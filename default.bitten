@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<build xmlns:python="http://bitten.edgewall.org/tools/python"
+       xmlns:hg="http://bitten.edgewall.org/tools/hg">
+</build>
