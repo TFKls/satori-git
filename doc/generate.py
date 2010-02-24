@@ -9,6 +9,8 @@ from apydia.generator import Generator
 from apydia.project import Project
 from apydia.theme import Theme
 
+sys.path[:0] = [os.getcwd()]
+
 from doc import theme
 
 
