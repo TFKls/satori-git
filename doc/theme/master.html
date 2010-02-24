@@ -13,7 +13,7 @@ ${Markup('&lt;xi:include xmlns:xi=&quot;http://www.w3.org/2001/XInclude&quot; hr
 <body py:match="body" py:attrs="select('@*')">
 	<div id="header">api :: ${desc.pathname} (${desc.type})</div>
 	<div id="menu">
-		<ul>
+		<ul py:if="len(project.modules)">
 			<li class="header">api reference</li>
 			<py:for each="module in project.modules"><li class="${(module.contains(desc)) and 'active' or None}"><a href="${module.href}">${module.pathname}</a></li>
 			</py:for>
