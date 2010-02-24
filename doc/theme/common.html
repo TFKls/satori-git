@@ -1,0 +1,14 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	py:strip="">
+
+<div py:def="describe(item, full=False)" id="${item.anchor or (item.type+'-'+item.name)}" class="description">
+	<span py:content="full and item.pathname or item.name" class="name" />
+	<span py:if="item.argspec" py:content="item.argspec" class="arguments" />
+	<a py:if="item.details" href="${item.details}" class="details" />
+	<a py:if="project.options.sourcelink(item)" href="${project.options.sourcelink(item)}" class="source" />
+	<p class="docstring" py:content="project.render_short_desc(item)" />
+</div>
+
+</html>

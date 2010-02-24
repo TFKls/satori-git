@@ -1,0 +1,22 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude">
+
+<xi:include href="master.html" />
+<xi:include href="common.html" />
+
+<head>
+	<title>Module Index</title>
+</head>
+
+<body>
+	<div id="content" class="api">
+		<h1>Module Index</h1>
+		<py:for each="module in project.modules" py:replace="describe(module, True)" />
+	</div>
+</body>
+
+</html>

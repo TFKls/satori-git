@@ -1,0 +1,43 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+	"http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude">
+
+<xi:include href="master.html" />
+<xi:include href="common.html" />
+
+<head>
+	<title py:content="desc.pathname" />
+</head>
+
+<body>
+	<div id="menu">
+		<py:for each="module in project.modules">
+			<ul py:if="module.contains(desc)">
+				<li class="header" py:content="module.pathname" />
+				<li py:for="class_ in module.classes" class="${(class_ == desc) and 'active' or ''}"><a href="${class_.details}" style="text-transform: none" py:content="class_.name" /></li>
+			</ul>
+		</py:for>
+	</div>
+
+	<div id="content" class="api">
+		<h1 py:content="desc.pathname" />
+		<p class="docstring" py:content="project.render_description(desc)" />
+	
+		<h2 py:if="desc.classes">Inner Classes</h2>
+		<py:for each="class_ in desc.classes" py:replace="describe(class_)" />
+	
+		<h2 py:if="desc.methods">Methods</h2>
+		<py:for each="method in desc.methods" py:replace="describe(method)" />
+	
+		<h2 py:if="desc.functions">Functions</h2>
+		<py:for each="function in desc.functions" py:replace="describe(function)" />
+	
+		<h2 py:if="desc.attributes">Attributes</h2>
+		<py:for each="member in desc.attributes" py:replace="describe(member)" />
+	</div>
+</body>
+
+</html>

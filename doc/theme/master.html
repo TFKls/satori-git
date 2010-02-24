@@ -1,0 +1,52 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	py:strip="">
+
+${Markup('&lt;xi:include xmlns:xi=&quot;http://www.w3.org/2001/XInclude&quot; href=&quot;layout.html&quot; /&gt;')}
+
+<head py:match="head">
+	<title py:match="title">api :: ${select('text()')}</title>
+	${select('*')}
+</head>
+
+<body py:match="body" py:attrs="select('@*')">
+	<div id="header">api :: ${desc.pathname} (${desc.type})</div>
+	<div id="menu">
+		<ul>
+			<li class="header">api reference</li>
+			<py:for each="module in project.modules"><li class="${(module.contains(desc)) and 'active' or None}"><a href="${module.href}">${module.pathname}</a></li>
+			</py:for>
+		</ul>
+		${select('*[@id="menu"]/ul')}
+		<ul py:match="ul">
+			${select('node()')}
+			<li py:match="li" py:attrs="select('@*')" py:content="select('a|text()')" />
+		</ul>
+	</div>
+	<div id="links" py:if="desc.modules or desc.classes or desc.methods or desc.functions">
+		<ul py:if="desc.modules">
+			<li class="header">modules</li>
+			<py:for each="member in desc.modules"><li><a href="#module-${member.name}">${member.name}</a></li>
+			</py:for>
+		</ul>
+		<ul py:if="desc.classes">
+			<li class="header">classes</li>
+			<py:for each="member in desc.classes"><li><a href="#class-${member.name}">${member.name}</a></li>
+			</py:for>
+		</ul>
+		<ul py:if="desc.methods">
+			<li class="header">methods</li>
+			<py:for each="member in desc.methods"><li><a href="#${member.anchor}">${member.name}</a></li>
+			</py:for>
+		</ul>
+		<ul py:if="desc.functions">
+			<li class="header">functions</li>
+			<py:for each="member in desc.functions"><li><a href="#${member.anchor}">${member.name}</a></li>
+			</py:for>
+		</ul>
+	</div>
+	${select('*[@id="content"]')}
+</body>
+
+</html>
