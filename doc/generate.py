@@ -42,7 +42,7 @@ def enumerate_modules(root, exclude=[], prefix=''):
 
 
 class IndexDesc(Descriptor):
-	"""Descriptor for documentation index."""
+	"""Apydia descriptor for documentation index."""
 
 	def __init__(self):
 		Descriptor.__init__(self, None)
@@ -99,7 +99,7 @@ if __name__ == '__main__':
 
 	# set options
 	options = Options()
-	options.revision = sys.argv[2] or ''
+	options.revision = sys.argv[2]
 	options.destination = os.path.join(os.getcwd(), sys.argv[1])
 	options.modules = list(enumerate_modules(os.getcwd(), exclude=['doc']))
 	options.sourcelink = sourcelink
