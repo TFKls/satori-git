@@ -16,6 +16,7 @@
 	<div id="content" class="api">
 		<h1>Module Index</h1>
 		<py:for each="module in project.modules" py:replace="describe(module, True)" />
+		<py:if test="len(project.modules) == 0">(no documented modules)</py:if>
 	</div>
 </body>
 
