@@ -94,7 +94,6 @@ if __name__ == '__main__':
 				path = path[1:]
 			return "{0}href.browser('{1}', rev='{2}'){4}#L{3}".format('${', path, revision, line, '}')
 		except Exception as ex:
-			print ex
 			return ''
 
 	# set options
