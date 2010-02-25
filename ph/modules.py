@@ -10,8 +10,9 @@ __all__ = (
 )
 
 
-def get_module(spec, path=sys.path):
+def get_module(spec, path=None):
 	"""Loads a module by its absolute, qualified name."""
+	path = path or sys.path
 	module = sys.modules.get(spec, None)
 	if module is None:
 		module = imp.new_module('(none)')
