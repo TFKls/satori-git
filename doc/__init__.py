@@ -1,0 +1,1 @@
+"""Manages automated documentation generation."""

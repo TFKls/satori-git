@@ -1,9 +1,14 @@
+"""A trivial theme for Apydia."""
+
+
 from pygments.style import Style
-from pygments.token import Keyword, Name, Comment, String, Error, Number, Operator, Generic, Punctuation
+from pygments.token import Keyword, Name, Comment, String, Error, Number, Operator
+from pygments.token import Generic, Punctuation
 
 
-# Style for Pygments source highlighter
 class ApydiaDefaultStyle(Style):
+	"""Style for Pygments source highlighter."""
+
 	default_style = ""
 	styles = {
 		Comment:        "italic #999",

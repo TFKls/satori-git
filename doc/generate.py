@@ -4,7 +4,7 @@ import os
 from inspect import getsourcelines
 from types import ModuleType
 
-from apydia.descriptors import Descriptor, ModuleDesc
+from apydia.descriptors import Descriptor
 from apydia.generator import Generator
 from apydia.project import Project
 from apydia.theme import Theme
@@ -14,9 +14,10 @@ sys.path[:0] = [os.getcwd()]
 from doc import theme
 
 
-def enumerate_modules(root, exclude=[], prefix=''):
+def modules(root, exclude=None, prefix=''):
 	"""Enumerates the names of all packages and modules under a given path."""
 
+	exclude = exclude or []
 	for entry in os.listdir(root):
 		path = os.path.join(root, entry)
 		if os.path.isdir(path):
@@ -25,7 +26,7 @@ def enumerate_modules(root, exclude=[], prefix=''):
 				continue
 			if not os.path.exists(os.path.join(path, '__init__.py')):
 				continue
-			for module in enumerate_modules(path, exclude=exclude, prefix=package+'.'):
+			for module in modules(path, exclude=exclude, prefix=package+'.'):
 				yield module
 		if not os.path.isfile(path):
 			continue
@@ -71,11 +72,13 @@ class Options(dict):
 		self[name] = value
 
 
-if __name__ == '__main__':
-	# prepare helper function
-	root = os.path.abspath(os.getcwd())
-	revision = sys.argv[2]
+def generate(root, revision):
+	"""Collect modules and generate documentation."""
+	
 	def sourcelink(descriptor):
+		"""Produce a trac browser link for a given descriptor."""
+
+		PATTERN = "{0}href.browser('{1}', rev='{2}'){4}#L{3}"
 		try:
 			obj = descriptor.value
 			if isinstance(obj, ModuleType):
@@ -92,22 +95,24 @@ if __name__ == '__main__':
 				path = path[:-1]
 			if path[0] == '/':
 				path = path[1:]
-			return "{0}href.browser('{1}', rev='{2}'){4}#L{3}".format('${', path, revision, line, '}')
-		except Exception as ex:
+			return PATTERN.format('${', path, revision, line, '}')
+		except Exception:		# pylint: disable-msg=W0703
 			return ''
 
-	# set options
 	options = Options()
-	options.revision = sys.argv[2]
 	options.destination = os.path.join(os.getcwd(), sys.argv[1])
-	options.modules = list(enumerate_modules(os.getcwd(), exclude=['doc']))
-	options.sourcelink = sourcelink
+	options.modules = list(modules(os.getcwd(), exclude=['doc']))
+	options.revision = sys.argv[2]		# pylint: disable-msg=W0201
+	options.sourcelink = sourcelink		# pylint: disable-msg=W0201
 
-	# generate documentation
 	project = Project(options)
 	project.theme = Theme('default', theme)
 	project.generate()
-
-	# create module index file
+	
 	options.modules.append('')
 	Generator(project).generate(IndexDesc())
+
+
+if __name__ == '__main__':
+	generate(os.path.abspath(os.getcwd()), sys.argv[2])
+
