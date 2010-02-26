@@ -10,15 +10,15 @@ __all__ = (
 from sys import _getframe
 from types import TypeType
 
-from ph.objects import Object
+from ph.objects import Object, Argument
 
 
 class Dispatch(Object):
 	"""Decorator. Marks the base implementation of a dynamically dispatched function."""
 
-	def __init__(self, **kwargs):
-		super(Dispatch, self).__init__(**kwargs)
-		self.required_argument('argument', None)
+	@Argument('argument', type=(int,str))
+	def __init__(self, args):
+		self.argument = args.argument
 
 	def __call__(self, function):
 		def _dispatch(*args, **kwargs):
@@ -44,9 +44,9 @@ class Dispatch(Object):
 class Implement(Object):
 	"""Decorator. Marks a specialized implementation of the dynamically dispatched function."""
 
-	def __init__(self, **kwargs):
-		super(Implement, self).__init__(**kwargs)
-		self.required_argument('type', TypeType)
+	@Argument('type', type=TypeType)
+	def __init__(self, args):
+		self.type = args.type
 
 	def __call__(self, function):
 		dispatch = _getframe(1).f_locals[function.__name__]

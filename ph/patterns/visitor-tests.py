@@ -5,25 +5,25 @@ import unittest
 from ph.patterns import visitor
 
 
-class A(object):						# pylint: disable-msg=C0103,C0111
+class A(object):					# pylint: disable-msg=C0103,C0111
 	pass
 
-class B(A):								# pylint: disable-msg=C0103,C0111
+class B(A):						# pylint: disable-msg=C0103,C0111
 	pass
 
-class C(A):								# pylint: disable-msg=C0103,C0111
+class C(A):						# pylint: disable-msg=C0103,C0111
 	pass
 
-class D(B):								# pylint: disable-msg=C0103,C0111
+class D(B):						# pylint: disable-msg=C0103,C0111
 	pass
 
-class E(C, B):							# pylint: disable-msg=C0103,C0111
+class E(C, B):						# pylint: disable-msg=C0103,C0111
 	pass
 
-class Visitor(unittest.TestCase):		# pylint: disable-msg=C0103,C0111
+class Visitor(unittest.TestCase):			# pylint: disable-msg=C0103,C0111
 	
 	@visitor.Dispatch(argument=1)
-	def visit(self, _):					# pylint: disable-msg=C0103,C0111,R0201
+	def visit(self, _):				# pylint: disable-msg=C0103,C0111,R0201
 		return '*'
 	
 	@visitor.Implement(type=A)
