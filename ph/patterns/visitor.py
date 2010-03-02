@@ -16,7 +16,7 @@ from ph.objects import Object, Argument
 class Dispatch(Object):
 	"""Decorator. Marks the base implementation of a dynamically dispatched function."""
 
-	@Argument('argument', type=(int,str))
+	@Argument('argument', "the index or name of the argument to dispatch on", type=(int,str))
 	def __init__(self, args):
 		self.argument = args.argument
 
@@ -42,9 +42,11 @@ class Dispatch(Object):
 
 
 class Implement(Object):
-	"""Decorator. Marks a specialized implementation of the dynamically dispatched function."""
+	"""
+	Decorator. Marks a specialized implementation of the dynamically dispatched function.
+	"""
 
-	@Argument('type', type=TypeType)
+	@Argument('type', "the argument type handled by this implementation", type=TypeType)
 	def __init__(self, args):
 		self.type = args.type
 

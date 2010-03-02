@@ -23,7 +23,20 @@ class TypeSpec(object):
 		return TypeSpec(type=type_, none=none)
 	
 	def __str__(self):
-		return str(self.type + (self.none and [] or ['not None']))
+		desc = ""
+		for type_ in self.type:
+			if isinstance(type_, tuple):
+				for option in type_:
+					desc += option.__name__
+					desc += " or "
+				desc = desc[:-4]
+			else:
+				desc += type_.__name__
+			desc += ", "
+		if not self.none:
+			desc += "not None, "
+		desc = desc[:-2]
+		return desc
 	
 	def isValid(self, value):
 		"""Checks whether a given value meets this TypeSpec."""
@@ -51,6 +64,15 @@ class ValueSpec(object):
 		if 'fixed' in kwargs:
 			self.value = kwargs['fixed']
 			self.mode = ValueSpec.PROVIDED
+	
+	def __str__(self):
+		if self.mode == ValueSpec.REQUIRED:
+			return "required"
+		if self.mode == ValueSpec.OPTIONAL:
+			return "optional, default = " + str(self.value)
+		if self.mode == ValueSpec.PROVIDED:
+			return "fixed, value = " + str(self.value)
+		raise Exception('this should NOT happen!')
 	
 	def __add__(self, other):
 		# one witout a value always looses...
@@ -95,6 +117,14 @@ class ArgumentSpec(object):
 		self.description = description
 		self.tspec = tspec or TypeSpec(**kwargs)
 		self.vspec = (vspec or ValueSpec(**kwargs)) & self.tspec
+	
+	def __str__(self):
+		tdesc = str(self.tspec)
+		vdesc = str(self.vspec)
+		if len(tdesc) > 0:
+			return tdesc + ", " + vdesc
+		else:
+			return vdesc
 	
 	def __add__(self, other):
 		tspec = self.tspec & other.tspec
