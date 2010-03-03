@@ -109,19 +109,20 @@ def updatedoc(item):
 	if not hasattr(item, '__doc__'):
 		return
 	paras = trim(item.__doc__).split('\n\n')
-	paras[1:1] = ["Description\n-----------"]
+	if len(paras) > 1:
+		paras[1:1] = ["Details\n-------"]
 	if hasattr(item, 'func_dict'):
 		if MAGIC_SPEC in item.func_dict:
-			doc = "Arguments\n---------\n\n"
+			doc = ""
 			for name, spec in item.func_dict[MAGIC_SPEC].iteritems():
 				doc += describe(name, spec)
-			paras[1:1] = [doc]
+			paras[1:1] = ["Arguments\n---------", doc]
 	if hasattr(item, '__init__') and hasattr(item.__init__, 'func_dict'):
 		if MAGIC_SPEC in item.__init__.func_dict:
-			doc = "Constructor arguments\n---------------------\n\n"
+			doc = ""
 			for name, spec in item.__init__.func_dict[MAGIC_SPEC].iteritems():
 				doc += describe(name, spec)
-			paras[1:1] = [doc]
+			paras[1:1] = ["Constructor Arguments\n---------------------", doc]
 	try:
 		item.__doc__ = '\n\n'.join(paras)
 	except AttributeError:
