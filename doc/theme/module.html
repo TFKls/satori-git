@@ -21,16 +21,17 @@
 	</div>
 
 	<div id="content" class="api">
-		<h1 py:content="desc.pathname" />
-		<p class="docstring" py:content="project.render_description(desc)" />
+		<h1>Overview</h1>
+		<py:match path="div[@class='section']" py:replace="select('*|text()')" />
+		${project.render_description(desc)}
 	
-		<h2 py:if="desc.modules">Sub-Modules</h2>
+		<h1 py:if="desc.modules">Sub-Modules</h1>
 		<py:for each="module in desc.modules" py:if="module.pathname not in project.options.exclude_modules" py:replace="describe(module)" />
 	
-		<h2 py:if="desc.classes">Classes</h2>
+		<h1 py:if="desc.classes">Classes</h1>
 		<py:for each="class_ in desc.classes" py:replace="describe(class_)" />
 	
-		<h2 py:if="desc.functions">Functions</h2>
+		<h1 py:if="desc.functions">Functions</h1>
 		<py:for each="function in desc.functions" py:replace="describe(function)" />
 	</div>
 </body>
