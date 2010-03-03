@@ -11,37 +11,10 @@ from apydia.theme import Theme
 
 sys.path[:0] = [os.getcwd()]
 
+from ph import modules
 from ph.misc import Namespace
-from ph.modules import traverse
-from ph.objects import MAGIC_SPEC, ValueSpec
+from ph.objects import MAGIC_SPEC, ArgumentMode
 from doc import theme
-
-
-def modules(root, exclude=None, prefix=''):
-	"""Enumerates the names of all packages and modules under a given path."""
-	exclude = exclude or []
-	for entry in os.listdir(root):
-		path = os.path.join(root, entry)
-		if os.path.isdir(path):
-			package = prefix + entry
-			if package in exclude:
-				continue
-			if not os.path.exists(os.path.join(path, '__init__.py')):
-				continue
-			for module in modules(path, exclude=exclude, prefix=package+'.'):
-				yield module
-		if not os.path.isfile(path):
-			continue
-		if entry[-3:] != '.py':
-			continue
-		entry = entry[:-3]
-		if entry == '__init__':
-			yield prefix[:-1]
-			continue
-		module = prefix+entry
-		if module in exclude:
-			continue
-		yield module
 
 
 class IndexDesc(Descriptor):
@@ -71,8 +44,7 @@ class Options(Namespace):
 def trim(docstring):
 	if not docstring:
 		return ''
-	# Convert tabs to spaces (following the normal Python rules)
-	# and split into a list of lines:
+	# Convert tabs to spaces (following the normal Python rules) and split into lines:
 	lines = docstring.expandtabs().splitlines()
 	# Determine minimum indentation (first line doesn't count):
 	indent = sys.maxint
@@ -94,14 +66,8 @@ def trim(docstring):
 	return '\n'.join(trimmed)
 
 
-def insert(docstring, para, index):
-	paras = docstring.split('\n\n')
-	paras[index:index] = [para]
-	return '\n\n'.join(paras)
-
-
 def describe(name, spec):
-	return (spec.vspec.mode == ValueSpec.PROVIDED) and "" or (name + " (" + str(spec) + ")" + "\n  " + spec.description + "\n")
+	return (spec.mode == ArgumentMode.PROVIDED) and "" or (name + " (" + str(spec) + ")" + "\n  " + spec.description + "\n")
 
 
 def updatedoc(item):
@@ -116,7 +82,7 @@ def updatedoc(item):
 			doc = ""
 			for name, spec in item.func_dict[MAGIC_SPEC].iteritems():
 				doc += describe(name, spec)
-			paras[1:1] = ["Arguments\n---------", doc]
+			paras[1:1] = ["Arguments:", doc]
 	if hasattr(item, '__init__') and hasattr(item.__init__, 'func_dict'):
 		if MAGIC_SPEC in item.__init__.func_dict:
 			doc = ""
@@ -156,12 +122,10 @@ def generate(root, revision):
 
 	options = Options()
 	options.destination = os.path.join(os.getcwd(), sys.argv[1])
-	options.modules = list(modules(os.getcwd(), exclude=['doc']))
+	options.modules = list('.'.join(m) for m in modules.walk(os.getcwd()))
 	options.sourcelink = sourcelink		# pylint: disable-msg=W0201
 
-	for module in options.modules:
-		__import__(module)
-	for item in traverse([sys.modules[m] for m in options.modules], False):
+	for item in modules.traverse([modules.load(m, [os.getcwd()]) for m in options.modules], False):
 		updatedoc(item)
 
 	project = Project(options)

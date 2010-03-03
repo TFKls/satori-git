@@ -2,7 +2,7 @@
 
 
 __all__ = (
-	'Object', 'Argument',
+	'Object', 'Argument', 'ArgumentMode',
 )
 
 
@@ -48,54 +48,58 @@ class TypeSpec(object):
 		return True
 
 
-class ValueSpec(object):
-	"""An argument value specification."""
+class ArgumentMode(object):
+	"""Enumeration. Modes for function arguments."""
 
 	REQUIRED = 0
 	OPTIONAL = 1
 	PROVIDED = 2
 
+
+class ValueSpec(object):
+	"""An argument value specification."""
+
 	def __init__(self, **kwargs):
 		self.value = None
-		self.mode = ValueSpec.REQUIRED
+		self.mode = ArgumentMode.REQUIRED
 		if 'default' in kwargs:
 			self.value = kwargs['default']
-			self.mode = ValueSpec.OPTIONAL
+			self.mode = ArgumentMode.OPTIONAL
 		if 'fixed' in kwargs:
 			self.value = kwargs['fixed']
-			self.mode = ValueSpec.PROVIDED
+			self.mode = ArgumentMode.PROVIDED
 	
 	def __str__(self):
-		if self.mode == ValueSpec.REQUIRED:
+		if self.mode == ArgumentMode.REQUIRED:
 			return "required"
-		if self.mode == ValueSpec.OPTIONAL:
+		if self.mode == ArgumentMode.OPTIONAL:
 			return "optional, default = " + str(self.value)
-		if self.mode == ValueSpec.PROVIDED:
+		if self.mode == ArgumentMode.PROVIDED:
 			return "fixed, value = " + str(self.value)
 		raise Exception('this should NOT happen!')
 	
 	def __add__(self, other):
 		# one witout a value always looses...
-		if (self.mode == ValueSpec.REQUIRED):
+		if (self.mode == ArgumentMode.REQUIRED):
 			return other
-		if (other.mode == ValueSpec.REQUIRED):
+		if (other.mode == ArgumentMode.REQUIRED):
 			return self
 		# ...two strongmen agree or die...
-		if (self.mode == ValueSpec.PROVIDED) and (other.mode == ValueSpec.PROVIDED):
+		if (self.mode == ArgumentMode.PROVIDED) and (other.mode == ArgumentMode.PROVIDED):
 			if self.value != other.value:
 				raise ArgumentError("Conflicting provided values.")
 		# ...otherwise the left has advantage
-		if (other.mode == ValueSpec.PROVIDED):
+		if (other.mode == ArgumentMode.PROVIDED):
 			return other
 		else:
 			return self
 	
 	def __and__(self, tspec):
-		if self.mode == ValueSpec.REQUIRED:
+		if self.mode == ArgumentMode.REQUIRED:
 			return self
 		if tspec.isValid(self.value):
 			return self
-		if self.mode == ValueSpec.OPTIONAL:
+		if self.mode == ArgumentMode.OPTIONAL:
 			return ValueSpec()
 		else:
 			raise TypeError("'{0}' does not satisfy the specification '{1}'.".format(self.value, tspec))
@@ -136,9 +140,11 @@ class ArgumentSpec(object):
 		vspec = (key in args) and ValueSpec(fixed=args[key]) or ValueSpec()
 		vspec &= self.tspec
 		vspec += self.vspec
-		if vspec.mode == ValueSpec.REQUIRED:
+		if vspec.mode == ArgumentMode.REQUIRED:
 			raise ArgumentError("Required argument '{0}' not provided.".format(key))
 		args[key] = vspec.value
+	
+	mode = property(lambda self: self.vspec.mode)
 
 
 MAGIC_ORIG = 'ph.objects.original'

@@ -1,26 +1,45 @@
 """Python Hacks that deal with modules."""
 
 
-import sys
 import imp
 import inspect
+import os
+import sys
 
 
 __all__ = (
-	'get_module', 'module_members'
+	'load', 'traverse', 'walk',
 )
 
 
-def get_module(spec, path=None):
+def load(qname, path=None):
 	"""Loads a module by its absolute, qualified name."""
 	path = path or sys.path
-	module = sys.modules.get(spec, None)
+	qname = isinstance(qname, list) and qname or qname.split('.')
+	module = sys.modules.get('.'.join(qname), None)
 	if module is None:
 		module = imp.new_module('(none)')
 		module.__path__ = path
-		for name in spec.split('.'):
-			module = imp.load_module(name, *imp.find_module(name, module.__path__))
+		for part in qname:
+			module = imp.load_module(part, *imp.find_module(part, module.__path__))
 	return module
+
+
+def walk(root, base=[]):
+	"""Generator. Walks a directory hierarchy looking for Python modules."""
+	for entry in os.listdir(root):
+		path = os.path.join(root, entry)
+		if os.path.isdir(path) and os.path.isfile(os.path.join(path, '__init__.py')):
+			for module in walk(path, base + [entry]):
+				yield module
+		if not os.path.isfile(path):
+			continue
+		if entry[-3:] != '.py':
+			continue
+		if entry == '__init__.py':
+			yield base
+		else:
+			yield base + [entry[:-3]]
 
 
 def traverse(modules, topdown=True):
