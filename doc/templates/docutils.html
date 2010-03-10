@@ -1,0 +1,187 @@
+<!--!
+	A genshi template directly rendering a docutils document as xhtml.
+	(c) Grzegorz Herman, 2010
+-->
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	py:strip="">
+
+<!--! run the first of 'functions' which exists -->
+<py:def function="dispatch(functions, index, *args, **kwargs)" py:with="DEFS=locals().__data__" py:choose=""
+	><py:when test="index == len(functions)"
+	/><py:when test="functions[index] in DEFS" py:replace="DEFS[functions[index]](*args, **kwargs)"
+	/><py:otherwise py:replace="dispatch(functions, index+1, *args, **kwargs)"
+	/></py:def>
+
+<!--! generic (default) formatting -->
+<py:def function="fmt(node, **kw)" py:replace="dispatch(['fmt_' + c.__name__ for c in node.__class__.__mro__], 0, node, **kw)" />
+<py:def function="fmt_Node(node, **kw)" py:for="child in node.children" py:replace="fmt(child, **kw)" />
+<py:def function="fmt_Text(node, indent='', **kw)" py:replace="node.astext().replace('\n', ' '+indent)" />
+<py:def function="fmt_generated(node, **kw)" py:strip="" />
+
+<!--! structural elements => <div> with appropriate attributes or <hr> -->
+<py:def function="fmt_section(node, indent='', shift='', depth=0, **kw)"
+	>${indent}<div id="${' '.join(node.attributes.get('ids',[])) or None}"
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, depth=depth+1, **kw)"
+	/>${indent}</div></py:def>
+<py:def function="fmt_sidebar(node, indent='', shift='', depth=0, **kw)"
+	>${indent}<div id="${' '.join(node.attributes.get('ids',[])) or None}" class="sidebar ${' '.join(node.attributes.get('classes',[]))}"
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, depth=depth+1, **kw)"
+	/>${indent}</div></py:def>
+<py:def function="fmt_topic(node, indent='', shift='', depth=0, **kw)"
+	>${indent}<div id="${' '.join(node.attributes.get('ids',[])) or None}" class="topic ${' '.join(node.attributes.get('classes',[]))}"
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, depth=depth+1, **kw)"
+	/>${indent}</div></py:def>
+<py:def function="fmt_transition(node, indent='', **kw)"
+	>${indent}<hr
+	/></py:def>
+
+<!--! itemized/enumerated lists => <ul>, <ol>, <li> -->
+<py:def function="fmt_bullet_list(node, indent='', shift='', **kw)"
+	>${indent}<ul
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</ul></py:def>
+<py:def function="fmt_enumerated_list(node, indent='', shift='', **kw)"
+	>${indent}<ol
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</ol></py:def>
+<py:def function="fmt_list_item(node, indent='', shift='', **kw)"
+	>${indent}<li
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</li></py:def>
+
+<!--! definition lists => <dl>, <dt>, <dd> -->
+<py:def function="fmt_definition_list(node, indent='', shift='', **kw)"
+	>${indent}<dl
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</dl></py:def>
+<py:def function="fmt_term(node, indent='', **kw)"
+	>${indent}<dt py:content="fmt_Node(node, indent='', **kw)"
+	/></py:def>
+<py:def function="fmt_definition(node, indent='', shift='', **kw)"
+	>${indent}<dd
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</dd></py:def>
+
+<!--! field lists => <dl>, <dt>, <dd> -->
+<py:def function="fmt_field_list(node, indent='', shift='', **kw)"
+	>${indent}<dl
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</dl></py:def>
+<py:def function="fmt_field_name(node, indent='', **kw)"
+	>${indent}<dt py:content="fmt_Node(node, indent='', **kw)"
+	/></py:def>
+<py:def function="fmt_field_body(node, indent='', shift='', **kw)"
+	>${indent}<dd
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</dd></py:def>
+
+<!--! section titles/subtitles -->
+<py:def function="fmt_title(node, indent='', depth=0, **kw)" py:choose="depth"
+	>${indent}<h1 py:when="1" py:content="fmt_Node(node, indent='', **kw)"
+	/><h2 py:when="2" py:content="fmt_Node(node, indent='', **kw)"
+	/><h3 py:when="3" py:content="fmt_Node(node, indent='', **kw)"
+	/><h4 py:when="4" py:content="fmt_Node(node, indent='', **kw)"
+	/><h5 py:when="5" py:content="fmt_Node(node, indent='', **kw)"
+	/><h6 py:when="6" py:content="fmt_Node(node, indent='', **kw)"
+	/></py:def>
+
+<!--! normal paragraphs -->
+<py:def function="fmt_paragraph(node, indent='', **kw)"
+	>${indent}<p py:content="fmt_Node(node, indent='', **kw)"
+	/></py:def>
+
+<!--! pre-formatted text -->
+<py:def function="fmt_FixedTextElement(node, indent='', **kw)"
+	>${indent}<pre py:content="node.astext()"
+	/></py:def>
+
+<!--! inline elements -->
+<py:def function="fmt_abbreviation(node, **kw)"
+	><abbr py:content="fmt_Node(node, **kw)"
+	/></py:def>
+<py:def function="fmt_acronym(node, **kw)"
+	><acronym py:content="fmt_Node(node, **kw)"
+	/></py:def>
+<py:def function="fmt_emphasis(node, **kw)"
+	><em py:content="fmt_Node(node, **kw)"
+	/></py:def>
+<py:def function="fmt_literal(node, **kw)"
+	><code py:content="fmt_Node(node, **kw)"
+	/></py:def>
+<py:def function="fmt_strong(node, **kw)"
+	><strong py:content="fmt_Node(node, **kw)"
+	/></py:def>
+<py:def function="fmt_subscript(node, **kw)"
+	><sub py:content="fmt_Node(node, **kw)"
+	/></py:def>
+<py:def function="fmt_superscript(node, **kw)"
+	><sup py:content="fmt_Node(node, **kw)"
+	/></py:def>
+
+<!--! internal and external references -->
+<py:def function="fmt_reference(node, **kw)" py:choose=""
+	><a py:when="'refid' in node" href="#${node['refid']}" py:content="fmt_Node(node, **kw)"
+	/><a py:when="'refuri' in node" href="${node['refuri']}" py:content="fmt_Node(node, **kw)"
+	/></py:def>
+
+<!--! citations -->
+<py:def function="fmt_citation_reference(node, **kw)" py:choose=""
+	><cite
+	><a href="#cite-${node['refname']}" py:content="fmt_Node(node, **kw)"
+	/></cite></py:def>
+<py:def function="fmt_citation(node, indent='', shift='', **kw)"
+	>${indent}<div id="cite-${node['names'][0]}"
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</div></py:def>
+
+<!--! footnotes -->
+<py:def function="fmt_footnote_reference(node, **kw)" py:choose=""
+	><sup
+	><a href="#footnote-${node['refname']}" py:content="fmt_Node(node, **kw)"
+	/></sup></py:def>
+<py:def function="fmt_footnote(node, indent='', shift='', **kw)"
+	>${indent}<div id="footnote-${node['names'][0]}"
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</div></py:def>
+
+<!--! block quotes -->
+<py:def function="fmt_block_quote(node, indent='', shift='', **kw)"
+	>${indent}<blockquote
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</blockquote></py:def>
+
+<!--! floating elements -->
+<py:def function="fmt_figure(node, indent='', shift='', **kw)"
+	>${indent}<div
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</div></py:def>
+<py:def function="fmt_image(node, indent='', **kw)"
+	>${indent}<img src="${node['uri']}" alt="" width="${node.attributes.get('width')}" height="${node.attributes.get('height')}"
+	/></py:def>
+
+<!--! tables -->
+<py:def function="fmt_table(node, indent='', shift='', **kw)"
+	>${indent}<table
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</table></py:def>
+<py:def function="fmt_thead(node, indent='', shift='', **kw)"
+	>${indent}<thead
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</thead></py:def>
+<py:def function="fmt_tbody(node, indent='', shift='', **kw)"
+	>${indent}<tbody
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</tbody></py:def>
+<py:def function="fmt_row(node, indent='', shift='', **kw)"
+	>${indent}<tr
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</tr></py:def>
+<py:def function="fmt_entry(node, indent='', shift='', **kw)"
+	py:with="rows=node.attributes.get('morerows',0); cols=node.attributes.get('morecols',0)"
+	>${indent}<td colspan="${cols and (cols+1) or None}" rowspan="${rows and (rows+1) or None}"
+	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, **kw)"
+	/>${indent}</td></py:def>
+
+</html>

@@ -1,0 +1,13 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+      xmlns:py="http://genshi.edgewall.org/"
+      xmlns:xi="http://www.w3.org/2001/XInclude"
+	  py:strip="">
+
+<py:def function="fmt_code_block(node, indent='', **kw)"
+	>${indent}<pre class="code" py:content="fmt_Node(node, indent='', **kw)"
+	/></py:def>
+<py:def function="fmt_code_token(node, **kw)"
+	><span class="${pygments[node.type]}" py:content="node.astext()" py:strip="not pygments[node.type]"
+	/></py:def>
+
+</html>
