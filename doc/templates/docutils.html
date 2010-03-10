@@ -21,15 +21,15 @@
 <py:def function="fmt_generated(node, **kw)" py:strip="" />
 
 <!--! structural elements => <div> with appropriate attributes or <hr> -->
-<py:def function="fmt_section(node, indent='', shift='', depth=0, **kw)"
+<py:def function="fmt_section(node, indent='', shift='', depth=1, **kw)"
 	>${indent}<div id="${' '.join(node.attributes.get('ids',[])) or None}"
 	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, depth=depth+1, **kw)"
 	/>${indent}</div></py:def>
-<py:def function="fmt_sidebar(node, indent='', shift='', depth=0, **kw)"
+<py:def function="fmt_sidebar(node, indent='', shift='', depth=1, **kw)"
 	>${indent}<div id="${' '.join(node.attributes.get('ids',[])) or None}" class="sidebar ${' '.join(node.attributes.get('classes',[]))}"
 	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, depth=depth+1, **kw)"
 	/>${indent}</div></py:def>
-<py:def function="fmt_topic(node, indent='', shift='', depth=0, **kw)"
+<py:def function="fmt_topic(node, indent='', shift='', depth=1, **kw)"
 	>${indent}<div id="${' '.join(node.attributes.get('ids',[])) or None}" class="topic ${' '.join(node.attributes.get('classes',[]))}"
 	><div py:replace="fmt_Node(node, indent=indent+shift, shift=shift, depth=depth+1, **kw)"
 	/>${indent}</div></py:def>
@@ -78,7 +78,7 @@
 	/>${indent}</dd></py:def>
 
 <!--! section titles/subtitles -->
-<py:def function="fmt_title(node, indent='', depth=0, **kw)" py:choose="depth"
+<py:def function="fmt_title(node, indent='', depth=1, **kw)" py:choose="depth"
 	>${indent}<h1 py:when="1" py:content="fmt_Node(node, indent='', **kw)"
 	/><h2 py:when="2" py:content="fmt_Node(node, indent='', **kw)"
 	/><h3 py:when="3" py:content="fmt_Node(node, indent='', **kw)"
