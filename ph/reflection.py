@@ -18,13 +18,13 @@ class Reflector(Object, dict):
 			descriptor = self._create(object)
 			self[object] = descriptor
 		return super(Reflector, self).__getitem__(object)
-	
+
 	def add(self, type, **kwargs):
 		kwargs['cache'] = self
 		group = type(**kwargs)
 		self.groups.append(group)
 		return group
-	
+
 	@visitor.Dispatch(argument=1)
 	def _create(self, object):
 		raise KeyError("Unhandled object type '{0}'".format(object.__class__))
@@ -50,7 +50,7 @@ class Reflector(Object, dict):
 		for group in self.groups:
 			for descendant in group.traverse(seen):
 				yield descendant
-	
+
 
 class Descriptor(Object):
 
@@ -114,18 +114,18 @@ class Descriptor(Object):
 
 
 class ModuleGroup(Descriptor):
-	
+
 	@Argument('object', fixed=None)
 	def __init__(self, kwargs):
 		self.module_list = []
 		self.group = self
 		pass
-	
+
 	@property
 	def children(self):
 		for module in self.module_list:
 			yield module.__name__, self.cache[module]
-	
+
 	def __contains__(self, module):
 		return module in self.module_list
 
@@ -192,7 +192,7 @@ class Module(Descriptor):
 		for name, child in super(Module, self).children:
 			if child.parent is self:
 				yield name, child
-	
+
 	def __str__(self):
 		return "module {0} at {1}".format(self.name, self.group)
 
@@ -201,6 +201,7 @@ class Class(Descriptor):
 
 	def __init__(self, kwargs):
 		self.parent = self.cache[sys.modules[self.object.__module__]]
+		self.group = self.parent.group
 		self.bases = [self.cache[base] for base in self.object.__bases__]
 
 	def __str__(self):
@@ -244,9 +245,11 @@ class Method(Callable):
 				if getattr(impl, 'func_code', None) is code:
 					class_ = base
 		self.parent = self.cache[class_]
+		self.group = self.parent.group
 
 
 class Function(Callable):
 
 	def __init__(self, kwargs):
 		self.parent = self.cache[sys.modules[self.object.__module__]]
+		self.group = self.parent.group
