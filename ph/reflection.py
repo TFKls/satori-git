@@ -60,7 +60,7 @@ class Descriptor(Object):
 		self.object = kwargs.object
 		self.cache = kwargs.cache
 		self.name = getattr(self.object, '__name__', None)
-		self.docstring = getattr(self.object, '__doc__', None)
+		self.docstring = inspect.cleandoc(getattr(self.object, '__doc__', None) or "")
 
 	class source_file(object):
 		def __get__(_, self, type=None):
