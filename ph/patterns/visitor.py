@@ -8,7 +8,7 @@ __all__ = (
 
 
 from sys import _getframe
-from types import TypeType
+from types import ClassType, TupleType, TypeType
 
 from ph.objects import Object, Argument
 
@@ -29,7 +29,8 @@ class Dispatch(Object):
 				key = args[arg]
 			else:
 				key = kwargs[arg]
-			for class_ in key.__class__.__mro__:
+			keyclass = isinstance(key, ClassType) and ClassType or key.__class__
+			for class_ in keyclass.__mro__:
 				if class_ in imp:
 					return imp[class_](*args, **kwargs)
 			return default(*args, **kwargs)
@@ -46,13 +47,15 @@ class Implement(Object):
 	Decorator. Marks a specialized implementation of the dynamically dispatched function.
 	"""
 
-	@Argument('type', "the argument type handled by this implementation", type=TypeType)
+	@Argument('type', "the argument type(s) handled by this implementation", type=(TypeType, TupleType))
 	def __init__(self, args):
-		self.type = args.type
+		self.types = isinstance(args.type, TupleType) and args.type or (args.type,)
 
 	def __call__(self, function):
 		dispatch = _getframe(1).f_locals[function.__name__]
-		dispatch.func_dict['implementations'][self.type] = function	# pylint: disable-msg=E1101
+		implementations = dispatch.func_dict['implementations']	# pylint: disable-msg=E1101
+		for type_ in self.types:
+			implementations[type_] = function
 		return dispatch
 
 
