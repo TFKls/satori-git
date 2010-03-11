@@ -52,6 +52,12 @@ class Reflector(Object, dict):
 				yield descendant
 
 
+_ismodule = lambda p: isinstance(p[1], Module)
+_isclass = lambda p: isinstance(p[1], Class) and not p[0].startswith('_')
+_ismethod = lambda p: isinstance(p[1], Method) and not p[0].startswith('_')
+_isfunction = lambda p: isinstance(p[1], Function) and not p[0].startswith('_')
+
+
 class Descriptor(Object):
 
 	@Argument('object')
@@ -101,6 +107,11 @@ class Descriptor(Object):
 				yield name, self.cache[object]
 			except (AttributeError, KeyError, TypeError) as ex:
 				pass
+
+	modules = property(lambda self: filter(_ismodule, self.children))
+	classes = property(lambda self: filter(_isclass, self.children))
+	methods = property(lambda self: filter(_ismethod, self.children))
+	functions = property(lambda self: filter(_isfunction, self.children))
 
 	def traverse(self, seen=None):
 		seen = seen or set()
