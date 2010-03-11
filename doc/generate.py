@@ -103,5 +103,5 @@ if __name__ == '__main__':
 	location = generator.add(Location, root=os.getcwd())
 	location.target_dir = target_dir.rstrip('/') + '/'
 	location.target_url = lambda path: "{0}href.api('{1}'){2}".format('${', path, '}')
-	location.source_url = lambda path, line: "{0}href.browser('{1}', rev='{2}')#L{3}{4}".format('${', path, revision, line, '}')
+	location.source_url = lambda path, line: "{0}href.browser('{1}', rev='{2}'){3}#L{4}".format('${', path, revision, '}', line)
 	generator.run()
