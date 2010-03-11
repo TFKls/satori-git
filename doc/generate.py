@@ -6,6 +6,9 @@ Script. Extracts information from docstrings and generates documentation.
 import sys
 import os
 
+if __name__ == '__main__':
+	sys.path.insert(0, '.')
+
 import docutils.frontend
 import docutils.nodes
 import docutils.parsers.rst
