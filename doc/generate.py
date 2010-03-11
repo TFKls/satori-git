@@ -1,141 +1,104 @@
-"""Script. Extracts information from docstrings and generates documentation."""
+"""
+Script. Extracts information from docstrings and generates documentation.
+"""
+
+
 import sys
 import os
-from inspect import getsourcelines
-from types import ModuleType
 
-from apydia.descriptors import Descriptor
-from apydia.generator import Generator
-from apydia.project import Project
-from apydia.theme import Theme
+import docutils.frontend
+import docutils.nodes
+import docutils.parsers.rst
+import docutils.utils
+import genshi.template
+import pygments.token
 
-sys.path[:0] = [os.getcwd()]
-
-from ph import modules
+from doc import sourcecode
 from ph.misc import Namespace
-from ph.objects import MAGIC_SPEC, ArgumentMode
-from doc import theme
+from ph.objects import Object, Argument
+from ph.patterns import visitor
+from ph.reflection import Reflector, Location, Module, Class, Method, Function
 
 
-class IndexDesc(Descriptor):
-	"""Apydia descriptor for documentation index."""
+class Generator(Reflector):
 
-	def __init__(self):
-		Descriptor.__init__(self, None)
-		self.pathname = 'modules'
-		self.name = 'index'
+	@Argument('template_dir', type=str)
+	def __init__(self, kwargs):
+		self.templates = genshi.template.TemplateLoader(kwargs.template_dir, variable_lookup='lenient')
+		self.docutils_parser = docutils.parsers.rst.Parser()
+		self.docutils_settings = dict(
+			pep_references=False,
+			rfc_references=True,
+			tab_width=4,
+			trim_footnote_reference_space=True,
+		)
+		self.data = Namespace()
 
+	def parseDocstring(self, desc):
+		options = docutils.frontend.OptionParser()
+		options.set_defaults_from_dict(self.docutils_settings)
+		desc.doc = docutils.utils.new_document(desc.name, settings=options.get_default_values())
+		self.docutils_parser.parse(desc.docstring or "(not documented)", desc.doc)
+		desc.doc.transformer.apply_transforms()
+		ispara = lambda node: isinstance(node, docutils.nodes.paragraph)
+		desc.shortdoc = filter(ispara, desc.doc.traverse())[0]
 
-class Options(Namespace):
-	"""Options for Apydia documentation generator."""
-
-	def __init__(self):
-		super(Options, self).__init__()
-		self.title = None
-		self.modules = ()
-		self.exclude_modules = ()
-		self.destination = '.'
-		self.theme = 'default'
-		self.trac_browser_url = None
-		self.format = 'xhtml'
-		self.docformat = 'reStructuredText'
-
-
-def trim(docstring):
-	if not docstring:
-		return ''
-	# Convert tabs to spaces (following the normal Python rules) and split into lines:
-	lines = docstring.expandtabs().splitlines()
-	# Determine minimum indentation (first line doesn't count):
-	indent = sys.maxint
-	for line in lines[1:]:
-		stripped = line.lstrip()
-		if stripped:
-			indent = min(indent, len(line) - len(stripped))
-	# Remove indentation (first line is special):
-	trimmed = [lines[0].strip()]
-	if indent < sys.maxint:
-		for line in lines[1:]:
-			trimmed.append(line[indent:].rstrip())
-	# Strip off trailing and leading blank lines:
-	while trimmed and not trimmed[-1]:
-		trimmed.pop()
-	while trimmed and not trimmed[0]:
-		trimmed.pop(0)
-	# Return a single string:
-	return '\n'.join(trimmed)
-
-
-def describe(name, spec):
-	return (spec.mode == ArgumentMode.PROVIDED) and "" or (name + " (" + str(spec) + ")" + "\n  " + spec.description + "\n")
-
-
-def updatedoc(item):
-	"""Update docstring on an item."""
-	if not hasattr(item, '__doc__'):
-		return
-	paras = trim(item.__doc__).split('\n\n')
-	if len(paras) > 1:
-		paras[1:1] = ["Details\n-------"]
-	if hasattr(item, 'func_dict'):
-		if MAGIC_SPEC in item.func_dict:
-			doc = ""
-			for name, spec in item.func_dict[MAGIC_SPEC].iteritems():
-				doc += describe(name, spec)
-			paras[1:1] = ["Arguments:", doc]
-	if hasattr(item, '__init__') and hasattr(item.__init__, 'func_dict'):
-		if MAGIC_SPEC in item.__init__.func_dict:
-			doc = ""
-			for name, spec in item.__init__.func_dict[MAGIC_SPEC].iteritems():
-				doc += describe(name, spec)
-			paras[1:1] = ["Constructor Arguments\n---------------------", doc]
-	try:
-		item.__doc__ = '\n\n'.join(paras)
-	except AttributeError:
+	@visitor.Dispatch(argument=1)
+	def update(self, desc):
 		pass
 
+	@visitor.Implement(type=Location)
+	def update(self, desc):
+		desc.template = 'index.html'
+		desc.target_path = os.path.join(desc.target_dir, 'index.html')
 
-def generate(root, revision):
-	"""Collect modules and generate documentation."""
-	def sourcelink(descriptor):
-		"""Produce a trac browser link for a given descriptor."""
-		PATTERN = "{0}href.browser('{1}', rev='{2}'){4}#L{3}"
-		try:
-			obj = descriptor.value
-			if isinstance(obj, ModuleType):
-				module = obj
-				line = 1
-			else:
-				module = sys.modules[obj.__module__]
-				line = getsourcelines(obj)[1]
-			path = module.__file__
-			if path[:len(root)] != root:
-				return ''
-			path = path[len(root):]
-			if path[-4:] in ('.pyc', '.pyo'):
-				path = path[:-1]
-			if path[0] == '/':
-				path = path[1:]
-			return PATTERN.format('${', path, revision, line, '}')
-		except Exception:		# pylint: disable-msg=W0703
-			return ''
+	@visitor.Implement(type=Module)
+	def update(self, desc):
+		if isinstance(desc.group, Location):
+			desc.template = 'module.html'
+			desc.target_path = os.path.join(desc.group.target_dir, desc.name+'.html')
+		self.parseDocstring(desc)
+		desc.doc.insert(0, docutils.nodes.title(text=desc.name))
 
-	options = Options()
-	options.destination = os.path.join(os.getcwd(), sys.argv[1])
-	options.modules = list('.'.join(m) for m in modules.walk(os.getcwd()))
-	options.sourcelink = sourcelink		# pylint: disable-msg=W0201
+	@visitor.Implement(type=Class)
+	def update(self, desc):
+		if isinstance(desc.group, Location):
+			desc.template = 'class.html'
+			desc.target_path = os.path.join(desc.group.target_dir, desc.parent.name+'.'+desc.name+'.html')
+		self.parseDocstring(desc)
+		desc.doc.insert(0, docutils.nodes.title(text=desc.parent.name+'.'+desc.name))
 
-	for item in modules.traverse([modules.load(m, [os.getcwd()]) for m in options.modules], False):
-		updatedoc(item)
+	@visitor.Implement(type=(Function, Method))
+	def update(self, desc):
+		self.parseDocstring(desc)
 
-	project = Project(options)
-	project.theme = Theme('default', theme)
-	project.generate()
-	
-	options.modules.append('')
-	Generator(project).generate(IndexDesc())
+	def run(self):
+		# first pass: resolve references
+		for desc in self:
+			pass
+		# second pass: update descriptor data
+		for desc in self:
+			self.update(desc)
+		# third pass: generate output
+		for desc in self:
+			if not hasattr(desc, 'template'):
+				continue
+			template = self.templates.load(desc.template)
+			with open(desc.target_path, 'w') as output:
+				self.data.this = desc
+				output.write(template.generate(**self.data).render('xhtml'))
 
 
 if __name__ == '__main__':
-	generate(os.path.abspath(os.getcwd()), sys.argv[2])
-
+	target_dir = sys.argv[1]
+	revision = sys.argv[2]
+	template_dir = os.path.join(os.path.dirname(sys.argv[0]), 'templates')
+	if not os.path.isdir(target_dir):
+		os.mkdir(target_dir)
+	generator = Generator(template_dir=template_dir)
+	generator.data.pygments = pygments.token.STANDARD_TYPES
+	location = generator.add(Location, root=os.getcwd())
+	location.target_dir = target_dir.rstrip('/') + '/'
+	location.target_url = lambda path: "{0}href.api('{1}'){2}".format('${', path, '}')
+	location.source_url = lambda path: "{0}href.browser('{1}', rev={2}){3}".format('${', path, revision, '}')
+	generator.run()

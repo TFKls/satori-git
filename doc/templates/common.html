@@ -1,0 +1,88 @@
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en"
+	xmlns:py="http://genshi.edgewall.org/"
+	xmlns:xi="http://www.w3.org/2001/XInclude"
+	py:strip="">
+
+<xi:include href="docutils.html" />
+<xi:include href="sourcecode.html" />
+
+<py:def function="xinclude(url)" py:with="ns = 'http://www.w3.org/2001/XInclude'"
+	py:replace="Markup('&lt;xi:include xmlns:xi=&quot;' + ns + '&quot; href=&quot;' + url + '&quot; /&gt;')"
+/>
+
+<py:def function="source_url(desc)"
+	py:if="desc.source_file and desc.group.root and desc.source_file.startswith(desc.group.root)"
+	py:replace="desc.group.source_url(desc.source_file[len(desc.group.root):] + '#L' + str(desc.source_line or 1))"
+/>
+
+<a py:def="source_link(desc, text=None)"
+	py:if="len([source_url(desc)])"
+	href="${source_url(desc)}"
+	py:content="text or desc.name"
+/>
+
+<py:choose py:def="target_url(desc, name=None, suffix='')" test=""
+	><py:when test="desc.target_path and desc.target_path.startswith(desc.group.target_dir)"
+			py:replace="desc.group.target_url(desc.target_path[len(desc.group.target_dir):] + suffix)"
+	/><py:when test="name" py:replace="target_url(desc.parent, None, '#'+name)"
+/></py:choose>
+
+<a py:def="target_link(desc, name=None, text=None)"
+	py:if="len([target_url(desc, name)])"
+	href="${target_url(desc, name)}"
+	py:content="text or name or desc.name"
+/>
+
+<span py:def="links(desc, name=None)">${target_link(desc, name, 'details')}${source_link(desc, 'source')}</span>
+
+<py:def function="toc(desc, name=None)">
+	<h4 py:content="name or desc.name" />
+	<ul>
+		<li py:for="name, child in desc.modules" py:content="target_link(child)" />
+		<li py:for="name, child in desc.classes" py:content="target_link(child)" />
+		<li py:for="name, child in desc.methods" py:content="target_link(child, name)" />
+		<li py:for="name, child in desc.functions" py:content="target_link(child, name)" />
+	</ul>
+</py:def>
+
+<div py:def="content()" py:strip="">
+	<div py:replace="fmt(this.doc, indent='\n\t\t', shift='\t')" />
+
+	<py:if test="this.modules">
+		<hr />
+		<h1>Modules</h1>
+		<py:for each="name, desc in this.modules">
+		<h2 id="${name}">${name}${links(desc)}</h2>
+		<div py:replace="fmt(desc.shortdoc)" />
+		</py:for>
+	</py:if>
+
+	<py:if test="this.classes">
+		<hr />
+		<h1>Classes</h1>
+		<py:for each="name, desc in this.classes">
+		<h2 id="${name}">${name}${links(desc)}</h2>
+		<div py:replace="fmt(desc.shortdoc)" />
+		</py:for>
+	</py:if>
+
+	<py:if test="this.methods">
+		<hr />
+		<h1>Methods</h1>
+		<py:for each="name, desc in this.methods">
+		<h2 id="${name}">${name}(${desc.signature})${links(desc)}</h2>
+		<div py:replace="fmt(desc.doc, depth=2)" />
+		</py:for>
+	</py:if>
+
+	<py:if test="this.functions">
+		<hr />
+		<h1>Functions</h1>
+		<py:for each="name, desc in this.functions">
+		<h2 id="${name}">${name}<span class="args">(${desc.signature})</span>${links(desc)}</h2>
+		<div py:replace="fmt(desc.doc, depth=2)" />
+		</py:for>
+	</py:if>
+</div>
+
+</html>
