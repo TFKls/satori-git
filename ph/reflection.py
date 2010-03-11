@@ -71,7 +71,7 @@ class Descriptor(Object):
 	class source_file(object):
 		def __get__(_, self, type=None):
 			try:
-				self.source_file = inspect.getsourcefile(self.object)
+				self.source_file = os.path.abspath(inspect.getsourcefile(self.object))
 				return self.source_file
 			except:
 				return None

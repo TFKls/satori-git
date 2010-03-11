@@ -22,9 +22,9 @@
 	py:replace="desc.group.source_url(desc.source_file[len(desc.group.root):] + '#L' + str(desc.source_line or 1))"
 />
 
-<a py:def="source_link(desc, text=None)"
+<a py:def="source_link(desc, text=None, class_=None)"
 	href="${source_url(desc)}"
-	class="api-link"
+	class="${class_}"
 	py:content="text or desc.name"
 />
 
@@ -34,13 +34,13 @@
 	/><py:when test="name" py:replace="target_url(desc.parent, None, '#'+name)"
 /></py:choose>
 
-<a py:def="target_link(desc, name=None, text=None)"
+<a py:def="target_link(desc, name=None, text=None, class_=None)"
 	href="${target_url(desc, name)}"
-	class="api-link"
+	class="${class_}"
 	py:content="text or name or desc.name"
 />
 
-<span py:def="links(desc, name=None)">${target_link(desc, name, 'details')}${source_link(desc, 'source')}</span>
+<py:def function="links(desc, name=None)">${target_link(desc, name, 'details', 'api-link')}${source_link(desc, 'source', 'api-link')}</py:def>
 
 <py:def function="toc(desc, name=None)">
 	<h4 py:content="name or desc.name" />

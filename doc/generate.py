@@ -93,7 +93,7 @@ class Generator(Reflector):
 
 
 if __name__ == '__main__':
-	target_dir = sys.argv[1]
+	target_dir = os.path.abspath(sys.argv[1])
 	revision = sys.argv[2]
 	template_dir = os.path.join(os.path.dirname(sys.argv[0]), 'templates')
 	if not os.path.isdir(target_dir):
