@@ -129,12 +129,14 @@ class ModuleGroup(Descriptor):
 	@Argument('object', fixed=None)
 	def __init__(self, kwargs):
 		self.module_list = []
+		self.parent = self
 		self.group = self
 		pass
 
 	@property
 	def children(self):
-		for module in self.module_list:
+		by_name = lambda m1, m2: cmp(m1.__name__, m2.__name__)
+		for module in sorted(self.module_list, by_name):
 			yield module.__name__, self.cache[module]
 
 	def __contains__(self, module):
