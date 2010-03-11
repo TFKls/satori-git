@@ -19,7 +19,7 @@
 
 <py:def function="source_url(desc)"
 	py:if="desc.source_file and desc.group.root and desc.source_file.startswith(desc.group.root)"
-	py:replace="desc.group.source_url(desc.source_file[len(desc.group.root):] + '#L' + str(desc.source_line or 1))"
+	py:replace="desc.group.source_url(desc.source_file[len(desc.group.root):], desc.source_line or 1)"
 />
 
 <a py:def="source_link(desc, text=None, class_=None)"
