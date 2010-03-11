@@ -10,6 +10,11 @@
 	py:replace="Markup('&lt;xi:include xmlns:xi=&quot;' + ns + '&quot; href=&quot;' + url + '&quot; /&gt;')"
 />
 
+<py:def function="header()">
+	<link rel="stylesheet" type="text/css" href="${&quot;${href.chrome('common/css/wiki.css')}&quot;}" />
+	<link rel="stylesheet" type="text/css" href="${&quot;${href.static('api.css')}&quot;}" />
+</py:def>
+
 <py:def function="source_url(desc)"
 	py:if="desc.source_file and desc.group.root and desc.source_file.startswith(desc.group.root)"
 	py:replace="desc.group.source_url(desc.source_file[len(desc.group.root):] + '#L' + str(desc.source_line or 1))"
