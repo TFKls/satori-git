@@ -6,6 +6,8 @@
 <xi:include href="docutils.html" />
 <xi:include href="sourcecode.html" />
 
+<py:match path=".//a" py:if="select('@href').render('text')" py:replace="select('.')" />
+
 <py:def function="xinclude(url)" py:with="ns = 'http://www.w3.org/2001/XInclude'"
 	py:replace="Markup('&lt;xi:include xmlns:xi=&quot;' + ns + '&quot; href=&quot;' + url + '&quot; /&gt;')"
 />
@@ -21,20 +23,20 @@
 />
 
 <a py:def="source_link(desc, text=None)"
-	py:if="len([source_url(desc)])"
 	href="${source_url(desc)}"
+	class="api-link"
 	py:content="text or desc.name"
 />
 
 <py:choose py:def="target_url(desc, name=None, suffix='')" test=""
 	><py:when test="desc.target_path and desc.target_path.startswith(desc.group.target_dir)"
-			py:replace="desc.group.target_url(desc.target_path[len(desc.group.target_dir):] + suffix)"
+		py:replace="desc.group.target_url(desc.target_path[len(desc.group.target_dir):] + suffix)"
 	/><py:when test="name" py:replace="target_url(desc.parent, None, '#'+name)"
 /></py:choose>
 
 <a py:def="target_link(desc, name=None, text=None)"
-	py:if="len([target_url(desc, name)])"
 	href="${target_url(desc, name)}"
+	class="api-link"
 	py:content="text or name or desc.name"
 />
 
@@ -75,7 +77,7 @@
 		<hr />
 		<h1>Methods</h1>
 		<py:for each="name, desc in this.methods">
-		<h2 id="${name}">${name}(${desc.signature})${links(desc)}</h2>
+		<h2 id="${name}">${name}<span class="api-args">(${desc.signature})</span>${links(desc)}</h2>
 		<div py:replace="fmt(desc.doc, depth=2)" />
 		</py:for>
 	</py:if>
@@ -84,7 +86,7 @@
 		<hr />
 		<h1>Functions</h1>
 		<py:for each="name, desc in this.functions">
-		<h2 id="${name}">${name}<span class="args">(${desc.signature})</span>${links(desc)}</h2>
+		<h2 id="${name}">${name}<span class="api-args">(${desc.signature})</span>${links(desc)}</h2>
 		<div py:replace="fmt(desc.doc, depth=2)" />
 		</py:for>
 	</py:if>
