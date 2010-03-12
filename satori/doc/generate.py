@@ -16,11 +16,11 @@ import docutils.utils
 import genshi.template
 import pygments.token
 
-from doc import sourcecode
-from ph.misc import Namespace
-from ph.objects import Object, Argument
-from ph.patterns import visitor
-from ph.reflection import Reflector, Location, Module, Class, Method, Function
+from satori.doc import sourcecode
+from satori.ph.misc import Namespace
+from satori.ph.objects import Object, Argument
+from satori.ph.patterns import visitor
+from satori.ph.reflection import Reflector, Location, Module, Class, Method, Function
 
 
 class Generator(Reflector):

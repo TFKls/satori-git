@@ -2,7 +2,7 @@
 
 import unittest
 
-from ph.patterns import visitor
+from satori.ph.patterns import visitor
 
 
 class A(object):					# pylint: disable-msg=C0103,C0111

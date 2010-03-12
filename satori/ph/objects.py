@@ -6,8 +6,8 @@ __all__ = (
 )
 
 
-from ph.exceptions import ArgumentError
-from ph.misc import Namespace
+from satori.ph.exceptions import ArgumentError
+from satori.ph.misc import Namespace
 
 
 class TypeSpec(object):

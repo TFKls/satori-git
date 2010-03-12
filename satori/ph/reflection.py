@@ -3,8 +3,8 @@ import os
 import sys
 import types
 
-from ph.objects import Object, Argument
-from ph.patterns import visitor
+from satori.ph.objects import Object, Argument
+from satori.ph.patterns import visitor
 
 
 class Reflector(Object, dict):

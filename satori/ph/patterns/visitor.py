@@ -10,7 +10,7 @@ __all__ = (
 from sys import _getframe
 from types import ClassType, TupleType, TypeType
 
-from ph.objects import Object, Argument
+from satori.ph.objects import Object, Argument
 
 
 class Dispatch(Object):
