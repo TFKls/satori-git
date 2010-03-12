@@ -1,0 +1,1 @@
+"""Package. The Satori project."""
