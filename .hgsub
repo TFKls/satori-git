@@ -1,0 +1,5 @@
+external/django = [svn]http://code.djangoproject.com/svn/django/trunk
+external/docutils = [svn]http://svn.berlios.de/svnroot/repos/docutils/trunk/docutils
+external/genshi = [svn]http://svn.edgewall.org/repos/genshi/trunk
+external/pygments = http://dev.pocoo.org/hg/pygments-main
+external/thrift = [svn]http://svn.apache.org/repos/asf/incubator/thrift/trunk
