@@ -1,7 +1,7 @@
 import hashlib
 import random
 
-from satori.ph.objects import Object, Argument
+from satori.ph.objects import Object
 from satori.ph.misc import Namespace
 
 

@@ -1,7 +1,7 @@
 import collections
 import select
 
-from satori.ph.objects import Object, Argument
+from satori.ph.objects import Object
 
 
 class Scheduler(Object):

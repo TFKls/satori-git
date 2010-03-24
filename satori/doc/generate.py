@@ -16,9 +16,9 @@ import docutils.utils
 import genshi.template
 import pygments.token
 
-from satori.doc import sourcecode
+import satori.doc.sourcecode
 from satori.ph.misc import Namespace
-from satori.ph.objects import Object, Argument
+from satori.ph.objects import Argument
 from satori.ph.patterns import visitor
 from satori.ph.reflection import Reflector, Location, Module, Class, Method, Function
 

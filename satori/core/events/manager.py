@@ -4,13 +4,10 @@ __all__ = ('Master', 'Slave')
 from _multiprocessing import Connection
 
 from satori.ph.objects import Object, Argument
-import satori.ph.patterns.visitor
-
-from satori.core.events.client import ListenerClient
 from satori.core.events.dispatcher import Dispatcher
-from satori.core.events.mapper import Mapper, TrivialMapper
-from satori.core.events.protocol import *
-from satori.core.events.scheduler import Scheduler, FifoScheduler, PollScheduler
+from satori.core.events.mapper import Mapper
+from satori.core.events.protocol import KeepAlive, Disconnect, Attach, Detach, Map, Unmap, Send, Receive
+from satori.core.events.scheduler import Scheduler
 
 
 class Manager(Object):
@@ -30,13 +27,13 @@ class Manager(Object):
 
     def run(self):
         processors = {
-            KeepAlive: self.doKeepAlive,
-            Attach: self.doAttach,
-            Detach: self.doDetach,
-            Map: self.doMap,
-            Unmap: self.doUnmap,
-            Send: self.doSend,
-            Receive: self.doReceive,
+            KeepAlive:  self.doKeepAlive,
+            Attach:     self.doAttach,
+            Detach:     self.doDetach,
+            Map:        self.doMap,
+            Unmap:      self.doUnmap,
+            Send:       self.doSend,
+            Receive:    self.doReceive,
             Disconnect: self.doDisconnect,
         }
         while True:
@@ -101,7 +98,7 @@ class Slave(Manager):
             self.queue_refs[command.queue_id] += 1
         else:
             self.connection.send(command)
-            none = self.connection.recv()
+            self.connection.recv()
             self.queue_refs[command.queue_id] = 1
         self.dispatcher.attach(sender, command.queue_id)
         sender.sendResponse(None)
@@ -111,7 +108,7 @@ class Slave(Manager):
             self.queue_refs[command.queue_id] -= 1
             if self.queue_refs[command.queue_id] == 0:
                 self.connection.send(command)
-                none = self.connection.recv()
+                self.connection.recv()
                 del self.queue_refs[command.queue_id]
         self.dispatcher.detach(sender, command.queue_id)
         sender.sendResponse(None)

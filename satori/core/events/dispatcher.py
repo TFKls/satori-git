@@ -1,10 +1,7 @@
 import collections
 
-from satori.ph.objects import Object, Argument
+from satori.ph.objects import Object
 from satori.ph.misc import Namespace
-
-from satori.core.events.client import Client
-from satori.core.events.protocol import Event, QueueId
 
 
 class Dispatcher(Object):

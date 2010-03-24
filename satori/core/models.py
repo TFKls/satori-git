@@ -1,6 +1,6 @@
 import hashlib, base64
 
-from satori.core import setup
+import satori.core.setup
 from django.conf import settings
 from django.db import models
 

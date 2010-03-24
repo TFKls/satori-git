@@ -6,12 +6,10 @@ __all__ = (
 )
 
 
-import collections
 import inspect
 import types
 
 from satori.ph.exceptions import ArgumentError
-from satori.ph.misc import Namespace
 
 
 MAGIC_ORG = 'objects: original'
@@ -87,7 +85,7 @@ class ValueSpec(object):
         raise Exception('this should NOT happen!')
 
     def __add__(self, other):
-        # one witout a value always looses...
+        # one without a value always looses...
         if (self.mode == ArgumentMode.REQUIRED):
             return other
         if (other.mode == ArgumentMode.REQUIRED):
@@ -197,7 +195,7 @@ class Signature(object):
         return callable.func_dict[MAGIC_SIG]
 
     def __init__(self, names, positional=None, keyword=None, defaults=None):
-        # TODO: flatten args
+        # TODO: flatten names
         self.positional = tuple(names)
         self.arguments = dict()
         self.extra_positional = positional

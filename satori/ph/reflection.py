@@ -104,7 +104,7 @@ class Descriptor(Object):
             try:
                 object = getattr(self.object, name)
                 yield name, self.cache[object]
-            except (AttributeError, KeyError, TypeError) as ex:
+            except (AttributeError, KeyError, TypeError):
                 pass
 
     modules = property(lambda self: filter(_ismodule, self.children))
@@ -118,7 +118,7 @@ class Descriptor(Object):
             return
         seen.add(self)
         yield self
-        for name, child in self.children:
+        for _, child in self.children:
             for descendant in child.traverse(seen):
                 yield descendant
 

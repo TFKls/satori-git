@@ -101,7 +101,7 @@ class ListenerClient(Client):
             connection = self.listener.accept()
         except:
             raise ProtocolError("Listener.accept() failed")
-        client = ConnectionClient(scheduler=self.scheduler, connection=connection)
+        ConnectionClient(scheduler=self.scheduler, connection=connection)
         return KeepAlive()
 
     def disconnect(self):
