@@ -23,7 +23,7 @@ class NameKind(Object):
         self.name = name
 
     def __call__(self, string):
-        return Name(NameComponent(string=string, kind=self))
+        return Name(NameComponent(string, kind=self))
 
 
 class NameComponent(Object):
@@ -126,8 +126,8 @@ class NamedObject(Object):
     """
 
     @Argument('name', type=Name)
-    def __init__(self, args):
-        self.name = args.name
+    def __init__(self, name):
+        self.name = name
 
 
 class NamingStyle(Object):

@@ -32,7 +32,7 @@ class QueueId(str):
     pass
 
 
-class Command(object):
+class Command(Object):
     """Abstract. Base for event command classes.
     """
 

@@ -5,6 +5,7 @@ import unittest
 
 from multiprocessing import Process, Pipe
 
+from satori.ph.objects import Object
 from satori.core.events.client import CoroutineClient, ConnectionClient
 from satori.core.events.mapper import TrivialMapper
 from satori.core.events.manager import Master, Slave
@@ -12,7 +13,7 @@ from satori.core.events.protocol import Event, QueueId, KeepAlive, Attach, Detac
 from satori.core.events.scheduler import FifoScheduler, PollScheduler
 
 
-class Tests(object):
+class Tests(Object):
 
     def testConnect(self):
         def run():
