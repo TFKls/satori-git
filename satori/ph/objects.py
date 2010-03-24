@@ -2,7 +2,7 @@
 
 
 __all__ = (
-	'Object', 'Argument', 'ArgumentMode',
+    'Object', 'Argument', 'ArgumentMode',
 )
 
 
@@ -19,285 +19,285 @@ MAGIC_SIG = 'objects: signature'
 
 
 class TypeSpec(object):
-	"""An argument type specification."""
+    """An argument type specification."""
 
-	def __init__(self, **kwargs):
-		self.type = kwargs.get('type', [])
-		self.none = kwargs.get('none', len(self.type) == 0)
-	
-	def __and__(self, other):
-		type_ = self.type + other.type
-		none = self.none and other.none
-		return TypeSpec(type=type_, none=none)
-	
-	def __str__(self):
-		desc = ""
-		for type_ in self.type:
-			if isinstance(type_, tuple):
-				for option in type_:
-					desc += option.__name__
-					desc += " or "
-				desc = desc[:-4]
-			else:
-				desc += type_.__name__
-			desc += ", "
-		if not self.none:
-			desc += "not None, "
-		desc = desc[:-2]
-		return desc
-	
-	def isValid(self, value):
-		"""Checks whether a given value meets this TypeSpec."""
-		if value is None:
-			return self.none
-		for type_ in self.type:
-			if not isinstance(value, type_):
-				return False
-		return True
+    def __init__(self, **kwargs):
+        self.type = kwargs.get('type', [])
+        self.none = kwargs.get('none', len(self.type) == 0)
+
+    def __and__(self, other):
+        type_ = self.type + other.type
+        none = self.none and other.none
+        return TypeSpec(type=type_, none=none)
+
+    def __str__(self):
+        desc = ""
+        for type_ in self.type:
+            if isinstance(type_, tuple):
+                for option in type_:
+                    desc += option.__name__
+                    desc += " or "
+                desc = desc[:-4]
+            else:
+                desc += type_.__name__
+            desc += ", "
+        if not self.none:
+            desc += "not None, "
+        desc = desc[:-2]
+        return desc
+
+    def isValid(self, value):
+        """Checks whether a given value meets this TypeSpec."""
+        if value is None:
+            return self.none
+        for type_ in self.type:
+            if not isinstance(value, type_):
+                return False
+        return True
 
 
 class ArgumentMode(object):
-	"""Enumeration. Modes for function arguments."""
+    """Enumeration. Modes for function arguments."""
 
-	REQUIRED = 0
-	OPTIONAL = 1
-	PROVIDED = 2
+    REQUIRED = 0
+    OPTIONAL = 1
+    PROVIDED = 2
 
 
 class ValueSpec(object):
-	"""An argument value specification."""
+    """An argument value specification."""
 
-	def __init__(self, **kwargs):
-		self.value = None
-		self.mode = ArgumentMode.REQUIRED
-		if 'default' in kwargs:
-			self.value = kwargs['default']
-			self.mode = ArgumentMode.OPTIONAL
-		if 'fixed' in kwargs:
-			self.value = kwargs['fixed']
-			self.mode = ArgumentMode.PROVIDED
-	
-	def __str__(self):
-		if self.mode == ArgumentMode.REQUIRED:
-			return "required"
-		if self.mode == ArgumentMode.OPTIONAL:
-			return "optional, default = " + str(self.value)
-		if self.mode == ArgumentMode.PROVIDED:
-			return "fixed, value = " + str(self.value)
-		raise Exception('this should NOT happen!')
-	
-	def __add__(self, other):
-		# one witout a value always looses...
-		if (self.mode == ArgumentMode.REQUIRED):
-			return other
-		if (other.mode == ArgumentMode.REQUIRED):
-			return self
-		# ...two strongmen agree or die...
-		if (self.mode == ArgumentMode.PROVIDED) and (other.mode == ArgumentMode.PROVIDED):
-			if self.value != other.value:
-				raise ArgumentError("Conflicting provided values.")
-		# ...otherwise the left has advantage
-		if (other.mode == ArgumentMode.PROVIDED):
-			return other
-		else:
-			return self
-	
-	def __and__(self, tspec):
-		if self.mode == ArgumentMode.REQUIRED:
-			return self
-		if tspec.isValid(self.value):
-			return self
-		if self.mode == ArgumentMode.OPTIONAL:
-			return ValueSpec()
-		else:
-			raise TypeError("'{0}' does not satisfy the specification '{1}'.".format(self.value, tspec))
+    def __init__(self, **kwargs):
+        self.value = None
+        self.mode = ArgumentMode.REQUIRED
+        if 'default' in kwargs:
+            self.value = kwargs['default']
+            self.mode = ArgumentMode.OPTIONAL
+        if 'fixed' in kwargs:
+            self.value = kwargs['fixed']
+            self.mode = ArgumentMode.PROVIDED
+
+    def __str__(self):
+        if self.mode == ArgumentMode.REQUIRED:
+            return "required"
+        if self.mode == ArgumentMode.OPTIONAL:
+            return "optional, default = " + str(self.value)
+        if self.mode == ArgumentMode.PROVIDED:
+            return "fixed, value = " + str(self.value)
+        raise Exception('this should NOT happen!')
+
+    def __add__(self, other):
+        # one witout a value always looses...
+        if (self.mode == ArgumentMode.REQUIRED):
+            return other
+        if (other.mode == ArgumentMode.REQUIRED):
+            return self
+        # ...two strongmen agree or die...
+        if (self.mode == ArgumentMode.PROVIDED) and (other.mode == ArgumentMode.PROVIDED):
+            if self.value != other.value:
+                raise ArgumentError("Conflicting provided values.")
+        # ...otherwise the left has advantage
+        if (other.mode == ArgumentMode.PROVIDED):
+            return other
+        else:
+            return self
+
+    def __and__(self, tspec):
+        if self.mode == ArgumentMode.REQUIRED:
+            return self
+        if tspec.isValid(self.value):
+            return self
+        if self.mode == ArgumentMode.OPTIONAL:
+            return ValueSpec()
+        else:
+            raise TypeError("'{0}' does not satisfy the specification '{1}'.".format(self.value, tspec))
 
 
 class Argument(object):
-	"""An argument specification."""
-	
-	def __init__(self, name, doc=None, tspec=None, vspec=None, **kwargs):
-		if 'type' in kwargs:
-			if not isinstance(kwargs['type'], list):
-				kwargs['type'] = [kwargs['type']]
-		if 'fixed' in kwargs:
-			if kwargs['fixed'] is None:
-				kwargs['none'] = True
-		elif 'default' in kwargs:
-			if kwargs['default'] is None:
-				kwargs['none'] = True
-		self.name = name
-		self.doc = doc
-		self.tspec = tspec or TypeSpec(**kwargs)
-		self.vspec = vspec or ValueSpec(**kwargs)
-		self.vspec &= self.tspec
-	
-	def __call__(self, func):
-		signature = Signature.of(func)
-		signature.arguments[self.name] = self + signature.arguments.get(self.name)
-		return func
-	
-	def __str__(self):
-		tdesc = str(self.tspec)
-		vdesc = str(self.vspec)
-		if len(tdesc) > 0:
-			return tdesc + ", " + vdesc
-		else:
-			return vdesc
-	
-	def __add__(self, other):
-		if other is None:
-			return self
-		if self.name != other.name:
-			raise ArgumentError("Argument names do not match.")
-		name = self.name
-		doc = self.doc or other.doc
-		tspec = self.tspec & other.tspec
-		vspec = (self.vspec & other.tspec) + (other.vspec & self.tspec)
-		return Argument(name, doc, tspec, vspec)
-	
-	def apply(self, args, name=None):
-		"""Applies this specification to a given argument."""
-		name = name or self.name
-		vspec = (name in args) and ValueSpec(fixed=args[name]) or ValueSpec()
-		vspec &= self.tspec
-		vspec += self.vspec
-		if vspec.mode == ArgumentMode.REQUIRED:
-			raise ArgumentError("Required argument '{0}' not provided.".format(name))
-		args[name] = vspec.value
-	
-	mode = property(lambda self: self.vspec.mode)
+    """An argument specification."""
+
+    def __init__(self, name, doc=None, tspec=None, vspec=None, **kwargs):
+        if 'type' in kwargs:
+            if not isinstance(kwargs['type'], list):
+                kwargs['type'] = [kwargs['type']]
+        if 'fixed' in kwargs:
+            if kwargs['fixed'] is None:
+                kwargs['none'] = True
+        elif 'default' in kwargs:
+            if kwargs['default'] is None:
+                kwargs['none'] = True
+        self.name = name
+        self.doc = doc
+        self.tspec = tspec or TypeSpec(**kwargs)
+        self.vspec = vspec or ValueSpec(**kwargs)
+        self.vspec &= self.tspec
+
+    def __call__(self, func):
+        signature = Signature.of(func)
+        signature.arguments[self.name] = self + signature.arguments.get(self.name)
+        return func
+
+    def __str__(self):
+        tdesc = str(self.tspec)
+        vdesc = str(self.vspec)
+        if len(tdesc) > 0:
+            return tdesc + ", " + vdesc
+        else:
+            return vdesc
+
+    def __add__(self, other):
+        if other is None:
+            return self
+        if self.name != other.name:
+            raise ArgumentError("Argument names do not match.")
+        name = self.name
+        doc = self.doc or other.doc
+        tspec = self.tspec & other.tspec
+        vspec = (self.vspec & other.tspec) + (other.vspec & self.tspec)
+        return Argument(name, doc, tspec, vspec)
+
+    def apply(self, args, name=None):
+        """Applies this specification to a given argument."""
+        name = name or self.name
+        vspec = (name in args) and ValueSpec(fixed=args[name]) or ValueSpec()
+        vspec &= self.tspec
+        vspec += self.vspec
+        if vspec.mode == ArgumentMode.REQUIRED:
+            raise ArgumentError("Required argument '{0}' not provided.".format(name))
+        args[name] = vspec.value
+
+    mode = property(lambda self: self.vspec.mode)
 
 
 def _original(callable):
-	while hasattr(callable, 'func_dict') and MAGIC_ORG in callable.func_dict:
-		callable = callable.func_dict[MAGIC_ORG]
-	return callable
+    while hasattr(callable, 'func_dict') and MAGIC_ORG in callable.func_dict:
+        callable = callable.func_dict[MAGIC_ORG]
+    return callable
 
 
 class Signature(object):
-	"""Function signature specification.
-	"""
+    """Function signature specification.
+    """
 
-	@staticmethod
-	def infer(callable):
-		"""Infer a Signature for a given callable.
-		"""
-		try:
-			return Signature(*inspect.getargspec(callable))
-		except TypeError:
-			return Signature(['self'])
-	
-	@staticmethod
-	def of(callable):
-		if not hasattr(callable, 'func_dict'):
-			return Signature.infer(callable)
-		if MAGIC_SIG not in callable.func_dict:
-			callable.func_dict[MAGIC_SIG] = Signature.infer(callable)
-		return callable.func_dict[MAGIC_SIG]
-	
-	def __init__(self, names, positional=None, keyword=None, defaults=None):
-		# TODO: flatten args
-		self.positional = tuple(names)
-		self.arguments = dict()
-		self.extra_positional = positional
-		self.extra_keyword = keyword
-		if defaults is None:
-			defaults = []
-		required = len(self.positional) - len(defaults)
-		for i in range(required):
-			name = names[i]
-			self.arguments[name] = Argument(name)
-		for i in range(len(defaults)):
-			name = names[required+i]
-			self.arguments[name] = Argument(name, default=defaults[i])
-	
-	def __str__(self):
-		result = '{'
-		for name, spec in self.arguments.iteritems():
-			result += name
-			result += ': '
-			result += str(spec)
-			result += '; '
-		return result[:-2]+'}'
-	
-	def __iadd__(self, other):
-		for name in self.arguments:
-			self.arguments[name] += other.arguments.get(name)
-		for name in other.arguments:
-			if name not in self.arguments:
-				self.arguments[name] = other.arguments[name]
-		return self
-	
-	@property
-	def Values(signature):
-		class ArgumentValues(object):
-			"""Holds argument values matching a given Specification.
-			"""
-			def __init__(self, *args, **kwargs):
-				# parse arguments
-				self.named = dict()
-				self.named.update(kwargs)
-				self.anonymous = []
-				for index, value in enumerate(args):
-					if index < len(signature.positional):
-						name = signature.positional[index]
-						if name in self.named:
-							raise ArgumentError("{0} given both as a positional and keyword argument".format(name))
-						self.named[name] = value
-					else:
-						anonymous.append(value)
-				# apply specifications
-				for name, spec in signature.arguments.iteritems():
-					spec.apply(self.named, name)
+    @staticmethod
+    def infer(callable):
+        """Infer a Signature for a given callable.
+        """
+        try:
+            return Signature(*inspect.getargspec(callable))
+        except TypeError:
+            return Signature(['self'])
 
-			def call(self, callable, strict=True):
-				"""Call a given callable with these ArgumentValues. 
-				"""
-				signature = Signature.infer(callable)
-				args = []
-				for name in signature.positional:
-					args.append(self.named[name])
-				if signature.extra_positional:
-					args += self.anonymous
-				kwargs = {}
-				for name, value in self.named.iteritems():
-					if name in signature.positional:
-						continue
-					if name not in signature.arguments and not signature.extra_keyword:
-						if not strict:
-							continue
-						raise ArgumentError("Extra argument '{0}' given to {1}".format(name, callable))
-					kwargs[name] = value
-				return callable(*tuple(args), **kwargs)
-		return ArgumentValues
+    @staticmethod
+    def of(callable):
+        if not hasattr(callable, 'func_dict'):
+            return Signature.infer(callable)
+        if MAGIC_SIG not in callable.func_dict:
+            callable.func_dict[MAGIC_SIG] = Signature.infer(callable)
+        return callable.func_dict[MAGIC_SIG]
+
+    def __init__(self, names, positional=None, keyword=None, defaults=None):
+        # TODO: flatten args
+        self.positional = tuple(names)
+        self.arguments = dict()
+        self.extra_positional = positional
+        self.extra_keyword = keyword
+        if defaults is None:
+            defaults = []
+        required = len(self.positional) - len(defaults)
+        for i in range(required):
+            name = names[i]
+            self.arguments[name] = Argument(name)
+        for i in range(len(defaults)):
+            name = names[required+i]
+            self.arguments[name] = Argument(name, default=defaults[i])
+
+    def __str__(self):
+        result = '{'
+        for name, spec in self.arguments.iteritems():
+            result += name
+            result += ': '
+            result += str(spec)
+            result += '; '
+        return result[:-2]+'}'
+
+    def __iadd__(self, other):
+        for name in self.arguments:
+            self.arguments[name] += other.arguments.get(name)
+        for name in other.arguments:
+            if name not in self.arguments:
+                self.arguments[name] = other.arguments[name]
+        return self
+
+    @property
+    def Values(signature):
+        class ArgumentValues(object):
+            """Holds argument values matching a given Specification.
+            """
+            def __init__(self, *args, **kwargs):
+                # parse arguments
+                self.named = dict()
+                self.named.update(kwargs)
+                self.anonymous = []
+                for index, value in enumerate(args):
+                    if index < len(signature.positional):
+                        name = signature.positional[index]
+                        if name in self.named:
+                            raise ArgumentError("{0} given both as a positional and keyword argument".format(name))
+                        self.named[name] = value
+                    else:
+                        anonymous.append(value)
+                # apply specifications
+                for name, spec in signature.arguments.iteritems():
+                    spec.apply(self.named, name)
+
+            def call(self, callable, strict=True):
+                """Call a given callable with these ArgumentValues.
+                """
+                signature = Signature.infer(callable)
+                args = []
+                for name in signature.positional:
+                    args.append(self.named[name])
+                if signature.extra_positional:
+                    args += self.anonymous
+                kwargs = {}
+                for name, value in self.named.iteritems():
+                    if name in signature.positional:
+                        continue
+                    if name not in signature.arguments and not signature.extra_keyword:
+                        if not strict:
+                            continue
+                        raise ArgumentError("Extra argument '{0}' given to {1}".format(name, callable))
+                    kwargs[name] = value
+                return callable(*tuple(args), **kwargs)
+        return ArgumentValues
 
 
 class ObjectMeta(types.TypeType):
-	
-	def __new__(mcs, name, bases, dict_):
-		# replace constructor
-		if '__init__' in dict_:
-			def __init__(self, *args, **kwargs):
-				signature = Signature.of(__init__)
-				values = signature.Values(self, *args, **kwargs)
-				for parent in reversed(self.__class__.__mro__):
-					if '__init__' in parent.__dict__:
-						values.call(_original(parent.__init__), False)
-			__init__.func_dict[MAGIC_SIG] = Signature.of(dict_['__init__'])
-			__init__.func_dict[MAGIC_ORG] = dict_['__init__']
-			__init__.__doc__ = dict_['__init__'].__doc__
-			dict_['__init__'] = __init__
-		# call parent metaclass
-		class_ = types.TypeType.__new__(mcs, name, bases, dict_)
-		# collect constructor signature (requires __mro__ ordering)
-		if '__init__' in dict_:
-			for parent in class_.__mro__:
-				if '__init__' in parent.__dict__:
-					__init__.func_dict[MAGIC_SIG] += Signature.of(_original(parent.__init__))
-		return class_
-			
+
+    def __new__(mcs, name, bases, dict_):
+        # replace constructor
+        if '__init__' in dict_:
+            def __init__(self, *args, **kwargs):
+                signature = Signature.of(__init__)
+                values = signature.Values(self, *args, **kwargs)
+                for parent in reversed(self.__class__.__mro__):
+                    if '__init__' in parent.__dict__:
+                        values.call(_original(parent.__init__), False)
+            __init__.func_dict[MAGIC_SIG] = Signature.of(dict_['__init__'])
+            __init__.func_dict[MAGIC_ORG] = dict_['__init__']
+            __init__.__doc__ = dict_['__init__'].__doc__
+            dict_['__init__'] = __init__
+        # call parent metaclass
+        class_ = types.TypeType.__new__(mcs, name, bases, dict_)
+        # collect constructor signature (requires __mro__ ordering)
+        if '__init__' in dict_:
+            for parent in class_.__mro__:
+                if '__init__' in parent.__dict__:
+                    __init__.func_dict[MAGIC_SIG] += Signature.of(_original(parent.__init__))
+        return class_
+
 
 class Object(object):
 
-	__metaclass__ = ObjectMeta
+    __metaclass__ = ObjectMeta

@@ -5,4 +5,4 @@ __all__ = (
 )
 
 class ArgumentError(Exception):
-	pass
+    pass

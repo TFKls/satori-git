@@ -72,5 +72,5 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-	'satori.core',
+    'satori.core',
 )

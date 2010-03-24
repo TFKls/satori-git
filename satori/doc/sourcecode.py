@@ -11,38 +11,38 @@ from pygments.lexers import get_lexer_by_name
 
 
 class code_token(Inline, FixedTextElement):
-	"""A `Node` representing single source token."""
+    """A `Node` representing single source token."""
 
-	pass
+    pass
 
 
 class code_block(literal_block):
-	"""A `Node` representing a (formatted) source code block."""
+    """A `Node` representing a (formatted) source code block."""
 
-	pass
+    pass
 
 
 class Code(Directive):
-	"""A docutils `Directive` creating source code blocks."""
+    """A docutils `Directive` creating source code blocks."""
 
-	required_arguments = 1
-	optional_arguments = 0
-	final_argument_whitespace = False
-	option_spec = {}
-	has_content = True
-	node_class = code_block
+    required_arguments = 1
+    optional_arguments = 0
+    final_argument_whitespace = False
+    option_spec = {}
+    has_content = True
+    node_class = code_block
 
-	def run(self):
-		self.assert_has_content()
-		lang = self.arguments[0]
-		code = '\n'.join(self.content)
-		lexer = get_lexer_by_name(lang)
-		tokens = lexer.get_tokens(code)
-		node = self.node_class()
-		node['classes'] += ['code']
-		for type, text in tokens:
-			node.append(code_token(text=text, type=type))
-			return [node]
+    def run(self):
+        self.assert_has_content()
+        lang = self.arguments[0]
+        code = '\n'.join(self.content)
+        lexer = get_lexer_by_name(lang)
+        tokens = lexer.get_tokens(code)
+        node = self.node_class()
+        node['classes'] += ['code']
+        for type, text in tokens:
+            node.append(code_token(text=text, type=type))
+            return [node]
 
 
 register_directive('code', Code)
