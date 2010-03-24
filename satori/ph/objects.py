@@ -246,7 +246,7 @@ class Signature(object):
                             raise ArgumentError("{0} given both as a positional and keyword argument".format(name))
                         self.named[name] = value
                     else:
-                        anonymous.append(value)
+                        self.anonymous.append(value)
                 # apply specifications
                 for name, spec in signature.arguments.iteritems():
                     spec.apply(self.named, name)
