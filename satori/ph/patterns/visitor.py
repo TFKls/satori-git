@@ -17,8 +17,8 @@ class Dispatch(Object):
 	"""Decorator. Marks the base implementation of a dynamically dispatched function."""
 
 	@Argument('argument', "the index or name of the argument to dispatch on", type=(int,str))
-	def __init__(self, args):
-		self.argument = args.argument
+	def __init__(self, argument):
+		self.argument = argument
 
 	def __call__(self, function):
 		def _dispatch(*args, **kwargs):
@@ -48,8 +48,8 @@ class Implement(Object):
 	"""
 
 	@Argument('type', "the argument type(s) handled by this implementation", type=(TypeType, TupleType))
-	def __init__(self, args):
-		self.types = isinstance(args.type, TupleType) and args.type or (args.type,)
+	def __init__(self, type):
+		self.types = isinstance(type, TupleType) and type or (type,)
 
 	def __call__(self, function):
 		dispatch = _getframe(1).f_locals[function.__name__]

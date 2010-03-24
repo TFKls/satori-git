@@ -31,7 +31,7 @@ class TrivialMapper(Mapper):
 	"""A trivial Mapper with linear lookup.
 	"""
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.mappings = dict()
 
 	def map(self, criteria, queue_id):

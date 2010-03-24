@@ -1,4 +1,4 @@
-"""Useful additions to the standard Pyhton class hierarchy."""
+"""Useful additions to the standard Python class hierarchy."""
 
 
 __all__ = (
@@ -6,8 +6,16 @@ __all__ = (
 )
 
 
+import collections
+import inspect
+import types
+
 from satori.ph.exceptions import ArgumentError
 from satori.ph.misc import Namespace
+
+
+MAGIC_ORG = 'objects: original'
+MAGIC_SIG = 'objects: signature'
 
 
 class TypeSpec(object):
@@ -105,10 +113,10 @@ class ValueSpec(object):
 			raise TypeError("'{0}' does not satisfy the specification '{1}'.".format(self.value, tspec))
 
 
-class ArgumentSpec(object):
+class Argument(object):
 	"""An argument specification."""
-
-	def __init__(self, description, tspec=None, vspec=None, **kwargs):
+	
+	def __init__(self, name, doc=None, tspec=None, vspec=None, **kwargs):
 		if 'type' in kwargs:
 			if not isinstance(kwargs['type'], list):
 				kwargs['type'] = [kwargs['type']]
@@ -118,9 +126,16 @@ class ArgumentSpec(object):
 		elif 'default' in kwargs:
 			if kwargs['default'] is None:
 				kwargs['none'] = True
-		self.description = description
+		self.name = name
+		self.doc = doc
 		self.tspec = tspec or TypeSpec(**kwargs)
-		self.vspec = (vspec or ValueSpec(**kwargs)) & self.tspec
+		self.vspec = vspec or ValueSpec(**kwargs)
+		self.vspec &= self.tspec
+	
+	def __call__(self, func):
+		signature = Signature.of(func)
+		signature.arguments[self.name] = self + signature.arguments.get(self.name)
+		return func
 	
 	def __str__(self):
 		tdesc = str(self.tspec)
@@ -131,81 +146,158 @@ class ArgumentSpec(object):
 			return vdesc
 	
 	def __add__(self, other):
+		if other is None:
+			return self
+		if self.name != other.name:
+			raise ArgumentError("Argument names do not match.")
+		name = self.name
+		doc = self.doc or other.doc
 		tspec = self.tspec & other.tspec
 		vspec = (self.vspec & other.tspec) + (other.vspec & self.tspec)
-		return ArgumentSpec(self.description, tspec, vspec)
+		return Argument(name, doc, tspec, vspec)
 	
-	def apply(self, args, key):
+	def apply(self, args, name=None):
 		"""Applies this specification to a given argument."""
-		vspec = (key in args) and ValueSpec(fixed=args[key]) or ValueSpec()
+		name = name or self.name
+		vspec = (name in args) and ValueSpec(fixed=args[name]) or ValueSpec()
 		vspec &= self.tspec
 		vspec += self.vspec
 		if vspec.mode == ArgumentMode.REQUIRED:
-			raise ArgumentError("Required argument '{0}' not provided.".format(key))
-		args[key] = vspec.value
+			raise ArgumentError("Required argument '{0}' not provided.".format(name))
+		args[name] = vspec.value
 	
 	mode = property(lambda self: self.vspec.mode)
 
 
-MAGIC_ORIG = 'ph.objects.original'
-MAGIC_SPEC = 'ph.objects.argspec'
+def _original(callable):
+	while hasattr(callable, 'func_dict') and MAGIC_ORG in callable.func_dict:
+		callable = callable.func_dict[MAGIC_ORG]
+	return callable
 
 
-class MetaObject(type):
-	"""Metaclass for Object.
+class Signature(object):
+	"""Function signature specification.
 	"""
 
+	@staticmethod
+	def infer(callable):
+		"""Infer a Signature for a given callable.
+		"""
+		try:
+			return Signature(*inspect.getargspec(callable))
+		except TypeError:
+			return Signature(['self'])
+	
+	@staticmethod
+	def of(callable):
+		if not hasattr(callable, 'func_dict'):
+			return Signature.infer(callable)
+		if MAGIC_SIG not in callable.func_dict:
+			callable.func_dict[MAGIC_SIG] = Signature.infer(callable)
+		return callable.func_dict[MAGIC_SIG]
+	
+	def __init__(self, names, positional=None, keyword=None, defaults=None):
+		# TODO: flatten args
+		self.positional = tuple(names)
+		self.arguments = dict()
+		self.extra_positional = positional
+		self.extra_keyword = keyword
+		if defaults is None:
+			defaults = []
+		required = len(self.positional) - len(defaults)
+		for i in range(required):
+			name = names[i]
+			self.arguments[name] = Argument(name)
+		for i in range(len(defaults)):
+			name = names[required+i]
+			self.arguments[name] = Argument(name, default=defaults[i])
+	
+	def __str__(self):
+		result = '{'
+		for name, spec in self.arguments.iteritems():
+			result += name
+			result += ': '
+			result += str(spec)
+			result += '; '
+		return result[:-2]+'}'
+	
+	def __iadd__(self, other):
+		for name in self.arguments:
+			self.arguments[name] += other.arguments.get(name)
+		for name in other.arguments:
+			if name not in self.arguments:
+				self.arguments[name] = other.arguments[name]
+		return self
+	
+	@property
+	def Values(signature):
+		class ArgumentValues(object):
+			"""Holds argument values matching a given Specification.
+			"""
+			def __init__(self, *args, **kwargs):
+				# parse arguments
+				self.named = dict()
+				self.named.update(kwargs)
+				self.anonymous = []
+				for index, value in enumerate(args):
+					if index < len(signature.positional):
+						name = signature.positional[index]
+						if name in self.named:
+							raise ArgumentError("{0} given both as a positional and keyword argument".format(name))
+						self.named[name] = value
+					else:
+						anonymous.append(value)
+				# apply specifications
+				for name, spec in signature.arguments.iteritems():
+					spec.apply(self.named, name)
+
+			def call(self, callable, strict=True):
+				"""Call a given callable with these ArgumentValues. 
+				"""
+				signature = Signature.infer(callable)
+				args = []
+				for name in signature.positional:
+					args.append(self.named[name])
+				if signature.extra_positional:
+					args += self.anonymous
+				kwargs = {}
+				for name, value in self.named.iteritems():
+					if name in signature.positional:
+						continue
+					if name not in signature.arguments and not signature.extra_keyword:
+						if not strict:
+							continue
+						raise ArgumentError("Extra argument '{0}' given to {1}".format(name, callable))
+					kwargs[name] = value
+				return callable(*tuple(args), **kwargs)
+		return ArgumentValues
+
+
+class ObjectMeta(types.TypeType):
+	
 	def __new__(mcs, name, bases, dict_):
+		# replace constructor
 		if '__init__' in dict_:
-			spec = {}
-			calls = []
-			def newinit(self, **kwargs):			# pylint: disable-msg=C0111
-				args = Namespace(**kwargs)
-				for key in spec:
-					spec[key].apply(args, key)
-				for call in calls:
-					call(self, args)
-			oldinit = dict_['__init__']
-			newinit.__name__ = oldinit.__name__		# pylint: disable-msg=W0622
-			newinit.__doc__ = oldinit.__doc__		# pylint: disable-msg=W0622
-			newinit.func_dict[MAGIC_SPEC] = oldinit.func_dict.get(MAGIC_SPEC, {})
-			newinit.func_dict[MAGIC_ORIG] = oldinit
-			dict_['__init__'] = newinit
-		class_ = type.__new__(mcs, name, bases, dict_)
+			def __init__(self, *args, **kwargs):
+				signature = Signature.of(__init__)
+				values = signature.Values(self, *args, **kwargs)
+				for parent in reversed(self.__class__.__mro__):
+					if '__init__' in parent.__dict__:
+						values.call(_original(parent.__init__), False)
+			__init__.func_dict[MAGIC_SIG] = Signature.of(dict_['__init__'])
+			__init__.func_dict[MAGIC_ORG] = dict_['__init__']
+			__init__.__doc__ = dict_['__init__'].__doc__
+			dict_['__init__'] = __init__
+		# call parent metaclass
+		class_ = types.TypeType.__new__(mcs, name, bases, dict_)
+		# collect constructor signature (requires __mro__ ordering)
 		if '__init__' in dict_:
 			for parent in class_.__mro__:
-				init = parent.__dict__.get('__init__')
-				if (init is None) or not hasattr(init, 'func_dict'):
-					continue
-				calls.append(init.func_dict.get(MAGIC_ORIG, init))
-				plus = init.func_dict.get(MAGIC_SPEC, {})
-				for key in plus:
-					spec[key] = (key in spec) and (spec[key] + plus[key]) or plus[key]
-			calls.reverse()
+				if '__init__' in parent.__dict__:
+					__init__.func_dict[MAGIC_SIG] += Signature.of(_original(parent.__init__))
 		return class_
-
+			
 
 class Object(object):
-	"""A better replacement for 'object'.
-	Supports super() constructor chaining.
-	"""
 
-	__metaclass__ = MetaObject
-
-
-class Argument(object):
-	"""Decorator. Describes an argument."""
-
-	def __init__(self, name, desc='', **kwargs):
-		self.name = name
-		self.desc = desc
-		self.args = kwargs
-	
-	def __call__(self, function):
-		if hasattr(function, 'func_dict'):
-			spec = function.func_dict.get(MAGIC_SPEC, {})
-			if self.name in spec:
-				raise ArgumentError("Duplicate specification for argument {0}.".format(self.name))
-			spec[self.name] = ArgumentSpec(description=self.desc, **self.args)
-			function.func_dict[MAGIC_SPEC] = spec
-		return function
+	__metaclass__ = ObjectMeta

@@ -19,8 +19,8 @@ class NameKind(Object):
 	"""
 
 	@Argument('name', type=str)
-	def __init__(self, args):
-		self.name = args.name
+	def __init__(self, name):
+		self.name = name
 
 	def __call__(self, string):
 		return Name(NameComponent(string=string, kind=self))
@@ -32,11 +32,11 @@ class NameComponent(Object):
 
 	@Argument('string', type=str)
 	@Argument('kind', type=NameKind)
-	def __init__(self, args):
-		self.kind = args.kind
+	def __init__(self, string, kind):
+		self.kind = kind
 		self.hash = hash(self.kind)
 		self.words = []
-		for word in args.string.split():
+		for word in string.split():
 			for part in word.split('_'):
 				if len(part) == 0:
 					continue
@@ -75,7 +75,7 @@ FieldName = NameKind(name="FieldName")
 AccessorName = NameKind(name="AccessorName")
 
 
-class Name(object):
+class Name(Object):
 	"""A hierarchical name.
 	"""
 
@@ -134,7 +134,7 @@ class NamingStyle(Object):
 	"""Formatter corresponding to a specific naming convention.
 	"""
 
-	def __init__(self, args):
+	def __init__(self):
 		self.formats = dict()
 
 	def format(self, name):

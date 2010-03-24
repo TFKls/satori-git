@@ -16,7 +16,7 @@ class FifoScheduler(Scheduler):
 	"""A simple FIFO Scheduler.
 	"""
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.fifo = collections.deque()
 
 	def next(self):
@@ -32,7 +32,7 @@ class PollScheduler(Scheduler):
 	"""A Scheduler using select.poll on file descriptors.
 	"""
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.waits = select.poll()
 		self.fdmap = dict()
 		self.ready = collections.deque()

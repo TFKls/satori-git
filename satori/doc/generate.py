@@ -26,8 +26,8 @@ from satori.ph.reflection import Reflector, Location, Module, Class, Method, Fun
 class Generator(Reflector):
 
 	@Argument('template_dir', type=str)
-	def __init__(self, kwargs):
-		self.templates = genshi.template.TemplateLoader(kwargs.template_dir, variable_lookup='lenient')
+	def __init__(self, template_dir):
+		self.templates = genshi.template.TemplateLoader(template_dir, variable_lookup='lenient')
 		self.docutils_parser = docutils.parsers.rst.Parser()
 		self.docutils_settings = dict(
 			pep_references=False,

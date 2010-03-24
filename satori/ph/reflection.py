@@ -9,7 +9,7 @@ from satori.ph.patterns import visitor
 
 class Reflector(Object, dict):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.groups = []
 		self.implicit = SystemModules(cache=self)
 
@@ -60,11 +60,10 @@ _isfunction = lambda p: isinstance(p[1], Function) and not p[0].startswith('_')
 
 class Descriptor(Object):
 
-	@Argument('object')
 	@Argument('cache', type=Reflector)
-	def __init__(self, kwargs):
-		self.object = kwargs.object
-		self.cache = kwargs.cache
+	def __init__(self, object, cache):
+		self.object = object
+		self.cache = cache
 		self.name = getattr(self.object, '__name__', None)
 		self.docstring = inspect.cleandoc(getattr(self.object, '__doc__', None) or "")
 
@@ -127,7 +126,7 @@ class Descriptor(Object):
 class ModuleGroup(Descriptor):
 
 	@Argument('object', fixed=None)
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.module_list = []
 		self.parent = self
 		self.group = self
@@ -155,7 +154,7 @@ class SystemModules(ModuleGroup):
 class Location(ModuleGroup):
 
 	@Argument('root', type=str)
-	def __init__(self, kwargs):
+	def __init__(self, root):
 
 		def walk(root, base=[]):
 			"""Generator. Walks a directory hierarchy looking for Python modules."""
@@ -173,7 +172,7 @@ class Location(ModuleGroup):
 				else:
 					yield base + [entry[:-3]]
 
-		self.root = kwargs.root
+		self.root = root
 		sys.path.insert(0, self.root)
 		for parts in walk(self.root):
 			name = '.'.join(parts)
@@ -187,7 +186,7 @@ class Location(ModuleGroup):
 
 class Module(Descriptor):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.group = None
 		for group in self.cache.groups:
 			if self.object in group:
@@ -212,7 +211,7 @@ class Module(Descriptor):
 
 class Class(Descriptor):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.parent = self.cache[sys.modules[self.object.__module__]]
 		self.group = self.parent.group
 		self.bases = [self.cache[base] for base in self.object.__bases__]
@@ -223,7 +222,7 @@ class Class(Descriptor):
 
 class Callable(Descriptor):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		spec = inspect.getargspec(self.object)
 		args = spec.args
 		defs = spec.defaults or ()
@@ -249,7 +248,7 @@ class Callable(Descriptor):
 
 class Method(Callable):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		class_ = self.object.im_class
 		code = self.object.func_code
 		for base in class_.__mro__:
@@ -263,6 +262,6 @@ class Method(Callable):
 
 class Function(Callable):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.parent = self.cache[sys.modules[self.object.__module__]]
 		self.group = self.parent.group

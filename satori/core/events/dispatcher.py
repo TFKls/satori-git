@@ -11,7 +11,7 @@ class Dispatcher(Object):
 	"""Abstract. Dispatches Events to Clients.
 	"""
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.queues = dict()
 		self.clients = dict()
 

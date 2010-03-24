@@ -60,8 +60,8 @@ class TypeAlias(NamedType):
 	"""
 
 	@objects.Argument('targetType', type=Type)
-	def __init__(self, kwargs):
-		self.targetType = kwargs.targetType
+	def __init__(self, targetType):
+		self.targetType = targetType
 
 	def isSimple(self):
 		return self.targetType.isSimple()
@@ -69,7 +69,7 @@ class TypeAlias(NamedType):
 
 class NamedTuple(objects.Object):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.names = set()
 		self.items = list()
 
@@ -90,14 +90,14 @@ class Field(Element, NamedObject):
 
 	@objects.Argument('type', type=Type)
 	@objects.Argument('optional', type=bool, default=False)
-	def __init__(self, kwargs):
-		self.type = kwargs.type
-		self.optional = kwargs.optional
+	def __init__(self, type, optional):
+		self.type = type
+		self.optional = optional
 
 
 class Structure(NamedType):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.fields = NamedTuple()
 
 	def isSimple(self):
@@ -114,26 +114,26 @@ class Argument(Element, NamedObject):
 	@objects.Argument('type', type=Type)
 	@objects.Argument('optional', type=bool, default=False)
 	@objects.Argument('default', default=None)
-	def __init__(self, kwargs):
-		self.type = kwargs.type
-		self.optional = kwargs.optional
-		self.default = kwargs.default
+	def __init__(self, type, optional, default):
+		self.type = type
+		self.optional = optional
+		self.default = default
 
 
 class Error(Element, NamedObject):
 
 	@objects.Argument('type', type=Type)
-	def __init__(self, kwargs):
-		self.type = kwargs.type
+	def __init__(self, type):
+		self.type = type
 
 
 class Procedure(Element, NamedObject):
 
 	@objects.Argument('returnType', type=Type, default=Void)
 	@objects.Argument('implementation', type=types.FunctionType, default=None)
-	def __init__(self, kwargs):
-		self.returnType = kwargs.returnType
-		self.implementation = kwargs.implementation
+	def __init__(self, returnType, implementation):
+		self.returnType = returnType
+		self.implementation = implementation
 		self.arguments = NamedTuple()
 		self.exceptions = NamedTuple()
 
@@ -150,7 +150,7 @@ class Procedure(Element, NamedObject):
 
 class Contract(Element, NamedObject):
 
-	def __init__(self, kwargs):
+	def __init__(self):
 		self.procedures = {}
 
 	def addProcedure(self, procedure=None, **kwargs):

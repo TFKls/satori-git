@@ -18,8 +18,8 @@ class Manager(Object):
 	"""
 
 	@Argument('scheduler', type=Scheduler)
-	def __init__(self, kwargs):
-		self.scheduler = kwargs.scheduler
+	def __init__(self, scheduler):
+		self.scheduler = scheduler
 		self.dispatcher = Dispatcher()
 
 	def doKeepAlive(self, command, sender):
@@ -55,8 +55,8 @@ class Master(Manager):
 	"""
 
 	@Argument('mapper', type=Mapper)
-	def __init__(self, kwargs):
-		self.mapper = kwargs.mapper
+	def __init__(self, mapper):
+		self.mapper = mapper
 		self.serial = 0
 
 	def doAttach(self, command, sender):
@@ -92,8 +92,8 @@ class Slave(Manager):
 	"""
 
 	@Argument('connection', type=Connection)
-	def __init__(self, kwargs):
-		self.connection = kwargs.connection
+	def __init__(self, connection):
+		self.connection = connection
 		self.queue_refs = dict()
 
 	def doAttach(self, command, sender):

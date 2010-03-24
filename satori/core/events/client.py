@@ -13,8 +13,8 @@ class Client(Object):
 	"""
 
 	@Argument('scheduler', type=Scheduler)
-	def __init__(self, kwargs):
-		self.scheduler = kwargs.scheduler
+	def __init__(self, scheduler):
+		self.scheduler = scheduler
 
 	def sendResponse(self, response):
 		raise NotImplementedError()
@@ -32,8 +32,8 @@ class CoroutineClient(Client):
 
 	@Argument('scheduler', type=FifoScheduler)
 	@Argument('coroutine', type=GeneratorType)
-	def __init__(self, kwargs):
-		self.coroutine = flatten_coroutine(kwargs.coroutine)
+	def __init__(self, coroutine):
+		self.coroutine = flatten_coroutine(coroutine)
 		self.response  = None
 		self.scheduler.add(self)
 
@@ -64,8 +64,8 @@ class ConnectionClient(Client):
 
 	@Argument('scheduler', type=PollScheduler)
 	@Argument('connection', type=Connection)
-	def __init__(self, kwargs):
-		self.connection = kwargs.connection
+	def __init__(self, connection):
+		self.connection = connection
 		self.scheduler.add(self)
 
 	def sendResponse(self, response):
@@ -90,8 +90,8 @@ class ListenerClient(Client):
 
 	@Argument('scheduler', type=PollScheduler)
 	@Argument('listener', type=Listener)
-	def __init__(self, kwargs):
-		self.listener = kwargs.listener
+	def __init__(self, listener):
+		self.listener = listener
 
 	def sendResponse(self, response):
 		pass
