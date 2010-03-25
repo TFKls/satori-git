@@ -43,7 +43,7 @@ class Code(Directive):
         node['classes'] += ['code']
         for type_, text in tokens:
             node.append(code_token(text=text, type=type_))
-            return [node]
+        return [node]
 
 
 register_directive('code', Code)
