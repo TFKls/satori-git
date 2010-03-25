@@ -1,4 +1,5 @@
-"""Useful additions to the standard Python class hierarchy."""
+"""Useful additions to the standard Python class hierarchy.
+"""
 
 
 __all__ = (
@@ -108,7 +109,8 @@ class ValueSpec(object):
         if self.mode == ArgumentMode.OPTIONAL:
             return ValueSpec()
         else:
-            raise TypeError("'{0}' does not satisfy the specification '{1}'.".format(self.value, tspec))
+            raise TypeError("'{0}' does not satisfy the specification '{1}'".
+                            format(self.value, tspec))
 
 
 class Argument(object):
@@ -167,10 +169,10 @@ class Argument(object):
     mode = property(lambda self: self.vspec.mode)
 
 
-def _original(callable):
-    while hasattr(callable, 'func_dict') and MAGIC_ORG in callable.func_dict:
-        callable = callable.func_dict[MAGIC_ORG]
-    return callable
+def _original(callable_):
+    while hasattr(callable_, 'func_dict') and MAGIC_ORG in callable_.func_dict:
+        callable_ = callable_.func_dict[MAGIC_ORG]
+    return callable_
 
 
 class Signature(object):
@@ -178,21 +180,23 @@ class Signature(object):
     """
 
     @staticmethod
-    def infer(callable):
+    def infer(callable_):
         """Infer a Signature for a given callable.
         """
         try:
-            return Signature(*inspect.getargspec(callable))
+            return Signature(*inspect.getargspec(callable_))
         except TypeError:
             return Signature(['self'])
 
     @staticmethod
-    def of(callable):
-        if not hasattr(callable, 'func_dict'):
-            return Signature.infer(callable)
-        if MAGIC_SIG not in callable.func_dict:
-            callable.func_dict[MAGIC_SIG] = Signature.infer(callable)
-        return callable.func_dict[MAGIC_SIG]
+    def of(callable_):                                         # pylint: disable-msg=C0103
+        """Cache and return a Signature for a given callable.
+        """
+        if not hasattr(callable_, 'func_dict'):
+            return Signature.infer(callable_)
+        if MAGIC_SIG not in callable_.func_dict:
+            callable_.func_dict[MAGIC_SIG] = Signature.infer(callable_)
+        return callable_.func_dict[MAGIC_SIG]
 
     def __init__(self, names, positional=None, keyword=None, defaults=None):
         # TODO: flatten names
@@ -203,12 +207,12 @@ class Signature(object):
         if defaults is None:
             defaults = []
         required = len(self.positional) - len(defaults)
-        for i in range(required):
-            name = names[i]
+        for idx in range(required):
+            name = names[idx]
             self.arguments[name] = Argument(name)
-        for i in range(len(defaults)):
-            name = names[required+i]
-            self.arguments[name] = Argument(name, default=defaults[i])
+        for idx in range(len(defaults)):
+            name = names[required+idx]
+            self.arguments[name] = Argument(name, default=defaults[idx])
 
     def __str__(self):
         result = '{'
@@ -228,11 +232,13 @@ class Signature(object):
         return self
 
     @property
-    def Values(signature):
+    def Values(signature):                         # pylint: disable-msg=E0213,C0103,R0912
+        """Return a class for argument values, specialized to match this Signature.
+        """
         class ArgumentValues(object):
             """Holds argument values matching a given Specification.
             """
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs):               # pylint: disable-msg=C0103
                 # parse arguments
                 self.named = dict()
                 self.named.update(kwargs)
@@ -241,7 +247,9 @@ class Signature(object):
                     if index < len(signature.positional):
                         name = signature.positional[index]
                         if name in self.named:
-                            raise ArgumentError("{0} given both as a positional and keyword argument".format(name))
+                            raise ArgumentError(
+                                "{0} given both as a positional and keyword argument".
+                                format(name))
                         self.named[name] = value
                     else:
                         self.anonymous.append(value)
@@ -249,10 +257,10 @@ class Signature(object):
                 for name, spec in signature.arguments.iteritems():
                     spec.apply(self.named, name)
 
-            def call(self, callable, strict=True):
+            def call(self, callable_, strict=True):
                 """Call a given callable with these ArgumentValues.
                 """
-                signature = Signature.infer(callable)
+                signature = Signature.infer(callable_)
                 args = []
                 for name in signature.positional:
                     args.append(self.named[name])
@@ -265,18 +273,21 @@ class Signature(object):
                     if name not in signature.arguments and not signature.extra_keyword:
                         if not strict:
                             continue
-                        raise ArgumentError("Extra argument '{0}' given to {1}".format(name, callable))
+                        raise ArgumentError("Extra argument '{0}' given to {1}".
+                                            format(name, callable_))
                     kwargs[name] = value
-                return callable(*tuple(args), **kwargs)
+                return callable_(*tuple(args), **kwargs)       # pylint: disable-msg=W0142
         return ArgumentValues
 
 
 class ObjectMeta(types.TypeType):
+    """Metaclass for Object.
+    """
 
     def __new__(mcs, name, bases, dict_):
         # replace constructor
         if '__init__' in dict_:
-            def __init__(self, *args, **kwargs):
+            def __init__(self, *args, **kwargs):               # pylint: disable-msg=C0103
                 signature = Signature.of(__init__)
                 values = signature.Values(self, *args, **kwargs)
                 for parent in reversed(self.__class__.__mro__):
@@ -284,7 +295,7 @@ class ObjectMeta(types.TypeType):
                         values.call(_original(parent.__init__), False)
             __init__.func_dict[MAGIC_SIG] = Signature.of(dict_['__init__'])
             __init__.func_dict[MAGIC_ORG] = dict_['__init__']
-            __init__.__doc__ = dict_['__init__'].__doc__
+            __init__.__doc__ = dict_['__init__'].__doc__       # pylint: disable-msg=W0622
             dict_['__init__'] = __init__
         # call parent metaclass
         class_ = types.TypeType.__new__(mcs, name, bases, dict_)
@@ -292,10 +303,14 @@ class ObjectMeta(types.TypeType):
         if '__init__' in dict_:
             for parent in class_.__mro__:
                 if '__init__' in parent.__dict__:
-                    __init__.func_dict[MAGIC_SIG] += Signature.of(_original(parent.__init__))
+                    parent_sig = Signature.of(_original(parent.__init__))
+                    __init__.func_dict[MAGIC_SIG] += parent_sig
         return class_
 
 
 class Object(object):
+    """A replacement for object. Automatically manages signatures and call chain for
+    constructors.
+    """
 
     __metaclass__ = ObjectMeta

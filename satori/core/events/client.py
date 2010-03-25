@@ -1,9 +1,13 @@
+"""Wrappers for event producers/consumers.
+"""
+
+
 from _multiprocessing import Connection
 from multiprocessing.connection import Listener
 from types import GeneratorType
 
 from satori.ph.objects import Object, Argument
-from satori.ph.misc import flatten_coroutine
+from satori.ph.misc import flattenCoroutine
 from satori.core.events.protocol import Command, KeepAlive, ProtocolError
 from satori.core.events.scheduler import Scheduler, FifoScheduler, PollScheduler
 
@@ -17,12 +21,18 @@ class Client(Object):
         self.scheduler = scheduler
 
     def sendResponse(self, response):
+        """Send a response to this Client.
+        """
         raise NotImplementedError()
 
     def recvCommand(self):
+        """Receive the next command from this Client.
+        """
         raise NotImplementedError()
 
     def disconnect(self):
+        """Disconnect this Client.
+        """
         raise NotImplementedError()
 
 
@@ -33,17 +43,25 @@ class CoroutineClient(Client):
     @Argument('scheduler', type=FifoScheduler)
     @Argument('coroutine', type=GeneratorType)
     def __init__(self, coroutine):
-        self.coroutine = flatten_coroutine(coroutine)
+        self.coroutine = flattenCoroutine(coroutine)
         self.response  = None
         self.scheduler.add(self)
 
     def sendResponse(self, response):
+        """Send a response to this Client.
+
+        The response is saved and delivered to the coroutine on the next call to
+        recvCommand().
+        """
         if self.response is not None:
-            raise ProtocolError("sendResponse() called twice without an intervening recvCommand()")
+            raise ProtocolError(
+                "sendResponse() called twice without an intervening recvCommand()")
         self.response = response
         self.scheduler.add(self)
 
     def recvCommand(self):
+        """Receive the next command from this Client.
+        """
         response = self.response
         self.response = None
         if isinstance(response, Exception):
@@ -55,6 +73,8 @@ class CoroutineClient(Client):
         return command
 
     def disconnect(self):
+        """Disconnect this Client.
+        """
         self.response = ProtocolError()
 
 
@@ -69,19 +89,25 @@ class ConnectionClient(Client):
         self.scheduler.add(self)
 
     def sendResponse(self, response):
+        """Send a response to this Client.
+        """
         self.connection.send(response)
 
     def recvCommand(self):
+        """Receive the next command from this Client.
+        """
         command = self.connection.recv()
         if not isinstance(command, Command):
             raise ProtocolError("received object is not a Command")
         return command
 
     def disconnect(self):
+        """Disconnect this Client.
+        """
         self.scheduler.remove(self)
         self.connection.close()
 
-    fd = property(lambda self: self.connection.fileno())
+    fileno = property(lambda self: self.connection.fileno())
 
 
 class ListenerClient(Client):
@@ -94,9 +120,13 @@ class ListenerClient(Client):
         self.listener = listener
 
     def sendResponse(self, response):
+        """Send a response to this Client.
+        """
         pass
 
     def recvCommand(self):
+        """Receive the next command from this Client.
+        """
         try:
             connection = self.listener.accept()
         except:
@@ -105,7 +135,11 @@ class ListenerClient(Client):
         return KeepAlive()
 
     def disconnect(self):
+        """Disconnect this Client.
+        """
         self.scheduler.remove(self)
         self.listener.close()
 
-    fd = property(lambda self: self.listener._listener._socket.fileno())
+    # pylint: disable-msg=W0212
+    fileno = property(lambda self: self.listener._listener._socket.fileno())
+    # pylint: enable-msg=W0212

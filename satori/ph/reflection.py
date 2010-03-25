@@ -1,3 +1,7 @@
+"""Uniform view for Python reflection information.
+"""
+
+
 import inspect
 import os
 import sys
@@ -8,42 +12,46 @@ from satori.ph.patterns import visitor
 
 
 class Reflector(Object, dict):
+    """Caches and interrelates descriptors for reflected objects.
+    """
 
     def __init__(self):
         self.groups = []
         self.implicit = SystemModules(cache=self)
 
-    def __getitem__(self, object):
-        if object not in self:
-            descriptor = self._create(object)
-            self[object] = descriptor
-        return super(Reflector, self).__getitem__(object)
+    def __getitem__(self, obj):
+        if obj not in self:
+            descriptor = self._create(obj)
+            self[obj] = descriptor
+        return super(Reflector, self).__getitem__(obj)
 
-    def add(self, type, **kwargs):
+    def add(self, type_, **kwargs):
+        """Construct and add a descriptor of a given type.
+        """
         kwargs['cache'] = self
-        group = type(**kwargs)
+        group = type_(**kwargs)
         self.groups.append(group)
         return group
 
     @visitor.Dispatch(argument=1)
-    def _create(self, object):
-        raise KeyError("Unhandled object type '{0}'".format(object.__class__))
+    def _create(self, obj):                                    # pylint: disable-msg=R0201
+        raise KeyError("Unhandled obj type '{0}'".format(obj.__class__))
 
     @visitor.Implement(type=types.ModuleType)
-    def _create(self, object):
-        return Module(object=object, cache=self)
+    def _create(self, obj):                                    # pylint: disable-msg=E0102
+        return Module(obj=obj, cache=self)
 
     @visitor.Implement(type=(types.ClassType, types.TypeType))
-    def _create(self, object):
-        return Class(object=object, cache=self)
+    def _create(self, obj):                                    # pylint: disable-msg=E0102
+        return Class(obj=obj, cache=self)
 
     @visitor.Implement(type=types.MethodType)
-    def _create(self, object):
-        return Method(object=object, cache=self)
+    def _create(self, obj):                                    # pylint: disable-msg=E0102
+        return Method(obj=obj, cache=self)
 
     @visitor.Implement(type=types.FunctionType)
-    def _create(self, object):
-        return Function(object=object, cache=self)
+    def _create(self, obj):                                    # pylint: disable-msg=E0102
+        return Function(obj=obj, cache=self)
 
     def __iter__(self):
         seen = set()
@@ -59,60 +67,72 @@ _isfunction = lambda p: isinstance(p[1], Function) and not p[0].startswith('_')
 
 
 class Descriptor(Object):
+    """Base class for descriptors of reflected objects.
+    """
 
     @Argument('cache', type=Reflector)
-    def __init__(self, object, cache):
-        self.object = object
+    def __init__(self, obj, cache):
+        self.object = obj
         self.cache = cache
         self.name = getattr(self.object, '__name__', None)
         self.docstring = inspect.cleandoc(getattr(self.object, '__doc__', None) or "")
 
-    class source_file(object):
-        def __get__(_, self, type=None):
+    class source_file(object):                                 # pylint: disable-msg=C0103
+        """Lazy property. The path of the source file for the described object.
+        """
+        def __get__(_, self, _type=None):                      # pylint: disable-msg=E0213
             try:
                 self.source_file = os.path.abspath(inspect.getsourcefile(self.object))
                 return self.source_file
-            except:
+            except:                                            # pylint: disable-msg=W0702
                 return None
     source_file = source_file()
 
-    class source_line(object):
-        def __get__(_, self, type=None):
+    class source_line(object):                                 # pylint: disable-msg=C0103
+        """Lazy property. The number of the first source line for the described object.
+        """
+        def __get__(_, self, _type=None):                      # pylint: disable-msg=E0213
             try:
                 lines = inspect.getsourcelines(self.object)
                 self.source_code = '\n'.join(lines[0])
                 self.source_line = lines[1] or 1
                 return self.source_line
-            except:
+            except:                                            # pylint: disable-msg=W0702
                 return None
     source_line = source_line()
 
-    class source_code(object):
-        def __get__(_, self, type=None):
+    class source_code(object):                                 # pylint: disable-msg=C0103
+        """Lazy property. The source code for the described object.
+        """
+        def __get__(_, self, _type=None):                      # pylint: disable-msg=E0213
             try:
                 lines = inspect.getsourcelines(self.object)
                 self.source_code = '\n'.join(lines[0])
                 self.source_line = lines[1] or 1
                 return self.source_code
-            except:
+            except:                                            # pylint: disable-msg=W0702
                 return None
     source_code = source_code()
 
     @property
     def children(self):
+        """Generator. Enumerate this descriptor's children.
+        """
         for name in dir(self.object):
             try:
-                object = getattr(self.object, name)
-                yield name, self.cache[object]
+                obj = getattr(self.object, name)
+                yield name, self.cache[obj]
             except (AttributeError, KeyError, TypeError):
                 pass
 
-    modules = property(lambda self: filter(_ismodule, self.children))
-    classes = property(lambda self: filter(_isclass, self.children))
-    methods = property(lambda self: filter(_ismethod, self.children))
-    functions = property(lambda self: filter(_isfunction, self.children))
+    modules = property(lambda self: (x for x in self.children if _ismodule(x)))
+    classes = property(lambda self: (x for x in self.children if _isclass(x)))
+    methods = property(lambda self: (x for x in self.children if _ismethod(x)))
+    functions = property(lambda self: (x for x in self.children if _isfunction(x)))
 
     def traverse(self, seen=None):
+        """Generator. Enumerate this descriptor's descendants.
+        """
         seen = seen or set()
         if self in seen:
             return
@@ -124,16 +144,19 @@ class Descriptor(Object):
 
 
 class ModuleGroup(Descriptor):
+    """A Descriptor for a group of modules.
+    """
 
-    @Argument('object', fixed=None)
+    @Argument('obj', fixed=None)
     def __init__(self):
         self.module_list = []
         self.parent = self
         self.group = self
-        pass
 
     @property
     def children(self):
+        """Generator. Enumerate this descriptor's children.
+        """
         by_name = lambda m1, m2: cmp(m1.__name__, m2.__name__)
         for module in sorted(self.module_list, by_name):
             yield module.__name__, self.cache[module]
@@ -143,6 +166,8 @@ class ModuleGroup(Descriptor):
 
 
 class SystemModules(ModuleGroup):
+    """A Descriptor for system modules.
+    """
 
     def __contains__(self, module):
         return True
@@ -152,17 +177,21 @@ class SystemModules(ModuleGroup):
 
 
 class Location(ModuleGroup):
+    """A Descriptor for module group defined in a single place.
+    """
 
     @Argument('root', type=str)
     def __init__(self, root):
 
-        def walk(root, base=[]):
-            """Generator. Walks a directory hierarchy looking for Python modules."""
+        def walk(root, base=[]):                               # pylint: disable-msg=W0102
+            """Generator. Walk a directory hierarchy looking for Python modules.
+            """
             for entry in os.listdir(root):
                 path = os.path.join(root, entry)
-                if os.path.isdir(path) and os.path.isfile(os.path.join(path, '__init__.py')):
-                    for module in walk(path, base + [entry]):
-                        yield module
+                if os.path.isdir(path):
+                    if os.path.isfile(os.path.join(path, '__init__.py')):
+                        for module in walk(path, base + [entry]):
+                            yield module
                 if not os.path.isfile(path):
                     continue
                 if entry[-3:] != '.py':
@@ -185,6 +214,8 @@ class Location(ModuleGroup):
 
 
 class Module(Descriptor):
+    """A Descriptor for a module.
+    """
 
     def __init__(self):
         self.group = None
@@ -201,6 +232,8 @@ class Module(Descriptor):
 
     @property
     def children(self):
+        """Generator. Enumerate this descriptor's children.
+        """
         for name, child in super(Module, self).children:
             if child.parent is self:
                 yield name, child
@@ -210,6 +243,8 @@ class Module(Descriptor):
 
 
 class Class(Descriptor):
+    """A Descriptor for a class.
+    """
 
     def __init__(self):
         self.parent = self.cache[sys.modules[self.object.__module__]]
@@ -221,6 +256,8 @@ class Class(Descriptor):
 
 
 class Callable(Descriptor):
+    """A Descriptor for a callable.
+    """
 
     def __init__(self):
         spec = inspect.getargspec(self.object)
@@ -240,6 +277,8 @@ class Callable(Descriptor):
 
     @property
     def children(self):
+        """Generator. Enumerate this descriptor's children.
+        """
         return []
 
     def __str__(self):
@@ -247,6 +286,8 @@ class Callable(Descriptor):
 
 
 class Method(Callable):
+    """A Descriptor for a method.
+    """
 
     def __init__(self):
         class_ = self.object.im_class
@@ -261,6 +302,8 @@ class Method(Callable):
 
 
 class Function(Callable):
+    """A Descriptor for a function.
+    """
 
     def __init__(self):
         self.parent = self.cache[sys.modules[self.object.__module__]]

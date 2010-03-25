@@ -1,3 +1,7 @@
+"""Client scheduling policies.
+"""
+
+
 import collections
 import select
 
@@ -9,6 +13,18 @@ class Scheduler(Object):
     """
 
     def next(self):
+        """Return the next Client to handle.
+        """
+        raise NotImplementedError()
+
+    def add(self, client):
+        """Add a Client to this Scheduler.
+        """
+        raise NotImplementedError()
+
+    def remove(self, client):
+        """Remove a Client from this Scheduler.
+        """
         raise NotImplementedError()
 
 
@@ -20,12 +36,23 @@ class FifoScheduler(Scheduler):
         self.fifo = collections.deque()
 
     def next(self):
+        """Return the next Client to handle.
+        
+        The Clients are returned in the order in which they are added.
+        """
         if len(self.fifo) > 0:
             return self.fifo.popleft()
         return None
 
     def add(self, client):
+        """Add a Client to this Scheduler.
+        """
         self.fifo.append(client)
+
+    def remove(self, client):
+        """Does nothing. Clients are removed when they are scheduled.
+        """
+        pass
 
 
 class PollScheduler(Scheduler):
@@ -38,24 +65,33 @@ class PollScheduler(Scheduler):
         self.ready = collections.deque()
 
     def next(self):
+        """Return the next Client to handle.
+        
+        A Client is available when its file descriptor is ready to be read from.
+        Available Clients are scheduler in a round-robin fashion.
+        """
         while len(self.ready) == 0:
-            for fd, ev in self.waits.poll():
-                client = self.fdmap[fd]
-                if ev & (select.POLLERR | select.POLLHUP) != 0:
+            for fileno, event in self.waits.poll():
+                client = self.fdmap[fileno]
+                if event & (select.POLLERR | select.POLLHUP) != 0:
                     self.remove(client)
                 self.ready.append(client)
         return self.ready.popleft()
 
     def add(self, client):
-        fd = client.fd
-        if fd in self.fdmap:
+        """Add a Client to this Scheduler.
+        """
+        fileno = client.fileno
+        if fileno in self.fdmap:
             return
-        self.fdmap[fd] = client
-        self.waits.register(fd, select.POLLIN | select.POLLHUP | select.POLLERR)
+        self.fdmap[fileno] = client
+        self.waits.register(fileno, select.POLLIN | select.POLLHUP | select.POLLERR)
 
     def remove(self, client):
-        fd = client.fd
-        if fd not in self.fdmap:
+        """Remove a Client from this Scheduler.
+        """
+        fileno = client.fileno
+        if fileno not in self.fdmap:
             return
-        del self.fdmap[fd]
-        self.waits.unregister(fd)
+        self.waits.unregister(fileno)
+        del self.fdmap[fileno]

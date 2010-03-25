@@ -1,3 +1,7 @@
+"""The API for client code to send and receive events.
+"""
+
+
 import hashlib
 import random
 
@@ -17,10 +21,15 @@ __all__ = (
 
 
 class Event(Namespace):
+    """Describes an event.
+    """
+
     pass
 
 
-class MappingId(str):
+class MappingId(str):                                          # pylint: disable-msg=R0904
+    """A (globally-unique) identifier of a mapping.
+    """
 
     def __new__(cls, value=None):
         if value is None:
@@ -28,7 +37,9 @@ class MappingId(str):
         return str.__new__(cls, value)
 
 
-class QueueId(str):
+class QueueId(str):                                            # pylint: disable-msg=R0904
+    """A (globally-unique) identifier of an event queue.
+    """
     pass
 
 

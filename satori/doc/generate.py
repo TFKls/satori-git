@@ -1,5 +1,4 @@
-"""
-Script. Extracts information from docstrings and generates documentation.
+"""Script. Extracts information from docstrings and generates documentation.
 """
 
 
@@ -9,14 +8,14 @@ import os
 if __name__ == '__main__':
     sys.path.insert(0, '.')
 
-import docutils.frontend
-import docutils.nodes
-import docutils.parsers.rst
-import docutils.utils
-import genshi.template
+from docutils.frontend import OptionParser
+from docutils.nodes import paragraph, title
+from docutils.parsers.rst import Parser
+from docutils.utils import new_document
+from genshi.template import TemplateLoader
 import pygments.token
 
-import satori.doc.sourcecode
+import satori.doc.sourcecode                                   # pylint: disable-msg=W0611
 from satori.ph.misc import Namespace
 from satori.ph.objects import Argument
 from satori.ph.patterns import visitor
@@ -24,11 +23,13 @@ from satori.ph.reflection import Reflector, Location, Module, Class, Method, Fun
 
 
 class Generator(Reflector):
+    """Generates XHTML documentation based on reflection information.
+    """
 
     @Argument('template_dir', type=str)
     def __init__(self, template_dir):
-        self.templates = genshi.template.TemplateLoader(template_dir, variable_lookup='lenient')
-        self.docutils_parser = docutils.parsers.rst.Parser()
+        self.templates = TemplateLoader(template_dir, variable_lookup='lenient')
+        self.docutils_parser = Parser()
         self.docutils_settings = dict(
             pep_references=False,
             rfc_references=True,
@@ -38,44 +39,58 @@ class Generator(Reflector):
         self.data = Namespace()
 
     def parseDocstring(self, desc):
-        options = docutils.frontend.OptionParser()
+        """Parse Python docstring into docutils document tree.
+        """
+        options = OptionParser()
         options.set_defaults_from_dict(self.docutils_settings)
-        desc.doc = docutils.utils.new_document(desc.name, settings=options.get_default_values())
+        desc.doc = new_document(desc.name, settings=options.get_default_values())
         self.docutils_parser.parse(desc.docstring or "(not documented)", desc.doc)
         desc.doc.transformer.apply_transforms()
-        ispara = lambda node: isinstance(node, docutils.nodes.paragraph)
-        desc.shortdoc = filter(ispara, desc.doc.traverse())[0]
+        desc.shortdoc = [x for x in desc.doc.traverse() if isinstance(x, paragraph)][0]
 
     @visitor.Dispatch(argument=1)
     def update(self, desc):
+        """Update descriptor information.
+        """
         pass
 
     @visitor.Implement(type=Location)
-    def update(self, desc):
+    def update(self, desc):                                    # pylint: disable-msg=E0102
+        """Update Location descriptor information.
+        """
         desc.template = 'index.html'
         desc.target_path = os.path.join(desc.target_dir, 'index.html')
 
     @visitor.Implement(type=Module)
-    def update(self, desc):
+    def update(self, desc):                                    # pylint: disable-msg=E0102
+        """Update Module descriptor information.
+        """
         if isinstance(desc.group, Location):
             desc.template = 'module.html'
             desc.target_path = os.path.join(desc.group.target_dir, desc.name+'.html')
         self.parseDocstring(desc)
-        desc.doc.insert(0, docutils.nodes.title(text=desc.name))
+        desc.doc.insert(0, title(text=desc.name))
 
     @visitor.Implement(type=Class)
-    def update(self, desc):
+    def update(self, desc):                                    # pylint: disable-msg=E0102
+        """Update Class descriptor information.
+        """
         if isinstance(desc.group, Location):
             desc.template = 'class.html'
-            desc.target_path = os.path.join(desc.group.target_dir, desc.parent.name+'.'+desc.name+'.html')
+            filename = desc.parent.name+'.'+desc.name+'.html'
+            desc.target_path = os.path.join(desc.group.target_dir, filename)
         self.parseDocstring(desc)
-        desc.doc.insert(0, docutils.nodes.title(text=desc.parent.name+'.'+desc.name))
+        desc.doc.insert(0, title(text=desc.parent.name+'.'+desc.name))
 
     @visitor.Implement(type=(Function, Method))
-    def update(self, desc):
+    def update(self, desc):                                    # pylint: disable-msg=E0102
+        """Update Function or Method descriptor information.
+        """
         self.parseDocstring(desc)
 
     def run(self):
+        """Generate the documentation.
+        """
         # first pass: resolve references
         for desc in self:
             pass
@@ -92,6 +107,10 @@ class Generator(Reflector):
                 output.write(template.generate(**self.data).render('xhtml'))
 
 
+def _sourceurl(path, line, rev):
+    return "{0}href.browser('{1}', rev='{2}'){3}#L{4}".format('${', path, rev, '}', line)
+
+
 if __name__ == '__main__':
     target_dir = os.path.abspath(sys.argv[1])
     revision = sys.argv[2]
@@ -103,5 +122,5 @@ if __name__ == '__main__':
     location = generator.add(Location, root=os.getcwd())
     location.target_dir = target_dir.rstrip('/') + '/'
     location.target_url = lambda path: "{0}href.api('{1}'){2}".format('${', path, '}')
-    location.source_url = lambda path, line: "{0}href.browser('{1}', rev='{2}'){3}#L{4}".format('${', path, revision, '}', line)
+    location.source_url = lambda path, line: _sourceurl(path, line, revision)
     generator.run()

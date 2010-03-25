@@ -1,3 +1,7 @@
+"""Event Manager implementations.
+"""
+
+
 __all__ = ('Master', 'Slave')
 
 
@@ -6,7 +10,8 @@ from _multiprocessing import Connection
 from satori.ph.objects import Object, Argument
 from satori.core.events.dispatcher import Dispatcher
 from satori.core.events.mapper import Mapper
-from satori.core.events.protocol import KeepAlive, Disconnect, Attach, Detach, Map, Unmap, Send, Receive
+from satori.core.events.protocol import KeepAlive, Disconnect, Attach, Detach
+from satori.core.events.protocol import Map, Unmap, Send, Receive
 from satori.core.events.scheduler import Scheduler
 
 
@@ -19,13 +24,19 @@ class Manager(Object):
         self.scheduler = scheduler
         self.dispatcher = Dispatcher()
 
-    def doKeepAlive(self, command, sender):
+    def doKeepAlive(self, _command, sender):
+        """Handle KeepAlive command.
+        """
         sender.sendResponse(None)
 
-    def doDisconnect(self, command, sender):
+    def doDisconnect(self, _command, sender):
+        """Handle Disconnect command.
+        """
         sender.disconnect()
 
     def run(self):
+        """Execute this Manager's event loop.
+        """
         processors = {
             KeepAlive:  self.doKeepAlive,
             Attach:     self.doAttach,
@@ -57,22 +68,32 @@ class Master(Manager):
         self.serial = 0
 
     def doAttach(self, command, sender):
+        """Handle Attach command.
+        """
         self.dispatcher.attach(sender, command.queue_id)
         sender.sendResponse(None)
 
     def doDetach(self, command, sender):
+        """Handle Detach command.
+        """
         self.dispatcher.detach(sender, command.queue_id)
         sender.sendResponse(None)
 
     def doMap(self, command, sender):
+        """Handle Map command.
+        """
         mapping_id = self.mapper.map(command.criteria, command.queue_id)
         sender.sendResponse(mapping_id)
 
     def doUnmap(self, command, sender):
+        """Handle Unmap command.
+        """
         self.mapper.unmap(command.mapping_id)
         sender.sendResponse(None)
 
     def doSend(self, command, sender):
+        """Handle Send command.
+        """
         event = command.event
         event.serial = self.serial
         self.serial += 1
@@ -80,7 +101,9 @@ class Master(Manager):
         for queue_id in self.mapper.resolve(event):
             self.dispatcher.enqueue(queue_id, event)
 
-    def doReceive(self, command, sender):
+    def doReceive(self, _command, sender):
+        """Handle Receive command.
+        """
         self.dispatcher.activate(sender)
 
 
@@ -94,6 +117,8 @@ class Slave(Manager):
         self.queue_refs = dict()
 
     def doAttach(self, command, sender):
+        """Handle Attach command.
+        """
         if command.queue_id in self.queue_refs:
             self.queue_refs[command.queue_id] += 1
         else:
@@ -104,6 +129,8 @@ class Slave(Manager):
         sender.sendResponse(None)
 
     def doDetach(self, command, sender):
+        """Handle Detach command.
+        """
         if command.queue_id in self.queue_refs:
             self.queue_refs[command.queue_id] -= 1
             if self.queue_refs[command.queue_id] == 0:
@@ -114,6 +141,8 @@ class Slave(Manager):
         sender.sendResponse(None)
 
     def doMap(self, command, sender):
+        """Handle Map/Unmap/Send commands.
+        """
         self.connection.send(command)
         response = self.connection.recv()
         sender.sendResponse(response)
@@ -123,9 +152,11 @@ class Slave(Manager):
     doSend = doMap
 
     def doReceive(self, command, sender):
+        """Handle Receive command.
+        """
         self.dispatcher.activate(sender)
         self.connection.send(command)
         response = self.connection.recv()
         if isinstance(response, Exception):
             pass # TODO: handle exceptions
-        self.dispatcher.enqueue(*response)
+        self.dispatcher.enqueue(response[0], response[1])

@@ -1,5 +1,4 @@
-"""
-Enhances docutils document strcuture with source code block support,
+"""Enhances docutils document structure with source code block support,
 using pygments for highlighting.
 """
 
@@ -10,13 +9,13 @@ from docutils.parsers.rst.directives import register_directive
 from pygments.lexers import get_lexer_by_name
 
 
-class code_token(Inline, FixedTextElement):
+class code_token(Inline, FixedTextElement):              # pylint: disable-msg=C0103,R0904
     """A `Node` representing single source token."""
 
     pass
 
 
-class code_block(literal_block):
+class code_block(literal_block):                         # pylint: disable-msg=C0103,R0904
     """A `Node` representing a (formatted) source code block."""
 
     pass
@@ -33,6 +32,8 @@ class Code(Directive):
     node_class = code_block
 
     def run(self):
+        """Execute this directive.
+        """
         self.assert_has_content()
         lang = self.arguments[0]
         code = '\n'.join(self.content)
@@ -40,8 +41,8 @@ class Code(Directive):
         tokens = lexer.get_tokens(code)
         node = self.node_class()
         node['classes'] += ['code']
-        for type, text in tokens:
-            node.append(code_token(text=text, type=type))
+        for type_, text in tokens:
+            node.append(code_token(text=text, type=type_))
             return [node]
 
 

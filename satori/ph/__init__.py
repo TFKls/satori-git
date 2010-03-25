@@ -1,1 +1,2 @@
-"""Package. A collection of useful Python Hacks."""
+"""Package. A collection of useful Python Hacks.
+"""

@@ -7,7 +7,7 @@ import types
 
 __all__ = (
     'Namespace',
-    'flatten_coroutine',
+    'flattenCoroutine',
 )
 
 
@@ -37,36 +37,36 @@ class Namespace(dict):
             raise AttributeError(key)
 
 
-def flatten_coroutine(coroutine):
+def flattenCoroutine(coroutine):
     """Flattens a coroutine (inside, yielding another Generator    behaves like
     a sub-procedure call).
     """
-    def run():
+    def _flattened():
         stack = [coroutine]
-        input = None
+        value = None
         error = None
         trace = None
         while len(stack) > 0:
             try:
                 if error is None:
-                    output = stack[-1].send(input)
+                    result = stack[-1].send(value)
                 else:
-                    output = stack[-1].throw(error)
+                    result = stack[-1].throw(error)
                     error = None
-                if isinstance(output, types.GeneratorType):
-                    stack.append(output)
-                    input = None
+                if isinstance(result, types.GeneratorType):
+                    stack.append(result)
+                    value = None
                 else:
-                    input = yield output
+                    value = yield result
             except StopIteration:
                 error = None
-                input = None
+                value = None
                 stack.pop()
             except Exception as ex:
                 error = ex
                 trace = sys.exc_traceback
-                input = None
+                value = None
                 stack.pop()
         if error is not None:
             raise error.__class__, error, trace
-    return run()
+    return _flattened()

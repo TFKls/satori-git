@@ -1,1 +1,2 @@
-"""Package. Implementations of common design patterns."""
+"""Package. Implementations of common design patterns.
+"""

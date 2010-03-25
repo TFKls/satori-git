@@ -1,4 +1,6 @@
-"""Test suite for ph.patterns.visitor"""
+"""Test suite for ph.patterns.visitor.
+"""
+
 
 import unittest
 
