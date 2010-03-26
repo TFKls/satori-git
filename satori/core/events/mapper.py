@@ -3,7 +3,8 @@
 
 
 from satori.ph.objects import Object, Argument
-from satori.core.events.protocol import Event, MappingId, QueueId
+
+from .api import Event, MappingId, QueueId
 
 
 class Mapper(Object):
@@ -14,7 +15,7 @@ class Mapper(Object):
     @Argument('queue_id', type=QueueId)
     def map(self, criteria, queue_id):
         """Create a new mapping. Events matching the criteria will be routed to
-        the queue_id with the given (opaque) id. Returns (opaque) mapping_id id.
+        the queue with the given (opaque) id. Returns (opaque) mapping id.
         """
         raise NotImplementedError
 

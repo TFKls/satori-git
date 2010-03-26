@@ -1,15 +1,32 @@
-"""Wrappers for event producers/consumers.
+"""Communications and scheduling of event clients.
 """
 
 
-from _multiprocessing import Connection
-from multiprocessing.connection import Listener
 from types import GeneratorType
 
 from satori.ph.objects import Object, Argument
 from satori.ph.misc import flattenCoroutine
-from satori.core.events.protocol import Command, KeepAlive, ProtocolError
-from satori.core.events.scheduler import Scheduler, FifoScheduler, PollScheduler
+from satori.core.events.protocol import Command, ProtocolError
+
+
+class Scheduler(Object):
+    """Interface. Chooses which Client to run next.
+    """
+
+    def next(self):
+        """Return the next Client to handle.
+        """
+        raise NotImplementedError()
+
+    def add(self, client):
+        """Add a Client to this Scheduler.
+        """
+        raise NotImplementedError()
+
+    def remove(self, client):
+        """Remove a Client from this Scheduler.
+        """
+        raise NotImplementedError()
 
 
 class Client(Object):
@@ -40,7 +57,6 @@ class CoroutineClient(Client):
     """In-process Client implemented as a coroutine.
     """
 
-    @Argument('scheduler', type=FifoScheduler)
     @Argument('coroutine', type=GeneratorType)
     def __init__(self, coroutine):
         self.coroutine = flattenCoroutine(coroutine)
@@ -76,70 +92,3 @@ class CoroutineClient(Client):
         """Disconnect this Client.
         """
         self.response = ProtocolError()
-
-
-class ConnectionClient(Client):
-    """Out-of-process Client communicating over multiprocessing.Connection.
-    """
-
-    @Argument('scheduler', type=PollScheduler)
-    @Argument('connection', type=Connection)
-    def __init__(self, connection):
-        self.connection = connection
-        self.scheduler.add(self)
-
-    def sendResponse(self, response):
-        """Send a response to this Client.
-        """
-        self.connection.send(response)
-
-    def recvCommand(self):
-        """Receive the next command from this Client.
-        """
-        command = self.connection.recv()
-        if not isinstance(command, Command):
-            raise ProtocolError("received object is not a Command")
-        return command
-
-    def disconnect(self):
-        """Disconnect this Client.
-        """
-        self.scheduler.remove(self)
-        self.connection.close()
-
-    fileno = property(lambda self: self.connection.fileno())
-
-
-class ListenerClient(Client):
-    """In-process Client wrapping a multiprocessing.connection.Listener.
-    """
-
-    @Argument('scheduler', type=PollScheduler)
-    @Argument('listener', type=Listener)
-    def __init__(self, listener):
-        self.listener = listener
-
-    def sendResponse(self, response):
-        """Send a response to this Client.
-        """
-        pass
-
-    def recvCommand(self):
-        """Receive the next command from this Client.
-        """
-        try:
-            connection = self.listener.accept()
-        except:
-            raise ProtocolError("Listener.accept() failed")
-        ConnectionClient(scheduler=self.scheduler, connection=connection)
-        return KeepAlive()
-
-    def disconnect(self):
-        """Disconnect this Client.
-        """
-        self.scheduler.remove(self)
-        self.listener.close()
-
-    # pylint: disable-msg=W0212
-    fileno = property(lambda self: self.listener._listener._socket.fileno())
-    # pylint: enable-msg=W0212

@@ -1,46 +1,17 @@
-"""The API for client code to send and receive events.
+"""The protocol for event-driven code.
 """
 
 
-import hashlib
-import random
-
 from satori.ph.objects import Object
-from satori.ph.misc import Namespace
 
 
 __all__ = (
-    'Event',
-    'MappingId', 'QueueId',
+    'KeepAlive', 'Disconnect',
     'Attach', 'Detach',
     'Map', 'Unmap',
     'Send', 'Receive',
-    'KeepAlive', 'Disconnect',
     'ProtocolError',
 )
-
-
-class Event(Namespace):
-    """Describes an event.
-    """
-
-    pass
-
-
-class MappingId(str):                                          # pylint: disable-msg=R0904
-    """A (globally-unique) identifier of a mapping.
-    """
-
-    def __new__(cls, value=None):
-        if value is None:
-            value = hashlib.md5(str(random.getrandbits(512))).hexdigest()
-        return str.__new__(cls, value)
-
-
-class QueueId(str):                                            # pylint: disable-msg=R0904
-    """A (globally-unique) identifier of an event queue.
-    """
-    pass
 
 
 class Command(Object):
