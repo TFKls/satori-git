@@ -1,1 +1,49 @@
-Here are demons!
+Repository Layout
+-----------------
+
+The mercurial repository is layed out as follows:
+
+(repository root)
+ |
+ + external            #  all out-of-project content, organized by source; 
+ |   + ...             #  includes (complete) external (sub-)repositories
+ |
+ + libs                #  library files used by project,
+ |   + java            #  organized by programming language;
+ |   + python          #  may contain sources of libs developed within the project
+ |   + ...             #  or symlinks to (source of compiled) files in ../external
+ |
+ + satori              #  the project source files, organized by component
+ |   + core            #
+ |   + judge           #
+ |   + ui              #
+ |   + ...             #
+ |
+ + scripts             #  build and test scripts (including configuration),
+     + ...             #  possibly other _machine-independent_ content
+ 
+As a general rule, the repository should _not_ contain any files which can
+be automatically generated. Instead, a suitable script should be included.
+
+
+Dependencies
+------------
+
+Most project dependencies (_all_ run-time dependencies and those _from_ which the
+project is built) should be placed within the repository (usually under external/).
+Dependencies required _to_ build the system belong to the environment (described
+below), unless they are very exotic.
+
+
+Build Environment
+-----------------
+
+The following programs are required to work with the project:
+ * python >=2.6
+ * pylint >=0.19
+ * mercurial >=1.5
+ * subversion >=1.6
+
+The build scripts (may) require the following variables to be set (${repo} is the
+repository root):
+ * PYTHONPATH=${repo}:${repo}/libs/python
