@@ -8,11 +8,14 @@ __all__ = (
 
 
 import inspect
+import sys
 import types
 
 
-MAGIC_ORG = 'objects: original'
-MAGIC_SIG = 'objects: signature'
+MAGIC_ORG = 'objects/original'
+MAGIC_SIG = 'objects/signature'
+MAGIC_DIS = 'objects.DispatchOn/argument name'
+MAGIC_MAP = 'objects.DispatchOn/type map'
 
 
 class ArgumentError(Exception):
@@ -292,15 +295,18 @@ class ObjectMeta(types.TypeType):
     def __new__(mcs, name, bases, dict_):
         # replace constructor
         if '__init__' in dict_:
+            init = dict_['__init__']
             def __init__(self, *args, **kwargs):               # pylint: disable-msg=C0103
                 signature = Signature.of(__init__)
                 values = signature.Values(self, *args, **kwargs)
                 for parent in reversed(self.__class__.__mro__):
                     if '__init__' in parent.__dict__:
                         values.call(_original(parent.__init__), False)
-            __init__.func_dict[MAGIC_SIG] = Signature.of(dict_['__init__'])
-            __init__.func_dict[MAGIC_ORG] = dict_['__init__']
-            __init__.__doc__ = dict_['__init__'].__doc__       # pylint: disable-msg=W0622
+            if hasattr(init, 'func_dict'):
+                __init__.func_dict.update(init.func_dict)
+            __init__.func_dict[MAGIC_SIG] = Signature.of(init)
+            __init__.func_dict[MAGIC_ORG] = init
+            __init__.__doc__ = init.__doc__                    # pylint: disable-msg=W0622
             dict_['__init__'] = __init__
         # call parent metaclass
         class_ = types.TypeType.__new__(mcs, name, bases, dict_)
@@ -319,3 +325,42 @@ class Object(object):
     """
 
     __metaclass__ = ObjectMeta
+
+
+class DispatchOn(Object):
+    """Decorator. Marks a single implementation of a dynamically-dispatched function.
+    """
+
+    def __init__(self, **kwargs):
+        if len(kwargs) != 1:
+            raise ArgumentError("DispatchOn takes exactly one keyword argument")
+        self.name = kwargs.keys[0]
+        typ = kwargs[self.name]
+        self.types = isinstance(typ, types.TupleType) and typ or (typ,)
+
+    def __call__(self, function):
+        combined = sys._getframe(1).f_locals.get(function.__name__)
+        if combined is None:
+            signature = Signature.infer(function)
+            def _dispatch(*args, **kwargs):
+                name = _dispatch.func_dict[MAGIC_DIS]
+                values = signature.Values(*args, **kwargs)
+                key = values.named[name]
+                implementations = _dispatch.func_dict[MAGIC_MAP]
+                class_ = isinstance(key, types.ClassType) and types.ClassType or key.__class__
+                for parent in class_.__mro__:
+                    if parent in implementations:
+                        return values.call(implementations[parent])
+                raise ArgumentError("Argument '{0}' for {1} is of unhandled type {2}".
+                                    format(name, function.__name__, class_.__name__))
+            combined = _dispatch
+            combined.__name__ = function.__name__              # pylint: disable-msg=W0622
+            combined.__doc__ = function.__doc__                # pylint: disable-msg=W0622
+            combined.func_dict[MAGIC_SIG] = signature
+            combined.func_dict[MAGIC_DIS] = self.name
+            combined.func_dict[MAGIC_MAP] = dict()
+        if combined.func_dict[MAGIC_DIS] != self.name:
+            raise ArgumentError("Inconsistent names for dynamic dispatch arguments")
+        for type_ in self.types:
+            combined.func_dict[MAGIC_MAP][type_] = function
+        return combined
