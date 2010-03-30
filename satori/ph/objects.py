@@ -3,18 +3,23 @@
 
 
 __all__ = (
-    'Object', 'Argument', 'ArgumentMode',
+    'Object', 'Argument', 'ArgumentMode', 'ArgumentError',
 )
 
 
 import inspect
 import types
 
-from satori.ph.exceptions import ArgumentError
-
 
 MAGIC_ORG = 'objects: original'
 MAGIC_SIG = 'objects: signature'
+
+
+class ArgumentError(Exception):
+    """Exception. A problem with an argument's specification or value.
+    """
+
+    pass
 
 
 class TypeSpec(object):
