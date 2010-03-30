@@ -156,7 +156,7 @@ def _sourceurl(path, line, rev):
 if __name__ == '__main__':
     target_dir = os.path.abspath(sys.argv[1])
     revision = sys.argv[2]
-    template_dir = os.path.join(os.path.dirname(sys.argv[0]), 'templates')
+    template_dir = os.path.join(os.path.dirname(sys.argv[0]), 'pydoc.tmpl')
     if not os.path.isdir(target_dir):
         os.mkdir(target_dir)
     generator = Generator(template_dir=template_dir)
