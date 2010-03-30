@@ -16,9 +16,8 @@ from pygments.lexers import get_lexer_by_name
 import pygments.token
 
 from satori.misc import Namespace
-from satori.objects import Argument
-from satori.patterns import visitor
-from satori.reflection import Reflector, Location, Module, Class, Method, Function
+from satori.objects import Argument, DispatchOn
+from satori.reflection import Reflector, Descriptor, Location, Module, Class, Method, Function
 
 
 class code_token(Inline, FixedTextElement):              # pylint: disable-msg=C0103,R0904
@@ -88,20 +87,20 @@ class Generator(Reflector):
         desc.doc.transformer.apply_transforms()
         desc.shortdoc = [x for x in desc.doc.traverse() if isinstance(x, paragraph)][0]
 
-    @visitor.Dispatch(argument=1)
+    @DispatchOn(desc=Descriptor)
     def update(self, desc):
         """Update descriptor information.
         """
         pass
 
-    @visitor.Implement(type=Location)
+    @DispatchOn(desc=Location)
     def update(self, desc):                                    # pylint: disable-msg=E0102
         """Update Location descriptor information.
         """
         desc.template = 'index.html'
         desc.target_path = os.path.join(desc.target_dir, 'index.html')
 
-    @visitor.Implement(type=Module)
+    @DispatchOn(desc=Module)
     def update(self, desc):                                    # pylint: disable-msg=E0102
         """Update Module descriptor information.
         """
@@ -111,7 +110,7 @@ class Generator(Reflector):
         self.parseDocstring(desc)
         desc.doc.insert(0, title(text=desc.name))
 
-    @visitor.Implement(type=Class)
+    @DispatchOn(desc=Class)
     def update(self, desc):                                    # pylint: disable-msg=E0102
         """Update Class descriptor information.
         """
@@ -122,7 +121,7 @@ class Generator(Reflector):
         self.parseDocstring(desc)
         desc.doc.insert(0, title(text=desc.parent.name+'.'+desc.name))
 
-    @visitor.Implement(type=(Function, Method))
+    @DispatchOn(desc=(Function, Method))
     def update(self, desc):                                    # pylint: disable-msg=E0102
         """Update Function or Method descriptor information.
         """
