@@ -2,7 +2,7 @@
 """
 
 
-from satori.ph.objects import Object, Argument
+from satori.objects import Object, Argument
 
 from .api import Event, MappingId, QueueId
 

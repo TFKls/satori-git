@@ -4,7 +4,7 @@
 
 import types
 
-from satori.ph import objects
+from satori import objects
 from satori.ars.naming import NamedObject
 
 

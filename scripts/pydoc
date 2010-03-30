@@ -15,10 +15,10 @@ from genshi.template import TemplateLoader
 from pygments.lexers import get_lexer_by_name
 import pygments.token
 
-from satori.ph.misc import Namespace
-from satori.ph.objects import Argument
-from satori.ph.patterns import visitor
-from satori.ph.reflection import Reflector, Location, Module, Class, Method, Function
+from satori.misc import Namespace
+from satori.objects import Argument
+from satori.patterns import visitor
+from satori.reflection import Reflector, Location, Module, Class, Method, Function
 
 
 class code_token(Inline, FixedTextElement):              # pylint: disable-msg=C0103,R0904

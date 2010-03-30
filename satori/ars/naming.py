@@ -9,7 +9,7 @@ __all__ = (
 )
 
 
-from satori.ph.objects import Object, Argument, ArgumentError
+from satori.objects import Object, Argument, ArgumentError
 
 
 class NameKind(Object):

@@ -7,7 +7,7 @@ import os
 import sys
 import types
 
-from satori.ph.objects import Object, Argument, ArgumentError, DispatchOn
+from satori.objects import Object, Argument, ArgumentError, DispatchOn
 
 
 class Reflector(Object, dict):

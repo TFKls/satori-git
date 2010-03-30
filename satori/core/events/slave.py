@@ -5,7 +5,7 @@
 import collections
 from _multiprocessing import Connection
 
-from satori.ph.objects import Argument
+from satori.objects import Argument
 
 from .api import Manager
 from .client import CoroutineClient, Scheduler

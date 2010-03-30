@@ -2,7 +2,7 @@
 """
 
 
-from satori.ph.objects import Object
+from satori.objects import Object
 
 
 __all__ = (

@@ -7,7 +7,7 @@ import select
 from _multiprocessing import Connection
 from multiprocessing.connection import Listener
 
-from satori.ph.objects import Argument
+from satori.objects import Argument
 
 from .api import Manager
 from .client import Client, Scheduler

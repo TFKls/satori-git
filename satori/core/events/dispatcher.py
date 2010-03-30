@@ -4,8 +4,8 @@
 
 import collections
 
-from satori.ph.objects import Object
-from satori.ph.misc import Namespace
+from satori.objects import Object
+from satori.misc import Namespace
 
 
 class Dispatcher(Object):

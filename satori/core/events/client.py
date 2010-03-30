@@ -4,8 +4,8 @@
 
 from types import GeneratorType
 
-from satori.ph.objects import Object, Argument
-from satori.ph.misc import flattenCoroutine
+from satori.objects import Object, Argument
+from satori.misc import flattenCoroutine
 from satori.core.events.protocol import Command, ProtocolError
 
 
