@@ -334,7 +334,7 @@ class DispatchOn(Object):
     def __init__(self, **kwargs):
         if len(kwargs) != 1:
             raise ArgumentError("DispatchOn takes exactly one keyword argument")
-        self.name = kwargs.keys[0]
+        self.name = kwargs.keys()[0]
         typ = kwargs[self.name]
         self.types = isinstance(typ, types.TupleType) and typ or (typ,)
 
