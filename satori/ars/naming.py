@@ -1,17 +1,15 @@
-"""
-Abstracts away the differences between various naming conventions.
+"""Abstraction layer for various naming conventions.
 """
 
 __all__ = (
     'Name',
-    'ClassName', 'MethodName', 'FieldName', 'AccessorName',
+    'ClassName', 'MethodName', 'ArgumentName', 'FieldName', 'AccessorName',
     'NamedObject',
     'NamingStyle',
 )
 
 
-from satori.ph.objects import Object, Argument
-from satori.ph.exceptions import ArgumentError
+from satori.ph.objects import Object, Argument, ArgumentError
 
 
 class NameKind(Object):
@@ -98,9 +96,12 @@ class Name(Object):
         self.kind = None
         for arg in args:
             if not isinstance(arg, NameComponent):
-                raise ArgumentError("Components of a Name must be instances of NameComponent")
+                raise ArgumentError(
+                    "Components of a Name must be instances of NameComponent")
             if (self.kind, arg.kind) not in Name.ALLOWED:
-                raise ArgumentError("A NameComponent of kind {0} cannot follow one of kind {1}".format(arg.kind, self.kind))
+                raise ArgumentError(
+                    "A NameComponent of kind {0} cannot follow one of kind {1}".
+                    format(arg.kind, self.kind))
             self.components.append(arg)
             self.hash ^= hash(arg)
             self.kind = arg.kind
@@ -144,9 +145,15 @@ class NamingStyle(Object):
             return self.formats.get(name.kind, NamingStyle.CAMEL)(name)
         if isinstance(name, Name):
             return '.'.join([self.format(c) for c in name.components])
-        raise TypeError("The argument to NamingStyle.format() must be a Name or a NameComponent")
+        raise TypeError(
+            "The argument to NamingStyle.format() must be a Name or a NameComponent")
 
-    CAMEL = staticmethod(lambda component: ''.join([w.lower().capitalize() for w in component.words]))
-    PASCAL = staticmethod(lambda component: ''.join([component.words[0].lower()] + [w.lower().capitalize() for w in component.words[1:]]))
-    LOWER = staticmethod(lambda component: '_'.join([w.lower() for w in component.words]))
-    UPPER = staticmethod(lambda component: '_'.join([w.upper() for w in component.words]))
+    CAMEL = staticmethod(
+        lambda c: ''.join([w.lower().capitalize() for w in c.words]))
+    PASCAL = staticmethod(
+        lambda c: ''.join([c.words[0].lower()] +
+                          [w.lower().capitalize() for w in c.words[1:]]))
+    LOWER = staticmethod(
+        lambda c: '_'.join([w.lower() for w in c.words]))
+    UPPER = staticmethod(
+        lambda c: '_'.join([w.upper() for w in c.words]))
