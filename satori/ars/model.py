@@ -4,18 +4,18 @@
 
 import types
 
-from satori import objects
+from satori.objects import Object, Argument, ArgumentError
 from satori.ars.naming import NamedObject
 
 
 __all__ = (
     'Boolean', 'Int16', 'Int32', 'Int64', 'String',
     'TypeAlias', 'Structure',
-    'Field', 'Argument', 'Procedure', 'Contract'
+    'Field', 'Parameter', 'Procedure', 'Contract'
 )
 
 
-class Element(objects.Object):
+class Element(Object):
     """Abstract. Base for ARS model elements.
     """
     pass
@@ -51,14 +51,17 @@ class NamedType(Type, NamedObject):
     """Abstract. A Type with a Name.
     """
 
-    pass
+    def isSimple(self):
+        """Checks whether this Type is simple.
+        """
+        raise NotImplementedError()
 
 
 class TypeAlias(NamedType):
     """A named alias for a Type.
     """
 
-    @objects.Argument('target_type', type=Type)
+    @Argument('target_type', type=Type)
     def __init__(self, target_type):
         self.target_type = target_type
 
@@ -66,7 +69,7 @@ class TypeAlias(NamedType):
         return self.target_type.isSimple()
 
 
-class NamedTuple(objects.Object):
+class NamedTuple(Object):
 
     def __init__(self):
         self.names = set()
@@ -74,7 +77,7 @@ class NamedTuple(objects.Object):
 
     def add(self, component):
         if component.name in self.names:
-            raise objects.ArgumentError("duplicate component name")
+            raise ArgumentError("duplicate component name")
         self.names.add(component.name)
         self.items.append(component)
 
@@ -87,8 +90,8 @@ class NamedTuple(objects.Object):
 
 class Field(Element, NamedObject):
 
-    @objects.Argument('type', type=Type)
-    @objects.Argument('optional', type=bool, default=False)
+    @Argument('type', type=Type)
+    @Argument('optional', type=bool, default=False)
     def __init__(self, type, optional):                        # pylint: disable-msg=W0622
         self.type = type
         self.optional = optional
@@ -108,10 +111,11 @@ class Structure(NamedType):
         self.fields.add(field)
 
 
-class Argument(Element, NamedObject):
+class Parameter(Element, NamedObject):
 
-    @objects.Argument('type', type=Type)
-    @objects.Argument('default', default=None)
+    @Argument('type', type=Type)
+    @Argument('optional', type=bool, default=False)
+    @Argument('default', default=None)
     def __init__(self, type, optional, default):               # pylint: disable-msg=W0622
         self.type = type
         self.optional = optional
@@ -120,21 +124,23 @@ class Argument(Element, NamedObject):
 
 class Procedure(Element, NamedObject):
 
-    @objects.Argument('return_type', type=Type, default=Void)
-    @objects.Argument('implementation', type=types.FunctionType, default=None)
-    @objects.Argument('error_type', type=Type, default=String)
-    @objects.Argument('error_transform', type=types.FunctionType, default=lambda x:str(x))
+    EX2STRING = lambda ex: str(ex)                             # pylint: disable-msg=W0108
+
+    @Argument('return_type', type=Type, default=Void)
+    @Argument('implementation', type=types.FunctionType, default=None)
+    @Argument('error_type', type=Type, default=String)
+    @Argument('error_transform', type=types.FunctionType, default=EX2STRING)
     def __init__(self, return_type, implementation, error_type, error_transform):
         self.return_type = return_type
         self.implementation = implementation
         self.error_type = error_type
         self.error_transform = error_transform
-        self.arguments = NamedTuple()
+        self.parameters = NamedTuple()
 
-    def addArgument(self, argument=None, **kwargs):
+    def addParameter(self, argument=None, **kwargs):
         if argument is None:
-            argument = Argument(**kwargs)
-        self.arguments.add(argument)
+            argument = Parameter(**kwargs)
+        self.parameters.add(argument)
 
 
 class Contract(Element, NamedObject):
@@ -147,5 +153,6 @@ class Contract(Element, NamedObject):
             procedure = Procedure(**kwargs)
         name = procedure.name.components[-1]
         if name in self.procedures:
-            raise objects.ArgumentError("duplicate procedure '{0}'".format(procedure.name))
+            raise ArgumentError("duplicate procedure '{0}'".
+                                        format(procedure.name))
         self.procedures[name] = procedure
