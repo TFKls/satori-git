@@ -7,9 +7,9 @@ __all__ = (
 )
 
 
-import inspect
-import sys
-import types
+from inspect import getargspec
+from sys import _getframe
+from types import ClassType, TupleType, TypeType
 
 
 MAGIC_ORG = 'objects/original'
@@ -192,7 +192,7 @@ class Signature(object):
         """Infer a Signature for a given callable.
         """
         try:
-            return Signature(*inspect.getargspec(callable_))
+            return Signature(*getargspec(callable_))
         except TypeError:
             return Signature(['self'])
 
@@ -288,7 +288,7 @@ class Signature(object):
         return ArgumentValues
 
 
-class ObjectMeta(types.TypeType):
+class ObjectMeta(TypeType):
     """Metaclass for Object.
     """
 
@@ -309,7 +309,7 @@ class ObjectMeta(types.TypeType):
             __init__.__doc__ = init.__doc__                    # pylint: disable-msg=W0622
             dict_['__init__'] = __init__
         # call parent metaclass
-        class_ = types.TypeType.__new__(mcs, name, bases, dict_)
+        class_ = TypeType.__new__(mcs, name, bases, dict_)
         # collect constructor signature (requires __mro__ ordering)
         if '__init__' in dict_:
             for parent in class_.__mro__:
@@ -336,10 +336,10 @@ class DispatchOn(Object):
             raise ArgumentError("DispatchOn takes exactly one keyword argument")
         self.name = kwargs.keys()[0]
         typ = kwargs[self.name]
-        self.types = isinstance(typ, types.TupleType) and typ or (typ,)
+        self.types = isinstance(typ, TupleType) and typ or (typ,)
 
     def __call__(self, function):
-        combined = sys._getframe(1).f_locals.get(function.__name__)
+        combined = _getframe(1).f_locals.get(function.__name__)
         if combined is None:
             signature = Signature.infer(function)
             def _dispatch(*args, **kwargs):
@@ -347,7 +347,7 @@ class DispatchOn(Object):
                 values = signature.Values(*args, **kwargs)
                 key = values.named[name]
                 implementations = _dispatch.func_dict[MAGIC_MAP]
-                class_ = isinstance(key, types.ClassType) and types.ClassType or key.__class__
+                class_ = isinstance(key, ClassType) and ClassType or key.__class__
                 for parent in class_.__mro__:
                     if parent in implementations:
                         return values.call(implementations[parent])
@@ -361,6 +361,11 @@ class DispatchOn(Object):
             combined.func_dict[MAGIC_MAP] = dict()
         if combined.func_dict[MAGIC_DIS] != self.name:
             raise ArgumentError("Inconsistent names for dynamic dispatch arguments")
+        oldmap = getattr(function, 'func_dict', {}).get(MAGIC_MAP, {})
+        if oldmap:
+            combined.func_dict[MAGIC_MAP].update(oldmap)
+            function = function.func_dict[MAGIC_ORG]
         for type_ in self.types:
             combined.func_dict[MAGIC_MAP][type_] = function
+        combined.func_dict[MAGIC_ORG] = function
         return combined

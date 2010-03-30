@@ -121,7 +121,8 @@ class Generator(Reflector):
         self.parseDocstring(desc)
         desc.doc.insert(0, title(text=desc.parent.name+'.'+desc.name))
 
-    @DispatchOn(desc=(Function, Method))
+    @DispatchOn(desc=Function)
+    @DispatchOn(desc=Method)
     def update(self, desc):                                    # pylint: disable-msg=E0102
         """Update Function or Method descriptor information.
         """

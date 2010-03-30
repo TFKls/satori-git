@@ -36,7 +36,8 @@ class Reflector(Object, dict):
     def _create(self, obj):                                    # pylint: disable-msg=E0102
         return Module(obj=obj, cache=self)
 
-    @DispatchOn(obj=(types.ClassType, types.TypeType))
+    @DispatchOn(obj=types.ClassType)
+    @DispatchOn(obj=types.TypeType)
     def _create(self, obj):                                    # pylint: disable-msg=E0102
         return Class(obj=obj, cache=self)
 
