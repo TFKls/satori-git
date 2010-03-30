@@ -7,8 +7,7 @@ import os
 import sys
 import types
 
-from satori.ph.objects import Object, Argument
-from satori.ph.patterns import visitor
+from satori.ph.objects import Object, Argument, ArgumentError, DispatchOn
 
 
 class Reflector(Object, dict):
@@ -33,23 +32,19 @@ class Reflector(Object, dict):
         self.groups.append(group)
         return group
 
-    @visitor.Dispatch(argument=1)
-    def _create(self, obj):                                    # pylint: disable-msg=R0201
-        raise KeyError("Unhandled obj type '{0}'".format(obj.__class__))
-
-    @visitor.Implement(type=types.ModuleType)
+    @DispatchOn(obj=types.ModuleType)
     def _create(self, obj):                                    # pylint: disable-msg=E0102
         return Module(obj=obj, cache=self)
 
-    @visitor.Implement(type=(types.ClassType, types.TypeType))
+    @DispatchOn(obj=(types.ClassType, types.TypeType))
     def _create(self, obj):                                    # pylint: disable-msg=E0102
         return Class(obj=obj, cache=self)
 
-    @visitor.Implement(type=types.MethodType)
+    @DispatchOn(obj=types.MethodType)
     def _create(self, obj):                                    # pylint: disable-msg=E0102
         return Method(obj=obj, cache=self)
 
-    @visitor.Implement(type=types.FunctionType)
+    @DispatchOn(obj=types.FunctionType)
     def _create(self, obj):                                    # pylint: disable-msg=E0102
         return Function(obj=obj, cache=self)
 
@@ -122,7 +117,7 @@ class Descriptor(Object):
             try:
                 obj = getattr(self.object, name)
                 yield name, self.cache[obj]
-            except (AttributeError, KeyError, TypeError):
+            except (AttributeError, KeyError, TypeError, ArgumentError):
                 pass
 
     modules = property(lambda self: (x for x in self.children if _ismodule(x)))
