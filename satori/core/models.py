@@ -7,7 +7,7 @@ import hashlib, base64
 import satori.core.setup                                       # pylint: disable-msg=W0611
 from django.conf import settings
 from django.db import models
-
+from satori.dbev import events
 
 BLOBHASH = hashlib.sha384
 HASHSIZE = (BLOBHASH().digest_size * 8 + 5) / 6
@@ -36,7 +36,7 @@ class BlobField(models.Field):
 
     __metaclass__ = models.SubfieldBase
 
-    def db_type(self, _connection):                            # pylint: disable-msg=C0103
+    def db_type(self, connection):                            # pylint: disable-msg=C0103
         """Return the database column type for this Field.
         """
         if settings.DATABASE_ENGINE == 'postgresql_psycopg2':
@@ -129,6 +129,10 @@ class Problem(Object):
 
     name        = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, default="")
+class ProblemEvents(events.Events):
+    model = Problem
+    on_insert = on_update = ('name')
+    on_delete = ()
 
 
 class Test(Object):
@@ -143,6 +147,10 @@ class Test(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
+class TestEvents(events.Events):
+    model = Test
+    on_insert = on_update = ('owner', 'problem', 'name')
+    on_delete = ()
 
 
 class TestSuite(Object):
@@ -158,6 +166,10 @@ class TestSuite(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
+class TestSuiteEvents(events.Events):
+    model = TestSuite
+    on_insert = on_update = ('owner', 'problem', 'name')
+    on_delete = ()
 
 
 class ProblemIncarnation(Object):
@@ -168,7 +180,10 @@ class ProblemIncarnation(Object):
     description = models.TextField()
     test_suite  = models.ForeignKey('TestSuite')
     aggregator2 = models.CharField(max_length=128, choices=AGGREGATORS2)
-
+class ProblemIncarnationEvents(events.Events):
+    model = ProblemIncarnation
+    on_insert = on_update = ('problem', 'test_suite')
+    on_delete = ()
 
 class Contest(Object):
     """Model. Description of a contest.
@@ -178,6 +193,10 @@ class Contest(Object):
     problems    = models.ManyToManyField('ProblemIncarnation', through='ProblemMapping')
     aggregator3 = models.CharField(max_length=128, choices=AGGREGATORS3)
     # TODO: add presentation options
+class ContestEvents(events.Events):
+    model = Contest
+    on_insert = on_update = ('name')
+    on_delete = ()
 
 
 class ProblemMapping(Object):
@@ -191,6 +210,10 @@ class ProblemMapping(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'code'), ('contest', 'problem'))
+class ProblemMappingEvents(events.Events):
+    model = ProblemMapping
+    on_insert = on_update = ('contest', 'problem')
+    on_delete = ()
 
 
 class Role(Object):
@@ -199,6 +222,10 @@ class Role(Object):
 
     name        = models.CharField(max_length=50)
     absorbing   = models.BooleanField(default=False)
+class RoleEvents(events.Events):
+    model = Role
+    on_insert = on_update = ('name')
+    on_delete = ()
 
 
 class User(Role):
@@ -207,6 +234,10 @@ class User(Role):
 
     pass
     # add validation
+class UserEvents(events.Events):
+    model = User
+    on_insert = on_update = ('name')
+    on_delete = ()
 
 
 class Contestant(Role):
@@ -214,6 +245,10 @@ class Contestant(Role):
     """
 
     contest     = models.ForeignKey('Contest')
+class ContestantEvents(events.Events):
+    model = Contestant
+    on_insert = on_update = ('name', 'contest')
+    on_delete = ()
 
 
 class Submit(Object):
@@ -223,6 +258,10 @@ class Submit(Object):
     owner       = models.ForeignKey('Contestant', null=True)
     problem     = models.ForeignKey('ProblemIncarnation', null=True)
     time        = models.DateTimeField(auto_now_add=True)
+class SubmitEvents(events.Events):
+    model = Submit
+    on_insert = on_update = ('owner', 'problem')
+    on_delete = ()
 
 
 class TestResult(Object):
@@ -235,6 +274,10 @@ class TestResult(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('submit', 'test'),)
+class TestResultEvents(events.Events):
+    model = TestResult
+    on_insert = on_update = ('submit', 'test', 'tester')
+    on_delete = ()
 
 
 class TestSuiteResult(Object):
@@ -246,6 +289,10 @@ class TestSuiteResult(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('submit', 'test_suite'),)
+class TestSuiteResultEvents(events.Events):
+    model = TestSuiteResult
+    on_insert = on_update = ('submit', 'test_suite')
+    on_delete = ()
 
 
 class ProblemResult(Object):
@@ -258,6 +305,10 @@ class ProblemResult(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contestant', 'problem'),)
+class ProblemResultEvents(events.Events):
+    model = ProblemResult
+    on_insert = on_update = ('contestant', 'problem')
+    on_delete = ()
 
 
 # pylint: enable-msg=W0232
