@@ -1,3 +1,4 @@
+# vim:ts=4:sts=4:sw=4:expandtab
 #!/usr/bin/env python
 
 """Script. Manages the Django part of satori.core.

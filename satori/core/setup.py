@@ -1,3 +1,4 @@
+# vim:ts=4:sts=4:sw=4:expandtab
 """Takes care of settings required by Django. Import this module before django.*
 """
 

@@ -1,3 +1,4 @@
+# vim:ts=4:sts=4:sw=4:expandtab
 import unittest
 
 from satori.ars.naming import NameKind, NameComponent

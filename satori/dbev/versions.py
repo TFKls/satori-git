@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+import satori.core.setup                                       # pylint: disable-msg=W0611
 from django.db import models
 from django.db import connection
 
