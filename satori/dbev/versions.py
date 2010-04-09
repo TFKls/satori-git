@@ -23,27 +23,27 @@ class UserField(models.IntegerField):
         self.on_delete = bool(on_delete is not False)
         self.versions = bool(versions is not False)
 
-    def insert_sql(self, table, dict):
+    def insert_sql(self, table, fields):
         keys = []
         vals = []
-        for k,v in dict.iteritems():
-        	keys.append(str(k))
-        	vals.append(str(v))
+        for key, val in fields.iteritems():
+            keys.append(str(key))
+            vals.append(str(val))
         return 'INSERT INTO {0} ({1}) VALUES ({2})'.format(table, ', '.join(keys), ', '.join(vals))
 
-    def update_sql(self, table, dict, where = {}):
+    def update_sql(self, table, fields, where = False):
         if where:
             return 'UPDATE {0} SET {1} WHERE {2}'.format(table,
-                ', '.join([str(x) + " = " + str(y) for x,y in dict.iteritems()]),
-                ' AND '.join([str(x) + " = " + str(y) for x,y in where.iteritems()]))
+                ', '.join([str(key) + " = " + str(val) for key, val in fields.iteritems()]),
+                ' AND '.join([str(key) + " = " + str(val) for key, val in where.iteritems()]))
         else:
-            return 'UPDATE {0} SET {1}'.format(table, ', '.join([str(x) + " = " + str(y) for x,y in dict.iteritems()]))
+            return 'UPDATE {0} SET {1}'.format(table, ', '.join([str(key) + " = " + str(val) for key, val in fields.iteritems()]))
 
     def notify_sql(self, action):
         qn = connection.ops.quote_name
         qv = lambda x : '\''+str(x)+'\''
         if (action == 'I' and self.on_init) or (action == 'U' and self.on_update) or (action == 'D' and self.on_delete):
-            entry = qn('old') + "." + qn('_version_transaction');
+            entry = qn('old') + "." + qn('_version_transaction')
             if action == 'I':
                 entry = 'NULL'
             record = 'new'
@@ -64,7 +64,7 @@ class UserField(models.IntegerField):
             where[not_col('transaction')] = row[not_col('transaction')]
             upd = row.copy()
             if action == 'U':
-            	del upd[not_col('action')]
+                del upd[not_col('action')]
             del upd[not_col('entry')]
             if action == 'I':
                 return """
@@ -90,7 +90,6 @@ class UserField(models.IntegerField):
     def post_create_sql(self, style, db_table):
         qn = connection.ops.quote_name
         qv = lambda x : '\''+str(x)+'\''
-        notification = models.get_model('dbev', 'notification')
 
         modify_original = """
             ALTER TABLE {0} ADD COLUMN {1} integer NOT NULL DEFAULT get_transaction_id();
@@ -112,7 +111,7 @@ class UserField(models.IntegerField):
        
         row = {}
         for x in self._model._original._meta.local_fields:
-        	row[qn(x.column)] = qn('new')+'.'+qn(x.column)
+            row[qn(x.column)] = qn('new')+'.'+qn(x.column)
         row[qn('_version_from')] = 'CURRENT_TIMESTAMP'
         row[qn('_version_to')] = 'NULL'
         row[qn('_version_transaction')] = 'get_transaction_id()'
@@ -138,7 +137,7 @@ class UserField(models.IntegerField):
             qn(self._model._original._meta.db_table),
         )
 
-        row[qn('_version_entry')] = qn('old')+'.'+qn('_version_transaction');
+        row[qn('_version_entry')] = qn('old')+'.'+qn('_version_transaction')
         where = {}
         where[qn(self._model._original._meta.pk.column)] = row[qn(self._model._original._meta.pk.column)]
         where[qn('_version_transaction')] = row[qn('_version_transaction')]
@@ -182,8 +181,8 @@ class UserField(models.IntegerField):
         )
 
         for x in self._model._original._meta.local_fields:
-        	row[qn(x.column)] = qn('old')+'.'+qn(x.column)
-        	upd[qn(x.column)] = qn('old')+'.'+qn(x.column)
+            row[qn(x.column)] = qn('old')+'.'+qn(x.column)
+            upd[qn(x.column)] = qn('old')+'.'+qn(x.column)
         where[qn(self._model._original._meta.pk.column)] = row[qn(self._model._original._meta.pk.column)]
         row[qn('_version_to')] = 'CURRENT_TIMESTAMP'
         upd[qn('_version_to')] = 'CURRENT_TIMESTAMP'
@@ -224,10 +223,6 @@ class Versions:
             def __new__(cls, name, bases, attrs):
                 return type.__new__(cls, name, bases, attrs)
         
-        class PModel(models.Model):
-            __metaclass__ = PMeta
-            pass
-
         fields = {}
         fields['__module__'] = model.__module__
         for field in model._meta.local_fields:
@@ -245,8 +240,8 @@ class Versions:
         for field in modelclass._meta.fields:
             field._model = modelclass
 
-def set_user_id(id):
-    connection.cursor().execute('SELECT set_user_id(%s);', [str(int(id))])
+def setUserId(uid):
+    connection.cursor().execute('SELECT set_user_id(%s);', [str(int(uid))])
 
-def unset_user_id():
+def unsetUserId():
     connection.cursor().execute('SELECT set_user_id(NULL);')

@@ -1,7 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import satori.core.setup                                       # pylint: disable-msg=W0611
-from django.db import models
-import satori.dbev.models
 from satori.dbev import versions
 
 class AlreadyRegistered(Exception):
@@ -22,10 +20,6 @@ class EventsRegistry(object):
             raise AlreadyRegistered('The model %s is already registered' % model.__name__)
         self._registry[model] = events(self)
         versions.Versions(model, events)
-
-    def sql(self):
-        for model, events in self._registry.iteritems():
-            print model._meta.app_label, model._meta.module_name, events.on_insert, events.on_update, events.on_delete
 
 registry = EventsRegistry()
 
