@@ -132,8 +132,8 @@ class Problem(Object):
     description = models.TextField(blank=True, default="")
 class ProblemEvents(events.Events):
     model = Problem
-    on_insert = on_update = ('name')
-    on_delete = ()
+    on_insert = on_update = ['name']
+    on_delete = []
 
 
 class Test(Object):
@@ -150,8 +150,8 @@ class Test(Object):
         unique_together = (('problem', 'name'),)
 class TestEvents(events.Events):
     model = Test
-    on_insert = on_update = ('owner', 'problem', 'name')
-    on_delete = ()
+    on_insert = on_update = ['owner', 'problem', 'name']
+    on_delete = []
 
 
 class TestSuite(Object):
@@ -169,8 +169,8 @@ class TestSuite(Object):
         unique_together = (('problem', 'name'),)
 class TestSuiteEvents(events.Events):
     model = TestSuite
-    on_insert = on_update = ('owner', 'problem', 'name')
-    on_delete = ()
+    on_insert = on_update = ['owner', 'problem', 'name']
+    on_delete = []
 
 
 class ProblemIncarnation(Object):
@@ -183,8 +183,8 @@ class ProblemIncarnation(Object):
     aggregator2 = models.CharField(max_length=128, choices=AGGREGATORS2)
 class ProblemIncarnationEvents(events.Events):
     model = ProblemIncarnation
-    on_insert = on_update = ('problem', 'test_suite')
-    on_delete = ()
+    on_insert = on_update = ['problem', 'test_suite']
+    on_delete = []
 
 class Contest(Object):
     """Model. Description of a contest.
@@ -196,8 +196,8 @@ class Contest(Object):
     # TODO: add presentation options
 class ContestEvents(events.Events):
     model = Contest
-    on_insert = on_update = ('name')
-    on_delete = ()
+    on_insert = on_update = ['name']
+    on_delete = []
 
 
 class ProblemMapping(Object):
@@ -213,8 +213,8 @@ class ProblemMapping(Object):
         unique_together = (('contest', 'code'), ('contest', 'problem'))
 class ProblemMappingEvents(events.Events):
     model = ProblemMapping
-    on_insert = on_update = ('contest', 'problem')
-    on_delete = ()
+    on_insert = on_update = ['contest', 'problem']
+    on_delete = []
 
 
 class Role(Object):
@@ -225,8 +225,8 @@ class Role(Object):
     absorbing   = models.BooleanField(default=False)
 class RoleEvents(events.Events):
     model = Role
-    on_insert = on_update = ('name')
-    on_delete = ()
+    on_insert = on_update = ['name']
+    on_delete = []
 
 
 class User(Role):
@@ -237,8 +237,8 @@ class User(Role):
     # add validation
 class UserEvents(events.Events):
     model = User
-    on_insert = on_update = ('name')
-    on_delete = ()
+    on_insert = on_update = ['name']
+    on_delete = []
 
 
 class Contestant(Role):
@@ -248,8 +248,8 @@ class Contestant(Role):
     contest     = models.ForeignKey('Contest')
 class ContestantEvents(events.Events):
     model = Contestant
-    on_insert = on_update = ('name', 'contest')
-    on_delete = ()
+    on_insert = on_update = ['name', 'contest']
+    on_delete = []
 
 
 class Submit(Object):
@@ -261,8 +261,8 @@ class Submit(Object):
     time        = models.DateTimeField(auto_now_add=True)
 class SubmitEvents(events.Events):
     model = Submit
-    on_insert = on_update = ('owner', 'problem')
-    on_delete = ()
+    on_insert = on_update = ['owner', 'problem']
+    on_delete = []
 
 
 class TestResult(Object):
@@ -277,8 +277,8 @@ class TestResult(Object):
         unique_together = (('submit', 'test'),)
 class TestResultEvents(events.Events):
     model = TestResult
-    on_insert = on_update = ('submit', 'test', 'tester')
-    on_delete = ()
+    on_insert = on_update = ['submit', 'test', 'tester']
+    on_delete = []
 
 
 class TestSuiteResult(Object):
@@ -292,8 +292,8 @@ class TestSuiteResult(Object):
         unique_together = (('submit', 'test_suite'),)
 class TestSuiteResultEvents(events.Events):
     model = TestSuiteResult
-    on_insert = on_update = ('submit', 'test_suite')
-    on_delete = ()
+    on_insert = on_update = ['submit', 'test_suite']
+    on_delete = []
 
 
 class ProblemResult(Object):
@@ -308,8 +308,8 @@ class ProblemResult(Object):
         unique_together = (('contestant', 'problem'),)
 class ProblemResultEvents(events.Events):
     model = ProblemResult
-    on_insert = on_update = ('contestant', 'problem')
-    on_delete = ()
+    on_insert = on_update = ['contestant', 'problem']
+    on_delete = []
 
 
 # pylint: enable-msg=W0232

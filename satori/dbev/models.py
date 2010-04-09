@@ -65,6 +65,6 @@ class Notification(models.Model):
     action      = models.CharField(max_length=1)
     model       = models.CharField(max_length=50)
     object      = models.IntegerField()
-    version     = models.IntegerField()
     transaction = models.IntegerField()
+    entry       = models.IntegerField(null=True, blank=True)
     user        = UserField()

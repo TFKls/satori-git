@@ -1,11 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-
-import select
-import psycopg2.extensions
 import satori.core.setup                                       # pylint: disable-msg=W0611
 from django.db import models
-from django.db import connection
-import versions
+import satori.dbev.models
+from satori.dbev import versions
 
 class AlreadyRegistered(Exception):
     pass
@@ -24,7 +21,7 @@ class EventsRegistry(object):
         if model in self._registry:
             raise AlreadyRegistered('The model %s is already registered' % model.__name__)
         self._registry[model] = events(self)
-        v = versions.Versions(model, events)
+        versions.Versions(model, events)
 
     def sql(self):
         for model, events in self._registry.iteritems():
@@ -57,23 +54,3 @@ class Events(object):
     def __init__(self, registry):
         self.registry = registry
         super(Events, self).__init__()
-
-class EventsListener(object):
-    """
-    Listens to Notify events.
-    """
-    def __init__(self):
-        notification = models.get_model('dbev','notification')
-        cursor = connection.cursor()
-        con = connection.connection
-        con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-        con.commit()
-        cursor = con.cursor()
-        cursor.execute('LISTEN '+notification.notification+';')
-        print "Waiting for 'NOTIFY "+notification.notification+"'"
-        while 1:
-            if select.select([cursor],[],[],5)==([],[],[]):
-                print "Timeout"
-            else:
-                if cursor.isready():
-                    print "Got NOTIFY:", cursor.connection.notifies.pop()
