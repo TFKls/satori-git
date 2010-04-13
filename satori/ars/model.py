@@ -144,7 +144,7 @@ class Procedure(Element, NamedObject):
         self.parameters.add(argument)
 
 
-class Contract(Element, NamedObject):
+class Contract(Element):
 
     def __init__(self):
         self.procedures = {}
@@ -152,7 +152,7 @@ class Contract(Element, NamedObject):
     def addProcedure(self, procedure=None, **kwargs):
         if procedure is None:
             procedure = Procedure(**kwargs)
-        name = procedure.name.components[-1]
+        name = procedure.name
         if name in self.procedures:
             raise ArgumentError("duplicate procedure '{0}'".
                                         format(procedure.name))
