@@ -4,7 +4,7 @@
 
 __all__ = (
     'Name',
-    'ClassName', 'MethodName', 'ArgumentName', 'FieldName', 'AccessorName',
+    'ClassName', 'MethodName', 'ParameterName', 'FieldName', 'AccessorName',
     'NamedObject',
     'NamingStyle',
 )
@@ -69,7 +69,7 @@ class NameComponent(Object):
         return (self.words == other.words)
 
     def __str__(self):
-        return 'NameComponent:' + self.kind.name + ':' + NamingStyle.DEFAULT.format(self)
+        return "{0} ({1})".format(NamingStyle.DEFAULT.format(self), self.kind.name)
 
 
 ClassName = NameKind(name="ClassName")
@@ -92,7 +92,7 @@ class Name(Object):
         (None, ParameterName),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         super(Name, self).__init__()
         self.components = []
         self.hash = 0

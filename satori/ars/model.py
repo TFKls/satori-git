@@ -128,7 +128,7 @@ class Procedure(Element, NamedObject):
     EX2STRING = lambda ex: str(ex)                             # pylint: disable-msg=W0108
 
     @Argument('return_type', type=Type, default=Void)
-    @Argument('implementation', type=types.FunctionType, default=None)
+    @Argument('implementation', type=(types.FunctionType,None), default=None)
     @Argument('error_type', type=Type, default=String)
     @Argument('error_transform', type=types.FunctionType, default=EX2STRING)
     def __init__(self, return_type, implementation, error_type, error_transform):
