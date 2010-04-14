@@ -1,3 +1,8 @@
-build
-dist
-Satori.egg-info
+syntax: regexp
+
+^\.
+/\.
+\.py[co]$
+^build
+^dist
+^Satori.egg-info
