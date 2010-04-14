@@ -10,7 +10,7 @@ __all__ = (
 
 from inspect import getargspec
 from sys import _getframe
-from types import ClassType, TupleType, TypeType
+from types import ClassType, DictType, NoneType, TupleType, TypeType
 
 
 MAGIC_ORG = 'objects/original'
@@ -22,124 +22,235 @@ MAGIC_MAP = 'objects.DispatchOn/type map'
 class ArgumentError(Exception):
     """Exception. A problem with an argument's specification or value.
     """
-
     pass
 
 
-class TypeSpec(object):
-    """An argument type specification."""
+class ArgumentConstraint(object):
+    """Abstract. A constraint for function argument.
+    """
 
-    def __init__(self, **kwargs):
-        self.type = kwargs.get('type', [])
-        self.none = kwargs.get('none', len(self.type) == 0)
+    def invalid(self, value):
+        """Checks whether a given value satisfies this constraint.
+        Returns the error message or None if the constraint is satisfied.
+        """
+        raise NotImplementedError()
+
+    def __le__(self, other):
+        """Checks whether this constraint is stronger than (or equal to) another.
+
+        The set of all ArgumentConstraints with this relation should form a partial order.
+        """
+        if isinstance(other, NoConstraint):
+            return True
+        if isinstance(other, ConstraintConjunction):
+            return all(self <= m for m in other.members)
+        if isinstance(other, ConstraintDisjunction):
+            return any(self <= m for m in other.members)
+        return False
+
+    def __eq__(self, other):
+        return (self <= other) and (other <= self)
 
     def __and__(self, other):
-        type_ = self.type + other.type
-        none = self.none and other.none
-        return TypeSpec(type=type_, none=none)
+        if isinstance(other, (ConstraintConjunction, ConstraintDisjunction)):
+            return other & self
+        return ConstraintConjunction.of((self, other))
+
+    def __or__(self, other):
+        if isinstance(other, (ConstraintConjunction, ConstraintDisjunction)):
+            return other | self
+        return ConstraintDisjunction.of((self, other))
+
+    @staticmethod
+    def parse(spec):
+        if spec is None:
+            return TypeConstraint(NoneType)
+        if isinstance(spec, (ClassType, TypeType)):
+            return TypeConstraint(spec)
+        if isinstance(spec, TupleType):
+            return ConstraintDisjunction.of([
+                ArgumentConstraint.parse(m) for m in spec
+            ])
+        if isinstance(spec, DictType):
+            handlers = {
+                'type': ArgumentConstraint.parse
+            }
+            return ConstraintConjunction.of([
+                handlers.get(k, lambda v: None)(v) for k, v in spec.iteritems()
+            ])
+        raise ArgumentError(
+            "Unrecognized argument constraint specification '{0}'"
+            .format(spec)
+        )
+
+
+class NoConstraint(ArgumentConstraint):
+    """An ArgumentConstraint which is always satisfied.
+    """
+
+    def invalid(self, value):
+        return None
+
+    def __and__(self, other):
+        return other
+
+    def __or__(self, other):
+        return self
 
     def __str__(self):
-        desc = ""
-        for type_ in self.type:
-            if isinstance(type_, tuple):
-                for option in type_:
-                    desc += option.__name__
-                    desc += " or "
-                desc = desc[:-4]
-            else:
-                desc += type_.__name__
-            desc += ", "
-        if not self.none:
-            desc += "not None, "
-        desc = desc[:-2]
-        return desc
+        return "anything"
 
-    def isValid(self, value):
-        """Checks whether a given value meets this TypeSpec."""
-        if value is None:
-            return self.none
-        for type_ in self.type:
-            if not isinstance(value, type_):
-                return False
-        return True
+
+class ConstraintConjunction(ArgumentConstraint):
+    """A conjunction of multiple ArgumentConstraints.
+    """
+
+    def __init__(self, members):
+        self.members = tuple(members)
+
+    @staticmethod
+    def of(candidates):
+        members = []
+        for i, c in enumerate(candidates):
+            if c is None:
+                continue
+            if any(d <= c for d in candidates[i+1:]):
+                continue
+            if any(m <= c for m in members):
+                continue
+            members.append(c)
+        if len(members) == 0:
+            return NoConstraint()
+        elif len(members) == 1:
+            return members[0]
+        else:
+            ConstraintConjunction(members)
+
+    def invalid(self, value):
+        for member in self.members:
+            result = member.invalid(value)
+            if result is not None:
+                return result
+        return None
+
+    def __le__(self, other):
+        return any(m <= other for m in self.members)
+
+    def __and__(self, other):
+        plus = isinstance(other, ConstraintConjunction) and other.members or [other]
+        return ConstraintConjunction.of(self.members + plus)
+
+    def __or__(self, other):
+        return ConstraintConjunction.of([m | other for m in self.members])
+
+    def __str__(self):
+        return " and ".join("({0})".format(m) for m in self.members)
+
+
+class ConstraintDisjunction(ArgumentConstraint):
+    """A disjunction of multiple ArgumentConstraints.
+    """
+
+    def __init__(self, members):
+        self.members = tuple(members)
+
+    @staticmethod
+    def of(candidates):
+        members = []
+        for i, c in enumerate(candidates):
+            if c is None:
+                continue
+            if any(c <= d for d in candidates[i+1:]):
+                continue
+            if any(c <= m for m in members):
+                continue
+            members.append(c)
+        if len(members) == 0:
+            raise ArgumentError("ConstraintDisjunction must have at least one member!")
+        elif len(members) == 1:
+            return members[0]
+        else:
+            return ConstraintDisjunction(members)
+
+    def invalid(self, value):
+        results = []
+        for member in self.members:
+            result = member.invalid(value)
+            if result is None:
+                return None
+            results.append(result)
+        return '; '.join(results)
+
+    def __le__(self, other):
+        return all(m <= other for m in self.members)
+
+    def __and__(self, other):
+        return ConstraintDisjunction.of([m & other for m in self.members])
+
+    def __or__(self, other):
+        plus = isinstance(other, ConstraintDisjunction) and other.members or [other]
+        return ConstraintDisjunction.of(self.members + plus)
+
+    def __str__(self):
+        return " or ".join("({0})".format(m) for m in self.members)
+
+
+class TypeConstraint(ArgumentConstraint):
+    """Constraint. Requires the value to be an instance of a specific type.
+    """
+
+    def __init__(self, type_):
+        self.type = type_
+
+    def invalid(self, value):
+        if isinstance(value, self.type):
+            return None
+        return "{0} is not an instance of {1}".format(value, self.type)
+
+    def __le__(self, other):
+        if isinstance(other, TypeConstraint):
+            return issubclass(self.type, other.type)
+        return super(TypeConstraint, self).__le__(other)
+
+    def __str__(self):
+        return "instance of {0}".format(self.type)
 
 
 class ArgumentMode(object):
-    """Enumeration. Modes for function arguments."""
+    """Enumeration. Modes for function arguments.
+    """
 
     REQUIRED = 0
     OPTIONAL = 1
     PROVIDED = 2
 
 
-class ValueSpec(object):
-    """An argument value specification."""
-
-    def __init__(self, **kwargs):
-        self.value = None
-        self.mode = ArgumentMode.REQUIRED
-        if 'default' in kwargs:
-            self.value = kwargs['default']
-            self.mode = ArgumentMode.OPTIONAL
-        if 'fixed' in kwargs:
-            self.value = kwargs['fixed']
-            self.mode = ArgumentMode.PROVIDED
-
-    def __str__(self):
-        if self.mode == ArgumentMode.REQUIRED:
-            return "required"
-        if self.mode == ArgumentMode.OPTIONAL:
-            return "optional, default = " + str(self.value)
-        if self.mode == ArgumentMode.PROVIDED:
-            return "fixed, value = " + str(self.value)
-        raise Exception('this should NOT happen!')
-
-    def __add__(self, other):
-        # one without a value always looses...
-        if (self.mode == ArgumentMode.REQUIRED):
-            return other
-        if (other.mode == ArgumentMode.REQUIRED):
-            return self
-        # ...two strongmen agree or die...
-        if (self.mode == ArgumentMode.PROVIDED) and (other.mode == ArgumentMode.PROVIDED):
-            if self.value != other.value:
-                raise ArgumentError("Conflicting provided values.")
-        # ...otherwise the left has advantage
-        if (other.mode == ArgumentMode.PROVIDED):
-            return other
-        else:
-            return self
-
-    def __and__(self, tspec):
-        if self.mode == ArgumentMode.REQUIRED:
-            return self
-        if tspec.isValid(self.value):
-            return self
-        if self.mode == ArgumentMode.OPTIONAL:
-            return ValueSpec()
-        else:
-            raise TypeError("'{0}' does not satisfy the specification '{1}'".
-                            format(self.value, tspec))
-
-
 class Argument(object):
-    """An argument specification."""
+    """An argument specification.
+    """
 
-    def __init__(self, name, doc=None, tspec=None, vspec=None, **kwargs):
-        if 'type' in kwargs:
-            if not isinstance(kwargs['type'], list):
-                kwargs['type'] = [kwargs['type']]
-        if 'fixed' in kwargs:
-            if kwargs['fixed'] is None:
-                kwargs['none'] = True
-        elif 'default' in kwargs:
-            if kwargs['default'] is None:
-                kwargs['none'] = True
+    def _enforce(self, constraint):
+        if self.mode != ArgumentMode.REQUIRED:
+            error = constraint.invalid(self.value)
+            if error is not None:
+                if self.mode == ArgumentMode.PROVIDED:
+                    raise ArgumentError("Invalid provided value: "+error)
+                self.mode = ArgumentMode.REQUIRED
+        self.constraint &= constraint
+
+    def __init__(self, name, doc=None, **kwargs):
         self.name = name
         self.doc = doc
-        self.tspec = tspec or TypeSpec(**kwargs)
-        self.vspec = vspec or ValueSpec(**kwargs)
-        self.vspec &= self.tspec
+        self.constraint = NoConstraint()
+        self.mode = kwargs.pop('mode', ArgumentMode.REQUIRED)
+        self.value = kwargs.pop('value', None)
+        if 'default' in kwargs:
+            self.value = kwargs.pop('default')
+            self.mode = ArgumentMode.OPTIONAL
+        if 'fixed' in kwargs:
+            self.value = kwargs.pop('fixed')
+            self.mode = ArgumentMode.PROVIDED
+        self._enforce(kwargs.pop('constraint', None) or ArgumentConstraint.parse(kwargs))
 
     def __call__(self, func):
         signature = Signature.of(func)
@@ -147,12 +258,13 @@ class Argument(object):
         return func
 
     def __str__(self):
-        tdesc = str(self.tspec)
-        vdesc = str(self.vspec)
-        if len(tdesc) > 0:
-            return tdesc + ", " + vdesc
-        else:
-            return vdesc
+        if self.mode == ArgumentMode.REQUIRED:
+            return "required, {0}".format(self.constraint)
+        if self.mode == ArgumentMode.OPTIONAL:
+            return "optional (default = {0}), {1}".format(self.value, self.constraint)
+        if self.mode == ArgumentMode.PROVIDED:
+            return "fixed (value = {0})".format(self.value)
+        raise Exception('this should NOT happen!')
 
     def __add__(self, other):
         if other is None:
@@ -161,21 +273,32 @@ class Argument(object):
             raise ArgumentError("Argument names do not match.")
         name = self.name
         doc = self.doc or other.doc
-        tspec = self.tspec & other.tspec
-        vspec = (self.vspec & other.tspec) + (other.vspec & self.tspec)
-        return Argument(name, doc, tspec, vspec)
+        cons = self.constraint & other.constraint
+        left = Argument(name, doc, constraint=cons, mode=self.mode, value=self.value)
+        right = Argument(name, doc, constraint=cons, mode=other.mode, value=other.value)
+        if left.mode == ArgumentMode.REQUIRED:
+            return right
+        if right.mode == ArgumentMode.REQUIRED:
+            return left
+        if left.mode == ArgumentMode.PROVIDED and right.mode == ArgumentMode.PROVIDED:
+            if left.value != right.value:
+                raise ArgumentError(
+                    "Conflicting provided values: {0} and {1}"
+                    .format(left.value, right.value)
+                )
+        if right.mode == ArgumentMode.PROVIDED:
+            return right
+        else:
+            return left
 
     def apply(self, args, name=None):
         """Applies this specification to a given argument."""
         name = name or self.name
-        vspec = (name in args) and ValueSpec(fixed=args[name]) or ValueSpec()
-        vspec &= self.tspec
-        vspec += self.vspec
-        if vspec.mode == ArgumentMode.REQUIRED:
+        provided = (name in args) and Argument(name, fixed=args[name]) or Argument(name)
+        provided += self
+        if provided.mode == ArgumentMode.REQUIRED:
             raise ArgumentError("Required argument '{0}' not provided.".format(name))
-        args[name] = vspec.value
-
-    mode = property(lambda self: self.vspec.mode)
+        args[name] = provided.value
 
 
 def _original(callable_):
