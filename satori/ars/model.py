@@ -128,7 +128,7 @@ class Procedure(Element, NamedObject):
     EX2STRING = lambda ex: str(ex)                             # pylint: disable-msg=W0108
 
     @Argument('return_type', type=Type, default=Void)
-    @Argument('implementation', type=types.FunctionType, default=None)
+    @Argument('implementation', type=(types.FunctionType,None), default=None)
     @Argument('error_type', type=Type, default=String)
     @Argument('error_transform', type=types.FunctionType, default=EX2STRING)
     def __init__(self, return_type, implementation, error_type, error_transform):
@@ -144,7 +144,7 @@ class Procedure(Element, NamedObject):
         self.parameters.add(argument)
 
 
-class Contract(Element, NamedObject):
+class Contract(Element):
 
     def __init__(self):
         self.procedures = {}
@@ -152,7 +152,7 @@ class Contract(Element, NamedObject):
     def addProcedure(self, procedure=None, **kwargs):
         if procedure is None:
             procedure = Procedure(**kwargs)
-        name = procedure.name.components[-1]
+        name = procedure.name
         if name in self.procedures:
             raise ArgumentError("duplicate procedure '{0}'".
                                         format(procedure.name))
