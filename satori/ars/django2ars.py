@@ -103,11 +103,11 @@ class FieldOper(object):
 
     def _addOpers(self, opers):
         if not self._want:
-        	return
+            return
 
         can = self._can
         implement = self._implement
-        
+
         if can:
             def func(*args, **kwargs):
                 can(*args, **kwargs)
@@ -121,7 +121,7 @@ class FieldOper(object):
 
         proc = Procedure(name=self._ars_name, return_type=self._ars_return_type, implementation=func)
         for param in self._ars_parameters:
-        	proc.addParameter(param)
+            proc.addParameter(param)
 
         opers.append(proc)
 
@@ -133,18 +133,18 @@ class FieldOpers(object):
         self._opers = genFieldOpers(model, field)
 
         for oper in self._opers:
-        	setattr(self, oper._name, oper)
+            setattr(self, oper._name, oper)
 
     def _addOpers(self, opers):
         for oper in self._opers:
-        	oper._addOpers(opers)
+            oper._addOpers(opers)
 
 class ModelOpers(OperProvider):
     def __init__(self, model):
         self.model = model
         self._field_operss = []
         for field in self.model._meta.fields:
-        	field_opers = FieldOpers(model, field)
+            field_opers = FieldOpers(model, field)
             self._field_operss.append(field_opers)
             setattr(self, field.name, field_opers)
 
@@ -152,7 +152,7 @@ class ModelOpers(OperProvider):
         for field_opers in self._field_operss:
             field_opers._addOpers(opers)
 
-contract = Contract()
+contract = Contract(name=Name(ClassName('DjangoContract')))
 
 class OpersBase(type):
     def __new__(cls, name, bases, dct):
@@ -165,8 +165,8 @@ class OpersBase(type):
         newdct = {}
 
         for oper in opers:
-        	newdct[NamingStyle.IDENTIFIER.format(oper.name)] = staticmethod(oper.implementation)
-        	contract.addProcedure(oper)
+            newdct[NamingStyle.IDENTIFIER.format(oper.name)] = staticmethod(oper.implementation)
+            contract.addProcedure(oper)
 
         return super(OpersBase, cls).__new__(cls, name, bases, newdct)
 

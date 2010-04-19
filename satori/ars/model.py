@@ -10,9 +10,9 @@ from satori.ars.naming import NamedObject
 
 
 __all__ = (
-    'Boolean', 'Int16', 'Int32', 'Int64', 'String',
-    'TypeAlias', 'Structure',
-    'Field', 'Parameter', 'Procedure', 'Contract'
+    'Boolean', 'Int16', 'Int32', 'Int64', 'String', 'Void',
+    'Field', 'ListType', 'MapType', 'SetType', 'Structure', 'TypeAlias',
+    'Parameter', 'Procedure', 'Contract'
 )
 
 
@@ -49,31 +49,38 @@ Float = AtomicType()
 String = AtomicType()
 Void = AtomicType()
 
-class List(Type):
+
+class ListType(Type):
     """A List Type.
     """
 
     @Argument('element_type', type=Type)
     def __init__(self, element_type):
         self.element_type = element_type
+
     def isSimple(self):
         return False
+
     def __str__(self):
         return 'List<'+str(self.element_type)+'>'
 
-class Set(Type):
+
+class SetType(Type):
     """A Set Type.
     """
 
     @Argument('element_type', type=Type)
     def __init__(self, element_type):
         self.element_type = element_type
+
     def isSimple(self):
         return False
+
     def __str__(self):
         return 'Set<'+str(self.element_type)+'>'
 
-class Map(Type):
+
+class MapType(Type):
     """A Map Type.
     """
 
@@ -82,8 +89,10 @@ class Map(Type):
     def __init__(self, key_type, value_type):
         self.key_type = key_type
         self.value_type = value_type
+
     def isSimple(self):
         return False
+
     def __str__(self):
         return 'Map<'+str(self.key_type)+','+str(self.value_type)+'>'
 
@@ -184,16 +193,12 @@ class Procedure(Element, NamedObject):
         self.parameters.add(argument)
 
 
-class Contract(Element):
+class Contract(Element, NamedObject):
 
     def __init__(self):
-        self.procedures = {}
+        self.procedures = NamedTuple()
 
     def addProcedure(self, procedure=None, **kwargs):
         if procedure is None:
             procedure = Procedure(**kwargs)
-        name = procedure.name
-        if name in self.procedures:
-            raise ArgumentError("duplicate procedure '{0}'".
-                                        format(procedure.name))
-        self.procedures[name] = procedure
+        self.procedures.add(procedure)

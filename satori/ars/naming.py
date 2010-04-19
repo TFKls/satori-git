@@ -93,7 +93,6 @@ class Name(Object):
     )
 
     def __init__(self, *args):
-        super(Name, self).__init__()
         self.components = []
         self.hash = 0
         self.kind = None
