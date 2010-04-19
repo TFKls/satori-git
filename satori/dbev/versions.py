@@ -1,4 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+import copy
 import satori.core.setup                                       # pylint: disable-msg=W0611
 from django.db import models
 import satori.dbev.models
@@ -225,8 +226,18 @@ class Versions:
         
         fields = {}
         fields['__module__'] = model.__module__
+
+        def db_type(self):
+            if self._original.db_type() == "serial":
+                return "integer"
+            else:
+                return self._original.db_type()
         for field in model._meta.local_fields:
-            fields[field.name] = VersionsField(field)
+            nfield = copy.copy(field)
+            nfield._original = field
+#            nfield.db_type = db_type
+            fields[field.name] = nfield
+
         fields['_version_from'] = models.DateTimeField()
         fields['_version_to'] = models.DateTimeField(null=True, blank=True)
         fields['_version_transaction'] = models.IntegerField()
