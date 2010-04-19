@@ -41,11 +41,51 @@ class AtomicType(Type):
 
 
 Boolean = AtomicType()
+Int8 = AtomicType()
 Int16 = AtomicType()
 Int32 = AtomicType()
 Int64 = AtomicType()
+Float = AtomicType()
 String = AtomicType()
 Void = AtomicType()
+
+class List(Type):
+    """A List Type.
+    """
+
+    @Argument('element_type', type=Type)
+    def __init__(self, element_type):
+        self.element_type = element_type
+    def isSimple(self):
+        return False
+    def __str__(self):
+        return 'List<'+str(self.element_type)+'>'
+
+class Set(Type):
+    """A Set Type.
+    """
+
+    @Argument('element_type', type=Type)
+    def __init__(self, element_type):
+        self.element_type = element_type
+    def isSimple(self):
+        return False
+    def __str__(self):
+        return 'Set<'+str(self.element_type)+'>'
+
+class Map(Type):
+    """A Map Type.
+    """
+
+    @Argument('key_type', type=Type)
+    @Argument('value_type', type=Type)
+    def __init__(self, key_type, value_type):
+        self.key_type = key_type
+        self.value_type = value_type
+    def isSimple(self):
+        return False
+    def __str__(self):
+        return 'Map<'+str(self.key_type)+','+str(self.value_type)+'>'
 
 
 class NamedType(Type, NamedObject):

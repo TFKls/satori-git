@@ -4,7 +4,7 @@
 
 __all__ = (
     'Name',
-    'ClassName', 'MethodName', 'ArgumentName', 'FieldName', 'AccessorName',
+    'ClassName', 'MethodName', 'ParameterName', 'FieldName', 'AccessorName',
     'NamedObject',
     'NamingStyle',
 )
@@ -22,8 +22,10 @@ class NameKind(Object):
         self.name = name
 
     def __call__(self, string):
-        return Name(NameComponent(string, kind=self))
+        return NameComponent(string, kind=self)
 
+    def __str__(self):
+        return 'NameKind:' + self.name
 
 class NameComponent(Object):
     """A single component of a hierarchical name.
@@ -66,10 +68,13 @@ class NameComponent(Object):
             return False
         return (self.words == other.words)
 
+    def __str__(self):
+        return "{0} ({1})".format(NamingStyle.DEFAULT.format(self), self.kind.name)
+
 
 ClassName = NameKind(name="ClassName")
 MethodName = NameKind(name="MethodName")
-ArgumentName = NameKind(name="ArgumentName")
+ParameterName = NameKind(name="ParameterName")
 FieldName = NameKind(name="FieldName")
 AccessorName = NameKind(name="AccessorName")
 
@@ -80,17 +85,14 @@ class Name(Object):
 
     ALLOWED = (
         (None, ClassName),
-        (None, MethodName),
-        (None, FieldName),
-        (ClassName, ClassName),
         (ClassName, MethodName),
         (ClassName, FieldName),
-        (MethodName, ArgumentName),
-        (FieldName, FieldName),
         (FieldName, AccessorName),
+        (None, MethodName),
+        (None, ParameterName),
     )
 
-    def __init__(self, *args, **kwargs):
+    def __init__(self, *args):
         super(Name, self).__init__()
         self.components = []
         self.hash = 0
@@ -98,7 +100,7 @@ class Name(Object):
         for arg in args:
             if not isinstance(arg, NameComponent):
                 raise ArgumentError(
-                    "Components of a Name must be instances of NameComponent")
+                    "Components of a Name must be instances of NameComponent:" + arg)
             if (self.kind, arg.kind) not in Name.ALLOWED:
                 raise ArgumentError(
                     "A NameComponent of kind {0} cannot follow one of kind {1}".
@@ -122,6 +124,9 @@ class Name(Object):
     def __add__(self, other):
         return Name(*(self.components + other.components))
 
+    def __str__(self):
+        return 'Name:' + NamingStyle.DEFAULT.format(self)
+
 
 class NamedObject(Object):
     """Mix-in base for Objects with a Name.
@@ -136,25 +141,31 @@ class NamingStyle(Object):
     """Formatter corresponding to a specific naming convention.
     """
 
-    def __init__(self):
-        self.formats = dict()
+    def __init__(self, separator, formats, default_style):
+        self.separator = separator
+        self.formats = formats
+        self.default_style = default_style
 
     def format(self, name):
         """Format a Name according to this NamingStyle.
         """
         if isinstance(name, NameComponent):
-            return self.formats.get(name.kind, NamingStyle.CAMEL)(name)
+            return self.formats.get(name.kind, self.default_style)(name)
         if isinstance(name, Name):
-            return '.'.join([self.format(c) for c in name.components])
+            return self.separator.join([self.format(c) for c in name.components])
         raise TypeError(
             "The argument to NamingStyle.format() must be a Name or a NameComponent")
 
-    CAMEL = staticmethod(
-        lambda c: ''.join([w.lower().capitalize() for w in c.words]))
     PASCAL = staticmethod(
+        lambda c: ''.join([w.lower().capitalize() for w in c.words]))
+    MIXED = staticmethod(
         lambda c: ''.join([c.words[0].lower()] +
                           [w.lower().capitalize() for w in c.words[1:]]))
     LOWER = staticmethod(
         lambda c: '_'.join([w.lower() for w in c.words]))
     UPPER = staticmethod(
         lambda c: '_'.join([w.upper() for w in c.words]))
+
+NamingStyle.DEFAULT = NamingStyle('.', {ClassName: NamingStyle.PASCAL}, NamingStyle.MIXED)
+NamingStyle.IDENTIFIER = NamingStyle('_', {ClassName: NamingStyle.PASCAL}, NamingStyle.MIXED)
+
