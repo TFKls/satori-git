@@ -418,28 +418,26 @@ class ObjectMeta(TypeType):
 
     def __new__(mcs, name, bases, dict_):
         # replace constructor
-        if '__init__' in dict_:
-            init = dict_['__init__']
-            def __init__(self, *args, **kwargs):               # pylint: disable-msg=C0103
-                signature = Signature.of(__init__)
-                values = signature.Values(self, *args, **kwargs)
-                for parent in reversed(self.__class__.__mro__):
-                    if '__init__' in parent.__dict__:
-                        values.call(_original(parent.__init__), False)
-            if hasattr(init, 'func_dict'):
-                __init__.func_dict.update(init.func_dict)
-            __init__.func_dict[MAGIC_SIG] = Signature.of(init)
-            __init__.func_dict[MAGIC_ORG] = init
-            __init__.__doc__ = init.__doc__                    # pylint: disable-msg=W0622
-            dict_['__init__'] = __init__
+        init = dict_.get('__init__', lambda self: None)
+        def __init__(self, *args, **kwargs):               # pylint: disable-msg=C0103
+            signature = Signature.of(__init__)
+            values = signature.Values(self, *args, **kwargs)
+            for parent in reversed(self.__class__.__mro__):
+                if '__init__' in parent.__dict__:
+                    values.call(_original(parent.__init__), False)
+        if hasattr(init, 'func_dict'):
+            __init__.func_dict.update(init.func_dict)
+        __init__.func_dict[MAGIC_SIG] = Signature.of(init)
+        __init__.func_dict[MAGIC_ORG] = init
+        __init__.__doc__ = init.__doc__                    # pylint: disable-msg=W0622
+        dict_['__init__'] = __init__
         # call parent metaclass
         class_ = TypeType.__new__(mcs, name, bases, dict_)
         # collect constructor signature (requires __mro__ ordering)
-        if '__init__' in dict_:
-            for parent in class_.__mro__:
-                if '__init__' in parent.__dict__:
-                    parent_sig = Signature.of(_original(parent.__init__))
-                    __init__.func_dict[MAGIC_SIG] += parent_sig
+        for parent in class_.__mro__:
+            if '__init__' in parent.__dict__:
+                parent_sig = Signature.of(_original(parent.__init__))
+                __init__.func_dict[MAGIC_SIG] += parent_sig
         return class_
 
 
