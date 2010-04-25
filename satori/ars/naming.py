@@ -167,4 +167,5 @@ class NamingStyle(Object):
 
 NamingStyle.DEFAULT = NamingStyle('.', {ClassName: NamingStyle.PASCAL}, NamingStyle.MIXED)
 NamingStyle.IDENTIFIER = NamingStyle('_', {ClassName: NamingStyle.PASCAL}, NamingStyle.MIXED)
+NamingStyle.PYTHON = NamingStyle('__', {ClassName: NamingStyle.PASCAL}, NamingStyle.LOWER)
 
