@@ -85,6 +85,7 @@ class Name(Object):
 
     ALLOWED = (
         (None, ClassName),
+        (None, FieldName),
         (ClassName, MethodName),
         (ClassName, FieldName),
         (FieldName, AccessorName),
