@@ -6,7 +6,7 @@
 from types import GeneratorType
 
 from satori.objects import Object, Argument
-from satori.misc import flattenCoroutine
+from satori.core.events.misc import flattenCoroutine
 from satori.core.events.protocol import Command, ProtocolError
 
 

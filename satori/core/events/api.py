@@ -7,7 +7,7 @@ import hashlib
 import random
 
 from satori.objects import Object
-from satori.misc import Namespace
+from satori.core.events.misc import Namespace
 
 from .dispatcher import Dispatcher
 from .protocol import KeepAlive, Disconnect, Attach, Detach, Map, Unmap, Send, Receive
