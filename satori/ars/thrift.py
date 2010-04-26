@@ -3,12 +3,22 @@
 """
 
 
+__all__ = (
+    'ThriftWriter',
+)
+
+
+from ..thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
+from ..thrift.protocol.TProtocol import TProtocolBase
+
 from satori.objects import Object, Argument, DispatchOn, ArgumentError
 from satori.ars.naming import NamedObject, NamingStyle
+from satori.ars.model import Type, AtomicType, Boolean, Float, Int16, Int32, Int64, String, Void
 from satori.ars.model import AtomicType, Boolean, Int8, Int16, Int32, Int64, Float, String, Void
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, TypeAlias
 from satori.ars.model import Element, Parameter, Procedure, Contract
-from satori.ars.common import TopologicalWriter
+from satori.ars.api import Server
+from satori.ars.common import ContractMixin, TopologicalWriter
 
 
 class ThriftBase(Object):
@@ -129,3 +139,69 @@ class ThriftWriter(TopologicalWriter, ThriftBase):
                 target.write(' error)')
             sep = '\n\t'
         target.write('\n}\n')
+
+
+class ThriftServerBase(ContractMixin, Server, ThriftBase):
+    """Abstract. Common functionality for thrift servers.
+    """
+
+    ATOMIC_TYPE = {
+        Boolean: TType.BOOL,
+        Int16:   TType.I16,
+        Int32:   TType.I32,
+        Int64:   TType.I64,
+        String:  TType.STRING,
+        Void:    TType.VOID,
+    }
+
+    ATOMIC_SEND = {
+        Boolean: 'writeBool',
+        Int16:   'writeI16',
+        Int32:   'writeI32',
+        Int64:   'writeI64',
+        String:  'writeString',
+    }
+
+    ATOMIC_RECV = {
+        Boolean: 'readBool',
+        Int16:   'readI16',
+        Int32:   'readI32',
+        Int64:   'readI64',
+        String:  'readString',
+    }
+
+    @DispatchOn(type_=Type)
+    def _send(self, value, type_, proto): # pylint: disable-msg=E0102
+        raise RuntimeError("Unhandled ARS type: {0}".format(type_))
+
+    @DispatchOn(type_=AtomicType)
+    def _send(self, value, type_, proto): # pylint: disable-msg=E0102
+        getattr(proto, ThriftServerBase.ATOMIC_SEND[type_])(value)
+
+    @DispatchOn(type_=Structure)
+    def _send(self, value, type_, proto): # pylint: disable-msg=E0102
+        proto.writeStructBegin(self.style.format(type_.name))
+        findex = 1
+        for field in type_.fields:
+            fname = self.style.format(field.name)
+            fvalue = value.get(fname, None)
+            if fvalue is not None:
+                self._send_field(findex, fname, fvalue, field.type, proto)
+            findex += 1
+        self.protocol.writeStructEnd()
+
+    @DispatchOn(type_=Type)
+    def _send_field(self, index, name, value, type_, proto): # pylint: disable-msg=E0102
+        raise RuntimeError("Unhandled ARS type: {0}".format(type_))
+
+    @DispatchOn(type_=AtomicType)
+    def _send_field(self, index, name, value, type_, proto): # pylint: disable-msg=E0102
+        proto.writeFieldBegin(name, ThriftServerBase.ATOMIC_TYPE[type_], index)
+        self._send(value, type_, proto)
+        proto.writeFieldStop()
+
+    @DispatchOn(type_=Structure)
+    def _send_field(self, index, name, value, type_, proto): # pylint: disable-msg=E0102
+        proto.writeFieldBegin(name, TType.STRUC, index)
+        self._send(value, type_, proto)
+        proto.writeFieldStop()
