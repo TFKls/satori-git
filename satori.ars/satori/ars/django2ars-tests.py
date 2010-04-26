@@ -16,7 +16,7 @@ class Op(django2ars.Opers):
 class BasicTest(unittest.TestCase):
 
     def setUp(self):
-        satori.test_setup.setupModel(X)
+        satori.ars.test_setup.setupModel(X)
 
         a = X()
         a.a = 12
