@@ -1,5 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-"""The public API of satori.core.events.
+"""The public API of satori.events.
 """
 
 
@@ -7,7 +7,7 @@ import hashlib
 import random
 
 from satori.objects import Object
-from satori.core.events.misc import Namespace
+from satori.events.misc import Namespace
 
 from .dispatcher import Dispatcher
 from .protocol import KeepAlive, Disconnect, Attach, Detach, Map, Unmap, Send, Receive

@@ -1,5 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-"""Test suite for satori.core.events.manager.
+"""Test suite for satori.events.manager.
 """
 
 import unittest

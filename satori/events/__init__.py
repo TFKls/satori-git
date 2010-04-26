@@ -14,7 +14,7 @@ Example
 
 .. code:: python
 
-    from satori.core.events import *
+    from satori.events import *
 
     def countdown():
         queue = QueueId('any string will do')
