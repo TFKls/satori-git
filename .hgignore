@@ -1,8 +1,13 @@
 syntax: regexp
 
 ^\.
+^bin/
+^include/
+^lib/
+^src/
+^var/
 /\.
 \.py[co]$
-^build
-^dist
-^Satori.egg-info
+/build/
+/dist/
+\.egg-info/
