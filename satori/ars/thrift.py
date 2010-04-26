@@ -5,7 +5,7 @@
 
 from satori.objects import Object, Argument, DispatchOn, ArgumentError
 from satori.ars.naming import NamedObject, NamingStyle
-from satori.ars.model import AtomicType, Boolean, Int16, Int32, Int64, String, Void
+from satori.ars.model import AtomicType, Boolean, Int8, Int16, Int32, Int64, Float, String, Void
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, TypeAlias
 from satori.ars.model import Element, Parameter, Procedure, Contract
 from satori.ars.common import TopologicalWriter
@@ -24,9 +24,11 @@ class ThriftWriter(TopologicalWriter, ThriftBase):
 
     ATOMIC_NAMES = {
         Boolean: 'bool',
+        Int8:    'byte',
         Int16:   'i16',
         Int32:   'i32',
         Int64:   'i64',
+        Float:   'double',
         String:  'string',
         Void:    'void',
     }
