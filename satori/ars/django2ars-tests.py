@@ -3,6 +3,8 @@ import unittest
 
 import satori.test_setup
 from satori.ars import django2ars
+from satori.ars.naming import *
+from satori.ars.model import *
 from django.db import models
 
 class X(models.Model):
@@ -23,5 +25,6 @@ class BasicTest(unittest.TestCase):
         a.save()
 
     def testGetter(self):
-        self.assertEqual(Op.X_a_read("", 1), 12)
+        self.assertEqual(Op.a__get("", 1), 12)
+        Op.a__set("", 1, 16)
 
