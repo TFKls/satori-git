@@ -3,10 +3,10 @@
 """
 
 import os
-os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.test_settings'
+os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.ars.test_settings'
 
 from django.core.management import setup_environ
-from satori import test_settings
+from satori.ars import test_settings
 
 setup_environ(test_settings)
 

@@ -1,9 +1,10 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import unittest
 
-import satori.test_setup
-from satori.ars import django2ars
+import satori.ars.test_setup
 from django.db import models
+
+from satori.ars import django2ars
 
 class X(models.Model):
     a = models.IntegerField()
