@@ -136,6 +136,9 @@ class NamedTuple(Object):
 
     def __len__(self):
         return self.items.__len__()
+    
+    def __getitem__(self, index):
+        return self.items[index]
 
 
 class Field(Element, NamedObject):
@@ -187,10 +190,10 @@ class Procedure(Element, NamedObject):
         self.error_transform = error_transform
         self.parameters = NamedTuple()
 
-    def addParameter(self, argument=None, **kwargs):
-        if argument is None:
-            argument = Parameter(**kwargs)
-        self.parameters.add(argument)
+    def addParameter(self, parameter=None, **kwargs):
+        if parameter is None:
+            parameter = Parameter(**kwargs)
+        self.parameters.add(parameter)
 
 
 class Contract(Element, NamedObject):
