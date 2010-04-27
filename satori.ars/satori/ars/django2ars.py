@@ -11,12 +11,12 @@ array_types = {}
 
 def get_id_type(model):
     if not model in id_types:
-    	id_types[model] = TypeAlias(name=Name(ClassName(model._meta.object_name + 'Id')), target_type=Int64)
+        id_types[model] = TypeAlias(name=Name(ClassName(model._meta.object_name + 'Id')), target_type=Int64)
     return id_types[model]
 
 def get_array_type(model):
     if not model in array_types:
-    	array_types[model] = ListType(name=Name(ClassName(model._meta.object_name + 'IdList')), element_type=get_id_type(model))
+        array_types[model] = ListType(name=Name(ClassName(model._meta.object_name + 'IdList')), element_type=get_id_type(model))
     return array_types[model]
 
 #def get_struct_type(model):
@@ -154,7 +154,7 @@ class MethodOper(object):
 
     def _add_opers(self, opers):
         if self._implement:
-        	implement = self._implement
+            implement = self._implement
 
             self._ars_name = Name(MethodName(implement.func_name))
 
@@ -197,7 +197,7 @@ class ModelOpers(OperProvider):
             field_opers._add_opers(myopers)
             
         for oper in myopers:
-        	contract.addProcedure(oper)
+            contract.addProcedure(oper)
 
         opers.extend(myopers)
 
@@ -213,7 +213,7 @@ class StaticMethodOper(OperProvider):
 
     def _add_opers(self, opers):
         if self._implement:
-        	implement = self._implement
+            implement = self._implement
 
             self._ars_name = Name(MethodName(implement.func_name))
 
@@ -227,7 +227,7 @@ class StaticMethodOper(OperProvider):
             for param in self._ars_parameters:
                 proc.addParameter(Parameter(name=Name(ParameterName(param[0])), type=param[1]))
 
-        	static_contract.addProcedure(proc)
+            static_contract.addProcedure(proc)
 
             opers.append(proc)
 
