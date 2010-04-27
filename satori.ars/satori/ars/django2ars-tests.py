@@ -5,7 +5,6 @@ import satori.ars.test_setup
 from django.db import models
 
 from satori.ars import django2ars
-
 class X(models.Model):
     a = models.IntegerField()
     b = models.CharField(max_length=12)
@@ -24,5 +23,6 @@ class BasicTest(unittest.TestCase):
         a.save()
 
     def testGetter(self):
-        self.assertEqual(Op.X_a_read("", 1), 12)
+        self.assertEqual(Op.a__get("", 1), 12)
+        Op.a__set("", 1, 16)
 
