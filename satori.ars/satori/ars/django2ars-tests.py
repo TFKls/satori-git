@@ -1,12 +1,10 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import unittest
 
-import satori.test_setup
-from satori.ars import django2ars
-from satori.ars.naming import *
-from satori.ars.model import *
+import satori.ars.test_setup
 from django.db import models
 
+from satori.ars import django2ars
 class X(models.Model):
     a = models.IntegerField()
     b = models.CharField(max_length=12)
@@ -17,7 +15,7 @@ class Op(django2ars.Opers):
 class BasicTest(unittest.TestCase):
 
     def setUp(self):
-        satori.test_setup.setupModel(X)
+        satori.ars.test_setup.setupModel(X)
 
         a = X()
         a.a = 12

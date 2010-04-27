@@ -5,8 +5,8 @@ import satori.core.setup                                       # pylint: disable
 from django.db import connection
 from django.db import models
 from satori.dbev.events import registry
-from satori.core.events.api import Event
-from satori.core.events.protocol import KeepAlive, Send
+from satori.events.api import Event
+from satori.events.protocol import KeepAlive, Send
 
 def notifier():
     qn = connection.ops.quote_name

@@ -6,7 +6,7 @@
 import collections
 
 from satori.objects import Object
-from satori.misc import Namespace
+from satori.events.misc import Namespace
 
 
 class Dispatcher(Object):

@@ -17,7 +17,7 @@ import pygments.token
 
 from satori.misc import Namespace
 from satori.objects import Argument, DispatchOn
-from satori.reflection import Reflector, Descriptor, Location, Module, Class, Method, Function
+from reflection import Reflector, Descriptor, Location, Module, Class, Method, Function
 
 
 class code_token(Inline, FixedTextElement):              # pylint: disable-msg=C0103,R0904
