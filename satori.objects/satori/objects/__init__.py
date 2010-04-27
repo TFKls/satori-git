@@ -368,7 +368,7 @@ class Signature(object):
         """Return a class for argument values, specialized to match this Signature.
         """
         class ArgumentValues(object):
-            """Holds argument values matching a given Specification.
+            """Holds argument values matching a given Signature.
             """
             def __init__(self, *args, **kwargs):               # pylint: disable-msg=C0103
                 # parse arguments
