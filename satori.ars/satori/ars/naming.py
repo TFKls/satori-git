@@ -86,6 +86,7 @@ class Name(Object):
     ALLOWED = (
         (None, ClassName),
         (None, FieldName),
+        (ClassName, ClassName),
         (ClassName, MethodName),
         (ClassName, FieldName),
         (FieldName, AccessorName),
@@ -122,7 +123,11 @@ class Name(Object):
         return (self.components == other.components)
 
     def __add__(self, other):
-        return Name(*(self.components + other.components))
+        if isinstance(other, Name):
+        	plus = other.components
+        else:
+        	plus = [other,]
+        return Name(*(self.components + plus))
 
     def __str__(self):
         return 'Name:' + NamingStyle.DEFAULT.format(self)
@@ -155,6 +160,28 @@ class NamingStyle(Object):
             return self.separator.join([self.format(c) for c in name.components])
         raise TypeError(
             "The argument to NamingStyle.format() must be a Name or a NameComponent")
+
+    def parse(self, string):
+        """Tries to parse the string.
+        """
+        def looks_like(crumb, kind):
+            return crumb == self.formats.get(kind, self.default_style)(kind(crumb))
+
+        crumbs = string.split(self.separator)
+        if not crumbs:
+        	return []
+        res = []
+        for i, kind in Name.ALLOWED:
+            if i is None and looks_like(crumbs[0], kind):
+            	res.append(Name(kind(crumbs[0])))
+        for crumb in crumbs[1:]:
+        	nres = []
+            for name in res:
+                for prev, next in Name.ALLOWED:
+                    if prev is name.kind and looks_like(crumb, next):
+                    	nres.append(name + next(crumb))
+            res = nres
+        return res
 
     PASCAL = staticmethod(
         lambda c: ''.join([w.lower().capitalize() for w in c.words]))

@@ -80,7 +80,7 @@ class FieldOper(object):
         self._field = field
         self._name = name
 
-        self._ars_name = Name(FieldName(field.name), AccessorName(name))
+        self._ars_name = Name(ClassName(model._meta.object_name), FieldName(field.name), AccessorName(name))
         self._ars_parameters = parameters
         self._ars_return_type = return_type
 
