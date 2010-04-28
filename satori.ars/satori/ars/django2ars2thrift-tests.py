@@ -4,7 +4,7 @@ from satori.ars.naming import Name, ClassName, MethodName, ParameterName
 from satori.ars.model import Contract, Procedure, Parameter, String, Int32
 from satori.ars.thrift import ThriftWriter
 
-import satori.test_setup
+import satori.ars.test_setup
 from satori.ars import django2ars
 from django.db import models
 
