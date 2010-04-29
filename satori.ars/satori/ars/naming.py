@@ -124,9 +124,9 @@ class Name(Object):
 
     def __add__(self, other):
         if isinstance(other, Name):
-        	plus = other.components
+            plus = other.components
         else:
-        	plus = [other,]
+            plus = [other,]
         return Name(*(self.components + plus))
 
     def __str__(self):
@@ -169,17 +169,17 @@ class NamingStyle(Object):
 
         crumbs = string.split(self.separator)
         if not crumbs:
-        	return []
+            return []
         res = []
         for i, kind in Name.ALLOWED:
             if i is None and looks_like(crumbs[0], kind):
-            	res.append(Name(kind(crumbs[0])))
+                res.append(Name(kind(crumbs[0])))
         for crumb in crumbs[1:]:
-        	nres = []
+            nres = []
             for name in res:
                 for prev, next in Name.ALLOWED:
                     if prev is name.kind and looks_like(crumb, next):
-                    	nres.append(name + next(crumb))
+                        nres.append(name + next(crumb))
             res = nres
         return res
 

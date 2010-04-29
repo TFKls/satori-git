@@ -9,11 +9,16 @@ setup(name='satori.core',
     install_requires=[
         'setuptools',
         'Django >= 1.1.1',
+        'egenix-mx-base',
         'psycopg2',
         'Thrift',
         'satori.ars',
         'satori.dbev',
         'satori.events',
         'satori.objects',
-    ]
+    ],
+    entry_points='''
+        [console_scripts]
+        satori.contract = satori.core:export_thrift
+    ''',
 )
