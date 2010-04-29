@@ -52,3 +52,24 @@ class Server(Object):
         """Abstract. Run the server.
         """
         raise NotImplementedError()
+
+
+class Client(Object):
+    """Abstract. Client fo ARS Contract(s).
+    """
+
+    @property
+    def contracts(self):
+        """Abstract. MutableSet. The Contract(s) to be handled by this Client.
+        """
+        raise NotImplementedError()
+
+    def start(self):
+        """Abstract. Start the client. Implement the Procedure(s) in Contract(s).
+        """
+        raise NotImplementedError()
+
+    def stop(self):
+        """Abstract. Stop the client. Unimplement the Procedure(s) in Contract(s).
+        """
+        raise NotImplementedError()

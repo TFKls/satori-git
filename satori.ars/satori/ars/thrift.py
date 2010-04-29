@@ -7,6 +7,7 @@ __all__ = (
     'ThriftWriter',
     'ThriftServer',
     'ThriftReader',
+    'ThriftClient',
 )
 
 
@@ -21,7 +22,8 @@ from pyparsing import dblQuotedString, sglQuotedString, removeQuotes
 from ..thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
 from ..thrift.protocol.TProtocol import TProtocolBase
 from ..thrift.server.TServer import TSimpleServer
-from ..thrift.transport.TTransport import TServerTransportBase
+from ..thrift.transport.TTransport import TServerTransportBase, TTransportBase
+from ..thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from satori.objects import Object, Argument, Signature, DispatchOn, ArgumentError
 from satori.ars.naming import NamedObject, NamingStyle
@@ -30,7 +32,7 @@ from satori.ars.model import Type, AtomicType, Boolean, Float, Int16, Int32, Int
 from satori.ars.model import AtomicType, Boolean, Int8, Int16, Int32, Int64, Float, String, Void
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, TypeAlias
 from satori.ars.model import Element, Parameter, Procedure, Contract
-from satori.ars.api import Server, Reader
+from satori.ars.api import Server, Reader, Client
 from satori.ars.common import ContractMixin, TopologicalWriter
 
 
@@ -170,12 +172,15 @@ class ThriftProcessor(ThriftBase, TProcessor):
                     self._procedures[pname] = procedure
                 elif self._procedures[pname] != procedure:
                     raise ArgumentError("Ambiguous procedure name: {0}".format(pname))
+        self.seqid = 0
 
     ATOMIC_TYPE = {
         Boolean: TType.BOOL,
+        Int8:    TType.BYTE,
         Int16:   TType.I16,
         Int32:   TType.I32,
         Int64:   TType.I64,
+        Float:   TType.DOUBLE,
         String:  TType.STRING,
         Void:    TType.VOID,
     }
@@ -202,11 +207,27 @@ class ThriftProcessor(ThriftBase, TProcessor):
 
     ATOMIC_SEND = {
         Boolean: 'writeBool',
+        Int8:    'writeByte',
         Int16:   'writeI16',
         Int32:   'writeI32',
         Int64:   'writeI64',
+        Float:   'writeDouble',
         String:  'writeString',
     }
+
+    def _sendFields(self, value, name, fields, proto): # pylint: disable-msg=E0102
+        proto.writeStructBegin(name)
+        for index, field in enumerate(fields):
+            if field is None:
+                continue
+            fname = self.style.format(field.name)
+            fvalue = value.get(fname, None)
+            if fvalue is not None:
+                proto.writeFieldBegin(fname, self._ttype(field.type), index)
+                self._send(fvalue, field.type, proto)
+                proto.writeFieldEnd()
+        proto.writeFieldStop()
+        proto.writeStructEnd()
 
     @DispatchOn(type_=Type)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
@@ -218,16 +239,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
     
     @DispatchOn(type_=Structure)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
-        proto.writeStructBegin(self.style.format(type_.name))
-        for index, field in enumerate(type_.fields):
-            fname = self.style.format(field.name)
-            fvalue = value.get(fname, None)
-            if fvalue is not None:
-                proto.writeFieldBegin(name, self._ttype(type_), findex+1)
-                self._send(value, type_, proto)
-                proto.writeFieldEnd()
-        self.protocol.writeFieldStop()
-        self.protocol.writeStructEnd()
+        self._sendFields(value, self.style.format(type_.name), [None] + [field for field in type_.fields], proto)
 
     @DispatchOn(type_=ListType)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
@@ -254,9 +266,11 @@ class ThriftProcessor(ThriftBase, TProcessor):
 
     ATOMIC_RECV = {
         Boolean: 'readBool',
+        Int8:    'readByte',
         Int16:   'readI16',
         Int32:   'readI32',
         Int64:   'readI64',
+        Float:   'readDouble',
         String:  'readString',
     }
 
@@ -275,7 +289,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
             fname, ftype, findex = proto.readFieldBegin()
             if ftype == TType.STOP:
                 break
-            field = fields[findex-1]
+            field = fields[findex]
             if fname is None:
                 fname = self.style.format(field.name)
             elif fname != self.style.format(field.name):
@@ -291,8 +305,8 @@ class ThriftProcessor(ThriftBase, TProcessor):
 
     @DispatchOn(type_=Structure)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
-        value = self._recvFields(type_.fields, proto)
-        for field in fields:
+        value = self._recvFields([None] + [field for field in type_.fields], proto)
+        for field in type_.fields:
             fname = self.style.format(field.name)
             if fname in value:
                 continue
@@ -336,6 +350,23 @@ class ThriftProcessor(ThriftBase, TProcessor):
             value.add(self._recv(type_.element_type, proto))
         proto.readSetEnd()
         return value
+
+    @DispatchOn(type_=Procedure)
+    def _recv(self, type_, proto):
+        fields = []
+        fields.append(Field(name=Name(FieldName('success')), type=type_.return_type))
+        fields.append(Field(name=Name(FieldName('error')), type=type_.error_type))
+        value = self._recvFields(fields, proto)
+        if 'success' in value:
+            return value['success']
+        raise Exception(value['error']) #TODO: what should I raise?
+
+    @DispatchOn(type_=Procedure)
+    def _send(self, value, type_, proto): # pylint: disable-msg=E0102
+        fields = [None]
+        for parameter in type_.parameters:
+            fields.append(Field(name=parameter.name, type=parameter.type, optional=parameter.optional))
+        self._sendFields(value, self.style.format(type_.name) + '_args', fields, proto)
     
     def process(self, iproto, oproto):
         """Processes a single client request.
@@ -352,7 +383,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
             # parse and check arguments
             try:
                 signature = Signature.infer(procedure.implementation)
-                arguments = self._recvFields(procedure.parameters, iproto)
+                arguments = self._recvFields([None] + [par for par in procedure.parameters], iproto)
                 iproto.readMessageEnd()
                 values = signature.Values(**arguments)
             except ArgumentError as ex:
@@ -395,6 +426,34 @@ class ThriftProcessor(ThriftBase, TProcessor):
         finally:
             oproto.trans.flush()
 
+    def call(self, name, args, iproto, oproto):
+        try:
+            procedure = self._procedures[name]
+        except KeyError:
+            raise TApplicationException(TApplicationException.UNKNOWN_METHOD,
+                "Unknown method '{0}'".format(name))
+        oproto.writeMessageBegin(self.style.format(procedure.name), TMessageType.CALL, self.seqid)
+        self.seqid = self.seqid + 1
+        self._send(args, procedure, oproto)
+        oproto.writeMessageEnd()
+        oproto.trans.flush()
+
+        (fname, mtype, rseqid) = iproto.readMessageBegin()
+        if mtype == TMessageType.EXCEPTION:
+            x = TApplicationException()
+            x.read(iproto)
+            iproto.readMessageEnd()
+            raise x
+        result = self._recv(procedure, iproto)
+        iproto.readMessageEnd()
+        return result
+        if result['success'] != None:
+            return result['success']
+        if result['error'] != None:
+            raise result['error']
+        raise TApplicationException(TApplicationException.MISSING_RESULT, "Static_call_me failed: unknown result");
+
+
 class ThriftServer(ContractMixin, Server):
     
     @Argument('server_type', type=(ClassType, TypeType), default=TSimpleServer)
@@ -408,6 +467,35 @@ class ThriftServer(ContractMixin, Server):
         processor = ThriftProcessor(self.contracts)
         server = self._server_type(processor, self._transport)
         return server.serve()
+
+class ThriftClient(ContractMixin, Client):
+
+    @Argument('transport', type=TTransportBase)
+    @Argument('changeContracts', fixed=True)
+    def __init__(self, transport):
+        self._transport = transport
+
+    def start(self):
+        self._changeContracts = False
+        self._transport.open()
+        proto = TBinaryProtocol(self._transport) #TODO: find a better protocol?
+        processor = ThriftProcessor(self.contracts)
+        for contract in self.contracts:
+            for procedure in contract.procedures:
+                names = [processor.style.format(parameter.name) for parameter in procedure.parameters]
+                sig = Signature(names) #TODO: type checking
+                def impl(*args, **kwargs):
+                    values = sig.Values(*args, **kwargs)
+                    return processor.call(processor.style.format(procedure.name), values.named, proto, proto)
+                procedure.implementation = impl
+
+    def stop(self):
+        for contract in self.contracts:
+            for procedure in contract.procedures:
+                procedure.implementation = None
+        self._transport.close()
+        self._changeContracts = True
+
 
 class ThriftReader(ContractMixin, ThriftBase, Reader):
     def setType(self, name, type):
@@ -567,10 +655,10 @@ class ThriftReader(ContractMixin, ThriftBase, Reader):
         def idlFunctionAction(self,s,l,t):
             throw = String
             if 'throw' in t and \
-            	isinstance(t['throw'][0], Structure) and \
-            	len(t['throw'][0].fields) == 1:
+                isinstance(t['throw'][0], Structure) and \
+                len(t['throw'][0].fields) == 1:
                 for field in t['throw'][0].fields:
-                	throw = field.type
+                    throw = field.type
             names = [n for n in self.style.parse(t['name']) if n.kind is MethodName or n.kind is AccessorName]
             name = names and names[0] or Name(MethodName(t['name']))
             proc = Procedure(return_type=t['ret'],
@@ -728,7 +816,7 @@ class ThriftReader(ContractMixin, ThriftBase, Reader):
         parsed = self.idlDocument.parseString(thrift, parseAll=True)
         for i in parsed:
             if isinstance(i, Contract):
-            	self._contracts.add(i)
+                self._contracts.add(i)
 
     types = property(lambda self: frozendict(self._types))
     consts = property(lambda self: frozendict(self._consts))
