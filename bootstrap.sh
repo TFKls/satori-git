@@ -9,6 +9,6 @@
 
 virtualenv-2.6 --no-site-packages .
 source bin/activate
-easy_install zc.buildout
+easy_install zc.buildout==1.4.3
 mkdir -p src/python var/{buildout,cache}
 buildout
