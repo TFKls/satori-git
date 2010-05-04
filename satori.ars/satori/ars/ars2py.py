@@ -7,6 +7,18 @@ id_types = {}
 array_types = {}
 classes = {}
 
+def convert_to(elem, type):
+    if type in id_types:
+    	return elem._id
+    
+    return elem
+
+def convert_from(elem, type):
+    if type in id_types:
+    	return id_types[type](elem)
+
+    return elem
+
 class ArsMethod(object):
     def __init__(self, proc):
         self._proc = proc.implementation
