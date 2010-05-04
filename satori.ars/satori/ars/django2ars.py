@@ -138,12 +138,10 @@ class FieldOpers(object):
             oper._add_opers(opers)
 
 contracts = []
-static_contract = Contract(name=Name(ClassName('Static')))
-contracts.append(static_contract)
 
 class MethodOper(object):
-    def __init__(self, model, return_type, parameters):
-        self._model = model
+    def __init__(self, name, return_type, parameters):
+        self._name = name
         self._ars_parameters = parameters
         self._ars_return_type = return_type
         self._implement = None
@@ -156,7 +154,7 @@ class MethodOper(object):
         if self._implement:
             implement = self._implement
 
-            self._ars_name = Name(MethodName(implement.func_name))
+            self._ars_name = Name(ClassName(self._name), MethodName(implement.func_name))
 
             def func(*args, **kwargs):
                 return implement(*args, **kwargs)
@@ -181,7 +179,7 @@ class ModelOpers(OperProvider):
             setattr(self, field.name, field_opers)
 
     def method(self, return_type, parameters):
-        mo = MethodOper(self._model, return_type, parameters)
+        mo = MethodOper(self._model._meta.object_name, return_type, parameters)
         self._method_opers.append(mo)
         return mo
 
@@ -193,46 +191,37 @@ class ModelOpers(OperProvider):
         for field_opers in self._field_operss:
             field_opers._add_opers(myopers)
             
-        for field_opers in self._method_opers:
-            field_opers._add_opers(myopers)
+        for method_opers in self._method_opers:
+            method_opers._add_opers(myopers)
             
         for oper in myopers:
             contract.addProcedure(oper)
 
         opers.extend(myopers)
 
-class StaticMethodOper(OperProvider):
-    def __init__(self, return_type, parameters):
-        self._ars_parameters = parameters
-        self._ars_return_type = return_type
-        self._implement = None
+class StaticOpers(OperProvider):
+    def __init__(self, name):
+        self._name = name
+        self._method_opers = []
 
-    def __call__(self, function):
-        self._implement = function
-        return self
+    def method(self, return_type, parameters):
+        mo = MethodOper(self._name, return_type, parameters)
+        self._method_opers.append(mo)
+        return mo
 
     def _add_opers(self, opers):
-        if self._implement:
-            implement = self._implement
+        contract = Contract(name=Name(ClassName(self._name)))
+        contracts.append(contract)
 
-            self._ars_name = Name(MethodName(implement.func_name))
+        myopers = []
+        for method_opers in self._method_opers:
+            method_opers._add_opers(myopers)
+            
+        for oper in myopers:
+            contract.addProcedure(oper)
 
-            def func(*args, **kwargs):
-                return implement(*args, **kwargs)
-
-            func.__name__ = NamingStyle.PYTHON.format(self._ars_name)
-            func.func_name = func.__name__
-
-            proc = Procedure(name=self._ars_name, return_type=self._ars_return_type, implementation=func)
-            for param in self._ars_parameters:
-                proc.addParameter(Parameter(name=Name(ParameterName(param[0])), type=param[1]))
-
-            static_contract.addProcedure(proc)
-
-            opers.append(proc)
-
-def StaticMethod(return_type, parameters):
-    return StaticMethodOper(return_type, parameters)
+        opers.extend(myopers)
+    
 
 class OpersBase(type):
     def __new__(cls, name, bases, dict_):
