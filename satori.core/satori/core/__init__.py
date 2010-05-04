@@ -51,3 +51,10 @@ def start_server():
     
     while True:
         pause()
+
+def manage():
+    from django.core.management import execute_manager
+    import satori.core.settings as settings
+
+   	execute_manager(settings)
+
