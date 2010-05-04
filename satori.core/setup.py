@@ -20,5 +20,6 @@ setup(name='satori.core',
     entry_points='''
         [console_scripts]
         satori.contract = satori.core:export_thrift
+        satori.server = satori.core:start_server
     ''',
 )
