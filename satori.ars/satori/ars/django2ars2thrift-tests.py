@@ -1,3 +1,4 @@
+#vim:ts=4:sts=4:sw=4:expandtab
 from unittest import TestCase
 
 from satori.ars.naming import Name, ClassName, MethodName, ParameterName
@@ -18,10 +19,7 @@ class OpX(django2ars.Opers):
     @x.method(String, (('par1', Int32), ('par2', String)))
     def func(par1, par2):
         return par1 + '_' + par2
-    
-    @django2ars.StaticMethod(String, (('par1', Int32), ('par2', String)))
-    def do_sth_stupid(par1, par2):
-        return 'false'
+
 
 class Y(models.Model):
     a = models.IntegerField()
@@ -32,14 +30,22 @@ class OpY(django2ars.Opers):
 
     y.a.set.want(False)
 
-    @django2ars.StaticMethod(String, (('par1', Int32), ('par2', String)))
+
+class StaticOp(django2ars.Opers):
+    s = django2ars.StaticOpers("BadOperations")
+
+    @s.method(String, (('par1', Int32), ('par2', String)))
+    def do_sth_stupid(par1, par2):
+        return 'false'
+
+    @s.method(String, (('par1', Int32), ('par2', String)))
     def do_sth_worse(par1, par2):
         return 'nothing'
+
 
 # not verifying the result, only checking if runs without throwing exceptions
 
 class Writer(TestCase):
-
     def setUp(self):
         self.text = None
 
