@@ -26,6 +26,10 @@ class OperProvider(object):
     def _add_opers(self, opers):
         raise NotImplementedError()
 
+@DispatchOn(field=object)
+def gen_field_opers(model, field):
+    return []
+
 @DispatchOn(field=models.AutoField)
 def gen_field_opers(model, field):
     return []
