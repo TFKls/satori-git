@@ -203,6 +203,10 @@ class ThriftProcessor(ThriftBase, TProcessor):
     @DispatchOn(type_=SetType)
     def _ttype(self, type_):
         return TType.SET
+    
+    @DispatchOn(type_=TypeAlias)
+    def _ttype(self, type_):
+        return self._ttype(type_.target_type)
 
     ATOMIC_SEND = {
         Boolean: 'writeBool',
@@ -236,6 +240,10 @@ class ThriftProcessor(ThriftBase, TProcessor):
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         getattr(proto, ThriftProcessor.ATOMIC_SEND[type_])(value)
     
+    @DispatchOn(type_=TypeAlias)
+    def _send(self, value, type_, proto): # pylint: disable-msg=E0102
+        return self._send(value, type_.target_type, proto)
+
     @DispatchOn(type_=Structure)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         self._sendFields(value, self.style.format(type_.name), [None] + [field for field in type_.fields], proto)
@@ -280,6 +288,10 @@ class ThriftProcessor(ThriftBase, TProcessor):
     @DispatchOn(type_=AtomicType)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         return getattr(proto, ThriftProcessor.ATOMIC_RECV[type_])()
+    
+    @DispatchOn(type_=TypeAlias)
+    def _recv(self, type_, proto): # pylint: disable-msg=E0102
+        return self._recv(type_.target_type, proto)
     
     def _recvFields(self, fields, proto):
         value = {}
@@ -473,20 +485,26 @@ class ThriftClient(ContractMixin, Client):
     @Argument('changeContracts', fixed=True)
     def __init__(self, transport):
         self._transport = transport
+        
+    class Implementation(object):
+        def __init__(self, client, procedure):
+            self._client = client
+            names = [client._processor.style.format(parameter.name) for parameter in procedure.parameters]
+            self._signature = Signature(names)
+            self._name = client._processor.style.format(procedure.name)
+        
+        def __call__(self, *args, **kwargs):
+            values = self._signature.Values(*args, **kwargs)
+            return self._client._processor.call(self._name, values.named, self._client._protocol, self._client._protocol)
 
     def start(self):
         self._changeContracts = False
         self._transport.open()
-        proto = TBinaryProtocol(self._transport) #TODO: find a better protocol?
-        processor = ThriftProcessor(self.contracts)
+        self._protocol = TBinaryProtocol(self._transport) #TODO: find a better protocol?
+        self._processor = ThriftProcessor(self.contracts)
         for contract in self.contracts:
             for procedure in contract.procedures:
-                names = [processor.style.format(parameter.name) for parameter in procedure.parameters]
-                sig = Signature(names) #TODO: type checking
-                def impl(*args, **kwargs):
-                    values = sig.Values(*args, **kwargs)
-                    return processor.call(processor.style.format(procedure.name), values.named, proto, proto)
-                procedure.implementation = impl
+                procedure.implementation = ThriftClient.Implementation(self, procedure)
 
     def stop(self):
         for contract in self.contracts:
