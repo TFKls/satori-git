@@ -817,5 +817,7 @@ class ThriftReader(ContractMixin, ThriftBase, Reader):
             if isinstance(i, Contract):
                 self._contracts.add(i)
 
-    types = property(lambda self: frozendict(self._types))
-    consts = property(lambda self: frozendict(self._consts))
+#    types = property(lambda self: frozendict(self._types))
+#    consts = property(lambda self: frozendict(self._consts))
+    types = property(lambda self: dict(self._types))
+    consts = property(lambda self: dict(self._consts))
