@@ -3,6 +3,7 @@
 exposed over Thrift.
 """
 
+import satori.core.setup
 
 def export_thrift():
     """Entry Point. Writes the Thrift contract of the server to standard output.
