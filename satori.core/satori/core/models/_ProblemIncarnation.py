@@ -13,7 +13,13 @@ class ProblemIncarnation(Object):
     description = models.TextField()
     test_suite  = models.ForeignKey('TestSuite')
     aggregator2 = models.CharField(max_length=128, choices=AGGREGATORS2)
+
 class ProblemIncarnationEvents(events.Events):
     model = ProblemIncarnation
     on_insert = on_update = ['problem', 'test_suite']
     on_delete = []
+
+class ProblemIncarnationOpers(django2ars.Opers):
+    problemincarnation = django2ars.ModelOpers(ProblemIncarnation)
+
+

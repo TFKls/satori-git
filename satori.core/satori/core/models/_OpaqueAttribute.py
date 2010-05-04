@@ -9,3 +9,4 @@ class OpaqueAttribute(OpenAttribute):
     __module__ = "satori.core.models"
 
     value       = models.TextField()
+

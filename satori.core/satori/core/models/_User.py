@@ -10,7 +10,12 @@ class User(Role):
 
     pass
     # add validation
+
 class UserEvents(events.Events):
     model = User
     on_insert = on_update = ['name']
     on_delete = []
+
+class UserOpers(django2ars.Opers):
+    user = django2ars.ModelOpers(User)
+

@@ -14,7 +14,12 @@ class ProblemResult(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contestant', 'problem'),)
+
 class ProblemResultEvents(events.Events):
     model = ProblemResult
     on_insert = on_update = ['contestant', 'problem']
     on_delete = []
+
+class ProblemResultOpers(django2ars.Opers):
+    problemresult = django2ars.ModelOpers(ProblemResult)
+

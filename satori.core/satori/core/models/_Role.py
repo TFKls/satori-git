@@ -10,7 +10,12 @@ class Role(Object):
 
     name        = models.CharField(max_length=50)
     absorbing   = models.BooleanField(default=False)
+
 class RoleEvents(events.Events):
     model = Role
     on_insert = on_update = ['name']
     on_delete = []
+
+class RoleOpers(django2ars.Opers):
+    role = django2ars.ModelOpers(Role)
+

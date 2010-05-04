@@ -11,3 +11,4 @@ class OpenAttribute(models.Model):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('object', 'name'),)
+

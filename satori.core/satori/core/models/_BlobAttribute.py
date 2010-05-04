@@ -9,3 +9,4 @@ class BlobAttribute(OpenAttribute):
     __module__ = "satori.core.models"
 
     hash        = models.ForeignKey('Blob')
+    

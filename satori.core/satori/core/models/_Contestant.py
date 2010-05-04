@@ -9,7 +9,12 @@ class Contestant(Role):
     __module__ = "satori.core.models"
 
     contest     = models.ForeignKey('Contest')
+
 class ContestantEvents(events.Events):
     model = Contestant
     on_insert = on_update = ['name', 'contest']
     on_delete = []
+
+class ContestantOpers(django2ars.Opers):
+    contestant = django2ars.ModelOpers(Contestant)
+

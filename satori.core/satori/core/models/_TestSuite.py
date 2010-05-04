@@ -19,7 +19,12 @@ class TestSuite(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
+
 class TestSuiteEvents(events.Events):
     model = TestSuite
     on_insert = on_update = ['owner', 'problem', 'name']
     on_delete = []
+
+class TestSuiteOpers(django2ars.Opers):
+    testsuite = django2ars.ModelOpers(TestSuite)
+

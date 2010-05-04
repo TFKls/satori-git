@@ -16,7 +16,12 @@ class Test(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
+
 class TestEvents(events.Events):
     model = Test
     on_insert = on_update = ['owner', 'problem', 'name']
     on_delete = []
+
+class TestOpers(django2ars.Opers):
+    test = django2ars.ModelOpers(Test)
+

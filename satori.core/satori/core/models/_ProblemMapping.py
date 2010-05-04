@@ -15,7 +15,12 @@ class ProblemMapping(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'code'), ('contest', 'problem'))
+
 class ProblemMappingEvents(events.Events):
     model = ProblemMapping
     on_insert = on_update = ['contest', 'problem']
     on_delete = []
+
+class ProblemMappingOpers(django2ars.Opers):
+    problemmapping = django2ars.ModelOpers(ProblemMapping)
+

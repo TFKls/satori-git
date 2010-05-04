@@ -60,3 +60,4 @@ class Blob(models.Model):
                 self.__dict__['hash'] = None
             else:
                 self.__dict__['hash'] = base64.b64encode(BLOBHASH(self.data).digest())
+

@@ -13,7 +13,12 @@ class Contest(Object):
     problems    = models.ManyToManyField('ProblemIncarnation', through='ProblemMapping')
     aggregator3 = models.CharField(max_length=128, choices=AGGREGATORS3)
     # TODO: add presentation options
+    
 class ContestEvents(events.Events):
     model = Contest
     on_insert = on_update = ['name']
     on_delete = []
+
+class ContestOpers(django2ars.Opers):
+    contest = django2ars.ModelOpers(Contest)
+

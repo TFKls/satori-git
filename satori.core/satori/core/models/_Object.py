@@ -8,3 +8,4 @@ class Object(models.Model):
 
     pass
     # attributes    (Manager created automatically by OpenAttribute)
+

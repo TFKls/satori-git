@@ -9,3 +9,4 @@ class StringAttribute(OpenAttribute):
     __module__ = "satori.core.models"
 
     value       = models.CharField(max_length=50)
+

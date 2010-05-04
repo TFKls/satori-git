@@ -14,8 +14,11 @@ class Problem(Object):
 class ProblemOpers(django2ars.Opers):
     problem = django2ars.ModelOpers(Problem)
 
-
 class ProblemEvents(events.Events):
     model = Problem
     on_insert = on_update = ['name']
     on_delete = []
+
+class ProblemOpers(django2ars.Opers):
+    problem = django2ars.ModelOpers(Problem)
+
