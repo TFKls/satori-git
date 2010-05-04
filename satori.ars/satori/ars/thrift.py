@@ -28,8 +28,7 @@ from ..thrift.protocol.TBinaryProtocol import TBinaryProtocol
 from satori.objects import Object, Argument, Signature, DispatchOn, ArgumentError
 from satori.ars.naming import NamedObject, NamingStyle
 from satori.ars.naming import ClassName, MethodName, ParameterName, FieldName, AccessorName, Name
-from satori.ars.model import Type, AtomicType, Boolean, Float, Int16, Int32, Int64, String, Void
-from satori.ars.model import AtomicType, Boolean, Int8, Int16, Int32, Int64, Float, String, Void
+from satori.ars.model import Type, AtomicType, Boolean, Float, Int8, Int16, Int32, Int64, String, Void
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, TypeAlias
 from satori.ars.model import Element, Parameter, Procedure, Contract
 from satori.ars.api import Server, Reader, Client
