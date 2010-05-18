@@ -70,13 +70,15 @@ class Token(Object):
     def _set_validity(self, val):
         self.deadline = datetime.now() + val
     validity = property(_get_validity, _set_validity)
+    def _get_valid(self):
+        return self.deadline > datetime.now()
+    valid = property(_get_valid)
 
     def __str__(self):
         token = '\n'.join([ str(x) for x in self.salt, self.user, self.auth, time.mktime(self.deadline.timetuple()), self._genhash() ])
         return self._encrypt(token)
 
-    def valid(self):
-        return self.deadline > datetime.now()
+
 
     def _hash(self, data):
         h = hashlib.md5()
