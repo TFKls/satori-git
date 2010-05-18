@@ -56,29 +56,32 @@ class Token(Object):
                     "Provided token '{0}' is invalid."
                     .format(token)
                 )
-        else:
+        if token == None and (user == None or auth == None or (validity == None and deadline == None)):
+            raise TokenError(
+                "Too few arguments to create a token."
+            )
+        if token == None:
             self.salt = str(random.randint(100000, 999999))
+        if user != None:
             self.user = user
+        if auth != None:
             self.auth = auth
-            if validity != None:
-                self.deadline = datetime.now() + validity
-            else:
-                self.deadline = deadline
+        if deadline != None:
+            self.deadline = deadline
+        if validity != None:
+            self.deadline = datetime.now() + validity
 
     def _get_validity(self):
         return self.deadline - datetime.now()
     def _set_validity(self, val):
         self.deadline = datetime.now() + val
     validity = property(_get_validity, _set_validity)
-    def _get_valid(self):
-        return self.deadline > datetime.now()
-    valid = property(_get_valid)
+    valid = property(lambda self: return self.deadline > datetime.now())
 
     def __str__(self):
-        token = '\n'.join([ str(x) for x in self.salt, self.user, self.auth, time.mktime(self.deadline.timetuple()), self._genhash() ])
-        return self._encrypt(token)
-
-
+        return self._encrypt('\n'.join([ str(x) for x in
+            self.salt, self.user, self.auth, time.mktime(self.deadline.timetuple()), self._genhash()
+        ]))
 
     def _hash(self, data):
         h = hashlib.md5()
@@ -124,5 +127,7 @@ class Token(Object):
         return self._unfill(e.decrypt(self._decode(data)))
 
     def _genhash(self):
-        return self._hash('\n'.join([ str(x) for x in self.salt, self.user, self.auth, time.mktime(self.deadline.timetuple()) ]))
+        return self._hash('\n'.join([ str(x) for x in
+            self.salt, self.user, self.auth, time.mktime(self.deadline.timetuple())
+        ]))
 
