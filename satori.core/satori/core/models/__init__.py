@@ -21,4 +21,3 @@ from satori.core.models._TestResult import TestResult
 from satori.core.models._TestSuite import TestSuite
 from satori.core.models._TestSuiteResult import TestSuiteResult
 from satori.core.models._User import User
-

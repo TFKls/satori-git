@@ -5,14 +5,13 @@ __all__ = (
 )
 
 from satori.objects import Object, Argument
+from satori.core.settings import SECRET_KEY
 from datetime import datetime, timedelta
 import base64
 import hashlib
 import random
 import time
 from Crypto.Cipher import AES
-
-KEY = 'SeCrEt'
 
 class TokenError(Exception):
     """Exception. Provided token is invalid.
@@ -31,8 +30,8 @@ class Token(Object):
     @Argument('validity', type=(timedelta, None), default=None)
     @Argument('deadline', type=(datetime, None), default=None)
     def __init__(self, token, key, user, auth, validity, deadline):
-        self.key = key or KEY
-        if token != None:
+        self.key = key or SECRET_KEY
+        if token is not None:
             try:
                 data = self._decrypt(token).split('\n')
                 if len(data) != 5:
@@ -56,19 +55,19 @@ class Token(Object):
                     "Provided token '{0}' is invalid."
                     .format(token)
                 )
-        if token == None and (user == None or auth == None or (validity == None and deadline == None)):
+        if token is None and (user is None or auth is None or (validity is None and deadline is None)):
             raise TokenError(
                 "Too few arguments to create a token."
             )
-        if token == None:
+        if token is None:
             self.salt = str(random.randint(100000, 999999))
-        if user != None:
+        if user is not None:
             self.user = user
-        if auth != None:
+        if auth is not None:
             self.auth = auth
-        if deadline != None:
+        if deadline is not None:
             self.deadline = deadline
-        if validity != None:
+        if validity is not None:
             self.deadline = datetime.now() + validity
 
     def _get_validity(self):
@@ -76,7 +75,7 @@ class Token(Object):
     def _set_validity(self, val):
         self.deadline = datetime.now() + val
     validity = property(_get_validity, _set_validity)
-    valid = property(lambda self: return self.deadline > datetime.now())
+    valid = property(lambda self: self.deadline > datetime.now())
 
     def __str__(self):
         return self._encrypt('\n'.join([ str(x) for x in
@@ -116,7 +115,9 @@ class Token(Object):
         return data[0:l]
 
     def _key(self):
-        return self._fillup(self.key)[0:16]
+        h = hashlib.md5()
+        h.update(self.key)
+        return h.hexdigest()[:16]
 
     def _encrypt(self, data):
         e = AES.new(self._key())
