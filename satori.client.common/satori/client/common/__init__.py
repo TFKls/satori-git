@@ -11,3 +11,14 @@ client.start()
 ars2py.process(reader)
 
 globals().update(ars2py.classes)
+
+def start_console():
+    import code
+    import readline
+    console = code.InteractiveConsole()
+    console.runcode('import satori.client.common as satori_classes')
+    print
+    print 'satori.client.common is imported as satori_classes'
+    print
+    console.interact()
+
