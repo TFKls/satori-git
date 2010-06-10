@@ -8,5 +8,6 @@ setup(name='satori.judge',
     ],
     install_requires=[
         'setuptools',
+        'pyyaml',
     ]
 )

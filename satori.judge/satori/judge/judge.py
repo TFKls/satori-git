@@ -5,6 +5,7 @@
 from satori.objects import Object, Argument
 import BaseHTTPServer
 import cgi
+from multiprocessing import Process
 import os
 import signal
 import subprocess
@@ -22,13 +23,36 @@ def checkSubPath(root, path):
         	return False
     return True
 
+def jailPath(root, path):
+    return os.path.join(root, os.path.abspath(path)[1:])
+
+class JailRunner(Object):
+    @Argument('root', type=str, default='/jail')
+    @Argument('path', type=str)
+    @Argument('args', default=[])
+    @Argument('search', type=bool, default=False)
+    def __init__(self, root, path, args, search):
+        self.root = root
+        self.path = path
+        self.args = [self.path] + args
+        self.search = search
+
+    def run(self):
+        os.chroot(self.root)
+        os.chdir('/')
+        if self.search:
+            os.execvp(self.path, self.args)
+        else:
+            os.execv(self.path, self.args)
+
+
 class JailBuilder(Object):
     safePath = '/cdrom'
     safeExtension = '.template'
+    scriptTimeout = 5
 
     @Argument('root', type=str, default='/jail')
     @Argument('template', type=str, default='/cdrom/jail.template')
-
     def __init__(self, root, template):
         if not checkSubPath(self.safePath, template) or os.path.splitext(template)[1] != self.safeExtension:
         	raise Exception('Template '+template+' is not safe')
@@ -44,8 +68,10 @@ class JailBuilder(Object):
             num = 1
             if 'base' in template:
                 for base in template['base']:
-                	opts = template.get('opts', '')
-                	name = template.get('name', '__' + str(num) + '__')
+                    if isinstance(base, str):
+                        base = { 'path' : base }
+                	opts = base.get('opts', '')
+                	name = base.get('name', '__' + str(num) + '__')
                 	num += 1
                     path = os.path.join(self.root, os.path.basename(name))
                     if 'path' in base:
@@ -65,6 +91,8 @@ class JailBuilder(Object):
                                 	type = 'auto'
                             subprocess.check_call(['mount', '-t', type, '-o', 'loop,noatime,ro,'+opts, src, path])
                             dirlist.append(path + '=nfsro')
+                        else:
+                        	raise Exception('Path '+base['path']+' can\'t be mounted')
             if 'quota' in template:
                 quota = int(template['quota'])
             if quota > 0:
@@ -72,20 +100,54 @@ class JailBuilder(Object):
                 os.mkdir(path)
                 subprocess.check_call(['mount', '-t', 'tmpfs', '-o', 'noatime,rw,size=' + str(quota) + 'm', 'tmpfs', path])
                 dirlist.append(path + '=rw')
+            dirlist.reverse()
             subprocess.check_call(['mount', '-t', 'aufs', '-o', 'noatime,rw,dirs=' + ':'.join(dirlist), 'aufs', self.root])
             if 'inject' in template: 
-                pass #TODO
+                for src in template['inject']:
+                	src = os.path.realpath(src)
+                    if os.path.isdir(src):
+                    	subprocess.check_call(['rsync', '-a', src, self.root])
+                    elif os.path.isfile(src):
+                        name = os.path.basename(src).split('.')
+                        if name[-1] == 'zip':
+                        	subprocess.check_call(['unzip', '-d', self.root, src])
+                        elif name[-1] == 'tar':
+                        	subprocess.check_call(['tar', '-C', self.root, '-x', '-f', src])
+                        elif name[-1] == 'tbz' or name[-1] == 'tbz2' or (name[-1] == 'bz' or name[-1] == 'bz2') and name[-2] == 'tar':
+                        	subprocess.check_call(['tar', '-C', self.root, '-x', '-j', '-f', src])
+                        elif name[-1] == 'tgz'  or name[-1] == 'gz' and name[-2] == 'tar':
+                        	subprocess.check_call(['tar', '-C', self.root, '-x', '-z', '-f', src])
+                        elif name[-1] == 'lzma' and name[-2] == 'tar':
+                        	subprocess.check_call(['tar', '-C', self.root, '-x', '--lzma', '-f', src])
+                        else:
+                        	raise Exception('Path '+src+ ' can\'t be injected')
+                    else:
+                        raise Exception('Path '+src+ ' can\'t be injected')
             if 'remove' in template:
                 for path in template['remove']:
-                	subprocess.check_call(['rm', '-rf', os.path.join(self.root, os.path.abspath(path))])
+                	subprocess.check_call(['rm', '-rf', jailPath(self.root, path)])
             if 'bind' in template:
-            	pass #TODO
-            if 'proc' in template:
-                subprocess.check_call(['mount', '-o', 'bind', '/proc', os.path.join(self.root, 'proc')])
+                for bind in template['bind']:
+                    if isinstance(bind, str):
+                        bind = { 'src' : bind }
+            		src = os.path.realpath(bind['src'])
+            		dst = jailPath(self.root, bind.get('dst',src))
+                	opts = bind.get('opts', '')
+            		subprocess.check_call(['mount', '-o', 'bind' + opts, src, dst])
             if 'script' in template:
-            	pass #TODO
-            subprocess.check_call(['mount', '--rshared', self.root])
-            subprocess.check_call(['mount', '--rslave', self.root])
+                for script in template['script']:
+                	params = script.split(' ')
+                    runner = JailRunner(root=self.root, path=params[0], args=params[1:], search=True)
+                    process = Process(target=runner.run)
+                    process.start()
+                    process.join(self.scriptTimeout)
+                    if process.is_alive():
+                    	process.terminate()
+                    	raise Exception('Script '+script+' failed to finish before timeout')
+                    if process.exitcode != 0:
+                    	raise Exception('Script '+script+' returned '+str(process.exitcode))
+            subprocess.check_call(['mount', '--make-rshared', self.root])
+            subprocess.check_call(['mount', '--make-rslave', self.root])
         except:
             self.destroy()
             raise
@@ -102,7 +164,6 @@ class JailBuilder(Object):
             	break
             paths.reverse()
             for path in paths:
-                print 'umount', '-l', path
                 subprocess.call(['umount', '-l', path])
         subprocess.check_call(['rm', '-rf', self.root])
 
@@ -151,11 +212,11 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         #TODO: Thrift get blob
         return 'OK'
     def cmd_CREATECG(self, input):
-        path = os.path.join(self.cg_root, os.path.abspath(input['path']))
+        path = os.path.join(jailPath(self.cg_root, input['path']))
         os.mkdir(path)
         return 'OK'
     def cmd_LIMITCG(self, input):
-        path = os.path.join(self.cg_root, os.path.abspath(input['path']))
+        path = os.path.join(jailPath(self.cg_root, input['path']))
         def set_limit(type, value):
             file = os.path.join(path, type)
             with open(file, 'w') as f:
@@ -164,14 +225,14 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         	set_limit('memory.limit_in_bytes', int(input['memory']))
         return 'OK'
     def cmd_ASSIGNCG(self, input):
-        path = os.path.join(self.cg_root, os.path.abspath(input['path']))
+        path = os.path.join(jailPath(self.cg_root, input['path']))
         pid = int(input['pid'])
         #TODO: Check pid
         with open(os.path.join(path, 'tasks'), 'w') as f:
             f.write(str(pid))
         return 'OK'
     def cmd_DESTROYCG(self, input):
-        path = os.path.join(self.cg_root, os.path.abspath(input['path']))
+        path = os.path.join(jailPath(self.cg_root, input['path']))
         killer = True
         #TODO: po ilu probach sie poddac?
         while killer:
@@ -183,7 +244,7 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             time.sleep(1)
         return 'OK'
     def cmd_QUERYCG(self, input):
-        path = os.path.join(self.cg_root, os.path.abspath(input['path']))
+        path = os.path.join(jailPath(self.cg_root, input['path']))
         output = {}
         with open(os.path.join(path, 'cpuacct.stat'), 'r') as f:
             _, output['cpu.user'] = f.readline().split()
@@ -191,6 +252,19 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         with open(os.path.join(path, 'memory.max_usage_in_bytes'), 'r') as f:
             output['memory'] = f.readline()
         return output
+
+    def cmd_CREATEJAIL(self, input):
+        path = os.path.join(jailPath(self.cg_root, input['path']))
+        template = input['template']
+        jb = JailBuilder(root=path, template=template)
+        jb.create()
+
+    def cmd_DESTROYJAIL(self, input):
+        path = os.path.join(jailPath(self.cg_root, input['path']))
+        jb = JailBuilder(root=path)
+        jb.destroy()
+
+
 
 
 
@@ -218,7 +292,24 @@ def run_server(host, port):
         httpd.server_close()
 
 
-#run_server('127.0.0.1', 8765)
-jb = JailBuilder(root='/dev')
-jb.destroy()
+
+if __name__ == "__main__":
+	from optparse import OptionParser
+    parser = OptionParser(usage="usage: %prog [options] DIR")
+	parser.add_option("-D", "--destroy",
+	    default=False,
+	    action="store_true",
+	    help="Destroy created chroot")
+	(options, args) = parser.parse_args()
+
+	path = args[0]
+	temp = args[1]
+
+    jb = JailBuilder(root=path, template=temp)
+    if options.destroy:
+    	jb.destroy()
+    else:
+    	jb.create()
+
+    #run_server('127.0.0.1', 8765)
 
