@@ -238,7 +238,8 @@ class ThriftProcessor(ThriftBase, TProcessor):
 
     @DispatchOn(type_=AtomicType)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
-        getattr(proto, ThriftProcessor.ATOMIC_SEND[type_])(value)
+        if type_ != Void:
+            getattr(proto, ThriftProcessor.ATOMIC_SEND[type_])(value)
     
     @DispatchOn(type_=TypeAlias)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
@@ -287,7 +288,10 @@ class ThriftProcessor(ThriftBase, TProcessor):
 
     @DispatchOn(type_=AtomicType)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
-        return getattr(proto, ThriftProcessor.ATOMIC_RECV[type_])()
+        if type_ == Void:
+            return None
+        else:
+            return getattr(proto, ThriftProcessor.ATOMIC_RECV[type_])()
     
     @DispatchOn(type_=TypeAlias)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
