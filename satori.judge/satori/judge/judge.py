@@ -5,12 +5,31 @@
 from satori.objects import Object, Argument
 import BaseHTTPServer
 import cgi
-from multiprocessing import Process
+from multiprocessing import Process, Pipe
 import os
+import prctl
+import shutil
 import signal
 import subprocess
 import time
+import unshare
 import yaml
+
+
+def loopUnmount(root):
+    while True:
+        paths = []
+        with open('/proc/mounts', 'r') as mounts:
+            for mount in mounts:
+                path = mount.split(' ')[1]
+                if checkSubPath(os.path.join('/', root), path):
+                    paths.append(path)
+            if len(paths) == 0:
+                break
+            paths.sort()
+            paths.reverse()
+            for path in paths:
+                subprocess.call(['umount', '-l', path])
 
 def checkSubPath(root, path):
     root = os.path.realpath(root).split('/')
@@ -26,7 +45,7 @@ def checkSubPath(root, path):
 def jailPath(root, path):
     return os.path.join(root, os.path.abspath(path)[1:])
 
-class JailRunner(Object):
+class JailExec(Object):
     @Argument('root', type=str, default='/jail')
     @Argument('path', type=str)
     @Argument('args', default=[])
@@ -44,6 +63,97 @@ class JailRunner(Object):
             os.execvp(self.path, self.args)
         else:
             os.execv(self.path, self.args)
+
+class JailRun(Object):
+    oldroot = '__oldroot__'
+
+    @Argument('root', type=str, default='/jail')
+    @Argument('path', type=str)
+    @Argument('args', default=[])
+    @Argument('search', type=bool, default=False)
+    def __init__(self, root, path, args, search):
+        self.root = root
+        self.path = path
+        self.args = [self.path] + args
+        self.search = search
+
+    def child(self, pipe):
+        try:
+            unshare.unshare(unshare.CLONE_NEWNS | unshare.CLONE_NEWUTS | unshare.CLONE_NEWIPC | unshare.CLONE_NEWNET)
+            oldroot = os.path.join(self.root, self.oldroot)
+            os.mkdir(oldroot)
+            subprocess.check_call(['mount', '-o', 'bind', oldroot, oldroot])
+            subprocess.check_call(['mount', '--make-rprivate', oldroot])
+            pipe.send(1)
+#WAIT FOR PARENT CREATE VETH
+            pipe.recv()
+            subprocess.check_call(['ifconfig', 'vethsg', '192.168.100.102/24', 'up'])
+            subprocess.check_call(['route', 'add', 'default', 'gw', '192.168.100.101'])
+            subprocess.check_call(['ifconfig', 'lo', '127.0.0.1/8', 'up'])
+            subprocess.check_call(['iptables', '-t', 'filter', '-F'])
+            subprocess.check_call(['iptables', '-t', 'nat', '-F'])
+            subprocess.check_call(['iptables', '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
+            subprocess.check_call(['iptables', '-P', 'INPUT', 'DROP'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-o', 'lo', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'owner', '--uid-owner', 'root', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-P', 'OUTPUT', 'DROP'])
+            subprocess.check_call(['iptables', '-P', 'FORWARD', 'DROP'])
+            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'PREROUTING', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'POSTROUTING', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'OUTPUT', 'ACCEPT'])
+
+            subprocess.check_call(['pivot_root', self.root, oldroot])
+            os.chdir('/')
+
+            oldroot = os.path.join('/', self.oldroot)
+            loopUnmount(oldroot)
+            os.rmdir(oldroot)
+            pipe.send(1)
+#WAIT FOR PARENT CLEANUP
+    		pipe.recv()
+	    	pipe.close()
+
+#TODO: drop_privileges CAP_SYSADM
+	    	prctl.cap_inheritable.drop('sys_admin', 'sys_time', 'sys_boot', 'sys_module', 'setpcap', 'kill', 'audit_write', 'audit_control')
+	    	prctl.capbset.drop('sys_admin', 'sys_time', 'sys_boot', 'sys_module', 'setpcap', 'kill', 'audit_write', 'audit_control')
+
+            if self.search:
+                os.execvp(self.path, self.args)
+            else:
+                os.execv(self.path, self.args)
+        except:
+            raise
+    	finally:
+	    	pipe.close()
+
+    def parent(self):
+        subprocess.check_call(['mount', '--make-rshared', self.root])
+        subprocess.check_call(['mount', '--make-rslave', self.root])
+        pipe, pipec = Pipe()
+        try:
+            child = Process(target = self.child, args=(pipec,))
+            child.start()
+#WAIT FOR CHILD START AND UNSHARE
+            pipe.recv()
+            subprocess.check_call(['ip', 'link', 'add', 'name', 'vethsh', 'type', 'veth', 'peer', 'name', 'vethsg'])
+            subprocess.check_call(['ifconfig', 'vethsh', '192.168.100.101/24', 'up'])
+            subprocess.check_call(['ip', 'link', 'set', 'vethsg', 'netns', str(child.pid)])
+            pipe.send(1)
+#WAIT FOR CHILD CONFIGURE NETWORK AND PIVOT ROOT
+    		pipe.recv()
+            pipe.send(1)
+        except:
+            raise
+        finally:
+            pipe.close()
+        child.join()
+
+    def run(self):
+        self.parent()
 
 
 class JailBuilder(Object):
@@ -102,8 +212,8 @@ class JailBuilder(Object):
                 dirlist.append(path + '=rw')
             dirlist.reverse()
             subprocess.check_call(['mount', '-t', 'aufs', '-o', 'noatime,rw,dirs=' + ':'.join(dirlist), 'aufs', self.root])
-            if 'inject' in template: 
-                for src in template['inject']:
+            if 'insert' in template: 
+                for src in template['insert']:
                 	src = os.path.realpath(src)
                     if os.path.isdir(src):
                     	subprocess.check_call(['rsync', '-a', src, self.root])
@@ -120,9 +230,9 @@ class JailBuilder(Object):
                         elif name[-1] == 'lzma' and name[-2] == 'tar':
                         	subprocess.check_call(['tar', '-C', self.root, '-x', '--lzma', '-f', src])
                         else:
-                        	raise Exception('Path '+src+ ' can\'t be injected')
+                        	raise Exception('Path '+src+ ' can\'t be inserted')
                     else:
-                        raise Exception('Path '+src+ ' can\'t be injected')
+                        raise Exception('Path '+src+ ' can\'t be inserted')
             if 'remove' in template:
                 for path in template['remove']:
                 	subprocess.check_call(['rm', '-rf', jailPath(self.root, path)])
@@ -133,11 +243,11 @@ class JailBuilder(Object):
             		src = os.path.realpath(bind['src'])
             		dst = jailPath(self.root, bind.get('dst',src))
                 	opts = bind.get('opts', '')
-            		subprocess.check_call(['mount', '-o', 'bind' + opts, src, dst])
+            		subprocess.check_call(['mount', '-o', 'bind,' + opts, src, dst])
             if 'script' in template:
                 for script in template['script']:
                 	params = script.split(' ')
-                    runner = JailRunner(root=self.root, path=params[0], args=params[1:], search=True)
+                    runner = JailExec(root=self.root, path=params[0], args=params[1:], search=True)
                     process = Process(target=runner.run)
                     process.start()
                     process.join(self.scriptTimeout)
@@ -146,26 +256,13 @@ class JailBuilder(Object):
                     	raise Exception('Script '+script+' failed to finish before timeout')
                     if process.exitcode != 0:
                     	raise Exception('Script '+script+' returned '+str(process.exitcode))
-            subprocess.check_call(['mount', '--make-rshared', self.root])
-            subprocess.check_call(['mount', '--make-rslave', self.root])
         except:
             self.destroy()
             raise
 
     def destroy(self):
-        while True:
-            paths = []
-            with open('/proc/mounts', 'r') as mounts:
-                for mount in mounts:
-                    path = mount.split(' ')[1]
-                    if checkSubPath(self.root, path):
-                        paths.append(path)
-            if len(paths) == 0:
-            	break
-            paths.reverse()
-            for path in paths:
-                subprocess.call(['umount', '-l', path])
-        subprocess.check_call(['rm', '-rf', self.root])
+        loopUnmount(self.root)
+        shutil.rmtree(self.root)
 
 
 
@@ -254,13 +351,13 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return output
 
     def cmd_CREATEJAIL(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['path']))
+        path = os.path.join(jailPath(self.root_path, input['path']))
         template = input['template']
         jb = JailBuilder(root=path, template=template)
         jb.create()
 
     def cmd_DESTROYJAIL(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['path']))
+        path = os.path.join(jailPath(self.root_path, input['path']))
         jb = JailBuilder(root=path)
         jb.destroy()
 
@@ -310,6 +407,8 @@ if __name__ == "__main__":
     	jb.destroy()
     else:
     	jb.create()
-
+    	jr = JailRun(root=path, path='bash', search=True) 
+    	jr.run()
+    	
     #run_server('127.0.0.1', 8765)
 
