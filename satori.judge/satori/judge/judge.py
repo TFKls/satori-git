@@ -80,10 +80,7 @@ class JailRun(Object):
     def child(self, pipe):
         try:
             unshare.unshare(unshare.CLONE_NEWNS | unshare.CLONE_NEWUTS | unshare.CLONE_NEWIPC | unshare.CLONE_NEWNET)
-            oldroot = os.path.join(self.root, self.oldroot)
-            os.mkdir(oldroot)
-            subprocess.check_call(['mount', '-o', 'bind', oldroot, oldroot])
-            subprocess.check_call(['mount', '--make-rprivate', oldroot])
+
             pipe.send(1)
 #WAIT FOR PARENT CREATE VETH
             pipe.recv()
@@ -106,25 +103,17 @@ class JailRun(Object):
             subprocess.check_call(['iptables', '-t', 'nat', '-P', 'POSTROUTING', 'ACCEPT'])
             subprocess.check_call(['iptables', '-t', 'nat', '-P', 'OUTPUT', 'ACCEPT'])
 
-            subprocess.check_call(['pivot_root', self.root, oldroot])
-            os.chdir('/')
-
-            oldroot = os.path.join('/', self.oldroot)
-            loopUnmount(oldroot)
-            os.rmdir(oldroot)
             pipe.send(1)
 #WAIT FOR PARENT CLEANUP
     		pipe.recv()
 	    	pipe.close()
 
-#TODO: drop_privileges CAP_SYSADM
-	    	prctl.cap_inheritable.drop('sys_admin', 'sys_time', 'sys_boot', 'sys_module', 'setpcap', 'kill', 'audit_write', 'audit_control')
-	    	prctl.capbset.drop('sys_admin', 'sys_time', 'sys_boot', 'sys_module', 'setpcap', 'kill', 'audit_write', 'audit_control')
-
+	    	runargs = [ 'runner', '--debug', '/runner.debug.txt', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--cap', 'safe', ]
             if self.search:
-                os.execvp(self.path, self.args)
-            else:
-                os.execv(self.path, self.args)
+            	runargs.append('--search')
+            runargs += self.args
+            print runargs
+            os.execvp('runner', runargs)
         except:
             raise
     	finally:
@@ -132,7 +121,6 @@ class JailRun(Object):
 
     def parent(self):
         subprocess.check_call(['mount', '--make-rshared', self.root])
-        subprocess.check_call(['mount', '--make-rslave', self.root])
         pipe, pipec = Pipe()
         try:
             child = Process(target = self.child, args=(pipec,))
@@ -243,7 +231,12 @@ class JailBuilder(Object):
             		src = os.path.realpath(bind['src'])
             		dst = jailPath(self.root, bind.get('dst',src))
                 	opts = bind.get('opts', '')
-            		subprocess.check_call(['mount', '-o', 'bind,' + opts, src, dst])
+                	rec = bind.get('recursive', 0)
+                    if rec:
+                    	rec = 'rbind'
+                    else:
+                    	rec = 'bind'
+                    subprocess.check_call(['mount', '-o', rec + ',' + opts, src, dst])
             if 'script' in template:
                 for script in template['script']:
                 	params = script.split(' ')
@@ -294,26 +287,26 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return output
     def cmd_GETCACHE(self, input):
         hash = gen_hash(input['what'])
-        fname = os.path.join(self.root_path, input['where'])
+        fname = jailPath(self.root_path, input['where'])
         #TODO: Przeszukac cache
         return 'OK'
     def cmd_PUTCACHE(self, input):
         hash = gen_hash(input['what'])
-        fname = os.path.join(self.root_path, input['where'])
+        fname = jailPath(self.root_path, input['where'])
         type = input['how']
         #TODO: Handle cache
         return 'OK'
     def cmd_GETBLOB(self, input):
         hash = input['hash']
-        fname = os.path.join(self.root_path, input['where'])
+        fname = jailPath(self.root_path, input['where'])
         #TODO: Thrift get blob
         return 'OK'
     def cmd_CREATECG(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['path']))
+        path = jailPath(self.cg_root, input['path'])
         os.mkdir(path)
         return 'OK'
     def cmd_LIMITCG(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['path']))
+        path = jailPath(self.cg_root, input['path'])
         def set_limit(type, value):
             file = os.path.join(path, type)
             with open(file, 'w') as f:
@@ -322,9 +315,11 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         	set_limit('memory.limit_in_bytes', int(input['memory']))
         return 'OK'
     def cmd_ASSIGNCG(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['path']))
-        pid = int(input['pid'])
+        path = jailPath(self.cg_root, input['path'])
+        file = jailPath(self.root_path, input['file'])
+        pid = int((subprocess.Popen(["fuser", file], stdout=subprocess.PIPE).communicate()[0]).split(':')[-1])
         #TODO: Check pid
+        print 'Gotya ', pid
         with open(os.path.join(path, 'tasks'), 'w') as f:
             f.write(str(pid))
         return 'OK'
@@ -382,7 +377,7 @@ def create_handler(submit, test, root, cgroot):
 
 def run_server(host, port):
     server_class = BaseHTTPServer.HTTPServer
-    httpd = server_class((host, port), create_handler(1, 2, '/jail', '/root/cg/satori.judge'))
+    httpd = server_class((host, port), create_handler(1, 2, '/jail', '/cg'))
     try:
         httpd.serve_forever()
     finally:
@@ -397,6 +392,10 @@ if __name__ == "__main__":
 	    default=False,
 	    action="store_true",
 	    help="Destroy created chroot")
+	parser.add_option("-S", "--server",
+	    default=False,
+	    action="store_true",
+	    help="Run server")
 	(options, args) = parser.parse_args()
 
 	path = args[0]
@@ -405,10 +404,9 @@ if __name__ == "__main__":
     jb = JailBuilder(root=path, template=temp)
     if options.destroy:
     	jb.destroy()
+    elif options.server:
+        run_server('127.0.0.1', 8765)
     else:
     	jb.create()
     	jr = JailRun(root=path, path='bash', search=True) 
     	jr.run()
-    	
-    #run_server('127.0.0.1', 8765)
-
