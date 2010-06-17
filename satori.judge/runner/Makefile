@@ -13,4 +13,4 @@ prepare:
 	sudo apt-get install libpopt-dev libcap-dev libcurl4-openssl-dev
 
 runner : runner_main.cpp runner.cpp runner.h
-	g++ -DVERSION=${VERSION} -Wall -O2 `curl-config --cflags` -o runner runner_main.cpp runner.cpp -lcap -lpthread -lpopt -lrt `curl-config --libs` -lyaml
+	g++ -DVERSION=${VERSION} -g -Wall -O2 `curl-config --cflags` -o runner runner_main.cpp runner.cpp -lcap -lpthread -lpopt -lrt `curl-config --libs` -lyaml

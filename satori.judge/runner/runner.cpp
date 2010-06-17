@@ -47,9 +47,12 @@ using namespace std;
 map<long, Runner*> Runner::runners;
 vector<int> Runner::Initializer::signals;
 vector<struct sigaction> Runner::Initializer::handlers;
+set<int> Runner::Initializer::debug_fds;
 Runner::Initializer Runner::initializer;
+
 Runner::Initializer::Initializer()
 {
+  debug_fds.insert(2);
   signals.push_back(SIGCHLD);
   handlers.resize(signals.size());
   struct sigaction action;
@@ -74,7 +77,7 @@ void Runner::Initializer::signalhandler(int sig, siginfo_t* info, void* data)
       i->second->process_child();
     else
     {
-      ProcStat P(info->si_pid, NULL);
+      ProcStat P(info->si_pid);
       i = runners.find(P.ppid);
       if (i != runners.end())
         i->second->process_child();
@@ -89,15 +92,98 @@ void Runner::Initializer::signalhandler(int sig, siginfo_t* info, void* data)
     }
   }
 }
+void Runner::Initializer::Debug(const char* format, va_list args)
+{
+  for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
+  {
+    int fd = *i;
+    va_list pars;
+    va_copy(pars, args);
+    dprintf(fd, "[pid: %5d]", getpid());
+    vdprintf(fd, format, pars);
+    dprintf(fd, "\n");
+    va_end(pars);
+  }
+}
+void Runner::Initializer::Fail(int err, const char* format, va_list args)
+{
+  for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
+  {
+    int fd = *i;
+    va_list pars;
+    va_copy(pars, args);
+    dprintf(fd, "[pid: %5d]", getpid());
+    vdprintf(fd, format, pars);
+    dprintf(fd, " (%s)\n", strerror(err));
+    va_end(pars);
+  }
+  exit(1);
+}
 
-Runner::ProcStat::ProcStat(int _pid, Runner* runner)
+
+Runner::Buffer::Buffer(size_t _size)
+{
+  size = _size;
+  fill = 0;
+  if (size)
+  {
+    buf = (char*)malloc(size);
+    if (buf == NULL)
+    {
+      fprintf(stderr, "Runner buffer memory depleted %lu: %s\n", (unsigned long)size, strerror(errno));
+      exit(1);
+    }
+  }
+  else
+    buf = NULL;
+}
+Runner::Buffer::~Buffer()
+{
+  if(buf)
+    free(buf);
+}
+void Runner::Buffer::Append(void* data, size_t length)
+{
+  if (fill + length > size)
+  {
+    size_t nsize = max(fill+length, 2*size);
+    char* nbuf = (char*)realloc(buf, nsize);
+    if (nbuf == NULL)
+    {
+      fprintf(stderr, "Runner buffer memory depleted %lu: %s\n", (unsigned long)size, strerror(errno));
+      exit(1);
+    }
+    size = nsize;
+    buf = nbuf;
+  }
+  memcpy(buf+fill, data, length);
+  fill += length;
+}
+string Runner::Buffer::String() const
+{
+  return string(buf, fill);
+}
+int Runner::Buffer::yaml_write_callback(void* data, unsigned char* buffer, size_t size)
+{
+  Buffer* buf = (Buffer*)data;
+  buf->Append(buffer, size);
+  return 1;
+}
+size_t Runner::Buffer::curl_write_callback(void* buffer, size_t size, size_t nmemb, void* userp)
+{
+  Buffer* buf = (Buffer*)userp;
+  buf->Append(buffer, size * nmemb);
+  return nmemb;
+}
+
+Runner::ProcStat::ProcStat(int _pid)
 {
   FILE* f;
-  char filename[128];
+  char filename[32];
   sprintf(filename, "/proc/%d/stat", _pid);
   f = fopen(filename, "r");
   if (!f)
-    if (runner) runner->fail("read of '/proc/%d/stat' failed", _pid);
+    fail("read of '/proc/%d/stat' failed", _pid);
   char* buf = NULL;
   char* sta = NULL;
   int z;
@@ -105,7 +191,7 @@ Runner::ProcStat::ProcStat(int _pid, Runner* runner)
   if ((z = fscanf(f, "%d%as%as%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d%u%u%llu%lu%ld",
     &pid, &buf, &sta, &ppid, &pgrp, &sid, &tty, &tpgid, &flags, &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime, &cutime, &cstime, &priority, &nice, &threads, &alarm, &start_time, &vsize, &rss, &rss_lim, &start_code, &end_code, &start_stack, &esp, &eip, &signal, &blocked, &sig_ignore, &sig_catch, &wchan, &nswap, &cnswap, &exit_signal, &cpu_number, &sched_priority, &sched_policy, &io_delay, &guest_time, &cguest_time
   )) != 44)
-    if (runner) runner->fail("scanf of '/proc/%d/stat' failed %d %d %s %c %d", _pid, z, pid, buf, state, ppid);
+    fail("scanf of '/proc/%d/stat' failed %d %d %s %c %d", _pid, z, pid, buf, state, ppid);
   if (buf)
   {
     if (strlen(buf) >= 2)
@@ -121,11 +207,11 @@ Runner::ProcStat::ProcStat(int _pid, Runner* runner)
   sprintf(filename, "/proc/%d/statm", _pid);
   f = fopen(filename, "r");
   if (!f)
-    if (runner) runner->fail("read of '/proc/%d/statm' failed", _pid);
+    fail("read of '/proc/%d/statm' failed", _pid);
   if (fscanf(f, "%d%d%d%d%d%d%d",
     &mem_size, &mem_resident, &mem_shared, &mem_text, &mem_lib, &mem_data, &mem_dirty
   ) != 7)
-    if (runner) runner->fail("scanf of '/proc/%d/statm' failed", _pid);
+    fail("scanf of '/proc/%d/statm' failed", _pid);
   fclose(f);
 }
 void Runner::UserStat::set(void* _p)
@@ -221,58 +307,20 @@ Runner::~Runner()
 
 void Runner::debug(const char* format, ...)
 {
-  const char* who="PRE   : ";
-  if (child==0)
-    who="CHILD : ";
-  else if (child>0)
-    who="PARENT: ";
-
-  fprintf(stderr, "%s", who);
   va_list args;
   va_start(args, format);
-  vfprintf(stderr, format, args);
+  Initializer::Debug(format, args);
   va_end(args);
-  fprintf(stderr, "\n");
-
-  if (debfd >= 0)
-  {
-    dprintf(debfd, "%s", who);
-    va_list args;
-    va_start(args, format);
-    vdprintf(debfd, format, args);
-    va_end(args);
-    dprintf(debfd, "\n");
-  }
 }
-
 void Runner::fail(const char* format, ...)
 {
   int err = errno;
-  const char* who="PRE   : ";
-  if (child==0)
-    who="CHILD : ";
-  else if (child>0)
-    who="PARENT: ";
-  fprintf(stderr, "%s", who);
   va_list args;
   va_start(args, format);
-  vfprintf(stderr, format, args);
+  Initializer::Fail(err, format, args);
   va_end(args);
-  fprintf(stderr, " (%s)\n", strerror(err));
-
-  if (debfd >= 0)
-  {
-    dprintf(debfd, "%s", who);
-    va_list args;
-    va_start(args, format);
-    vdprintf(debfd, format, args);
-    va_end(args);
-    dprintf(debfd, " (%s)\n", strerror(err));
-  }
-
-  result.status = RES_FAIL;
-  exit(1);
 }
+
 void Runner::set_rlimit(const string& name, int resource, long limit)
 {
   struct rlimit r;
@@ -341,7 +389,7 @@ bool Runner::milisleep(long ms)
   return usleep(1000*ms);
 };
 
-bool Runner::parse_yaml(const string& yaml, map<string, string>& data)
+bool Runner::Controller::Parse(const string& yaml, map<string, string>& data)
 {
   yaml_parser_t parser;
   yaml_event_t event;
@@ -354,6 +402,7 @@ bool Runner::parse_yaml(const string& yaml, map<string, string>& data)
   {
     if (!yaml_parser_parse(&parser, &event))
     {
+      debug("YAML Parser failure: %s", parser.problem);
       yaml_parser_delete(&parser);
       return false;
     }
@@ -385,6 +434,7 @@ bool Runner::parse_yaml(const string& yaml, map<string, string>& data)
     }
     else
     {
+      debug("YAML Parser: wrong data");
       yaml_event_delete(&event);
       yaml_parser_delete(&parser);
       return false;
@@ -394,118 +444,193 @@ bool Runner::parse_yaml(const string& yaml, map<string, string>& data)
   yaml_parser_delete(&parser);
   return true;
 }
-bool Runner::dump_yaml(const map<string, string>& data, string& yaml)
+bool Runner::Controller::Dump(const map<string, string>& data, string& yaml)
 {
   yaml_emitter_t emitter;
   yaml_event_t event;
   yaml_emitter_initialize(&emitter);
-  size_t len = 1024;
-  for(map<string,string>::const_iterator i = data.begin(); i != data.end(); i++)
-    len += 8 + 4*i->first.length() + 4*i->second.length();
-  unsigned char buf[len];
-  size_t rlen = 0;
-
-  fprintf(stderr, "Hello 1\n");
-
-  yaml_emitter_set_output_string(&emitter, buf, len, &rlen);
+  Buffer ybuf;
+  yaml_emitter_set_output(&emitter, Buffer::yaml_write_callback, &ybuf);
 
   yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
   if (!yaml_emitter_emit(&emitter, &event))
   {
+    debug("Emitter stream start failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
-  fprintf(stderr, "Hello 2\n");
-  yaml_document_start_event_initialize(&event, NULL, NULL, NULL, 0);
+  yaml_document_start_event_initialize(&event, NULL, NULL, NULL, 1);
   if (!yaml_emitter_emit(&emitter, &event))
   {
+    debug("Emitter doc start failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
-  yaml_mapping_start_event_initialize(&event, NULL, NULL, 0, YAML_ANY_MAPPING_STYLE);
+  yaml_mapping_start_event_initialize(&event, NULL, NULL, 1, YAML_ANY_MAPPING_STYLE);
   if (!yaml_emitter_emit(&emitter, &event))
   {
+    debug("Emitter map start failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
-  fprintf(stderr, "Hello 3\n");
 
   for (map<string,string>::const_iterator i = data.begin(); i != data.end(); i++)
   {
-    fprintf(stderr, "Hello 3.5: %s\n", i->first.c_str());
-    yaml_scalar_event_initialize(&event, NULL, NULL, (unsigned char*)i->first.c_str(), i->first.length(), 0, 0, YAML_ANY_SCALAR_STYLE);
+    yaml_scalar_event_initialize(&event, NULL, NULL, (unsigned char*)i->first.c_str(), i->first.length(), 1, 1, YAML_ANY_SCALAR_STYLE);
     if (!yaml_emitter_emit(&emitter, &event))
     {
+      debug("Emitter key failure: %s", emitter.problem);
       yaml_emitter_delete(&emitter);
       return false;
     }
-    fprintf(stderr, "Hello 3.5: %s\n", i->second.c_str());
-    yaml_scalar_event_initialize(&event, NULL, NULL, (unsigned char*)i->second.c_str(), i->second.length(), 0, 0, YAML_ANY_SCALAR_STYLE);
+    yaml_scalar_event_initialize(&event, NULL, NULL, (unsigned char*)i->second.c_str(), i->second.length(), 1, 1, YAML_ANY_SCALAR_STYLE);
     if (!yaml_emitter_emit(&emitter, &event))
     {
+      debug("Emitter val failure: %s", emitter.problem);
       yaml_emitter_delete(&emitter);
       return false;
     }
   }
-  fprintf(stderr, "Hello 4\n");
+
   yaml_mapping_end_event_initialize(&event);
   if (!yaml_emitter_emit(&emitter, &event))
   {
+    debug("Emitter map end failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
-  fprintf(stderr, "Hello 4.5\n");
-  yaml_document_end_event_initialize(&event, 0);
+  yaml_document_end_event_initialize(&event, 1);
   if (!yaml_emitter_emit(&emitter, &event))
   {
+    debug("Emitter doc end failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
-  fprintf(stderr, "Hello 5\n");
   yaml_stream_end_event_initialize(&event);
   if (!yaml_emitter_emit(&emitter, &event))
   {
+    debug("Emitter stream end failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
 
-
-  fprintf(stderr, "Hello 6\n");
   yaml_emitter_delete(&emitter);
-  yaml = string((const char*)buf, rlen);
+  yaml = ybuf.String();
   return true;
 }
 
-bool Runner::contact_controller(string action, const map<string, string>& input, map<string, string>& output)
+bool Runner::Controller::Contact(const string& action, const map<string, string>& input, map<string, string>& output)
 {
   bool result = true;
   string yaml;
-  if (!dump_yaml(input, yaml))
+  if (!Dump(input, yaml))
     return false;
-  debug("Contact YAML '%s'", yaml.c_str());
+  //debug("Contact yaml\n%s", yaml.c_str());
 
   char buf[16];
-  snprintf(buf, sizeof(buf), "%d", controller_port);
-  string url = string("http://") + controller_host + ":" + buf + "/" + action;
-  debug("Contact URL '%s'", url.c_str());
+  snprintf(buf, sizeof(buf), "%d", port);
+  string url = string("http://") + host + ":" + buf + "/" + action;
+  //debug("Contact url %s", url.c_str());
 
   CURL *curl;
   CURLcode res;
   curl = curl_easy_init();
   curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDS, yaml.c_str());
+  curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)yaml.length());
+  Buffer cbuf;
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Buffer::curl_write_callback);
+  curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cbuf); 
   res = curl_easy_perform(curl);
   if(CURLE_OK != res)
     result = false;
   else
   {
-//    yaml =
-    if (!parse_yaml(yaml, output))
+    //debug("Contact result\n%s", cbuf.String().c_str());
+    if (!Parse(cbuf.String(), output))
       result = false;
   }
   curl_easy_cleanup(curl);
   return result;
 }
+
+void Runner::Controller::CheckOK(const std::string& call, const map<string, string>& output)
+{
+  map<string, string>::const_iterator ok = output.find("res");
+  if (ok == output.end() || ok->second != "OK")
+  {
+    string yaml;
+    Dump(output, yaml);
+    fail("%s returned '%s'", call.c_str(), yaml.c_str());
+  }
+}
+
+Runner::Controller::Controller(const string& _host, int _port, const string& _secret)
+{
+  host = _host;
+  port = _port;
+  secret = _secret;
+}
+
+void Runner::Controller::GroupCreate(const string& cgroup)
+{
+  map<string, string> input, output;
+  input["group"] = cgroup;
+  Contact("CREATECG", input, output);
+  CheckOK("CREATECG", output);
+}
+void Runner::Controller::GroupJoin(const string& cgroup)
+{
+  map<string, string> input, output;
+  input["group"] = cgroup;
+  char buf[64];
+  snprintf(buf, sizeof(buf), "/tmp/__cgroup__.%ld.lock", (long)time(NULL));
+  input["file"] = buf;
+  int fd = open(input["file"].c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+  if (fd < 0)
+    fail("open('%s') failed", input["file"].c_str());
+  Contact("ASSIGNCG", input, output);
+  close(fd);
+  if (unlink(input["file"].c_str()))
+    fail("unlink('%s') failed", input["file"].c_str());
+  CheckOK("ASSIGNCG", output);
+}
+void Runner::Controller::GroupDestroy(const string& cgroup)
+{
+  map<string, string> input, output;
+  input["group"] = cgroup;
+  Contact("DESTROYCG", input, output);
+  CheckOK("DESTROYCG", output);
+}
+void Runner::Controller::GroupLimits(const string& cgroup, const Limits& limits)
+{
+  map<string, string> input, output;
+  if (limits.memory > 0)
+  {
+    char buf[32];
+    snprintf(buf, sizeof(buf), "%ld", limits.memory);
+    input["memory"] = buf;
+  }
+  if (input.size() > 0)
+  {
+    input["group"] = cgroup;
+    Contact("LIMITCG", input, output);
+    CheckOK("LIMITCG", output);
+  }
+}
+Runner::Controller::Stats Runner::Controller::GroupStats(const string& cgroup)
+{
+  map<string, string> input, output;
+  input["group"] = cgroup;
+  Contact("QUERYCG", input, output);
+  CheckOK("QUERYCG", output);
+  Stats s;
+  s.memory = atol(output["memory"].c_str());
+  s.utime = atol(output["cpu.user"].c_str());
+  s.stime = atol(output["cpu.system"].c_str());
+  return s;
+}
+
 
 bool Runner::check_times()
 {
@@ -523,14 +648,14 @@ bool Runner::check_times()
     getrusage(*i, &usage);
     proctimesofar += miliseconds(usage.ru_utime);
     */
-    ProcStat stat(*i, this);
+    ProcStat stat(*i);
     proctimesofar.first += miliseconds(stat).first;
     proctimesofar.second += miliseconds(stat).second;
     curmemory += stat.mem_size;
   }
   if (proctimesofar.first < 0 || proctimesofar.second < 0)
   {
-    ProcStat stat(*offspring.begin(), this);
+    ProcStat stat(*offspring.begin());
     debug("CPU time below zero: (%ld,%ld) = (%ld,%ld) - (%ld,%ld) + (%ld,%ld)", proctimesofar.first, proctimesofar.second, dead_pids_time.first, dead_pids_time.second, before_exec_time.first, before_exec_time.second, miliseconds(stat).first, miliseconds(stat).second);
     if (proctimesofar.first < 0)
       proctimesofar.first = 0;
@@ -620,11 +745,11 @@ void Runner::run_child()
   int fi=-1, fo=-1, fe=-1;
   if ((input != "") && ((fi = open(input.c_str(), O_RDONLY)) < 0))
     fail("open('%s') failed", input.c_str());
-  if ((output != "") && ((fo = open(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), 0644)) < 0))
+  if ((output != "") && ((fo = open(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
     fail("open('%s') failed", output.c_str());
   if (error_to_output)
     fe = fo;
-  else if ((error != "") && ((fe = open(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), 0644)) < 0))
+  else if ((error != "") && ((fe = open(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
     fail("open('%s') failed", error.c_str());
   setresgid(rgid, egid, sgid);
   setresuid(ruid, euid, suid);
@@ -680,6 +805,15 @@ void Runner::run_child()
     mount("proc", "/proc", "proc", 0, NULL);
   }
 
+  if (cgroup != "" && controller)
+  { 
+    controller->GroupCreate(cgroup);
+    Controller::Limits limits;
+    if (cgroup_memory > 0)
+      limits.memory = cgroup_memory;
+    controller->GroupLimits(cgroup, limits);
+    controller->GroupJoin(cgroup);
+  }
 
   if ((env_level != ENV_COPY) && clearenv())
     fail("clearenv failed");
@@ -789,12 +923,6 @@ void Runner::run_child()
   else
     if(error != "") close(2);
 
-  for (int f=getdtablesize(); f >= 3; f--)
-    if(f != debfd)
-      close(f);
-  if (descriptor_count > 0)
-    set_rlimit("DESCRIPTORS", RLIMIT_NOFILE, descriptor_count);
-
   size_t buflen = exec.length() + 1;
   for (uint i=0; i < params.size(); i++)
     buflen += params[i].length() + 1;
@@ -830,6 +958,11 @@ void Runner::run_child()
       case CAP_EMPTY:
         ;
     }
+
+  for (int f=getdtablesize(); f >= 3; f--)
+    close(f);
+  if (descriptor_count > 0)
+    set_rlimit("DESCRIPTORS", RLIMIT_NOFILE, descriptor_count);
 
   if(search_path)
     execvp(exec.c_str(), argv);
@@ -1014,19 +1147,17 @@ int Runner::child_runner(void* _runner)
 
 void Runner::Run()
 {
-  controller_host = "www.onet.pl";
-  controller_port = 80;
-  map<string, string> input, output;
-  input["hello"] = "world";
-//input["hello2"] = "world2";
-  contact_controller("index.php", input, output);
-  string yaml;
-  dump_yaml(output, yaml);
-  debug("Contact result: %s", yaml.c_str());
-  exit(1);
+  parent = getpid();
   if (debug_file != "")
-    if ((debug_file != "") && ((debfd = open(debug_file.c_str(), O_WRONLY|O_CREAT|O_APPEND, 0644)) < 0))
+  {
+    int debfd;
+    if ((debug_file != "") && ((debfd = open(debug_file.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)) < 0))
       fail("open('%s') failed", debug_file.c_str());
+    else
+      Initializer::debug_fds.insert(debfd);
+  }
+  if (controller_host != "" || controller_port > 0)
+    controller = new Controller(controller_host, controller_port, "SeCrEt");
   if (ptrace_safe)
     ptrace = true;
   if (user == "" && thread_count > 0)
@@ -1048,11 +1179,12 @@ void Runner::Run()
     flags |= CLONE_NEWPID;
   if (new_uts)
     flags |= CLONE_NEWUTS;
-  void *childstack, *stack = malloc(getpagesize());
+  size_t cssize = 1024*1024;
+  void *childstack, *stack = malloc(cssize);
   if (!stack)
     fail("child stack malloc failed");
 
-  childstack = (void*)((char*)stack + getpagesize());
+  childstack = (void*)((char*)stack + cssize);
   child = clone(child_runner, childstack, flags, (void*)this);
   if (child > 0)
     run_parent();
@@ -1072,6 +1204,8 @@ void Runner::Stop()
       runners.erase(*i);
     offspring.clear();
     child=-1;
+    if (cgroup != "" && controller)
+      controller->GroupDestroy(cgroup);
   }
 }
 

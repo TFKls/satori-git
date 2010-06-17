@@ -7,7 +7,6 @@ import BaseHTTPServer
 import cgi
 from multiprocessing import Process, Pipe
 import os
-import prctl
 import shutil
 import signal
 import subprocess
@@ -24,12 +23,15 @@ def loopUnmount(root):
                 path = mount.split(' ')[1]
                 if checkSubPath(os.path.join('/', root), path):
                     paths.append(path)
-            if len(paths) == 0:
-                break
+            count = 0
             paths.sort()
             paths.reverse()
             for path in paths:
-                subprocess.call(['umount', '-l', path])
+                if os.path.isdir(path):
+                    subprocess.call(['umount', '-l', path])
+                    count += 1
+            if count == 0:
+            	break
 
 def checkSubPath(root, path):
     root = os.path.realpath(root).split('/')
@@ -43,7 +45,7 @@ def checkSubPath(root, path):
     return True
 
 def jailPath(root, path):
-    return os.path.join(root, os.path.abspath(path)[1:])
+    return os.path.join(root, os.path.abspath(os.path.join('/',path))[1:])
 
 class JailExec(Object):
     @Argument('root', type=str, default='/jail')
@@ -108,7 +110,8 @@ class JailRun(Object):
     		pipe.recv()
 	    	pipe.close()
 
-	    	runargs = [ 'runner', '--debug', '/runner.debug.txt', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--cap', 'safe', ]
+	    	runargs = [ 'runner', '--debug', '/runner.debug.txt', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--cap', 'safe' ]
+	    	runargs += [ '--control-host', '192.168.100.101', '--control-port', '8765', '--cgroup', 'runner', '--cgroup-memory', str(1024*1024*64) ]
             if self.search:
             	runargs.append('--search')
             runargs += self.args
@@ -130,6 +133,8 @@ class JailRun(Object):
             subprocess.check_call(['ip', 'link', 'add', 'name', 'vethsh', 'type', 'veth', 'peer', 'name', 'vethsg'])
             subprocess.check_call(['ifconfig', 'vethsh', '192.168.100.101/24', 'up'])
             subprocess.check_call(['ip', 'link', 'set', 'vethsg', 'netns', str(child.pid)])
+            controller = Process(target = run_server, args=('192.168.100.101', 8765))
+            controller.start()
             pipe.send(1)
 #WAIT FOR CHILD CONFIGURE NETWORK AND PIVOT ROOT
     		pipe.recv()
@@ -139,6 +144,7 @@ class JailRun(Object):
         finally:
             pipe.close()
         child.join()
+        controller.terminate()
 
     def run(self):
         self.parent()
@@ -289,42 +295,51 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         hash = gen_hash(input['what'])
         fname = jailPath(self.root_path, input['where'])
         #TODO: Przeszukac cache
-        return 'OK'
+        return { 'res' : 'OK' }
     def cmd_PUTCACHE(self, input):
         hash = gen_hash(input['what'])
         fname = jailPath(self.root_path, input['where'])
         type = input['how']
         #TODO: Handle cache
-        return 'OK'
+        return { 'res' : 'OK' }
     def cmd_GETBLOB(self, input):
         hash = input['hash']
         fname = jailPath(self.root_path, input['where'])
         #TODO: Thrift get blob
-        return 'OK'
+        return { 'res' : 'OK' }
     def cmd_CREATECG(self, input):
-        path = jailPath(self.cg_root, input['path'])
-        os.mkdir(path)
-        return 'OK'
+        path = jailPath(self.cg_root, input['group'])
+        if not os.path.isdir(path):
+            os.mkdir(path)
+            par = os.path.join(path, '..')
+            for limit in [ 'cpuset.cpus', 'cpuset.mems', ]:
+                with open(os.path.join(par, limit), 'r') as s:
+                    with open(os.path.join(path, limit), 'w') as d:
+                        for l in s:
+                    	    d.write(l)
+        return { 'res' : 'OK' }
     def cmd_LIMITCG(self, input):
-        path = jailPath(self.cg_root, input['path'])
+        path = jailPath(self.cg_root, input['group'])
         def set_limit(type, value):
             file = os.path.join(path, type)
             with open(file, 'w') as f:
                 f.write(str(value))
         if 'memory' in input:
         	set_limit('memory.limit_in_bytes', int(input['memory']))
-        return 'OK'
+        	set_limit('memory.soft_limit_in_bytes', int(input['memory']))
+
+        return { 'res' : 'OK' }
     def cmd_ASSIGNCG(self, input):
-        path = jailPath(self.cg_root, input['path'])
+        path = jailPath(self.cg_root, input['group'])
         file = jailPath(self.root_path, input['file'])
         pid = int((subprocess.Popen(["fuser", file], stdout=subprocess.PIPE).communicate()[0]).split(':')[-1])
         #TODO: Check pid
         print 'Gotya ', pid
         with open(os.path.join(path, 'tasks'), 'w') as f:
             f.write(str(pid))
-        return 'OK'
+        return { 'res' : 'OK' }
     def cmd_DESTROYCG(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['path']))
+        path = os.path.join(jailPath(self.cg_root, input['group']))
         killer = True
         #TODO: po ilu probach sie poddac?
         while killer:
@@ -334,15 +349,17 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 	killer = True
                 	os.kill(int(pid), signal.SIGKILL)
             time.sleep(1)
-        return 'OK'
+        os.rmdir(path)
+        return { 'res' : 'OK' }
     def cmd_QUERYCG(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['path']))
+        path = os.path.join(jailPath(self.cg_root, input['group']))
         output = {}
         with open(os.path.join(path, 'cpuacct.stat'), 'r') as f:
             _, output['cpu.user'] = f.readline().split()
             _, output['cpu.system'] = f.readline().split()
         with open(os.path.join(path, 'memory.max_usage_in_bytes'), 'r') as f:
             output['memory'] = f.readline()
+        output['res'] = 'OK'
         return output
 
     def cmd_CREATEJAIL(self, input):
@@ -350,17 +367,17 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         template = input['template']
         jb = JailBuilder(root=path, template=template)
         jb.create()
+        return { 'res' : 'OK' }
 
     def cmd_DESTROYJAIL(self, input):
         path = os.path.join(jailPath(self.root_path, input['path']))
         jb = JailBuilder(root=path)
         jb.destroy()
+        return { 'res' : 'OK' }
 
-
-
-
-
-
+    def cmd_PING(self, input):
+        input['ping'] = 'pong'
+        return input
 
 
 
@@ -377,7 +394,7 @@ def create_handler(submit, test, root, cgroot):
 
 def run_server(host, port):
     server_class = BaseHTTPServer.HTTPServer
-    httpd = server_class((host, port), create_handler(1, 2, '/jail', '/cg'))
+    httpd = server_class((host, port), create_handler(1, 2, '/jail', '/cgroup'))
     try:
         httpd.serve_forever()
     finally:
