@@ -5,11 +5,15 @@ from satori.ars.naming import Name, ClassName, MethodName, ParameterName
 from satori.ars.model import Contract, Procedure, Parameter, String, Int32
 from satori.ars.thrift import ThriftWriter
 
-import satori.ars.test_setup
+from satori.ars.test_layer import DjangoTestLayer, setup_module
 from satori.ars import django2ars
 from django.db import models
 
+setup_module(__name__)
+
 class X(models.Model):
+    __model__ = __name__ + '.models'
+
     a = models.IntegerField()
     b = models.CharField(max_length=12)
 
@@ -22,6 +26,8 @@ class OpX(django2ars.Opers):
 
 
 class Y(models.Model):
+    __model__ = __name__ + '.models'
+
     a = models.IntegerField()
     b = models.CharField(max_length=12)
 
@@ -46,6 +52,8 @@ class StaticOp(django2ars.Opers):
 # not verifying the result, only checking if runs without throwing exceptions
 
 class Writer(TestCase):
+    layer = DjangoTestLayer
+
     def setUp(self):
         self.text = None
 
