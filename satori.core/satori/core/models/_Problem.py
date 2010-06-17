@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 from satori.core.models._Object import Object
 
 class Problem(Object):
@@ -16,6 +16,6 @@ class ProblemEvents(events.Events):
     on_insert = on_update = ['name']
     on_delete = []
 
-class ProblemOpers(django2ars.Opers):
-    problem = django2ars.ModelOpers(Problem)
+class ProblemOpers(django_.Opers):
+    problem = django_.ModelProceduresProvider(Problem)
 

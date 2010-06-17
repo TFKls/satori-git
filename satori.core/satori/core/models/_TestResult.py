@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 from satori.core.models._Object import Object
 
 class TestResult(Object):
@@ -20,6 +20,6 @@ class TestResultEvents(events.Events):
     on_insert = on_update = ['submit', 'test', 'tester']
     on_delete = []
 
-class TestResultOpers(django2ars.Opers):
-    testresult = django2ars.ModelOpers(TestResult)
+class TestResultOpers(django_.Opers):
+    testresult = django_.ModelProceduresProvider(TestResult)
 

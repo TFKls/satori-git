@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 import hashlib, base64
 from django.conf import settings
 

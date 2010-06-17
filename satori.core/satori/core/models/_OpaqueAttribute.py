@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 from satori.core.models._OpenAttribute import OpenAttribute
 
 class OpaqueAttribute(OpenAttribute):

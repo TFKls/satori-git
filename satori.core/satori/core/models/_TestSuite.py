@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 from satori.core.models._Object import Object
 from satori.core.models.modules import AGGREGATORS1
 from satori.core.models.modules import DISPATCHERS
@@ -25,6 +25,6 @@ class TestSuiteEvents(events.Events):
     on_insert = on_update = ['owner', 'problem', 'name']
     on_delete = []
 
-class TestSuiteOpers(django2ars.Opers):
-    testsuite = django2ars.ModelOpers(TestSuite)
+class TestSuiteOpers(django_.Opers):
+    testsuite = django_.ModelProceduresProvider(TestSuite)
 

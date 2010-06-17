@@ -1,6 +1,8 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.objects import Argument, ReturnValue
+from satori.ars import django_
+from satori.ars.model import String
 from satori.core.models._Object import Object
 
 class Test(Object):
@@ -22,6 +24,15 @@ class TestEvents(events.Events):
     on_insert = on_update = ['owner', 'problem', 'name']
     on_delete = []
 
-class TestOpers(django2ars.Opers):
-    test = django2ars.ModelOpers(Test)
+class TestOpers(django_.Opers):
+    test = django_.ModelProceduresProvider(Test)
+
+    @test.method
+    @ReturnValue(type=Test)
+    @Argument(name='name', type=str)
+    def create(name):
+        t = Test()
+        t.name = name
+        t.save()
+        return t.id
 

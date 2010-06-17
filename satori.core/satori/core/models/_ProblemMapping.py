@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 from satori.core.models._Object import Object
 
 class ProblemMapping(Object):
@@ -21,6 +21,6 @@ class ProblemMappingEvents(events.Events):
     on_insert = on_update = ['contest', 'problem']
     on_delete = []
 
-class ProblemMappingOpers(django2ars.Opers):
-    problemmapping = django2ars.ModelOpers(ProblemMapping)
+class ProblemMappingOpers(django_.Opers):
+    problemmapping = django_.ModelProceduresProvider(ProblemMapping)
 

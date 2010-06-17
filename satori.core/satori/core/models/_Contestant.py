@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 from satori.core.models._Role import Role
 
 class Contestant(Role):
@@ -15,6 +15,6 @@ class ContestantEvents(events.Events):
     on_insert = on_update = ['name', 'contest']
     on_delete = []
 
-class ContestantOpers(django2ars.Opers):
-    contestant = django2ars.ModelOpers(Contestant)
+class ContestantOpers(django_.Opers):
+    contestant = django_.ModelProceduresProvider(Contestant)
 

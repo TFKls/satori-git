@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 from satori.core.models._Object import Object
 from satori.core.models.modules import AGGREGATORS3
 
@@ -19,6 +19,6 @@ class ContestEvents(events.Events):
     on_insert = on_update = ['name']
     on_delete = []
 
-class ContestOpers(django2ars.Opers):
-    contest = django2ars.ModelOpers(Contest)
+class ContestOpers(django_.Opers):
+    contest = django_.ModelProceduresProvider(Contest)
 

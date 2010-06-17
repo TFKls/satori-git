@@ -1,6 +1,6 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django2ars
+from satori.ars import django_
 from satori.core.models._Object import Object
 
 class Submit(Object):
@@ -17,6 +17,6 @@ class SubmitEvents(events.Events):
     on_insert = on_update = ['owner', 'problem']
     on_delete = []
 
-class SubmitOpers(django2ars.Opers):
-    submit = django2ars.ModelOpers(Submit)
+class SubmitOpers(django_.Opers):
+    submit = django_.ModelProceduresProvider(Submit)
 
