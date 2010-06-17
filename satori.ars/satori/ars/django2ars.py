@@ -2,6 +2,7 @@
 import new
 from satori.objects import DispatchOn
 from django.db import models
+from django.db.models.fields.related import add_lazy_relation
 from satori.ars.model import Contract, Procedure, Parameter, TypeAlias, Void, Boolean, Int32, Int64, String
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorName, ParameterName, NamingStyle
 
@@ -10,13 +11,17 @@ array_types = {}
 #struct_types = {}
 
 def get_id_type(model):
+    if isinstance(model, models.base.ModelBase):
+    	model = model._meta.object_name
     if not model in id_types:
-        id_types[model] = TypeAlias(name=Name(ClassName(model._meta.object_name + 'Id')), target_type=Int64)
+        id_types[model] = TypeAlias(name=Name(ClassName(model + 'Id')), target_type=Int64)
     return id_types[model]
 
 def get_array_type(model):
+    if isinstance(model, models.base.ModelBase):
+    	model = model._meta.object_name
     if not model in array_types:
-        array_types[model] = ListType(name=Name(ClassName(model._meta.object_name + 'IdList')), element_type=get_id_type(model))
+        array_types[model] = ListType(name=Name(ClassName(model + 'IdList')), element_type=get_id_type(model))
     return array_types[model]
 
 #def get_struct_type(model):
@@ -34,6 +39,41 @@ def gen_field_opers(model, field):
 def gen_field_opers(model, field):
     return []
 
+@DispatchOn(field=models.ForeignKey)
+def gen_field_opers(model, field):
+    field_name = field.name
+    other = field.rel.to
+    ret = []
+
+    def get(token, id):
+        obj = model.objects.get(pk=id)
+        return getattr(obj, field_name).id
+
+    ret.append(FieldOper(model, field, 'get', get, get_id_type(other),
+        (('token', String),('id', get_id_type(model)))))
+
+    def set(token, id, value):
+        other = set.func_dict['other']
+        obj = model.objects.get(pk=id)
+        other_obj = other.objects.get(pk=value)
+        setattr(obj, field_name, other_obj)
+        obj.save()
+        return value
+
+    if isinstance(other, basestring):
+        def resolve_related_class(func, model, cls):
+            func.func_dict['other'] = model
+        add_lazy_relation(model, set, other, resolve_related_class)
+    else:
+        set.func_dict['other'] = other
+
+    ret.append(FieldOper(model, field, 'set', set, get_id_type(other), 
+        (('token', String), ('id', get_id_type(model)), ('value', get_id_type(other)))))
+#    ret.append(FieldOper(model, field, 'set', set, Void, 
+#        (('token', String), ('id', get_id_type(model)), ('value', get_id_type(other)))))
+
+    return ret
+
 @DispatchOn(field=models.IntegerField)
 def gen_field_opers(model, field):
     field_name = field.name
@@ -50,9 +90,12 @@ def gen_field_opers(model, field):
         obj = model.objects.get(pk=id)
         setattr(obj, field_name, value)
         obj.save()
+        return value
 
-    ret.append(FieldOper(model, field, 'set', set, Void, 
+    ret.append(FieldOper(model, field, 'set', set, Int32, 
         (('token', String), ('id', get_id_type(model)), ('value', Int32))))
+#    ret.append(FieldOper(model, field, 'set', set, Void, 
+#        (('token', String), ('id', get_id_type(model)), ('value', Int32))))
 
     return ret
 
@@ -72,8 +115,11 @@ def gen_field_opers(model, field):
         obj = model.objects.get(pk=id)
         setattr(obj, field_name, value)
         obj.save()
+        return value
 
-    ret.append(FieldOper(model, field, 'set', set, Void, 
+#    ret.append(FieldOper(model, field, 'set', set, Void, 
+#        (('token', String), ('id', get_id_type(model)), ('value', String))))
+    ret.append(FieldOper(model, field, 'set', set, String, 
         (('token', String), ('id', get_id_type(model)), ('value', String))))
 
     return ret
