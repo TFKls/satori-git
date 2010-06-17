@@ -300,6 +300,33 @@ class Argument(object):
             raise ArgumentError("Required argument '{0}' not provided.".format(name))
         args[name] = provided.value
 
+class ReturnValue(object):
+    """A return value specification.
+    """
+
+    def __init__(self, **kwargs):
+        self.constraint = (kwargs.pop('constraint', None) or ArgumentConstraint.parse(kwargs) or NoConstraint())
+
+    def __call__(self, func):
+        signature = Signature.of(func)
+        signature.return_value = self + signature.return_value
+        return func
+
+    def __str__(self):
+        return "{0}".format(self.constraint)
+
+    def __add__(self, other):
+        if other is None:
+            return self
+        cons = self.constraint & other.constraint
+        return ReturnValue(constraint=cons)
+
+    def apply(self, value):
+        """Applies this specification to a return value."""
+        error = self.constraint.invalid(value)
+        if error is not None:
+            raise TypeError("Bad return value type: " + error)
+
 
 def _original(callable_):
     while hasattr(callable_, 'func_dict') and MAGIC_ORG in callable_.func_dict:
@@ -336,6 +363,7 @@ class Signature(object):
         self.arguments = dict()
         self.extra_positional = positional
         self.extra_keyword = keyword
+        self.return_value = ReturnValue()
         if defaults is None:
             defaults = []
         required = len(self.positional) - len(defaults)
