@@ -102,15 +102,29 @@ class Name(Object):
             if not isinstance(arg, NameComponent):
                 raise ArgumentError(
                     "Components of a Name must be instances of NameComponent:" + arg)
-            if (self.kind, arg.kind) not in Name.ALLOWED:
-                raise ArgumentError(
-                    "A NameComponent of kind {0} cannot follow one of kind {1}".
-                    format(arg.kind, self.kind))
+#            if (self.kind, arg.kind) not in Name.ALLOWED:
+#                raise ArgumentError(
+#                    "A NameComponent of kind {0} cannot follow one of kind {1}".
+#                    format(arg.kind, self.kind))
             self.components.append(arg)
             self.hash ^= hash(arg)
             self.kind = arg.kind
         if self.kind is None:
             raise ArgumentError("A Name must have at least one component")
+
+    def prefix(self, arg):
+        if isinstance(arg, NameComponent):
+            components = [arg] + self.components
+        else:
+            components = arg + self.components
+        return Name(*components)
+
+    def suffix(self, arg):
+        if isinstance(arg, NameComponent):
+            components = self.components + [arg]
+        else:
+            components = self.components + arg
+        return Name(*components)
 
     def __hash__(self):
         return self.hash

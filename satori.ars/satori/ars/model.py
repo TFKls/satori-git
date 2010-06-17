@@ -6,7 +6,7 @@
 import types
 
 from satori.objects import Object, Argument, ArgumentError
-from satori.ars.naming import NamedObject
+from satori.ars.naming import Name, ClassName, NamedObject, NamingStyle
 
 
 __all__ = (
@@ -30,24 +30,6 @@ class Type(Element):
         """Checks whether this Type is simple.
         """
         raise NotImplementedError()
-
-
-class AtomicType(Type):
-    """A Type without (visible) internal structure.
-    """
-
-    def isSimple(self):
-        return True
-
-
-Boolean = AtomicType()
-Int8 = AtomicType()
-Int16 = AtomicType()
-Int32 = AtomicType()
-Int64 = AtomicType()
-Float = AtomicType()
-String = AtomicType()
-Void = AtomicType()
 
 
 class ListType(Type):
@@ -107,6 +89,30 @@ class NamedType(Type, NamedObject):
         raise NotImplementedError()
 
 
+class AtomicType(NamedType):
+    """A Type without (visible) internal structure.
+    """
+
+    def __init__(self):
+        pass
+
+    def __str__(self):
+        return NamingStyle.DEFAULT.format(self.name)
+
+    def isSimple(self):
+        return True
+
+
+Boolean = AtomicType(name=Name(ClassName('Boolean')))
+Int8 = AtomicType(name=Name(ClassName('Int8')))
+Int16 = AtomicType(name=Name(ClassName('Int16')))
+Int32 = AtomicType(name=Name(ClassName('Int32')))
+Int64 = AtomicType(name=Name(ClassName('Int64')))
+Float = AtomicType(name=Name(ClassName('Float')))
+String = AtomicType(name=Name(ClassName('String')))
+Void = AtomicType(name=Name(ClassName('Void')))
+
+
 class TypeAlias(NamedType):
     """A named alias for a Type.
     """
@@ -124,12 +130,44 @@ class NamedTuple(Object):
     def __init__(self):
         self.names = set()
         self.items = list()
+        self.DEFAULT = dict()
+        self.PYTHON = dict()
 
     def add(self, component):
         if component.name in self.names:
             raise ArgumentError("duplicate component name")
         self.names.add(component.name)
         self.items.append(component)
+        self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
+        self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
+
+    def extend(self, tuple):
+        if not self.names.isdisjoint(tuple.names):
+            raise ArgumentError("duplicate component name")
+        self.names.update(tuple.names)
+        self.items.extend(tuple.items)
+        self.DEFAULT.update(tuple.DEFAULT)
+        self.PYTHON.update(tuple.PYTHON)
+
+    def update_prefix(self, arg):
+        self.names = set()
+        self.DEFAULT = dict()
+        self.PYTHON = dict()
+        for component in self.items:
+            component.name = component.name.prefix(arg)
+            self.names.add(component.name)
+            self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
+            self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
+
+    def update_suffix(self, arg):
+        self.names = set()
+        self.DEFAULT = dict()
+        self.PYTHON = dict()
+        for component in self.items:
+            component.name = component.name.suffix(arg)
+            self.names.add(component.name)
+            self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
+            self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
 
     def __iter__(self):
         return self.items.__iter__()
