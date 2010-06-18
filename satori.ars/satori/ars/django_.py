@@ -45,18 +45,18 @@ def generate_field_procedures(model, field):
     ret = []
 
     @Argument('token', type=str)
-    @Argument('obj', type=model)
+    @Argument('self', type=model)
     @ReturnValue(type=(other, NoneType))
-    def get(token, obj):
-        return getattr(obj, field_name)
+    def get(token, self):
+        return getattr(self, field_name)
 
     @Argument('token', type=str)
-    @Argument('obj', type=model)
+    @Argument('self', type=model)
     @Argument('value', type=(other, NoneType))
     @ReturnValue(type=NoneType)
-    def set(token, obj, value):
-        setattr(obj, field_name, value)
-        obj.save()
+    def set(token, self, value):
+        setattr(self, field_name, value)
+        self.save()
         return value
 
     if isinstance(other, basestring):
@@ -77,18 +77,18 @@ def generate_field_procedures(model, field):
     ret = []
 
     @Argument('token', type=str)
-    @Argument('obj', type=model)
+    @Argument('self', type=model)
     @ReturnValue(type=type_mapping[type(field)])
-    def get(token, obj):
-        return getattr(obj, field_name)
+    def get(token, self):
+        return getattr(self, field_name)
 
     @Argument('token', type=str)
-    @Argument('obj', type=model)
+    @Argument('self', type=model)
     @Argument('value', type=type_mapping[type(field)])
     @ReturnValue(type=NoneType)
-    def set(token, obj, value):
-        setattr(obj, field_name, value)
-        obj.save()
+    def set(token, self, value):
+        setattr(self, field_name, value)
+        self.save()
         return value
 
     return [set, get]
@@ -261,25 +261,32 @@ def wrap(ars_proc):
     ars_ret_type = ars_type(extract_type(signature.return_value.constraint))
     ars_proc.return_type = ars_ret_type
 
-    ars_arg_count = len(signature.positional)
+    arg_names = signature.positional
+    arg_count = len(signature.positional)
     ars_arg_types = []
-    for i in range(ars_arg_count):
+    for i in range(arg_count):
         param_type = ars_type(extract_type(signature.arguments[signature.positional[i]].constraint))
         ars_proc.addParameter(Parameter(name=Name(ParameterName(signature.positional[i])), type=param_type))
         ars_arg_types.append(param_type)
 
-    want_token = (ars_arg_count > 0) and (signature.positional[0] == 'token')
+    want_token = (arg_count > 0) and (signature.positional[0] == 'token')
     
-    def reimplementation(*args):
-        args = list(args)
+    def reimplementation(**kwargs):
+        newargs = [None] * arg_count
 #        if want_token:
 #           args[0] = process_token(args[0])
 
-        for i in range(ars_arg_count):
-            if (ars_arg_types[i] in rev_id_types) and (args[i] is not None):
-                args[i] = rev_id_types[ars_arg_types[i]].objects.get(pk=args[i])
+        for i in range(arg_count):
+            if arg_names[i] in kwargs:
+                # should not be none
+                if ars_arg_types[i] in rev_id_types:
+                    newargs[i] = rev_id_types[ars_arg_types[i]].objects.get(pk=kwargs[arg_names[i]])
+                else:
+                	newargs[i] = kwargs[arg_names[i]]
+            else:
+            	newargs[i] = None
 
-        ret = implementation(*args)
+        ret = implementation(*newargs)
 
         if (ars_ret_type in rev_id_types) and (ret is not None):
             ret = ret.pk
