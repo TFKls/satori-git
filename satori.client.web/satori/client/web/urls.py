@@ -1,6 +1,10 @@
 from django.conf.urls.defaults import *
 from satori.core.models import *
 
+import os
+
+PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
+
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
@@ -10,9 +14,9 @@ urlpatterns = patterns('',
 	(r'^create/','satori.client.web.createdata.create'),
 	(r'^admin/', include(admin.site.urls)),
 	(r'^files/(?P<path>.*)/$', 'django.views.static.serve',
-        {'document_root': 'files/'}),        
+        {'document_root': os.path.join(PROJECT_PATH,'files')}),        
 	(r'^files/(?P<path>.*)$', 'django.views.static.serve',
-        {'document_root': 'files/'}),
+        {'document_root': os.path.join(PROJECT_PATH,'files')}),
 	(r'^process/(?P<argstr>.*)/$','satori.client.web.main.loadPOST'),
 	(r'^process/(?P<argstr>.*)$','satori.client.web.main.loadPOST'),
 	(r'^(?P<argstr>.*);(?P<path>.*)$', 'satori.client.web.main.load'),
