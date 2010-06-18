@@ -58,7 +58,7 @@ def ToString(dict):
 # just for concatenating two URL halves	
 	
 def GetLink(dict, path):
-	return "?"+ToString(dict)+"/"+path;
+	return ToString(dict)+"|"+path;
 
 # if path is nontrivial, returns a descendant dictionary		
 		
