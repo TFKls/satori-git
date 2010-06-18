@@ -12,8 +12,8 @@
 class Runner
 {
   private:
-    static int child_runner(void*);
     static std::map<long, Runner*> runners;
+
     class Initializer
     {
       private:
@@ -21,9 +21,31 @@ class Runner
         static std::vector<int> signals;
         static std::vector<struct sigaction> handlers;
       public:
+        static std::set<int> debug_fds;
         Initializer();
         static void Stop();
+        static void Debug(const char*, va_list);
+        static void Fail(int, const char*, va_list);
     };
+    static Initializer initializer;
+    static void debug(const char*, ...);
+    static void fail(const char*, ...);
+
+    class Buffer
+    {
+      private:
+        char* buf;
+        size_t size;
+        size_t fill;
+      public:
+        Buffer(size_t =0);
+        ~Buffer();
+        void Append(void*, size_t);
+        std::string String() const;
+        static int yaml_write_callback(void*, unsigned char*, size_t);
+        static size_t curl_write_callback(void*, size_t, size_t, void*);
+    };
+
     class ProcStat
     {
       public:
@@ -35,8 +57,9 @@ class Runner
         char state;
         std::string command;
         int mem_size, mem_resident, mem_shared, mem_text, mem_lib, mem_data, mem_dirty;
-        ProcStat(int, Runner*);
+        ProcStat(int);
     };
+
     class UserStat
     {
       private:
@@ -53,6 +76,7 @@ class Runner
         UserStat(const std::string&);
         UserStat(long);
     };
+
     class GroupStat
     {
       private:
@@ -66,10 +90,45 @@ class Runner
         GroupStat(const std::string&);
         GroupStat(long);
     };
-    static Initializer initializer;
-    int  debfd;
-    void debug(const char*, ...);
-    void fail(const char*, ...);
+
+    class Controller
+    {
+      private:
+        std::string host;
+        int port;
+        std::string secret;
+        static bool Parse(const std::string&, std::map<std::string, std::string>&);
+        static bool Dump(const std::map<std::string, std::string>&, std::string&);
+        bool Contact(const std::string&, const std::map<std::string, std::string>&, std::map<std::string, std::string>&);
+        static void CheckOK(const std::string&, const std::map<std::string, std::string>&);
+      public:
+        Controller(const std::string&, int, const std::string&);
+        void GroupCreate(const std::string&);
+        void GroupJoin(const std::string&);
+        void GroupDestroy(const std::string&);
+        struct Limits
+        {
+          long memory;
+          Limits()
+            : memory(-1)
+          {
+          }
+        };
+        void GroupLimits(const std::string&, const Limits&);
+        struct Stats
+        {
+          long utime, stime, memory;
+          Stats()
+            : utime(0)
+            , stime(0)
+            , memory(0)
+          {
+          }
+        };
+        Stats GroupStats(const std::string&);
+    };
+    Controller* controller;
+
     void set_rlimit(const std::string&, int, long);
     void drop_capabilities();
     void drop_capability(const std::string&, int);
@@ -78,15 +137,15 @@ class Runner
     static long miliseconds(const timespec&);
     static std::pair<long, long> miliseconds(const rusage&);
     static std::pair<long, long> miliseconds(const ProcStat&);
-    bool parse_yaml(const std::string&, std::map<std::string, std::string>&);
-    bool dump_yaml(const std::map<std::string, std::string>&, std::string&);
-    bool contact_controller(std::string, const std::map<std::string, std::string>&, std::map<std::string, std::string>&);
+    static std::pair<long, long> miliseconds(const Controller::Stats&);
     bool check_times();
+    static int child_runner(void*);
     void run_child();
     void run_parent();
     void process_child();
     int  pipefd[2];
     long child;
+    long parent;
     std::set<long> offspring;
     bool after_exec;
     long start_time;
@@ -174,9 +233,13 @@ class Runner
     bool search_path;
     std::string controller_host;
     int controller_port;
+    std::string cgroup;
+    long cgroup_memory;
+
     Runner()
-      : debfd(-1)
+      : controller(NULL)
       , child(-1)
+      , parent(-1)
       , offspring()
       , after_exec(false)
       , start_time(0)
@@ -232,6 +295,8 @@ class Runner
       , search_path(false)
       , controller_host("")
       , controller_port(-1)
+      , cgroup("")
+      , cgroup_memory(-1)
     {}
     ~Runner();
 
@@ -263,6 +328,7 @@ class Runner
       unsigned long real_time;
       unsigned long sum_write;
       unsigned long sum_read;
+      unsigned long cgroup_memory;
       std::set<std::string> read_files;
       std::set<std::string> write_files;
 
@@ -276,6 +342,7 @@ class Runner
         , real_time(0)
         , sum_write(0)
         , sum_read(0)
+        , cgroup_memory(0)
       {}
     };
     
