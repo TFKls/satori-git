@@ -9,6 +9,7 @@ class Session:
 
 def ParseURL(argstr):
 	res = {}
+	return res
 	pos = 0
 	length = len(argstr)
 	while pos<length:
