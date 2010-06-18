@@ -5,10 +5,14 @@ import satori.core.setup                                       # pylint: disable
 from django.db import connection
 from django.db import models
 from satori.dbev.events import registry
-from satori.events.api import Event
-from satori.events.protocol import KeepAlive, Send
+from satori.events import Event, KeepAlive, Send, Slave
 
-def notifier():
+def notifier(connection):
+    slave = Slave(connection)
+    slave.schedule(notifier_coroutine())
+    slave.run()
+
+def notifier_coroutine():
     qn = connection.ops.quote_name
     qv = lambda x : '\''+str(x)+'\''
     notifications = models.get_model('dbev','notification')
@@ -20,10 +24,14 @@ def notifier():
     cursor.execute('LISTEN '+notifications.notification+';')
 
     while True:
-        if select.select([cursor], [], [], 5) == ([], [], []):
+        print 'notifier: select()'
+        if select.select([con], [], [], 5) == ([], [], []):
             yield KeepAlive()
         else:
-            while cursor.isready():
+        	con.poll()
+        	if con.notifies:
+                while con.notifies:
+            		con.notifies.pop()
                 for notification in notifications.objects.all():
                     model = notification.model.split('.')
                     versions = models.get_model(model[0], model[1] + "Versions")
@@ -55,5 +63,7 @@ def notifier():
                         previous = versions.objects.filter(_version_transaction=notification.entry).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
                         for field in events.on_delete:
                             event['old.'+field] = previous.__dict__[field]
+                    print 'Sending...'
                     yield Send(event)
+                    print 'Sent!'
                     notification.delete()
