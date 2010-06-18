@@ -7,6 +7,9 @@ class UserField(models.IntegerField):
         super(UserField, self).__init__(self, blank = True, null = True)
 
     def post_create_sql(self, style, db_table):
+        create_language = """
+CREATE LANGUAGE plpgsql;
+"""
         set_user_id_function = """
 CREATE OR REPLACE FUNCTION set_user_id(arg INTEGER) RETURNS VOID AS $$
 BEGIN
@@ -57,7 +60,7 @@ END;
 $$ LANGUAGE plpgsql;
 """
 
-        return (set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function)
+        return (create_language, set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function)
 
 
 class Notification(models.Model):
