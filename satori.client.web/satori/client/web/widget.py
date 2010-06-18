@@ -63,7 +63,7 @@ class MenuWidget(Widget):
 		addwidget(contest,'Ranking','ranking',contest,'seeranking')
 		addwidget(contest,'Manage users','manusers',contest,'manage_users')
 		addwidget(contest,'Manage problems','manproblems',contest,'manage_problems')
-		addlink(contest,'Main screen',DefaultLayout())			
+		addlink(contest,'Main screen',DefaultLayout())
 			
 # news table (a possible main content)
 class NewsWidget(Widget):
@@ -92,8 +92,8 @@ class ManageUsersWidget(Widget):
 	def __init__(self, params, path):
 		self.htmlFile = 'htmls/manusers.html'
 		c = ActiveContest(params)
-		self.accepted = ConUser.objects.filter(contest=c,accepted=True)
-		self.pending = ConUser.objects.filter(contest=c,accepted=False)
+		self.accepted = Contestant.objects.filter(contest=c,accepted=True)
+		self.pending = Contestant.objects.filter(contest=c,accepted=False)
 		
 class ManageProblemsWidget(Widget):
 	def __init__(self, params, path):
@@ -109,17 +109,12 @@ class SelectContestWidget(Widget):
 		self.other = []
 		self.user = CurrentUser()
 		for c in Contest.objects.all():
-			cu = None
-			if self.user:
-				try:
-					cu = ConUser.objects.get(user=self.user.id, contest=c.id)
-				except ConUser.DoesNotExist:
-					pass
+			cu = MyContestant(c)
 			d = DefaultLayout()
 			d['contestid'] = [str(c.id)]				
-			if cu and c.joining!=0 and cu.accepted:
+			if cu and cu.accepted:
 				self.participating.append([c,cu,GetLink(d,'')])
-			elif c.joining == 2 or c.joining == 3:
+			elif c.joining == 'Public' or c.joining == 'Moderated':
 				self.mayjoin.append([c,cu,GetLink(d,'')])
 			else:
 				self.other.append([c,cu,GetLink(d,'')])
@@ -146,4 +141,4 @@ allwidgets = {
 'submit' : SubmitWidget,
 'manusers' : ManageUsersWidget,
 'manproblems' : ManageProblemsWidget
-}	
+}

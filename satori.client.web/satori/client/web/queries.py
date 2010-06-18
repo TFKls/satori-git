@@ -1,6 +1,6 @@
 ﻿
 from URLDictionary import *
-from cdata.models import *
+from satori.core.models import *
 
 # Module for database queries
 
@@ -23,18 +23,21 @@ def ActiveContest(d):
 		return None
 	return ContestById(d['contestid'][0])
 
-def CurrentContestant(d):
+
+def MyContestant(c)
     u = CurrentUser()
-    c = ActiveContest(d)
     if u and c:
 	try:
-	    cu = ConUser.objects.get(user = u.id, contest = c.id)
-	except ConUser.DoesNotExist:
+	    cu = Contestant.objects.get(user = u.id, contest = c.id)
+	except:
 	    return None
 	else:
 	    return cu
     else:
 	return None
+    
+def CurrentContestant(d):
+	return MyContestant(ActiveContest(d))
 
 def Allowed(o, str):
 	return True

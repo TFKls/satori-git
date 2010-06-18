@@ -1,28 +1,18 @@
 ﻿from URLDictionary import *
 from queries import *
 from django.db import models
-from cdata.models import *
+from satori.core.models import *
 
 def LoginRequest(request):
-	postvars = request.POST
-	d = ParseURL(postvars['back_to'])
-	try:
-		m = User.objects.get(login__exact=request.POST['username'])
-	except User.DoesNotExist:
-		d['login'][0]['status'] = ['no_user']
-	else:
-		if m.password == request.POST['password']:
-			request.session['user'] = m.id
-			d['login'][0] = {'name' : ['login'] }
-		else:
-			d['login'][0]['status'] = ['failed']
+	request.session['user'] = m.id
+	d['login'][0] = {'name' : ['login'] }
 	return GetLink(d,postvars['path'])
 
 def JoinContestRequest(request):
 	user_o = UserById(request.POST['user_id'])
 	contest_o = ContestById(request.POST['contest_id'])
-	cu = ConUser(user=user_o,contest=contest_o)
-	if contest_o.joining==3:
+	cu = Contestant(user=user_o,contest=contest_o)
+	if contest_o.joining=='Public':
 		cu.accepted=True
 	cu.save()
 	d = DefaultLayout()
@@ -30,7 +20,7 @@ def JoinContestRequest(request):
 	return GetLink(d,'')
 
 def AcceptUserRequest(request):
-	cu = ConUser.objects.get(id = request.POST['conuser_id'])
+	cu = Contestant.objects.get(id = request.POST['conuser_id'])
 	cu.accepted = True
 	cu.save()
 	d = DefaultLayout()

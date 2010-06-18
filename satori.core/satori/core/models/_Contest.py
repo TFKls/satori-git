@@ -8,9 +8,11 @@ class Contest(Object):
     """Model. Description of a contest.
     """
     __module__ = "satori.core.models"
-
+    
+    joiningChoices = [ ('Private', 'Private'),('Moderated','Moderated'),('Public','Public') ]
     name        = models.CharField(max_length=50, unique=True)
     problems    = models.ManyToManyField('ProblemIncarnation', through='ProblemMapping')
+    joining     = models.CharField(max_length=30, choices=joiningChoices)
     aggregator3 = models.CharField(max_length=128, choices=AGGREGATORS3)
     # TODO: add presentation options
     

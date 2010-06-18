@@ -10,7 +10,8 @@ class User(Role):
     """
     __module__ = "satori.core.models"
 
-    pass
+    fullname   = models.CharField(max_length = 64)
+
     # add validation
 
 class UserEvents(events.Events):
