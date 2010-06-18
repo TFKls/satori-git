@@ -37,7 +37,7 @@ from .api import Event, MappingId, QueueId
 from .protocol import Attach, Detach
 from .protocol import Map, Unmap
 from .protocol import Send, Receive
-from .protocol import ProtocolError
+from .protocol import KeepAlive, ProtocolError
 from .api import Manager
 from .master import Master
 from .slave import Slave
@@ -48,6 +48,6 @@ __all__ = (
     'Attach', 'Detach',
     'Map', 'Unmap',
     'Send', 'Receive',
-    'ProtocolError',
+    'KeepAlive', 'ProtocolError',
     'Master', 'Slave',
 )
