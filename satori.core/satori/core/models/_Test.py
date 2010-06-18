@@ -34,5 +34,5 @@ class TestOpers(django_.Opers):
         t = Test()
         t.name = name
         t.save()
-        return t.id
+        return t
 
