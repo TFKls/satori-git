@@ -2,6 +2,7 @@ from django.db import models
 from satori.dbev import events
 from satori.ars import django_
 from satori.core.models._Object import Object
+from satori.core.models._RoleRel import RoleRel
 
 class Role(Object):
     """Model. Base for authorization "levels".
@@ -10,6 +11,7 @@ class Role(Object):
 
     name        = models.CharField(max_length=50)
     absorbing   = models.BooleanField(default=False)
+#    child       = models.ManyToManyField("self", through=RoleRel, symmetrical=False)
 
 class RoleEvents(events.Events):
     model = Role

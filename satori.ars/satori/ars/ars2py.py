@@ -97,19 +97,22 @@ def generate_class(contract):
 
     return new.classobj(class_name, class_bases, class_dict)
 
-def process(reader):
-    for contract in reader.contracts:
+def process(contracts):
+    types = NamedTuple()
+    for contract in contracts:
+    	types.extend(namedTypes(contract))
+    for contract in contracts:
         c_name = NamingStyle.PYTHON.format(contract.name)
 
         newcls = generate_class(contract)
 
         id_name = NamingStyle.IDENTIFIER.format(Name(ClassName(c_name + 'Id')))
-        if id_name in reader.types:
-        	id_types[reader.types[id_name]] = newcls
+        if id_name in types:
+        	id_types[types[id_name]] = newcls
 
         array_name = NamingStyle.IDENTIFIER.format(Name(ClassName(c_name + 'IdArray')))
-        if array_name in reader.types:
-        	array_types[reader.types[array_name]] = newcls
+        if array_name in types:
+        	array_types[types[array_name]] = newcls
 
         classes[c_name] = newcls
 

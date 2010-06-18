@@ -51,18 +51,19 @@ def notifier_coroutine():
                     event.user = notification.user
                     if notification.action == 'I' and events.on_insert:
                         version = versions.objects.filter(_version_transaction=notification.transaction).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
+                        print dir (version)
                         for field in events.on_insert:
-                            event['new.'+field] = version.__dict__[field]
+                            event['new.'+field] = getattr(version, field)
                     if notification.action == 'U' and events.on_update:
                         version = versions.objects.filter(_version_transaction=notification.transaction).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
                         previous = versions.objects.filter(_version_transaction=notification.entry).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
                         for field in events.on_update:
-                            event['new.'+field] = version.__dict__[field]
-                            event['old.'+field] = previous.__dict__[field]
+                            event['new.'+field] = getattr(version, field)
+                            event['old.'+field] = getattr(previous, field)
                     if notification.action == 'D' and events.on_delete:
                         previous = versions.objects.filter(_version_transaction=notification.entry).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
                         for field in events.on_delete:
-                            event['old.'+field] = previous.__dict__[field]
+                            event['old.'+field] = getattr(previous. field)
                     print 'Sending...'
                     yield Send(event)
                     print 'Sent!'
