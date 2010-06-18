@@ -28,6 +28,6 @@ class UserOpers(django_.Opers):
         t = User()
         t.name = name
         t.save()
-        return t.id
+        return t
 
 
