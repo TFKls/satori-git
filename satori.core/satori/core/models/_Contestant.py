@@ -8,7 +8,9 @@ class Contestant(Role):
     """
     __module__ = "satori.core.models"
 
-    contest     = models.ForeignKey('Contest')
+    contest    = models.ForeignKey('Contest')
+    user       = models.ForeignKey('User')
+    accepted   = models.BooleanField()
 
 class ContestantEvents(events.Events):
     model = Contestant

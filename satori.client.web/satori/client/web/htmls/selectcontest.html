@@ -1,0 +1,44 @@
+﻿
+{% if widget.user %}
+<h2 class="subtitle">Contests currently signed to:</h2>
+
+<table class="list_table">
+{% for c, conuser, link in widget.participating %}
+	<tr>
+		<td><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
+	</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+<h2 class="subtitle">Registration active:</h2>
+<table class="list_table">
+{% for c, conuser, link in widget.mayjoin %}
+	<tr>
+	<td><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
+	{% if widget.user %}
+		<td>
+		{% if conuser %}
+			<span class="messageemph">Applied</span>
+		{% else %}	
+		<form action="/process/join/" method="post">
+			<input type="hidden" name="user_id" value="{{ widget.user.id }}"/>
+			<input type="hidden" name="contest_id" value="{{ c.id }}"/>
+			<input type="hidden" name="back_path" value=""/>
+			<input type="submit" class="button" value="Join"/>
+		</form>
+		{% endif %}
+		</td>
+	{% endif %}
+	</tr>
+{% endfor %}
+</table>
+
+
+<h2 class="subtitle">Other contests:</h2>
+{% for c, conuser, link in widget.other %}
+	<div class="contestselection"> 	
+	<a class="contestlink" href="{{ link }}"> {{ c.name }}</a>
+	</div>
+{% endfor %}
+
