@@ -14,7 +14,7 @@ def ParseURL(argstr):
 	while pos<length:
 		if argstr[pos]==',':
 			pos = pos+1
-		m = re.match("(?P<key>[a-zA-Z0-9_]*)\:",argstr[pos:])
+		m = re.match("(?P<key>[a-zA-Z0-9_]*)|",argstr[pos:])
 		key = m.group("key")
 		pos = pos+m.end()
 		res[key]= []
@@ -44,7 +44,7 @@ def ToString(dict):
 	s = ""
 	for key, value in dict.iteritems():
 		s = s+key
-		s = s+':'
+		s = s+'|'
 		for v in value:
 			if type(v).__name__=='dict':
 				s = s+'('+ToString(v)+')'
@@ -58,7 +58,7 @@ def ToString(dict):
 # just for concatenating two URL halves	
 	
 def GetLink(dict, path):
-	return ToString(dict)+"|"+path;
+	return ToString(dict)+";"+path;
 
 # if path is nontrivial, returns a descendant dictionary		
 		
@@ -66,7 +66,7 @@ def follow(dict, pathstr):
 	d = dict
 	if not pathstr or len(pathstr)==0:
 		return d;
-	path = re.split(":",pathstr)
+	path = re.split("|",pathstr)
 	for i in range(0,len(path)):
 		d = d[path[i]][0]
 	return d			
