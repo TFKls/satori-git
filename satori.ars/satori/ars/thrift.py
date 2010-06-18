@@ -12,6 +12,7 @@ __all__ = (
 
 
 from collections import Set
+import traceback
 from types import ClassType, TypeType
 
 from pyparsing import Forward, Group, Literal, Optional, Regex, StringEnd
@@ -412,6 +413,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
                 result_name = 'success'
             except Exception as ex:
                 # handle "expected" (registered) exceptions
+                traceback.print_exc()
                 try:
                     result_value = procedure.error_transform(ex)
                     result_type = procedure.error_type
