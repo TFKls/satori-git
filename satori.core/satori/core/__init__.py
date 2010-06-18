@@ -22,8 +22,9 @@ def start_server():
     """Entry Point. Starts the core server.
     """
     from threading import Thread
-    from multiprocessing.connection import Listener
-    from satori.events import Master
+    from multiprocessing.connection import Listener, Client
+    from satori.dbev.notifier import notifier
+    from satori.events import Master, Slave, QueueId, Attach, Map, Receive
     from satori.events.mapper import TrivialMapper
     listener = Listener(address=('localhost', 38888))
     master = Master(mapper=TrivialMapper())
@@ -31,6 +32,7 @@ def start_server():
     master_thread = Thread(target=master.run)
     master_thread.daemon = True
     master_thread.start()
+    print 'event master started'
     
     from sys import exit
     from multiprocessing import Process
@@ -43,6 +45,14 @@ def start_server():
     server.contracts.update(django_.contract_list.items)
     server_process = Process(target=server.run)
     server_process.start()
+    print 'thrift server started'
+
+    print 'connecting to event master'
+    connection = Client(address=('localhost', 38888))
+    print 'connected!'
+    notifier_thread = Thread(target=notifier, args=(connection,))
+    notifier_thread.start()
+    print 'database notifier started'
     
     from signal import signal, SIGINT, SIGTERM, pause
     def handle_signal(signum, frame):
@@ -52,8 +62,20 @@ def start_server():
     signal(SIGINT, handle_signal)
     signal(SIGTERM, handle_signal)
     
-    while True:
-        pause()
+    slave = Slave(connection=Client(address=('localhost', 38888)))
+    def dump_events():
+        queue_id = QueueId("*")
+        yield Attach(queue_id)
+        mapping = yield Map(dict(), queue_id)
+        while True:
+            queue, event = yield Receive()
+            print 'queue', queue, 'received', event
+    slave.schedule(dump_events())
+    print 'starting event slave'
+    slave.run()
+    print 'event slave quit!'
+    #while True:
+    #    pause()
 
 def manage():
     from django.core.management import execute_manager
