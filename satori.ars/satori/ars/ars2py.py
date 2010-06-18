@@ -34,7 +34,7 @@ class ArsMethod(object):
         else:
         	self._want_token = False
 
-        if self._argnames and (self._argnames[0] == 'id'):
+        if self._argnames and (self._argnames[0] == 'self'):
         	self._argnames.pop(0)
         	self._type_self = self._argtypes.pop(0)
         	self._want_self = True
@@ -80,6 +80,18 @@ def generate_class(contract):
 
     def __init__(self, id):
         self._id = id
+
+    def __getattr__(self, name):
+        if hasattr(self, name + '__get'):
+        	return self.getattr(name + '__get')()
+        else:
+        	return AttributeError("'{0}' object has no attribute '{1}'".format(class_name, name))
+
+    def __setattr__(self, name):
+        if hasattr(self, name + '__set'):
+        	return self.getattr(name + '__set')()
+        else:
+        	return AttributeError("'{0}' object has no attribute '{1}'".format(class_name, name))
 
     class_dict['__init__'] = __init__
 
