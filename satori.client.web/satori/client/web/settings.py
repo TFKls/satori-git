@@ -63,7 +63,7 @@ MIDDLEWARE_CLASSES = (
     'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
-ROOT_URLCONF = 'satoritest.urls'
+ROOT_URLCONF = 'satori.client.web.urls'
 
 TEMPLATE_DIRS = ("/afs/matinf.uj.edu.pl/usr/dokt/tcs/duraj/profil_TCS/satoritest/"
     # Put strings here, like "/home/html/django_templates" or "C:/www/django/templates".
