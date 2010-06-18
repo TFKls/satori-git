@@ -45,6 +45,7 @@ class PollScheduler(Scheduler):
         fileno = client.fileno
         if fileno in self.fdmap:
             return
+        print 'PollScheduler: registered new client with fd', fileno
         self.fdmap[fileno] = client
         self.waits.register(fileno, select.POLLIN | select.POLLHUP | select.POLLERR)
 
@@ -98,6 +99,7 @@ class ListenerClient(Client):
     @Argument('listener', type=Listener)
     def __init__(self, listener):
         self.listener = listener
+        self.scheduler.add(self)
 
     def sendResponse(self, response):
         """Send a response to this Client.
@@ -108,7 +110,9 @@ class ListenerClient(Client):
         """Receive the next command from this Client.
         """
         try:
+            print 'ListenerClient: waiting for connection'
             connection = self.listener.accept()
+            print 'ListenerClient: got connection'
         except:
             raise ProtocolError("Listener.accept() failed")
         ConnectionClient(scheduler=self.scheduler, connection=connection)
@@ -146,29 +150,39 @@ class Master(Manager):
         """
         ListenerClient(scheduler=self.scheduler, listener=listener)
 
+    def _print(self, command, sender):
+        print 'event master: received', command, 'from', sender
+
     def _handleKeepAlive(self, _command, sender):
+        self._print(_command, sender)
         sender.sendResponse(None)
 
     def _handleDisconnect(self, _command, sender):
+        self._print(_command, sender)
         sender.disconnect()
 
     def _handleAttach(self, command, sender):
+        self._print(command, sender)
         self.dispatcher.attach(sender, command.queue_id)
         sender.sendResponse(None)
 
     def _handleDetach(self, command, sender):
+        self._print(command, sender)
         self.dispatcher.detach(sender, command.queue_id)
         sender.sendResponse(None)
 
     def _handleMap(self, command, sender):
+        self._print(command, sender)
         mapping_id = self.mapper.map(command.criteria, command.queue_id)
         sender.sendResponse(mapping_id)
 
     def _handleUnmap(self, command, sender):
+        self._print(command, sender)
         self.mapper.unmap(command.mapping_id)
         sender.sendResponse(None)
 
     def _handleSend(self, command, sender):
+        self._print(command, sender)
         event = command.event
         event.serial = self.serial
         self.serial += 1
@@ -177,4 +191,5 @@ class Master(Manager):
             self.dispatcher.enqueue(queue_id, event)
 
     def _handleReceive(self, _command, sender):
+        self._print(_command, sender)
         self.dispatcher.activate(sender)
