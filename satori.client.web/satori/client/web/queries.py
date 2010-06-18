@@ -24,7 +24,7 @@ def ActiveContest(d):
 	return ContestById(d['contestid'][0])
 
 
-def MyContestant(c)
+def MyContestant(c):
     u = CurrentUser()
     if u and c:
 	try:
