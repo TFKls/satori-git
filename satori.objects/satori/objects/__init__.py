@@ -398,12 +398,13 @@ class Signature(object):
         class ArgumentValues(object):
             """Holds argument values matching a given Signature.
             """
-            def __init__(self, *args, **kwargs):               # pylint: disable-msg=C0103
+            def __init__(*args, **kwargs):               # pylint: disable-msg=C0103
                 # parse arguments
+                self = args[0]
                 self.named = dict()
                 self.named.update(kwargs)
                 self.anonymous = []
-                for index, value in enumerate(args):
+                for index, value in enumerate(args[1:]):
                     if index < len(signature.positional):
                         name = signature.positional[index]
                         if name in self.named:
@@ -447,9 +448,10 @@ class ObjectMeta(TypeType):
     def __new__(mcs, name, bases, dict_):
         # replace constructor
         init = dict_.get('__init__', lambda self: None)
-        def __init__(self, *args, **kwargs):               # pylint: disable-msg=C0103
+        def __init__(*args, **kwargs):               # pylint: disable-msg=C0103
+            self = args[0]
             signature = Signature.of(__init__)
-            values = signature.Values(self, *args, **kwargs)
+            values = signature.Values(*args, **kwargs)
             for parent in reversed(self.__class__.__mro__):
                 if '__init__' in parent.__dict__:
                     values.call(_original(parent.__init__), False)
