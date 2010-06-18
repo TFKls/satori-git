@@ -1,0 +1,9 @@
+﻿<div id="menu">
+
+{% for name, link in widget.menuitems %}
+	<div class="mainmenuitem"> 
+	
+	<a class="menulink" href="{{link}}"> {{ name }} </a>
+	</div>
+{% endfor %}
+</div>
