@@ -64,7 +64,7 @@ def GetLink(dict, path):
 		
 def follow(dict, pathstr):
 	d = dict
-	if len(pathstr)==0:
+	if not pathstr or len(pathstr)==0:
 		return d;
 	path = re.split(":",pathstr)
 	for i in range(0,len(path)):
