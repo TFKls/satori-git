@@ -46,7 +46,7 @@ class Runner
         static size_t curl_write_callback(void*, size_t, size_t, void*);
     };
 
-    class ProcStat
+    class ProcStats
     {
       public:
         int pid,ppid,pgrp,sid,tty,tpgid,exit_signal,cpu_number;
@@ -57,10 +57,10 @@ class Runner
         char state;
         std::string command;
         int mem_size, mem_resident, mem_shared, mem_text, mem_lib, mem_data, mem_dirty;
-        ProcStat(int);
+        ProcStats(int);
     };
 
-    class UserStat
+    class UserInfo
     {
       private:
         void set(void*);
@@ -73,11 +73,11 @@ class Runner
         std::string gecos;
         std::string dir;
         std::string shell;
-        UserStat(const std::string&);
-        UserStat(long);
+        UserInfo(const std::string&);
+        UserInfo(long);
     };
 
-    class GroupStat
+    class GroupInfo
     {
       private:
         void set(void*);
@@ -87,8 +87,8 @@ class Runner
         std::string password;
         long gid;
         std::vector<std::string> members;
-        GroupStat(const std::string&);
-        GroupStat(long);
+        GroupInfo(const std::string&);
+        GroupInfo(long);
     };
 
     class Controller
@@ -138,6 +138,7 @@ class Runner
     static std::pair<long, long> miliseconds(const rusage&);
     static std::pair<long, long> miliseconds(const ProcStat&);
     static std::pair<long, long> miliseconds(const Controller::Stats&);
+    bool check_cgroup();
     bool check_times();
     static int child_runner(void*);
     void run_child();
@@ -235,6 +236,10 @@ class Runner
     int controller_port;
     std::string cgroup;
     long cgroup_memory;
+    long cgroup_time;
+    long cgroup_user_time;
+    long cgroup_system_time;
+
 
     Runner()
       : controller(NULL)
@@ -297,11 +302,15 @@ class Runner
       , controller_port(-1)
       , cgroup("")
       , cgroup_memory(-1)
+      , cgroup_time(-1)
+      , cgroup_user_time(-1)
+      , cgroup_system_time(-1)
     {}
     ~Runner();
 
     void Run();
     void Stop();
+    bool Check();
     void Wait();
 
     enum RES_STATUS
@@ -329,6 +338,9 @@ class Runner
       unsigned long sum_write;
       unsigned long sum_read;
       unsigned long cgroup_memory;
+      unsigned long cgroup_time;
+      unsigned long cgroup_user_time;
+      unsigned long cgroup_system_time;
       std::set<std::string> read_files;
       std::set<std::string> write_files;
 
@@ -343,7 +355,15 @@ class Runner
         , sum_write(0)
         , sum_read(0)
         , cgroup_memory(0)
+        , cgroup_time(0)
+        , cgroup_user_time(0)
+        , cgroup_system_time(0)
       {}
+      void SetStatus(RES_STATUS _status)
+      {
+        if (status == RES_OTHER || status == RES_OK)
+          status = _status;
+      }
     };
     
     Result result;

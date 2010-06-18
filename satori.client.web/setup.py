@@ -8,12 +8,13 @@ setup(name='satori.client.web',
         'satori.client',
     ],
     install_requires=[
+        'flup',
         'setuptools',
         'Thrift',
         'satori.client.common',
     ],
     entry_points='''
         [console_scripts]
-	satori.client.web.manage = satori.client.web:manage
+	    satori.client.web.manage = satori.client.web:manage
     ''',
 )
