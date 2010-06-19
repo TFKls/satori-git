@@ -12,6 +12,7 @@ class Contestant(Role):
     user       = models.ForeignKey('User')
     accepted   = models.BooleanField()
 
+
 class ContestantEvents(events.Events):
     model = Contestant
     on_insert = on_update = ['name', 'contest']

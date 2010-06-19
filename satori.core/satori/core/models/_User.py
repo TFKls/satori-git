@@ -12,6 +12,7 @@ class User(Role):
 
     fullname   = models.CharField(max_length = 64)
 
+
     # add validation
 
 class UserEvents(events.Events):

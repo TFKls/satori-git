@@ -14,7 +14,7 @@ def ParseURL(argstr):
 	while pos<length:
 		if argstr[pos]==',':
 			pos = pos+1
-		m = re.match("(?P<key>[a-zA-Z0-9_]*)|",argstr[pos:])
+		m = re.match("(?P<key>[a-zA-Z0-9_]*)\|",argstr[pos:])
 		key = m.group("key")
 		pos = pos+m.end()
 		res[key]= []

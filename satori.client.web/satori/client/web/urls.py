@@ -17,10 +17,10 @@ urlpatterns = patterns('',
         {'document_root': os.path.join(PROJECT_PATH,'files')}),        
 	(r'^files/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': os.path.join(PROJECT_PATH,'files')}),
-	(r'^process/(?P<argstr>.*)/$','satori.client.web.main.loadPOST'),
+	(r'^process/(?P<argstr>.*)\;$','satori.client.web.main.loadPOST'),
 	(r'^process/(?P<argstr>.*)$','satori.client.web.main.loadPOST'),
-	(r'^(?P<argstr>.*);(?P<path>.*)$', 'satori.client.web.main.load'),
-    (r'^(?P<argstr>.*);(?P<path>.*)$', 'satori.client.web.main.load'),
+	(r'^(?P<argstr>.*)\;(?P<path>.*)$', 'satori.client.web.main.load'),
+    (r'^(?P<argstr>.*)\;(?P<path>.*)$', 'satori.client.web.main.load'),
     (r'^(?P<argstr>.*)$', 'satori.client.web.main.load')
      
     # Uncomment the admin/doc line below and add 'django.contrib.admindocs' 

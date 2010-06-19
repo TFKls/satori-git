@@ -15,6 +15,7 @@ class Contest(Object):
     joining     = models.CharField(max_length=30, choices=joiningChoices)
     aggregator3 = models.CharField(max_length=128, choices=AGGREGATORS3)
     # TODO: add presentation options
+
     
 class ContestEvents(events.Events):
     model = Contest
