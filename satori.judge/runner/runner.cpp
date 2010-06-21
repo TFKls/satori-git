@@ -54,6 +54,7 @@ Runner::Initializer::Initializer()
 {
   debug_fds.insert(2);
   signals.push_back(SIGCHLD);
+  signals.push_back(SIGALRM);
   handlers.resize(signals.size());
   struct sigaction action;
   memset(&action, 0, sizeof(action));
@@ -90,6 +91,11 @@ void Runner::Initializer::signalhandler(int sig, siginfo_t* info, void* data)
           fprintf(stderr, "HANDLE: Received SIGCHLD from unknown pid %d\n", (int) info->si_pid);
       }
     }
+  }
+  else if (sig == SIGALRM)
+  {
+    for(map<long, Runner*>::const_iterator i = runners.begin(); i != runners.end(); i++)
+      i->second->Check();
   }
 }
 void Runner::Initializer::Debug(const char* format, va_list args)
@@ -384,6 +390,11 @@ pair<long, long> Runner::miliseconds(const ProcStat& stat)
 {
   return make_pair(stat.utime*1000/sysconf(_SC_CLK_TCK), stat.stime*1000/sysconf(_SC_CLK_TCK));
 };
+pair<long, long> Runner::miliseconds(const Controller::Stats& stat)
+{
+  const CGROUP_CPU_CLK_TCK = 100;
+  return make_pair(stat.utime*1000/CGROUP_CPU_CLK_TCK, stat.stime*1000/CGROUP_CPU_CLK_TCK);
+};
 bool Runner::milisleep(long ms)
 {
   return usleep(1000*ms);
@@ -675,15 +686,38 @@ bool Runner::check_times()
   if (((cpu_time > 0) && (cpu_time < (long)result.cpu_time)) || ((real_time > 0) && (real_time < (long)result.real_time)) ||
       ((user_time > 0) && (user_time < (long)result.user_time)) || ((system_time > 0) && (system_time < (long)result.system_time)))
   {
-    result.status = RES_TIME;
-    Stop();
+    result.SetStatus(RES_TIME);
     return false;
   }
   if ((memory_space > 0) && (curmemory > memory_space))
   {
-    result.status = RES_MEMORY;
-    Stop();
+    result.SetStatus(RES_MEMORY);
     return false;
+  }
+  return true;
+}
+bool Runner::check_cgroup()
+{
+  if (cgroup != "" && controller)
+  {
+    Controller::Stats stats = controller->GroupStats(cgroup);
+    result.cgroup_memory = stats.memory;
+    pair<long, long> cgtime = miliseconds(stats);
+    result.cgroup_time = cgtime.first + cgtime.second;
+    result.cgroup_user_time = cgtime.first;
+    result.cgroup_system_time = cgtime.second;
+    if (cgroup_time > 0 && cgroup_time < result.cgroup_time ||
+        cgroup_user_time > 0 && cgroup_user_time < result.cgroup_user_time ||
+        cgroup_system_time > 0 && cgroup_system_time < result.cgroup_system_time)
+    {
+      result.SetStatus(RES_TIME);
+      return false;
+    }
+    if (cgroup_memory > 0 && cgroup_memory < result.cgroup_memory)
+    {
+      result.SetStatus(RES_MEMORY);
+      return false;
+    }
   }
   return true;
 }
@@ -699,7 +733,7 @@ void Runner::run_child()
 
   Initializer::Stop();
 
-  result.status = RES_OK;
+  result.SetStatus(RES_OK);
   
   if (ptrace)
     if (::ptrace(PTRACE_TRACEME, 0, NULL, NULL))
@@ -990,7 +1024,10 @@ void Runner::process_child()
   int status;
   rusage usage;
   if (!check_times())
+  {
+    Stop();
     return;
+  }
   pid_t p = wait4(-1 * child, &status, WNOHANG | WUNTRACED, &usage);
   if (p < 0)
     fail("wait4 failed");
@@ -1025,13 +1062,16 @@ void Runner::process_child()
       result.exit_status = status;
       result.usage = usage;
       if(!check_times())
+      {
+        Stop();
         return;
+      }
       if ((memory_space > 0 && usage.ru_maxrss > memory_space))
-        result.status = RES_MEMORY;
+        result.SetStatus(RES_MEMORY);
       else if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
-        result.status = RES_OK;
+        result.SetStatus(RES_OK);
       else
-        result.status = RES_RUNTIME;
+        result.SetStatus(RES_RUNTIME);
       Stop();
     }
   }
@@ -1060,7 +1100,7 @@ void Runner::process_child()
             }
             else if (ptrace_safe)
             {
-              result.status = RES_IO;
+              result.SetStatus(RES_IO);
               Stop();
             }
             after_exec = true;
@@ -1081,7 +1121,7 @@ void Runner::process_child()
           default:
             if (ptrace_safe)
             {
-              result.status = RES_IO;
+              result.SetStatus(RES_IO);
               Stop();
             }
           //TODO: Handle syscalls!
@@ -1133,7 +1173,7 @@ void Runner::process_child()
   if (p==child && force_stop)
   {
     debug("Child stoped for unknown reason");
-    result.status = RES_RUNTIME;
+    result.SetStatus(RES_RUNTIME);
     Stop();
   }
 }
@@ -1196,21 +1236,34 @@ void Runner::Stop()
 {
   if (child > 0)
   {
-    if (result.status == RES_OTHER)
-      result.status = RES_STOP;
     killpg(child, SIGKILL);
     runners.erase(child);
     for (set<long>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
       runners.erase(*i);
     offspring.clear();
     child=-1;
+    check_times();
+    check_cgroup();
     if (cgroup != "" && controller)
       controller->GroupDestroy(cgroup);
+    result.SetStatus(RES_STOP);
   }
+}
+
+bool Runner::Check()
+{
+  if (child <= 0)
+    return false;
+  if (!check_times() || !check_cgroup())
+  {
+    Stop();
+    return false;
+  }
+  return true;
 }
 
 void Runner::Wait()
 {
-  while (child>0 && check_times())
+  while (child>0 && Check())
     milisleep(250);
 }
