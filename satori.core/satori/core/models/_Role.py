@@ -2,7 +2,7 @@ from django.db import models
 from satori.dbev import events
 from satori.ars import django_
 from satori.core.models._Object import Object
-from satori.core.models._RoleRel import RoleRel
+#from satori.core.models._RoleRel import RoleRel
 
 class Role(Object):
     """Model. Base for authorization "levels".
