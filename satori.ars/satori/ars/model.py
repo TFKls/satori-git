@@ -129,26 +129,37 @@ class TypeAlias(NamedType):
 class NamedTuple(Object):
 
     def __init__(self):
-        self.names = set()
+        self.names = dict()
         self.items = list()
         self.DEFAULT = dict()
         self.PYTHON = dict()
 
     def add(self, component):
         if component.name in self.names:
-            raise ArgumentError("duplicate component name")
-        self.names.add(component.name)
+            if self.names[component.name] == component:
+            	return
+            else:
+                raise ArgumentError("duplicate component name")
+        self.names[component.name] = component
         self.items.append(component)
         self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
         self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
 
     def extend(self, tuple):
-        if not self.names.isdisjoint(tuple.names):
-            raise ArgumentError("duplicate component name")
-        self.names.update(tuple.names)
-        self.items.extend(tuple.items)
-        self.DEFAULT.update(tuple.DEFAULT)
-        self.PYTHON.update(tuple.PYTHON)
+        components = list()
+        for component in tuple.items:
+            if component.name in self.names:
+                if self.names[component.name] == component:
+                    pass
+                else:
+                    raise ArgumentError("duplicate component name")
+            else:
+            	components.append(component)
+        for component in components:
+            self.names[component.name] = component
+            self.items.append(component)
+            self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
+            self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
 
     def update_prefix(self, arg):
         self.names = set()
