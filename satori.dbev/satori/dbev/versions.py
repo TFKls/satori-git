@@ -223,13 +223,11 @@ class Versions:
                 nfield = models.fields.IntegerField(
                     name=field.name,
                     verbose_name=field.verbose_name,
-                    db_column=field.db_column,
-                    db_tablespace=field.db_tablespace,
+                    db_column=field.column,
                 )
             else:
             	nfield = copy.copy(field)
             nfield._original = field
-#            nfield.db_type = db_type
             fields[field.name] = nfield
 
         fields['_version_from'] = models.DateTimeField()
