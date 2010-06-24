@@ -5,17 +5,6 @@ from django.db import models
 import satori.dbev.models
 from django.db import connection
 
-class VersionsField(models.Field):
-    def __init__(self, _original):
-        self._original = _original
-        super(VersionsField, self).__init__(self, blank = True, null = True, db_column = _original.column, primary_key = False)
-
-    def db_type(self, connection):
-        if self._original.db_type() == "serial":
-            return "integer"
-        else:
-            return self._original.db_type()
-
 class UserField(models.IntegerField):
     def __init__(self, on_init = False, on_update = False, on_delete = False, versions = True):
         super(UserField, self).__init__(self, blank = True, null = True)
@@ -227,13 +216,18 @@ class Versions:
         fields = {}
         fields['__module__'] = model.__module__
 
-        def db_type(self):
-            if self._original.db_type() == "serial":
-                return "integer"
-            else:
-                return self._original.db_type()
         for field in model._meta.local_fields:
-            nfield = copy.copy(field)
+        	if isinstance(field, models.fields.AutoField) or \
+        		isinstance(field, models.fields.related.OneToOneField) or \
+        		isinstance(field, models.fields.related.ForeignKey):
+                nfield = models.fields.IntegerField(
+                    name=field.name,
+                    verbose_name=field.verbose_name,
+                    db_column=field.db_column,
+                    db_tablespace=field.db_tablespace,
+                )
+            else:
+            	nfield = copy.copy(field)
             nfield._original = field
 #            nfield.db_type = db_type
             fields[field.name] = nfield
