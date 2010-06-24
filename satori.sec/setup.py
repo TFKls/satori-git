@@ -10,7 +10,7 @@ setup(name='satori.sec',
         'setuptools',
         'Django >= 1.1.1',
         'psycopg2',
-        'python-openid',
+        'python-openid >= 2.2.4',
         'pycrypto',
     ]
 )

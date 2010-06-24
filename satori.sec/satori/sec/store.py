@@ -1,5 +1,9 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+__all__ = (
+    'Store',
+)
+
 from satori.core.settings import SECRET_KEY
 from satori.sec.models import Nonce, Association
 from django.db.models import F
@@ -10,7 +14,7 @@ import base64
 import hashlib
 import time
 
-class IDStore(OpenIDStore):
+class Store(OpenIDStore):
     
     def storeAssociation(self, server_url, association):
         try:

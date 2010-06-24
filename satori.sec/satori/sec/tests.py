@@ -4,7 +4,7 @@
 
 import unittest
 
-from satori.sec.tools import Token
+from satori.sec import Token
 from datetime import timedelta
 
 class TestToken(unittest.TestCase):
@@ -19,11 +19,12 @@ class TestToken(unittest.TestCase):
     def testToken(self):
         """Test scenario: create token by parameters, and by string.
         """
-        tok1 = Token(user='test_user', auth='test_auth', validity=timedelta(days=1))
+        tok1 = Token(user='test_user', data='\n'.join(['test', 'data']), auth='test_auth', validity=timedelta(days=1))
 
         print 'Token:    ', tok1
         print 'User:     ', tok1.user
         print 'Auth:     ', tok1.auth
+        print 'Data:     ', tok1.data
         print 'Valid:    ', tok1.valid
         print 'Deadline: ', tok1.deadline
         print 'Validity: ', tok1.validity
@@ -38,6 +39,7 @@ class TestToken(unittest.TestCase):
         print 'Token:    ', tok2
         print 'User:     ', tok2.user
         print 'Auth:     ', tok2.auth
+        print 'Data:     ', tok2.data
         print 'Valid:    ', tok2.valid
         print 'Deadline: ', tok2.deadline
         print 'Validity: ', tok2.validity

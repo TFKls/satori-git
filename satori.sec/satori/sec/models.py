@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
+from satori.core.models import User
 
 class Nonce(models.Model):
 
@@ -26,3 +27,18 @@ class Association(models.Model):
 
     class Meta:
         unique_together = (('server_url', 'handle'),)
+
+class Login(models.Model):
+
+    __module__ == "satori.sec.models"
+
+    login    = models.CharField(max_length=32, unique=True)
+    password = models.CharField(max_length=128)
+    user     = models.ForeignKey(User)
+
+class OpenIdentity(models.Model):
+
+    __module__ == "satori.sec.models"
+
+    identity = models.CharField(max_length=512, unique=True)
+    user     = models.ForeignKey(User)
