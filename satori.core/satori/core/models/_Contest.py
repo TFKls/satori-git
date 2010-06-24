@@ -11,10 +11,13 @@ class Contest(Object):
     
     joiningChoices = [ ('Private', 'Private'),('Moderated','Moderated'),('Public','Public') ]
     name        = models.CharField(max_length=50, unique=True)
-    problems    = models.ManyToManyField('ProblemIncarnation', through='ProblemMapping')
+    problems    = models.ManyToManyField('Problem', through='ProblemMapping')
     joining     = models.CharField(max_length=30, choices=joiningChoices)
     aggregator3 = models.CharField(max_length=128, choices=AGGREGATORS3)
+    def __unicode__(self):
+        return self.name
     # TODO: add presentation options
+
     
 class ContestEvents(events.Events):
     model = Contest

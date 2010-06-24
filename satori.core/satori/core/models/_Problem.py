@@ -10,6 +10,9 @@ class Problem(Object):
 
     name        = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, default="")
+    
+    def __unicode__(self):
+        return self.name+" ("+self.description+")"
 
 class ProblemEvents(events.Events):
     model = Problem

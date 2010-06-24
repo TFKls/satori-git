@@ -1,0 +1,15 @@
+
+<h4>Problems</h4>
+<table class="list_table">
+<tr class="header">
+    <td>Code</td>
+    <td>Title</td>
+</tr>
+{% for p in widget.problems %}
+<tr>
+    <td>{{p.code}} </td>
+    <td>{{p.title}}</td>
+{% endfor %}
+</tr>
+</table>
+

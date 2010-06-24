@@ -10,8 +10,12 @@ class ProblemMapping(Object):
     __module__ = "satori.core.models"
 
     contest     = models.ForeignKey('Contest')
+    problem     = models.ForeignKey('Problem')
     code        = models.CharField(max_length=10)
-    problem     = models.ForeignKey('ProblemIncarnation')
+    title       = models.CharField(max_length=64)
+    
+    def __unicode__(self):
+        return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'code'), ('contest', 'problem'))

@@ -11,6 +11,9 @@ class Contestant(Role):
     contest    = models.ForeignKey('Contest')
     user       = models.ForeignKey('User')
     accepted   = models.BooleanField()
+    def __unicode__(self):
+        return self.user.fullname+' ('+self.contest.name+')'
+
 
 class ContestantEvents(events.Events):
     model = Contestant
