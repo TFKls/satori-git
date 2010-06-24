@@ -1,2 +1,27 @@
-﻿
 <h3>Results</h3>
+
+<table class="compact">
+<tr class="header">
+    <td>#</td>
+    <td>User</td>
+    <td>Problem</td>
+    <td>Time</td>
+    <td>Status</td>
+    <td></td>
+</tr>
+{% for s in widget.submits %}
+<tr>
+    <td>{{s.id}}</td>
+    <td>{{s.user}}</td>
+    <td>{{s.problem}}</td>
+    <td>{{s.time}}</td>
+    <td>{{s.status}}</td>
+    <td><a href="{{s.link}}" class="showhidelink">Show/hide details</a></td>
+</tr>
+{% if s.showdetails %}
+<tr>
+    <td colspan="6">{{s.details}}</td>
+</tr>
+{% endif %}
+{% endfor %}
+</table>

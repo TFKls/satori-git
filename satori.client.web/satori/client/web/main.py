@@ -1,4 +1,4 @@
-﻿
+from satori.core.models import *
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from URLDictionary import *

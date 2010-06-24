@@ -10,38 +10,38 @@
 
 <body>
 
-	<div id="header">
-	{% include "htmls/banner.html" %}
-	</div>
-	
-	<div id="middle">
-	
-		<div id="leftmenu">
-			
-			{% with widget.loginform as widget %}
-			{% include widget.htmlFile %}
-			{% endwith %}
+    <div id="header">
+    {% include "htmls/banner.html" %}
+    </div>
+    
+    <div id="middle">
+    
+        <div id="leftmenu">
+            
+            {% with widget.loginform as widget %}
+            {% include widget.htmlFile %}
+            {% endwith %}
 
-			{% with widget.menu as widget %}
-			{% include widget.htmlFile %}
-			{% endwith %}
-		</div>
-		
-		<div id="content">
-			{% with widget.content as widget %}
-			{% include widget.htmlFile %}
-			{% endwith %}
-		</div>
-	</div>
-	<div id="footer">
-				Debug:
-			<ul>
-				{% for key, v in widget.params.items %}
-		  		<li> {{ key }}: {{v}} </li>
-				{% endfor %}
-			</ul>
+            {% with widget.menu as widget %}
+            {% include widget.htmlFile %}
+            {% endwith %}
+        </div>
+        
+        <div id="content">
+            {% with widget.content as widget %}
+            {% include widget.htmlFile %}
+            {% endwith %}
+        </div>
+    </div>
+    <div id="footer">
+                Debug:
+            <ul>
+                {% for key, v in widget.params.items %}
+                <li> {{ key }}: {{v}} </li>
+                {% endfor %}
+            </ul>
 
-	</div>	
+    </div>  
 </body>
 </html>
 

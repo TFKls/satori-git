@@ -9,9 +9,10 @@ class User(Role):
     """Model. A Role which can be logged onto.
     """
     __module__ = "satori.core.models"
-
+    login      = models.CharField(max_length = 64)
     fullname   = models.CharField(max_length = 64)
-
+    def __unicode__(self):
+        return self.fullname
 
     # add validation
 

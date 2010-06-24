@@ -1,1 +1,11 @@
-Submit!
+<h2>Submit</h2>
+<form action="process.submit" method="post">
+    <select name="problem">
+        {% for p in widget.problems %}
+            <option value="{{p.id}}">{{p.code}}: {{p.title}}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" class="button" value="Submit"/>
+    <input type="hidden" name="cid" value="{{ widget.cid }}"/>
+    <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
+</form>
