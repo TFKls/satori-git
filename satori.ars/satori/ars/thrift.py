@@ -12,6 +12,7 @@ __all__ = (
 
 
 from collections import Set
+from StringIO import StringIO
 import traceback
 from types import ClassType, TypeType
 
@@ -481,6 +482,16 @@ class ThriftServer(ContractMixin, Server):
         self._transport = transport
     
     def run(self):
+        idl_proc = Procedure(return_type=String, name=Name(ClassName('Server'), MethodName('getIDL')))
+        idl_cont = Contract(name=Name(ClassName('Server')))
+        idl_cont.addProcedure(idl_proc)
+        self.contracts.add(idl_cont)
+        writer = ThriftWriter()
+        writer.contracts.update(self.contracts)
+        idl = StringIO()
+        writer.writeTo(idl)
+        idl = idl.getvalue()
+        idl_proc.implementation = lambda: idl
         processor = ThriftProcessor(self.contracts)
         server = self._server_type(processor, self._transport)
         return server.serve()
@@ -503,14 +514,26 @@ class ThriftClient(ContractMixin, Client):
             values = self._signature.Values(*args, **kwargs)
             return self._client._processor.call(self._name, values.named, self._client._protocol, self._client._protocol)
 
-    def start(self):
-        self._changeContracts = False
+    def start(self, bootstrap=False):
         self._transport.open()
         self._protocol = TBinaryProtocol(self._transport) #TODO: find a better protocol?
+        if bootstrap:
+        	self.contracts.clear()
+            idl_proc = Procedure(return_type=String, name=Name(ClassName('Server'), MethodName('getIDL')))
+            idl_cont = Contract(name=Name(ClassName('Server')))
+            idl_cont.addProcedure(idl_proc)
+            self.contracts.add(idl_cont)
+            self._processor = ThriftProcessor(self.contracts)
+            idl = ThriftClient.Implementation(self, idl_proc)()
+            idl_reader = ThriftReader()
+            idl_io = StringIO(idl)
+            idl_reader.readFrom(idl_io)
+            self.contracts = idl_reader.contracts
         self._processor = ThriftProcessor(self.contracts)
         for contract in self.contracts:
             for procedure in contract.procedures:
                 procedure.implementation = ThriftClient.Implementation(self, procedure)
+        self._changeContracts = False
 
     def stop(self):
         for contract in self.contracts:

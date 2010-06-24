@@ -5,14 +5,15 @@
 
 import types
 
-from satori.objects import Object, Argument, ArgumentError
+from satori.objects import Object, Argument, ArgumentError, DispatchOn
 from satori.ars.naming import Name, ClassName, NamedObject, NamingStyle
 
 
 __all__ = (
     'Boolean', 'Int16', 'Int32', 'Int64', 'String', 'Void',
     'Field', 'ListType', 'MapType', 'SetType', 'Structure', 'TypeAlias',
-    'Parameter', 'Procedure', 'Contract'
+    'Parameter', 'Procedure', 'Contract',
+    'NamedTuple', 'namedTypes'
 )
 
 
@@ -128,26 +129,37 @@ class TypeAlias(NamedType):
 class NamedTuple(Object):
 
     def __init__(self):
-        self.names = set()
+        self.names = dict()
         self.items = list()
         self.DEFAULT = dict()
         self.PYTHON = dict()
 
     def add(self, component):
         if component.name in self.names:
-            raise ArgumentError("duplicate component name")
-        self.names.add(component.name)
+            if self.names[component.name] == component:
+            	return
+            else:
+                raise ArgumentError("duplicate component name")
+        self.names[component.name] = component
         self.items.append(component)
         self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
         self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
 
     def extend(self, tuple):
-        if not self.names.isdisjoint(tuple.names):
-            raise ArgumentError("duplicate component name")
-        self.names.update(tuple.names)
-        self.items.extend(tuple.items)
-        self.DEFAULT.update(tuple.DEFAULT)
-        self.PYTHON.update(tuple.PYTHON)
+        components = list()
+        for component in tuple.items:
+            if component.name in self.names:
+                if self.names[component.name] == component:
+                    pass
+                else:
+                    raise ArgumentError("duplicate component name")
+            else:
+            	components.append(component)
+        for component in components:
+            self.names[component.name] = component
+            self.items.append(component)
+            self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
+            self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
 
     def update_prefix(self, arg):
         self.names = set()
@@ -243,3 +255,51 @@ class Contract(Element, NamedObject):
         if procedure is None:
             procedure = Procedure(**kwargs)
         self.procedures.add(procedure)
+
+@DispatchOn(item=AtomicType)
+def namedTypes(item):
+    nt = NamedTuple()
+    nt.add(item)
+    return nt
+@DispatchOn(item=TypeAlias)
+def namedTypes(item):
+    nt = namedTypes(item.target_type)
+    nt.add(item)
+    return nt
+@DispatchOn(item=ListType)
+def namedTypes(item):
+    return namedTypes(item.element_type)
+@DispatchOn(item=MapType)
+def namedTypes(item):
+    nt = namedTypes(item.key_type)
+    nt.extend(item.value_type)
+    return nt
+@DispatchOn(item=SetType)
+def namedTypes(item):
+    return namedTypes(item.element_type)
+@DispatchOn(item=Field)
+def namedTypes(item):
+    return namedTypes(item.type)
+@DispatchOn(item=Structure)
+def namedTypes(item):
+    nt = NamedTuple()
+    for field in item.fields:
+        nt.extend(namedTypes(field))
+    nt.add(item)
+    return nt
+@DispatchOn(item=Parameter)
+def namedTypes(item):
+    return namedTypes(item.type)
+@DispatchOn(item=Procedure)
+def namedTypes(item):
+    nt = namedTypes(item.return_type)
+    nt.extend(namedTypes(item.error_type))
+    for parameter in item.parameters:
+    	nt.extend(namedTypes(parameter))
+    return nt
+@DispatchOn(item=Contract)
+def namedTypes(item):
+    nt = NamedTuple()
+    for procedure in item.procedures:
+    	nt.extend(namedTypes(procedure))
+    return nt
