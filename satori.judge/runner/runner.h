@@ -136,14 +136,14 @@ class Runner
     static long miliseconds(const timeval&);
     static long miliseconds(const timespec&);
     static std::pair<long, long> miliseconds(const rusage&);
-    static std::pair<long, long> miliseconds(const ProcStat&);
+    static std::pair<long, long> miliseconds(const ProcStats&);
     static std::pair<long, long> miliseconds(const Controller::Stats&);
     bool check_cgroup();
     bool check_times();
     static int child_runner(void*);
     void run_child();
     void run_parent();
-    void process_child();
+    void process_child(long);
     int  pipefd[2];
     long child;
     long parent;
@@ -361,7 +361,7 @@ class Runner
       {}
       void SetStatus(RES_STATUS _status)
       {
-        if (status == RES_OTHER || status == RES_OK)
+        if (status == RES_OTHER)
           status = _status;
       }
     };

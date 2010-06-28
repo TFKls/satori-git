@@ -75,18 +75,18 @@ void Runner::Initializer::signalhandler(int sig, siginfo_t* info, void* data)
   {
     map<long, Runner*>::const_iterator i = runners.find(info->si_pid);
     if (i != runners.end())
-      i->second->process_child();
+      i->second->process_child(info->si_pid);
     else
     {
-      ProcStat P(info->si_pid);
+      ProcStats P(info->si_pid);
       i = runners.find(P.ppid);
       if (i != runners.end())
-        i->second->process_child();
+        i->second->process_child(info->si_pid);
       else
       {
         i = runners.find(P.pgrp);
         if (i != runners.end())
-          i->second->process_child();
+          i->second->process_child(info->si_pid);
         else
           fprintf(stderr, "HANDLE: Received SIGCHLD from unknown pid %d\n", (int) info->si_pid);
       }
@@ -182,7 +182,7 @@ size_t Runner::Buffer::curl_write_callback(void* buffer, size_t size, size_t nme
   return nmemb;
 }
 
-Runner::ProcStat::ProcStat(int _pid)
+Runner::ProcStats::ProcStats(int _pid)
 {
   FILE* f;
   char filename[32];
@@ -220,7 +220,7 @@ Runner::ProcStat::ProcStat(int _pid)
     fail("scanf of '/proc/%d/statm' failed", _pid);
   fclose(f);
 }
-void Runner::UserStat::set(void* _p)
+void Runner::UserInfo::set(void* _p)
 {
   passwd* p = (passwd*)_p;
   ok = true;
@@ -232,7 +232,7 @@ void Runner::UserStat::set(void* _p)
   dir = p->pw_dir;
   shell = p->pw_shell;
 }
-Runner::UserStat::UserStat(const string& name)
+Runner::UserInfo::UserInfo(const string& name)
 {
   ok = false;
   if(name == "")
@@ -253,7 +253,7 @@ Runner::UserStat::UserStat(const string& name)
         set(ppwd);
   }
 }
-Runner::UserStat::UserStat(long id)
+Runner::UserInfo::UserInfo(long id)
 {
   ok = false;
   passwd pwd;
@@ -263,7 +263,7 @@ Runner::UserStat::UserStat(long id)
   if (ppwd == &pwd)
     set(ppwd);
 }
-void Runner::GroupStat::set(void* _g)
+void Runner::GroupInfo::set(void* _g)
 {
   struct group* g = (struct group*)_g;
   ok = true;
@@ -274,7 +274,7 @@ void Runner::GroupStat::set(void* _g)
   for(char** i=g->gr_mem; *i != NULL; i++)
     members.push_back(*i);
 }
-Runner::GroupStat::GroupStat(const string& name)
+Runner::GroupInfo::GroupInfo(const string& name)
 {
   ok = false;
   if(name == "")
@@ -295,7 +295,7 @@ Runner::GroupStat::GroupStat(const string& name)
       set(pgrp);
   }
 }
-Runner::GroupStat::GroupStat(long id)
+Runner::GroupInfo::GroupInfo(long id)
 {
   ok = false;
   struct group grp;
@@ -386,13 +386,13 @@ pair<long, long> Runner::miliseconds(const rusage& usage)
 {
   return make_pair(miliseconds(usage.ru_utime), miliseconds(usage.ru_stime));
 };
-pair<long, long> Runner::miliseconds(const ProcStat& stat)
+pair<long, long> Runner::miliseconds(const ProcStats& stat)
 {
   return make_pair(stat.utime*1000/sysconf(_SC_CLK_TCK), stat.stime*1000/sysconf(_SC_CLK_TCK));
 };
 pair<long, long> Runner::miliseconds(const Controller::Stats& stat)
 {
-  const CGROUP_CPU_CLK_TCK = 100;
+  const long CGROUP_CPU_CLK_TCK = 100;
   return make_pair(stat.utime*1000/CGROUP_CPU_CLK_TCK, stat.stime*1000/CGROUP_CPU_CLK_TCK);
 };
 bool Runner::milisleep(long ms)
@@ -659,14 +659,14 @@ bool Runner::check_times()
     getrusage(*i, &usage);
     proctimesofar += miliseconds(usage.ru_utime);
     */
-    ProcStat stat(*i);
+    ProcStats stat(*i);
     proctimesofar.first += miliseconds(stat).first;
     proctimesofar.second += miliseconds(stat).second;
     curmemory += stat.mem_size;
   }
   if (proctimesofar.first < 0 || proctimesofar.second < 0)
   {
-    ProcStat stat(*offspring.begin());
+    ProcStats stat(*offspring.begin());
     debug("CPU time below zero: (%ld,%ld) = (%ld,%ld) - (%ld,%ld) + (%ld,%ld)", proctimesofar.first, proctimesofar.second, dead_pids_time.first, dead_pids_time.second, before_exec_time.first, before_exec_time.second, miliseconds(stat).first, miliseconds(stat).second);
     if (proctimesofar.first < 0)
       proctimesofar.first = 0;
@@ -683,8 +683,10 @@ bool Runner::check_times()
   result.user_time = proctimesofar.first;
   result.system_time = proctimesofar.second;
   result.memory = max((long)result.memory, curmemory);
-  if (((cpu_time > 0) && (cpu_time < (long)result.cpu_time)) || ((real_time > 0) && (real_time < (long)result.real_time)) ||
-      ((user_time > 0) && (user_time < (long)result.user_time)) || ((system_time > 0) && (system_time < (long)result.system_time)))
+  if ((cpu_time > 0 && cpu_time < (long)result.cpu_time) ||
+      (real_time > 0 && real_time < (long)result.real_time) ||
+      (user_time > 0 && user_time < (long)result.user_time) ||
+      (system_time > 0 && system_time < (long)result.system_time))
   {
     result.SetStatus(RES_TIME);
     return false;
@@ -706,14 +708,14 @@ bool Runner::check_cgroup()
     result.cgroup_time = cgtime.first + cgtime.second;
     result.cgroup_user_time = cgtime.first;
     result.cgroup_system_time = cgtime.second;
-    if (cgroup_time > 0 && cgroup_time < result.cgroup_time ||
-        cgroup_user_time > 0 && cgroup_user_time < result.cgroup_user_time ||
-        cgroup_system_time > 0 && cgroup_system_time < result.cgroup_system_time)
+    if ((cgroup_time > 0 && cgroup_time < (long)result.cgroup_time) ||
+        (cgroup_user_time > 0 && cgroup_user_time < (long)result.cgroup_user_time) ||
+        (cgroup_system_time > 0 && cgroup_system_time < (long)result.cgroup_system_time))
     {
       result.SetStatus(RES_TIME);
       return false;
     }
-    if (cgroup_memory > 0 && cgroup_memory < result.cgroup_memory)
+    if (cgroup_memory > 0 && cgroup_memory < (long)result.cgroup_memory)
     {
       result.SetStatus(RES_MEMORY);
       return false;
@@ -733,8 +735,6 @@ void Runner::run_child()
 
   Initializer::Stop();
 
-  result.SetStatus(RES_OK);
-  
   if (ptrace)
     if (::ptrace(PTRACE_TRACEME, 0, NULL, NULL))
       fail("ptrace_traceme failed");
@@ -761,13 +761,13 @@ void Runner::run_child()
   uid = ruid;
   gid = rgid;
 
-  UserStat usr(user);
+  UserInfo usr(user);
   if (usr.ok)
   {
     uid = usr.uid;
     gid = usr.gid;
   }
-  GroupStat grp(group);
+  GroupInfo grp(group);
   if (grp.ok)
   {
     gid = grp.gid;
@@ -791,7 +791,7 @@ void Runner::run_child()
   string username("unknown");
   string homedir("/");
   string shell("/bin/bash");
-  UserStat ust(uid);
+  UserInfo ust(uid);
   if (ust.ok)
   {
     username = ust.name;
@@ -833,7 +833,7 @@ void Runner::run_child()
     if (chdir("/"))
       fail("chdir('/') failed");
 
-  if (new_pid && new_mount)
+  if (new_mount)
   {
     umount2("/proc", MNT_DETACH);
     mount("proc", "/proc", "proc", 0, NULL);
@@ -1019,72 +1019,91 @@ void Runner::run_parent()
   start_time = miliseconds(ts);
 }
 
-void Runner::process_child()
+void Runner::process_child(long epid)
 {
-  int status;
-  rusage usage;
+  const long ptrace_opts = PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXEC | PTRACE_O_TRACEEXIT;
   if (!check_times())
   {
     Stop();
     return;
   }
-  pid_t p = wait4(-1 * child, &status, WNOHANG | WUNTRACED, &usage);
-  if (p < 0)
+  int status;
+  rusage usage;
+  pid_t p = wait4(epid, &status, WNOHANG | WUNTRACED, &usage);
+  if (p < 0 && errno != ECHILD)
     fail("wait4 failed");
-  if (p == 0)
+  if (p <= 0)
+  {
+    debug("wait4 %d empty", (int)epid);
     return;
+  }
+  int sig = 0;
+  if (WIFSTOPPED(status))
+    sig = WSTOPSIG(status);
+  else if (WIFSIGNALED(status))
+    sig = WTERMSIG(status);
   if (offspring.find(p) == offspring.end())
   {
     if (ptrace)
     {
-//    ::ptrace(PTRACE_ATTACH, p, NULL, NULL);
-      ::ptrace(PTRACE_SETOPTIONS, p, NULL, PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXEC | PTRACE_O_TRACEEXIT);
+//      ::ptrace(PTRACE_ATTACH, p, NULL, NULL);
+      ::ptrace(PTRACE_SETOPTIONS, p, NULL, ptrace_opts);
+      if (sig == SIGTRAP)
+        sig = SIGTRAP | 0x80;
     }
     offspring.insert(p);
     runners[p] = this;
   }
   bool force_stop = false;
-  if (WIFEXITED(status) || WIFSIGNALED(status))
-  {
-    if(WIFEXITED(status))
-      debug("Exited %d", (int)p);
-    if(WIFSIGNALED(status))
-    {
-      int s = WSTOPSIG(status);
-      debug("Signaled %d (%d)", (int)p, s);
-    }
-    dead_pids_time.first += miliseconds(usage).first;
-    dead_pids_time.second += miliseconds(usage).second;
-    offspring.erase(p);
-    runners.erase(p);
-    if (p == child)
-    {
-      result.exit_status = status;
-      result.usage = usage;
-      if(!check_times())
-      {
-        Stop();
-        return;
-      }
-      if ((memory_space > 0 && usage.ru_maxrss > memory_space))
-        result.SetStatus(RES_MEMORY);
-      else if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
-        result.SetStatus(RES_OK);
-      else
-        result.SetStatus(RES_RUNTIME);
-      Stop();
-    }
-  }
-  else if (WIFSTOPPED(status))
+
+  if (WIFSTOPPED(status))
   {
     if (ptrace)
     {
       siginfo_t sigi;
       ::ptrace(PTRACE_GETSIGINFO, p, NULL, &sigi);
-      int sig = sigi.si_signo;
-      //t sig = WSTOPSIG(status);
 
       if (sig == SIGTRAP)
+      {
+        int ptre = (status >> 16) & 0xffff;
+        if (ptre == PTRACE_EVENT_FORK ||
+            ptre == PTRACE_EVENT_VFORK ||
+            ptre == PTRACE_EVENT_CLONE)
+        {
+          //TODO: Handle new child? No need?
+          unsigned long npid;
+          ::ptrace(PTRACE_GETEVENTMSG, p, NULL, &npid);
+          debug("-> Thread %d %lu", (int)p, npid);
+          /*
+          ::ptrace(PTRACE_ATTACH, npid, NULL, NULL);
+          ::ptrace(PTRACE_SETOPTIONS, npid, NULL, ptrace_opts);
+          offspring.insert(npid);
+          runners[npid] = this;
+          */
+          ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
+          ::ptrace(PTRACE_SYSCALL, npid, NULL, NULL);
+          debug("<- Thread %d %lu", (int)p, npid);
+        }
+        else if (ptre == PTRACE_EVENT_EXEC)
+        {
+          //TODO: Allow him to exec?
+          debug("-> Execing %d", (int)p);
+          ::ptrace(PTRACE_ATTACH, p, NULL, NULL);
+          ::ptrace(PTRACE_SETOPTIONS, p, NULL, ptrace_opts);
+          ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
+          debug("<- Execing %d", (int)p);
+        }
+        else if (ptre == PTRACE_EVENT_EXIT)
+        {
+          unsigned long exit_status;
+          ::ptrace(PTRACE_GETEVENTMSG, p, NULL, &exit_status);
+          debug("-> Exiting %d %lu", (int)p, exit_status);
+          //TODO: Check something on exit?
+          ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
+          debug("<- Exiting %d %lu", (int)p, exit_status);
+        }
+      }
+      else if (sig == (SIGTRAP | 0x80))
       {
         user_regs_struct regs;
         ::ptrace(PTRACE_GETREGS, p, NULL, &regs);
@@ -1118,6 +1137,13 @@ void Runner::process_child()
             break;
           case __NR_uname:
             break;
+          case __NR_clone:
+            debug("Clone");
+            unsigned long mod;
+            mod = CLONE_UNTRACED;
+            regs.rbx &= ~mod;
+            mod = CLONE_PTRACE;
+            regs.rbx |= mod;
           default:
             if (ptrace_safe)
             {
@@ -1130,43 +1156,38 @@ void Runner::process_child()
         ::ptrace(PTRACE_SETREGS, p, NULL, &regs);
         ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
       }
-      else if ((sig == (SIGTRAP | (PTRACE_EVENT_FORK << 8))) ||
-          (sig == (SIGTRAP | (PTRACE_EVENT_VFORK << 8))) ||
-          (sig == (SIGTRAP | (PTRACE_EVENT_CLONE << 8)))
-         )
-      {
-        //TODO: Handle new child? No need?
-        unsigned long npid;
-        ::ptrace(PTRACE_GETEVENTMSG, p, NULL, &npid);
-        debug("-> Thread %d %lu", (int)p, npid);
-        ::ptrace(PTRACE_ATTACH, npid, NULL, NULL);
-        ::ptrace(PTRACE_SETOPTIONS, npid, NULL, PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXEC | PTRACE_O_TRACEEXIT);
-        ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-        debug("<- Thread %d %lu", (int)p, npid);
-      }
-      else if (sig == (SIGTRAP | (PTRACE_EVENT_EXEC << 8)))
-      {
-        //TODO: Allow him to exec?
-        debug("-> Execing %d", (int)p);
-        ::ptrace(PTRACE_ATTACH, p, NULL, NULL);
-        ::ptrace(PTRACE_SETOPTIONS, p, NULL, PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXEC | PTRACE_O_TRACEEXIT);
-        ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-        debug("<- Execing %d", (int)p);
-      }
-      else if (sig == (SIGTRAP | (PTRACE_EVENT_EXIT << 8)))
-      {
-        unsigned long exit_status;
-        ::ptrace(PTRACE_GETEVENTMSG, p, NULL, &exit_status);
-        debug("-> Exiting %d %lu", (int)p, exit_status);
-        //TODO: Check something on exit?
-        ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-        debug("<- Exiting %d %lu", (int)p, exit_status);
-      }
       else
-        force_stop = true;
+      {
+        debug("-> Signaling %d %d", (int)p, (int)sigi.si_signo);
+        ::ptrace(PTRACE_SYSCALL, p, NULL, sigi.si_signo);
+      }
     }
     else
       force_stop = true;
+  }
+  else if (WIFEXITED(status) || WIFSIGNALED(status))
+  {
+    if(WIFEXITED(status))
+      debug("Exited %d", (int)p);
+    if(WIFSIGNALED(status))
+    {
+      int s = WSTOPSIG(status);
+      debug("Signaled %d (%d)", (int)p, s);
+    }
+    dead_pids_time.first += miliseconds(usage).first;
+    dead_pids_time.second += miliseconds(usage).second;
+    offspring.erase(p);
+    runners.erase(p);
+    if (p == child)
+    {
+      result.exit_status = status;
+      result.usage = usage;
+      if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
+        result.SetStatus(RES_OK);
+      else
+        result.SetStatus(RES_RUNTIME);
+      Stop();
+    }
   }
   else
     force_stop = true;
@@ -1175,6 +1196,10 @@ void Runner::process_child()
     debug("Child stoped for unknown reason");
     result.SetStatus(RES_RUNTIME);
     Stop();
+  }
+  else if (force_stop)
+  {
+    debug("Grandchild stopped for unknown reason");
   }
 }
 
@@ -1236,14 +1261,20 @@ void Runner::Stop()
 {
   if (child > 0)
   {
+    if (ptrace)
+    {
+      ::ptrace(PTRACE_KILL, child, NULL, NULL);
+      for (set<long>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
+        ::ptrace(PTRACE_KILL, *i, NULL, NULL);
+    }
     killpg(child, SIGKILL);
+    check_times();
+    check_cgroup();
     runners.erase(child);
     for (set<long>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
       runners.erase(*i);
     offspring.clear();
     child=-1;
-    check_times();
-    check_cgroup();
     if (cgroup != "" && controller)
       controller->GroupDestroy(cgroup);
     result.SetStatus(RES_STOP);

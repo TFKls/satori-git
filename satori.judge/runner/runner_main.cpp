@@ -210,11 +210,77 @@ void parse_options(int argc, const char* argv[])
   */
 }
 
+Runner run;
+
+int finish()
+{
+  switch (run.result.status)
+  {
+    case Runner::RES_OK: printf("OK\n"); break;
+    case Runner::RES_TIME: printf("TLE\n"); break;
+    case Runner::RES_MEMORY: printf("MEM\n"); break;
+    case Runner::RES_IO: printf("IOQ\n"); break;
+    case Runner::RES_ILLEGAL: printf("ILL\n"); break;
+    case Runner::RES_RUNTIME: printf("RTE\n"); break;
+    case Runner::RES_STOP: printf("STP\n"); break;
+    case Runner::RES_FAIL: printf("FLD\n"); break;
+    default: printf("UNK\n");
+  }
+  if (!config.quiet)
+  {
+    printf("Status : %d\n", run.result.exit_status);
+    printf("Retcode: %d\n", WEXITSTATUS(run.result.exit_status));
+    printf("Memory : %lu\n", run.result.memory);
+    printf("CPU    : %lu\n", run.result.cpu_time);
+    printf("Time   : %lu\n", run.result.real_time);
+    printf("Read   : %lu\n", run.result.sum_read);
+    printf("Write  : %lu\n", run.result.sum_write);
+  }
+  if (run.result.status == Runner::RES_OK)
+    return 0;
+  return 1;
+}
+
+void signalhandler(int sig, siginfo_t* info, void* data)
+{
+  run.Stop();
+  exit(finish());
+}
+
 int main(int argc, const char** argv)
 {
   curl_global_init(CURL_GLOBAL_ALL);
+
+  vector<int> signals;
+  signals.push_back(SIGHUP);
+  signals.push_back(SIGINT);
+  signals.push_back(SIGQUIT);
+  signals.push_back(SIGILL);
+  signals.push_back(SIGABRT);
+  signals.push_back(SIGFPE);
+  signals.push_back(SIGSEGV);
+  signals.push_back(SIGPIPE);
+  signals.push_back(SIGTERM);
+  signals.push_back(SIGUSR1);
+  signals.push_back(SIGUSR2);
+  signals.push_back(SIGBUS);
+  signals.push_back(SIGPOLL);
+  signals.push_back(SIGPROF);
+  signals.push_back(SIGSYS);
+  signals.push_back(SIGVTALRM);
+  signals.push_back(SIGXCPU);
+  signals.push_back(SIGXFSZ);
+  signals.push_back(SIGIO);
+  signals.push_back(SIGPWR);
+  struct sigaction action;
+  memset(&action, 0, sizeof(action));
+  action.sa_sigaction = &signalhandler;
+  action.sa_flags = SA_RESTART | SA_SIGINFO;
+  sigfillset(&action.sa_mask);
+  for (uint i=0; i<signals.size(); i++)
+    sigaction(signals[i], &action, NULL);
+
   parse_options(argc, argv);
-  Runner run;
   if (config.debug)
     run.debug_file = config.debug;
   if (config.chroot)
@@ -332,30 +398,8 @@ int main(int argc, const char** argv)
 
   run.Run();
   run.Wait();
-  switch (run.result.status)
-  {
-    case Runner::RES_OK: printf("OK\n"); break;
-    case Runner::RES_TIME: printf("TLE\n"); break;
-    case Runner::RES_MEMORY: printf("MEM\n"); break;
-    case Runner::RES_IO: printf("IOQ\n"); break;
-    case Runner::RES_ILLEGAL: printf("ILL\n"); break;
-    case Runner::RES_RUNTIME: printf("RTE\n"); break;
-    case Runner::RES_STOP: printf("STP\n"); break;
-    case Runner::RES_FAIL: printf("FLD\n"); break;
-    default: printf("UNK\n");
-  }
-  if (!config.quiet)
-  {
-    printf("Status : %d\n", run.result.exit_status);
-    printf("Retcode: %d\n", WEXITSTATUS(run.result.exit_status));
-    printf("Memory : %lu\n", run.result.memory);
-    printf("CPU    : %lu\n", run.result.cpu_time);
-    printf("Time   : %lu\n", run.result.real_time);
-    printf("Read   : %lu\n", run.result.sum_read);
-    printf("Write  : %lu\n", run.result.sum_write);
-  }
+  run.Stop();
+  int res = finish();
   curl_global_cleanup();
-  if (run.result.status == Runner::RES_OK)
-    return 0;
-  return 1;
+  return res;
 }
