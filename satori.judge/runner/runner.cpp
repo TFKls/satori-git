@@ -44,7 +44,7 @@
 
 using namespace std;
 
-map<long, Runner*> Runner::runners;
+map<int, Runner*> Runner::runners;
 vector<int> Runner::Initializer::signals;
 vector<struct sigaction> Runner::Initializer::handlers;
 set<int> Runner::Initializer::debug_fds;
@@ -58,7 +58,7 @@ Runner::Initializer::Initializer()
   handlers.resize(signals.size());
   struct sigaction action;
   memset(&action, 0, sizeof(action));
-  action.sa_sigaction = &signalhandler;
+  action.sa_sigaction = &SignalHandler;
   action.sa_flags = SA_RESTART | SA_SIGINFO;
   sigfillset(&action.sa_mask);
   for (uint i=0; i<signals.size(); i++)
@@ -69,11 +69,11 @@ void Runner::Initializer::Stop()
   for (uint i=0; i<signals.size(); i++)
     sigaction(signals[i], &handlers[i], NULL);
 }
-void Runner::Initializer::signalhandler(int sig, siginfo_t* info, void* data)
+void Runner::Initializer::SignalHandler(int sig, siginfo_t* info, void* data)
 {
   if (sig == SIGCHLD)
   {
-    map<long, Runner*>::const_iterator i = runners.find(info->si_pid);
+    map<int, Runner*>::const_iterator i = runners.find(info->si_pid);
     if (i != runners.end())
       i->second->process_child(info->si_pid);
     else
@@ -94,7 +94,7 @@ void Runner::Initializer::signalhandler(int sig, siginfo_t* info, void* data)
   }
   else if (sig == SIGALRM)
   {
-    for(map<long, Runner*>::const_iterator i = runners.begin(); i != runners.end(); i++)
+    for(map<int, Runner*>::const_iterator i = runners.begin(); i != runners.end(); i++)
       i->second->Check();
   }
 }
@@ -169,13 +169,13 @@ string Runner::Buffer::String() const
 {
   return string(buf, fill);
 }
-int Runner::Buffer::yaml_write_callback(void* data, unsigned char* buffer, size_t size)
+int Runner::Buffer::YamlWriteCallback(void* data, unsigned char* buffer, size_t size)
 {
   Buffer* buf = (Buffer*)data;
   buf->Append(buffer, size);
   return 1;
 }
-size_t Runner::Buffer::curl_write_callback(void* buffer, size_t size, size_t nmemb, void* userp)
+size_t Runner::Buffer::CurlWriteCallback(void* buffer, size_t size, size_t nmemb, void* userp)
 {
   Buffer* buf = (Buffer*)userp;
   buf->Append(buffer, size * nmemb);
@@ -189,7 +189,7 @@ Runner::ProcStats::ProcStats(int _pid)
   sprintf(filename, "/proc/%d/stat", _pid);
   f = fopen(filename, "r");
   if (!f)
-    fail("read of '/proc/%d/stat' failed", _pid);
+    Fail("read of '/proc/%d/stat' failed", _pid);
   char* buf = NULL;
   char* sta = NULL;
   int z;
@@ -197,7 +197,7 @@ Runner::ProcStats::ProcStats(int _pid)
   if ((z = fscanf(f, "%d%as%as%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d%u%u%llu%lu%ld",
     &pid, &buf, &sta, &ppid, &pgrp, &sid, &tty, &tpgid, &flags, &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime, &cutime, &cstime, &priority, &nice, &threads, &alarm, &start_time, &vsize, &rss, &rss_lim, &start_code, &end_code, &start_stack, &esp, &eip, &signal, &blocked, &sig_ignore, &sig_catch, &wchan, &nswap, &cnswap, &exit_signal, &cpu_number, &sched_priority, &sched_policy, &io_delay, &guest_time, &cguest_time
   )) != 44)
-    fail("scanf of '/proc/%d/stat' failed %d %d %s %c %d", _pid, z, pid, buf, state, ppid);
+    Fail("scanf of '/proc/%d/stat' failed %d %d %s %c %d", _pid, z, pid, buf, state, ppid);
   if (buf)
   {
     if (strlen(buf) >= 2)
@@ -213,11 +213,11 @@ Runner::ProcStats::ProcStats(int _pid)
   sprintf(filename, "/proc/%d/statm", _pid);
   f = fopen(filename, "r");
   if (!f)
-    fail("read of '/proc/%d/statm' failed", _pid);
+    Fail("read of '/proc/%d/statm' failed", _pid);
   if (fscanf(f, "%d%d%d%d%d%d%d",
     &mem_size, &mem_resident, &mem_shared, &mem_text, &mem_lib, &mem_data, &mem_dirty
   ) != 7)
-    fail("scanf of '/proc/%d/statm' failed", _pid);
+    Fail("scanf of '/proc/%d/statm' failed", _pid);
   fclose(f);
 }
 void Runner::UserInfo::set(void* _p)
@@ -253,7 +253,7 @@ Runner::UserInfo::UserInfo(const string& name)
         set(ppwd);
   }
 }
-Runner::UserInfo::UserInfo(long id)
+Runner::UserInfo::UserInfo(int id)
 {
   ok = false;
   passwd pwd;
@@ -295,7 +295,7 @@ Runner::GroupInfo::GroupInfo(const string& name)
       set(pgrp);
   }
 }
-Runner::GroupInfo::GroupInfo(long id)
+Runner::GroupInfo::GroupInfo(int id)
 {
   ok = false;
   struct group grp;
@@ -306,19 +306,61 @@ Runner::GroupInfo::GroupInfo(long id)
     set(pgrp);
 }
 
+Runner::MountsInfo::MountsInfo()
+{
+  FILE* f;
+  f = fopen("/proc/mounts", "r");
+  if (!f)
+    Fail("read of '/proc/mounts' failed");
+  char* so = NULL;
+  char* ta = NULL;
+  char* ty = NULL;
+  char* op = NULL;
+  while (true)
+  {
+    int z;
+    if ((z = fscanf(f, "%as%as%as%as%*d%*d", &so, &ta, &ty, &op)) != 4)
+      break;
+    mounts.push_back(Mount(so, ta, ty, op));
+    targets[ta] = mounts.back();
+    map<string, Mount>::iterator t = targets.find(ta);
+    t++;
+    if (t != targets.end())
+    {
+      map<string, Mount>::iterator u = t;
+      while (strncmp(ta, u->first.c_str(), strlen(ta)) != 0)
+        u++;
+      if (t != u)
+        targets.erase(t, u);
+    }
+    free(so);
+    free(ta);
+    free(ty);
+    free(op);
+  }
+  fclose(f);
+}
+bool Runner::MountsInfo::Available()
+{
+  struct stat s;
+  if (stat("/proc/mounts", &s))
+    return false;
+  return s.st_dev == (dev_t)0;
+}
+
 Runner::~Runner()
 {
   Stop();
 }
 
-void Runner::debug(const char* format, ...)
+void Runner::Debug(const char* format, ...)
 {
   va_list args;
   va_start(args, format);
   Initializer::Debug(format, args);
   va_end(args);
 }
-void Runner::fail(const char* format, ...)
+void Runner::Fail(const char* format, ...)
 {
   int err = errno;
   va_list args;
@@ -333,39 +375,39 @@ void Runner::set_rlimit(const string& name, int resource, long limit)
   r.rlim_cur = limit;
   r.rlim_max = limit;
   if (setrlimit(resource, &r))
-    fail("setrlimit('%s') failed", name.c_str());
+    Fail("setrlimit('%s') failed", name.c_str());
   if (getrlimit(resource, &r))
-    fail("getrlimit('%s') failed", name.c_str());
+    Fail("getrlimit('%s') failed", name.c_str());
   if ((long)r.rlim_cur != limit || (long)r.rlim_max != limit)
-    fail("setrlimit('%s') did not work", name.c_str());
+    Fail("setrlimit('%s') did not work", name.c_str());
 }
 void Runner::drop_capabilities()
 {
   for (unsigned long cap = 0; cap < CAP_LAST_CAP; cap++)
     if(prctl(PR_CAPBSET_DROP, cap))
-      fail("cap_bset_drop() failed");
+      Fail("cap_bset_drop() failed");
   cap_t caps = cap_init();
   if (cap_set_proc(caps))
-    fail("cap_set_proc() failed");
+    Fail("cap_set_proc() failed");
 }
 void Runner::drop_capability(const string& name, int cap)
 {
   if(prctl(PR_CAPBSET_DROP, (unsigned long) cap))
-    fail("cap_bset_drop('%s') failed", name.c_str());
+    Fail("cap_bset_drop('%s') failed", name.c_str());
   cap_value_t capt = (cap_value_t)cap;
   cap_t caps = cap_get_proc();
   if (caps == NULL)
-    fail("cap_get_proc('%s') failed", name.c_str());
+    Fail("cap_get_proc('%s') failed", name.c_str());
   if(cap_set_flag(caps, CAP_EFFECTIVE, 1, &capt, CAP_CLEAR))
-    fail("cap_set_flag('%s') failed", name.c_str());
+    Fail("cap_set_flag('%s') failed", name.c_str());
   if(cap_set_flag(caps, CAP_PERMITTED, 1, &capt, CAP_CLEAR))
-    fail("cap_set_flag('%s') failed", name.c_str());
+    Fail("cap_set_flag('%s') failed", name.c_str());
   if(cap_set_flag(caps, CAP_INHERITABLE, 1, &capt, CAP_CLEAR))
-    fail("cap_set_flag('%s') failed", name.c_str());
+    Fail("cap_set_flag('%s') failed", name.c_str());
   if (cap_set_proc(caps))
-    fail("cap_set_proc('%s') failed", name.c_str());
+    Fail("cap_set_proc('%s') failed", name.c_str());
   if(cap_free(caps))
-    fail("cap_free('%s') failed", name.c_str());
+    Fail("cap_free('%s') failed", name.c_str());
 }
 
 long Runner::miliseconds(const timeval& tv)
@@ -413,7 +455,7 @@ bool Runner::Controller::Parse(const string& yaml, map<string, string>& data)
   {
     if (!yaml_parser_parse(&parser, &event))
     {
-      debug("YAML Parser failure: %s", parser.problem);
+      Debug("YAML Parser failure: %s", parser.problem);
       yaml_parser_delete(&parser);
       return false;
     }
@@ -445,7 +487,7 @@ bool Runner::Controller::Parse(const string& yaml, map<string, string>& data)
     }
     else
     {
-      debug("YAML Parser: wrong data");
+      Debug("YAML Parser: wrong data");
       yaml_event_delete(&event);
       yaml_parser_delete(&parser);
       return false;
@@ -461,26 +503,26 @@ bool Runner::Controller::Dump(const map<string, string>& data, string& yaml)
   yaml_event_t event;
   yaml_emitter_initialize(&emitter);
   Buffer ybuf;
-  yaml_emitter_set_output(&emitter, Buffer::yaml_write_callback, &ybuf);
+  yaml_emitter_set_output(&emitter, Buffer::YamlWriteCallback, &ybuf);
 
   yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
   if (!yaml_emitter_emit(&emitter, &event))
   {
-    debug("Emitter stream start failure: %s", emitter.problem);
+    Debug("Emitter stream start failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
   yaml_document_start_event_initialize(&event, NULL, NULL, NULL, 1);
   if (!yaml_emitter_emit(&emitter, &event))
   {
-    debug("Emitter doc start failure: %s", emitter.problem);
+    Debug("Emitter doc start failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
   yaml_mapping_start_event_initialize(&event, NULL, NULL, 1, YAML_ANY_MAPPING_STYLE);
   if (!yaml_emitter_emit(&emitter, &event))
   {
-    debug("Emitter map start failure: %s", emitter.problem);
+    Debug("Emitter map start failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
@@ -490,14 +532,14 @@ bool Runner::Controller::Dump(const map<string, string>& data, string& yaml)
     yaml_scalar_event_initialize(&event, NULL, NULL, (unsigned char*)i->first.c_str(), i->first.length(), 1, 1, YAML_ANY_SCALAR_STYLE);
     if (!yaml_emitter_emit(&emitter, &event))
     {
-      debug("Emitter key failure: %s", emitter.problem);
+      Debug("Emitter key failure: %s", emitter.problem);
       yaml_emitter_delete(&emitter);
       return false;
     }
     yaml_scalar_event_initialize(&event, NULL, NULL, (unsigned char*)i->second.c_str(), i->second.length(), 1, 1, YAML_ANY_SCALAR_STYLE);
     if (!yaml_emitter_emit(&emitter, &event))
     {
-      debug("Emitter val failure: %s", emitter.problem);
+      Debug("Emitter val failure: %s", emitter.problem);
       yaml_emitter_delete(&emitter);
       return false;
     }
@@ -506,21 +548,21 @@ bool Runner::Controller::Dump(const map<string, string>& data, string& yaml)
   yaml_mapping_end_event_initialize(&event);
   if (!yaml_emitter_emit(&emitter, &event))
   {
-    debug("Emitter map end failure: %s", emitter.problem);
+    Debug("Emitter map end failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
   yaml_document_end_event_initialize(&event, 1);
   if (!yaml_emitter_emit(&emitter, &event))
   {
-    debug("Emitter doc end failure: %s", emitter.problem);
+    Debug("Emitter doc end failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
   yaml_stream_end_event_initialize(&event);
   if (!yaml_emitter_emit(&emitter, &event))
   {
-    debug("Emitter stream end failure: %s", emitter.problem);
+    Debug("Emitter stream end failure: %s", emitter.problem);
     yaml_emitter_delete(&emitter);
     return false;
   }
@@ -536,12 +578,12 @@ bool Runner::Controller::Contact(const string& action, const map<string, string>
   string yaml;
   if (!Dump(input, yaml))
     return false;
-  //debug("Contact yaml\n%s", yaml.c_str());
+  //Debug("Contact yaml\n%s", yaml.c_str());
 
   char buf[16];
   snprintf(buf, sizeof(buf), "%d", port);
   string url = string("http://") + host + ":" + buf + "/" + action;
-  //debug("Contact url %s", url.c_str());
+  //Debug("Contact url %s", url.c_str());
 
   CURL *curl;
   CURLcode res;
@@ -550,14 +592,14 @@ bool Runner::Controller::Contact(const string& action, const map<string, string>
   curl_easy_setopt(curl, CURLOPT_POSTFIELDS, yaml.c_str());
   curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)yaml.length());
   Buffer cbuf;
-  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Buffer::curl_write_callback);
+  curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Buffer::CurlWriteCallback);
   curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cbuf); 
   res = curl_easy_perform(curl);
   if(CURLE_OK != res)
     result = false;
   else
   {
-    //debug("Contact result\n%s", cbuf.String().c_str());
+    //Debug("Contact result\n%s", cbuf.String().c_str());
     if (!Parse(cbuf.String(), output))
       result = false;
   }
@@ -572,7 +614,7 @@ void Runner::Controller::CheckOK(const std::string& call, const map<string, stri
   {
     string yaml;
     Dump(output, yaml);
-    fail("%s returned '%s'", call.c_str(), yaml.c_str());
+    Fail("%s returned '%s'", call.c_str(), yaml.c_str());
   }
 }
 
@@ -599,11 +641,11 @@ void Runner::Controller::GroupJoin(const string& cgroup)
   input["file"] = buf;
   int fd = open(input["file"].c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if (fd < 0)
-    fail("open('%s') failed", input["file"].c_str());
+    Fail("open('%s') failed", input["file"].c_str());
   Contact("ASSIGNCG", input, output);
   close(fd);
   if (unlink(input["file"].c_str()))
-    fail("unlink('%s') failed", input["file"].c_str());
+    Fail("unlink('%s') failed", input["file"].c_str());
   CheckOK("ASSIGNCG", output);
 }
 void Runner::Controller::GroupDestroy(const string& cgroup)
@@ -647,13 +689,14 @@ bool Runner::check_times()
 {
 //  rusage usage;
   timespec ts;
-  if (clock_gettime(CLOCK_REALTIME, &ts)) fail("clock_gettime(CLOCK_REALTIME) failed");
+  if (clock_gettime(CLOCK_REALTIME, &ts))
+    Fail("clock_gettime(CLOCK_REALTIME) failed");
   long realtimesofar = miliseconds(ts) - start_time;
   pair<long, long> proctimesofar = dead_pids_time;
   proctimesofar.first -= before_exec_time.first;
   proctimesofar.second -= before_exec_time.second;
   long curmemory = 0;
-  for (set<long>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
+  for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
   {
     /* NIE DA SIE TAK, A POWINNO! Musimy czytać wolnego proca w sighandlerze
     getrusage(*i, &usage);
@@ -667,7 +710,7 @@ bool Runner::check_times()
   if (proctimesofar.first < 0 || proctimesofar.second < 0)
   {
     ProcStats stat(*offspring.begin());
-    debug("CPU time below zero: (%ld,%ld) = (%ld,%ld) - (%ld,%ld) + (%ld,%ld)", proctimesofar.first, proctimesofar.second, dead_pids_time.first, dead_pids_time.second, before_exec_time.first, before_exec_time.second, miliseconds(stat).first, miliseconds(stat).second);
+    Debug("CPU time below zero: (%ld,%ld) = (%ld,%ld) - (%ld,%ld) + (%ld,%ld)", proctimesofar.first, proctimesofar.second, dead_pids_time.first, dead_pids_time.second, before_exec_time.first, before_exec_time.second, miliseconds(stat).first, miliseconds(stat).second);
     if (proctimesofar.first < 0)
       proctimesofar.first = 0;
     if (proctimesofar.second < 0)
@@ -675,7 +718,7 @@ bool Runner::check_times()
   }
   if (realtimesofar < 0)
   {
-    debug("Real time below zero: %ld", realtimesofar);
+    Debug("Real time below zero: %ld", realtimesofar);
     realtimesofar = 0;
   }
   result.real_time = realtimesofar;
@@ -737,15 +780,15 @@ void Runner::run_child()
 
   if (ptrace)
     if (::ptrace(PTRACE_TRACEME, 0, NULL, NULL))
-      fail("ptrace_traceme failed");
+      Fail("ptrace_traceme failed");
 
 /*
   if (setpgrp())
-    fail("setpgrp() failed");
+    Fail("setpgrp() failed");
 */
 
   if (setsid() < 0)
-    fail("setsid() failed");
+    Fail("setsid() failed");
 
   munlockall();
   if (lock_memory)
@@ -778,13 +821,13 @@ void Runner::run_child()
   setresuid(ruid, ruid, euid);
   int fi=-1, fo=-1, fe=-1;
   if ((input != "") && ((fi = open(input.c_str(), O_RDONLY)) < 0))
-    fail("open('%s') failed", input.c_str());
+    Fail("open('%s') failed", input.c_str());
   if ((output != "") && ((fo = open(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
-    fail("open('%s') failed", output.c_str());
+    Fail("open('%s') failed", output.c_str());
   if (error_to_output)
     fe = fo;
   else if ((error != "") && ((fe = open(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
-    fail("open('%s') failed", error.c_str());
+    Fail("open('%s') failed", error.c_str());
   setresgid(rgid, egid, sgid);
   setresuid(ruid, euid, suid);
 
@@ -800,43 +843,71 @@ void Runner::run_child()
   }
 
   if ((dir != "") && chdir(dir.c_str()))
-    fail("chdir('%s') failed", dir.c_str());
+    Fail("chdir('%s') failed", dir.c_str());
   if (dir != "")
   {
     if (pivot)
     {
-      bool rem = (mkdir("__oldroot__", S_IRUSR | S_IWUSR | S_IXUSR) == 0);
-      if(mount("__oldroot__", "__oldroot__", "", MS_BIND, NULL))
-        fail("bind mount('__oldroot__') failed");
-      if(mount("__oldroot__", "__oldroot__", "", MS_PRIVATE, NULL))
-        fail("private mount('__oldroot__') failed");
-      if (syscall(SYS_pivot_root, ".", "__oldroot__"))
-        fail("pivot_root('.', '__oldroot__') failed");
+      const char* oldroot = "tmp/__oldroot__";
+      bool rem = (mkdir(oldroot, S_IRUSR | S_IWUSR | S_IXUSR) == 0);
+      if(mount(oldroot, oldroot, "", MS_BIND, NULL))
+      {
+        if (rem)
+          rmdir(oldroot);
+        Fail("bind mount('%s') failed", oldroot);
+      }
+      if(mount(oldroot, oldroot, "", MS_PRIVATE, NULL))
+      {
+        if (rem)
+          rmdir(oldroot);
+        Fail("private mount('%s') failed", oldroot);
+      }
+      if (syscall(SYS_pivot_root, ".", oldroot))
+      {
+        if (rem)
+          rmdir(oldroot);
+        Fail("pivot_root('.', '%s') failed", oldroot);
+      }
       if (chdir("/"))
-        fail("chdir('/') failed");
-      if(umount2("__oldroot__", MNT_DETACH))
-        fail("first detach('__oldroot__') failed");
-      if(umount2("__oldroot__", MNT_DETACH))
-        fail("second detach('__oldroot__') failed");
+      {
+        if (rem)
+          rmdir(oldroot);
+        Fail("chdir('/') failed");
+      }
+      if(umount2(oldroot, MNT_DETACH))
+      {
+        if (rem)
+          rmdir(oldroot);
+        Fail("first detach('%s') failed", oldroot);
+      }
+      if(umount2(oldroot, MNT_DETACH))
+      {
+        if (rem)
+          rmdir(oldroot);
+        Fail("second detach('%s') failed", oldroot);
+      }
       if (rem)
-        rmdir("__oldroot__");
+        rmdir(oldroot);
     }
     else if (chroot("."))
-      fail("chroot('.') failed");
+      Fail("chroot('.') failed");
   }
   if (work_dir != "")
   {
     if (chdir(work_dir.c_str()))
-      fail("chdir('%s') failed", work_dir.c_str());
+      Fail("chdir('%s') failed", work_dir.c_str());
   }
   else
     if (chdir("/"))
-      fail("chdir('/') failed");
+      Fail("chdir('/') failed");
 
   if (new_mount)
   {
-    umount2("/proc", MNT_DETACH);
-    mount("proc", "/proc", "proc", 0, NULL);
+    if (MountsInfo::Available())
+    {
+      umount2("/proc", MNT_DETACH);
+      mount("proc", "/proc", "proc", 0, NULL);
+    }
   }
 
   if (cgroup != "" && controller)
@@ -850,34 +921,34 @@ void Runner::run_child()
   }
 
   if ((env_level != ENV_COPY) && clearenv())
-    fail("clearenv failed");
+    Fail("clearenv failed");
   switch(env_level)
   {
     case ENV_FULL:
-      if (setenv("TERM", "linux", 1)) fail("setenv('TERM') failed");
-      if (setenv("CFLAGS", "-Wall -O2", 1)) fail("setenv('CFLAGS') failed");
-      if (setenv("CPPFLAGS", "-Wall -O2", 1)) fail("setenv('CPPFLAGS') failed");
-      if (setenv("USER", username.c_str(), 1)) fail("setenv('USER') failed");
-      if (setenv("USERNAME", username.c_str(), 1)) fail("setenv('USERNAME') failed");
-      if (setenv("LOGNAME", username.c_str(), 1)) fail("setenv('LOGNAME') failed");
-      if (setenv("SHELL", shell.c_str(), 1)) fail("setenv('SHELL') failed");
-      if (setenv("HOME", homedir.c_str(), 1)) fail("setenv('HOME') failed");
-      if (setenv("LANG", "en_US.UTF-8", 1)) fail("setenv('LANG') failed");
-      if (setenv("LANGUAGE", "en_US.UTF-8", 1)) fail("setenv('LANGUAGE') failed");
+      if (setenv("TERM", "linux", 1)) Fail("setenv('TERM') failed");
+      if (setenv("CFLAGS", "-Wall -O2", 1)) Fail("setenv('CFLAGS') failed");
+      if (setenv("CPPFLAGS", "-Wall -O2", 1)) Fail("setenv('CPPFLAGS') failed");
+      if (setenv("USER", username.c_str(), 1)) Fail("setenv('USER') failed");
+      if (setenv("USERNAME", username.c_str(), 1)) Fail("setenv('USERNAME') failed");
+      if (setenv("LOGNAME", username.c_str(), 1)) Fail("setenv('LOGNAME') failed");
+      if (setenv("SHELL", shell.c_str(), 1)) Fail("setenv('SHELL') failed");
+      if (setenv("HOME", homedir.c_str(), 1)) Fail("setenv('HOME') failed");
+      if (setenv("LANG", "en_US.UTF-8", 1)) Fail("setenv('LANG') failed");
+      if (setenv("LANGUAGE", "en_US.UTF-8", 1)) Fail("setenv('LANGUAGE') failed");
     case ENV_SIMPLE:
-      if (setenv("IFS", " ", 1)) fail("setenv('IFS') failed");
-      if (setenv("PWD", work_dir.c_str(), 1)) fail("setenv('PWD') failed");
-      if (setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", 1)) fail("setenv('PATH') failed");
+      if (setenv("IFS", " ", 1)) Fail("setenv('IFS') failed");
+      if (setenv("PWD", work_dir.c_str(), 1)) Fail("setenv('PWD') failed");
+      if (setenv("PATH", "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin", 1)) Fail("setenv('PATH') failed");
     case ENV_COPY:
     case ENV_EMPTY:
       ;
   }
   for (map<string, string>::const_iterator i=env_add.begin(); i!=env_add.end(); i++)
     if (setenv(i->first.c_str(), i->second.c_str(), 1))
-      fail("setenv('%s') failed", i->first.c_str());
+      Fail("setenv('%s') failed", i->first.c_str());
   for (set<string>::const_iterator i=env_del.begin(); i!=env_del.end(); i++)
     if (unsetenv(i->c_str()))
-      fail("unsetenv('%s') failed", i->c_str());
+      Fail("unsetenv('%s') failed", i->c_str());
 
   set_rlimit("CORE", RLIMIT_CORE, 0);
 
@@ -896,20 +967,20 @@ void Runner::run_child()
 
   if (priority > 0)
     if (setpriority(PRIO_PGRP, 0, 19-priority))
-      fail("setpriority(%d) failed", 19-priority);
+      Fail("setpriority(%d) failed", 19-priority);
 
   if (scheduler_cpu.size())
   {
     cpu_set_t *cpusetp;
     size_t cpusets = 1 + *max_element(scheduler_cpu.begin(), scheduler_cpu.end());
     if (!(cpusetp = CPU_ALLOC(cpusets)))
-      fail("cpu_alloc(%d) failed", (int)cpusets);
+      Fail("cpu_alloc(%d) failed", (int)cpusets);
     cpusets = CPU_ALLOC_SIZE(cpusets);
     CPU_ZERO_S(cpusets, cpusetp);
     for (set<int>::const_iterator i = scheduler_cpu.begin(); i != scheduler_cpu.end(); i++)
       CPU_SET_S(*i, cpusets, cpusetp);
     if (sched_setaffinity(0, cpusets, cpusetp))
-      fail("setaffinity failed");
+      Fail("setaffinity failed");
     CPU_FREE(cpusetp);
   }
   if (scheduler_policy >= 0)
@@ -920,7 +991,7 @@ void Runner::run_child()
     else
       schp.sched_priority = 0;
     if (sched_setscheduler(0, scheduler_policy, &schp))
-      fail("setscheduler failed");
+      Fail("setscheduler failed");
   }
 
   if (uid < 0)
@@ -938,21 +1009,21 @@ void Runner::run_child()
   if (fi >= 0)
   {
     if (dup2(fi, 0) < 0)
-      fail("dup2(stdin) failed");
+      Fail("dup2(stdin) failed");
   }
   else
     if(input != "") close(0);
   if (fo >= 0)
   {
     if (dup2(fo, 1) < 0)
-      fail("dup2(stdout) failed");
+      Fail("dup2(stdout) failed");
   }
   else
     if(output != "") close(1);
   if (fe >= 0)
   {
     if (dup2(fe, 2) < 0)
-      fail("dup2(stderr) failed");
+      Fail("dup2(stderr) failed");
   }
   else
     if(error != "") close(2);
@@ -1002,12 +1073,12 @@ void Runner::run_child()
     execvp(exec.c_str(), argv);
   else
     execv(exec.c_str(), argv);
-  fail("execv('%s') failed", exec.c_str());
+  Fail("execv('%s') failed", exec.c_str());
 }
 
 void Runner::run_parent()
 {
-  debug("spawn child %d", (int)child);
+  Debug("spawn child %d", (int)child);
   runners[child] = this;
   close(pipefd[1]);
   close(pipefd[0]);
@@ -1015,7 +1086,8 @@ void Runner::run_parent()
     offspring.insert(child);
 
   timespec ts;
-  if (clock_gettime(CLOCK_REALTIME, &ts)) fail("clock_gettime(CLOCK_REALTIME) failed");
+  if (clock_gettime(CLOCK_REALTIME, &ts))
+    Fail("clock_gettime(CLOCK_REALTIME) failed");
   start_time = miliseconds(ts);
 }
 
@@ -1031,10 +1103,10 @@ void Runner::process_child(long epid)
   rusage usage;
   pid_t p = wait4(epid, &status, WNOHANG | WUNTRACED, &usage);
   if (p < 0 && errno != ECHILD)
-    fail("wait4 failed");
+    Fail("wait4 failed");
   if (p <= 0)
   {
-    debug("wait4 %d empty", (int)epid);
+    Debug("wait4 %d empty", (int)epid);
     return;
   }
   int sig = 0;
@@ -1073,7 +1145,7 @@ void Runner::process_child(long epid)
           //TODO: Handle new child? No need?
           unsigned long npid;
           ::ptrace(PTRACE_GETEVENTMSG, p, NULL, &npid);
-          debug("-> Thread %d %lu", (int)p, npid);
+          Debug("-> Thread %d %lu", (int)p, npid);
           /*
           ::ptrace(PTRACE_ATTACH, npid, NULL, NULL);
           ::ptrace(PTRACE_SETOPTIONS, npid, NULL, ptrace_opts);
@@ -1082,25 +1154,25 @@ void Runner::process_child(long epid)
           */
           ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
           ::ptrace(PTRACE_SYSCALL, npid, NULL, NULL);
-          debug("<- Thread %d %lu", (int)p, npid);
+          Debug("<- Thread %d %lu", (int)p, npid);
         }
         else if (ptre == PTRACE_EVENT_EXEC)
         {
           //TODO: Allow him to exec?
-          debug("-> Execing %d", (int)p);
+          Debug("-> Execing %d", (int)p);
           ::ptrace(PTRACE_ATTACH, p, NULL, NULL);
           ::ptrace(PTRACE_SETOPTIONS, p, NULL, ptrace_opts);
           ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-          debug("<- Execing %d", (int)p);
+          Debug("<- Execing %d", (int)p);
         }
         else if (ptre == PTRACE_EVENT_EXIT)
         {
           unsigned long exit_status;
           ::ptrace(PTRACE_GETEVENTMSG, p, NULL, &exit_status);
-          debug("-> Exiting %d %lu", (int)p, exit_status);
+          Debug("-> Exiting %d %lu", (int)p, exit_status);
           //TODO: Check something on exit?
           ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-          debug("<- Exiting %d %lu", (int)p, exit_status);
+          Debug("<- Exiting %d %lu", (int)p, exit_status);
         }
       }
       else if (sig == (SIGTRAP | 0x80))
@@ -1114,7 +1186,8 @@ void Runner::process_child(long epid)
             {
               timespec ts;
               before_exec_time = miliseconds(usage);
-              if (clock_gettime(CLOCK_REALTIME, &ts)) fail("clock_gettime(CLOCK_REALTIME) failed");
+              if (clock_gettime(CLOCK_REALTIME, &ts))
+                Fail("clock_gettime(CLOCK_REALTIME) failed");
               start_time = miliseconds(ts);
             }
             else if (ptrace_safe)
@@ -1138,7 +1211,7 @@ void Runner::process_child(long epid)
           case __NR_uname:
             break;
           case __NR_clone:
-            debug("Clone");
+            Debug("Clone");
             unsigned long mod;
             mod = CLONE_UNTRACED;
             regs.rbx &= ~mod;
@@ -1152,13 +1225,13 @@ void Runner::process_child(long epid)
             }
           //TODO: Handle syscalls!
         }
-        debug("Syscall %d %d", (int)p, (int)regs.orig_rax);
+        Debug("Syscall %d %d", (int)p, (int)regs.orig_rax);
         ::ptrace(PTRACE_SETREGS, p, NULL, &regs);
         ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
       }
       else
       {
-        debug("-> Signaling %d %d", (int)p, (int)sigi.si_signo);
+        Debug("-> Signaling %d %d", (int)p, (int)sigi.si_signo);
         ::ptrace(PTRACE_SYSCALL, p, NULL, sigi.si_signo);
       }
     }
@@ -1168,11 +1241,11 @@ void Runner::process_child(long epid)
   else if (WIFEXITED(status) || WIFSIGNALED(status))
   {
     if(WIFEXITED(status))
-      debug("Exited %d", (int)p);
+      Debug("Exited %d", (int)p);
     if(WIFSIGNALED(status))
     {
       int s = WSTOPSIG(status);
-      debug("Signaled %d (%d)", (int)p, s);
+      Debug("Signaled %d (%d)", (int)p, s);
     }
     dead_pids_time.first += miliseconds(usage).first;
     dead_pids_time.second += miliseconds(usage).second;
@@ -1193,13 +1266,13 @@ void Runner::process_child(long epid)
     force_stop = true;
   if (p==child && force_stop)
   {
-    debug("Child stoped for unknown reason");
+    Debug("Child stoped for unknown reason");
     result.SetStatus(RES_RUNTIME);
     Stop();
   }
   else if (force_stop)
   {
-    debug("Grandchild stopped for unknown reason");
+    Debug("Grandchild stopped for unknown reason");
   }
 }
 
@@ -1217,7 +1290,7 @@ void Runner::Run()
   {
     int debfd;
     if ((debug_file != "") && ((debfd = open(debug_file.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)) < 0))
-      fail("open('%s') failed", debug_file.c_str());
+      Fail("open('%s') failed", debug_file.c_str());
     else
       Initializer::debug_fds.insert(debfd);
   }
@@ -1226,11 +1299,11 @@ void Runner::Run()
   if (ptrace_safe)
     ptrace = true;
   if (user == "" && thread_count > 0)
-    debug("BEWARE! 'thread_count' sets limits for user, not for process group!");
+    Debug("BEWARE! 'thread_count' sets limits for user, not for process group!");
   if (child > 0)
-    fail("run failed");
+    Fail("run failed");
   if (pipe(pipefd))
-    fail("pipe failed");
+    Fail("pipe failed");
   after_exec = false;
 
   unsigned long flags = SIGCHLD;
@@ -1247,14 +1320,14 @@ void Runner::Run()
   size_t cssize = 1024*1024;
   void *childstack, *stack = malloc(cssize);
   if (!stack)
-    fail("child stack malloc failed");
+    Fail("child stack malloc failed");
 
   childstack = (void*)((char*)stack + cssize);
   child = clone(child_runner, childstack, flags, (void*)this);
   if (child > 0)
     run_parent();
   else
-    fail("clone failed");
+    Fail("clone failed");
 }
 
 void Runner::Stop()
@@ -1264,14 +1337,14 @@ void Runner::Stop()
     if (ptrace)
     {
       ::ptrace(PTRACE_KILL, child, NULL, NULL);
-      for (set<long>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
+      for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
         ::ptrace(PTRACE_KILL, *i, NULL, NULL);
     }
     killpg(child, SIGKILL);
     check_times();
     check_cgroup();
     runners.erase(child);
-    for (set<long>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
+    for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
       runners.erase(*i);
     offspring.clear();
     child=-1;

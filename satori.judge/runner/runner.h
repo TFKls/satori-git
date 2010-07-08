@@ -12,12 +12,12 @@
 class Runner
 {
   private:
-    static std::map<long, Runner*> runners;
+    static std::map<int, Runner*> runners;
 
     class Initializer
     {
       private:
-        static void signalhandler(int, siginfo_t*, void*);
+        static void SignalHandler(int, siginfo_t*, void*);
         static std::vector<int> signals;
         static std::vector<struct sigaction> handlers;
       public:
@@ -28,8 +28,8 @@ class Runner
         static void Fail(int, const char*, va_list);
     };
     static Initializer initializer;
-    static void debug(const char*, ...);
-    static void fail(const char*, ...);
+    static void Debug(const char*, ...);
+    static void Fail(const char*, ...);
 
     class Buffer
     {
@@ -42,8 +42,8 @@ class Runner
         ~Buffer();
         void Append(void*, size_t);
         std::string String() const;
-        static int yaml_write_callback(void*, unsigned char*, size_t);
-        static size_t curl_write_callback(void*, size_t, size_t, void*);
+        static int YamlWriteCallback(void*, unsigned char*, size_t);
+        static size_t CurlWriteCallback(void*, size_t, size_t, void*);
     };
 
     class ProcStats
@@ -68,13 +68,13 @@ class Runner
         bool ok;
         std::string name;
         std::string password;
-        long uid;
-        long gid;
+        int uid;
+        int gid;
         std::string gecos;
         std::string dir;
         std::string shell;
         UserInfo(const std::string&);
-        UserInfo(long);
+        UserInfo(int);
     };
 
     class GroupInfo
@@ -85,10 +85,34 @@ class Runner
         bool ok;
         std::string name;
         std::string password;
-        long gid;
+        int gid;
         std::vector<std::string> members;
         GroupInfo(const std::string&);
-        GroupInfo(long);
+        GroupInfo(int);
+    };
+
+    class MountsInfo
+    {
+      private:
+        struct Mount
+        {
+          std::string source;
+          std::string target;
+          std::string type;
+          std::string options;
+          Mount(std::string _source = "", std::string _target = "", std::string _type = "", std::string _options = "")
+            : source(_source)
+            , target(_target)
+            , type(_type)
+            , options(_options)
+          {
+          }
+        };
+      public:
+        std::vector<Mount> mounts;
+        std::map<std::string, Mount> targets;
+        MountsInfo();
+        static bool Available();
     };
 
     class Controller
@@ -145,9 +169,9 @@ class Runner
     void run_parent();
     void process_child(long);
     int  pipefd[2];
-    long child;
-    long parent;
-    std::set<long> offspring;
+    int  child;
+    int  parent;
+    std::set<int> offspring;
     bool after_exec;
     long start_time;
     std::pair<long, long> before_exec_time;

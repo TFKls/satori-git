@@ -189,7 +189,7 @@ void parse_options(int argc, const char* argv[])
     exit(1);
   }
   poptFreeContext(ctx);
-  /*
+  /**/
   if (config.c_host)
   {
     char* orig = strdup(config.c_host);
@@ -207,7 +207,7 @@ void parse_options(int argc, const char* argv[])
     config.c_host = strdup(tmp);
     free(orig);
   }
-  */
+  /**/
 }
 
 Runner run;
