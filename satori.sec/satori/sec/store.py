@@ -82,7 +82,7 @@ class Store(OpenIDStore):
             timestamp__lt = (int(time.time()) - nonce.SKEW),
         ).delete()
     
-    def cleaupAssociations(self):
+    def cleanupAssociations(self):
         Association.objects.filter(
             issued__lt = (int(time.time()) - F('lifetime')),
         ).delete()

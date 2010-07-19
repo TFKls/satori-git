@@ -13,7 +13,7 @@ class TestSuite(Object):
     owner       = models.ForeignKey('User', null=True)
     problem     = models.ForeignKey('Problem', null=True)
     name        = models.CharField(max_length=50)
-    members     = models.ManyToManyField('Test')
+    tests       = models.ManyToManyField('Test', through='TestMapping')
     dispatcher  = models.CharField(max_length=128, choices=DISPATCHERS)
     aggregator1 = models.CharField(max_length=128, choices=AGGREGATORS1)
 
