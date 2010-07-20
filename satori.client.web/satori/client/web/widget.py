@@ -11,6 +11,10 @@ class MetaWidget(type):
         super(MetaWidget, cls).__init__(name, bases, attrs)
         #We don't want abstract class here
         if name != "Widget":
+            if not hasattr(cls, 'pathName'):
+                raise Exception('No pathName in widget ' + name)
+            if cls.pathName in MetaWidget.allwidgets:
+                raise Exception('Two widgets with the same pathName!') 
             MetaWidget.allwidgets[cls.pathName] = cls
 
 class Widget:
@@ -26,7 +30,6 @@ class Widget:
             #return dict #CoverWidget(dict, path)
         d = follow(dict,path)
         name = d['name'][0]
-        print MetaWidget.allwidgets, name
         return MetaWidget.allwidgets[name](dict,path)
 
 
