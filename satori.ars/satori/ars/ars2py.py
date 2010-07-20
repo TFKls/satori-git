@@ -3,13 +3,11 @@ from satori.ars.model import *
 from satori.ars.naming import *
 import new
 
-id_types = {}
-
 def convert_to(elem, type):
     if isinstance(type, ListType):
     	return [convert_to(x, type.element_type) for x in elem]
 
-    if hasattr(type, __realclass):
+    if hasattr(type, '__realclass'):
     	return elem._id
     
     return elem
@@ -18,7 +16,7 @@ def convert_from(elem, type):
     if isinstance(type, ListType):
     	return [convert_from(x, type.element_type) for x in elem]
 
-    if hasattr(type, __realclass):
+    if hasattr(type, '__realclass'):
     	return type.__realclass(elem)
 
     return elem
