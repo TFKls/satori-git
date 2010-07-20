@@ -133,6 +133,7 @@ class NamedTuple(Object):
         self.items = list()
         self.DEFAULT = dict()
         self.PYTHON = dict()
+        self.IDENTIFIER = dict()
 
     def add(self, component):
         if component.name in self.names:
@@ -144,6 +145,7 @@ class NamedTuple(Object):
         self.items.append(component)
         self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
         self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
+        self.IDENTIFIER[NamingStyle.IDENTIFIER.format(component.name)] = component
 
     def extend(self, tuple):
         components = list()
@@ -160,26 +162,31 @@ class NamedTuple(Object):
             self.items.append(component)
             self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
             self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
+            self.IDENTIFIER[NamingStyle.IDENTIFIER.format(component.name)] = component
 
     def update_prefix(self, arg):
         self.names = set()
         self.DEFAULT = dict()
         self.PYTHON = dict()
+        self.IDENTIFIER = dict()
         for component in self.items:
             component.name = component.name.prefix(arg)
             self.names.add(component.name)
             self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
             self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
+            self.IDENTIFIER[NamingStyle.IDENTIFIER.format(component.name)] = component
 
     def update_suffix(self, arg):
         self.names = set()
         self.DEFAULT = dict()
         self.PYTHON = dict()
+        self.IDENTIFIER = dict()
         for component in self.items:
             component.name = component.name.suffix(arg)
             self.names.add(component.name)
             self.DEFAULT[NamingStyle.DEFAULT.format(component.name)] = component
             self.PYTHON[NamingStyle.PYTHON.format(component.name)] = component
+            self.IDENTIFIER[NamingStyle.IDENTIFIER.format(component.name)] = component
 
     def __iter__(self):
         return self.items.__iter__()
