@@ -6,6 +6,9 @@ from satori.core.models._BlobAttribute import BlobAttribute
 from satori.core.models._Blob import Blob
 from satori.core.models._Contestant import Contestant
 from satori.core.models._Contest import Contest
+from satori.core.models._Message import Message
+from satori.core.models._MessageGlobal import MessageGlobal
+from satori.core.models._MessageContest import MessageContest
 from satori.core.models._Object import Object
 from satori.core.models._OpaqueAttribute import OpaqueAttribute
 from satori.core.models._OpenAttribute import OpenAttribute

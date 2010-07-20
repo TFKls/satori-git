@@ -381,7 +381,7 @@ class Signature(object):
             result += ': '
             result += str(spec)
             result += '; '
-        return result[:-2]+'}'
+        return result[:-2] + '}' + '->' + str(self.return_value)
 
     def __iadd__(self, other):
         for name in self.arguments:
@@ -390,6 +390,12 @@ class Signature(object):
             if name not in self.arguments:
                 self.arguments[name] = other.arguments[name]
         return self
+
+    def set(self, callable_):                                         # pylint: disable-msg=C0103
+        """Set this Signature for a given callable.
+        """
+        if hasattr(callable_, 'func_dict'):
+            callable_.func_dict[MAGIC_SIG] = self
 
     @property
     def Values(signature):                         # pylint: disable-msg=E0213,C0103,R0912

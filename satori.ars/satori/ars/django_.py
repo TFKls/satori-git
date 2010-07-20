@@ -3,14 +3,29 @@ from types import NoneType
 from satori.objects import DispatchOn, Signature, Argument, ReturnValue, ConstraintDisjunction, ConstraintConjunction, TypeConstraint
 from django.db import models
 from django.db.models.fields.related import add_lazy_relation
-from satori.ars.model import NamedTuple, Contract, Procedure, Parameter, TypeAlias, Void, Boolean, Int32, Int64, String
+from satori.ars.model import NamedTuple, Contract, Procedure, Parameter, TypeAlias, Void, Boolean, Int32, Int64, String, ListType
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorName, ParameterName, NamingStyle
+
+class TypedList(type):
+    def __init__(self, name, bases, namespace):
+        super(TypedList, self).__init__(name, bases, {})
+        self.type_ = namespace['type']
+
 
 class LazyModelClass(type):
     def __init__(self, model_name):
         self.model_name = model_name
 
+def emptyCan(*args, **kwargs):
+    pass
+
+
+def emptyFilter(*args, **kwargs):
+    return args[0]
+
+
 def process_constraint(constraint, model):
+    return
     if instanceof(constraint, (ConstraintConjunction, ConstraintDisjunction)):
         for member in constraint.members:
             process_constraint(member, model)
@@ -18,6 +33,8 @@ def process_constraint(constraint, model):
     if instanceof(constraint, TypeConstraint):
         if instanceof(constraint.type, LazyModelClass) and (constraint.type.model_name == model._meta.object_name):
             constraint.type = model
+        if instanceof(constraint.type, TypedList) and (constraint.type.type == model._meta.object_name):
+        	constraint.type.type = model
 
 
 def fix_arg_ret_model(func, model, cls):
@@ -131,11 +148,16 @@ class ProcedureProvider(ProceduresProvider):
     def __init__(self, implement, parent, name_type=MethodName):
         super(ProcedureProvider, self).__init__(implement.__name__, parent, name_type)
 
-        self._can = None
+        self._can = emptyCan
+        self._filter = emptyFilter
         self._implement = implement
 
     def can(self, proc):
         self._can = proc
+        return proc
+
+    def filter(self, proc):
+        self._filter = proc
         return proc
 
     def implement(self, proc):
@@ -148,15 +170,14 @@ class ProcedureProvider(ProceduresProvider):
             return ret
 
         can = self._can
+        filter = self._filter
         implement = self._implement
 
-        if can:
-            def proc(*args, **kwargs):
-                can(*args, **kwargs)
-                return implement(*args, **kwargs)
-            # TODO: copy argument attributes
-        else:
-            proc = implement
+        def proc(*args, **kwargs):
+            can(*args, **kwargs)
+            result = implement(*args, **kwargs)
+            return filter(result, *args, **kwargs)
+        Signature.of(implement).set(proc)
     
         ars_proc = Procedure(name=Name(self._name_type(self._name)), return_type=Void, implementation = proc)
         ret.add(ars_proc)
@@ -171,6 +192,54 @@ class FieldProceduresProvider(ProceduresProvider):
 
         for proc in generate_field_procedures(parent._model, field):
             self._add_child(ProcedureProvider(proc, self, AccessorName))
+
+
+class FilterProcedureProvider(ProcedureProvider):
+    def __init__(self, parent):
+        model = parent._model
+        names = []
+        types = []
+
+        for field in model._meta.fields:
+        	field_ok = True
+
+            if isinstance(field, models.IntegerField):
+            	types.append(int)
+            elif isinstance(field, models.CharField):
+                types.append(str)
+            elif isinstance(field, models.ForeignKey):
+                other = field.rel.to
+                if isinstance(other, str):
+                    types.append(LazyModelClass(other))
+                else:
+                	types.append(other)
+            else:
+            	field_ok = False
+            
+            if field_ok:
+            	names.append(field.name)
+
+        sorted = zip(names, types)
+        sorted.sort()
+        sorted = [('token', str)] + sorted
+        (names, types) = zip(*sorted)
+
+        def filter(token, *args, **kwargs):
+            for i in range(len(args)):
+                if args[i] is not None:
+                	kwargs[names[i + 1]] = args[i]
+            ret = model.objects.filter(**kwargs)
+            return ret
+
+        sign = Signature(names)
+        sign.set(filter)
+
+        for (name, type_) in zip(names, types):
+        	Argument(name, type=(type_, NoneType))(filter)
+
+        ReturnValue(type=TypedList('A', (object,), {'type': model}))(filter)
+
+        super(FilterProcedureProvider, self).__init__(filter, parent)
 
 
 class StaticProceduresProvider(ProceduresProvider):
@@ -188,6 +257,8 @@ class ModelProceduresProvider(StaticProceduresProvider):
         
         for field in model._meta.fields:
             self._add_child(FieldProceduresProvider(field, self))
+
+        self._add_child(FilterProcedureProvider(self))
 
 
 class OpersBase(type):
@@ -228,13 +299,13 @@ def extract_type(constraint):
     if isinstance(constraint, ConstraintDisjunction):
         if len(constraint.members) == 2:
             if is_nonetype_constraint(constraint.members[0]):
-                return extract_type(constraint.members[1])
+                return (extract_type(constraint.members[1])[0], True)
             else:
                 if is_nonetype_constraint(constraint.members[1]):
-                    return extract_type(constraint.members[0])
+                    return (extract_type(constraint.members[0])[0], True)
 
     if isinstance(constraint, TypeConstraint):
-    	return constraint.type
+    	return (constraint.type, False)
 
     raise RuntimeError("Cannot extract type from constraint: " + str(constraint))
 
@@ -247,27 +318,47 @@ types = {
 def ars_type(type_):
     if isinstance(type_, models.base.ModelBase):
         return get_id_type(type_)
+
+    if isinstance(type_, TypedList):
+    	return ListType(ars_type(type_.type_))
     
     if type_ in types:
         return types[type_]
 
-    raise RuntimeError("Cannot convert type to ars type: " + type_)   
+    raise RuntimeError("Cannot convert type to ars type: " + str(type_))
 
+def convert_to(elem, type):
+    if isinstance(type, ListType):
+        return [convert_to(x, type.element_type) for x in elem]
+
+    if type in rev_id_types:
+        return elem.id
+               
+    return elem
+
+def convert_from(elem, type):
+    if isinstance(type, ListType):
+        return [convert_from(x, type.element_type) for x in elem]
+
+    if type in rev_id_types:
+        return rev_id_types[type].objects.get(pk=elem)
+
+    return elem
 
 def wrap(ars_proc):
     implementation = ars_proc.implementation
     signature = Signature.of(implementation)
 
-    ars_ret_type = ars_type(extract_type(signature.return_value.constraint))
+    ars_ret_type = ars_type(extract_type(signature.return_value.constraint)[0])
     ars_proc.return_type = ars_ret_type
 
     arg_names = signature.positional
     arg_count = len(signature.positional)
     ars_arg_types = []
     for i in range(arg_count):
-        param_type = ars_type(extract_type(signature.arguments[signature.positional[i]].constraint))
-        ars_proc.addParameter(Parameter(name=Name(ParameterName(signature.positional[i])), type=param_type))
-        ars_arg_types.append(param_type)
+        param_type = extract_type(signature.arguments[signature.positional[i]].constraint)
+        ars_proc.addParameter(Parameter(name=Name(ParameterName(signature.positional[i])), type=ars_type(param_type[0]), optional=param_type[1]))
+        ars_arg_types.append(ars_type(param_type[0]))
 
     want_token = (arg_count > 0) and (signature.positional[0] == 'token')
     
@@ -279,18 +370,14 @@ def wrap(ars_proc):
         for i in range(arg_count):
             if arg_names[i] in kwargs:
                 # should not be none
-                if ars_arg_types[i] in rev_id_types:
-                    newargs[i] = rev_id_types[ars_arg_types[i]].objects.get(pk=kwargs[arg_names[i]])
-                else:
-                	newargs[i] = kwargs[arg_names[i]]
+                newargs[i] = convert_from(kwargs[arg_names[i]], ars_arg_types[i])
             else:
             	newargs[i] = None
 
         ret = implementation(*newargs)
 
-        if (ars_ret_type in rev_id_types) and (ret is not None):
-            ret = ret.pk
-        
+        ret = convert_to(ret, ars_ret_type)
+ 
 #        if ret is None:
 #        	raise NoneReturn()
 
@@ -306,8 +393,6 @@ def generate_contract(provider):
         contract.addProcedure(ars_proc)
 
     return contract
-
-#contract_list = []
 
 def generate_contracts():
     if not contract_list.items:
