@@ -12,12 +12,12 @@ def LoginRequest(request):
     except:
         d['login'][0]['status'] = ['failed']
     else:
-        request.session['user'] = m.id
+        Session.user = m.id
 
     return GetLink(d,postvars['path'])
 
 def LogoutRequest(request):
-    del Session.request.session['user']
+    Session.user = ''
     return GetLink(DefaultLayout(),'')
 
 
