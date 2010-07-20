@@ -106,13 +106,15 @@ def generate_class(contract):
         self._id = id
 
     def __getattr__(self, name):
+        if name == 'id':
+        	return self._id
         if (name[-5:] == '__get') or (name[-5:] == '__set'):
-        	raise AttributeException("AA")
+        	raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
         if hasattr(self, name + '__get'):
         	return getattr(self, name + '__get')()
         else:
-        	raise AttributeException("AA")
-
+        	raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
+        
     def __setattr__(self, name, value):
         if name[-5:] == '__set':
         	return super(self.__class__, self).__setattr__(name, value)
