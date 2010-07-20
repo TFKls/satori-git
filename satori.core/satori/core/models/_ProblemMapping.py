@@ -8,6 +8,7 @@ class ProblemMapping(Object):
     ProblemIncarnations.
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_problemmapping')
 
     contest     = models.ForeignKey('Contest')
     problem     = models.ForeignKey('Problem')

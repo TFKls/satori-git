@@ -40,6 +40,7 @@ class Association(models.Model):
 class Login(Object):
 
     __module__ == "satori.sec.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_login')
 
     login    = models.CharField(max_length=64, unique=True)
     password = models.CharField(max_length=128)
@@ -56,6 +57,7 @@ class LoginOpers(django_.Opers):
 class OpenIdentity(Object):
 
     __module__ == "satori.sec.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_openidentity')
 
     identity = models.CharField(max_length=512, unique=True)
     user     = models.ForeignKey(User, related_name='authorized_openids')

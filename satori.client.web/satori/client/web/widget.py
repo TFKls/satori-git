@@ -209,7 +209,7 @@ class MainWidget(Widget):
         self.menu = MenuWidget(params,path)
         if not ('content' in params.keys()):
             params['content'] = [{'name' : ['news']}]
-        self.content = Widget.FromDictionary(params,'content');
+        self.content = Widget.FromDictionary(params,'content(0)');
         self.params = params
 
 

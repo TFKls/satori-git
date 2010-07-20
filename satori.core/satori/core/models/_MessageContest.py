@@ -8,6 +8,7 @@ class MessageContest(Message):
     """Model. Description of a text message - contest msg.
     """
     __module__ = "satori.core.models"
+    parent_message = models.OneToOneField(Message, parent_link=True, related_name='cast_messagecontest')
     
     contest = models.ForeignKey('Contest')
     

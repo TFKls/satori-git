@@ -7,6 +7,7 @@ class RoleMapping(Object):
     """Model. Intermediary for many-to-many relationship between Roles.
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_rolemapping')
 
     parent     = models.ForeignKey('Role', related_name='childmap')
     child      = models.ForeignKey('Role', related_name='parentmap')

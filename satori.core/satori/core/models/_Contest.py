@@ -8,6 +8,7 @@ class Contest(Object):
     """Model. Description of a contest.
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_contest')
     
     joiningChoices = [ ('Private', 'Private'),('Moderated','Moderated'),('Public','Public') ]
     name        = models.CharField(max_length=50, unique=True)

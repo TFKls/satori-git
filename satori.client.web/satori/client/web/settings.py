@@ -63,8 +63,8 @@ TEMPLATE_LOADERS = (
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
+#    'django.contrib.sessions.middleware.SessionMiddleware',
+#    'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
 ROOT_URLCONF = 'satori.client.web.urls'
@@ -77,13 +77,13 @@ TEMPLATE_DIRS = (PROJECT_PATH,
 )
 
 INSTALLED_APPS = (
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.sites',
-    'django.contrib.admin',
+#    'django.contrib.auth',
+#    'django.contrib.contenttypes',
+#    'django.contrib.sessions',
+#    'django.contrib.sites',
+#    'django.contrib.admin',
     'satori.dbev',
     'satori.core',
-    'satori.core.models',
-    'satori.client.web'
+    'satori.sec',
+    'satori.client.web',
 )

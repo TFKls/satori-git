@@ -8,6 +8,8 @@ class MessageGlobal(Message):
     """Model. Description of a text message - main screen msg.
     """
     __module__ = "satori.core.models"
+    parent_message = models.OneToOneField(Message, parent_link=True, related_name='cast_messageglobal')
+
     mainscreenonly = models.BooleanField()
     
     def __unicode__(self):
