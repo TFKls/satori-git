@@ -67,9 +67,8 @@ def follow(dict, pathstr):
     d = dict
     if not pathstr or len(pathstr)==0:
         return d;
-    path = re.split("\|",pathstr)
+    path = re.split('\|',pathstr)
     for i in range(0,len(path)):
         m = re.match("(?P<name>[a-zA-Z0-9_]*)\((?P<index>[0-9]*)\)",path[i])
         d = d[m.group("name")][int(m.group("index"))]
     return d
-

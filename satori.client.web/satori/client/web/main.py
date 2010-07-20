@@ -6,7 +6,7 @@ from django.core.urlresolvers import reverse
 from URLDictionary import *
 from widget import *
 from formprocess import *
-				
+                
 def load(request,argstr,path = ""):
 	Session.request = request
 	Session.user = request.COOKIES.get('satori_user', None)
