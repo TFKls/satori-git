@@ -12,5 +12,6 @@ setup(name='satori.sec',
         'psycopg2',
         'python-openid >= 2.2.4',
         'pycrypto',
+        'python-memcached',
     ]
 )
