@@ -14,8 +14,12 @@ class TypedList(type):
 
 
 class LazyModelClass(type):
-    def __init__(self, model_name):
-        self.model_name = model_name
+    def __init__(self, name, bases, namespace):
+        super(LazyModelClass, self).__init__(name, bases, {})
+        self.model = namespace['model']
+
+    def __str__(self):
+        return 'LMC:' + str(self.model)
 
 def emptyCan(*args, **kwargs):
     pass
@@ -26,15 +30,15 @@ def emptyFilter(*args, **kwargs):
 
 
 def process_constraint(constraint, model):
-    return
-    if instanceof(constraint, (ConstraintConjunction, ConstraintDisjunction)):
+    if isinstance(constraint, (ConstraintConjunction, ConstraintDisjunction)):
         for member in constraint.members:
             process_constraint(member, model)
 
-    if instanceof(constraint, TypeConstraint):
-        if instanceof(constraint.type, LazyModelClass) and (constraint.type.model_name == model._meta.object_name):
-            constraint.type = model
-        if instanceof(constraint.type, TypedList) and (constraint.type.type == model._meta.object_name):
+    if isinstance(constraint, TypeConstraint):
+        if isinstance(constraint.type, LazyModelClass):
+        	if (constraint.type.model == model._meta.object_name):
+                constraint.type = model
+        if isinstance(constraint.type, TypedList) and (constraint.type.type == model._meta.object_name):
         	constraint.type.type = model
 
 
@@ -43,7 +47,7 @@ def fix_arg_ret_model(func, model, cls):
     for argument in sign.arguments.itervalues():
         process_constraint(argument.constraint, model)
 
-    process_constraint(sign.return_value.constraint)
+    process_constraint(sign.return_value.constraint, model)
 
 
 @DispatchOn(field=object)
@@ -56,10 +60,13 @@ def generate_field_procedures(model, field):
 
 @DispatchOn(field=models.ForeignKey)
 def generate_field_procedures(model, field):
+    otherIsStr = False
     field_name = field.name
     other = field.rel.to
     if isinstance(other, str):
-    	other = LazyModelClass(other)
+    	otherStr = other
+        other = LazyModelClass('A', (object,), {'model': other})
+        otherIsStr = True
     ret = []
 
     @Argument('token', type=str)
@@ -77,9 +84,9 @@ def generate_field_procedures(model, field):
         self.save()
         return value
 
-    if isinstance(other, basestring):
-        add_lazy_relation(model, get, other, fix_arg_ret_model)
-        add_lazy_relation(model, set, other, fix_arg_ret_model)
+    if otherIsStr:
+        add_lazy_relation(model, get, otherStr, fix_arg_ret_model)
+        add_lazy_relation(model, set, otherStr, fix_arg_ret_model)
 
     return [set, get]
 
@@ -215,7 +222,7 @@ class FilterProcedureProvider(ProcedureProvider):
             elif isinstance(field, models.ForeignKey):
                 other = field.rel.to
                 if isinstance(other, str):
-                    types.append(LazyModelClass(other))
+                    types.append(LazyModelClass('A', (object,), {'model': other}))
                 else:
                 	types.append(other)
             else:
@@ -244,6 +251,12 @@ class FilterProcedureProvider(ProcedureProvider):
 
         ReturnValue(type=TypedList('A', (object,), {'type': model}))(filter)
 
+        for field in model._meta.fields:
+            if isinstance(field, models.ForeignKey):
+                other = field.rel.to
+                if isinstance(other, str):
+                    add_lazy_relation(model, filter, other, fix_arg_ret_model)
+
         super(FilterProcedureProvider, self).__init__(filter, parent)
 
 
@@ -265,7 +278,7 @@ class CreateProcedureProvider(ProcedureProvider):
             elif isinstance(field, models.ForeignKey):
                 other = field.rel.to
                 if isinstance(other, str):
-                    types.append(LazyModelClass(other))
+                    types.append(LazyModelClass('A', (object,), {'model': other}))
                 else:
                 	types.append(other)
             else:
@@ -296,6 +309,12 @@ class CreateProcedureProvider(ProcedureProvider):
         	Argument(name, type=(type_, NoneType))(create)
 
         ReturnValue(type=model)(create)
+        
+        for field in model._meta.fields:
+            if isinstance(field, models.ForeignKey):
+                other = field.rel.to
+                if isinstance(other, str):
+                    add_lazy_relation(model, create, other, fix_arg_ret_model)
 
         super(CreateProcedureProvider, self).__init__(create, parent)
 
