@@ -12,7 +12,8 @@ def ContestById(cid):
 	return Contest.objects.get(id=cid)
 
 def CurrentUser():
-	if Session.user=='':
+        s = Session.user
+	if not Session.user:
 		return None
 	else:
 		u = Session.user

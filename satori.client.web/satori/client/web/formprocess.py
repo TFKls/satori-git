@@ -17,7 +17,7 @@ def LoginRequest(request):
     return GetLink(d,postvars['path'])
 
 def LogoutRequest(request):
-    Session.user = ''
+    Session.user = None
     return GetLink(DefaultLayout(),'')
 
 
