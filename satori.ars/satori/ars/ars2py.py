@@ -4,14 +4,12 @@ from satori.ars.naming import *
 import new
 
 id_types = {}
-array_types = {}
-classes = {}
 
 def convert_to(elem, type):
     if isinstance(type, ListType):
     	return [convert_to(x, type.element_type) for x in elem]
 
-    if type in id_types:
+    if hasattr(type, __realclass):
     	return elem._id
     
     return elem
@@ -20,8 +18,8 @@ def convert_from(elem, type):
     if isinstance(type, ListType):
     	return [convert_from(x, type.element_type) for x in elem]
 
-    if type in id_types:
-    	return id_types[type](elem)
+    if hasattr(type, __realclass):
+    	return type.__realclass(elem)
 
     return elem
 
@@ -132,6 +130,7 @@ def generate_class(contract):
     return new.classobj(class_name, class_bases, class_dict)
 
 def process(contracts):
+    classes = {}
     types = NamedTuple()
     for contract in contracts:
     	types.extend(namedTypes(contract))
@@ -142,7 +141,8 @@ def process(contracts):
 
         id_name = NamingStyle.IDENTIFIER.format(Name(ClassName(c_name + 'Id')))
         if id_name in types.IDENTIFIER:
-        	id_types[types.IDENTIFIER[id_name]] = newcls
+        	types.IDENTIFIER[id_name].__realclass = newcls
 
         classes[c_name] = newcls
+    return classes
 

@@ -12,10 +12,10 @@ def ContestById(cid):
 	return Contest.objects.get(id=cid)
 
 def CurrentUser():
-	if not ('user' in Session.request.session.keys()):
+	if Session.user=='':
 		return None
 	else:
-		u = Session.request.session['user']
+		u = Session.user
 		return UserById(u)
 
 def ActiveContest(d):
