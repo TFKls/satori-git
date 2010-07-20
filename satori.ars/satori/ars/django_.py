@@ -92,11 +92,13 @@ def generate_field_procedures(model, field):
 
 @DispatchOn(field=models.IntegerField)
 @DispatchOn(field=models.CharField)
+@DispatchOn(field=models.TextField)
 @DispatchOn(field=models.BooleanField)
 def generate_field_procedures(model, field):
     type_mapping = {
             models.IntegerField: int,
             models.CharField: str,
+            models.TextField: str,
             models.BooleanField: bool,
             }
 
@@ -217,6 +219,8 @@ class FilterProcedureProvider(ProcedureProvider):
             	types.append(int)
             elif isinstance(field, models.CharField):
                 types.append(str)
+            elif isinstance(field, models.TextField):
+                types.append(str)
             elif isinstance(field, models.BooleanField):
                 types.append(bool)
             elif isinstance(field, models.ForeignKey):
@@ -272,6 +276,8 @@ class CreateProcedureProvider(ProcedureProvider):
             if isinstance(field, models.IntegerField):
             	types.append(int)
             elif isinstance(field, models.CharField):
+                types.append(str)
+            elif isinstance(field, models.TextField):
                 types.append(str)
             elif isinstance(field, models.BooleanField):
                 types.append(bool)
