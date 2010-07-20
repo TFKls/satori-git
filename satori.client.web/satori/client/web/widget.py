@@ -62,7 +62,7 @@ class MenuWidget(Widget):
             if object and not Allowed(object,rights):
                 return
             f = { 'name' : [wname], 'override' : ["1"] };
-            d = [f];
+            d['content'] = [f];
             self.menuitems.append([label,GetLink(params_copy,'')])
 
         def addlink(check,label,dict,object = None,rights=''):
@@ -241,7 +241,7 @@ class MainWidget(Widget):
         self.loginform = LoginWidget(_params,path)
         if not ('content' in _params.keys()):
             _params['content'] = [{'name' : ['news']}]
-        self.menu = MenuWidget(params,path,path+'|content(0)')
+        self.menu = MenuWidget(params,path,path)
         self.content = Widget.FromDictionary(_params,'content(0)');
         self.params = _params
 
