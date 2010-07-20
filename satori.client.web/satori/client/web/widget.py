@@ -2,6 +2,7 @@
 from URLDictionary import *
 from queries import *
 from satori.core.models import *
+from satori.client.common import classes
 from postmarkup import render_bbcode
 
 class MetaWidget(type):
@@ -99,7 +100,7 @@ class NewsWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/news.html'
         self.messages = []
-        for m in MessageGlobal.objects.all():
+        for m in classes.MessageGlobal.filter():
             if not ActiveContest(params) or not m.mainscreenonly:
                 self.messages.append({'type' : 'global', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time})
         for m in MessageContest.objects.filter(contest = ActiveContest(params)):
