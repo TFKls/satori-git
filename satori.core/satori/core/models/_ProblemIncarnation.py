@@ -8,6 +8,7 @@ class ProblemIncarnation(Object):
     """Model. Specific version of a Problems, as used in (one or more) Contests.
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_problemincarnation')
 
     problem     = models.ForeignKey('Problem')
     description = models.TextField()

@@ -8,6 +8,7 @@ class TestMapping(Object):
     Tests.
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_testmapping')
 
     suite       = models.ForeignKey('TestSuite')
     test        = models.ForeignKey('Test')

@@ -9,6 +9,8 @@ class User(Role):
     """Model. A Role which can be logged onto.
     """
     __module__ = "satori.core.models"
+    parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_user')
+
     login      = models.CharField(max_length = 64, unique=True)
     fullname   = models.CharField(max_length = 64)
     def __unicode__(self):

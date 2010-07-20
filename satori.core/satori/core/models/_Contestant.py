@@ -7,6 +7,7 @@ class Contestant(Role):
     """Model. A Role for a contest participant.
     """
     __module__ = "satori.core.models"
+    parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_contestant')
 
     contest    = models.ForeignKey('Contest')
     user       = models.ForeignKey('User')

@@ -7,6 +7,7 @@ class Submit(Object):
     """Model. Single problem solution (within or outside of a Contest).
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_submit')
 
     owner       = models.ForeignKey('Contestant', null=True)
     problem     = models.ForeignKey('ProblemMapping', null=True)

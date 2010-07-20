@@ -9,6 +9,7 @@ class Test(Object):
     """Model. Single test.
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_test')
 
     owner       = models.ForeignKey('User', null=True)
     problem     = models.ForeignKey('Problem', null=True)

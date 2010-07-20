@@ -7,6 +7,7 @@ class Privilege(Object):
     """Model. Represents single right on object granted to the role.
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_privilege')
 
     role    = models.ForeignKey('Role', related_name='privileges')
     object  = models.ForeignKey('Object', related_name='privileged')

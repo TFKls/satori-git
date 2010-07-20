@@ -7,6 +7,7 @@ class Message(Object):
     """Model. Description of a text message.
     """
     __module__ = "satori.core.models"
+    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_message')
 
     topic       = models.CharField(max_length=50, unique=True)
     content     = models.TextField(blank=True, default="")
