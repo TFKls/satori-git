@@ -279,7 +279,7 @@ def namedTypes(item):
 @DispatchOn(item=MapType)
 def namedTypes(item):
     nt = namedTypes(item.key_type)
-    nt.extend(item.value_type)
+    nt.extend(namedTypes(item.value_type))
     return nt
 @DispatchOn(item=SetType)
 def namedTypes(item):
