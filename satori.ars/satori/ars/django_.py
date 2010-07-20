@@ -1,4 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+from datetime import datetime
 from types import NoneType
 from satori.objects import DispatchOn, Signature, Argument, ReturnValue, ConstraintDisjunction, ConstraintConjunction, TypeConstraint
 from django.db import models
@@ -84,10 +85,12 @@ def generate_field_procedures(model, field):
 
 @DispatchOn(field=models.IntegerField)
 @DispatchOn(field=models.CharField)
+@DispatchOn(field=models.BooleanField)
 def generate_field_procedures(model, field):
     type_mapping = {
             models.IntegerField: int,
-            models.CharField: str
+            models.CharField: str,
+            models.BooleanField: bool,
             }
 
     field_name = field.name
@@ -207,6 +210,8 @@ class FilterProcedureProvider(ProcedureProvider):
             	types.append(int)
             elif isinstance(field, models.CharField):
                 types.append(str)
+            elif isinstance(field, models.BooleanField):
+                types.append(bool)
             elif isinstance(field, models.ForeignKey):
                 other = field.rel.to
                 if isinstance(other, str):
@@ -255,6 +260,8 @@ class CreateProcedureProvider(ProcedureProvider):
             	types.append(int)
             elif isinstance(field, models.CharField):
                 types.append(str)
+            elif isinstance(field, models.BooleanField):
+                types.append(bool)
             elif isinstance(field, models.ForeignKey):
                 other = field.rel.to
                 if isinstance(other, str):
@@ -377,6 +384,7 @@ types = {
         NoneType: Void,
         str: String,
         int: Int32,
+        bool: Boolean,
 }
 
 def ars_type(type_):
