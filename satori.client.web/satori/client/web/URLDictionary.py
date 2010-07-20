@@ -5,7 +5,7 @@ import re
 # creates a dictionary from first half of URL
 
 class Session:
-    user = ''
+    user = None
     pass
 
 def ParseURL(argstr):
