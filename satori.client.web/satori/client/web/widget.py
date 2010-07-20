@@ -102,9 +102,9 @@ class NewsWidget(Widget):
         self.messages = []
         for m in classes.MessageGlobal.filter():
             if not ActiveContest(params) or not m.mainscreenonly:
-                self.messages.append({'type' : 'global', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time})
+                self.messages.append({'type' : 'global', 'topic' : m.topic, 'content' : render_bbcode(m.content)})
         for m in MessageContest.objects.filter(contest = ActiveContest(params)):
-                self.messages.append({'type' : 'contest', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time})
+                self.messages.append({'type' : 'contest', 'topic' : m.topic, 'content' : render_bbcode(m.content)})
 
 # results table (a possible main content)
 class ResultsWidget(Widget):
