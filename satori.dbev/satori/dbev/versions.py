@@ -83,6 +83,7 @@ class UserField(models.IntegerField):
 
         modify_original = """
             ALTER TABLE {0} ADD COLUMN {1} integer NOT NULL DEFAULT get_transaction_id();
+            SELECT repair_version_table({10});
             CREATE INDEX {7} ON {2} ({3});
             CREATE INDEX {8} ON {2} ({4});
             CREATE UNIQUE INDEX {9} ON {2} ({5},{6});
@@ -97,6 +98,7 @@ class UserField(models.IntegerField):
             qn(db_table + '_vfrom_idx'),
             qn(db_table + '_vto_idx'),
             qn(db_table + '_ver_idx'),
+            qv(db_table),
         )
        
         row = {}
