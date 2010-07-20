@@ -30,14 +30,20 @@ def create(request):
     MessageContest = classes.MessageContest
     for object in MessageContest.filter():
         object.delete()
+    RoleMapping = classes.RoleMapping
+    for object in RoleMapping.filter():
+        object.delete()
     paladin = User.create(fullname='Lech Duraj', login='paladin')
     User.create(fullname='Edgsger W. Dijkstra', login = 'dijkstra')
     c2 = Contest.create(name = 'Kontest prywatny', joining = 'Private')
     c3 = Contest.create(name = 'Kontest moderowany', joining = 'Moderated')
     c4 = Contest.create(name = 'Kontest publiczny', joining = 'Public')
-    Contestant.create(user = paladin, contest = c2, accepted = True)
-    Contestant.create(user = paladin, contest = c3, accepted = True)
-    Contestant.create(user = paladin, contest = c4, accepted = True)
+    cc2 = Contestant.create(contest = c2, accepted = True)
+    RoleMapping.create(parent = cc2, child = paladin)
+    cc3 = Contestant.create(contest = c3, accepted = True)
+    RoleMapping.create(parent = cc3, child = paladin)
+    cc4 = Contestant.create(contest = c4, accepted = True)
+    RoleMapping.create(parent = cc4, child = paladin)
     p1 = Problem.create(name = "SORT", description = "Zadanie o sortowaniu")
     p2 = Problem.create(name = "COW", description = "Zadanie o krowie")
     p3 = Problem.create(name = "WUWU", description = "Zadanie o wuwuzeli")

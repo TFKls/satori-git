@@ -11,6 +11,10 @@ class MetaWidget(type):
         super(MetaWidget, cls).__init__(name, bases, attrs)
         #We don't want abstract class here
         if name != "Widget":
+            if not hasattr(cls, 'pathName'):
+                raise Exception('No pathName in widget ' + name)
+            if cls.pathName in MetaWidget.allwidgets:
+                raise Exception('Two widgets with the same pathName!') 
             MetaWidget.allwidgets[cls.pathName] = cls
 
 class Widget:
@@ -26,7 +30,6 @@ class Widget:
             #return dict #CoverWidget(dict, path)
         d = follow(dict,path)
         name = d['name'][0]
-        print MetaWidget.allwidgets, name
         return MetaWidget.allwidgets[name](dict,path)
 
 
@@ -45,22 +48,22 @@ class LoginWidget(Widget):
 # left menu
 class MenuWidget(Widget):
     pathName = 'menu'
-    def __init__(self, params, path):
+    def __init__(self, params, path, content_path):
         self.htmlFile = 'htmls/menu.html'
         self.menuitems = []
         contest = ActiveContest(params)
         user = CurrentUser()
         cuser = CurrentContestant(params)
-
         def addwidget(check,label,wname,object = None,rights = ''):
+            params_copy = deepcopy(params)
+            d = follow(params_copy, content_path)
             if not check:
                 return
             if object and not Allowed(object,rights):
                 return
-            d = DefaultLayout(params)
             f = { 'name' : [wname], 'override' : ["1"] };
-            d['content'] = [f];
-            self.menuitems.append([label,GetLink(d,'')])
+            d = [f];
+            self.menuitems.append([label,GetLink(params_copy,'')])
 
         def addlink(check,label,dict,object = None,rights=''):
             if not check:
@@ -236,9 +239,9 @@ class MainWidget(Widget):
         _params = follow(params,path)
         self.htmlFile = 'htmls/index.html'
         self.loginform = LoginWidget(_params,path)
-        self.menu = MenuWidget(_params,path)
         if not ('content' in _params.keys()):
             _params['content'] = [{'name' : ['news']}]
+        self.menu = MenuWidget(params,path,path+'|content(0)')
         self.content = Widget.FromDictionary(_params,'content(0)');
         self.params = _params
 
