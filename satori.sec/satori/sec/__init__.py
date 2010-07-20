@@ -8,6 +8,7 @@ from satori.sec.store import Store
 from satori.objects import DispatchOn, Argument
 from satori.ars.model import NamedTuple, Contract, Procedure, Parameter, TypeAlias, Void, Boolean, Int32, Int64, String, NamedObject, Structure, ListType, SetType, MapType, Field, Argument
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorName, ParameterName, NamingStyle
+from satori.core.models import Object as modelObject, User
 
 contract_list = NamedTuple()
 
@@ -38,22 +39,16 @@ def findByName(where, name, type):
 @Argument('name', type=Name)
 @Argument('type', type=type)
 def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
     return findByName(where.element_type, name, type)
 @DispatchOn(where = SetType)
 @Argument('name', type=Name)
 @Argument('type', type=type)
 def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
     return findByName(where.element_type, name, type)
 @DispatchOn(where = MapType)
 @Argument('name', type=Name)
 @Argument('type', type=type)
 def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
     needle = findByName(where.key_type, name, type)
     if needle:
     	return needle
@@ -110,25 +105,25 @@ def findByName(where, name, type):
 
 
 def generate_contract(contracts):
-    contract = Contract(name=Name(ClassName('security')))
+    contract = Contract(name=Name(ClassName('Security')))
     userId = findByName(contracts, Name(ClassName('User'+'Id')), TypeAlias)
     objectId = findByName(contracts, Name(ClassName('Object'+'Id')), TypeAlias)
 
-    whoami = Procedure(name=contract.name + Name(MethodName('whoAmI')), return_type=userId)
+    whoami = Procedure(name=contract.name + Name(MethodName('whoami')), return_type=userId)
     whoami.addParameter(name=Name(ParameterName('token')), type=String)
     def whoami_impl(token):
         return int(Token(str(token)).user)
     whoami.implementation = whoami_impl
     contract.addProcedure(whoami)
 
-    cani = Procedure(name=contract.name + Name(MethodName('canI')), return_type=Boolean)
+    cani = Procedure(name=contract.name + Name(MethodName('cani')), return_type=Boolean)
     cani.addParameter(name=Name(ParameterName('token')), type=String)
     cani.addParameter(name=Name(ParameterName('object')), type=objectId)
     cani.addParameter(name=Name(ParameterName('right')), type=String)
     def cani_impl(token, object, right):
         checker = CheckRights()
         object = modelObject.objects.get(id=object)
-        roleset = Roleset(user=User.objects.get(id=Token(token).user))
+        roleset = RoleSet(user=User.objects.get(id=Token(token).user))
         return checker.check(roleset, object, right)
     cani.implementation = cani_impl
     contract.addProcedure(cani)

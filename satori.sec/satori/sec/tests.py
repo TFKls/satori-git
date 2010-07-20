@@ -4,8 +4,16 @@
 
 import unittest
 
+import satori.core.setup
 from satori.sec import Token
 from datetime import timedelta
+
+import crypt
+from satori.core.models import User, Privilege
+from satori.sec.models import Login
+from satori.ars import django_
+from satori.ars.naming import Name, ClassName, MethodName
+import satori.sec
 
 class TestToken(unittest.TestCase):
     """Test token manipulation.
@@ -49,6 +57,43 @@ class TestToken(unittest.TestCase):
         """Clean up.
         """
         pass
+
+class TestLogin(unittest.TestCase):
+    """Test login mechanism.
+    """
+
+    def setUp(self):
+        #u = User(login='mammoth', fullname='Grzegorz Gutowski')
+        #u.save()
+        u = User.objects.get(login='mammoth')
+        #l = Login(login='mammoth', password=crypt.crypt('mammoth','aaa'), user=u)
+        #l.save()
+        l = Login.objects.get(login='mammoth')
+        p = Privilege(object=u, role=u, right='ADMIN')
+        p.save()
+        django_.generate_contracts()
+        satori.sec.generate_contracts(django_.contract_list)
+
+    def testLogin(self):
+        login = satori.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('login'))]
+        whoami = satori.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('whoami'))]
+        cani = satori.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('cani'))]
+
+        tok = Token(login.implementation('mammoth', 'mammoth'))
+        print 'Token:    ', tok
+        print 'User:     ', tok.user
+        print 'Auth:     ', tok.auth
+        print 'Data:     ', tok.data
+        print 'Valid:    ', tok.valid
+        print 'Deadline: ', tok.deadline
+        print 'Validity: ', tok.validity
+        print 'Salt:     ', tok.salt
+        id = whoami.implementation(str(tok))
+        print 'User.login', User.objects.get(id=id).login
+        print 'VIEW?', cani.implementation(str(tok), id, 'VIEW')
+
+
+
 
 if __name__ == '__main__':
 	unittest.main()

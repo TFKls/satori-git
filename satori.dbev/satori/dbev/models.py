@@ -57,8 +57,23 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 """
+        repair_version_table_function = """
+CREATE OR REPLACE FUNCTION repair_version_table(name TEXT) RETURNS INTEGER AS $$
+DECLARE
+    con RECORD;
+    count INTEGER;
+BEGIN
+    count = 0;
+    FOR con in (SELECT constraint_name FROM information_schema.table_constraints WHERE table_name=name and constraint_type='UNIQUE') LOOP
+        EXECUTE 'ALTER TABLE ' || quote_ident(name) || ' DROP CONSTRAINT ' || quote_ident(con.constraint_name);
+        count = count + 1;
+    END LOOP;
+    RETURN count;
+END;
+$$ LANGUAGE plpgsql;
+"""
 
-        return (create_language, set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function)
+        return (create_language, set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, repair_version_table_function)
 
 
 class Notification(models.Model):
