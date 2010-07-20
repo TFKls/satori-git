@@ -242,6 +242,68 @@ class FilterProcedureProvider(ProcedureProvider):
         super(FilterProcedureProvider, self).__init__(filter, parent)
 
 
+class CreateProcedureProvider(ProcedureProvider):
+    def __init__(self, parent):
+        model = parent._model
+        names = []
+        types = []
+
+        for field in model._meta.fields:
+        	field_ok = True
+
+            if isinstance(field, models.IntegerField):
+            	types.append(int)
+            elif isinstance(field, models.CharField):
+                types.append(str)
+            elif isinstance(field, models.ForeignKey):
+                other = field.rel.to
+                if isinstance(other, str):
+                    types.append(LazyModelClass(other))
+                else:
+                	types.append(other)
+            else:
+            	field_ok = False
+            
+            if field_ok:
+            	names.append(field.name)
+
+        sorted = zip(names, types)
+        sorted.sort()
+        sorted = [('token', str)] + sorted
+        (names, types) = zip(*sorted)
+
+        def create(token, *args, **kwargs):
+            for i in range(len(args)):
+                if args[i] is not None:
+                	kwargs[names[i + 1]] = args[i]
+
+            ret = model(**kwargs)
+            ret.save()
+
+            return ret
+
+        sign = Signature(names)
+        sign.set(create)
+
+        for (name, type_) in zip(names, types):
+        	Argument(name, type=(type_, NoneType))(create)
+
+        ReturnValue(type=model)(create)
+
+        super(CreateProcedureProvider, self).__init__(create, parent)
+
+class DeleteProcedureProvider(ProcedureProvider):
+    def __init__(self, parent):
+        model = parent._model
+
+        @Argument('token', type=str)
+        @Argument('self', type=model)
+        @ReturnValue(type=NoneType)
+        def delete(token, self):
+            self.delete()
+
+        super(DeleteProcedureProvider, self).__init__(delete, parent)
+
 class StaticProceduresProvider(ProceduresProvider):
     def __init__(self, name):
         super(StaticProceduresProvider, self).__init__(name, None, ClassName)
@@ -259,6 +321,8 @@ class ModelProceduresProvider(StaticProceduresProvider):
             self._add_child(FieldProceduresProvider(field, self))
 
         self._add_child(FilterProcedureProvider(self))
+        self._add_child(CreateProcedureProvider(self))
+        self._add_child(DeleteProcedureProvider(self))
 
 
 class OpersBase(type):
