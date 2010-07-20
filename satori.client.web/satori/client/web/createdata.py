@@ -10,12 +10,26 @@ def create(request):
 #    MessageGlobal.objects.all().delete()
 #    MessageContest.objects.all().delete()
     User = classes.User
+    for object in User.filter():
+        object.delete()
     Contest = classes.Contest
+    for object in Contest.filter():
+        object.delete()
     Contestant = classes.Contestant
+    for object in Contestant.filter():
+        object.delete()
     Problem = classes.Problem
+    for object in Problem.filter():
+        object.delete()
     ProblemMapping = classes.ProblemMapping
+    for object in ProblemMapping.filter():
+        object.delete()
     MessageGlobal = classes.MessageGlobal
+    for object in MessageGlobal.filter():
+        object.delete()
     MessageContest = classes.MessageContest
+    for object in MessageContest.filter():
+        object.delete()
     paladin = User.create(fullname='Lech Duraj', login='paladin')
     User.create(fullname='Edgsger W. Dijkstra', login = 'dijkstra')
     c2 = Contest.create(name = 'Kontest prywatny', joining = 'Private')
