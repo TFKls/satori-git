@@ -39,22 +39,16 @@ def findByName(where, name, type):
 @Argument('name', type=Name)
 @Argument('type', type=type)
 def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
     return findByName(where.element_type, name, type)
 @DispatchOn(where = SetType)
 @Argument('name', type=Name)
 @Argument('type', type=type)
 def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
     return findByName(where.element_type, name, type)
 @DispatchOn(where = MapType)
 @Argument('name', type=Name)
 @Argument('type', type=type)
 def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
     needle = findByName(where.key_type, name, type)
     if needle:
     	return needle
