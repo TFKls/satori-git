@@ -15,3 +15,11 @@ class MessageGlobal(Message):
     def __unicode__(self):
         return self.topic+" (Global)"
 
+class MessageGlobalEvents(events.Events):
+    model = MessageGlobal
+    on_insert = on_update = ['topic', 'time']
+    on_delete = []
+
+class MessageGlobalOpers(django_.Opers):
+    messageglobal = django_.ModelProceduresProvider(MessageGlobal)
+
