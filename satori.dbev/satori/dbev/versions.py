@@ -226,6 +226,7 @@ class Versions:
                     name=field.name,
                     verbose_name=field.verbose_name,
                     db_column=field.column,
+                    null=True,
                 )
             else:
             	nfield = copy.copy(field)
