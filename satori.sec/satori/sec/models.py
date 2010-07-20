@@ -34,7 +34,7 @@ class Login(models.Model):
 
     login    = models.CharField(max_length=32, unique=True)
     password = models.CharField(max_length=128)
-    user     = models.ForeignKey(User)
+    user     = models.ForeignKey(User, related_name='logins')
 
 class OpenIdentity(models.Model):
 

@@ -227,6 +227,7 @@ class Versions:
                 )
             else:
             	nfield = copy.copy(field)
+            #TODO: nfield.unique = False
             nfield._original = field
             fields[field.name] = nfield
 

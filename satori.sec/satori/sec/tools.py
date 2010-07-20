@@ -2,6 +2,8 @@
 
 __all__ = (
     'Token',
+    'RoleSet',
+    'CheckRights',
 )
 
 from datetime import datetime, timedelta
@@ -13,12 +15,15 @@ import random
 import time
 import urlparse
 import urllib
+from django.core import cache
+from django.db import models
 from Crypto.Cipher import AES
 from openid.consumer import consumer
 from satori.objects import Object, Argument
 from satori.core.settings import SECRET_KEY
 from satori.sec.models import Login, OpenIdentity
 from satori.sec.store import Store
+from satori.core.models import Role, User, Privilege, Object as modelObject
 
 class TokenError(Exception):
     """Exception. Provided token is invalid.
@@ -180,9 +185,19 @@ def authenticateByOpenIdStart(openid, realm, return_to):
     consument = consumer.Consumer(session, store)
     request = consument.begin(openid)
     #request.addExtension
-    redirect = request.redirectURL(realm, url)
+    redirect = ''
+    html = ''
+    if request.shouldSendRedirect():
+        redirect = request.redirectURL(realm, url)
+    else:
+        form = request.formMarkup(realm, url, False, {'id': 'openid_form'})
+        html = '<html><body onload="document.getElementById(\'openid_form\').submit()">' + form + '</body></html>'
     token = Token(user='', auth='openid', data=pickle.dumps(session), validity=timedelta(hours=1)) 
-    return (str(token), redirect)
+    return {
+        'token' : str(token),
+        'redirect' : redirect,
+        'html' : html
+    }
 
 @Argument('token', type=str)
 @Argument('args', type=dict)
@@ -203,3 +218,88 @@ def authenticateByOpenIdFinish(token, args, return_to):
     token = Token(user=str(identity.user.id), auth='openid', validity=timedelta(hours=6)) 
     print 'OpenIDFinish session', session
     return str(token)
+
+class RoleSetError(Exception):
+    """Exception. Roles structure is corrupted.
+    """
+    pass
+
+class RoleSet(Object):
+    def _dfs(self, role):
+        if role.startOn is not None and role.startOn > self._ts or role.finishOn is not None and role.finishOn < self._ts:
+        	return None
+        if role not in self._absorb:
+            abs = None
+            for parent in role.parents.all():
+                a = self._dfs(parent)
+                if a is not None:
+                    if abs is not None and abs != a:
+                        raise RoleSetError(
+                            "Multiple absorbing roles."
+                        )
+                    abs = a
+            if role.absorbing and abs is None:
+                abs = role
+            self._absorb[role] = abs
+        return self._absorb[role]
+
+    @Argument('user', type=User)
+    def __init__(self, user):
+        self._ts = datetime.now()
+        self._absorb = dict()
+        try:
+            abs = self._dfs(user)
+            roles = set()
+            for (role,a) in self._absorb.items():
+                if a == abs:
+                	roles.add(role)
+            if abs:
+            	self._absorb = dict()
+            	self._dfs(abs)
+                for (role,a) in self._absorb.items():
+                	roles.add(role)
+            self.roles = frozenset(roles)
+        except RoleSetError:
+            #TODO: log
+            self.roles = frozenset()
+
+class CheckRights(Object):
+
+    def __init__(self):
+        pass
+
+    def _cache_key(self, role, object, right):
+        return 'check_rights_'+str(role.id)+'_'+str(object.id)+'_'+right
+    def _cache_set(self, role, object, right, value):
+        #cache.set(self._cache_key(role, object, right), value)
+        pass
+    def _cache_get(self, role, object, right):
+        #return cache.get(self._cache_key(role, object, right), None)
+        return None
+    
+    def _single_check(self, role, object, right):
+        print role.id, object.id, right
+        res = self._cache_get(role, object, right)
+        if res is not None:
+            return res
+        res = (Privilege.objects.filter(role = role, object = object, right = right).count() > 0)
+        if not res:
+            self._cache_set(role, object, right, False)
+            model = models.get_model(*object.model.split('.'))
+            if not isinstance(object, model):
+                object = model.objects.get(id=object.id)
+            for (obj,rig) in object.inheritRights(right):
+                if self._single_check(role, obj, rig):
+                	res = True
+                	break
+        self._cache_set(role, object, right, res)
+        return res
+
+    @Argument('roleset', type=RoleSet)
+    @Argument('object', type=modelObject)
+    @Argument('right', type=str)
+    def check(self, roleset, object, right):
+        ret = False
+        for role in roleset.roles:
+        	ret = ret or self._single_check(role, object, right)
+        return ret
