@@ -235,12 +235,12 @@ class MainWidget(Widget):
     def __init__(self, params, path):
         _params = follow(params,path)
         self.htmlFile = 'htmls/index.html'
-        self.loginform = LoginWidget(params,path)
-        self.menu = MenuWidget(params,path)
+        self.loginform = LoginWidget(_params,path)
+        self.menu = MenuWidget(_params,path)
         if not ('content' in _params.keys()):
             _params['content'] = [{'name' : ['news']}]
-        self.content = Widget.FromDictionary(params,'content(0)');
-        self.params = params
+        self.content = Widget.FromDictionary(_params,'content(0)');
+        self.params = _params
 
 # cover widget
 class CoverWidget(Widget):
