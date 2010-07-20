@@ -233,11 +233,12 @@ class SelectContestWidget(Widget):
 class MainWidget(Widget):
     pathName = 'main'
     def __init__(self, params, path):
+        _params = follow(params,path)
         self.htmlFile = 'htmls/index.html'
         self.loginform = LoginWidget(params,path)
         self.menu = MenuWidget(params,path)
-        if not ('content' in params.keys()):
-            params['content'] = [{'name' : ['news']}]
+        if not ('content' in _params.keys()):
+            _params['content'] = [{'name' : ['news']}]
         self.content = Widget.FromDictionary(params,'content(0)');
         self.params = params
 
