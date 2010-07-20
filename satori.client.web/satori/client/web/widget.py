@@ -4,10 +4,18 @@ from queries import *
 from satori.core.models import *
 from postmarkup import render_bbcode
 
-allwidgets = {}
+class MetaWidget(type):
+    allwidgets = {}
+    
+    def __init__(cls, name, bases, attrs):
+        super(MetaWidget, cls).__init__(name, bases, attrs)
+        #We don't want abstract class here
+        if name != "Widget":
+            MetaWidget.allwidgets[cls.pathName] = cls
 
 class Widget:
-    def __init(self,params,path):
+    __metaclass__ = MetaWidget
+    def __init__(self,params,path):
         pass
 
 # returns a newly created widget of a given kind
@@ -15,13 +23,16 @@ class Widget:
     def FromDictionary(dict,path):
         if not ('name' in dict.keys()):
             dict = DefaultLayout(dict)
+            #return dict #CoverWidget(dict, path)
         d = follow(dict,path)
         name = d['name'][0]
-        return allwidgets[name](dict,path)
+        print MetaWidget.allwidgets, name
+        return MetaWidget.allwidgets[name](dict,path)
 
 
 # login box
 class LoginWidget(Widget):
+    pathName = 'loginform'
     def __init__(self, params, path):
         el = CurrentUser()
         if el:
@@ -33,6 +44,7 @@ class LoginWidget(Widget):
 
 # left menu
 class MenuWidget(Widget):
+    pathName = 'menu'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/menu.html'
         self.menuitems = []
@@ -46,7 +58,7 @@ class MenuWidget(Widget):
             if object and not Allowed(object,rights):
                 return
             d = DefaultLayout(params)
-            f = { 'name' : [wname] };
+            f = { 'name' : [wname], 'override' : ["1"] };
             d['content'] = [f];
             self.menuitems.append([label,GetLink(d,'')])
 
@@ -58,6 +70,7 @@ class MenuWidget(Widget):
             self.menuitems.append([label,GetLink(dict,'')])
 
         addwidget(True, 'News', 'news')
+        addwidget(True, 'About', 'about')
         addwidget(not contest,'Select contest','selectcontest')
         addwidget(contest,'Problems','problems',contest,'seeproblems')
         addwidget(cuser,'Submit','submit',contest,'submit')
@@ -71,8 +84,15 @@ class MenuWidget(Widget):
         addwidget(contest,'Manage users','manusers',contest,'manage_users')
         addlink(contest,'Main screen',DefaultLayout())
 
+# about table (to test ajah)
+class AboutWidget(Widget):
+    pathName = 'about'
+    def __init__(self, params, path):
+        self.htmlFile = 'htmls/about.html'
+
 # news table (a possible main content)
 class NewsWidget(Widget):
+    pathName = 'news'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/news.html'
         self.messages = []
@@ -84,6 +104,7 @@ class NewsWidget(Widget):
 
 # results table (a possible main content)
 class ResultsWidget(Widget):
+    pathName = 'results'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/results.html'
         c = ActiveContest(params)
@@ -119,11 +140,13 @@ class ResultsWidget(Widget):
 
 # ranking (a possible main content)
 class RankingWidget(Widget):
+    pathName = 'ranking'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/ranking.html'
 
 
 class SubmitWidget(Widget):
+    pathName = 'submit'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/submit.html'
         self.back_to = ToString(params)
@@ -135,6 +158,7 @@ class SubmitWidget(Widget):
                 self.problems.append(p)
 
 class ManageUsersWidget(Widget):
+    pathName = 'manusers'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/manusers.html'
         c = ActiveContest(params)
@@ -143,6 +167,7 @@ class ManageUsersWidget(Widget):
 
 
 class ManageNewsWidget(Widget):
+    pathName = 'mannews'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/mannews.html'
         self.contest = ActiveContest(params)
@@ -173,10 +198,12 @@ class ManageNewsWidget(Widget):
                 md['editlink'] = GetLink(_params,'')
 
 class ManageContestWidget(Widget):
+    pathName = 'mancontest'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/mancontest.html'
 
 class ProblemsWidget(Widget):
+    pathName = 'problems'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/problems.html'
         c = ActiveContest(params)
@@ -184,6 +211,7 @@ class ProblemsWidget(Widget):
 
 # contest selection screen (a possible main content)
 class SelectContestWidget(Widget):
+    pathName = 'selectcontest'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/selectcontest.html'
         self.participating = []
@@ -203,26 +231,22 @@ class SelectContestWidget(Widget):
 
 # base widget
 class MainWidget(Widget):
+    pathName = 'main'
     def __init__(self, params, path):
+        _params = follow(params,path)
         self.htmlFile = 'htmls/index.html'
-        self.loginform = LoginWidget(params,path)
-        self.menu = MenuWidget(params,path)
-        if not ('content' in params.keys()):
-            params['content'] = [{'name' : ['news']}]
-        self.content = Widget.FromDictionary(params,'content(0)');
-        self.params = params
+        self.loginform = LoginWidget(_params,path)
+        self.menu = MenuWidget(_params,path)
+        if not ('content' in _params.keys()):
+            _params['content'] = [{'name' : ['news']}]
+        self.content = Widget.FromDictionary(_params,'content(0)');
+        self.params = _params
 
-
-allwidgets = {
-'main' : MainWidget, 
-'menu' : MenuWidget, 'news' : NewsWidget, 
-'selectcontest' : SelectContestWidget, 
-'loginform' : LoginWidget, 
-'ranking' : RankingWidget, 
-'results' : ResultsWidget, 
-'submit' : SubmitWidget,
-'manusers' : ManageUsersWidget,
-'mancontest' : ManageContestWidget,
-'mannews' : ManageNewsWidget,
-'problems' : ProblemsWidget
-}
+# cover widget
+class CoverWidget(Widget):
+    pathName = 'cover'
+    def __init__(self, params, path):
+        self.htmlFile = 'htmls/cover.html'
+        d = DefaultLayout(params)
+        self.cover = Widget.FromDictionary(params,'cover(0)');
+#        self.startLink = GetLink(d,'')
