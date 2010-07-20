@@ -19,6 +19,8 @@ DATABASE_PASSWORD = ''
 DATABASE_HOST = ''
 DATABASE_PORT = ''
 
+CACHE_BACKEND = 'memcached://localhost:11211'
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -77,4 +79,5 @@ TEMPLATE_DIRS = (
 INSTALLED_APPS = (
     'satori.dbev',
     'satori.core',
+    'satori.sec',
 )
