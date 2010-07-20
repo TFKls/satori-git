@@ -28,12 +28,3 @@ class TestEvents(events.Events):
 class TestOpers(django_.Opers):
     test = django_.ModelProceduresProvider(Test)
 
-    @test.method
-    @ReturnValue(type=Test)
-    @Argument(name='name', type=str)
-    def create(name):
-        t = Test()
-        t.name = name
-        t.save()
-        return t
-

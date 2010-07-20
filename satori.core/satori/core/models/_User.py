@@ -25,14 +25,5 @@ class UserEvents(events.Events):
 
 class UserOpers(django_.Opers):
     user = django_.ModelProceduresProvider(User)
-    
-    @user.method
-    @ReturnValue(type=User)
-    @Argument(name='name', type=str)
-    def create(name):
-        t = User()
-        t.name = name
-        t.save()
-        return t
 
 
