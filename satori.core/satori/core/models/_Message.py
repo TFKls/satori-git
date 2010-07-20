@@ -16,3 +16,11 @@ class Message(Object):
     def __unicode__(self):
         return self.topic
 
+class MessageEvents(events.Events):
+    model = Message
+    on_insert = on_update = ['topic', 'time']
+    on_delete = []
+
+class MessageOpers(django_.Opers):
+    message = django_.ModelProceduresProvider(Message)
+

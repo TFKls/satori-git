@@ -15,3 +15,11 @@ class MessageContest(Message):
     def __unicode__(self):
         return self.topic+" ("+self.contest.name+")"
 
+class MessageContestEvents(events.Events):
+    model = MessageContest
+    on_insert = on_update = ['topic', 'time']
+    on_delete = []
+
+class MessageContestOpers(django_.Opers):
+    messagecontest = django_.ModelProceduresProvider(MessageContest)
+
