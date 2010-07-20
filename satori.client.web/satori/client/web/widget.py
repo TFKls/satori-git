@@ -2,6 +2,7 @@
 from URLDictionary import *
 from queries import *
 from satori.core.models import *
+from postmarkup import render_bbcode
 
 allwidgets = {}
 
@@ -63,6 +64,10 @@ class MenuWidget(Widget):
         addwidget(contest,'Results','results',contest,'seeresults')
         addwidget(contest,'Ranking','ranking',contest,'seeranking')
         addwidget(cuser,'Manage contest','mancontest',contest,'manage')
+        if cuser:
+            addwidget(user,'Manage news','mannews',contest,'manage_news')
+        else:
+            addwidget(user,'Manage news','mannews',True,'manage_news')
         addwidget(contest,'Manage users','manusers',contest,'manage_users')
         addlink(contest,'Main screen',DefaultLayout())
 
@@ -70,7 +75,12 @@ class MenuWidget(Widget):
 class NewsWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/news.html'
-
+        self.messages = []
+        for m in MessageGlobal.objects.all():
+            if not ActiveContest(params) or not m.mainscreenonly:
+                self.messages.append({'type' : 'global', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time})
+        for m in MessageContest.objects.filter(contest = ActiveContest(params)):
+                self.messages.append({'type' : 'contest', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time})
 
 # results table (a possible main content)
 class ResultsWidget(Widget):
@@ -131,6 +141,37 @@ class ManageUsersWidget(Widget):
         self.accepted = Contestant.objects.filter(contest=c,accepted=True)
         self.pending = Contestant.objects.filter(contest=c,accepted=False)
 
+
+class ManageNewsWidget(Widget):
+    def __init__(self, params, path):
+        self.htmlFile = 'htmls/mannews.html'
+        self.contest = ActiveContest(params)
+        self.canglobal = Allowed(True,'managenews')
+        self.messages = []
+        d = follow(params,path)
+        _params = deepcopy(params)
+        _d = follow(_params,path)
+        if 'edit' in d.keys():
+            self.editing = True
+            try:
+                msg = MessageGlobal.objects.get(id = d['edit'][0])
+            except MessageGlobal.DoesNotExist:
+                msg = MessageContest.objects.get(id = d['edit'][0])
+            self.msgtopic = msg.topic
+            self.msgcontent = msg.content
+            self.msgid = msg.id
+            del _d['edit'];
+        self.back_to = ToString(_params);
+        for m in MessageGlobal.objects.all():
+            if not ActiveContest(params) or not m.mainscreenonly:
+                self.messages.append({'id' : m.id, 'type' : 'global', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time, 'canedit' : Allowed(m,'edit')})
+        for m in MessageContest.objects.filter(contest = ActiveContest(params)):
+                self.messages.append({'id' : m.id, 'type' : 'contest', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time, 'canedit' : Allowed(m,'edit')})
+        for md in self.messages:
+            if md['canedit']:
+                _d['edit'] = [str(md['id'])]
+                md['editlink'] = GetLink(_params,'')
+
 class ManageContestWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/mancontest.html'
@@ -182,5 +223,6 @@ allwidgets = {
 'submit' : SubmitWidget,
 'manusers' : ManageUsersWidget,
 'mancontest' : ManageContestWidget,
+'mannews' : ManageNewsWidget,
 'problems' : ProblemsWidget
 }

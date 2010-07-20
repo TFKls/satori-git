@@ -1,0 +1,52 @@
+<h3>Manage news</h3>
+
+<div class="msgeditform">
+<form action = "process.editmsg" method = "post">
+    <input type="hidden" name="msgid" value="{{widget.msgid}}">
+    <input type="hidden" name="contest_id" value="{{widget.contest.id}}">
+    <input type="hidden" name="back_to" value="{{ widget.back_to }}">
+    <div class="msgtopic">
+        <input type="text" name="msgtopic" value="{{ widget.msgtopic }}">
+    </div>
+    <div class="msgcontent">
+        <textarea name="msgcontent" cols="6">{{ widget.msgcontent }}</textarea>
+    </div>
+    {% if not widget.editing %}
+    <div class="msgtype">
+        {% if widget.contest %}
+        <input type="radio" name="msgtype" value="contest_only" checked>This contest only</input>
+        {% endif %}
+        {% if widget.canglobal %}
+        <input type="radio" name="msgtype" value="mainscreen_only"{% if not widget.contest %} checked {% endif %}>Main screen only</input>
+        <input type="radio" name="msgtype" value="global">Always visible</input>
+        {% endif %}    
+    </div>
+    {% endif %}
+    <div class="msgbuttons">
+        {% if widget.editing %}
+        <input type="submit" class="button" name="edit" value="Save">
+        <input type="submit" class="button" name="delete" value="Delete">
+        <input type="submit" class="button" name="cancel" value="Cancel">
+        {% else %}
+        <input type="submit" class="button" name="add" value="Add">
+        {% endif %}
+    </div>
+</form>
+</div>
+
+{% for msg in widget.messages %}
+<div class = "newsmsg">
+<span class = "{{ msg.type }}">
+    <div class = "newstitle">
+        {{ msg.topic }}
+    </div>
+    <div class = "newscontent">
+        {{ msg.content|safe }}
+    </div>
+    <div class = "newseditlink">
+        <a class="stdlink" href=" {{ msg.editlink }}"> Edit/delete</a>
+    </div>
+</span>
+</div>
+{% endfor %}
+

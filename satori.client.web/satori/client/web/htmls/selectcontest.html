@@ -2,30 +2,30 @@
 {% if widget.user %}
 <h2 class="subtitle">Contests currently signed to:</h2>
 
-<table class="list_table">
+<table class="contest_table">
 {% for c, conuser, link in widget.participating %}
     <tr>
-        <td><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
+        <td colspan="2" class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
     </tr>
 {% endfor %}
 </table>
 {% endif %}
 
 <h2 class="subtitle">Registration active:</h2>
-<table class="list_table">
+<table class="contest_table">
 {% for c, conuser, link in widget.mayjoin %}
     <tr>
-    <td><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
+    <td class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
     {% if widget.user %}
-        <td>
+        <td class="buttoncell">
         {% if conuser %}
-            <span class="messageemph">Applied</span>
+            <div class="noclickbutton">Applied</div>
         {% else %}  
         <form action="process.join" method="post">
             <input type="hidden" name="user_id" value="{{ widget.user.id }}"/>
             <input type="hidden" name="contest_id" value="{{ c.id }}"/>
             <input type="hidden" name="back_path" value=""/>
-            <input type="submit" class="button" value="Join"/>
+            <input type="submit" class="applybutton" value="Join"/>
         </form>
         {% endif %}
         </td>
@@ -37,8 +37,10 @@
 
 <h2 class="subtitle">Other contests:</h2>
 {% for c, conuser, link in widget.other %}
-    <div class="contestselection">  
-    <a class="contestlink" href="{{ link }}"> {{ c.name }}</a>
-    </div>
+<table class="contest_table">
+    <tr>
+        <td colspan="2" class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
+    </tr>
+</table>
 {% endfor %}
 
