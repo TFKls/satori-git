@@ -23,7 +23,7 @@ from pyparsing import dblQuotedString, sglQuotedString, removeQuotes
 
 from ..thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
 from ..thrift.protocol.TProtocol import TProtocolBase
-from ..thrift.server.TServer import TSimpleServer
+from ..thrift.server.TServer import TThreadedServer
 from ..thrift.transport.TTransport import TServerTransportBase, TTransportBase
 from ..thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
@@ -474,7 +474,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
 
 class ThriftServer(ContractMixin, Server):
     
-    @Argument('server_type', type=(ClassType, TypeType), default=TSimpleServer)
+    @Argument('server_type', type=(ClassType, TypeType), default=TThreadedServer)
     @Argument('transport', type=TServerTransportBase)
     @Argument('changeContracts', fixed=True)
     def __init__(self, server_type, transport):
