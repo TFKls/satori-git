@@ -1,7 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from satori.ars.model import *
 from satori.ars.naming import *
-import new
 
 def convert_to(elem, type):
     if isinstance(type, ListType):
@@ -21,86 +20,65 @@ def convert_from(elem, type):
 
     return elem
 
-class ArsMethod(object):
-    def __init__(self, proc):
-        self._proc = proc.implementation
-        self._rettype = proc.return_type
-        self._argnames = []
-        self._argtype = {}
-        self._argoptional = {}
-        self._procname = NamingStyle.PYTHON.format(proc.name)
-        for param in proc.parameters.items:
-        	argname = NamingStyle.PYTHON.format(param.name)
-        	self._argnames.append(argname)
-        	self._argtype[argname] = param.type
-        	self._argoptional[argname] = param.optional
+def wrap(_client, _proc, _procname):
+    _implementation = _proc.implementation
+    _rettype = _proc.return_type
+    _args = [(NamingStyle.PYTHON.format(param.name), param.type, param.optional) for param in _proc.parameters.items]
 
-        if self._argnames and (self._argnames[0] == 'token'):
-        	self._argnames.pop(0)
-        	self._want_token = True
-        else:
-        	self._want_token = False
+    _token_type = None
+    if _args and (_args[0][0] == 'token'):
+        _token_type = _args.pop(0)[1]
 
-        if self._argnames and (self._argnames[0] == 'self'):
-        	self._argnames.pop(0)
-        	self._want_self = True
-        else:
-        	self._want_self = False        
+    def func(*args, **kwargs):
+#        newargs = []
+	    newkwargs = {}
 
-    def __get__(self, cls_self, cls):
-        def func(*args, **kwargs):
-            usedargs = set()
+        if _token_type is not None:
+#            newargs.append(convert_to('', _token_type))
+            newkwargs['token'] = convert_to('', _token_type)
 
-            newargs = []
+        if len(args) > len(_args):
+            raise TypeError('{0}() takes at most {1} arguments ({2} given)'.format(_procname, len(_args), len(args)))
 
-            if self._want_token:
-            	newargs.append(convert_to('', self._argtype['token']))
-            	usedargs.add('token')
+        for i in range(len(_args)):
+        	(argname, argtype, argoptional) = _args[i]
+            if i < len(args):
+#                newargs.append(convert_to(args[i], argtype))
+                newkwargs[argname] = convert_to(args[i], argtype)
+                if argname in kwargs:
+                    raise TypeError('{0}() got multiple values for keyword argument \'{1}\''.format(_procname, argname))
+            elif argname in kwargs:
+#                newargs.append(convert_to(kwargs.pop(argname), argtype))
+                newkwargs[argname] = convert_to(kwargs.pop(argname), argtype)
+            elif argoptional:
+#                newargs.append(None)
+                newkwargs[argname] = None
+            else:
+                raise TypeError('{0}() didn\'t get required argument \'{1}\''.format(_procname, argname))
 
-            if self._want_self:
-            	newargs.append(convert_to(cls_self, self._argtype['self']))
-            	usedargs.add('self')
+        for argname in kwargs:
+            raise TypeError('{0} got an unexpected keyword argument \'{1}\''.format(_procname, argname))
 
-            if len(args) > len(self._argnames):
-                raise TypeError('{0} takes at most {1} arguments ({2} given)'.format(self._procname, len(self._argnames), len(args)))
+#        ret = _implementation(*newargs)
+        ret = _client.call(_proc, newkwargs)
 
-            for i in range(len(self._argnames)):
-            	argname = self._argnames[i]
-                if i < len(args):
-            	    newargs.append(convert_to(args[i], self._argtype[argname]))
-                    if argname in kwargs:
-                        raise TypeError('{0} got an unexpected keyword argument \'{1}\''.format(self._procname, argname))
-                elif argname in kwargs:
-                    newargs.append(convert_to(kwargs[argname], self._argtype[argname]))
-                elif self._argoptional[argname]:
-                    newargs.append(None)
-                else:
-                    raise TypeError('{0} didn\'t get required argument \'{1}\''.format(self._procname, argname))
+        return convert_from(ret, _rettype)
 
-            for argname in kwargs:
-                if not argname in self._argtype:
-                    raise TypeError('{0} got an unexpected keyword argument \'{1}\''.format(self._procname, argname))
-            
-            ret = self._proc(*newargs)
+    func.func_name = _procname
 
-            return convert_from(ret, self._rettype)
+    if not (_args and (_args[0][0] == 'self')):
+    	func = staticmethod(func)
 
-        func.func_name = self._procname
-        return func
+    return func
 
-    def __str__():
-        return 'ArsMethod:{0}'.format(self._procname)
-
-def generate_class(contract):
+def generate_class(client, contract):
     class_name = NamingStyle.PYTHON.format(contract.name)
     class_bases = (object, )
     class_dict = {}
 
     for proc in contract.procedures:
         meth_name = NamingStyle.PYTHON.format(Name(*proc.name.components[1:]))
-        meth = ArsMethod(proc)
-
-        class_dict[meth_name] = meth
+        class_dict[meth_name] = wrap(client, proc, meth_name)
 
     def __init__(self, id):
         self._id = id
@@ -127,17 +105,17 @@ def generate_class(contract):
     class_dict['__getattr__'] = __getattr__
     class_dict['__setattr__'] = __setattr__
 
-    return new.classobj(class_name, class_bases, class_dict)
+    return type(class_name, class_bases, class_dict)
 
-def process(contracts):
+def generate_classes(client):
     classes = {}
     types = NamedTuple()
-    for contract in contracts:
+    for contract in client.contracts:
     	types.extend(namedTypes(contract))
-    for contract in contracts:
+    for contract in client.contracts:
         c_name = NamingStyle.PYTHON.format(contract.name)
 
-        newcls = generate_class(contract)
+        newcls = generate_class(client, contract)
 
         id_name = NamingStyle.IDENTIFIER.format(Name(ClassName(c_name + 'Id')))
         if id_name in types.IDENTIFIER:
