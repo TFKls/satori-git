@@ -15,6 +15,7 @@ from collections import Set
 from StringIO import StringIO
 import traceback
 from types import ClassType, TypeType
+import threading
 
 from pyparsing import Forward, Group, Literal, Optional, Regex, StringEnd
 from pyparsing import Suppress, ZeroOrMore;
@@ -273,6 +274,11 @@ class ThriftProcessor(ThriftBase, TProcessor):
         for item in value:
             self._send(item, type_.element_type, proto)
         proto.writeSetEnd()
+    
+    @DispatchOn(type_=Procedure)
+    def _send(self, value, type_, proto): # pylint: disable-msg=E0102
+        fields = [None]
+        self._sendFields(value, self.style.format(type_.name) + '_args', [None] + [par for par in type_.parameters], proto)
 
     ATOMIC_RECV = {
         Boolean: 'readBool',
@@ -378,13 +384,6 @@ class ThriftProcessor(ThriftBase, TProcessor):
             return value['success']
         raise Exception(value['error']) #TODO: what should I raise?
 
-    @DispatchOn(type_=Procedure)
-    def _send(self, value, type_, proto): # pylint: disable-msg=E0102
-        fields = [None]
-        for parameter in type_.parameters:
-            fields.append(Field(name=parameter.name, type=parameter.type, optional=parameter.optional))
-        self._sendFields(value, self.style.format(type_.name) + '_args', fields, proto)
-    
     def process(self, iproto, oproto):
         """Processes a single client request.
         """
@@ -444,12 +443,14 @@ class ThriftProcessor(ThriftBase, TProcessor):
         finally:
             oproto.trans.flush()
 
-    def call(self, name, args, iproto, oproto):
-        try:
-            procedure = self._procedures[name]
-        except KeyError:
-            raise TApplicationException(TApplicationException.UNKNOWN_METHOD,
-                "Unknown method '{0}'".format(name))
+    def call(self, procedure, args, iproto, oproto):
+        if isinstance(procedure, str):
+            try:
+                procedure = self._procedures[procedure]
+            except KeyError:
+                raise TApplicationException(TApplicationException.UNKNOWN_METHOD,
+                    "Unknown method '{0}'".format(name))
+        
         oproto.writeMessageBegin(self.style.format(procedure.name), TMessageType.CALL, self.seqid)
         self.seqid = self.seqid + 1
         self._send(args, procedure, oproto)
@@ -502,37 +503,39 @@ class ThriftClient(ContractMixin, Client):
     @Argument('changeContracts', fixed=True)
     def __init__(self, transport):
         self._transport = transport
-        
-    class Implementation(object):
-        def __init__(self, client, procedure):
-            self._client = client
-            names = [client._processor.style.format(parameter.name) for parameter in procedure.parameters]
-            self._signature = Signature(names)
-            self._name = client._processor.style.format(procedure.name)
-        
-        def __call__(self, *args, **kwargs):
-            values = self._signature.Values(*args, **kwargs)
-            return self._client._processor.call(self._name, values.named, self._client._protocol, self._client._protocol)
 
+    def wrap(self, procedure):
+        names = [NamingStyle.PYTHON.format(parameter.name) for parameter in procedure.parameters]
+        values_type = Signature(names).Values
+
+        def proc(*args, **kwargs):
+            values = values_type(*args, **kwargs)
+            return self._processor.call(procedure, values.named, self._protocol, self._protocol)
+
+        proc.func_name = NamingStyle.PYTHON.format(procedure.name)
+        return proc
+        
     def start(self, bootstrap=False):
         self._transport.open()
         self._protocol = TBinaryProtocol(self._transport) #TODO: find a better protocol?
+
         if bootstrap:
         	self.contracts.clear()
             idl_proc = Procedure(return_type=String, name=Name(ClassName('Server'), MethodName('getIDL')))
             idl_cont = Contract(name=Name(ClassName('Server')))
             idl_cont.addProcedure(idl_proc)
             self.contracts.add(idl_cont)
-            self._processor = ThriftProcessor(self.contracts)
-            idl = ThriftClient.Implementation(self, idl_proc)()
+            idl = ThriftProcessor(self.contracts).call(idl_proc, [], self._protocol, self._protocol)
             idl_reader = ThriftReader()
             idl_io = StringIO(idl)
             idl_reader.readFrom(idl_io)
             self.contracts = idl_reader.contracts
+
         self._processor = ThriftProcessor(self.contracts)
         for contract in self.contracts:
             for procedure in contract.procedures:
-                procedure.implementation = ThriftClient.Implementation(self, procedure)
+                procedure.implementation = self.wrap(procedure)
+
         self._changeContracts = False
 
     def stop(self):
@@ -541,6 +544,21 @@ class ThriftClient(ContractMixin, Client):
                 procedure.implementation = None
         self._transport.close()
         self._changeContracts = True
+
+    def call(self, procedure, kwargs):
+        return self._processor.call(procedure, kwargs, self._protocol, self._protocol)
+
+
+class ThreadedThriftClient(threading.local):
+    def __init__(self, contracts, transport_factory):
+        self.contracts = contracts
+        self._transport = transport_factory()
+        self._transport.open()
+        self._protocol = TBinaryProtocol(self._transport)
+        self._processor = ThriftProcessor(contracts)
+
+    def call(self, procedure, kwargs):
+        return self._processor.call(procedure, kwargs, self._protocol, self._protocol)
 
 
 class ThriftReader(ContractMixin, ThriftBase, Reader):
