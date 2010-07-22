@@ -1,5 +1,5 @@
 from django.http import HttpResponse
-from satori.client.common import classes
+from satori.client.common import *
 
 def create(request):
 #    ProblemMapping.objects.all().delete()
@@ -9,28 +9,28 @@ def create(request):
 #    User.objects.all().delete()
 #    MessageGlobal.objects.all().delete()
 #    MessageContest.objects.all().delete()
-    User = classes.User
+    User = User
     for object in User.filter():
         object.delete()
-    Contest = classes.Contest
+    Contest = Contest
     for object in Contest.filter():
         object.delete()
-    Contestant = classes.Contestant
+    Contestant = Contestant
     for object in Contestant.filter():
         object.delete()
-    Problem = classes.Problem
+    Problem = Problem
     for object in Problem.filter():
         object.delete()
-    ProblemMapping = classes.ProblemMapping
+    ProblemMapping = ProblemMapping
     for object in ProblemMapping.filter():
         object.delete()
-    MessageGlobal = classes.MessageGlobal
+    MessageGlobal = MessageGlobal
     for object in MessageGlobal.filter():
         object.delete()
-    MessageContest = classes.MessageContest
+    MessageContest = MessageContest
     for object in MessageContest.filter():
         object.delete()
-    RoleMapping = classes.RoleMapping
+    RoleMapping = RoleMapping
     for object in RoleMapping.filter():
         object.delete()
     paladin = User.create(fullname='Lech Duraj', login='paladin')
