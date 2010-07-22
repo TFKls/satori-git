@@ -5,6 +5,8 @@ exposed over Thrift.
 
 import satori.client.web.setup
 
+import satori.client.common
+
 
 
 def manage():
