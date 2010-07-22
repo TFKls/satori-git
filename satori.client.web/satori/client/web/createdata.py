@@ -9,28 +9,20 @@ def create(request):
 #    User.objects.all().delete()
 #    MessageGlobal.objects.all().delete()
 #    MessageContest.objects.all().delete()
-    User = User
     for object in User.filter():
         object.delete()
-    Contest = Contest
     for object in Contest.filter():
         object.delete()
-    Contestant = Contestant
     for object in Contestant.filter():
         object.delete()
-    Problem = Problem
     for object in Problem.filter():
         object.delete()
-    ProblemMapping = ProblemMapping
     for object in ProblemMapping.filter():
         object.delete()
-    MessageGlobal = MessageGlobal
     for object in MessageGlobal.filter():
         object.delete()
-    MessageContest = MessageContest
     for object in MessageContest.filter():
         object.delete()
-    RoleMapping = RoleMapping
     for object in RoleMapping.filter():
         object.delete()
     paladin = User.create(fullname='Lech Duraj', login='paladin')
