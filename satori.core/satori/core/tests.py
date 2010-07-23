@@ -1,19 +1,19 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-"""Test suite for satori.sec.
+"""Test suite for satori.core.
 """
 
 import unittest
 
 import satori.core.setup
-from satori.sec import Token
+from satori.core.sec import Token
 from datetime import timedelta
 
 import crypt
 from satori.core.models import User, Privilege
-from satori.sec.models import Login
+from satori.core.models import Login
 from satori.ars import django_
 from satori.ars.naming import Name, ClassName, MethodName
-import satori.sec
+import satori.core.sec
 
 class TestToken(unittest.TestCase):
     """Test token manipulation.
@@ -72,12 +72,12 @@ class TestLogin(unittest.TestCase):
         p = Privilege(object=u, role=u, right='ADMIN')
         p.save()
         django_.generate_contracts()
-        satori.sec.generate_contracts(django_.contract_list)
+        satori.core.sec.generate_contracts(django_.contract_list)
 
     def testLogin(self):
-        login = satori.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('login'))]
-        whoami = satori.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('whoami'))]
-        cani = satori.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('cani'))]
+        login = satori.core.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('login'))]
+        whoami = satori.core.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('whoami'))]
+        cani = satori.core.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('cani'))]
 
         tok = Token(login.implementation('mammoth', 'mammoth'))
         print 'Token:    ', tok

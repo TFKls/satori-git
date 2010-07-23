@@ -21,8 +21,8 @@ from Crypto.Cipher import AES
 from openid.consumer import consumer
 from satori.objects import Object, Argument
 from satori.core.settings import SECRET_KEY
-from satori.sec.models import Login, OpenIdentity
-from satori.sec.store import Store
+from satori.core.models import Login, OpenIdentity
+from satori.core.sec.store import Store
 from satori.core.models import Role, User, Privilege, Object as modelObject
 
 class TokenError(Exception):

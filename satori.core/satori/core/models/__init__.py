@@ -2,16 +2,20 @@
 """Database schema for satori.core.
 """
 
+from satori.core.models._Association import Association
 from satori.core.models._BlobAttribute import BlobAttribute
 from satori.core.models._Blob import Blob
 from satori.core.models._Contestant import Contestant
 from satori.core.models._Contest import Contest
+from satori.core.models._Login import Login
 from satori.core.models._Message import Message
 from satori.core.models._MessageGlobal import MessageGlobal
 from satori.core.models._MessageContest import MessageContest
+from satori.core.models._Nonce import Nonce
 from satori.core.models._Object import Object
 from satori.core.models._OpaqueAttribute import OpaqueAttribute
 from satori.core.models._OpenAttribute import OpenAttribute
+from satori.core.models._OpenIdentity import OpenIdentity
 from satori.core.models._Privilege import Privilege
 from satori.core.models._ProblemIncarnation import ProblemIncarnation
 from satori.core.models._ProblemMapping import ProblemMapping

@@ -6,6 +6,7 @@ syntax: regexp
 ^lib
 ^src/
 ^var/
+^tmp/
 /\.
 \.py[co]$
 /build/

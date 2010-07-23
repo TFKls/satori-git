@@ -11,13 +11,13 @@ def export_thrift():
     from sys import stdout
     import satori.core.models
     from satori.ars import django_
-    import satori.sec
+    import satori.core.sec
     from satori.ars.thrift import ThriftWriter
     django_.generate_contracts()
-    satori.sec.generate_contracts(django_.contract_list)
+    satori.core.sec.generate_contracts(django_.contract_list)
     writer = ThriftWriter()
     writer.contracts.update(django_.contract_list.items)
-    writer.contracts.update(satori.sec.contract_list.items)
+    writer.contracts.update(satori.core.sec.contract_list.items)
     writer.writeTo(stdout)
 
 
@@ -42,13 +42,13 @@ def start_server():
     from thrift.transport.TSocket import TServerSocket
     import satori.core.models
     from satori.ars import django_
-    import satori.sec
+    import satori.core.sec
     from satori.ars.thrift import ThriftServer
     django_.generate_contracts()
-    satori.sec.generate_contracts(django_.contract_list)
+    satori.core.sec.generate_contracts(django_.contract_list)
     server = ThriftServer(transport=TServerSocket(port=38889))
     server.contracts.update(django_.contract_list.items)
-    server.contracts.update(satori.sec.contract_list.items)
+    server.contracts.update(satori.core.sec.contract_list.items)
     server_process = Process(target=server.run)
     server_process.start()
     print 'thrift server started'

@@ -84,6 +84,5 @@ INSTALLED_APPS = (
 #    'django.contrib.admin',
     'satori.dbev',
     'satori.core',
-    'satori.sec',
     'satori.client.web',
 )
