@@ -8,7 +8,7 @@ from satori.core.models._User import User
 
 class Login(Object):
 
-    __module__ == "satori.core.models"
+    __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_login')
 
     login    = models.CharField(max_length=64, unique=True)

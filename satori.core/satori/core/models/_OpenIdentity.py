@@ -8,7 +8,7 @@ from satori.core.models._Object import Object
 
 class OpenIdentity(Object):
 
-    __module__ == "satori.core.models"
+    __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_openidentity')
 
     identity = models.CharField(max_length=512, unique=True)
