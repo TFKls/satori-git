@@ -5,7 +5,7 @@ __all__ = (
 )
 
 from satori.core.settings import SECRET_KEY
-from satori.sec.models import Nonce, Association
+from satori.core.models import Nonce, Association
 from django.db.models import F
 from openid.store.interface import OpenIDStore
 from openid.store.nonce import SKEW
