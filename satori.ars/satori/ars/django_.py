@@ -379,10 +379,16 @@ class CreateProcedureProvider(ProcedureProvider):
         sign.set(create)
 
         for (name, type, optional) in sorted:
-            if optional:
-                Argument(name, type=(type, NoneType))(create)
-            else:
+            if name == 'token':
                 Argument(name, type=type)(create)
+            else:
+                Argument(name, type=(type, NoneType))(create)
+
+#        for (name, type, optional) in sorted:
+#            if optional:
+#                Argument(name, type=(type, NoneType))(create)
+#            else:
+#                Argument(name, type=type)(create)
 
         ReturnValue(type=model)(create)
         
