@@ -1,25 +1,183 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from datetime import datetime
 from types import NoneType
-from satori.objects import DispatchOn, Signature, Argument, ReturnValue, ConstraintDisjunction, ConstraintConjunction, TypeConstraint
+from satori.objects import DispatchOn, Signature, Argument, ReturnValue, ConstraintDisjunction, ConstraintConjunction, TypeConstraint, TypedConstraint
 from django.db import models
 from django.db.models.fields.related import add_lazy_relation
-from satori.ars.model import NamedTuple, Contract, Procedure, Parameter, TypeAlias, Void, Boolean, Int32, Int64, String, ListType
+from satori.ars import model
+from satori.ars.model import NamedTuple, Contract, Procedure, Parameter
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorName, ParameterName, NamingStyle
+import types
+import typed
+import typed.specialize
 
-class TypedList(type):
-    def __init__(self, name, bases, namespace):
-        super(TypedList, self).__init__(name, bases, {})
-        self.type_ = namespace['type']
+def resolve_model(self, model, rel_model):
+    self._model = model
+
+class DjangoModelType(typed.specialize.Type):
+    def __init__(self, model, rel_model=None):
+        self._model = model
+        if isinstance(model, str):
+            super(DjangoModelType, self).__init__(model)
+            add_lazy_relation(rel_model, self, model, resolve_model)
+        else:
+            super(DjangoModelType, self).__init__(model._meta.object_name)
+
+    def is_(self, x):
+        if isinstance(self._model, str):
+            return False
+        return isinstance(x, self._model)
+
+    def sub(self, X):
+        if not isinstance(X, DjangoModelType):
+            return False
+        if isinstance(self._model, str) or isinstance(X._model, str):
+            return False
+        return issubclass(X._model, self._model)
 
 
-class LazyModelClass(type):
-    def __init__(self, name, bases, namespace):
-        super(LazyModelClass, self).__init__(name, bases, {})
-        self.model = namespace['model']
+class StructType(typed.specialize.Type):
+    def __init__(self, name, fields):
+        self._fields = fields
+        super(StructType, self).__init__(name)
 
-    def __str__(self):
-        return 'LMC:' + str(self.model)
+    def is_(self, x):
+        for (name, type, optional) in self._fields:
+            if not ((name in x) or optional):
+            	return False
+            if name in x:
+                if not typed.isinstance(x[name], type):
+                	return False
+        return True
+
+    def sub(self, X):
+        if not isinstance(X, StructType):
+            return False
+        return self._fields == X._fields
+
+
+class ModelStructType(StructType):
+    def __init__(self, model):
+        sorted = []
+
+        for field in model._meta.fields:
+            field_type = django_field_to_python_type(model, field)
+            if field_type is not None:
+            	sorted.append((field.name, field_type, bool(field.null)))
+
+        sorted.sort()
+
+        super(ModelStructType, self).__init__(model._meta.object_name, sorted)
+        
+
+model_type_map = {}
+
+def django_model_to_python_type(model, rel_model=None):
+    if isinstance(model, models.base.ModelBase):
+        if not model in model_type_map:
+        	model_type_map[model] = DjangoModelType(model, rel_model)
+    	return model_type_map[model]
+    else:
+        return DjangoModelType(model, rel_model)
+
+model_list_type_map = {}
+
+def django_model_list_to_python_type(model, rel_model=None):
+    if isinstance(model, models.base.ModelBase):
+        if not model in model_list_type_map:
+            model_list_type_map[model] = typed.List(DjangoModelType(model))
+        return model_list_type_map[model]
+    else:
+        return typed.List(DjangoModelType(model, rel_model))
+
+model_struct_type_map = {}
+
+def django_model_struct_to_python_type(model):
+    if isinstance(model, models.base.ModelBase):
+        if not model in model_struct_type_map:
+            model_struct_type_map[model] = ModelStructType(model)
+        return model_struct_type_map[model]
+
+field_basic_types = {
+    models.AutoField: types.LongType,
+    models.IntegerField: types.IntType,
+    models.CharField: types.StringType,
+    models.TextField: types.StringType,
+    models.BooleanField: types.BooleanType,
+}
+
+field_type_map = {}
+
+def django_field_to_python_type(model, field):
+    if not field in field_type_map:
+        field_type = None
+        if type(field) in field_basic_types:
+            field_type = field_basic_types[type(field)]
+        if isinstance(field, models.ForeignKey):
+            field_type = django_model_to_python_type(field.rel.to, model)
+        field_type_map[field] = field_type
+
+    return field_type_map[field]
+
+python_basic_types = {
+    types.NoneType: model.Void,
+    types.IntType: model.Int32,
+    types.LongType: model.Int64,
+    types.StringType: model.String,
+    types.BooleanType: model.Boolean,
+}
+
+python_type_map = {}
+
+def python_to_ars_type(type_):
+    if not type_ in python_type_map:
+    	ars_type = None
+    
+        if type_ in python_basic_types:
+        	ars_type = python_basic_types[type_]
+
+        if isinstance(type_, models.base.ModelBase):
+            ars_type = model.TypeAlias(name=Name(ClassName(type_._meta.object_name + 'Id')), target_type=model.Int64)
+            ars_type.__realclass = type_
+
+        if isinstance(type_, DjangoModelType):
+            if isinstance(type_._model, str):
+            	return None
+            ars_type = python_to_ars_type(type_._model)
+
+        if isinstance(type_, StructType):
+        	struct = model.Structure(name=Name(ClassName(type_.name)))
+            for (name, type, optional) in type_._fields:
+            	struct.addField(name=Name(FieldName(name)), type=python_to_ars_type(type), optional=optional)
+            ars_type = struct
+
+        if isinstance(type_, typed.types.List_):
+        	ars_element_type = python_to_ars_type(type_.T)
+            if ars_element_type is None:
+            	return None
+            ars_type = model.ListType(ars_element_type)
+
+        python_type_map[type_] = ars_type
+
+    return python_type_map[type_]
+
+def value_django_to_ars(value, ars_type):
+    if isinstance(ars_type, model.ListType):
+        return [value_django_to_ars(x, ars_type.element_type) for x in value]
+
+    if hasattr(ars_type, '__realclass'):
+        return value.id
+               
+    return value
+
+def value_ars_to_django(value, ars_type):
+    if isinstance(ars_type, ListType):
+        return [value_ars_to_django(x, ars_type.element_type) for x in value]
+
+    if hasattr(ars_type, '__realclass'):
+        return ars_type.__realclass.objects.get(pk=value)
+
+    return value
 
 def emptyCan(*args, **kwargs):
     pass
@@ -27,27 +185,6 @@ def emptyCan(*args, **kwargs):
 
 def emptyFilter(*args, **kwargs):
     return args[0]
-
-
-def process_constraint(constraint, model):
-    if isinstance(constraint, (ConstraintConjunction, ConstraintDisjunction)):
-        for member in constraint.members:
-            process_constraint(member, model)
-
-    if isinstance(constraint, TypeConstraint):
-        if isinstance(constraint.type, LazyModelClass):
-        	if (constraint.type.model == model._meta.object_name):
-                constraint.type = model
-        if isinstance(constraint.type, TypedList) and (constraint.type.type == model._meta.object_name):
-        	constraint.type.type = model
-
-
-def fix_arg_ret_model(func, model, cls):
-    sign = Signature.of(func)
-    for argument in sign.arguments.itervalues():
-        process_constraint(argument.constraint, model)
-
-    process_constraint(sign.return_value.constraint, model)
 
 
 @DispatchOn(field=object)
@@ -58,62 +195,27 @@ def generate_field_procedures(model, field):
 def generate_field_procedures(model, field):
     return []
 
-@DispatchOn(field=models.ForeignKey)
-def generate_field_procedures(model, field):
-    otherIsStr = False
-    field_name = field.name
-    other = field.rel.to
-    if isinstance(other, str):
-    	otherStr = other
-        other = LazyModelClass('A', (object,), {'model': other})
-        otherIsStr = True
-    ret = []
-
-    @Argument('token', type=str)
-    @Argument('self', type=model)
-    @ReturnValue(type=(other, NoneType))
-    def get(token, self):
-        return getattr(self, field_name)
-
-    @Argument('token', type=str)
-    @Argument('self', type=model)
-    @Argument('value', type=(other, NoneType))
-    @ReturnValue(type=NoneType)
-    def set(token, self, value):
-        setattr(self, field_name, value)
-        self.save()
-        return value
-
-    if otherIsStr:
-        add_lazy_relation(model, get, otherStr, fix_arg_ret_model)
-        add_lazy_relation(model, set, otherStr, fix_arg_ret_model)
-
-    return [set, get]
-
 @DispatchOn(field=models.IntegerField)
 @DispatchOn(field=models.CharField)
 @DispatchOn(field=models.TextField)
 @DispatchOn(field=models.BooleanField)
+@DispatchOn(field=models.ForeignKey)
 def generate_field_procedures(model, field):
-    type_mapping = {
-            models.IntegerField: int,
-            models.CharField: str,
-            models.TextField: str,
-            models.BooleanField: bool,
-            }
-
     field_name = field.name
-    ret = []
+    field_type = django_field_to_python_type(model, field)
+    
+    if field_type is None:
+        return []
 
     @Argument('token', type=str)
     @Argument('self', type=model)
-    @ReturnValue(type=type_mapping[type(field)])
+    @ReturnValue(type=(field_type, types.NoneType))
     def get(token, self):
         return getattr(self, field_name)
 
     @Argument('token', type=str)
     @Argument('self', type=model)
-    @Argument('value', type=type_mapping[type(field)])
+    @Argument('value', type=(field_type, types.NoneType))
     @ReturnValue(type=NoneType)
     def set(token, self, value):
         setattr(self, field_name, value)
@@ -189,9 +291,10 @@ class ProcedureProvider(ProceduresProvider):
             can(*args, **kwargs)
             result = implement(*args, **kwargs)
             return filter(result, *args, **kwargs)
+
         Signature.of(implement).set(proc)
     
-        ars_proc = Procedure(name=Name(self._name_type(self._name)), return_type=Void, implementation = proc)
+        ars_proc = Procedure(name=Name(self._name_type(self._name)), return_type=model.Void, implementation = proc)
         ret.add(ars_proc)
 
         return ret
@@ -209,119 +312,80 @@ class FieldProceduresProvider(ProceduresProvider):
 class FilterProcedureProvider(ProcedureProvider):
     def __init__(self, parent):
         model = parent._model
-        names = []
-        types = []
 
-        for field in model._meta.fields:
-        	field_ok = True
-
-            if isinstance(field, models.IntegerField):
-            	types.append(int)
-            elif isinstance(field, models.CharField):
-                types.append(str)
-            elif isinstance(field, models.TextField):
-                types.append(str)
-            elif isinstance(field, models.BooleanField):
-                types.append(bool)
-            elif isinstance(field, models.ForeignKey):
-                other = field.rel.to
-                if isinstance(other, str):
-                    types.append(LazyModelClass('A', (object,), {'model': other}))
-                else:
-                	types.append(other)
-            else:
-            	field_ok = False
-            
-            if field_ok:
-            	names.append(field.name)
-
-        sorted = zip(names, types)
-        sorted.sort()
-        sorted = [('token', str)] + sorted
-        (names, types) = zip(*sorted)
+        struct = django_model_struct_to_python_type(model)
+        sorted = [('token', str, False)] + struct._fields
+        names = [x[0] for x in sorted]
 
         def filter(token, *args, **kwargs):
             for i in range(len(args)):
                 if args[i] is not None:
-                	kwargs[names[i + 1]] = args[i]
-            ret = model.objects.filter(**kwargs)
-            return ret
+                    kwargs[names[i + 1]] = args[i]
+
+            return model.objects.filter(**kwargs)
 
         sign = Signature(names)
         sign.set(filter)
 
-        for (name, type_) in zip(names, types):
-        	Argument(name, type=(type_, NoneType))(filter)
+        for (name, type, optional) in sorted:
+            if name == 'token':
+                Argument(name, type=type)(filter)
+            else:
+                Argument(name, type=(type, NoneType))(filter)
 
-        ReturnValue(type=TypedList('A', (object,), {'type': model}))(filter)
-
-        for field in model._meta.fields:
-            if isinstance(field, models.ForeignKey):
-                other = field.rel.to
-                if isinstance(other, str):
-                    add_lazy_relation(model, filter, other, fix_arg_ret_model)
+        ReturnValue(type=django_model_list_to_python_type(model))(filter)
 
         super(FilterProcedureProvider, self).__init__(filter, parent)
 
 
+class GetStructProcedureProvider(ProcedureProvider):
+    def __init__(self, parent):
+        model = parent._model
+
+        struct = django_model_struct_to_python_type(model)
+
+        @Argument('token', type=str)
+        @Argument('self', type=model)
+        @ReturnValue(type=struct)
+        def getStruct(token, self):
+            ret = {}
+
+            for (name, type, optional) in struct._fields:
+                if self.getattr(name) is not None:
+                	ret[name] = self.getattr(name)
+
+            return ret
+
+        super(GetStructProcedureProvider, self).__init__(getStruct, parent)
+
 class CreateProcedureProvider(ProcedureProvider):
     def __init__(self, parent):
         model = parent._model
-        names = []
-        types = []
-
-        for field in model._meta.fields:
-        	field_ok = True
-
-            if isinstance(field, models.IntegerField):
-            	types.append(int)
-            elif isinstance(field, models.CharField):
-                types.append(str)
-            elif isinstance(field, models.TextField):
-                types.append(str)
-            elif isinstance(field, models.BooleanField):
-                types.append(bool)
-            elif isinstance(field, models.ForeignKey):
-                other = field.rel.to
-                if isinstance(other, str):
-                    types.append(LazyModelClass('A', (object,), {'model': other}))
-                else:
-                	types.append(other)
-            else:
-            	field_ok = False
-            
-            if field_ok:
-            	names.append(field.name)
-
-        sorted = zip(names, types)
-        sorted.sort()
-        sorted = [('token', str)] + sorted
-        (names, types) = zip(*sorted)
+        
+        struct = django_model_struct_to_python_type(model)
+        sorted = [('token', str, False)] + filter(lambda x: x[0] != 'id', struct._fields)
+        names = [x[0] for x in sorted]
 
         def create(token, *args, **kwargs):
             for i in range(len(args)):
                 if args[i] is not None:
-                	kwargs[names[i + 1]] = args[i]
+                    kwargs[names[i + 1]] = args[i]
 
             ret = model(**kwargs)
             ret.save()
-
             return ret
 
         sign = Signature(names)
         sign.set(create)
 
-        for (name, type_) in zip(names, types):
-        	Argument(name, type=(type_, NoneType))(create)
+        for (name, type, optional) in sorted:
+            if optional:
+                Argument(name, type=(type, NoneType))(create)
+            else:
+                Argument(name, type=type)(create)
 
         ReturnValue(type=model)(create)
         
-        for field in model._meta.fields:
-            if isinstance(field, models.ForeignKey):
-                other = field.rel.to
-                if isinstance(other, str):
-                    add_lazy_relation(model, create, other, fix_arg_ret_model)
-
         super(CreateProcedureProvider, self).__init__(create, parent)
 
 class DeleteProcedureProvider(ProcedureProvider):
@@ -353,6 +417,7 @@ class ModelProceduresProvider(StaticProceduresProvider):
             self._add_child(FieldProceduresProvider(field, self))
 
         self._add_child(FilterProcedureProvider(self))
+        self._add_child(GetStructProcedureProvider(self))
         self._add_child(CreateProcedureProvider(self))
         self._add_child(DeleteProcedureProvider(self))
 
@@ -374,88 +439,40 @@ class OpersBase(type):
 class Opers(object):
     __metaclass__ = OpersBase
 
-id_types = {}
-rev_id_types = {}
-
-def get_id_type(model):
-    if not isinstance(model, models.base.ModelBase):
-        raise RuntimeError("Argument is not an instance of ModelBase: " + model)
-    if not model in id_types:
-        id_types[model] = TypeAlias(name=Name(ClassName(model._meta.object_name + 'Id')), target_type=Int64)
-        rev_id_types[id_types[model]] = model
-    return id_types[model]
-
 def is_nonetype_constraint(constraint):
-    if isinstance(constraint, TypeConstraint) and (constraint.type == NoneType):
-        return True
-    else:
-        return False
+    return isinstance(constraint, TypeConstraint) and (constraint.type == NoneType)
 
-def extract_type(constraint):
+def extract_ars_type(constraint):
     if isinstance(constraint, ConstraintDisjunction):
         if len(constraint.members) == 2:
             if is_nonetype_constraint(constraint.members[0]):
-                return (extract_type(constraint.members[1])[0], True)
-            else:
-                if is_nonetype_constraint(constraint.members[1]):
-                    return (extract_type(constraint.members[0])[0], True)
+                return (extract_ars_type(constraint.members[1])[0], True)
+            elif is_nonetype_constraint(constraint.members[1]):
+                return (extract_ars_type(constraint.members[0])[0], True)
 
     if isinstance(constraint, TypeConstraint):
-    	return (constraint.type, False)
+        return (python_to_ars_type(constraint.type), False)
+
+    if isinstance(constraint, TypedConstraint):
+        return (python_to_ars_type(constraint.type), False)
 
     raise RuntimeError("Cannot extract type from constraint: " + str(constraint))
 
-types = {
-        NoneType: Void,
-        str: String,
-        int: Int32,
-        bool: Boolean,
-}
-
-def ars_type(type_):
-    if isinstance(type_, models.base.ModelBase):
-        return get_id_type(type_)
-
-    if isinstance(type_, TypedList):
-    	return ListType(ars_type(type_.type_))
-    
-    if type_ in types:
-        return types[type_]
-
-    raise RuntimeError("Cannot convert type to ars type: " + str(type_))
-
-def convert_to(elem, type):
-    if isinstance(type, ListType):
-        return [convert_to(x, type.element_type) for x in elem]
-
-    if type in rev_id_types:
-        return elem.id
-               
-    return elem
-
-def convert_from(elem, type):
-    if isinstance(type, ListType):
-        return [convert_from(x, type.element_type) for x in elem]
-
-    if type in rev_id_types:
-        return rev_id_types[type].objects.get(pk=elem)
-
-    return elem
 
 def wrap(ars_proc):
     implementation = ars_proc.implementation
     signature = Signature.of(implementation)
 
-    ars_ret_type = ars_type(extract_type(signature.return_value.constraint)[0])
+    ars_ret_type = extract_ars_type(signature.return_value.constraint)[0]
     ars_proc.return_type = ars_ret_type
 
     arg_names = signature.positional
     arg_count = len(signature.positional)
     ars_arg_types = []
     for i in range(arg_count):
-        param_type = extract_type(signature.arguments[signature.positional[i]].constraint)
-        ars_proc.addParameter(Parameter(name=Name(ParameterName(signature.positional[i])), type=ars_type(param_type[0]), optional=param_type[1]))
-        ars_arg_types.append(ars_type(param_type[0]))
+        param_type = extract_ars_type(signature.arguments[signature.positional[i]].constraint)
+        ars_proc.addParameter(Parameter(name=Name(ParameterName(signature.positional[i])), type=param_type[0], optional=param_type[1]))
+        ars_arg_types.append(param_type[0])
 
     want_token = (arg_count > 0) and (signature.positional[0] == 'token')
     
@@ -467,16 +484,16 @@ def wrap(ars_proc):
         for i in range(arg_count):
             if arg_names[i] in kwargs:
                 # should not be none
-                newargs[i] = convert_from(kwargs[arg_names[i]], ars_arg_types[i])
+                newargs[i] = value_ars_to_django(kwargs[arg_names[i]], ars_arg_types[i])
             else:
-            	newargs[i] = None
+                newargs[i] = None
 
         ret = implementation(*newargs)
 
-        ret = convert_to(ret, ars_ret_type)
+        ret = value_django_to_ars(ret, ars_ret_type)
  
 #        if ret is None:
-#        	raise NoneReturn()
+#           raise NoneReturn()
 
         return ret
 
