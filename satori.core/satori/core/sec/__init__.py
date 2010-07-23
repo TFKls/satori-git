@@ -2,8 +2,8 @@
 """
 Security and authorization procedures.
 """
-from satori.sec.tools import CheckRights, RoleSet, Token, authenticateByLogin, authenticateByOpenIdStart, authenticateByOpenIdFinish
-from satori.sec.store import Store
+from satori.core.sec.tools import CheckRights, RoleSet, Token, authenticateByLogin, authenticateByOpenIdStart, authenticateByOpenIdFinish
+from satori.core.sec.store import Store
 
 from satori.objects import DispatchOn, Argument
 from satori.ars.model import NamedTuple, Contract, Procedure, Parameter, TypeAlias, Void, Boolean, Int32, Int64, String, NamedObject, Structure, ListType, SetType, MapType, Field, Argument

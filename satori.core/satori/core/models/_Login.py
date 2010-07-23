@@ -3,7 +3,8 @@
 from django.db import models
 from satori.dbev import events
 from satori.ars import django_
-from satori.core.models import User, Object
+from satori.core.models._Object import Object
+from satori.core.models._User import User
 
 class Login(Object):
 
