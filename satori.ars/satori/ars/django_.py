@@ -171,7 +171,7 @@ def value_django_to_ars(value, ars_type):
     return value
 
 def value_ars_to_django(value, ars_type):
-    if isinstance(ars_type, ListType):
+    if isinstance(ars_type, model.ListType):
         return [value_ars_to_django(x, ars_type.element_type) for x in value]
 
     if hasattr(ars_type, '__realclass'):
