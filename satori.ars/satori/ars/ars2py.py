@@ -1,6 +1,24 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from satori.ars.model import *
 from satori.ars.naming import *
+import threading
+
+import perf
+
+class TokenContainer(threading.local):
+    def __init__(self):
+        self._token = ""
+
+    def set_token(self, token):
+        self._token = token
+
+    def unset_token(self):
+        self._token = ""
+
+    def get_token(self):
+        return self._token
+
+token_container = TokenContainer()
 
 def convert_to(elem, type):
     if isinstance(type, ListType):
@@ -30,12 +48,13 @@ def wrap(_client, _proc, _procname):
         _token_type = _args.pop(0)[1]
 
     def func(*args, **kwargs):
+        perf.begin('wrap')
 #        newargs = []
 	    newkwargs = {}
 
         if _token_type is not None:
 #            newargs.append(convert_to('', _token_type))
-            newkwargs['token'] = convert_to('', _token_type)
+            newkwargs['token'] = convert_to(token_container.get_token(), _token_type)
 
         if len(args) > len(_args):
             raise TypeError('{0}() takes at most {1} arguments ({2} given)'.format(_procname, len(_args), len(args)))
@@ -61,8 +80,9 @@ def wrap(_client, _proc, _procname):
 
 #        ret = _implementation(*newargs)
         ret = _client.call(_proc, newkwargs)
-
-        return convert_from(ret, _rettype)
+        ret = convert_from(ret, _rettype)
+        perf.end('wrap')
+        return ret
 
     func.func_name = _procname
 
