@@ -105,7 +105,13 @@ class Token(Object):
         self.deadline = datetime.now() + val
     validity = property(_get_validity, _set_validity)
     valid = property(lambda self: self.deadline > datetime.now())
-    user = property(lambda self: User.objects.get(id=self.user_id))
+    @property
+    def user(self):
+        try:
+            return User.objects.get(id=self.user_id)
+        except:
+            pass
+        return None
 
     def __str__(self):
         return self._encrypt('\n'.join([ str(x) for x in
