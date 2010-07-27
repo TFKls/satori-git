@@ -8,5 +8,6 @@ setup(name='satori.objects',
     ],
     install_requires=[
         'setuptools',
+        'typed.py',
     ]
 )

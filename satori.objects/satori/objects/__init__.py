@@ -10,14 +10,15 @@ __all__ = (
 
 from inspect import getargspec
 from sys import _getframe
-from types import ClassType, DictType, NoneType, TupleType, TypeType
+import types
+import typed
+import typed.specialize
 
 
 MAGIC_ORG = 'objects/original'
 MAGIC_SIG = 'objects/signature'
 MAGIC_DIS = 'objects.DispatchOn/argument name'
 MAGIC_MAP = 'objects.DispatchOn/type map'
-
 
 class ArgumentError(Exception):
     """Exception. A problem with an argument's specification or value.
@@ -64,14 +65,16 @@ class ArgumentConstraint(object):
     @staticmethod
     def parse(spec):
         if spec is None:
-            return TypeConstraint(NoneType)
-        if isinstance(spec, (ClassType, TypeType)):
+            return TypeConstraint(types.NoneType)
+        if isinstance(spec, typed.specialize.Type):
+            return TypedConstraint(spec)
+        if isinstance(spec, (types.ClassType, types.TypeType)):
             return TypeConstraint(spec)
-        if isinstance(spec, TupleType):
+        if isinstance(spec, types.TupleType):
             return ConstraintDisjunction.of([
                 ArgumentConstraint.parse(m) for m in spec
             ])
-        if isinstance(spec, DictType):
+        if isinstance(spec, types.DictType):
             handlers = {
                 'type': ArgumentConstraint.parse
             }
@@ -211,6 +214,27 @@ class TypeConstraint(ArgumentConstraint):
         if isinstance(other, TypeConstraint):
             return issubclass(self.type, other.type)
         return super(TypeConstraint, self).__le__(other)
+
+    def __str__(self):
+        return "instance of {0}".format(self.type)
+
+
+class TypedConstraint(ArgumentConstraint):
+    """Constraint. Requires the value to be an instance of a specific inquisitive type from typed package.
+    """
+
+    def __init__(self, type_):
+        self.type = type_
+
+    def invalid(self, value):
+        if typed.isinstance(value, self.type):
+            return None
+        return "{0} is not an instance of {1}".format(value, self.type)
+
+    def __le__(self, other):
+        if isinstance(other, TypedConstraint):
+            return typed.issubclass(self.type, other.type)
+        return super(TypedConstraint, self).__le__(other)
 
     def __str__(self):
         return "instance of {0}".format(self.type)
@@ -447,7 +471,7 @@ class Signature(object):
         return ArgumentValues
 
 
-class ObjectMeta(TypeType):
+class ObjectMeta(type):
     """Metaclass for Object.
     """
 
@@ -468,7 +492,7 @@ class ObjectMeta(TypeType):
         __init__.__doc__ = init.__doc__                    # pylint: disable-msg=W0622
         dict_['__init__'] = __init__
         # call parent metaclass
-        class_ = TypeType.__new__(mcs, name, bases, dict_)
+        class_ = type.__new__(mcs, name, bases, dict_)
         # collect constructor signature (requires __mro__ ordering)
         for parent in class_.__mro__:
             if '__init__' in parent.__dict__:
@@ -494,7 +518,7 @@ class DispatchOn(Object):
             raise ArgumentError("DispatchOn takes exactly one keyword argument")
         self.name = kwargs.keys()[0]
         typ = kwargs[self.name]
-        self.types = isinstance(typ, TupleType) and typ or (typ,)
+        self.types = isinstance(typ, types.TupleType) and typ or (typ,)
 
     def __call__(self, function):
         combined = _getframe(1).f_locals.get(function.__name__)
@@ -505,7 +529,7 @@ class DispatchOn(Object):
                 values = signature.Values(*args, **kwargs)
                 key = values.named[name]
                 implementations = _dispatch.func_dict[MAGIC_MAP]
-                class_ = isinstance(key, ClassType) and ClassType or key.__class__
+                class_ = isinstance(key, types.ClassType) and types.ClassType or key.__class__
                 for parent in class_.__mro__:
                     if parent in implementations:
                         return values.call(implementations[parent])
