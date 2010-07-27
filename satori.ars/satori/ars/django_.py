@@ -181,7 +181,10 @@ def value_django_to_ars(value, ars_type):
         return [value_django_to_ars(x, ars_type.element_type) for x in value]
 
     if hasattr(ars_type, '__realclass'):
-        return value.id
+        if value is None:
+            return None
+        else:
+            return value.id
                
     return value
 
@@ -193,7 +196,10 @@ def value_ars_to_django(value, ars_type):
         return ars_type.__realtype(value)
 
     if hasattr(ars_type, '__realclass'):
-        return ars_type.__realclass.objects.get(pk=value)
+        if value is None:
+            return None
+        else:
+            return ars_type.__realclass.objects.get(pk=value)
 
     return value
 
