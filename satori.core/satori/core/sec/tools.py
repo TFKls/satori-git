@@ -49,32 +49,39 @@ class Token(Object):
         self.key = key or SECRET_KEY
         self.data = ''
         if token is not None:
-            try:
-                raw = self._decrypt(token).split('\n')
-                if len(raw) != 6:
+            if token == '':
+                self.salt = str(random.randint(100000, 999999))
+                self.user_id = ''
+                self.auth = ''
+                self.data = ''
+                self.deadline = datetime.fromtimestamp(0.0)
+            else:
+                try:
+                    raw = self._decrypt(token).split('\n')
+                    if len(raw) != 6:
+                        raise TokenError(
+                            "Provided token '{0}' is strange."
+                            .format(token)
+                        )
+                    self.salt = raw[0]
+                    self.user_id = raw[1]
+                    self.auth = raw[2]
+                    self.data = self._decode(raw[3])
+                    self.deadline = datetime.fromtimestamp(float(raw[4]))
+                    if raw[5] != self._genhash():
+                        raise TokenError(
+                            "Provided token '{0}' is malformed."
+                            .format(token)
+                        )
+                except TokenError:
+                    raise
+                except:
                     raise TokenError(
-                        "Provided token '{0}' is strange."
+                        "Provided token '{0}' is invalid."
                         .format(token)
                     )
-                self.salt = raw[0]
-                self.user_id = raw[1]
-                self.auth = raw[2]
-                self.data = self._decode(raw[3])
-                self.deadline = datetime.fromtimestamp(float(raw[4]))
-                if raw[5] != self._genhash():
-                    raise TokenError(
-                        "Provided token '{0}' is malformed."
-                        .format(token)
-                    )
-            except TokenError:
-                raise
-            except:
-                raise TokenError(
-                    "Provided token '{0}' is invalid."
-                    .format(token)
-                )
         if user is not None and user_id is None:
-        	user_id = user.id
+        	user_id = str(user.id)
         if token is None and (user_id is None or auth is None or (validity is None and deadline is None)):
             raise TokenError(
                 "Too few arguments to create a token."
