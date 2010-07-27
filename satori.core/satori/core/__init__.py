@@ -16,7 +16,6 @@ def export_thrift():
     django_.generate_contracts()
     writer = ThriftWriter()
     writer.contracts.update(django_.contract_list.items)
-    writer.contracts.update(satori.core.sec.contract_list.items)
     writer.writeTo(stdout)
 
 
@@ -46,7 +45,6 @@ def start_server():
     django_.generate_contracts()
     server = ThriftServer(transport=TServerSocket(port=38889))
     server.contracts.update(django_.contract_list.items)
-    server.contracts.update(satori.core.sec.contract_list.items)
     server_process = Process(target=server.run)
     server_process.start()
     print 'thrift server started'
