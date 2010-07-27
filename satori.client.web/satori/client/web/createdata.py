@@ -27,7 +27,7 @@ def create(request):
     for object in RoleMapping.filter():
         object.delete()
     paladin = User.create(fullname='Lech Duraj', login='paladin')
-    login = Login.create(user=paladin, login='paladin', password=crypt.crypt('paladin','aaa'))
+    login = Login.create(user=paladin, login='paladin', password=crypt.crypt('paladin','paladin'))
     User.create(fullname='Edgsger W. Dijkstra', login = 'dijkstra')
     c2 = Contest.create(name = 'Kontest prywatny', joining = 'Private')
     c3 = Contest.create(name = 'Kontest moderowany', joining = 'Moderated')
