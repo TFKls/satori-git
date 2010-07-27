@@ -37,6 +37,8 @@ from satori.ars.model import Element, Parameter, Procedure, Contract
 from satori.ars.api import Server, Reader, Client
 from satori.ars.common import ContractMixin, TopologicalWriter
 
+import perf
+
 
 class ThriftBase(Object):
 
@@ -158,7 +160,7 @@ class ThriftWriter(TopologicalWriter, ThriftBase):
                 target.write(' error)')
             sep = '\n\t'
         target.write('\n}\n')
-
+xx = {}
 
 class ThriftProcessor(ThriftBase, TProcessor):
     """ARS implementation of thrift.Thrift.TProcessor.
@@ -313,9 +315,14 @@ class ThriftProcessor(ThriftBase, TProcessor):
             if ftype == TType.STOP:
                 break
             field = fields[findex]
+#            if not field in xx:
+#            	xx[field] = self.style.format(field.name)
+#            fn = xx[field]
             if fname is None:
                 fname = self.style.format(field.name)
+#                fname = fn
             elif fname != self.style.format(field.name):
+#            elif fname != fn
                 proto.skip(ftype)
                 # TODO: warning: field name mismatch
             if ftype != self._ttype(field.type):
@@ -388,15 +395,20 @@ class ThriftProcessor(ThriftBase, TProcessor):
         """Processes a single client request.
         """
         pname, _, seqid = iproto.readMessageBegin()
+        perf.begin('process')
+        print pname
         try:
             # find the procedure to call
+            perf.begin('funcdict')
             try:
                 procedure = self._procedures[pname] # TApplicationException.UNKNOWN_METHOD
             except KeyError:
                 iproto.skip(TType.STRUCT)
                 raise TApplicationException(TApplicationException.UNKNOWN_METHOD,
                     "Unknown method '{0}'".format(pname))
+            perf.end('funcdict')
             # parse and check arguments
+            perf.begin('recv')
             try:
                 signature = Signature.infer(procedure.implementation)
                 arguments = self._recvFields([None] + [par for par in procedure.parameters], iproto)
@@ -405,7 +417,9 @@ class ThriftProcessor(ThriftBase, TProcessor):
             except ArgumentError as ex:
                 raise TApplicationException(TApplicationException.MISSING_RESULT,
                     "Error processing arguments: " + ex.message)
+            perf.end('recv')
             # call the registered implementation
+            perf.begin('call')
             try:
                 result_value = values.call(procedure.implementation)
                 result_type = procedure.return_type
@@ -422,7 +436,9 @@ class ThriftProcessor(ThriftBase, TProcessor):
                 except:
                     raise TApplicationException(TApplicationException.MISSING_RESULT,
                         "Error processing exception: " + ex.message)
+            perf.end('call')
             # send the reply
+            perf.begin('send')
             try:
                 oproto.writeMessageBegin(pname, TMessageType.REPLY, seqid)
                 oproto.writeStructBegin(pname + '_result')
@@ -435,15 +451,22 @@ class ThriftProcessor(ThriftBase, TProcessor):
             except Exception as ex:
                 raise TApplicationException(TApplicationException.MISSING_RESULT,
                     "Error processing result: " + ex.message)
+            perf.end('send')
         except TApplicationException as ex:
             # handle protocol errors
+            perf.begin('except')
             oproto.writeMessageBegin(pname, TMessageType.EXCEPTION, seqid)
             ex.write(oproto)
             oproto.writeMessageEnd()
+            perf.end('except')
         finally:
+            perf.begin('flush')
             oproto.trans.flush()
+            perf.end('flush')
+            perf.end('process')
 
     def call(self, procedure, args, iproto, oproto):
+        perf.begin('call')
         if isinstance(procedure, str):
             try:
                 procedure = self._procedures[procedure]
@@ -451,13 +474,17 @@ class ThriftProcessor(ThriftBase, TProcessor):
                 raise TApplicationException(TApplicationException.UNKNOWN_METHOD,
                     "Unknown method '{0}'".format(name))
         
+        perf.begin('send')
         oproto.writeMessageBegin(self.style.format(procedure.name), TMessageType.CALL, self.seqid)
         self.seqid = self.seqid + 1
         self._send(args, procedure, oproto)
         oproto.writeMessageEnd()
         oproto.trans.flush()
-
+        perf.end('send')
+        perf.begin('wait')
         (fname, mtype, rseqid) = iproto.readMessageBegin()
+        perf.end('wait')
+        perf.begin('recv')
         if mtype == TMessageType.EXCEPTION:
             x = TApplicationException()
             x.read(iproto)
@@ -465,6 +492,8 @@ class ThriftProcessor(ThriftBase, TProcessor):
             raise x
         result = self._recv(procedure, iproto)
         iproto.readMessageEnd()
+        perf.end('recv')
+        perf.end('call')
         return result
         if result['success'] != None:
             return result['success']
@@ -492,7 +521,13 @@ class ThriftServer(ContractMixin, Server):
         idl = StringIO()
         writer.writeTo(idl)
         idl = idl.getvalue()
-        idl_proc.implementation = lambda: idl
+        def do_idl():
+            perf.clear('process')
+            perf.clear('call')
+            perf.clear('delete')
+            return idl
+        idl_proc.implementation = do_idl
+#        idl_proc.implementation = lambda: idl
         processor = ThriftProcessor(self.contracts)
         server = self._server_type(processor, self._transport)
         return server.serve()
