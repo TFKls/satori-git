@@ -26,7 +26,7 @@ class Object(models.Model):
         return ret
 
     def demand_right(self, token, right):
-        from satori.core.sec import Token, CheckRights
+        from satori.core.sec import Token, RoleSet, CheckRights
         checker = CheckRights()
         roleset = RoleSet(user=User.objects.get(id=Token(str(token)).user))
         cani = checker.check(roleset, self, str(right))
