@@ -45,7 +45,7 @@ class Token(Object):
     @Argument('data', type=(str, None), default=None)
     @Argument('validity', type=(timedelta, None), default=None)
     @Argument('deadline', type=(datetime, None), default=None)
-    def __init__(self, token, key, user_id, auth, data, validity, deadline):
+    def __init__(self, token, key, user, user_id, auth, data, validity, deadline):
         self.key = key or SECRET_KEY
         self.data = ''
         if token is not None:
