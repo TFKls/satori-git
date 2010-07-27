@@ -21,7 +21,7 @@ _classes = ars2py.generate_classes(_client)
 for name, value in _classes.iteritems():
     setattr(_module, name, value)
 
-setattr(_module, '__all__', _classes.keys() + ['set_token', 'unset_token'])
+setattr(_module, '__all__', _classes.keys() + ['set_token', 'get_token', 'unset_token'])
 
 print 'Client bootstrapped.'
 
