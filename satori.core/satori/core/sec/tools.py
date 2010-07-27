@@ -105,7 +105,13 @@ class Token(Object):
         self.deadline = datetime.now() + val
     validity = property(_get_validity, _set_validity)
     valid = property(lambda self: self.deadline > datetime.now())
-    user = property(lambda self: User.objects.get(id=self.user_id))
+    @property
+    def user(self):
+        try:
+            return User.objects.get(id=self.user_id)
+        except:
+            pass
+        return None
 
     def __str__(self):
         return self._encrypt('\n'.join([ str(x) for x in
@@ -176,9 +182,7 @@ def authenticateByLogin(login, password):
         raise AuthenticationError(
             "Incorrect password."
         )
-    token = Token(user=login.user, auth='login', validity=timedelta(hours=6)) 
-    return str(token)
-
+    return str(Token(user=login.user, auth='login', validity=timedelta(hours=6)))
 
 @Argument('openid', type=str)
 @Argument('realm', type=str)
@@ -212,11 +216,10 @@ def authenticateByOpenIdStart(openid, realm, return_to):
         'html' : html
     }
 
-@Argument('token', type=str)
+@Argument('token', type=Token)
 @Argument('args', type=dict)
 @Argument('return_to', type=str)
 def authenticateByOpenIdFinish(token, args, return_to):
-    token = Token(token)
     if token.auth != 'openid':
         return str(token)
     session = pickle.loads(token.data)
