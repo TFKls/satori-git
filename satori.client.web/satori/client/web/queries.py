@@ -1,35 +1,34 @@
 ﻿
 from URLDictionary import *
-from satori.core.models import *
+from satori.client.common import *
 
 # Module for database queries
 
 
 def UserById(uid):
-	return User.objects.get(id=uid)
+	return User(int(uid))
 
 def ContestById(cid):
-	return Contest.objects.get(id=cid)
+	return Contest(int(cid))
 
 def CurrentUser():
         s = Session.user
 	if not Session.user:
 		return None
 	else:
-		u = Session.user
-		return UserById(u)
+		return Security.whoami(token=Session.user)
 
 def ActiveContest(d):
 	if not 'contestid' in d.keys():
 		return None
-	return ContestById(d['contestid'][0])
+	return ContestById(int(d['contestid'][0]))
 
 
 def MyContestant(c):
     u = CurrentUser()
     if u and c:
 	try:
-	    cu = Contestant.objects.get(user = u.id, contest = c.id)
+	    cu = Contestant.filter(user = u, contest = c)[0]
 	except:
 	    return None
 	else:
@@ -46,7 +45,7 @@ def Allowed(o, str):
 # default dictionary, if need to return to main screen
 def DefaultLayout(dict = {}):
 	a = ActiveContest(dict)
-	d = {'name' : ['cover'], 'cover' :[{'name' : ['main'], 'content' : [{'name' : ['news']} ], 'login' : [{'name' : ['login']}]}]}
+	d = {'name' : ['cover'], 'cover' :[{'name' : ['main'], 'content' : [{'name' : ['news']} ], 'loginspace' : [{'name' : ['loginform']}]}]}
 	#d = {'name' : ['main'], 'content' : [{'name' : ['news']} ], 'login' : [{'name' : ['login']}]}
 	if a:
 		d['contestid'] = [str(a.id)]

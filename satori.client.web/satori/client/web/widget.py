@@ -45,6 +45,7 @@ class LoginWidget(Widget):
         else:
             self.htmlFile = 'htmls/loginform.html'
             self.back_to = ToString(params)
+            self.lw_path = path;
 
 # left menu
 class MenuWidget(Widget):
@@ -103,9 +104,10 @@ class NewsWidget(Widget):
         for m in MessageGlobal.filter():
             if not ActiveContest(params) or not m.mainscreenonly:
                 self.messages.append({'type' : 'global', 'topic' : m.topic, 'content' : render_bbcode(m.content)})
-        for m in MessageContest.objects.filter(contest = ActiveContest(params)):
+        if (ActiveContest(params)):
+            for m in MessageContest.filter(contest = ActiveContest(params)):
                 self.messages.append({'type' : 'contest', 'topic' : m.topic, 'content' : render_bbcode(m.content)})
-
+            
 # results table (a possible main content)
 class ResultsWidget(Widget):
     pathName = 'results'
@@ -119,28 +121,29 @@ class ResultsWidget(Widget):
         else:
             shown = d['shown']
         self.submits = []
-        for o in Submit.objects.filter(owner__contest=c):
-            s = {}
-            id = str(o.id)
-            s["id"] = id
-            s["time"] = o.time
-            s["user"] = o.owner.user.fullname
-            s["problem"] = o.problem.code
-            s["status"] = o.shortstatus
-            s["details"] = o.longstatus
-            _shown = deepcopy(shown)
-            if id in _shown:
-                s["showdetails"] = True
-                _shown.remove(id)
-            else:
-                s["showdetails"] = False
-                _shown.append(id)
-            _shown.sort()
-            d['shown'] = _shown
-            if _shown == []:
-                del d['shown']
-            s["link"] = GetLink(_params,'')
-            self.submits.append(s)
+        for o in Submit.filter(): # TODO: correct 
+            if o.owner.contest==c:
+                s = {}
+                id = str(o.id)
+                s["id"] = id
+                s["time"] = o.time
+                s["user"] = o.owner.user.fullname
+                s["problem"] = o.problem.code
+                s["status"] = o.shortstatus
+                s["details"] = o.longstatus
+                _shown = deepcopy(shown)
+                if id in _shown:
+                    s["showdetails"] = True
+                    _shown.remove(id)
+                else:
+                    s["showdetails"] = False
+                    _shown.append(id)
+                _shown.sort()
+                d['shown'] = _shown
+                if _shown == []:
+                    del d['shown']
+                s["link"] = GetLink(_params,'')
+                self.submits.append(s)
 
 # ranking (a possible main content)
 class RankingWidget(Widget):
@@ -157,7 +160,7 @@ class SubmitWidget(Widget):
         c = ActiveContest(params)
         self.problems = []
         self.cid = CurrentContestant(params).id
-        for p in ProblemMapping.objects.filter(contest=c):
+        for p in ProblemMapping.filter(contest=c):
             if Allowed(p,'submit'):
                 self.problems.append(p)
 
@@ -166,8 +169,8 @@ class ManageUsersWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/manusers.html'
         c = ActiveContest(params)
-        self.accepted = Contestant.objects.filter(contest=c,accepted=True)
-        self.pending = Contestant.objects.filter(contest=c,accepted=False)
+        self.accepted = Contestant.filter(contest=c,accepted=True)
+        self.pending = Contestant.filter(contest=c,accepted=False)
 
 
 class ManageNewsWidget(Widget):
@@ -183,18 +186,18 @@ class ManageNewsWidget(Widget):
         if 'edit' in d.keys():
             self.editing = True
             try:
-                msg = MessageGlobal.objects.get(id = d['edit'][0])
+                msg = MessageGlobal(d['edit'][0])
             except MessageGlobal.DoesNotExist:
-                msg = MessageContest.objects.get(id = d['edit'][0])
+                msg = MessageContest(d['edit'][0])
             self.msgtopic = msg.topic
             self.msgcontent = msg.content
             self.msgid = msg.id
             del _d['edit'];
         self.back_to = ToString(_params);
-        for m in MessageGlobal.objects.all():
+        for m in MessageGlobal.filter():
             if not ActiveContest(params) or not m.mainscreenonly:
                 self.messages.append({'id' : m.id, 'type' : 'global', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time, 'canedit' : Allowed(m,'edit')})
-        for m in MessageContest.objects.filter(contest = ActiveContest(params)):
+        for m in MessageContest.filter(contest = ActiveContest(params)):
                 self.messages.append({'id' : m.id, 'type' : 'contest', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time, 'canedit' : Allowed(m,'edit')})
         for md in self.messages:
             if md['canedit']:
@@ -211,7 +214,7 @@ class ProblemsWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/problems.html'
         c = ActiveContest(params)
-        self.problems = ProblemMapping.objects.filter(contest=c)
+        self.problems = ProblemMapping.filter(contest=c)
 
 # contest selection screen (a possible main content)
 class SelectContestWidget(Widget):
@@ -222,7 +225,7 @@ class SelectContestWidget(Widget):
         self.mayjoin = []
         self.other = []
         self.user = CurrentUser()
-        for c in Contest.objects.all():
+        for c in Contest.filter():
             cu = MyContestant(c)
             d = DefaultLayout()
             d['contestid'] = [str(c.id)]
@@ -239,11 +242,11 @@ class MainWidget(Widget):
     def __init__(self, params, path):
         _params = follow(params,path)
         self.htmlFile = 'htmls/index.html'
-        self.loginform = LoginWidget(_params,path)
+        self.loginform = LoginWidget(params,path)
         if not ('content' in _params.keys()):
             _params['content'] = [{'name' : ['news']}]
         self.menu = MenuWidget(params,path,path)
-        self.content = Widget.FromDictionary(_params,'content(0)');
+        self.content = Widget.FromDictionary(params,path+'|content(0)');
         self.params = _params
 
 # cover widget
