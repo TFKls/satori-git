@@ -27,10 +27,10 @@ class TestToken(unittest.TestCase):
     def testToken(self):
         """Test scenario: create token by parameters, and by string.
         """
-        tok1 = Token(user='test_user', data='\n'.join(['test', 'data']), auth='test_auth', validity=timedelta(days=1))
+        tok1 = Token(user_id='test_user', data='\n'.join(['test', 'data']), auth='test_auth', validity=timedelta(days=1))
 
         print 'Token:    ', tok1
-        print 'User:     ', tok1.user
+        print 'User:     ', tok1.user_id
         print 'Auth:     ', tok1.auth
         print 'Data:     ', tok1.data
         print 'Valid:    ', tok1.valid
@@ -40,12 +40,12 @@ class TestToken(unittest.TestCase):
 
         
         tok2 = Token(str(tok1))
-        self.assertEqual(tok2.user, 'test_user')
+        self.assertEqual(tok2.user_id, 'test_user')
         self.assertEqual(tok2.auth, 'test_auth')
         self.assertEqual(tok2.salt, tok1.salt)
         
         print 'Token:    ', tok2
-        print 'User:     ', tok2.user
+        print 'User:     ', tok2.user_id
         print 'Auth:     ', tok2.auth
         print 'Data:     ', tok2.data
         print 'Valid:    ', tok2.valid

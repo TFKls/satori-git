@@ -37,12 +37,13 @@ class Token(Object):
 
     @Argument('token', type=(str, None), default=None)
     @Argument('key', type=(str, None), default=None)
-    @Argument('user', type=(str, None), default=None)
+    @Argument('user', type=(User, None), default=None)
+    @Argument('user_id', type=(str, None), default=None)
     @Argument('auth', type=(str, None), default=None)
     @Argument('data', type=(str, None), default=None)
     @Argument('validity', type=(timedelta, None), default=None)
     @Argument('deadline', type=(datetime, None), default=None)
-    def __init__(self, token, key, user, auth, data, validity, deadline):
+    def __init__(self, token, key, user_id, auth, data, validity, deadline):
         self.key = key or SECRET_KEY
         self.data = ''
         if token is not None:
@@ -54,7 +55,7 @@ class Token(Object):
                         .format(token)
                     )
                 self.salt = raw[0]
-                self.user = raw[1]
+                self.user_id = raw[1]
                 self.auth = raw[2]
                 self.data = self._decode(raw[3])
                 self.deadline = datetime.fromtimestamp(float(raw[4]))
@@ -70,14 +71,16 @@ class Token(Object):
                     "Provided token '{0}' is invalid."
                     .format(token)
                 )
-        if token is None and (user is None or auth is None or (validity is None and deadline is None)):
+        if user is not None and user_id is None:
+        	user_id = user.id
+        if token is None and (user_id is None or auth is None or (validity is None and deadline is None)):
             raise TokenError(
                 "Too few arguments to create a token."
             )
         if token is None:
             self.salt = str(random.randint(100000, 999999))
-        if user is not None:
-            self.user = user
+        if user_id is not None:
+            self.user_id = user_id
         if auth is not None:
             self.auth = auth
         if data is not None:
@@ -93,10 +96,11 @@ class Token(Object):
         self.deadline = datetime.now() + val
     validity = property(_get_validity, _set_validity)
     valid = property(lambda self: self.deadline > datetime.now())
+    user = property(lambda self: User.objects.get(id=self.user_id))
 
     def __str__(self):
         return self._encrypt('\n'.join([ str(x) for x in
-            self.salt, self.user, self.auth, self._encode(self.data), time.mktime(self.deadline.timetuple()), self._genhash()
+            self.salt, self.user_id, self.auth, self._encode(self.data), time.mktime(self.deadline.timetuple()), self._genhash()
         ]))
 
     def _hash(self, data):
@@ -146,7 +150,7 @@ class Token(Object):
 
     def _genhash(self):
         return self._hash('\n'.join([ str(x) for x in
-            self.salt, self.user, self.auth, time.mktime(self.deadline.timetuple())
+            self.salt, self.user_id, self.auth, time.mktime(self.deadline.timetuple())
         ]))
 
 
@@ -163,7 +167,7 @@ def authenticateByLogin(login, password):
         raise AuthenticationError(
             "Incorrect password."
         )
-    token = Token(user=str(login.user.id), auth='login', validity=timedelta(hours=6)) 
+    token = Token(user=login.user, auth='login', validity=timedelta(hours=6)) 
     return str(token)
 
 
@@ -192,7 +196,7 @@ def authenticateByOpenIdStart(openid, realm, return_to):
     else:
         form = request.formMarkup(realm, url, False, {'id': 'openid_form'})
         html = '<html><body onload="document.getElementById(\'openid_form\').submit()">' + form + '</body></html>'
-    token = Token(user='', auth='openid', data=pickle.dumps(session), validity=timedelta(hours=1)) 
+    token = Token(user_id='', auth='openid', data=pickle.dumps(session), validity=timedelta(hours=1)) 
     return {
         'token' : str(token),
         'redirect' : redirect,
@@ -215,7 +219,7 @@ def authenticateByOpenIdFinish(token, args, return_to):
             "OpenID failed."
         )
     identity = OpenIdentity.objects.get(identity=response.identity_url)
-    token = Token(user=str(identity.user.id), auth='openid', validity=timedelta(hours=6)) 
+    token = Token(user=identity.user, auth='openid', validity=timedelta(hours=6)) 
     print 'OpenIDFinish session', session
     return str(token)
 
@@ -264,17 +268,23 @@ class RoleSet(Object):
             self.roles = frozenset()
 
 class CheckRights(Object):
+    cache = {}
 
     def __init__(self):
+        cache = {}
         pass
-
+    
     def _cache_key(self, role, object, right):
         return 'check_rights_'+str(role.id)+'_'+str(object.id)+'_'+right
     def _cache_set(self, role, object, right, value):
         #cache.set(self._cache_key(role, object, right), value)
-        pass
+        key = self._cache_key(role, object, right)
+        cache[key] = value
     def _cache_get(self, role, object, right):
         #return cache.get(self._cache_key(role, object, right), None)
+        key = self._cache_key(role, object, right)
+        if key in cache:
+        	return cache[key]
         return None
     
     def _single_check(self, role, object, right):
@@ -288,7 +298,7 @@ class CheckRights(Object):
             model = models.get_model(*object.model.split('.'))
             if not isinstance(object, model):
                 object = model.objects.get(id=object.id)
-            for (obj,rig) in object.inheritRights(right):
+            for (obj,rig) in object.inherit_right(right):
                 if self._single_check(role, obj, rig):
                 	res = True
                 	break
