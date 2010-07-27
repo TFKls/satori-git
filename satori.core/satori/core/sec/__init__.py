@@ -23,8 +23,7 @@ class SecurityOpers(django_.Opers):
     @Argument('token', type=Token)
     @ReturnValue(type=User)
     def whoami(token):
-        print token
-        return User.objects.get(id=Token(str(token)).user)
+        return token.user
 
     @security.method
     @Argument('token', type=Token)
@@ -33,7 +32,7 @@ class SecurityOpers(django_.Opers):
     @ReturnValue(type=bool)
     def cani_impl(token, object, right):
         checker = CheckRights()
-        roleset = RoleSet(user=User.objects.get(id=Token(token).user))
+        roleset = RoleSet(token.user)
         return checker.check(roleset, object, right)
 
     @security.method

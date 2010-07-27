@@ -11,14 +11,14 @@ def LoginRequest(request):
     login = postvars['username']
     password = postvars['password']
     try:
-        Session.user = Security.login(login=login,password=password)
+        set_token(Security.login(login=login,password=password))
     except:
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
 
     return GetLink(d,postvars['path'])
 
 def LogoutRequest(request):
-    Session.user = None
+    set_token('')
     return GetLink(DefaultLayout(),'')
 
 

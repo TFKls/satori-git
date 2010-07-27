@@ -12,11 +12,11 @@ def ContestById(cid):
 	return Contest(int(cid))
 
 def CurrentUser():
-        s = Session.user
-	if not Session.user:
-		return None
-	else:
-		return Security.whoami(token=Session.user)
+#        try:
+        w = Security.whoami()
+#        except:
+#            return None
+        return w
 
 def ActiveContest(d):
 	if not 'contestid' in d.keys():

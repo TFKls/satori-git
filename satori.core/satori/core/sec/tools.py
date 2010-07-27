@@ -49,32 +49,39 @@ class Token(Object):
         self.key = key or SECRET_KEY
         self.data = ''
         if token is not None:
-            try:
-                raw = self._decrypt(token).split('\n')
-                if len(raw) != 6:
+            if token == '':
+                self.salt = str(random.randint(100000, 999999))
+                self.user_id = ''
+                self.auth = ''
+                self.data = ''
+                self.deadline = datetime.fromtimestamp(0.0)
+            else:
+                try:
+                    raw = self._decrypt(token).split('\n')
+                    if len(raw) != 6:
+                        raise TokenError(
+                            "Provided token '{0}' is strange."
+                            .format(token)
+                        )
+                    self.salt = raw[0]
+                    self.user_id = raw[1]
+                    self.auth = raw[2]
+                    self.data = self._decode(raw[3])
+                    self.deadline = datetime.fromtimestamp(float(raw[4]))
+                    if raw[5] != self._genhash():
+                        raise TokenError(
+                            "Provided token '{0}' is malformed."
+                            .format(token)
+                        )
+                except TokenError:
+                    raise
+                except:
                     raise TokenError(
-                        "Provided token '{0}' is strange."
+                        "Provided token '{0}' is invalid."
                         .format(token)
                     )
-                self.salt = raw[0]
-                self.user_id = raw[1]
-                self.auth = raw[2]
-                self.data = self._decode(raw[3])
-                self.deadline = datetime.fromtimestamp(float(raw[4]))
-                if raw[5] != self._genhash():
-                    raise TokenError(
-                        "Provided token '{0}' is malformed."
-                        .format(token)
-                    )
-            except TokenError:
-                raise
-            except:
-                raise TokenError(
-                    "Provided token '{0}' is invalid."
-                    .format(token)
-                )
         if user is not None and user_id is None:
-        	user_id = user.id
+        	user_id = str(user.id)
         if token is None and (user_id is None or auth is None or (validity is None and deadline is None)):
             raise TokenError(
                 "Too few arguments to create a token."
@@ -98,7 +105,13 @@ class Token(Object):
         self.deadline = datetime.now() + val
     validity = property(_get_validity, _set_validity)
     valid = property(lambda self: self.deadline > datetime.now())
-    user = property(lambda self: User.objects.get(id=self.user_id))
+    @property
+    def user(self):
+        try:
+            return User.objects.get(id=self.user_id)
+        except:
+            pass
+        return None
 
     def __str__(self):
         return self._encrypt('\n'.join([ str(x) for x in
@@ -169,9 +182,7 @@ def authenticateByLogin(login, password):
         raise AuthenticationError(
             "Incorrect password."
         )
-    token = Token(user=login.user, auth='login', validity=timedelta(hours=6)) 
-    return str(token)
-
+    return str(Token(user=login.user, auth='login', validity=timedelta(hours=6)))
 
 @Argument('openid', type=str)
 @Argument('realm', type=str)
@@ -205,11 +216,10 @@ def authenticateByOpenIdStart(openid, realm, return_to):
         'html' : html
     }
 
-@Argument('token', type=str)
+@Argument('token', type=Token)
 @Argument('args', type=dict)
 @Argument('return_to', type=str)
 def authenticateByOpenIdFinish(token, args, return_to):
-    token = Token(token)
     if token.auth != 'openid':
         return str(token)
     session = pickle.loads(token.data)
