@@ -35,6 +35,8 @@ class Token(Object):
     Class for token manipulation.
     """
 
+    _arstype = str
+
     @Argument('token', type=(str, None), default=None)
     @Argument('key', type=(str, None), default=None)
     @Argument('user', type=(User, None), default=None)
