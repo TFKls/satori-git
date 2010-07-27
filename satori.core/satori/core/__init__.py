@@ -14,7 +14,6 @@ def export_thrift():
     import satori.core.sec
     from satori.ars.thrift import ThriftWriter
     django_.generate_contracts()
-    satori.core.sec.generate_contracts(django_.contract_list)
     writer = ThriftWriter()
     writer.contracts.update(django_.contract_list.items)
     writer.contracts.update(satori.core.sec.contract_list.items)
@@ -45,7 +44,6 @@ def start_server():
     import satori.core.sec
     from satori.ars.thrift import ThriftServer
     django_.generate_contracts()
-    satori.core.sec.generate_contracts(django_.contract_list)
     server = ThriftServer(transport=TServerSocket(port=38889))
     server.contracts.update(django_.contract_list.items)
     server.contracts.update(satori.core.sec.contract_list.items)
