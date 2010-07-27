@@ -11,6 +11,8 @@ import types
 import typed
 import typed.specialize
 
+import perf
+
 def resolve_model(self, model, rel_model):
     self._model = model
 
@@ -125,6 +127,7 @@ python_basic_types = {
     types.LongType: model.Int64,
     types.StringType: model.String,
     types.BooleanType: model.Boolean,
+    typed.String: model.String,
 }
 
 python_type_map = {}
@@ -132,6 +135,10 @@ python_type_map = {}
 def python_to_ars_type(type_):
     if not type_ in python_type_map:
     	ars_type = None
+
+        if hasattr(type_, '_arstype'):
+        	ars_type = model.TypeAlias(name=Name(ClassName(type_.__name__)), target_type=python_to_ars_type(type_._arstype))
+        	ars_type.__realtype = type_
     
         if type_ in python_basic_types:
         	ars_type = python_basic_types[type_]
@@ -157,6 +164,14 @@ def python_to_ars_type(type_):
             	return None
             ars_type = model.ListType(ars_element_type)
 
+        if isinstance(type_, typed.types.Dict_):
+        	ars_key_type = python_to_ars_type(type_.K)
+        	ars_value_type = python_to_ars_type(type_.V)
+            if (ars_key_type is None) or (ars_value_type is None):
+            	return None
+            else:
+                ars_type = model.MapType(key_type=ars_key_type, value_type=ars_value_type)
+
         python_type_map[type_] = ars_type
 
     return python_type_map[type_]
@@ -173,6 +188,9 @@ def value_django_to_ars(value, ars_type):
 def value_ars_to_django(value, ars_type):
     if isinstance(ars_type, model.ListType):
         return [value_ars_to_django(x, ars_type.element_type) for x in value]
+
+    if hasattr(ars_type, '__realtype'):
+        return ars_type.__realtype(value)
 
     if hasattr(ars_type, '__realclass'):
         return ars_type.__realclass.objects.get(pk=value)
@@ -402,7 +420,9 @@ class DeleteProcedureProvider(ProcedureProvider):
         @Argument('self', type=model)
         @ReturnValue(type=NoneType)
         def delete(token, self):
+            perf.begin('delete')
             self.delete()
+            perf.end('delete')
 
         super(DeleteProcedureProvider, self).__init__(delete, parent)
 
@@ -480,12 +500,8 @@ def wrap(ars_proc):
         ars_proc.addParameter(Parameter(name=Name(ParameterName(signature.positional[i])), type=param_type[0], optional=param_type[1]))
         ars_arg_types.append(param_type[0])
 
-    want_token = (arg_count > 0) and (signature.positional[0] == 'token')
-    
     def reimplementation(**kwargs):
         newargs = [None] * arg_count
-#        if want_token:
-#           args[0] = process_token(args[0])
 
         for i in range(arg_count):
             if arg_names[i] in kwargs:
@@ -493,6 +509,8 @@ def wrap(ars_proc):
                 newargs[i] = value_ars_to_django(kwargs[arg_names[i]], ars_arg_types[i])
             else:
                 newargs[i] = None
+            if arg_names[i] == 'token':
+            	print newargs[i]
 
         ret = implementation(*newargs)
 
