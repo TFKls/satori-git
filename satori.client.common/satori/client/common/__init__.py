@@ -28,6 +28,9 @@ print 'Client bootstrapped.'
 def set_token(token):
     ars2py.token_container.set_token(token)
 
+def get_token():
+    return ars2py.token_container.get_token()
+
 def unset_token():
     ars2py.token_container.unset_token()
 
