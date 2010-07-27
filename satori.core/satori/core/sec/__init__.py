@@ -5,155 +5,58 @@ Security and authorization procedures.
 from satori.core.sec.tools import CheckRights, RoleSet, Token, authenticateByLogin, authenticateByOpenIdStart, authenticateByOpenIdFinish
 from satori.core.sec.store import Store
 
-from satori.objects import DispatchOn, Argument
-from satori.ars.model import NamedTuple, Contract, Procedure, Parameter, TypeAlias, Void, Boolean, Int32, Int64, String, NamedObject, Structure, ListType, SetType, MapType, Field, Argument
-from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorName, ParameterName, NamingStyle
+from satori.objects import DispatchOn, Argument, ReturnValue
 from satori.core.models import Object as modelObject, User
+from satori.ars import django_
+import typed
 
-contract_list = NamedTuple()
+OpenIdRedirect = django_.StructType('OpenIdRedirect', (
+    ('token', str, False),
+    ('redirect', str, True),
+    ('html', str, True)
+))
 
-@DispatchOn(where = NamedTuple)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    for item in where.items:
-    	needle = findByName(item, name, type)
-        if needle:
-        	return needle
-    return None
-@DispatchOn(where = NamedObject)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
-    return None
-@DispatchOn(where = TypeAlias)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
-    return findByName(where.target_type, name, type)
-@DispatchOn(where = ListType)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    return findByName(where.element_type, name, type)
-@DispatchOn(where = SetType)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    return findByName(where.element_type, name, type)
-@DispatchOn(where = MapType)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    needle = findByName(where.key_type, name, type)
-    if needle:
-    	return needle
-    return findByName(where.value_type, name, type)
-@DispatchOn(where = Field)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    return findByName(where.type, name, type)
-@DispatchOn(where = Structure)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
-    for field in where.fields:
-    	needle = findByName(field, name, type)
-        if needle:
-        	return needle
-    return None
-@DispatchOn(where = Parameter)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    return findByName(where.type, name, type)
-@DispatchOn(where = Procedure)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
-    for parameter in where.parameters:
-    	needle = findByName(parameter, name, type)
-        if needle:
-        	return needle
-    needle = findByName(where.return_type, name, type)
-    if needle:
-        return needle
-    return findByName(where.error_type, name, type)
-@DispatchOn(where = Contract)
-@Argument('name', type=Name)
-@Argument('type', type=type)
-def findByName(where, name, type):
-    if where.name == name and isinstance(where, type):
-    	return where
-    for procedure in where.procedures:
-    	needle = findByName(procedure, name, type)
-        if needle:
-        	return needle
-    return None
+class SecurityOpers(django_.Opers):
+    security = django_.StaticProceduresProvider('Security')
 
+    @security.method
+    @Argument('token', type=Token)
+    @ReturnValue(type=User)
+    def whoami(token):
+        print token
+        return User.objects.get(id=Token(str(token)).user)
 
-
-
-
-def generate_contract(contracts):
-    contract = Contract(name=Name(ClassName('Security')))
-    userId = findByName(contracts, Name(ClassName('User'+'Id')), TypeAlias)
-    objectId = findByName(contracts, Name(ClassName('Object'+'Id')), TypeAlias)
-
-    whoami = Procedure(name=contract.name + Name(MethodName('whoami')), return_type=userId)
-    whoami.addParameter(name=Name(ParameterName('token')), type=String)
-    def whoami_impl(token):
-        return int(Token(str(token)).user)
-    whoami.implementation = whoami_impl
-    contract.addProcedure(whoami)
-
-    cani = Procedure(name=contract.name + Name(MethodName('cani')), return_type=Boolean)
-    cani.addParameter(name=Name(ParameterName('token')), type=String)
-    cani.addParameter(name=Name(ParameterName('object')), type=objectId)
-    cani.addParameter(name=Name(ParameterName('right')), type=String)
+    @security.method
+    @Argument('token', type=Token)
+    @Argument('object', type=modelObject)
+    @Argument('right', type=str)
+    @ReturnValue(type=bool)
     def cani_impl(token, object, right):
         checker = CheckRights()
-        object = modelObject.objects.get(id=object)
         roleset = RoleSet(user=User.objects.get(id=Token(token).user))
         return checker.check(roleset, object, right)
-    cani.implementation = cani_impl
-    contract.addProcedure(cani)
 
-    login = Procedure(name=contract.name + Name(MethodName('login')), return_type=String)
-    login.addParameter(name=Name(ParameterName('login')), type=String)
-    login.addParameter(name=Name(ParameterName('password')), type=String)
-    login.implementation = authenticateByLogin
-    contract.addProcedure(login)
+    @security.method
+    @Argument('login', type=str)
+    @Argument('password', type=str)
+    @ReturnValue(type=str)
+    def login(login, password):
+        return authenticateByLogin(login, password)
 
-    openid_res = Structure(name=Name(ClassName('OpenIdResult')))
-    openid_res.addField(name=Name(FieldName('token')), type=String)
-    openid_res.addField(name=Name(FieldName('redirect')), type=String, optional=True)
-    openid_res.addField(name=Name(FieldName('html')), type=String, optional=True)
-    openid_start = Procedure(name=contract.name + Name(MethodName('openIdStart')), return_type=openid_res)
-    openid_start.addParameter(name=Name(ParameterName('openid')), type=String)
-    openid_start.addParameter(name=Name(ParameterName('realm')), type=String)
-    openid_start.addParameter(name=Name(ParameterName('return_to')), type=String)
-    openid_start.implementation = authenticateByOpenIdStart
-    contract.addProcedure(openid_start)
-    openid_finish = Procedure(name=contract.name + Name(MethodName('openIdFinish')), return_type=String)
-    openid_finish.addParameter(name=Name(ParameterName('token')), type=String)
-    openid_finish.addParameter(name=Name(ParameterName('args')), type=MapType(key_type=String, value_type=String))
-    openid_finish.addParameter(name=Name(ParameterName('return_to')), type=String)
-    openid_finish.implementation = authenticateByOpenIdFinish
-    contract.addProcedure(openid_finish)
+    @security.method
+    @Argument('openid', type=str)
+    @Argument('realm', type=str)
+    @Argument('return_to', type=str)
+    @ReturnValue(type=OpenIdRedirect)
+    def openIdStart(openid, realm, return_to):
+        return authenticateByOpenIdStart(openid, realm, return_to)
 
-    return contract
-
-def generate_contracts(contracts):
-    contract_list.add(generate_contract(contracts))
+    @security.method
+    @Argument('token', type=Token)
+    @Argument('args', type=typed.Dict(typed.String, typed.String))
+    @Argument('return_to', type=str)
+    @ReturnValue(type=str)
+    def openIdFinish(token, args, return_to):
+        return authenticateByOpenIdFinish(token, args, return_to)
 
 
