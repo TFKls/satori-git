@@ -21,6 +21,9 @@ class TokenContainer(threading.local):
 token_container = TokenContainer()
 
 def convert_to(elem, type):
+    if elem is None:
+    	return None
+
     if isinstance(type, ListType):
     	return [convert_to(x, type.element_type) for x in elem]
 
@@ -30,6 +33,9 @@ def convert_to(elem, type):
     return elem
 
 def convert_from(elem, type):
+    if elem is None:
+    	return None
+
     if isinstance(type, ListType):
     	return [convert_from(x, type.element_type) for x in elem]
 
