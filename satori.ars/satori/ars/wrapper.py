@@ -229,7 +229,7 @@ class StaticWrapper(Wrapper):
 
 
 class WrapperBase(type):
-    def __init__(cls, name, bases, dict_):
+    def __new__(mcs, name, bases, dict_):
         newdict = {}
 
         for elem in dict_.itervalues():
@@ -237,7 +237,7 @@ class WrapperBase(type):
                 for (proc_name, ars_proc) in elem._generate_procedures().PYTHON.iteritems():
                     newdict[proc_name] = staticmethod(ars_proc.implementation)
                     
-        return super(WrapperBase, cls).__init__(name, bases, newdict)
+        return type.__new__(mcs, name, bases, newdict)
 
 class WrapperClass(object):
     __metaclass__ = WrapperBase
