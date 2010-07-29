@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._OpenAttribute import OpenAttribute
 
 class StringAttribute(OpenAttribute):

@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 class OpenAttribute(models.Model):
     """Model. Base for all kinds of open attributes.
     """

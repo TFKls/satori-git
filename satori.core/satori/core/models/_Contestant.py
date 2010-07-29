@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._Role import Role
 
 class Contestant(Role):
@@ -20,6 +21,6 @@ class ContestantEvents(events.Events):
     on_insert = on_update = ['name', 'contest']
     on_delete = []
 
-class ContestantOpers(django_.Opers):
-    contestant = django_.ModelProceduresProvider(Contestant)
+class ContestantWrapper(wrapper.WrapperClass):
+    contestant = cwrapper.ModelWrapper(Contestant)
 

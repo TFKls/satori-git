@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class TestMapping(Object):
@@ -26,6 +27,6 @@ class TestMappingEvents(events.Events):
     on_insert = on_update = ['suite', 'test']
     on_delete = []
 
-class TestMappingOpers(django_.Opers):
-    testmapping = django_.ModelProceduresProvider(TestMapping)
+class TestMappingWrapper(wrapper.WrapperClass):
+    testmapping = cwrapper.ModelWrapper(TestMapping)
 

@@ -1,14 +1,14 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.ars.django_ import DjangoModelType
 from satori.objects import Argument, ReturnValue
 from satori.core.models._Contestant import Contestant
 from satori.core.models._Object import Object
 from satori.core.models._User import User
 from satori.core.models.modules import AGGREGATORS3
-import typed
 
 class Contest(Object):
     """Model. Description of a contest.
@@ -31,8 +31,8 @@ class ContestEvents(events.Events):
     on_insert = on_update = ['name']
     on_delete = []
 
-class ContestOpers(django_.Opers):
-    contest = django_.ModelProceduresProvider(Contest)
+class ContestWrapper(wrapper.WrapperClass):
+    contest = cwrapper.ModelWrapper(Contest)
 
     @contest.method
     @Argument('token', type=str)
@@ -50,7 +50,7 @@ class ContestOpers(django_.Opers):
     @contest.method
     @Argument('token', type=str)
     @Argument('self', type=Contest)
-    @Argument('user_list', type=typed.List(DjangoModelType(User)))
+    @Argument('user_list', type=wrapper.TypedList(User))
     @Argument('accepted', type=bool, default=False)
     @ReturnValue(type=Contestant)
     def create_contestant(token, self, user_list, accepted):

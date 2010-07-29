@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class RoleMapping(Object):
@@ -24,6 +25,6 @@ class RoleMappingEvents(events.Events):
     on_insert = on_update = ['parent', 'child']
     on_delete = []
 
-class RoleMappingOpers(django_.Opers):
-    rolemapping = django_.ModelProceduresProvider(RoleMapping)
+class RoleMappingWrapper(wrapper.WrapperClass):
+    rolemapping = cwrapper.ModelWrapper(RoleMapping)
 

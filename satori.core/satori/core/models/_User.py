@@ -1,7 +1,8 @@
 from django.db import models
 from satori.dbev import events
 from satori.objects import ReturnValue, Argument
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.ars.model import String
 from satori.core.models._Role import Role
 
@@ -23,7 +24,7 @@ class UserEvents(events.Events):
     on_insert = on_update = ['name']
     on_delete = []
 
-class UserOpers(django_.Opers):
-    user = django_.ModelProceduresProvider(User)
+class UserWrapper(wrapper.WrapperClass):
+    user = cwrapper.ModelWrapper(User)
 
 

@@ -2,7 +2,8 @@
 
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._User import User
 from satori.core.models._Object import Object
 
@@ -19,5 +20,5 @@ class OpenIdentityEvents(events.Events):
     on_insert = on_update = ['identity', 'user']
     on_delete = []
 
-class OpenIdentityOpers(django_.Opers):
-    openidentity = django_.ModelProceduresProvider(OpenIdentity)
+class OpenIdentityWrapper(wrapper.WrapperClass):
+    openidentity = cwrapper.ModelWrapper(OpenIdentity)

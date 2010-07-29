@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class Message(Object):
@@ -21,6 +22,6 @@ class MessageEvents(events.Events):
     on_insert = on_update = ['topic', 'time']
     on_delete = []
 
-class MessageOpers(django_.Opers):
-    message = django_.ModelProceduresProvider(Message)
+class MessageWrapper(wrapper.WrapperClass):
+    message = cwrapper.ModelWrapper(Message)
 

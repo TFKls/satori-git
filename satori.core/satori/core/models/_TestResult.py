@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class TestResult(Object):
@@ -21,6 +22,6 @@ class TestResultEvents(events.Events):
     on_insert = on_update = ['submit', 'test', 'tester']
     on_delete = []
 
-class TestResultOpers(django_.Opers):
-    testresult = django_.ModelProceduresProvider(TestResult)
+class TestResultWrapper(wrapper.WrapperClass):
+    testresult = cwrapper.ModelWrapper(TestResult)
 
