@@ -45,7 +45,7 @@ class ContestWrapper(wrapper.WrapperClass):
 #            self.demand_right(token, 'VIEW')
 #        else:
 #            self.demand_right(token, 'MODERATE')
-        return Contestant.filter(contest=self, accepted=True, children__id=user.id)[0]
+        return Contestant.objects.filter(contest=self, accepted=True, children__id=user.id)[0]
 
     @contest.method
     @Argument('token', type=str)
