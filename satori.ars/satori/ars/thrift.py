@@ -29,11 +29,10 @@ from ..thrift.transport.TTransport import TServerTransportBase, TTransportBase
 from ..thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from satori.objects import Object, Argument, Signature, DispatchOn, ArgumentError
-from satori.ars.naming import NamedObject, NamingStyle
-from satori.ars.naming import ClassName, MethodName, ParameterName, FieldName, AccessorName, Name
-from satori.ars.model import Type, AtomicType, Boolean, Float, Int8, Int16, Int32, Int64, String, Void
+from satori.ars.naming import NamingStyle, ClassName, MethodName, ParameterName, FieldName, AccessorName, Name
+from satori.ars.model import Type, NamedType, AtomicType, Boolean, Float, Int8, Int16, Int32, Int64, String, Void
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, TypeAlias
-from satori.ars.model import Element, Parameter, Procedure, Contract
+from satori.ars.model import Element, NamedElement, Parameter, Procedure, Contract
 from satori.ars.api import Server, Reader, Client
 from satori.ars.common import ContractMixin, TopologicalWriter
 
@@ -62,11 +61,15 @@ class ThriftWriter(TopologicalWriter, ThriftBase):
         Void:    'void',
     }
 
-    @DispatchOn(item=object)
+    @DispatchOn(item=Element)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         raise RuntimeError("Unhandled Element type '{0}'".format(item.__class__.__name__))
 
-    @DispatchOn(item=NamedObject)
+    @DispatchOn(item=NamedElement)
+    def _reference(self, item, target): # pylint: disable-msg=E0102
+        target.write(self.style.format(item.name))
+
+    @DispatchOn(item=NamedType)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write(self.style.format(item.name))
 

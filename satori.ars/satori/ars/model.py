@@ -17,20 +17,30 @@ __all__ = (
 )
 
 
-class Element(Object):
-    """Abstract. Base for ARS model elements.
-    """
+class Element(object):
     pass
+
+
+class NamedElement(Element):
+
+    @Argument('name', type=Name)
+    def __init__(self, name):
+        super(NamedElement, self).__init__()
+        self.name = name
 
 
 class Type(Element):
     """Abstract. Base for ARS data types.
     """
 
-    def isSimple(self):
-        """Checks whether this Type is simple.
-        """
-        raise NotImplementedError()
+    def needs_conversion(self):
+        return False
+
+    def convert_to_ars(self, value):
+        return value
+
+    def convert_from_ars(self, value):
+        return value
 
 
 class ListType(Type):
@@ -39,13 +49,26 @@ class ListType(Type):
 
     @Argument('element_type', type=Type)
     def __init__(self, element_type):
+        super(ListType, self).__init__()
         self.element_type = element_type
-
-    def isSimple(self):
-        return False
 
     def __str__(self):
         return 'List<'+str(self.element_type)+'>'
+
+    def needs_conversion(self):
+        return self.element_type.needs_conversion()
+
+    def convert_to_ars(self, value):
+        if self.element_type.needs_conversion():
+        	return [self.element_type.convert_to_ars(elem) for elem in value]
+        else:
+        	return value
+
+    def convert_from_ars(self, value):
+        if self.element_type.needs_conversion():
+        	return [self.element_type.convert_from_ars(elem) for elem in value]
+        else:
+        	return value
 
 
 class SetType(Type):
@@ -54,10 +77,8 @@ class SetType(Type):
 
     @Argument('element_type', type=Type)
     def __init__(self, element_type):
+        super(SetType, self).__init__()
         self.element_type = element_type
-
-    def isSimple(self):
-        return False
 
     def __str__(self):
         return 'Set<'+str(self.element_type)+'>'
@@ -70,38 +91,33 @@ class MapType(Type):
     @Argument('key_type', type=Type)
     @Argument('value_type', type=Type)
     def __init__(self, key_type, value_type):
+        super(MapType, self).__init__()
         self.key_type = key_type
         self.value_type = value_type
-
-    def isSimple(self):
-        return False
 
     def __str__(self):
         return 'Map<'+str(self.key_type)+','+str(self.value_type)+'>'
 
 
-class NamedType(Type, NamedObject):
+class NamedType(Type):
     """Abstract. A Type with a Name.
     """
 
-    def isSimple(self):
-        """Checks whether this Type is simple.
-        """
-        raise NotImplementedError()
+    @Argument('name', type=Name)
+    def __init__(self, name):
+        super(NamedType, self).__init__()
+        self.name = name
+    
+    def __str__(self):
+        return 'Type:' + NamingStyle.DEFAULT.format(self.name)
 
 
 class AtomicType(NamedType):
     """A Type without (visible) internal structure.
     """
 
-    def __init__(self):
-        pass
-
-    def __str__(self):
-        return NamingStyle.DEFAULT.format(self.name)
-
-    def isSimple(self):
-        return True
+    def __init__(self, name):
+        super(AtomicType, self).__init__(name)
 
 
 Boolean = AtomicType(name=Name(ClassName('Boolean')))
@@ -119,11 +135,9 @@ class TypeAlias(NamedType):
     """
 
     @Argument('target_type', type=Type)
-    def __init__(self, target_type):
+    def __init__(self, name, target_type):
+        super(TypeAlias, self).__init__(name)
         self.target_type = target_type
-
-    def isSimple(self):
-        return self.target_type.isSimple()
 
 
 class NamedTuple(Object):
@@ -198,49 +212,59 @@ class NamedTuple(Object):
         return self.items[index]
 
 
-class Field(Element, NamedObject):
+class Field(NamedElement):
 
     @Argument('type', type=Type)
-    @Argument('optional', type=bool, default=False)
-    def __init__(self, type, optional):                        # pylint: disable-msg=W0622
+    @Argument('optional', type=bool)
+    def __init__(self, name, type, optional=False):                        # pylint: disable-msg=W0622
+        super(Field, self).__init__(name)
+        self.name = name
         self.type = type
         self.optional = optional
+    
+    def __str__(self):
+        return 'Field:' + NamingStyle.DEFAULT.format(self.name)
 
 
 class Structure(NamedType):
 
-    def __init__(self):
+    def __init__(self, name):
+        super(Structure, self).__init__(name)
         self.fields = NamedTuple()
-
-    def isSimple(self):
-        return False
 
     def addField(self, field=None, **kwargs):
         if field is None:
             field = Field(**kwargs)
         self.fields.add(field)
+    
+    def __str__(self):
+        return 'Structue:' + NamingStyle.DEFAULT.format(self.name)
 
 
-class Parameter(Element, NamedObject):
+class Parameter(NamedElement):
 
     @Argument('type', type=Type)
-    @Argument('optional', type=bool, default=False)
-    @Argument('default', default=None)
-    def __init__(self, type, optional, default):               # pylint: disable-msg=W0622
+    @Argument('optional', type=bool)
+    def __init__(self, name, type, optional=False, default=None):               # pylint: disable-msg=W0622
+        super(Parameter, self).__init__(name)
         self.type = type
         self.optional = optional
         self.default = default
 
+    def __str__(self):
+        return 'Parameter:' + NamingStyle.DEFAULT.format(self.name)
 
-class Procedure(Element, NamedObject):
+
+class Procedure(NamedElement):
 
     EX2STRING = lambda ex: str(ex)                             # pylint: disable-msg=W0108
 
-    @Argument('return_type', type=Type, default=Void)
-    @Argument('implementation', type=(types.FunctionType,None), default=None)
-    @Argument('error_type', type=Type, default=String)
-    @Argument('error_transform', type=types.FunctionType, default=EX2STRING)
-    def __init__(self, return_type, implementation, error_type, error_transform):
+    @Argument('return_type', type=Type)
+    @Argument('implementation', type=(types.FunctionType,None))
+    @Argument('error_type', type=Type)
+    @Argument('error_transform', type=types.FunctionType)
+    def __init__(self, name, return_type=Void, implementation=None, error_type=String, error_transform=EX2STRING):
+        super(Procedure, self).__init__(name)
         self.return_type = return_type
         self.implementation = implementation
         self.error_type = error_type
@@ -252,16 +276,21 @@ class Procedure(Element, NamedObject):
             parameter = Parameter(**kwargs)
         self.parameters.add(parameter)
 
+    def __str__(self):
+        return 'Procedure:' + NamingStyle.DEFAULT.format(self.name)
 
-class Contract(Element, NamedObject):
 
-    def __init__(self):
+class Contract(NamedElement):
+
+    def __init__(self, name):
+        super(Contract, self).__init__(name)
         self.procedures = NamedTuple()
 
     def addProcedure(self, procedure=None, **kwargs):
         if procedure is None:
             procedure = Procedure(**kwargs)
         self.procedures.add(procedure)
+
 
 @DispatchOn(item=AtomicType)
 def namedTypes(item):
