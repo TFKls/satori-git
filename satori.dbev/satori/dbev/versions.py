@@ -81,9 +81,22 @@ class UserField(models.IntegerField):
         qn = connection.ops.quote_name
         qv = lambda x : '\''+str(x)+'\''
 
+        tabs = []
+        keys = []
+        mod = self._model._original
+        while issubclass(mod, models.Model):
+        	tabs.append(str(mod._meta.db_table))
+        	keys.append(str(mod._meta.pk.column))
+            try:
+            	mod = mod._meta.parents.items()[0][0]
+            except:
+                break
+
         modify_original = """
             ALTER TABLE {0} ADD COLUMN {1} integer NOT NULL DEFAULT get_transaction_id();
             SELECT repair_version_table({10});
+            SELECT create_full_view({11}, {12}, {13});
+            SELECT create_version_function({14}, {12}, {13});
             CREATE INDEX {7} ON {2} ({3});
             CREATE INDEX {8} ON {2} ({4});
             CREATE UNIQUE INDEX {9} ON {2} ({5},{6});
@@ -99,6 +112,10 @@ class UserField(models.IntegerField):
             qn(db_table + '_vto_idx'),
             qn(db_table + '_ver_idx'),
             qv(db_table),
+            qv(self._model._original._meta.db_table + '__view'),
+            'ARRAY[' + ','.join([qv(tab) for tab in tabs]) + ']',
+            'ARRAY[' + ','.join([qv(key) for key in keys]) + ']',
+            qv(self._model._original._meta.db_table + '__version_view'),
         )
        
         row = {}

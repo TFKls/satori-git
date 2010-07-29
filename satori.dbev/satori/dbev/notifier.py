@@ -33,8 +33,8 @@ def notifier_coroutine():
             		con.notifies.pop()
                 for notification in notifications.objects.all():
                     model = notification.model.split('.')
-                    versions = models.get_model(model[0], model[1] + "Versions")
                     model = models.get_model(model[0], model[1])
+                    versions = models.get_model(model._meta.app_label, model._meta.module_name + "Versions")
                     events = registry._registry[model]
                     if notification.action == 'D' and not notification.entry:
                         version = versions.objects.filter(_version_transaction=notification.transaction).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
