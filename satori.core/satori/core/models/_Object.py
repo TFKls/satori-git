@@ -3,7 +3,7 @@ from django.db import models
 from satori.dbev import events
 from satori.ars import wrapper
 from satori.core import cwrapper
-from satori.ars import naming,model as model_
+from satori.ars import naming, model as model_
 
 class Object(models.Model):
     """Model. Base for all database objects. Provides common GUID space.
@@ -34,11 +34,11 @@ class Object(models.Model):
         if right != 'ADMIN':
         	  ret.append((self,'ADMIN'))
         return ret
-
+    
     def demand_right(self, token, right):
         from satori.core.sec import Token, RoleSet, CheckRights
         checker = CheckRights()
-        roleset = RoleSet(user=User.objects.get(id=Token(str(token)).user))
+        roleset = RoleSet(user=Token.user)
         cani = checker.check(roleset, self, str(right))
         if not cani:
         	raise 'Insufficient rights'
