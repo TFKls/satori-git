@@ -11,8 +11,8 @@ class Test(Object):
     __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_test')
 
-    owner       = models.ForeignKey('User', null=True)
-    problem     = models.ForeignKey('Problem', null=True)
+    owner       = models.ForeignKey('User')
+    problem     = models.ForeignKey('Problem')
     name        = models.CharField(max_length=50)
     description = models.TextField(blank=True, default="")
     environment = models.CharField(max_length=50)

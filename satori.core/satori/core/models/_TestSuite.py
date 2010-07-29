@@ -3,7 +3,6 @@ from satori.dbev import events
 from satori.ars import wrapper
 from satori.core import cwrapper
 from satori.core.models._Object import Object
-from satori.core.models.modules import AGGREGATORS1
 from satori.core.models.modules import DISPATCHERS
 
 class TestSuite(Object):
@@ -12,12 +11,12 @@ class TestSuite(Object):
     __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_testsuite')
 
-    owner       = models.ForeignKey('User', null=True)
-    problem     = models.ForeignKey('Problem', null=True)
+    owner       = models.ForeignKey('User')
+    problem     = models.ForeignKey('Problem')
     name        = models.CharField(max_length=50)
+    description = models.TextField(blank=True, default="")
     tests       = models.ManyToManyField('Test', through='TestMapping')
     dispatcher  = models.CharField(max_length=128, choices=DISPATCHERS)
-    aggregator1 = models.CharField(max_length=128, choices=AGGREGATORS1)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)

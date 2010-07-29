@@ -10,11 +10,9 @@ class Submit(Object):
     __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_submit')
 
-    owner       = models.ForeignKey('Contestant', null=True)
-    problem     = models.ForeignKey('ProblemMapping', null=True)
+    owner       = models.ForeignKey('Contestant')
+    problem     = models.ForeignKey('ProblemMapping')
     time        = models.DateTimeField(auto_now_add=True)
-    shortstatus = models.CharField(max_length = 64)
-    longstatus  = models.CharField(max_length = 1024)
 
 class SubmitEvents(events.Events):
     model = Submit

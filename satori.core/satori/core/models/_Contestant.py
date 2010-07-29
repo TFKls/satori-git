@@ -11,7 +11,9 @@ class Contestant(Role):
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_contestant')
 
     contest    = models.ForeignKey('Contest')
-    accepted   = models.BooleanField()
+    accepted   = models.BooleanField(default=False)
+    invisible  = models.BooleanField(default=False)
+
     def __unicode__(self):
         return self.user.fullname+' ('+self.contest.name+')'
 

@@ -13,14 +13,13 @@ class TestMapping(Object):
 
     suite       = models.ForeignKey('TestSuite')
     test        = models.ForeignKey('Test')
-    code        = models.CharField(max_length=10)
-    title       = models.CharField(max_length=64)
+    order       = models.IntegerField()
     
     def __unicode__(self):
-        return self.code+": "+self.title+ " ("+self.suite.name+","+self.test.name+")"
+        return self.order+": ("+self.suite.name+","+self.test.name+")"
 
     class Meta:                                                # pylint: disable-msg=C0111
-        unique_together = (('suite', 'code'), ('suite', 'test'))
+        unique_together = (('suite', 'test'), ('suite', 'order'))
 
 class TestMappingEvents(events.Events):
     model = TestMapping

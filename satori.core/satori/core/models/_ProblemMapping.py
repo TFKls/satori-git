@@ -15,6 +15,8 @@ class ProblemMapping(Object):
     problem     = models.ForeignKey('Problem')
     code        = models.CharField(max_length=10)
     title       = models.CharField(max_length=64)
+    statement   = models.TextField(blank=True, default="")
+    default_test_suite = models.ForeignKey('TestSuite');
     
     def __unicode__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"

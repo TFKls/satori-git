@@ -8,7 +8,6 @@ from satori.objects import Argument, ReturnValue
 from satori.core.models._Contestant import Contestant
 from satori.core.models._Object import Object
 from satori.core.models._User import User
-from satori.core.models.modules import AGGREGATORS3
 
 class Contest(Object):
     """Model. Description of a contest.
@@ -16,11 +15,9 @@ class Contest(Object):
     __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_contest')
     
-    joiningChoices = [ ('Private', 'Private'),('Moderated','Moderated'),('Public','Public') ]
     name        = models.CharField(max_length=50, unique=True)
     problems    = models.ManyToManyField('Problem', through='ProblemMapping')
-    joining     = models.CharField(max_length=30, choices=joiningChoices)
-    aggregator3 = models.CharField(max_length=128, choices=AGGREGATORS3)
+
     def __unicode__(self):
         return self.name
     # TODO: add presentation options
