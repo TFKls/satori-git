@@ -40,11 +40,11 @@ class ContestWrapper(wrapper.WrapperClass):
     @Argument('user', type=User)
     @ReturnValue(type=Contestant)
     def find_contestant(token, self, user):
-        from satori.core.sec import Token
-        if Token(token).user == user:
-            self.demand_right(token, 'VIEW')
-        else:
-        	self.demand_right(token, 'MODERATE')
+#        from satori.core.sec import Token
+#        if Token(token).user == user:
+#            self.demand_right(token, 'VIEW')
+#        else:
+#            self.demand_right(token, 'MODERATE')
         return Contestant.filter(contest=self, accepted=True, children__id=user.id)[0]
 
     @contest.method
