@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._Object import Object
 from satori.core.models.modules import AGGREGATORS2
 
@@ -20,7 +21,7 @@ class ProblemIncarnationEvents(events.Events):
     on_insert = on_update = ['problem', 'test_suite']
     on_delete = []
 
-class ProblemIncarnationOpers(django_.Opers):
-    problemincarnation = django_.ModelProceduresProvider(ProblemIncarnation)
+class ProblemIncarnationWrapper(wrapper.WrapperClass):
+    problemincarnation = cwrapper.ModelWrapper(ProblemIncarnation)
 
 

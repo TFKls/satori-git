@@ -1,6 +1,7 @@
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class Problem(Object):
@@ -20,6 +21,6 @@ class ProblemEvents(events.Events):
     on_insert = on_update = ['name']
     on_delete = []
 
-class ProblemOpers(django_.Opers):
-    problem = django_.ModelProceduresProvider(Problem)
+class ProblemWrapper(wrapper.WrapperClass):
+    problem = cwrapper.ModelWrapper(Problem)
 

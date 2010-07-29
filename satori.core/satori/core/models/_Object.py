@@ -1,7 +1,10 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from django.db import models
 from satori.dbev import events
-from satori.ars import django_
+from satori.ars import wrapper
+from satori.core import cwrapper
+from satori.ars import naming, model as model_
+
 class Object(models.Model):
     """Model. Base for all database objects. Provides common GUID space.
     """
@@ -13,7 +16,14 @@ class Object(models.Model):
         if not self.model:
         	  self.model = self._meta.app_label + '.' + self._meta.object_name
         super(Object, self).save()
-  
+    
+    @classmethod
+    def ars_type(cls):
+        if not '_ars_type' in cls.__dict__:
+        	cls._ars_type = cwrapper.DjangoTypeAlias(cls)
+
+        return cls._ars_type
+
     def inherit_right(self, right):
         right = str(right)
         ret = list()
@@ -24,15 +34,17 @@ class Object(models.Model):
         if right != 'ADMIN':
         	  ret.append((self,'ADMIN'))
         return ret
-
+    
     def demand_right(self, token, right):
         from satori.core.sec import Token, RoleSet, CheckRights
         checker = CheckRights()
-        roleset = RoleSet(user=User.objects.get(id=Token(str(token)).user))
+        roleset = RoleSet(user=Token.user)
         cani = checker.check(roleset, self, str(right))
         if not cani:
         	raise 'Insufficient rights'
 
     pass
     # attributes    (Manager created automatically by OpenAttribute)
+
+wrapper.ArsWrapperType.register_instance(Object)
 

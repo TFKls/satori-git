@@ -29,11 +29,10 @@ from ..thrift.transport.TTransport import TServerTransportBase, TTransportBase
 from ..thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from satori.objects import Object, Argument, Signature, DispatchOn, ArgumentError
-from satori.ars.naming import NamedObject, NamingStyle
-from satori.ars.naming import ClassName, MethodName, ParameterName, FieldName, AccessorName, Name
-from satori.ars.model import Type, AtomicType, Boolean, Float, Int8, Int16, Int32, Int64, String, Void
+from satori.ars.naming import NamingStyle, ClassName, MethodName, ParameterName, FieldName, AccessorName, Name
+from satori.ars.model import Type, NamedType, AtomicType, Boolean, Float, Int8, Int16, Int32, Int64, String, Void
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, TypeAlias
-from satori.ars.model import Element, Parameter, Procedure, Contract
+from satori.ars.model import Element, NamedElement, Parameter, Procedure, Contract
 from satori.ars.api import Server, Reader, Client
 from satori.ars.common import ContractMixin, TopologicalWriter
 
@@ -62,11 +61,15 @@ class ThriftWriter(TopologicalWriter, ThriftBase):
         Void:    'void',
     }
 
-    @DispatchOn(item=object)
+    @DispatchOn(item=Element)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         raise RuntimeError("Unhandled Element type '{0}'".format(item.__class__.__name__))
 
-    @DispatchOn(item=NamedObject)
+    @DispatchOn(item=NamedElement)
+    def _reference(self, item, target): # pylint: disable-msg=E0102
+        target.write(self.style.format(item.name))
+
+    @DispatchOn(item=NamedType)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write(self.style.format(item.name))
 
@@ -389,7 +392,9 @@ class ThriftProcessor(ThriftBase, TProcessor):
         value = self._recvFields(fields, proto)
         if 'success' in value:
             return value['success']
-        raise Exception(value['error']) #TODO: what should I raise?
+        if 'error' in value:
+            raise Exception(value['error']) #TODO: what should I raise?
+        return None
 
     def process(self, iproto, oproto):
         """Processes a single client request.
@@ -415,7 +420,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
                 iproto.readMessageEnd()
                 values = signature.Values(**arguments)
             except ArgumentError as ex:
-                raise TApplicationException(TApplicationException.MISSING_RESULT,
+                raise TApplicationException(TApplicationException.UNKNOWN,
                     "Error processing arguments: " + ex.message)
             perf.end('recv')
             # call the registered implementation
@@ -434,7 +439,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
                     result_index = 1
                     result_name = 'error'
                 except:
-                    raise TApplicationException(TApplicationException.MISSING_RESULT,
+                    raise TApplicationException(TApplicationException.UNKNOWN,
                         "Error processing exception: " + ex.message)
             perf.end('call')
             # send the reply
@@ -442,14 +447,15 @@ class ThriftProcessor(ThriftBase, TProcessor):
             try:
                 oproto.writeMessageBegin(pname, TMessageType.REPLY, seqid)
                 oproto.writeStructBegin(pname + '_result')
-                oproto.writeFieldBegin(result_name, self._ttype(result_type), result_index)
-                self._send(result_value, result_type, oproto)
-                oproto.writeFieldEnd()
+                if result_value is not None:
+                    oproto.writeFieldBegin(result_name, self._ttype(result_type), result_index)
+                    self._send(result_value, result_type, oproto)
+                    oproto.writeFieldEnd()
                 oproto.writeFieldStop()
                 oproto.writeStructEnd()
                 oproto.writeMessageEnd()
             except Exception as ex:
-                raise TApplicationException(TApplicationException.MISSING_RESULT,
+                raise TApplicationException(TApplicationException.UNKNOWN,
                     "Error processing result: " + ex.message)
             perf.end('send')
         except TApplicationException as ex:
@@ -495,10 +501,6 @@ class ThriftProcessor(ThriftBase, TProcessor):
         perf.end('recv')
         perf.end('call')
         return result
-        if result['success'] != None:
-            return result['success']
-        if result['error'] != None:
-            raise result['error']
         raise TApplicationException(TApplicationException.MISSING_RESULT, "Static_call_me failed: unknown result");
 
 
