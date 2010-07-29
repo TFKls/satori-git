@@ -24,18 +24,39 @@ from satori.core.settings import SECRET_KEY
 from satori.core.models import Login, OpenIdentity
 from satori.core.sec.store import Store
 from satori.core.models import Role, User, Privilege, Object as modelObject
+from satori.ars import model, wrapper
+from satori.ars.naming import Name, ClassName
 
 class TokenError(Exception):
     """Exception. Provided token is invalid.
     """
     pass
 
+class TokenTypeAlias(model.TypeAlias):
+    def __init__(self):
+        super(TokenTypeAlias, self).__init__(name=Name(ClassName('Token')), target_type=model.String)
+
+    def needs_conversion(self):
+        return True
+
+    def convert_to_ars(self, value):
+        return str(value)
+
+    def convert_from_ars(self, value):
+        return Token(value)
+
+
 class Token(Object):
     """
     Class for token manipulation.
     """
 
-    _arstype = str
+    @classmethod
+    def ars_type(cls):
+        if not hasattr(cls, '_ars_type'):
+        	cls._ars_type = TokenTypeAlias()
+
+        return cls._ars_type
 
     @Argument('token', type=(str, None), default=None)
     @Argument('key', type=(str, None), default=None)
@@ -168,6 +189,7 @@ class Token(Object):
             self.salt, self.user_id, self.auth, time.mktime(self.deadline.timetuple())
         ]))
 
+wrapper.ArsWrapperType.register_instance(Token)
 
 class AuthenticationError(Exception):
     """Exception. Authentication failed.

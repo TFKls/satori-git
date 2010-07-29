@@ -7,17 +7,16 @@ from satori.core.sec.store import Store
 
 from satori.objects import DispatchOn, Argument, ReturnValue
 from satori.core.models import Object as modelObject, User
-from satori.ars import django_
-import typed
+from satori.ars import wrapper
 
-OpenIdRedirect = django_.StructType('OpenIdRedirect', (
+OpenIdRedirect = wrapper.Struct('OpenIdRedirect', (
     ('token', str, False),
     ('redirect', str, True),
     ('html', str, True)
 ))
 
-class SecurityOpers(django_.Opers):
-    security = django_.StaticProceduresProvider('Security')
+class SecurityWrapper(wrapper.WrapperClass):
+    security = wrapper.StaticWrapper('Security')
 
     @security.method
     @Argument('token', type=Token)
@@ -52,7 +51,7 @@ class SecurityOpers(django_.Opers):
 
     @security.method
     @Argument('token', type=Token)
-    @Argument('args', type=typed.Dict(typed.String, typed.String))
+    @Argument('args', type=wrapper.TypedMap(str, str))
     @Argument('return_to', type=str)
     @ReturnValue(type=str)
     def openIdFinish(token, args, return_to):
