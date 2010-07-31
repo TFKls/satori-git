@@ -231,8 +231,9 @@ class ThriftProcessor(ThriftBase, TProcessor):
         for index, field in enumerate(fields):
             if field is None:
                 continue
+            pfname = NamingStyle.PYTHON.format(field.name)
             fname = self.style.format(field.name)
-            fvalue = value.get(fname, None)
+            fvalue = value.get(pfname, None)
             if fvalue is not None:
                 proto.writeFieldBegin(fname, self._ttype(field.type), index)
                 self._send(fvalue, field.type, proto)
