@@ -331,7 +331,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
             if ftype != self._ttype(field.type):
                 proto.skip(ftype)
                 # TODO: warning: field type mismatch
-            value[fname] = self._recv(field.type, proto)
+            value[NamingStyle.PYTHON.format(field.name)] = self._recv(field.type, proto)
             proto.readFieldEnd()
         proto.readStructEnd()
         return value
