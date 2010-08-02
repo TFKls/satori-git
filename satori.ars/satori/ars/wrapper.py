@@ -4,6 +4,7 @@
 import collections
 import types
 import sys
+import copy
 from satori.objects import Signature, Argument, ReturnValue, ConstraintDisjunction, TypeConstraint
 from satori.ars import model
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, ParameterName
@@ -159,7 +160,7 @@ class Wrapper(object):
 
 
 def emptyCan(*args, **kwargs):
-    pass
+    return True
 
 
 def emptyFilter(retval, *args, **kwargs):
@@ -196,7 +197,8 @@ class ProcedureWrapper(Wrapper):
         implement = self._implement
 
         def proc(*args, **kwargs):
-            can(*args, **kwargs)
+            if not can(*args, **kwargs):
+            	raise Exception('Access denied.')
             result = implement(*args, **kwargs)
             return filter(result, *args, **kwargs)
 
@@ -205,7 +207,17 @@ class ProcedureWrapper(Wrapper):
         ars_proc = model.Procedure(name=Name(self._name_type(self._name)), return_type=model.Void, implementation = proc)
         ret.add(ars_proc)
 
+        def proc(*args, **kwargs):
+            return can(*args, **kwargs)
+
+        copy.copy(Signature.of(implement)).set(proc)
+        Signature.of(proc).return_value = ReturnValue(type=bool)
+    
+        ars_proc = model.Procedure(name=Name(self._name_type(self._name + '_can')), return_type=model.Void, implementation = proc)
+        ret.add(ars_proc)
+
         return ret
+
 
 class StaticWrapper(Wrapper):
     def __init__(self, name):
