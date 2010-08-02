@@ -2,8 +2,6 @@
 
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
 import hashlib, base64
 from django.conf import settings
 
