@@ -42,3 +42,6 @@ class Object(models.Model):
         if not cani:
         	raise 'Insufficient rights'
 
+class ObjectEvents(events.Events):
+    model = Object
+    on_insert = on_update = on_delete = []
