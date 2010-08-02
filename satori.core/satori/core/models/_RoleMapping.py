@@ -1,7 +1,7 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class RoleMapping(Object):
@@ -24,7 +24,4 @@ class RoleMappingEvents(events.Events):
     model = RoleMapping
     on_insert = on_update = ['parent', 'child']
     on_delete = []
-
-class RoleMappingWrapper(wrapper.WrapperClass):
-    rolemapping = cwrapper.ModelWrapper(RoleMapping)
 

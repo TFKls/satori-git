@@ -1,9 +1,7 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.objects import ReturnValue, Argument
-from satori.ars import wrapper
-from satori.core import cwrapper
-from satori.ars.model import String
 from satori.core.models._Role import Role
 
 class User(Role):
@@ -23,8 +21,4 @@ class UserEvents(events.Events):
     model = User
     on_insert = on_update = ['name']
     on_delete = []
-
-class UserWrapper(wrapper.WrapperClass):
-    user = cwrapper.ModelWrapper(User)
-
 

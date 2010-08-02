@@ -1,9 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
-from satori.ars import naming, model as model_
 
 class Object(models.Model):
     """Model. Base for all database objects. Provides common GUID space.
@@ -20,6 +18,7 @@ class Object(models.Model):
     @classmethod
     def ars_type(cls):
         if not '_ars_type' in cls.__dict__:
+            from satori.core import cwrapper
         	cls._ars_type = cwrapper.DjangoTypeAlias(cls)
 
         return cls._ars_type
@@ -42,9 +41,4 @@ class Object(models.Model):
         cani = checker.check(roleset, self, str(right))
         if not cani:
         	raise 'Insufficient rights'
-
-    pass
-    # attributes    (Manager created automatically by OpenAttribute)
-
-wrapper.ArsWrapperType.register_instance(Object)
 

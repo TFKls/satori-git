@@ -34,13 +34,13 @@ class DjangoTypeAlias(model.TypeAlias):
         return self.model.objects.get(id=value)
 
 
-class DjangoModelType(wrapper.ArsWrapperType):
+class DjangoModelType(type):
     def __new__(mcs, name, bases, dict_):
         model = dict_['model']
         rel_model = dict_['rel_model']
         name = 'DjangoType(' + str(model) + ')'
 
-        cls = wrapper.ArsWrapperType.__new__(mcs, name, bases, dict_)
+        cls = type.__new__(mcs, name, bases, dict_)
         
         add_lazy_relation(rel_model, cls, model, resolve_model)
 

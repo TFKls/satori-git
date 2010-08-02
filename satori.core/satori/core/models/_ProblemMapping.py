@@ -1,7 +1,7 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class ProblemMapping(Object):
@@ -28,7 +28,4 @@ class ProblemMappingEvents(events.Events):
     model = ProblemMapping
     on_insert = on_update = ['contest', 'problem']
     on_delete = []
-
-class ProblemMappingWrapper(wrapper.WrapperClass):
-    problemmapping = cwrapper.ModelWrapper(ProblemMapping)
 

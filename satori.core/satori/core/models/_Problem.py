@@ -1,7 +1,7 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class Problem(Object):
@@ -20,7 +20,4 @@ class ProblemEvents(events.Events):
     model = Problem
     on_insert = on_update = ['name']
     on_delete = []
-
-class ProblemWrapper(wrapper.WrapperClass):
-    problem = cwrapper.ModelWrapper(Problem)
 

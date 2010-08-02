@@ -1,7 +1,7 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
 from satori.core.models._Object import Object
 from satori.core.models.modules import DISPATCHERS
 
@@ -25,7 +25,4 @@ class TestSuiteEvents(events.Events):
     model = TestSuite
     on_insert = on_update = ['owner', 'problem', 'name']
     on_delete = []
-
-class TestSuiteWrapper(wrapper.WrapperClass):
-    testsuite = cwrapper.ModelWrapper(TestSuite)
 

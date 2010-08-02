@@ -1,9 +1,8 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
 from satori.core.models._Object import Object
-#from satori.core.models._RoleRel import RoleRel
 
 class Role(Object):
     """Model. Base for authorization "levels".
@@ -21,7 +20,4 @@ class RoleEvents(events.Events):
     model = Role
     on_insert = on_update = ['name']
     on_delete = []
-
-class RoleWrapper(wrapper.WrapperClass):
-    role = cwrapper.ModelWrapper(Role)
 

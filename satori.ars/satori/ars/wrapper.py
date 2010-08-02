@@ -3,39 +3,16 @@
 #import abc
 import collections
 import types
+import sys
 from satori.objects import Signature, Argument, ReturnValue, ConstraintDisjunction, TypeConstraint
 from satori.ars import model
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, ParameterName
 
-class ArsWrapperType(type):
-    __subclass__ = set()
-    __instance__ = set()
-
-    def ars_type(cls):
-        raise NotImplemented()
-    
-    @classmethod
-    def isinstance(cls, inst):
-        sub = type(inst)
-        return (any(issubclass(inst, c) for c in cls.__instance__) 
-            or any(issubclass(sub, c) for c in cls.__subclass__))
-
-    @classmethod
-    def register_subclass(cls, sub):
-        cls.__subclass__.add(sub)
-
-    @classmethod
-    def register_instance(cls, inst):
-        cls.__instance__.add(inst)
-
-ArsWrapperType.register_subclass(ArsWrapperType)
-
-
-class TypedListType(ArsWrapperType):
+class TypedListType(type):
     def __new__(mcs, name, bases, dict_):
         elem_type = dict_['elem_type']
         name = 'list[' + str(elem_type) + ']'
-        return ArsWrapperType.__new__(mcs, name, bases, dict_)
+        return type.__new__(mcs, name, bases, dict_)
 
     def __instancecheck__(cls, obj):
         if not isinstance(elem, collections.Sequence):
@@ -58,12 +35,12 @@ def TypedList(elem_type):
     return TypedListType('', (), {'elem_type': elem_type})
 
 
-class TypedMapType(ArsWrapperType):
+class TypedMapType(type):
     def __new__(mcs, name, bases, dict_):
         key_type = dict_['key_type']
         value_type = dict_['value_type']
         name = 'map[' + str(key_type) + ',' + str(value_type) + ']'
-        return ArsWrapperType.__new__(mcs, name, bases, dict_)
+        return type.__new__(mcs, name, bases, dict_)
 
     def __instancecheck__(cls, obj):
         if not isinstance(elem, collections.Mapping):
@@ -90,11 +67,11 @@ def TypedMap(key_type, value_type):
     return TypedMapType('', (), {'key_type': key_type, 'value_type': value_type})
 
 
-class StructType(ArsWrapperType):
+class StructType(type):
     def __new__(mcs, name, bases, dict_):
         assert 'fields' in dict_
         dict_['name'] = name
-        return ArsWrapperType.__new__(mcs, name, bases, dict_)
+        return type.__new__(mcs, name, bases, dict_)
 
     def __instancecheck__(cls, obj):
         for (name, type_, optional) in cls.fields:
@@ -130,7 +107,7 @@ def python_to_ars_type(type_):
     if type_ in python_basic_types:
     	return python_basic_types[type_]
 
-    if ArsWrapperType.isinstance(type_):
+    if hasattr(type_, 'ars_type'):
     	return type_.ars_type()
 
     raise RuntimeError('Cannot convert type {0} to ars type.'.format(type_))
@@ -169,6 +146,16 @@ class Wrapper(object):
         ret.update_prefix(self._name_type(self._name))
 
         return ret
+
+    def _fill_module(self, name):
+        module = sys.modules[name]
+    
+        procs = self._generate_procedures()
+
+        for (proc_name, ars_proc) in procs.PYTHON.iteritems():
+            setattr(module, proc_name, ars_proc.implementation)
+
+        setattr(module, '__all__', procs.PYTHON.keys())
 
 
 def emptyCan(*args, **kwargs):

@@ -189,7 +189,6 @@ class Token(Object):
             self.salt, self.user_id, self.auth, time.mktime(self.deadline.timetuple())
         ]))
 
-wrapper.ArsWrapperType.register_instance(Token)
 
 class AuthenticationError(Exception):
     """Exception. Authentication failed.

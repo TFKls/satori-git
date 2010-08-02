@@ -9,9 +9,8 @@ def export_thrift():
     """Entry Point. Writes the Thrift contract of the server to standard output.
     """
     from sys import stdout
-    import satori.core.models
     from satori.ars import wrapper
-    import satori.core.sec
+    import satori.core.api
     from satori.ars.thrift import ThriftWriter
     writer = ThriftWriter()
     writer.contracts.update(wrapper.generate_contracts().items)
@@ -37,9 +36,8 @@ def start_server():
     from sys import exit
     from multiprocessing import Process
     from thrift.transport.TSocket import TServerSocket
-    import satori.core.models
     from satori.ars import wrapper
-    import satori.core.sec
+    import satori.core.api
     from satori.ars.thrift import ThriftServer
     server = ThriftServer(transport=TServerSocket(port=38889))
     server.contracts.update(wrapper.generate_contracts().items)

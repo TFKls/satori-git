@@ -1,7 +1,7 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
 from satori.core.models._Object import Object
 
 class Privilege(Object):
@@ -21,7 +21,4 @@ class PrivilegeEvents(events.Events):
     model = Privilege
     on_insert = on_update = ['role', 'object', 'right']
     on_delete = []
-
-class PrivilegeWrapper(wrapper.WrapperClass):
-    privilege = cwrapper.ModelWrapper(Privilege)
 

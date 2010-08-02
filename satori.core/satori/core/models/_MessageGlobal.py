@@ -1,8 +1,7 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
-from satori.core.models._Object import Object
 from satori.core.models._Message import Message
 
 class MessageGlobal(Message):
@@ -20,7 +19,4 @@ class MessageGlobalEvents(events.Events):
     model = MessageGlobal
     on_insert = on_update = ['topic', 'time']
     on_delete = []
-
-class MessageGlobalWrapper(wrapper.WrapperClass):
-    messageglobal = cwrapper.ModelWrapper(MessageGlobal)
 

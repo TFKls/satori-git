@@ -2,10 +2,7 @@
 
 from django.db import models
 from satori.dbev import events
-from satori.ars import wrapper
-from satori.core import cwrapper
 from satori.core.models._Object import Object
-from satori.core.models._User import User
 
 class Login(Object):
 
@@ -14,12 +11,9 @@ class Login(Object):
 
     login    = models.CharField(max_length=64, unique=True)
     password = models.CharField(max_length=128)
-    user     = models.ForeignKey(User, related_name='authorized_logins')
+    user     = models.ForeignKey('User', related_name='authorized_logins')
 
 class LoginEvents(events.Events):
     model = Login
     on_insert = on_update = ['login', 'user']
     on_delete = []
-
-class LoginWrapper(wrapper.WrapperClass):
-    login = cwrapper.ModelWrapper(Login)
