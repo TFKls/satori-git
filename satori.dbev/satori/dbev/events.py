@@ -18,6 +18,9 @@ class EventsRegistry(object):
     def register(self, model, events):
         if model in self._registry:
             raise AlreadyRegistered('The model %s is already registered' % model.__name__)
+        for parent in model._meta.parents.keys():
+            if parent not in self._registry:
+            	raise NotRegistered('Parent model %s is not registered' % parent.__name__)
         self._registry[model] = events(self)
         versions.Versions(model, events)
 
