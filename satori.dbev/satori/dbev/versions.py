@@ -251,7 +251,7 @@ class Versions:
             nfield._original = field
             fields[field.name] = nfield
 
-        fields['_version_id'] = models.IntegerField(primary_key=True)
+        fields['_version_id'] = models.AutoField(primary_key=True)
         fields['_version_from'] = models.DateTimeField()
         fields['_version_to'] = models.DateTimeField(null=True, blank=True)
         fields['_version_transaction'] = models.IntegerField()

@@ -61,24 +61,19 @@ def notifier_coroutine():
                         continue
                     event = Event(type='db')
                     event.action = notification.action
-                    event.model = notification.model
+                    event.model = rec.model
                     event.object = notification.object
                     event.transaction = notification.transaction
                     event.entry = notification.entry
                     event.user = notification.user
                     if notification.action == 'I' and events.on_insert:
-                        version = versions.objects.filter(_version_transaction=notification.transaction).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
                         for field in events.on_insert:
-                            event['new.'+field] = getattr(version, field)
+                            event['new.'+field] = rec[field]
                     if notification.action == 'U' and events.on_update:
-                        version = versions.objects.filter(_version_transaction=notification.transaction).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
-                        previous = versions.objects.filter(_version_transaction=notification.entry).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
                         for field in events.on_update:
-                            event['new.'+field] = getattr(version, field)
-                            event['old.'+field] = getattr(previous, field)
+                            event['new.'+field] = rec[field]
                     if notification.action == 'D' and events.on_delete:
-                        previous = versions.objects.filter(_version_transaction=notification.entry).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
                         for field in events.on_delete:
-                            event['old.'+field] = getattr(previous. field)
+                            event['old.'+field] = rec[field]
                     yield Send(event)
                     notification.delete()
