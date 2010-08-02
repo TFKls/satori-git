@@ -43,13 +43,13 @@ class UserField(models.IntegerField):
             not_col = lambda x : qn(notification._meta.get_field_by_name(x)[0].column)
             row = {}
             row[not_col('action')] = qv(action)
-            row[not_col('model')]  = qv(self._model._original._meta.app_label + '.' + self._model._original._meta.module_name)
+            row[not_col('table')]  = qv(self._model._original._meta.app_label + '.' + self._model._original._meta.module_name)
             row[not_col('object')] = qn(record)+'.'+qn(self._model._original._meta.pk.column)
             row[not_col('transaction')] = 'get_transaction_id()'
             row[not_col('entry')] = entry
             row[not_col('user')] = 'get_user_id()'
             where = {}
-            where[not_col('model')] = row[not_col('model')]
+            where[not_col('table')] = row[not_col('table')]
             where[not_col('object')] = row[not_col('object')]
             where[not_col('transaction')] = row[not_col('transaction')]
             upd = row.copy()
@@ -251,6 +251,7 @@ class Versions:
             nfield._original = field
             fields[field.name] = nfield
 
+        fields['_version_id'] = models.IntegerField(primary_key=True)
         fields['_version_from'] = models.DateTimeField()
         fields['_version_to'] = models.DateTimeField(null=True, blank=True)
         fields['_version_transaction'] = models.IntegerField()

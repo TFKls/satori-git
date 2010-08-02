@@ -12,6 +12,12 @@ def notifier(connection):
     slave.schedule(notifier_coroutine())
     slave.run()
 
+def row_to_dict(cursor, row)
+    res = {}
+    for i in range(len(row)):
+    	res[cursor.description[i][0]] = row[i]
+    return res
+
 def notifier_coroutine():
     qn = connection.ops.quote_name
     qv = lambda x : '\''+str(x)+'\''
@@ -32,9 +38,19 @@ def notifier_coroutine():
                 while con.notifies:
             		con.notifies.pop()
                 for notification in notifications.objects.all():
-                    model = notification.model.split('.')
-                    model = models.get_model(model[0], model[1])
-                    versions = models.get_model(model._meta.app_label, model._meta.module_name + "Versions")
+
+                    modeln = notification.table.split('.')
+                    model = models.get_model(modeln[0], modeln[1])
+                    obj = model.objects.get(id=notification.object)
+                    try:
+                        modeln = obj.model.split('.')
+                        model = models.get_model(modeln[0], modeln[1])
+                        obj = model.objects.get(id=notification.object)
+                    tab = model._meta.db_table + '__version_view'
+
+                    cursor.execute('SELECT * FROM ' + tab + '(' + str(notification.object) + ',' + str(notification.transaction) + ')')
+                    rec = row_to_dict(cursor, cursor.fetchone())
+
                     events = registry._registry[model]
                     if notification.action == 'D' and not notification.entry:
                         version = versions.objects.filter(_version_transaction=notification.transaction).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()

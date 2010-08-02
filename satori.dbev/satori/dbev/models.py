@@ -199,7 +199,7 @@ $$ LANGUAGE plpgsql;
 class Notification(models.Model):
     notification = 'satori'
     action      = models.CharField(max_length=1)
-    model       = models.CharField(max_length=50)
+    table       = models.CharField(max_length=50)
     object      = models.IntegerField()
     transaction = models.IntegerField()
     entry       = models.IntegerField(null=True, blank=True)
