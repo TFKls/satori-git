@@ -7,6 +7,7 @@ from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorNa
 from django.db import models
 from django.db.models.fields.related import add_lazy_relation
 from satori.ars import perf
+from satori.core.sec.tools import Token
 
 def resolve_model(self, model, rel_model):
     self.model = model
@@ -137,13 +138,13 @@ def generate_field_procedures(model, field):
     if field_type is None:
         return []
 
-    @Argument('token', type=str)
+    @Argument('token', type=Token)
     @Argument('self', type=model)
     @ReturnValue(type=(field_type, types.NoneType))
     def get(token, self):
         return getattr(self, field_name)
 
-    @Argument('token', type=str)
+    @Argument('token', type=Token)
     @Argument('self', type=model)
     @Argument('value', type=(field_type, types.NoneType))
     @ReturnValue(type=types.NoneType)
@@ -169,7 +170,7 @@ class FilterWrapper(wrapper.ProcedureWrapper):
         model = parent._model
 
         struct = DjangoStruct(model)
-        sorted = [('token', str, False)] + struct.fields
+        sorted = [('token', Token, False)] + struct.fields
         names = [x[0] for x in sorted]
 
         def filter(token, *args, **kwargs):
@@ -199,7 +200,7 @@ class GetStructWrapper(wrapper.ProcedureWrapper):
 
         struct = DjangoStruct(model)
 
-        @Argument('token', type=str)
+        @Argument('token', type=Token)
         @Argument('self', type=model)
         @ReturnValue(type=struct)
         def getStruct(token, self):
@@ -213,12 +214,13 @@ class GetStructWrapper(wrapper.ProcedureWrapper):
 
         super(GetStructWrapper, self).__init__(getStruct, parent)
 
+
 class CreateWrapper(wrapper.ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
         
         struct = DjangoStruct(model)
-        sorted = [('token', str, False)] + filter(lambda x: x[0] != 'id', struct.fields)
+        sorted = [('token', Token, False)] + filter(lambda x: x[0] != 'id', struct.fields)
         names = [x[0] for x in sorted]
 
         def create(token, *args, **kwargs):
@@ -254,7 +256,7 @@ class DeleteWrapper(wrapper.ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
 
-        @Argument('token', type=str)
+        @Argument('token', type=Token)
         @Argument('self', type=model)
         @ReturnValue(type=types.NoneType)
         def delete(token, self):
@@ -263,6 +265,60 @@ class DeleteWrapper(wrapper.ProcedureWrapper):
             perf.end('delete')
 
         super(DeleteWrapper, self).__init__(delete, parent)
+
+
+Attribute = wrapper.Struct('Attribute', (
+    ('name', str, False),
+    ('isBlob', bool, False),
+    ('value', str, False)
+))
+
+class OpenAttributeWrapper(wrapper.Wrapper):
+    def __init__(self, parent):
+        super(OpenAttributeWrapper, self).__init__('OpenAttribute', parent, ClassName)
+
+        model = parent._model
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @ReturnValue(type=Attribute)
+        def get(token, self, name):
+            pass
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @ReturnValue(type=wrapper.TypedList(Attribute))
+        def get_list(token, self):
+            pass
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @Argument('value', type=str)
+        @ReturnValue(type=types.NoneType)
+        def set_str(token, self, name, value):
+            pass
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('attributes', type=wrapper.TypedList(Attribute))
+        @ReturnValue(type=types.NoneType)
+        def set_list(token, self, attributes):
+            pass
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @ReturnValue(type=types.NoneType)
+        def delete(token, self, name):
+            pass
+
+        self._add_child(wrapper.ProcedureWrapper(get, self))
+        self._add_child(wrapper.ProcedureWrapper(get_list, self))
+        self._add_child(wrapper.ProcedureWrapper(set_str, self))
+        self._add_child(wrapper.ProcedureWrapper(set_list, self))
+        self._add_child(wrapper.ProcedureWrapper(delete, self))
 
 
 class ModelWrapper(wrapper.StaticWrapper):
@@ -277,4 +333,5 @@ class ModelWrapper(wrapper.StaticWrapper):
         self._add_child(GetStructWrapper(self))
         self._add_child(CreateWrapper(self))
         self._add_child(DeleteWrapper(self))
+        self._add_child(OpenAttributeWrapper(self))
 
