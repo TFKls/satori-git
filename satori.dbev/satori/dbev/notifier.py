@@ -12,7 +12,7 @@ def notifier(connection):
     slave.schedule(notifier_coroutine())
     slave.run()
 
-def row_to_dict(cursor, row)
+def row_to_dict(cursor, row):
     res = {}
     for i in range(len(row)):
     	res[cursor.description[i][0]] = row[i]
@@ -46,6 +46,8 @@ def notifier_coroutine():
                         modeln = obj.model.split('.')
                         model = models.get_model(modeln[0], modeln[1])
                         obj = model.objects.get(id=notification.object)
+                    except:
+                        pass
                     tab = model._meta.db_table + '__version_view'
 
                     cursor.execute('SELECT * FROM ' + tab + '(' + str(notification.object) + ',' + str(notification.transaction) + ')')
