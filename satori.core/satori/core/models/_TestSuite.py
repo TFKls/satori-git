@@ -17,6 +17,13 @@ class TestSuite(Object):
     description = models.TextField(blank=True, default="")
     tests       = models.ManyToManyField('Test', through='TestMapping')
     dispatcher  = models.CharField(max_length=128, choices=DISPATCHERS)
+    
+    def inherit_right(self, right):
+        right = str(right)
+        ret = list()
+        if right=='EDIT':
+            ret.append((self.problem,'EDIT'))
+        return ret
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)

@@ -32,18 +32,20 @@ def create(request):
         object.delete()
     for object in TestMapping.filter():
         object.delete()
-    paladin = User.create(fullname='Lech Duraj', login='paladin')
-    login = Login.create(user=paladin, login='paladin', password=crypt.crypt('paladin','paladin'))
-    User.create(fullname='Edgsger W. Dijkstra', login = 'dijkstra')
-    c2 = Contest.create(name = 'Kontest prywatny')
-    c3 = Contest.create(name = 'Kontest moderowany')
-    c4 = Contest.create(name = 'Kontest publiczny')
-    cc2 = Contestant.create(contest = c2, accepted = True)
-    RoleMapping.create(parent = cc2, child = paladin)
-    cc3 = Contestant.create(contest = c3, accepted = True)
-    RoleMapping.create(parent = cc3, child = paladin)
-    cc4 = Contestant.create(contest = c4, accepted = True)
-    RoleMapping.create(parent = cc4, child = paladin)
+    paladin = Security.register(login='paladin', fullname='Lech Duraj', password='paladin')
+    dijkstra = Security.register(fullname='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')
+    Privilege.create(object = Global.get_instance(), role = paladin, right='ADMIN')
+    token = Security.login(login='paladin', password='paladin')
+    
+    set_token(token)
+    c2 = Contest.create_contest(name = 'Kontest prywatny')
+    c3 = Contest.create_contest(name = 'Kontest moderowany')
+    c4 = Contest.create_contest(name = 'Kontest publiczny')
+    Privilege.create(object = c2, role = paladin, right='JOIN')
+    Privilege.create(object = c2, role = paladin, right='MANAGE')
+    cc2 = c2.join_contest()
+    
+    
     p1 = Problem.create(name = "SORT", description = "Zadanie o sortowaniu")
     p2 = Problem.create(name = "COW", description = "Zadanie o krowie")
     p3 = Problem.create(name = "WUWU", description = "Zadanie o wuwuzeli")
@@ -61,6 +63,7 @@ def create(request):
     for i in range(1,3):
         t = Test.create(owner = paladin, problem = p3, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania WUWU.")
         TestMapping.create(suite=ts3,test=t,order=i)
+    
     ProblemMapping.create(problem = p1, contest = c4, code = "A", title = "Harry Potter i sortownia smieci", default_test_suite=ts1)
     ProblemMapping.create(problem = p2, contest = c4, code = "B", title = "Harry Potter i krowa z Albanii", default_test_suite=ts2)
     ProblemMapping.create(problem = p3, contest = c4, code = "C", title = "Harry Potter i wuwuzele", default_test_suite=ts3)
