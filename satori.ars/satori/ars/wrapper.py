@@ -267,13 +267,16 @@ def wrap(ars_proc):
 
     arg_names = signature.positional
     arg_count = len(signature.positional)
+    arg_defaults = [None] * arg_count
     ars_arg_types = []
     for i in range(arg_count):
     	argument = signature.arguments[signature.positional[i]]
         param_type = extract_ars_type(argument.constraint)
         optional = param_type[1]
-        if argument.mode != ArgumentMode.REQUIRED:
+        if argument.mode == ArgumentMode.OPTIONAL:
         	optional = True
+        	arg_defaults[i] = argument.value
+
 
         ars_proc.addParameter(model.Parameter(name=Name(ParameterName(signature.positional[i])), type=param_type[0], optional=optional))
         ars_arg_types.append(param_type[0])
@@ -287,7 +290,7 @@ def wrap(ars_proc):
             if arg_names[i] in kwargs:
                 newargs[i] = ars_arg_types[i].convert_from_ars(kwargs[arg_names[i]])
             else:
-                newargs[i] = None
+                newargs[i] = arg_defaults[i]
 
         ret = implementation(*newargs)
 
