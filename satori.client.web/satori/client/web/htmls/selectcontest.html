@@ -1,26 +1,31 @@
 ﻿
 {% if widget.user %}
-<h2 class="subtitle">Contests currently signed to:</h2>
+<h2 class="subtitle">Registered:</h2>
 
 <table class="contest_table">
 {% for c, conuser, link in widget.participating %}
     <tr>
-        <td colspan="2" class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
+    <td class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
+    {% if widget.user %}
+        <td class="buttoncell">
+        {% if not conuser.accepted %}
+            <div class="noclickbutton">Pending</div>
+        {% endif %}
+        </td>
+    {% endif %}
     </tr>
 {% endfor %}
 </table>
 {% endif %}
 
-<h2 class="subtitle">Registration active:</h2>
+<h2 class="subtitle">Other contests:</h2>
 <table class="contest_table">
-{% for c, conuser, link in widget.mayjoin %}
+{% for c, mayjoin, link in widget.other %}
     <tr>
     <td class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
     {% if widget.user %}
         <td class="buttoncell">
-        {% if conuser %}
-            <div class="noclickbutton">Applied</div>
-        {% else %}  
+        {% if mayjoin %}
         <form action="process.join" method="post">
             <input type="hidden" name="user_id" value="{{ widget.user.id }}"/>
             <input type="hidden" name="contest_id" value="{{ c.id }}"/>
@@ -33,14 +38,4 @@
     </tr>
 {% endfor %}
 </table>
-
-
-<h2 class="subtitle">Other contests:</h2>
-{% for c, conuser, link in widget.other %}
-<table class="contest_table">
-    <tr>
-        <td colspan="2" class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
-    </tr>
-</table>
-{% endfor %}
 

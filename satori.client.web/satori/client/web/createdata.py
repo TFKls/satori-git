@@ -26,6 +26,12 @@ def create(request):
         object.delete()
     for object in RoleMapping.filter():
         object.delete()
+    for object in Test.filter():
+        object.delete()
+    for object in TestSuite.filter():
+        object.delete()
+    for object in TestMapping.filter():
+        object.delete()
     paladin = User.create(fullname='Lech Duraj', login='paladin')
     login = Login.create(user=paladin, login='paladin', password=crypt.crypt('paladin','paladin'))
     User.create(fullname='Edgsger W. Dijkstra', login = 'dijkstra')
@@ -41,18 +47,20 @@ def create(request):
     p1 = Problem.create(name = "SORT", description = "Zadanie o sortowaniu")
     p2 = Problem.create(name = "COW", description = "Zadanie o krowie")
     p3 = Problem.create(name = "WUWU", description = "Zadanie o wuwuzeli")
-    tp1 = []
     ts1 = TestSuite.create(owner = paladin, problem = p1, name = "Testy do SORT")
     for i in range(1,4):
-        tp1.append(Test.create(owner = paladin, problem = p1, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania SORT."))
+        t = Test.create(owner = paladin, problem = p1, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania SORT.")
+        TestMapping.create(suite=ts1,test=t,order=i)
     tp2 = []
     ts2 = TestSuite.create(owner = paladin, problem = p2, name = "Testy do COW")
     for i in range(1,2):
-        tp2.append(Test.create(owner = paladin, problem = p2, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania COW."))
+        t = Test.create(owner = paladin, problem = p2, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania COW.")
+        TestMapping.create(suite=ts2,test=t,order=i)
     tp3 = []
     ts3 = TestSuite.create(owner = paladin, problem = p3, name = "Testy do WUWU")
     for i in range(1,3):
-        tp3.append(Test.create(owner = paladin, problem = p3, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania WUWU."))
+        t = Test.create(owner = paladin, problem = p3, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania WUWU.")
+        TestMapping.create(suite=ts3,test=t,order=i)
     ProblemMapping.create(problem = p1, contest = c4, code = "A", title = "Harry Potter i sortownia smieci", default_test_suite=ts1)
     ProblemMapping.create(problem = p2, contest = c4, code = "B", title = "Harry Potter i krowa z Albanii", default_test_suite=ts2)
     ProblemMapping.create(problem = p3, contest = c4, code = "C", title = "Harry Potter i wuwuzele", default_test_suite=ts3)

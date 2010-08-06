@@ -28,7 +28,7 @@ def MyContestant(c):
     u = CurrentUser()
     if u and c:
 	try:
-	    cu = Contestant.filter(user = u, contest = c)[0]
+	    cu =c.find_contestant(user = u)
 	except:
 	    return None
 	else:

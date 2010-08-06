@@ -229,12 +229,11 @@ class SelectContestWidget(Widget):
             cu = MyContestant(c)
             d = DefaultLayout()
             d['contestid'] = [str(c.id)]
-            if cu and cu.accepted:
+            if cu:
                 self.participating.append([c,cu,GetLink(d,'')])
-            elif c.joining == 'Public' or c.joining == 'Moderated':
-                self.mayjoin.append([c,cu,GetLink(d,'')])
             else:
-                self.other.append([c,cu,GetLink(d,'')])
+                mayjoin = Allowed(c,"APPLY")
+                self.other.append([c,mayjoin,GetLink(d,'')])
 
 # base widget
 class MainWidget(Widget):
