@@ -34,7 +34,7 @@ from satori.ars.model import Type, NamedType, AtomicType, Boolean, Float, Int8, 
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, TypeAlias
 from satori.ars.model import Element, NamedElement, Parameter, Procedure, Contract
 from satori.ars.api import Server, Reader, Client
-from satori.ars.common import ContractMixin, TopologicalWriter
+from satori.ars.common import ContractMixin, TopologicalSortedWriter
 
 import perf
 
@@ -46,7 +46,7 @@ class ThriftBase(Object):
         self.style = style
 
 
-class ThriftWriter(TopologicalWriter, ThriftBase):
+class ThriftWriter(TopologicalSortedWriter, ThriftBase):
     """An ARS Writer spitting out thrift IDL.
     """
 
@@ -101,9 +101,22 @@ class ThriftWriter(TopologicalWriter, ThriftBase):
     def _write(self, item, target): # pylint: disable-msg=E0102
         raise ArgumentError("Unknown Element type '{0}'".format(item.__class__.__name__))
 
+    @DispatchOn(item=Element)
+    def _sortkey(self, item): # pylint: disable-msg=E0102
+        raise ArgumentError("Unknown Element type '{0}'".format(item.__class__.__name__))
+
     @DispatchOn(item=(AtomicType,ListType,MapType,SetType,Field,Parameter,Procedure))
     def _write(self, item, target): # pylint: disable-msg=E0102
         pass
+
+    @DispatchOn(item=(AtomicType,ListType,MapType,SetType,Field,Parameter,Procedure))
+    def _sortkey(self, item): # pylint: disable-msg=E0102
+        pass 
+
+    def _sortkey(self, item):
+        target = StringIO()
+        self._reference(item, target)
+        return str(target)
 
     @DispatchOn(item=TypeAlias)
     def _write(self, item, target): # pylint: disable-msg=E0102
@@ -558,16 +571,40 @@ class ThriftClient(ContractMixin, Client):
         self._protocol = TBinaryProtocol(self._transport) #TODO: find a better protocol?
 
         if bootstrap:
-        	self.contracts.clear()
+            self.contracts.clear()
             idl_proc = Procedure(return_type=String, name=Name(ClassName('Server'), MethodName('getIDL')))
             idl_cont = Contract(name=Name(ClassName('Server')))
             idl_cont.addProcedure(idl_proc)
             self.contracts.add(idl_cont)
             idl = ThriftProcessor(self.contracts).call(idl_proc, [], self._protocol, self._protocol)
-            idl_reader = ThriftReader()
-            idl_io = StringIO(idl)
-            idl_reader.readFrom(idl_io)
-            self.contracts = idl_reader.contracts
+            self.contracts.clear()
+            server = False
+            try:
+                import satori.core.setup
+                from satori.ars import wrapper
+                import satori.core.api
+                self.contracts.update(wrapper.generate_contracts().items)
+                idl_proc = Procedure(return_type=String, name=Name(ClassName('Server'), MethodName('getIDL')))
+                idl_cont = Contract(name=Name(ClassName('Server')))
+                idl_cont.addProcedure(idl_proc)
+                self.contracts.add(idl_cont)
+                writer = ThriftWriter()
+                writer.contracts.update(self.contracts)
+                idl2 = StringIO()
+                writer.writeTo(idl2)
+                idl2 = idl2.getvalue()
+                if idl2 != idl:
+                	print idl, idl2
+                	print "Server and client api mismatch. Downloading server version."
+                	server = True
+            except:
+                server = True
+            if server:
+                print "Server and client api mismatch. Using server version."
+                idl_reader = ThriftReader()
+                idl_io = StringIO(idl)
+                idl_reader.readFrom(idl_io)
+                self.contracts = idl_reader.contracts
 
         self._processor = ThriftProcessor(self.contracts)
         for contract in self.contracts:

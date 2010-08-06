@@ -10,5 +10,6 @@ setup(name='satori.ars',
         'setuptools',
         'pyparsing',
         'satori.objects',
+        'blist',
     ]
 )

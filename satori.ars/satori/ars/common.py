@@ -2,6 +2,7 @@
 """Common functionality for ARS providers.
 """
 
+from blist import sortedset
 
 from satori.objects import Object, Argument, DispatchOn
 from satori.ars.model import Element, ListType, MapType, SetType, TypeAlias
@@ -99,3 +100,47 @@ class TopologicalWriter(ContractMixin, Writer):
             self._write(item, target)
         for contract in self._contracts:
             _recwrite(contract)
+
+class TopologicalSortedWriter(TopologicalWriter):
+    """Abstract. A base for Writers which process the elements in topological order.
+    """
+
+    @Argument('changeContracts', fixed=True)
+    def __init__(self):
+        pass
+
+    def _sortkey(self, item):
+        """Abstract. Write a single Element to the target file.
+
+        Implementations can assume that all referenced Elements have already been written.
+        """
+        raise NotImplementedError()
+
+    def writeTo(self, target):
+        ready = sortedset()
+        deps = dict()
+        fol = dict()
+
+        def _recfind(item):
+            if item in deps:
+            	return
+            d = list(self._dependencies(item))
+            deps[item] = len(d)
+            fol[item] = []
+            if deps[item] == 0:
+            	ready.add((self._sortkey(item), item,))
+            for dependency in d:
+            	_recfind(dependency)
+            	fol[dependency].append(item)
+
+        for contract in self._contracts:
+        	_recfind(contract)
+
+        while len(ready) > 0:
+        	item = ready.pop(0)[1]
+        	self._write(item, target)
+        	for f in fol[item]:
+        		deps[f] = deps[f] - 1
+                if deps[f] == 0:
+                	ready.add((self._sortkey(f), f,))
+
