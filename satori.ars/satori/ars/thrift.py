@@ -34,9 +34,10 @@ from satori.ars.model import Type, NamedType, AtomicType, Boolean, Float, Int8, 
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, TypeAlias
 from satori.ars.model import Element, NamedElement, Parameter, Procedure, Contract
 from satori.ars.api import Server, Reader, Client
-from satori.ars.common import ContractMixin, TopologicalSortedWriter
+from satori.ars.common import ContractMixin, TopologicalWriter
 
 import perf
+import sys
 
 
 class ThriftBase(Object):
@@ -46,7 +47,7 @@ class ThriftBase(Object):
         self.style = style
 
 
-class ThriftWriter(TopologicalSortedWriter, ThriftBase):
+class ThriftWriter(TopologicalWriter, ThriftBase):
     """An ARS Writer spitting out thrift IDL.
     """
 
@@ -593,11 +594,14 @@ class ThriftClient(ContractMixin, Client):
                 idl2 = StringIO()
                 writer.writeTo(idl2)
                 idl2 = idl2.getvalue()
-                if idl2 != idl:
-                	print idl, idl2
+                first = "\n".join(sorted(idl.split("\n")))
+                second = "\n".join(sorted(idl2.split("\n")))
+                if first != second:
+                	print first, "\n--- ---\n", second
                 	print "Server and client api mismatch. Downloading server version."
                 	server = True
             except:
+                raise
                 server = True
             if server:
                 print "Server and client api mismatch. Using server version."
