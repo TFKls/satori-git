@@ -17,6 +17,16 @@ class Contest(Object):
         return self.name
     # TODO: add presentation options
 
+    def inherit_right(self, right):
+        right = str(right)
+        ret = list()
+        if right == 'VIEW' or right == 'OBSERVE' or right == 'VIEWTASKS':
+            ret.append((self,'MANAGE'))
+        if right == 'APPLY':
+            ret.append((self,'JOIN'))
+        return ret
+    
+
     
 class ContestEvents(events.Events):
     model = Contest

@@ -16,6 +16,14 @@ class Problem(Object):
     def __unicode__(self):
         return self.name+" ("+self.description+")"
 
+    def inherit_right(self, right):
+        right = str(right)
+        ret = list()
+        if right == 'EDIT':
+            pass
+        return ret
+    
+
 class ProblemEvents(events.Events):
     model = Problem
     on_insert = on_update = ['name']

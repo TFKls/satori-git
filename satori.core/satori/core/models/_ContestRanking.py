@@ -16,8 +16,16 @@ class ContestRanking(Object):
     aggregator  = models.CharField(max_length=128, choices=AGGREGATORS)
     pending     = models.BooleanField(default=True)
 
+    def inherit_right(self, right)
+        right = str(right)
+        ret = list()
+        if right == 'VIEW':
+            ret.append((self.contest,'MANAGE'))
+        return ret
+
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)
+
 
 
 class ContestRankingEvents(events.Events):

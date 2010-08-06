@@ -16,10 +16,18 @@ class ProblemMapping(Object):
     code        = models.CharField(max_length=10)
     title       = models.CharField(max_length=64)
     statement   = models.TextField(blank=True, default="")
-    default_test_suite = models.ForeignKey('TestSuite');
+    default_test_suite = models.ForeignKey('TestSuite')
     
     def __unicode__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
+
+    def inherit_right(self, right):
+        right = str(right)
+        ret = list()
+        if right == 'EDIT':
+            ret.append((self.contest,'MANAGE'))
+        return ret
+    
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'code'), ('contest', 'problem'))

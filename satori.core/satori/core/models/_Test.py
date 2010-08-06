@@ -16,6 +16,14 @@ class Test(Object):
     description = models.TextField(blank=True, default="")
     environment = models.CharField(max_length=50)
 
+    def inherit_right(self, right):
+        right = str(right)
+        ret = list()
+        if right == 'EDIT':
+            ret.append((self.problem,'EDIT'))
+        return ret
+    
+
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
 

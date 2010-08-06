@@ -13,9 +13,18 @@ class Submit(Object):
     owner       = models.ForeignKey('Contestant')
     problem     = models.ForeignKey('ProblemMapping')
     time        = models.DateTimeField(auto_now_add=True)
+    
+    def inherit_right(self, right)
+        right = str(right)
+        ret = list()
+        if right == 'VIEW':
+            ret.append((self.owner.contest,'OBSERVE'))
+        if right == 'OVERRIDE'
+            ret.append((self.owner.contest,'MANAGE'))
 
 class SubmitEvents(events.Events):
     model = Submit
     on_insert = on_update = ['owner', 'problem']
     on_delete = []
+
 
