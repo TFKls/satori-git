@@ -24,14 +24,14 @@ class Login(Object):
     def set_password(self, password):
         chars = string.letters + string.digits
         salt = random.choice(chars) + random.choice(chars)
-        password = crypt.crypt(password, salt)
+        self.password = crypt.crypt(password, salt)
 
     def check_password(self, password):
         return crypt.crypt(password, self.password) == self.password
 
     def change_password(self, old_password, new_password):
         if self.check_password(old_password):
-        	set_password(new_password)
+        	self.set_password(new_password)
 
 class LoginEvents(events.Events):
     model = Login
