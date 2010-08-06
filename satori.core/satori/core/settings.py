@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 """Django settings for satori.core.
 """
+import getpass
 
 
 DEBUG = False
@@ -13,7 +14,7 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_ENGINE = 'postgresql_psycopg2'
-DATABASE_NAME = 'satori'
+DATABASE_NAME = getpass.getuser()
 DATABASE_USER = ''
 DATABASE_PASSWORD = ''
 DATABASE_HOST = ''
