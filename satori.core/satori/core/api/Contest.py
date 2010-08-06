@@ -112,10 +112,4 @@ def submit_check(token, self, problem_mapping, content, filename):
 
 
 
-
-
-
-
-
-
 contest._fill_module(__name__)
