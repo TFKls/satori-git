@@ -5,7 +5,7 @@ import collections
 import types
 import sys
 import copy
-from satori.objects import Signature, Argument, ReturnValue, ConstraintDisjunction, TypeConstraint
+from satori.objects import Signature, Argument, ArgumentMode, ReturnValue, ConstraintDisjunction, TypeConstraint
 from satori.ars import model
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, ParameterName
 
@@ -269,8 +269,13 @@ def wrap(ars_proc):
     arg_count = len(signature.positional)
     ars_arg_types = []
     for i in range(arg_count):
-        param_type = extract_ars_type(signature.arguments[signature.positional[i]].constraint)
-        ars_proc.addParameter(model.Parameter(name=Name(ParameterName(signature.positional[i])), type=param_type[0], optional=param_type[1]))
+    	argument = signature.arguments[signature.positional[i]]
+        param_type = extract_ars_type(argument.constraint)
+        optional = param_type[1]
+        if argument.mode != ArgumentMode.REQUIRED:
+        	optional = True
+
+        ars_proc.addParameter(model.Parameter(name=Name(ParameterName(signature.positional[i])), type=param_type[0], optional=optional))
         ars_arg_types.append(param_type[0])
 
     def reimplementation(*args, **kwargs):
