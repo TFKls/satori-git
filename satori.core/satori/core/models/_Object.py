@@ -35,10 +35,10 @@ class Object(models.Model):
         return ret
     
     def demand_right(self, token, right):
-        from satori.core.sec import Token, RoleSet, CheckRights
-        checker = CheckRights()
-        roleset = RoleSet(user=Token.user)
-        cani = checker.check(roleset, self, str(right))
+        from satori.core.sec import Token, RoleSet, RightCheck
+        checker = RightCheck()
+        roleset = RoleSet(token=Token)
+        return checker(roleset, self, str(right))
         if not cani:
         	raise 'Insufficient rights'
 

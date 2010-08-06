@@ -3,7 +3,7 @@
 __all__ = (
     'Token',
     'RoleSet',
-    'CheckRights',
+    'RightCheck',
 )
 
 from datetime import datetime, timedelta
@@ -13,17 +13,16 @@ import hashlib
 import pickle
 import random
 import time
+import string
 import urlparse
 import urllib
 from django.core import cache
 from django.db import models
 from Crypto.Cipher import AES
-from openid.consumer import consumer
 from satori.objects import Object, Argument
 from satori.core.settings import SECRET_KEY
-from satori.core.models import Login, OpenIdentity
 from satori.core.sec.store import Store
-from satori.core.models import Role, User, Privilege, Object as modelObject
+from satori.core.models import Session, Role, User, Privilege, Object as modelObject
 from satori.ars import model, wrapper
 from satori.ars.naming import Name, ClassName
 
@@ -63,18 +62,18 @@ class Token(Object):
     @Argument('user', type=(User, None), default=None)
     @Argument('user_id', type=(str, None), default=None)
     @Argument('auth', type=(str, None), default=None)
-    @Argument('data', type=(str, None), default=None)
+    @Argument('data', default=None)
     @Argument('validity', type=(timedelta, None), default=None)
     @Argument('deadline', type=(datetime, None), default=None)
     def __init__(self, token, key, user, user_id, auth, data, validity, deadline):
         self.key = key or SECRET_KEY
-        self.data = ''
+        self.data_id = ''
         if token is not None:
             if token == '':
-                self.salt = str(random.randint(100000, 999999))
+            	self.salt = self._salt()
                 self.user_id = ''
                 self.auth = ''
-                self.data = ''
+                self.data_id = ''
                 self.deadline = datetime.fromtimestamp(0.0)
             else:
                 try:
@@ -87,7 +86,7 @@ class Token(Object):
                     self.salt = raw[0]
                     self.user_id = raw[1]
                     self.auth = raw[2]
-                    self.data = self._decode(raw[3])
+                    self.data_id = raw[3]
                     self.deadline = datetime.fromtimestamp(float(raw[4]))
                     if raw[5] != self._genhash():
                         raise TokenError(
@@ -108,13 +107,16 @@ class Token(Object):
                 "Too few arguments to create a token."
             )
         if token is None:
-            self.salt = str(random.randint(100000, 999999))
+            self.salt = self._salt()
         if user_id is not None:
             self.user_id = user_id
         if auth is not None:
             self.auth = auth
         if data is not None:
-        	self.data = data
+        	ses = Session()
+        	ses.data = pickle.dumps(data)
+        	ses.save()
+        	self.data_id = ses.id
         if deadline is not None:
             self.deadline = deadline
         if validity is not None:
@@ -133,11 +135,35 @@ class Token(Object):
         except:
             pass
         return None
+    def _get_data(self):
+        try:
+            return pickle.loads(Session.objects.get(id=self.data_id).data)
+        except:
+            pass
+        return None
+    def _set_data(self, data):
+        ses = None
+        try:
+            ses = Session.objects.get(id=self.data_id)
+        except:
+            ses = Session()
+        ses.data = pickle.dumps(data)
+        ses.save()
+        self.data_id = ses.id
+    data = property(_get_data, _set_data)
+
 
     def __str__(self):
         return self._encrypt('\n'.join([ str(x) for x in
-            self.salt, self.user_id, self.auth, self._encode(self.data), time.mktime(self.deadline.timetuple()), self._genhash()
+            self.salt, self.user_id, self.auth, self.data_id, time.mktime(self.deadline.timetuple()), self._genhash()
         ]))
+
+    def _salt(self):
+        chars = string.letters + string.digits
+        salt = ''
+        for i in range(8):
+        	salt += random.choice(chars)
+        return salt
 
     def _hash(self, data):
         h = hashlib.md5()
@@ -186,75 +212,9 @@ class Token(Object):
 
     def _genhash(self):
         return self._hash('\n'.join([ str(x) for x in
-            self.salt, self.user_id, self.auth, time.mktime(self.deadline.timetuple())
+            self.salt, self.user_id, self.auth, self.data_id, time.mktime(self.deadline.timetuple())
         ]))
 
-
-class AuthenticationError(Exception):
-    """Exception. Authentication failed.
-    """
-    pass
-
-@Argument('login', type=str)
-@Argument('password', type=str)
-def authenticateByLogin(login, password):
-    login = Login.objects.get(login=login)
-    if crypt.crypt(password, login.password) != login.password:
-        raise AuthenticationError(
-            "Incorrect password."
-        )
-    return str(Token(user=login.user, auth='login', validity=timedelta(hours=6)))
-
-@Argument('openid', type=str)
-@Argument('realm', type=str)
-@Argument('return_to', type=str)
-def authenticateByOpenIdStart(openid, realm, return_to):
-    session = { 'id' : 'random' }
-    store = Store()
-    callback = urlparse.urlparse(return_to)
-    qs = urlparse.parse_qs(callback.query)
-    qs['__satori__openid'] = [ session['id'] ]
-    query = []
-    for key, vlist in qs.items():
-        for value in vlist:
-        	query.append((key,value))
-    query = urllib.urlencode(query)
-    url = urlparse.urlunparse((callback.scheme, callback.netloc, callback.path, callback.params, query, callback.fragment))
-    consument = consumer.Consumer(session, store)
-    request = consument.begin(openid)
-    #request.addExtension
-    redirect = ''
-    html = ''
-    if request.shouldSendRedirect():
-        redirect = request.redirectURL(realm, url)
-    else:
-        form = request.formMarkup(realm, url, False, {'id': 'openid_form'})
-        html = '<html><body onload="document.getElementById(\'openid_form\').submit()">' + form + '</body></html>'
-    token = Token(user_id='', auth='openid', data=pickle.dumps(session), validity=timedelta(hours=1)) 
-    return {
-        'token' : str(token),
-        'redirect' : redirect,
-        'html' : html
-    }
-
-@Argument('token', type=Token)
-@Argument('args', type=dict)
-@Argument('return_to', type=str)
-def authenticateByOpenIdFinish(token, args, return_to):
-    if token.auth != 'openid':
-        return str(token)
-    session = pickle.loads(token.data)
-    store = Store()
-    consument = consumer.Consumer(session, store)
-    response = consument.complete(args, return_to)
-    if response.status != consumer.SUCCESS:
-        raise AuthenticationError(
-            "OpenID failed."
-        )
-    identity = OpenIdentity.objects.get(identity=response.identity_url)
-    token = Token(user=identity.user, auth='openid', validity=timedelta(hours=6)) 
-    print 'OpenIDFinish session', session
-    return str(token)
 
 class RoleSetError(Exception):
     """Exception. Roles structure is corrupted.
@@ -280,30 +240,36 @@ class RoleSet(Object):
             self._absorb[role] = abs
         return self._absorb[role]
 
-    @Argument('user', type=User)
-    def __init__(self, user):
+    @Argument('token', type=Token)
+    def __init__(self, token):
         self._ts = datetime.now()
         self._absorb = dict()
         try:
-            abs = self._dfs(user)
+            abs = self._dfs(token.user)
             roles = set()
-            for (role,a) in self._absorb.items():
-                if a == abs:
-                	roles.add(role)
+            
+            #for (role,a) in self._absorb.items():
+            #    if a == abs:
+            #    	roles.add(role)
             if abs:
             	self._absorb = dict()
             	self._dfs(abs)
                 for (role,a) in self._absorb.items():
                 	roles.add(role)
+            else:
+                for (role,a) in self._absorb.items():
+                	roles.add(role)
+
             self.roles = frozenset(roles)
         except RoleSetError:
             #TODO: log
             self.roles = frozenset()
 
-class CheckRights(Object):
+class RightCheck(Object):
     cache = {}
 
     def __init__(self):
+        self._ts = datetime.now()
         cache = {}
         pass
     
@@ -312,12 +278,12 @@ class CheckRights(Object):
     def _cache_set(self, role, object, right, value):
         #cache.set(self._cache_key(role, object, right), value)
         key = self._cache_key(role, object, right)
-        cache[key] = value
+        RightCheck.cache[key] = value
     def _cache_get(self, role, object, right):
         #return cache.get(self._cache_key(role, object, right), None)
         key = self._cache_key(role, object, right)
-        if key in cache:
-        	return cache[key]
+        if key in RightCheck.cache:
+        	return RightCheck.cache[key]
         return None
     
     def _single_check(self, role, object, right):
@@ -325,7 +291,11 @@ class CheckRights(Object):
         res = self._cache_get(role, object, right)
         if res is not None:
             return res
-        res = (Privilege.objects.filter(role = role, object = object, right = right).count() > 0)
+        for priv in Privilege.objects.filter(role = role, object = object, right = right):
+        	if priv.startOn is not None and priv.startOn > self._ts or priv.finishOn is not None and priv.finishOn < self._ts:
+        		continue
+        	res = True
+        	break
         if not res:
             self._cache_set(role, object, right, False)
             model = models.get_model(*object.model.split('.'))
@@ -341,7 +311,7 @@ class CheckRights(Object):
     @Argument('roleset', type=RoleSet)
     @Argument('object', type=modelObject)
     @Argument('right', type=str)
-    def check(self, roleset, object, right):
+    def __call__(self, roleset, object, right):
         ret = False
         for role in roleset.roles:
         	ret = ret or self._single_check(role, object, right)

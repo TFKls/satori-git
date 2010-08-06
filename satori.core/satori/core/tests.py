@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 # vim:ts=4:sts=4:sw=4:expandtab
 """Test suite for satori.core.
 """
@@ -14,6 +15,7 @@ from satori.core.models import Login
 from satori.ars import django_
 from satori.ars.naming import Name, ClassName, MethodName
 import satori.core.sec
+from satori.core.api import Security
 
 class TestToken(unittest.TestCase):
     """Test token manipulation.
@@ -27,7 +29,7 @@ class TestToken(unittest.TestCase):
     def testToken(self):
         """Test scenario: create token by parameters, and by string.
         """
-        tok1 = Token(user_id='test_user', data='\n'.join(['test', 'data']), auth='test_auth', validity=timedelta(days=1))
+        tok1 = Token(user_id='test_user', data={'test' : 'data'}, auth='test_auth', validity=timedelta(days=1))
 
         print 'Token:    ', tok1
         print 'User:     ', tok1.user_id
@@ -63,23 +65,23 @@ class TestLogin(unittest.TestCase):
     """
 
     def setUp(self):
-        #u = User(login='mammoth', fullname='Grzegorz Gutowski')
-        #u.save()
+        u = User.objects.filter(login='mammoth')
+        if len(u) == 0:
+            u = User(login='mammoth', fullname='Grzegorz Gutowski')
+            u.save()
         u = User.objects.get(login='mammoth')
-        #l = Login(login='mammoth', password=crypt.crypt('mammoth','aaa'), user=u)
-        #l.save()
+        l = Login.objects.filter(login='mammoth')
+        if len(l) == 0:
+            l = Login(login='mammoth', password=crypt.crypt('mammoth','aaa'), user=u)
+            l.save()
         l = Login.objects.get(login='mammoth')
-        p = Privilege(object=u, role=u, right='ADMIN')
-        p.save()
-        django_.generate_contracts()
-        satori.core.sec.generate_contracts(django_.contract_list)
+        p = Privilege.objects.filter(object=u, role=u, right='ADMIN')
+        if len(p) == 0:
+            p = Privilege(object=u, role=u, right='ADMIN')
+            p.save()
 
     def testLogin(self):
-        login = satori.core.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('login'))]
-        whoami = satori.core.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('whoami'))]
-        cani = satori.core.sec.contract_list[0].procedures.names[Name(ClassName('Security'))+Name(MethodName('cani'))]
-
-        tok = Token(login.implementation('mammoth', 'mammoth'))
+        tok = Security.Security__login(login='mammoth', password='mammoth', namespace='')
         print 'Token:    ', tok
         print 'User:     ', tok.user
         print 'Auth:     ', tok.auth
@@ -88,9 +90,9 @@ class TestLogin(unittest.TestCase):
         print 'Deadline: ', tok.deadline
         print 'Validity: ', tok.validity
         print 'Salt:     ', tok.salt
-        id = whoami.implementation(str(tok))
-        print 'User.login', User.objects.get(id=id).login
-        print 'VIEW?', cani.implementation(str(tok), id, 'VIEW')
+        user = Security.Security__whoami(token=tok)
+        print 'User.login', user.login
+        print 'VIEW?', Security.Security__right_have(token=tok, object=user, right='VIEW')
 
 
 
