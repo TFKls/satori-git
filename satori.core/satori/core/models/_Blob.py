@@ -33,7 +33,7 @@ class BlobField(models.Field):
             return str(value)
         raise NotImplementedError
 
-    def get_db_prep_save(self, value, _connection):            # pylint: disable-msg=C0103
+    def get_db_prep_save(self, value, connection):            # pylint: disable-msg=C0103
         """Convert a value from Python to database format.
         """
         if value is None:
