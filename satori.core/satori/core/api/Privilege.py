@@ -11,9 +11,12 @@ privilege = ModelWrapper(Privilege)
 @Argument('token', type=Token)
 @Argument('role', type=Role)
 @Argument('right', type=str)
+@ReturnValue(type=Privilege)
 def create_global(token, role, right):
     globe = Global.get_instance()
-    Privilege(role=role, object=globe, right=right).save()
+    p = Privilege(role=role, object=globe, right=right)
+    p.save()
+    return p
 
 @privilege.create_global.can
 def create_global_check(token, role, right):
