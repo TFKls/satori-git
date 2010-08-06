@@ -28,7 +28,7 @@ class Global(Object):
         right = str(right)
         ret = list()
         if right != 'ADMIN':
-        	ret.append(self, 'ADMIN')
+        	ret.append((self, 'ADMIN'))
         return ret
 
 class GlobalEvents(events.Events):

@@ -27,11 +27,11 @@ class Object(models.Model):
         right = str(right)
         ret = list()
         if right == 'VIEW':
-        	ret.append((self,'MODERATE'))
+        	ret.append((self, 'MODERATE'))
         if right == 'MODERATE':
-        	ret.append((self,'EDIT'))
+        	ret.append((self, 'EDIT'))
         if right != 'ADMIN':
-        	  ret.append((self,'ADMIN'))
+        	  ret.append((self, 'ADMIN'))
         return ret
     
     def demand_right(self, token, right):
