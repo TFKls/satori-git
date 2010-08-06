@@ -32,6 +32,9 @@ def create_contestant(token, self, user_list):
     RoleMapping(parent = self.contestant_role, child = c).save()
     for user in user_list:
         RoleMapping(parent = c, child = user).save()
+@contest.create_contestant.can
+def create_contestant_check(token, self, user_list):
+    return self.demand_right(token, 'MANAGE')
 
 @contest.method
 @Argument('token', type=Token)
@@ -48,7 +51,7 @@ def create_contest(token, name):
     p.save()
     return c
 @contest.create_contest.can
-def create_contest_check(token, self, user):
+def create_contest_check(token, name):
     return Global.get_instance().demand_right(token, 'MANAGE_CONTESTS')
 
 @contest.method
