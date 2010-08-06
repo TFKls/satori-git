@@ -12,7 +12,7 @@ class RoleMapping(Object):
 
     parent     = models.ForeignKey('Role', related_name='childmap')
     child      = models.ForeignKey('Role', related_name='parentmap')
-    title      = models.CharField(max_length=64)
+    #title      = models.CharField(max_length=64)
     
     def __unicode__(self):
         return self.title+ " ("+self.child.name+","+self.parent.name+")"

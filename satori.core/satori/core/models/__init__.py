@@ -8,6 +8,7 @@ from satori.core.models._Blob import Blob
 from satori.core.models._Contestant import Contestant
 from satori.core.models._Contest import Contest
 from satori.core.models._ContestRanking import ContestRanking
+from satori.core.models._Global import Global
 from satori.core.models._Login import Login
 from satori.core.models._Message import Message
 from satori.core.models._MessageGlobal import MessageGlobal

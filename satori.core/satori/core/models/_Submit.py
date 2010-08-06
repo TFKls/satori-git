@@ -10,7 +10,7 @@ class Submit(Object):
     __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_submit')
 
-    owner       = models.ForeignKey('Contestant')
+    contestant  = models.ForeignKey('Contestant')
     problem     = models.ForeignKey('ProblemMapping')
     time        = models.DateTimeField(auto_now_add=True)
     
@@ -18,9 +18,9 @@ class Submit(Object):
         right = str(right)
         ret = list()
         if right == 'VIEW':
-            ret.append((self.owner.contest,'OBSERVE'))
+            ret.append((self.contestant.contest,'OBSERVE'))
         if right == 'OVERRIDE':
-            ret.append((self.owner.contest,'MANAGE'))
+            ret.append((self.contestant.contest,'MANAGE'))
 
 class SubmitEvents(events.Events):
     model = Submit
