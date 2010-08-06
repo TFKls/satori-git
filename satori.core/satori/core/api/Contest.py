@@ -3,7 +3,7 @@
 from satori.objects import Argument, ReturnValue
 from satori.ars.wrapper import TypedList
 from satori.core.cwrapper import ModelWrapper
-from satori.core.models import Contest, Contestant, User, ProblemMapping, Submit, Global
+from satori.core.models import Contest, Contestant, User, ProblemMapping, Submit, Global, Role, RoleMapping
 from satori.core.sec import Token
 
 contest = ModelWrapper(Contest)
