@@ -9,11 +9,12 @@ class Session(models.Model):
     __module__ = "satori.core.models"
 
     data     = BlobField()
-    deleteOn = models.DateTimeField(null=True)
+    deleteOn = models.DateTimeField()
 
     HOURS = 6
 
     def save(self, *args, **kwargs):
-        deleteOn = datetime.now() + timedelta(hours = Session.HOURS)
-        super(Session, self).save(*args, **kwargs)
+        self.deleteOn = datetime.now() + timedelta(hours = Session.HOURS)
+        ret = super(Session, self).save(*args, **kwargs)
         Session.objects.filter(deleteOn__lt = datetime.now()).delete()
+        return ret
