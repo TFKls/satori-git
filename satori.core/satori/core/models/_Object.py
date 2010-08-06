@@ -37,7 +37,7 @@ class Object(models.Model):
     def demand_right(self, token, right):
         from satori.core.sec import Token, RoleSet, RightCheck
         checker = RightCheck()
-        roleset = RoleSet(token=Token)
+        roleset = RoleSet(token=token)
         return checker(roleset, self, str(right))
         if not cani:
         	raise 'Insufficient rights'
