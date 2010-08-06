@@ -2,6 +2,9 @@
 """
 Security and authorization procedures.
 """
+
+from types import NoneType
+
 from satori.core.sec.tools import CheckRights, RoleSet, Token, authenticateByLogin, authenticateByOpenIdStart, authenticateByOpenIdFinish
 from satori.core.sec.store import Store
 
@@ -55,6 +58,28 @@ def openIdStart(openid, realm, return_to):
 @ReturnValue(type=str)
 def openIdFinish(token, args, return_to):
     return authenticateByOpenIdFinish(token, args, return_to)
+
+@security.method
+@Argument('login', type=str)
+@ReturnValue(type=bool)
+def check_login(login):
+    return len(User.objects.filter(login=login)) == 0
+
+@security.method
+@Argument('login', type=str)
+@Argument('password', type=str)
+@Argument('fullname', type=str)
+@ReturnValue(type=NoneType)
+def register(login, password, fullname):
+    user = User()
+    user.login = login
+    user.fullname = fullname
+    user.save()
+    auth = Login()
+    auth.login = login
+    auth.user = user
+    auth.password = crypt.crypt(password, str(random.randint(100000, 999999)))
+    auth.save()
 
 security._fill_module(__name__)
 
