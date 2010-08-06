@@ -69,7 +69,7 @@ def check_login(login):
 @Argument('login', type=str)
 @Argument('password', type=str)
 @Argument('fullname', type=str)
-@ReturnValue(type=NoneType)
+@ReturnValue(type=User)
 def register(login, password, fullname):
     user = User()
     user.login = login
@@ -80,6 +80,7 @@ def register(login, password, fullname):
     auth.user = user
     auth.password = crypt.crypt(password, str(random.randint(100000, 999999)))
     auth.save()
+    return user
 
 security._fill_module(__name__)
 
