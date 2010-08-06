@@ -12,7 +12,7 @@ class User(Role):
 
     login      = models.CharField(max_length = 64, unique=True)
     fullname   = models.CharField(max_length = 64)
-    def __unicode__(self):
+    def __str__(self):
         return self.fullname
 
     # add validation

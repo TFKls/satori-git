@@ -7,12 +7,14 @@ from satori.core.models._Object import Object
 class Privilege(Object):
     """Model. Represents single right on object granted to the role.
     """
-    __module__ = "satori.core.models"
+    __module__    = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_privilege')
 
-    role    = models.ForeignKey('Role', related_name='privileges')
-    object  = models.ForeignKey('Object', related_name='privileged')
-    right   = models.CharField(max_length=64)
+    role     = models.ForeignKey('Role', related_name='privileges')
+    object   = models.ForeignKey('Object', related_name='privileged')
+    right    = models.CharField(max_length=64)
+    startOn  = models.DateTimeField(null=True)
+    finishOn = models.DateTimeField(null=True)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('role', 'object', 'right'),)

@@ -15,7 +15,7 @@ class TestMapping(Object):
     test        = models.ForeignKey('Test')
     order       = models.IntegerField()
     
-    def __unicode__(self):
+    def __str__(self):
         return self.order+": ("+self.suite.name+","+self.test.name+")"
 
     class Meta:                                                # pylint: disable-msg=C0111

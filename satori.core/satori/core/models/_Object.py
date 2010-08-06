@@ -10,10 +10,10 @@ class Object(models.Model):
 
     model = models.CharField(max_length=64, editable=False)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         if not self.model:
         	  self.model = self._meta.app_label + '.' + self._meta.object_name
-        super(Object, self).save()
+        super(Object, self).save(*args, **kwargs)
     
     @classmethod
     def ars_type(cls):

@@ -12,7 +12,7 @@ class MessageGlobal(Message):
 
     mainscreenonly = models.BooleanField()
     
-    def __unicode__(self):
+    def __str__(self):
         return self.topic+" (Global)"
 
 class MessageGlobalEvents(events.Events):

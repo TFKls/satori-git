@@ -12,7 +12,7 @@ class MessageContest(Message):
     
     contest = models.ForeignKey('Contest')
     
-    def __unicode__(self):
+    def __str__(self):
         return self.topic+" ("+self.contest.name+")"
 
 class MessageContestEvents(events.Events):

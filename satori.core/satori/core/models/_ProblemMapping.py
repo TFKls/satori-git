@@ -18,7 +18,7 @@ class ProblemMapping(Object):
     statement   = models.TextField(blank=True, default="")
     default_test_suite = models.ForeignKey('TestSuite')
     
-    def __unicode__(self):
+    def __str__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
 
     def inherit_right(self, right):

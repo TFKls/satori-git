@@ -14,7 +14,7 @@ class Contest(Object):
     problems    = models.ManyToManyField('Problem', through='ProblemMapping')
     contestant_role = models.ForeignKey('Role')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
     # TODO: add presentation options
 

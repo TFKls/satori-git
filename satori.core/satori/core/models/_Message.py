@@ -14,7 +14,7 @@ class Message(Object):
     content     = models.TextField(blank=True, default="")
     time        = models.DateTimeField(auto_now_add=True)
     
-    def __unicode__(self):
+    def __str__(self):
         return self.topic
 
 class MessageEvents(events.Events):

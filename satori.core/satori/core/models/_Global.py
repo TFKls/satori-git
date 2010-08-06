@@ -11,9 +11,9 @@ class Global(Object):
 
     guardian = models.IntegerField(unique=True)
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.guardian = 1
-        super(Object, self).save()
+        super(Global, self).save(*args, **kwargs)
 
     @staticmethod
     def get_instance():

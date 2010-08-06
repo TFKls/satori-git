@@ -14,7 +14,7 @@ class RoleMapping(Object):
     child      = models.ForeignKey('Role', related_name='parentmap')
     #title      = models.CharField(max_length=64)
     
-    def __unicode__(self):
+    def __str__(self):
         return self.title+ " ("+self.child.name+","+self.parent.name+")"
 
     class Meta:                                                # pylint: disable-msg=C0111
