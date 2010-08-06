@@ -34,7 +34,7 @@ def create(request):
         object.delete()
     paladin = Security.register(login='paladin', fullname='Lech Duraj', password='paladin')
     dijkstra = Security.register(fullname='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')
-    Privilege.create(object = Global.get_instance(), role = paladin, right='ADMIN')
+    Privilege.create_global(role = paladin, right='ADMIN')
     token = Security.login(login='paladin', password='paladin')
     
     set_token(token)
