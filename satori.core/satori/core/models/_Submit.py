@@ -14,12 +14,12 @@ class Submit(Object):
     problem     = models.ForeignKey('ProblemMapping')
     time        = models.DateTimeField(auto_now_add=True)
     
-    def inherit_right(self, right)
+    def inherit_right(self, right):
         right = str(right)
         ret = list()
         if right == 'VIEW':
             ret.append((self.owner.contest,'OBSERVE'))
-        if right == 'OVERRIDE'
+        if right == 'OVERRIDE':
             ret.append((self.owner.contest,'MANAGE'))
 
 class SubmitEvents(events.Events):

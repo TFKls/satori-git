@@ -16,7 +16,7 @@ class ContestRanking(Object):
     aggregator  = models.CharField(max_length=128, choices=AGGREGATORS)
     pending     = models.BooleanField(default=True)
 
-    def inherit_right(self, right)
+    def inherit_right(self, right):
         right = str(right)
         ret = list()
         if right == 'VIEW':
