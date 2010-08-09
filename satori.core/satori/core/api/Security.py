@@ -13,7 +13,7 @@ from satori.objects import DispatchOn, Argument, ReturnValue
 from satori.core.models import Object, User, Login
 from satori.ars.wrapper import Struct, StaticWrapper, TypedMap
 
-def _salt(self):
+def _salt():
     chars = string.letters + string.digits
     salt = ''
     for i in range(8):
