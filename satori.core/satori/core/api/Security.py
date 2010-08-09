@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from types import NoneType
 import string
 import random
+import urlparse
+import urllib
 
 from satori.core.sec.tools import RightCheck, RoleSet, Token
 from satori.core.sec.store import Store
