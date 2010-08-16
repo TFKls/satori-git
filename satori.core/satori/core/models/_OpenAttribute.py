@@ -23,8 +23,8 @@ class OpenAttribute(models.Model):
     name        = models.CharField(max_length=50)
 
     oatype       = models.IntegerField(choices=OATYPES)
-    string_value = models.TextField()
-    blob_hash    = models.ForeignKey('Blob')
+    string_value = models.TextField(null=True)
+    blob_hash    = models.ForeignKey('Blob', null=True)
 
     def save(self, *args, **kwargs):
         str = self.string_value
@@ -40,6 +40,6 @@ class OpenAttribute(models.Model):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('object', 'name'),)
 
-class OpenAttributeEvents(events.Events):
-    model = OpenAttribute
-    on_insert = on_update = on_delete = []
+#class OpenAttributeEvents(events.Events):
+#    model = OpenAttribute
+#    on_insert = on_update = on_delete = []

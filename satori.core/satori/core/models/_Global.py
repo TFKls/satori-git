@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import events
 from satori.core.models._Object import Object
+from satori.core.models._Role import Role
 
 class Global(Object):
     """Model. Special Global object for privileges.
@@ -11,8 +12,17 @@ class Global(Object):
 
     guardian = models.IntegerField(unique=True)
 
+    anonymous = models.ForeignKey('Role', related_name='global_anonymous+')
+    authenticated = models.ForeignKey('Role', related_name='global_authenticated+')
+
     def save(self, *args, **kwargs):
         self.guardian = 1
+        anonymous = Role(name='ANONYMOUS', absorbing=False)
+        anonymous.save()
+        self.anonymous = anonymous
+        authenticated = Role(name='AUTHENTICATED', absorbing=False)
+        authenticated.save()
+        self.authenticated = authenticated
         super(Global, self).save(*args, **kwargs)
 
     @staticmethod

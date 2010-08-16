@@ -22,7 +22,7 @@ from Crypto.Cipher import AES
 from satori.objects import Object, Argument
 from satori.core.settings import SECRET_KEY
 from satori.core.sec.store import Store
-from satori.core.models import Session, Role, User, Privilege, Object as modelObject
+from satori.core.models import Session, Role, User, Privilege, Global, Object as modelObject
 from satori.ars import model, wrapper
 from satori.ars.naming import Name, ClassName
 
@@ -244,26 +244,23 @@ class RoleSet(Object):
     def __init__(self, token):
         self._ts = datetime.now()
         self._absorb = dict()
-        try:
-            abs = self._dfs(token.user)
-            roles = set()
+        globe = Global.get_instance()
+        roles = set()
+        roles.add(globe.anonymous)
+        if token.user != None and token.valid: 
+        	roles.add(globe.authenticated)
+            try:
+                abs = self._dfs(token.user)
             
-            #for (role,a) in self._absorb.items():
-            #    if a == abs:
-            #    	roles.add(role)
-            if abs:
-            	self._absorb = dict()
-            	self._dfs(abs)
+                if abs:
+                	roles.clear()
+                    self._absorb = dict()
+                    self._dfs(abs)
                 for (role,a) in self._absorb.items():
-                	roles.add(role)
-            else:
-                for (role,a) in self._absorb.items():
-                	roles.add(role)
-
-            self.roles = frozenset(roles)
-        except RoleSetError:
-            #TODO: log
-            self.roles = frozenset()
+                    roles.add(role)
+            except:
+                pass
+        self.roles = frozenset(roles)
 
 class RightCheck(Object):
     cache = {}
