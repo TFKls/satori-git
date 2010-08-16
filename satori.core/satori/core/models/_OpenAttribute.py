@@ -2,7 +2,12 @@
 
 from django.db import models
 from satori.dbev import events
-from satori.core.models.modules import OATYPES
+
+OATYPES = (
+    ('string', 'String Attribute'),
+    ('opaque', 'Opaque Attribute'),
+    ('blob', 'Blob Attribute'),
+)
 
 class OpenAttribute(models.Model):
     """Model. Base for all kinds of open attributes.
