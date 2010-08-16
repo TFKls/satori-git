@@ -16,6 +16,9 @@ class OpenAttribute(models.Model):
     """
     __module__ = "satori.core.models"
 
+    OATYPES_STRING = OATYPES_STRING
+    OATYPES_BLOB = OATYPES_BLOB
+
     object      = models.ForeignKey('Object', related_name='attributes')
     name        = models.CharField(max_length=50)
 
