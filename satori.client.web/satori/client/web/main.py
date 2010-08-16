@@ -20,8 +20,7 @@ def load(request,argstr,path = ""):
 def loadPOST(request,argstr=""):
 	Session.request = request
 	set_token(request.COOKIES.get('satori_token', ''))
-	redir = process(argstr,request)
-	res = HttpResponseRedirect(redir)
+	res = process(argstr,request)
 	if request.COOKIES.get('satori_token', '') != get_token():
 	    res.set_cookie('satori_token', get_token())
 	return res

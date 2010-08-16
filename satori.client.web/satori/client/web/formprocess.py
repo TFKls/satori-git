@@ -1,8 +1,11 @@
-﻿from URLDictionary import *
+﻿# vim:ts=4:sts=4:sw=4:expandtab
+from URLDictionary import *
 from queries import *
 from django.db import models
 #from satori.core.models import *
 from satori.client.common import *
+from django.http import HttpResponseRedirect
+from django.http import HttpResponse
 
 def LoginRequest(request):
     postvars = request.POST
@@ -16,6 +19,25 @@ def LoginRequest(request):
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
 
     return GetLink(d,postvars['path'])
+
+def OpenIdRequest(request):
+    postvars = request.POST
+    d = ParseURL(postvars['back_to'])
+    lw_path = postvars['lw_path']
+    openid = postvars['openid']
+    finisher = GetLink(DefaultLayout(),'')
+    try:
+        res = Security.openid_start(openid=openid, realm='satori.tcs.uj.edu.pl', return_to=finisher)
+        set_token(res['token'])
+        if res['html']:
+        	ret = HttpResponse()
+        	ret.write(res['html'])
+        	return ret;
+        else:
+            return HttpResponseRedirect(res['redirect'])
+    except:
+        raise
+        follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
 
 def LogoutRequest(request):
     set_token('')
@@ -76,7 +98,10 @@ def EditMessageRequest(request):
         return GetLink(d,'')
 
 
-allreqs = {'login' : LoginRequest, 'logout' : LogoutRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
+allreqs = {'login' : LoginRequest, 'openid' : OpenIdRequest, 'logout' : LogoutRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
 
 def process(argstr,request):
-    return allreqs[argstr](request)
+    res = allreqs[argstr](request)
+    if isinstance(res, HttpResponse):
+    	return res
+    return HttpResponseRedirect(res)

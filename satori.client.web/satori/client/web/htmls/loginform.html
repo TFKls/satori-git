@@ -6,7 +6,20 @@
 <div class="messagecenter">
 <span class="message">Pass:</span> <input type="password" class="smallinputbox" name="password"/>
 </div>
-<div class="messagecenter">
+<div class="messagecenter">
+    <input type="submit" value="Sign in" class="button"/>
+</div>
+
+<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+<input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
+<input type="hidden" name="path" value="{{widget.path}}"/>
+</form>
+
+<form method="post" action="process.openid">
+<div class="messagecenter">
+<span class="message">Login:</span><input type="text" class="smallinputbox" name="openid"/>
+</div>
+<div class="messagecenter">
     <input type="submit" value="Sign in" class="button"/>
 </div>
 
