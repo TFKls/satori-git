@@ -247,7 +247,7 @@ class Structure(NamedType):
         if self.needs_conversion():
         	new_value = {}
             for field in self.fields.items:
-            	field_name = NaminStyle.PYTHON.format(field.name)
+            	field_name = NamingStyle.PYTHON.format(field.name)
                 if field_name in value:
                     if field.type.needs_conversion():
                     	new_value[field_name] = field.type.convert_to_ars(value[field_name])
