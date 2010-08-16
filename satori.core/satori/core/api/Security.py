@@ -10,6 +10,8 @@ import random
 import urlparse
 import urllib
 
+from openid.consumer import consumer
+
 from satori.core.sec.tools import RightCheck, RoleSet, Token
 from satori.core.sec.store import Store
 
