@@ -3,10 +3,12 @@
 from django.db import models
 from satori.dbev import events
 
+OATYPES_STRING = 1
+OATYPES_BLOB = 2
+
 OATYPES = (
-    ('string', 'String Attribute'),
-    ('opaque', 'Opaque Attribute'),
-    ('blob', 'Blob Attribute'),
+    (OATYPES_STRING, 'String Attribute'),
+    (OATYPES_BLOB, 'Blob Attribute'),
 )
 
 class OpenAttribute(models.Model):
@@ -17,23 +19,18 @@ class OpenAttribute(models.Model):
     object      = models.ForeignKey('Object', related_name='attributes')
     name        = models.CharField(max_length=50)
 
-    oatype       = models.CharField(max_length=16, choices=OATYPES)
-    string_value = models.CharField(max_length=50)
-    opaque_value = models.TextField()
+    oatype       = models.IntegerField(choices=OATYPES)
+    string_value = models.TextField()
     blob_hash    = models.ForeignKey('Blob')
 
     def save(self, *args, **kwargs):
         str = self.string_value
-        opa = self.opaque_value
         blo = self.blob_hash
         self.string_value = None
-        self.opaque_value = None
         self.blob_hash = None
-        if self.oatype == 'string':
+        if self.oatype == OATYPES_STRING:
         	self.string_value = str
-        if self.oatype == 'opaque':
-        	self.opaque_value = opa
-        if self.oatype == 'blob':
+        if self.oatype == OATYPES_BLOB:
         	self.blob_hash = blo
         super(OpenAttribute, self).save(*args, **kwargs)
 
