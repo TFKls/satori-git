@@ -7,3 +7,8 @@ DISPATCHERS = (
 AGGREGATORS = (
     ('fully.qualified.Name','description'),
 )
+OATYPES = (
+    ('string', 'String Attribute'),
+    ('opaque', 'Opaque Attribute'),
+    ('blob', 'Blob Attribute'),
+)
