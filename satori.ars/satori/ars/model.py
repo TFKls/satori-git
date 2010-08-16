@@ -240,6 +240,39 @@ class Structure(NamedType):
     def __str__(self):
         return 'Structue:' + NamingStyle.DEFAULT.format(self.name)
 
+    def needs_conversion(self):
+        return any(field.type.needs_conversion() for field in self.fields.items)
+
+    def convert_to_ars(self, value):
+        if self.needs_conversion():
+        	new_value = {}
+            for field in self.fields.items:
+            	field_name = NaminStyle.PYTHON.format(field.name)
+                if field_name in value:
+                    if field.type.needs_conversion():
+                    	new_value[field_name] = field.type.convert_to_ars(value[field_name])
+                    else:
+                    	new_value[field_name] = value[field_name]
+
+            return new_value
+        else:
+        	return value
+
+    def convert_from_ars(self, value):
+        if self.needs_conversion():
+        	new_value = {}
+            for field in self.fields.items:
+            	field_name = NaminStyle.PYTHON.format(field.name)
+                if field_name in value:
+                    if field.type.needs_conversion():
+                    	new_value[field_name] = field.type.convert_from_ars(value[field_name])
+                    else:
+                    	new_value[field_name] = value[field_name]
+
+            return new_value
+        else:
+        	return value
+
 
 class Parameter(NamedElement):
 
