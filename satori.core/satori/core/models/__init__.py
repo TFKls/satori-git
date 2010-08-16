@@ -3,7 +3,7 @@
 """
 
 from satori.core.models._Association import Association
-from satori.core.models._BlobAttribute import BlobAttribute
+from satori.core.models._AttributeGroup import AttributeGroup
 from satori.core.models._Blob import Blob
 from satori.core.models._Contestant import Contestant
 from satori.core.models._Contest import Contest
@@ -15,7 +15,6 @@ from satori.core.models._MessageGlobal import MessageGlobal
 from satori.core.models._MessageContest import MessageContest
 from satori.core.models._Nonce import Nonce
 from satori.core.models._Object import Object
-from satori.core.models._OpaqueAttribute import OpaqueAttribute
 from satori.core.models._OpenAttribute import OpenAttribute
 from satori.core.models._OpenIdentity import OpenIdentity
 from satori.core.models._Privilege import Privilege
@@ -24,7 +23,6 @@ from satori.core.models._Problem import Problem
 from satori.core.models._ProblemResult import ProblemResult
 from satori.core.models._Role import Role
 from satori.core.models._RoleMapping import RoleMapping
-from satori.core.models._StringAttribute import StringAttribute
 from satori.core.models._Session import Session
 from satori.core.models._Submit import Submit
 from satori.core.models._Test import Test
