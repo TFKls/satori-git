@@ -59,13 +59,13 @@ class ListType(Type):
         return self.element_type.needs_conversion()
 
     def convert_to_ars(self, value):
-        if self.element_type.needs_conversion():
+        if self.needs_conversion():
         	return [self.element_type.convert_to_ars(elem) for elem in value]
         else:
         	return value
 
     def convert_from_ars(self, value):
-        if self.element_type.needs_conversion():
+        if self.needs_conversion():
         	return [self.element_type.convert_from_ars(elem) for elem in value]
         else:
         	return value
@@ -83,6 +83,27 @@ class SetType(Type):
     def __str__(self):
         return 'Set<'+str(self.element_type)+'>'
 
+    def needs_conversion(self):
+        return self.element_type.needs_conversion()
+
+    def convert_to_ars(self, value):
+        if self.needs_conversion():
+            new_value = set()
+            for elem in value:
+            	new_value.add(self.element_type.convert_to_ars(elem))
+            return new_value
+        else:
+        	return value
+
+    def convert_from_ars(self, value):
+        if self.needs_conversion():
+            new_value = set()
+            for elem in value:
+            	new_value.add(self.element_type.convert_from_ars(elem))
+            return new_value
+        else:
+        	return value
+
 
 class MapType(Type):
     """A Map Type.
@@ -97,6 +118,27 @@ class MapType(Type):
 
     def __str__(self):
         return 'Map<'+str(self.key_type)+','+str(self.value_type)+'>'
+
+    def needs_conversion(self):
+        return self.key_type.needs_conversion() or self.value_type.needs_conversion()
+
+    def convert_to_ars(self, value):
+        if self.needs_conversion():
+            new_value = dict()
+            for (key, elem) in value.iteritems():
+            	new_value[self.key_type.convert_to_ars(key)] = self.value_type.convert_to_ars(elem)
+            return new_value
+        else:
+        	return value
+
+    def convert_from_ars(self, value):
+        if self.needs_conversion():
+            new_value = dict()
+            for (key, elem) in value.iteritems():
+            	new_value[self.key_type.convert_from_ars(key)] = self.value_type.convert_from_ars(elem)
+            return new_value
+        else:
+        	return value
 
 
 class NamedType(Type):
@@ -247,7 +289,7 @@ class Structure(NamedType):
         if self.needs_conversion():
         	new_value = {}
             for field in self.fields.items:
-            	field_name = NaminStyle.PYTHON.format(field.name)
+            	field_name = NamingStyle.PYTHON.format(field.name)
                 if field_name in value:
                     if field.type.needs_conversion():
                     	new_value[field_name] = field.type.convert_to_ars(value[field_name])
@@ -262,7 +304,7 @@ class Structure(NamedType):
         if self.needs_conversion():
         	new_value = {}
             for field in self.fields.items:
-            	field_name = NaminStyle.PYTHON.format(field.name)
+            	field_name = NamingStyle.PYTHON.format(field.name)
                 if field_name in value:
                     if field.type.needs_conversion():
                     	new_value[field_name] = field.type.convert_from_ars(value[field_name])
