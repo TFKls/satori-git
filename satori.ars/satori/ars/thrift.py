@@ -212,7 +212,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
     
     @DispatchOn(type_=Structure)
     def _ttype(self, type_):
-        return TType.STRUC
+        return TType.STRUCT
 
     @DispatchOn(type_=ListType)
     def _ttype(self, type_):
@@ -447,6 +447,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
                 result_name = 'success'
             except Exception as ex:
                 # handle "expected" (registered) exceptions
+                print 'call:'
                 traceback.print_exc()
                 try:
                     result_value = procedure.error_transform(ex)
@@ -470,6 +471,8 @@ class ThriftProcessor(ThriftBase, TProcessor):
                 oproto.writeStructEnd()
                 oproto.writeMessageEnd()
             except Exception as ex:
+                print 'send:'
+                traceback.print_exc()
                 raise TApplicationException(TApplicationException.UNKNOWN,
                     "Error processing result: " + ex.message)
             perf.end('send')
