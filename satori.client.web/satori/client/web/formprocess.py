@@ -61,8 +61,9 @@ def OpenId2Request(request):
     path = vars.get('path', '')
     lw_path = vars.get('lw_path', '')
     d = ParseURL(back_to)
+    print dict(request.REQUEST.items())
     try:
-        set_token(Security.openid_finish(args=dict(request.REQUEST), return_to=request.build_absolute_uri()))
+        set_token(Security.openid_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
     except:
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
     return GetLink(d,path)
