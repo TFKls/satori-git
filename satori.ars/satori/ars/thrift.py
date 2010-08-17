@@ -70,10 +70,6 @@ class ThriftWriter(TopologicalWriter, ThriftBase):
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write(self.style.format(item.name))
 
-    @DispatchOn(item=NamedType)
-    def _reference(self, item, target): # pylint: disable-msg=E0102
-        target.write(self.style.format(item.name))
-
     @DispatchOn(item=AtomicType)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write(ThriftWriter.ATOMIC_NAMES[item])

@@ -141,14 +141,12 @@ class MapType(Type):
         	return value
 
 
-class NamedType(Type):
+class NamedType(NamedElement, Type):
     """Abstract. A Type with a Name.
     """
 
-    @Argument('name', type=Name)
     def __init__(self, name):
-        super(NamedType, self).__init__()
-        self.name = name
+        super(NamedType, self).__init__(name)
     
     def __str__(self):
         return 'Type:' + NamingStyle.DEFAULT.format(self.name)
