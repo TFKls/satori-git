@@ -381,7 +381,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
             kvalue = self._recv(type_.key_type, proto)
             vvalue = self._recv(type_.value_type, proto)
             value[kvalue] = vvalue
-        proto.readListEnd()
+        proto.readMapEnd()
         return value
 
     @DispatchOn(type_=SetType)
