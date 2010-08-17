@@ -19,25 +19,20 @@ class Store(OpenIDStore):
     def storeAssociation(self, server_url, association):
         print 'store: add', server_url, association
         try:
-            Association.objects.filter(
+            assoc = Association.objects.get(
                 server_url = server_url,
                 handle     = association.handle,
-            ).update(
-                secret     = base64.urlsafe_b64encode(association.secret),
-                issued     = association.issued,
-                lifetime   = association.lifetime,
-                assoc_type = association.assoc_type,
             )
         except:
             assoc = Association(
                 server_url = server_url,
                 handle = association.handle,
-                secret = base64.urlsafe_b64encode(association.secret),
-                issued = association.issued,
-                lifetime = association.lifetime,
-                assoc_type = association.assoc_type,
             )
-            assoc.save()
+        assoc.secret = base64.urlsafe_b64encode(association.secret)
+        assoc.issued = association.issued
+        assoc.lifetime = association.lifetime
+        assoc.assoc_type = association.assoc_type
+        assoc.save()
     
     def getAssociation(self, server_url, handle=None):
         print 'store: get', server_url
