@@ -85,21 +85,21 @@ def login(login, password, namespace):
 
 @security.method
 @Argument('openid', type=str)
-@Argument('realm', type=str)
 @Argument('return_to', type=str)
 @ReturnValue(type=OpenIdRedirect)
-def openid_start(openid, realm, return_to):
-    session = { 'id' : _salt() }
+def openid_start(openid, return_to):
+    session = { 'satori_id' : _salt() }
     store = Store()
     callback = urlparse.urlparse(return_to)
     qs = urlparse.parse_qs(callback.query)
-    qs['__satori__openid'] = [ session['id'] ]
+    qs['__satori__openid'] = [ session['satori_id'] ]
     query = []
     for key, vlist in qs.items():
         for value in vlist:
         	query.append((key,value))
     query = urllib.urlencode(query)
     url = urlparse.urlunparse((callback.scheme, callback.netloc, callback.path, callback.params, query, callback.fragment))
+    realm = urlparse.urlunparse((callback.scheme, callback.netloc, '', '', '', ''))
     cons = consumer.Consumer(session, store)
     request = cons.begin(openid)
     #request.addExtension
@@ -129,6 +129,9 @@ def openid_finish(token, args, return_to):
     store = Store()
     cons = consumer.Consumer(session, store)
     response = cons.complete(args, return_to)
+    callback = urlparse.urlparse(return_to)
+    qs = urlparse.parse_qs(callback.query)
+    print return_to, qs, session 
     if response.status != consumer.SUCCESS:
         raise "OpenID failed."
     identity = OpenIdentity.objects.get(identity=response.identity_url)

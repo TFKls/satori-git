@@ -27,3 +27,14 @@
 <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
 <input type="hidden" name="path" value="{{widget.path}}"/>
 </form>
+
+<form method="post" action="process.openid">
+<div class="messagecenter">
+    <input type="submit" value="Sign in with Google" class="button"/>
+</div>
+
+<input type="hidden" name="openid" value="https://www.google.com/accounts/o8/id"/>
+<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+<input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
+<input type="hidden" name="path" value="{{widget.path}}"/>
+</form>

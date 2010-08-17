@@ -7,27 +7,44 @@ from satori.client.common import *
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 
+import urlparse
+import urllib
+
 def LoginRequest(request):
-    postvars = request.POST
-    d = ParseURL(postvars['back_to'])
-    lw_path = postvars['lw_path']
-    login = postvars['username']
-    password = postvars['password']
+    vars = request.REQUEST
+    d = ParseURL(vars.get('back_to', ''))
+    path = vars['path']
+    lw_path = vars['lw_path']
+    login = vars['username']
+    password = vars['password']
     try:
-        set_token(Security.login(login=login,password=password))
+        set_token(Security.login(login=login, password=password))
     except:
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
-
-    return GetLink(d,postvars['path'])
+    return GetLink(d,path)
 
 def OpenIdRequest(request):
-    postvars = request.POST
-    d = ParseURL(postvars['back_to'])
-    lw_path = postvars['lw_path']
-    openid = postvars['openid']
-    finisher = GetLink(DefaultLayout(),'')
+    vars = request.REQUEST
+    d = ParseURL(vars['back_to'])
+    path = vars.get('path', '')
+    lw_path = vars['lw_path']
+    openid = vars['openid']
+    finisher = request.build_absolute_uri()
+    print finisher
+    callback = urlparse.urlparse(finisher)
+    qs = urlparse.parse_qs(callback.query)
+    qs['back_to'] = (vars['back_to'],)
+    qs['path'] = (vars['path'],)
+    qs['lw_path'] = (vars['lw_path'],)
+    query = []
+    for key, vlist in qs.items():
+        for value in vlist:
+        	query.append((key,value))
+    query = urllib.urlencode(query)
+    finisher = urlparse.urlunparse((callback.scheme, callback.netloc, callback.path + '2', callback.params, query, callback.fragment))
+    print finisher
     try:
-        res = Security.openid_start(openid=openid, realm='satori.tcs.uj.edu.pl', return_to=finisher)
+        res = Security.openid_start(openid=openid, return_to=finisher)
         set_token(res['token'])
         if res['html']:
         	ret = HttpResponse()
@@ -36,8 +53,20 @@ def OpenIdRequest(request):
         else:
             return HttpResponseRedirect(res['redirect'])
     except:
-        raise
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+
+def OpenId2Request(request):
+    vars = request.REQUEST
+    back_to = vars.get('back_to', '')
+    path = vars.get('path', '')
+    lw_path = vars.get('lw_path', '')
+    d = ParseURL(back_to)
+    try:
+        set_token(Security.openid_finish(args=dict(request.REQUEST), return_to=request.build_absolute_uri()))
+    except:
+        follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+    return GetLink(d,path)
+
 
 def LogoutRequest(request):
     set_token('')
@@ -98,7 +127,7 @@ def EditMessageRequest(request):
         return GetLink(d,'')
 
 
-allreqs = {'login' : LoginRequest, 'openid' : OpenIdRequest, 'logout' : LogoutRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
+allreqs = {'login' : LoginRequest, 'openid' : OpenIdRequest, 'openid2': OpenId2Request, 'logout' : LogoutRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
 
 def process(argstr,request):
     res = allreqs[argstr](request)
