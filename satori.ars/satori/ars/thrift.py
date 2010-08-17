@@ -281,7 +281,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
                             len(value))
         for key in value:
             self._send(key, type_.key_type, proto)
-            self._send(value[key], type_.value_type_, proto)
+            self._send(value[key], type_.value_type, proto)
         proto.writeMapEnd()
 
     @DispatchOn(type_=SetType)
