@@ -6,6 +6,9 @@ import sys
 def transport_factory():
     return TSocket(host='satori.tcs.uj.edu.pl', port=38889)
 
+ars2py.blob_host = 'satori.tcs.uj.edu.pl'
+ars2py.blob_port = 38887
+
 print 'Bootstrapping client...'
 
 _bootstrap_client = ThriftClient(transport_factory())

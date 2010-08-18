@@ -21,20 +21,18 @@ class TokenContainer(threading.local):
         return self._token
 
 token_container = TokenContainer()
+blob_host = ''
+blob_port = ''
 
 def blob_con(model, id, name, group):
-    host = 'satori.tcs.uj.edu.pl'
-    port = 38887
-    host = 'localhost'
-    port = 8001
     if group != None:
         url = '/blob/' + str(model) + '/' + str(id) + '/' + str(group) + '/' + str(name)
     else:
         url = '/blob/' + str(model) + '/' + str(id) + '/' + str(name)
     headers = {}
-    headers['Host'] = host
+    headers['Host'] = blob_host
     headers['Cookie'] = 'satori_token=' + token_container.get_token() 
-    return (host, port, url, headers)
+    return (blob_host, blob_port, url, headers)
 
 def blob_put(filepath, model, id, name, group=None):
     (host, port, url, headers) = blob_con(model, id, name, group)
@@ -176,9 +174,17 @@ def generate_class(client, contract):
         else:
         	return super(self.__class__, self).__setattr__(name, value)
 
+    def oa_get_blob(self, name, filepath):
+        return blob_get(filepath, class_name, self._id, name)
+
+    def oa_set_blob(self, name, filepath):
+        return blob_put(filepath, class_name, self._id, name)
+
     class_dict['__init__'] = __init__
     class_dict['__getattr__'] = __getattr__
     class_dict['__setattr__'] = __setattr__
+    class_dict['oa_get_blob'] = oa_get_blob
+    class_dict['oa_set_blob'] = oa_set_blob
 
     return type(class_name, class_bases, class_dict)
 
