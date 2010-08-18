@@ -351,7 +351,7 @@ class ThriftProcessor(ThriftBase, TProcessor):
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         value = self._recvFields([None] + [field for field in type_.fields], proto)
         for field in type_.fields:
-            fname = self.style.format(field.name)
+            fname = NamingStyle.PYTHON.format(field.name)
             if fname in value:
                 continue
             if not field.optional:

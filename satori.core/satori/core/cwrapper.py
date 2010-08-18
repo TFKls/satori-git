@@ -9,6 +9,7 @@ from django.db import transaction
 from django.db.models.fields.related import add_lazy_relation
 from satori.ars import perf
 from satori.core.sec.tools import Token
+from satori.core.models import OpenAttribute
 
 def resolve_model(self, model, rel_model):
     self.model = model
@@ -270,28 +271,40 @@ class DeleteWrapper(wrapper.ProcedureWrapper):
 
 Attribute = wrapper.Struct('Attribute', (
     ('name', str, False),
-    ('isBlob', bool, False),
+    ('is_blob', bool, False),
     ('value', str, False)
 ))
 
 class OpenAttributeWrapper(wrapper.Wrapper):
     def __init__(self, parent):
-        super(OpenAttributeWrapper, self).__init__('OpenAttribute', parent, ClassName)
+        super(OpenAttributeWrapper, self).__init__('oa', parent, ClassName)
 
         model = parent._model
+
+        def oa_to_struct(oa):
+            ret = {}
+            ret['name'] = oa.name
+            if oa.oatype == OpenAttribute.OATYPES_BLOB:
+            	ret['value'] = oa.blob_hash.hash
+                ret['is_blob'] = True
+            elif oa.oatype == OpenAttribute.OATYPES_STRING:
+                ret['value'] = oa.string_value
+                ret['is_blob'] = False
+            return ret
+
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
         @ReturnValue(type=Attribute)
         def get(token, self, name):
-            pass
+            return oa_to_struct(self.attributes.get(name=name))
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @ReturnValue(type=wrapper.TypedList(Attribute))
         def get_list(token, self):
-            pass
+            return [oa_to_struct(oa) for oa in self.attributes.all()]
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
@@ -299,21 +312,36 @@ class OpenAttributeWrapper(wrapper.Wrapper):
         @Argument('value', type=str)
         @ReturnValue(type=types.NoneType)
         def set_str(token, self, name, value):
-            pass
+            try:
+                oa = self.attributes.get(name=name)
+            except:
+                oa = OpenAttribute(object=self, name=name)
+            oa.oatype = OpenAttribute.OATYPES_STRING
+            oa.string_value = value
+            oa.save()
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('attributes', type=wrapper.TypedList(Attribute))
         @ReturnValue(type=types.NoneType)
         def set_list(token, self, attributes):
-            pass
+            for struct in attributes:
+                if struct['is_blob']:
+                	raise Exception('Cannot set blob attribute using set_list')
+                try:
+                    oa = self.attributes.get(name=struct['name'])
+                except:
+                    oa = OpenAttribute(object=self, name=struct['name'])
+                oa.oatype = OpenAttribute.OATYPES_STRING
+                oa.string_value = struct['value']
+                oa.save()
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
         @ReturnValue(type=types.NoneType)
         def delete(token, self, name):
-            pass
+            self.attributes.get(name=name).delete()
 
         self._add_child(wrapper.ProcedureWrapper(get, self))
         self._add_child(wrapper.ProcedureWrapper(get_list, self))
