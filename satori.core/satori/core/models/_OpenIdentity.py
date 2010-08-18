@@ -12,6 +12,11 @@ class OpenIdentity(Object):
     identity = models.CharField(max_length=512, unique=True)
     user     = models.ForeignKey('User', related_name='authorized_openids')
 
+    country  = models.CharField(max_length=64, null=True)
+    email    = models.CharField(max_length=64, null=True)
+    name     = models.CharField(max_length=64, null=True)
+    language = models.CharField(max_length=64, null=True)
+
 class OpenIdentityEvents(events.Events):
     model = OpenIdentity
     on_insert = on_update = ['identity', 'user']

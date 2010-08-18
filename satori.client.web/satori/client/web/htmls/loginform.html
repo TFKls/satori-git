@@ -15,9 +15,10 @@
 <input type="hidden" name="path" value="{{widget.path}}"/>
 </form>
 
-<form method="post" action="process.openid">
+<!--
+<form method="post" action="process.openid_start">
 <div class="messagecenter">
-<span class="message">Login:</span><input type="text" class="smallinputbox" name="openid"/>
+<span class="message">OpenId:</span><input type="text" class="smallinputbox" name="openid"/>
 </div>
 <div class="messagecenter">
     <input type="submit" value="Sign in" class="button"/>
@@ -27,8 +28,9 @@
 <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
 <input type="hidden" name="path" value="{{widget.path}}"/>
 </form>
+-->
 
-<form method="post" action="process.openid">
+<form method="post" action="process.openid_start">
 <div class="messagecenter">
     <input type="submit" value="Sign in with Google" class="button"/>
 </div>
@@ -38,3 +40,41 @@
 <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
 <input type="hidden" name="path" value="{{widget.path}}"/>
 </form>
+
+
+
+<form method="post" action="process.register">
+
+<div class="messagecenter">
+<span class="message">Login:</span><input type="text" class="smallinputbox" name="username"/>
+</div>
+<div class="messagecenter">
+<span class="message">Pass:</span> <input type="password" class="smallinputbox" name="password"/>
+</div>
+<div class="messagecenter">
+<span class="message">Fullname:</span> <input type="text" class="smallinputbox" name="fullname"/>
+</div>
+<div class="messagecenter">
+    <input type="submit" value="Register" class="button"/>
+</div>
+
+<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+<input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
+<input type="hidden" name="path" value="{{widget.path}}"/>
+</form>
+
+<form method="post" action="process.openid_register">
+<div class="messagecenter">
+<span class="message">Login:</span><input type="text" class="smallinputbox" name="username"/>
+</div>
+<div class="messagecenter">
+    <input type="submit" value="Register with Google" class="button"/>
+</div>
+
+<input type="hidden" name="openid" value="https://www.google.com/accounts/o8/id"/>
+<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+<input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
+<input type="hidden" name="path" value="{{widget.path}}"/>
+</form>
+
+

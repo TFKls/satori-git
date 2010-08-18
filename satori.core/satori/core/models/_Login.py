@@ -32,6 +32,8 @@ class Login(Object):
     def change_password(self, old_password, new_password):
         if self.check_password(old_password):
         	self.set_password(new_password)
+            return True
+        return False
 
 class LoginEvents(events.Events):
     model = Login
