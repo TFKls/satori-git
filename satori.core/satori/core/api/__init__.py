@@ -7,6 +7,7 @@ import Login
 import MessageContest
 import MessageGlobal
 import Message
+import Object
 import OpenIdentity
 import Privilege
 import ProblemMapping
