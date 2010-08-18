@@ -11,5 +11,9 @@ setup(name='satori.judge',
         'python-prctl',
         'python-unshare',
         'pyyaml',
-    ]
+    ],
+    entry_points='''
+        [console_scripts]
+        satori.judge = satori.judge:start_judge
+    ''',
 )

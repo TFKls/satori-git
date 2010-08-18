@@ -400,9 +400,7 @@ def run_server(host, port):
     finally:
         httpd.server_close()
 
-
-
-if __name__ == "__main__":
+def judge():
 	from optparse import OptionParser
     parser = OptionParser(usage="usage: %prog [options] DIR")
 	parser.add_option("-D", "--destroy",
@@ -427,3 +425,6 @@ if __name__ == "__main__":
     	jb.create()
     	jr = JailRun(root=path, path='bash', search=True) 
     	jr.run()
+
+if __name__ == "__main__":
+  judge()
