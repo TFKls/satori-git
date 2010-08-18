@@ -25,10 +25,12 @@ token_container = TokenContainer()
 def blob_con(model, id, name, group):
     host = 'satori.tcs.uj.edu.pl'
     port = 38887
+    host = 'localhost'
+    port = 8001
     if group != None:
-        url = '/blob/' + model + '/' + id + '/' + group + '/' + name
+        url = '/blob/' + str(model) + '/' + str(id) + '/' + str(group) + '/' + str(name)
     else:
-        url = '/blob/' + model + '/' + id + '/' + name
+        url = '/blob/' + str(model) + '/' + str(id) + '/' + str(name)
     headers = {}
     headers['Host'] = host
     headers['Cookie'] = 'satori_token=' + token_container.get_token() 
@@ -37,18 +39,23 @@ def blob_con(model, id, name, group):
 def blob_put(filepath, model, id, name, group=None):
     (host, port, url, headers) = blob_con(model, id, name, group)
     with open(filepath, 'r') as data:
-        with httplib.HTTPConnection(host, port) as con:
-            req = con.request('PUT', url, data, headers)
-            res = req.getresponse()
+        con = httplib.HTTPConnection(host, port)
+        try:
+            con.request('PUT', url, data, headers)
+            res = con.getresponse()
             if res.status == 200:
                 return True
             raise Exception("Server returned %d (%s) answer." % (res.status, res.reason))
+        except:
+            con.close()
+            raise
 
 def blob_get(filepath, model, id, name, group=None):
     (host, port, url, headers) = blob_con(model, id, name, group)
-    with httplib.HTTPConnection(host, port) as con:
-        req = con.request('GET', url, '', headers)
-        res = req.getresponse()
+    con = httplib.HTTPConnection(host, port)
+    try:
+        con.request('GET', url, '', headers)
+        res = con.getresponse()
         if res.status == 200:
             with open(filepath, 'w') as data:
                 while True:
@@ -58,6 +65,9 @@ def blob_get(filepath, model, id, name, group=None):
                     data.write(str)
                 return True
         raise Exception("Server returned %d (%s) answer." % (res.status, res.reason))
+    except:
+        con.close()
+        raise
 
 def convert_to(elem, type):
     if elem is None:
