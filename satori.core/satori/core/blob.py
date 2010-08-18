@@ -39,19 +39,32 @@ def server_get(request, token, obj, oa, name):
     if oa.oatype != OpenAttribute.OATYPES_BLOB:
         return HttpResponseForbidden()
     blob = oa.blob_hash
-    res = HttpResponse()
-    res.write(blob.data)
+    def reader():
+        blob.open('r')
+        while True:
+            data = blob.read(16)
+            if len(data) == 0:
+                break
+            yield data
+        blob.close()
+    res = HttpResponse(reader())
     return res
 
 def server_put(request, token, obj, oa, name):
-#    if not obj.demand_right(token, 'ATTRIBUTE_WRITE'):
-#        return HttpResponseForbidden()
+    if not obj.demand_right(token, 'ATTRIBUTE_WRITE'):
+        return HttpResponseForbidden()
     if oa == None:
     	oa = OpenAttribute(object=obj, name=name)
     oa.oatype=OpenAttribute.OATYPES_BLOB
     blob = Blob()
     len = int(request.environ.get('CONTENT_LENGTH', 0))
-    blob.data = request.environ['wsgi.input'].read(len)
+    blob.open('w')
+    while(len > 0):
+        r = min(len, 16)
+        data = request.environ['wsgi.input'].read(r)
+        blob.write(data)
+        len = len - r
+    blob.close()
     blob.save()
     oa.blob_hash = blob
     oa.save()
