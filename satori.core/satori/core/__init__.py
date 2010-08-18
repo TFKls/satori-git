@@ -37,8 +37,10 @@ def start_server():
     from multiprocessing import Process
     from thrift.transport.TSocket import TServerSocket
     from satori.ars import wrapper
+    from satori.core import cwrapper
     import satori.core.api
     from satori.ars.thrift import ThriftServer
+    wrapper.register_middleware(cwrapper.TransactionMiddleware())
     server = ThriftServer(transport=TServerSocket(port=38889))
     server.contracts.update(wrapper.generate_contracts().items)
     server_process = Process(target=server.run)

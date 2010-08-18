@@ -5,6 +5,7 @@ from satori.objects import Signature, Argument, ReturnValue, DispatchOn
 from satori.ars import model, wrapper
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorName
 from django.db import models
+from django.db import transaction
 from django.db.models.fields.related import add_lazy_relation
 from satori.ars import perf
 from satori.core.sec.tools import Token
@@ -334,4 +335,34 @@ class ModelWrapper(wrapper.StaticWrapper):
         self._add_child(CreateWrapper(self))
         self._add_child(DeleteWrapper(self))
         self._add_child(OpenAttributeWrapper(self))
+
+
+class TransactionMiddleware(object):
+    """
+    Transaction middleware. If this is enabled, each function will be run
+    in its own transaction - that way a save() doesn't do a direct
+    commit, the commit is done when a successful response is created. If an
+    exception happens, the database is rolled back.
+    """
+    def process_request(self, args, kwargs):
+        """Enters transaction management"""
+        print 'tenter'
+        transaction.enter_transaction_management()
+        transaction.managed(True)
+
+    def process_exception(self, args, kwargs, exception):
+        """Rolls back the database and leaves transaction management"""
+        print 'texcept'
+        if transaction.is_dirty():
+            transaction.rollback()
+        transaction.leave_transaction_management()
+
+    def process_response(self, args, kwargs, ret):
+        """Commits and leaves transaction management."""
+        print 'tleave'
+        if transaction.is_managed():
+            if transaction.is_dirty():
+                transaction.commit()
+            transaction.leave_transaction_management()
+        return ret
 
