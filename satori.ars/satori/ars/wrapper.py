@@ -1,6 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#import abc
 import collections
 import types
 import sys
@@ -116,7 +115,7 @@ def python_to_ars_type(type_):
 
 wrapper_list = []
 contract_list = model.NamedTuple()
-
+middleware = []
 
 class Wrapper(object):
     def __init__(self, name, parent, name_type):
@@ -283,18 +282,30 @@ def wrap(ars_proc):
 
     def reimplementation(*args, **kwargs):
         newargs = [None] * arg_count
+    
+        for i in middleware:
+        	i.process_request(args, kwargs)
+        
+        try:
+            for i in range(arg_count):
+                if i < len(args):
+                	newargs[i] = ars_arg_types[i].convert_from_ars(args[i])
+                if arg_names[i] in kwargs:
+                    newargs[i] = ars_arg_types[i].convert_from_ars(kwargs[arg_names[i]])
+                else:
+                    newargs[i] = arg_defaults[i]
 
-        for i in range(arg_count):
-            if i < len(args):
-            	newargs[i] = ars_arg_types[i].convert_from_ars(args[i])
-            if arg_names[i] in kwargs:
-                newargs[i] = ars_arg_types[i].convert_from_ars(kwargs[arg_names[i]])
-            else:
-                newargs[i] = arg_defaults[i]
+            ret = implementation(*newargs)
 
-        ret = implementation(*newargs)
-
-        return ars_ret_type.convert_to_ars(ret)
+            ret = ars_ret_type.convert_to_ars(ret)
+        except Exception as exception:
+            for i in reversed(middleware):
+                i.process_exception(args, kwargs, exception)
+            raise
+        else:
+            for i in reversed(middleware):
+                ret = i.process_response(args, kwargs, ret)
+            return ret
 
     ars_proc.implementation = reimplementation
 
@@ -313,4 +324,7 @@ def generate_contracts():
             contract_list.add(generate_contract(wrapper))
 
     return contract_list
+
+def register_middleware(obj):
+    middleware.append(obj)
 
