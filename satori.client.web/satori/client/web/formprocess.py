@@ -10,6 +10,16 @@ from django.http import HttpResponse
 import urlparse
 import urllib
 
+def RegisterRequest(request):
+    vars = request.REQUEST
+    d = ParseURL(vars.get('back_to', ''))
+    path = vars['path']
+    login = vars['username']
+    password = vars['password']
+    fullname = vars['fullname']
+    Security.register(login=login, password=password, fullname=fullname)
+    return GetLink(d, path)
+
 def LoginRequest(request):
     vars = request.REQUEST
     d = ParseURL(vars.get('back_to', ''))
@@ -23,7 +33,7 @@ def LoginRequest(request):
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
     return GetLink(d,path)
 
-def OpenIdRequest(request):
+def OpenIdStartRequest(request):
     vars = request.REQUEST
     d = ParseURL(vars['back_to'])
     path = vars.get('path', '')
@@ -41,10 +51,13 @@ def OpenIdRequest(request):
         for value in vlist:
         	query.append((key,value))
     query = urllib.urlencode(query)
-    finisher = urlparse.urlunparse((callback.scheme, callback.netloc, callback.path + '2', callback.params, query, callback.fragment))
+    path = callback.path.split('.')
+    path[-1] = 'openid_check'
+    path = '.'.join(path)
+    finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
     print finisher
     try:
-        res = Security.openid_start(openid=openid, return_to=finisher)
+        res = Security.openid_login_start(openid=openid, return_to=finisher)
         set_token(res['token'])
         if res['html']:
         	ret = HttpResponse()
@@ -55,7 +68,7 @@ def OpenIdRequest(request):
     except:
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
 
-def OpenId2Request(request):
+def OpenIdCheckRequest(request):
     vars = request.REQUEST
     back_to = vars.get('back_to', '')
     path = vars.get('path', '')
@@ -63,11 +76,60 @@ def OpenId2Request(request):
     d = ParseURL(back_to)
     print dict(request.REQUEST.items())
     try:
-        set_token(Security.openid_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
+        set_token(Security.openid_login_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
     except:
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
     return GetLink(d,path)
 
+
+def OpenIdRegisterRequest(request):
+    vars = request.REQUEST
+    d = ParseURL(vars['back_to'])
+    path = vars.get('path', '')
+    lw_path = vars['lw_path']
+    openid = vars['openid']
+    login = vars['username']
+    finisher = request.build_absolute_uri()
+    print finisher
+    callback = urlparse.urlparse(finisher)
+    qs = urlparse.parse_qs(callback.query)
+    qs['back_to'] = (vars['back_to'],)
+    qs['path'] = (vars['path'],)
+    qs['lw_path'] = (vars['lw_path'],)
+    query = []
+    for key, vlist in qs.items():
+        for value in vlist:
+        	query.append((key,value))
+    query = urllib.urlencode(query)
+    path = callback.path.split('.')
+    path[-1] = 'openid_confirm'
+    path = '.'.join(path)
+    finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
+    print finisher
+    try:
+        res = Security.openid_register_start(openid=openid, return_to=finisher, login=login)
+        set_token(res['token'])
+        if res['html']:
+        	ret = HttpResponse()
+        	ret.write(res['html'])
+        	return ret;
+        else:
+            return HttpResponseRedirect(res['redirect'])
+    except:
+        follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+
+def OpenIdConfirmRequest(request):
+    vars = request.REQUEST
+    back_to = vars.get('back_to', '')
+    path = vars.get('path', '')
+    lw_path = vars.get('lw_path', '')
+    d = ParseURL(back_to)
+    print dict(request.REQUEST.items())
+    try:
+        set_token(Security.openid_register_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
+    except:
+        follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+    return GetLink(d,path)
 
 def LogoutRequest(request):
     set_token('')
@@ -128,7 +190,7 @@ def EditMessageRequest(request):
         return GetLink(d,'')
 
 
-allreqs = {'login' : LoginRequest, 'openid' : OpenIdRequest, 'openid2': OpenId2Request, 'logout' : LogoutRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
+allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
 
 def process(argstr,request):
     res = allreqs[argstr](request)
