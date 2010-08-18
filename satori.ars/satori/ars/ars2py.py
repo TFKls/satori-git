@@ -5,6 +5,8 @@ import threading
 
 import perf
 
+import httplib
+
 class TokenContainer(threading.local):
     def __init__(self):
         self._token = ""
@@ -19,6 +21,43 @@ class TokenContainer(threading.local):
         return self._token
 
 token_container = TokenContainer()
+
+def blob_con(model, id, name, group):
+    host = 'satori.tcs.uj.edu.pl'
+    port = 38887
+    if group != None:
+        url = '/blob/' + model + '/' + id + '/' + group + '/' + name
+    else:
+        url = '/blob/' + model + '/' + id + '/' + name
+    headers = {}
+    headers['Host'] = host
+    headers['Cookie'] = 'satori_token=' + token_container.get_token() 
+    return (host, port, url, headers)
+
+def blob_put(filepath, model, id, name, group=None):
+    (host, port, url, headers) = blob_con(model, id, name, group)
+    with open(filepath, 'r') as data:
+        with httplib.HTTPConnection(host, port) as con:
+            req = con.request('PUT', url, data, headers)
+            res = req.getresponse()
+            if res.status == 200:
+                return True
+            raise Exception("Server returned %d (%s) answer." % (res.status, res.reason))
+
+def blob_get(filepath, model, id, name, group=None):
+    (host, port, url, headers) = blob_con(model, id, name, group)
+    with httplib.HTTPConnection(host, port) as con:
+        req = con.request('GET', url, '', headers)
+        res = req.getresponse()
+        if res.status == 200:
+            with open(filepath, 'w') as data:
+                while True:
+                    str = res.read(65536)
+                    if len(str) == 0:
+                        break
+                    data.write(str)
+                return True
+        raise Exception("Server returned %d (%s) answer." % (res.status, res.reason))
 
 def convert_to(elem, type):
     if elem is None:
