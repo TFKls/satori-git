@@ -5,6 +5,7 @@
 
 import hashlib
 import random
+import traceback
 
 from satori.objects import Object
 from satori.events.misc import Namespace
@@ -71,7 +72,12 @@ class Manager(Object):
                 command = client.recvCommand()
             except StopIteration:
                 command = Disconnect()
-            handlers[command.__class__](command, client)
+            except Exception:
+                print 'Exception in client, removing from queue'
+                traceback.print_exc()
+                self.scheduler.remove(client)
+            else:
+                handlers[command.__class__](command, client)
 
     def _handleKeepAlive(self, command, sender):
         raise NotImplementedError()
