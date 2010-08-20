@@ -7,6 +7,7 @@ import BaseHTTPServer
 import cgi
 from multiprocessing import Process, Pipe
 import os
+import sys
 import shutil
 import signal
 import subprocess
@@ -31,17 +32,17 @@ def loopUnmount(root):
                     subprocess.call(['umount', '-l', path])
                     count += 1
             if count == 0:
-            	break
+                break
 
 def checkSubPath(root, path):
     root = os.path.realpath(root).split('/')
     path = os.path.realpath(path).split('/')
 
     if len(path) < len(root):
-    	return False
+        return False
     for i in range(0, len(root)):
         if root[i] != path[i]:
-        	return False
+            return False
     return True
 
 def jailPath(root, path):
@@ -107,22 +108,23 @@ class JailRun(Object):
 
             pipe.send(1)
 #WAIT FOR PARENT CLEANUP
-    		pipe.recv()
-	    	pipe.close()
+            pipe.recv()
+            pipe.close()
 
-	    	runargs = [ 'runner', '--debug', '/runner.debug.txt', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--cap', 'safe' ]
-	    	runargs += [ '--control-host', '192.168.100.101', '--control-port', '8765', '--cgroup', 'runner', '--cgroup-memory', str(1024*1024*64) ]
+            runargs = [ 'runner', '--debug', '/runner.debug.txt', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
+            runargs += [ '--control-host', '192.168.100.101', '--control-port', '8765', '--cgroup', 'runner', '--cgroup-memory', str(1024*1024*64) ]
             if self.search:
-            	runargs.append('--search')
+                runargs.append('--search')
             runargs += self.args
             print runargs
             os.execvp('runner', runargs)
         except:
             raise
-    	finally:
-	    	pipe.close()
+        finally:
+            pipe.close()
 
     def parent(self):
+        subprocess.check_call(['ip', 'link', 'add', 'name', 'vethsh', 'type', 'veth', 'peer', 'name', 'vethsg'])
         subprocess.check_call(['mount', '--make-rshared', self.root])
         pipe, pipec = Pipe()
         try:
@@ -130,14 +132,13 @@ class JailRun(Object):
             child.start()
 #WAIT FOR CHILD START AND UNSHARE
             pipe.recv()
-            subprocess.check_call(['ip', 'link', 'add', 'name', 'vethsh', 'type', 'veth', 'peer', 'name', 'vethsg'])
             subprocess.check_call(['ifconfig', 'vethsh', '192.168.100.101/24', 'up'])
             subprocess.check_call(['ip', 'link', 'set', 'vethsg', 'netns', str(child.pid)])
-            controller = Process(target = run_server, args=('192.168.100.101', 8765))
+            controller = Process(target = run_server, args=('192.168.100.101', 8765, True))
             controller.start()
             pipe.send(1)
 #WAIT FOR CHILD CONFIGURE NETWORK AND PIVOT ROOT
-    		pipe.recv()
+            pipe.recv()
             pipe.send(1)
         except:
             raise
@@ -159,7 +160,7 @@ class JailBuilder(Object):
     @Argument('template', type=str, default='/cdrom/jail.template')
     def __init__(self, root, template):
         if not checkSubPath(self.safePath, template) or os.path.splitext(template)[1] != self.safeExtension:
-        	raise Exception('Template '+template+' is not safe')
+            raise Exception('Template '+template+' is not safe')
         self.root = root
         self.template = template
 
@@ -174,9 +175,9 @@ class JailBuilder(Object):
                 for base in template['base']:
                     if isinstance(base, str):
                         base = { 'path' : base }
-                	opts = base.get('opts', '')
-                	name = base.get('name', '__' + str(num) + '__')
-                	num += 1
+                    opts = base.get('opts', '')
+                    name = base.get('name', '__' + str(num) + '__')
+                    num += 1
                     path = os.path.join(self.root, os.path.basename(name))
                     if 'path' in base:
                         type = base.get('type')
@@ -188,15 +189,15 @@ class JailBuilder(Object):
                         elif os.path.isfile(src):
                             os.mkdir(path)
                             if type is None:
-                            	ext = os.path.splitext(src)[1]
+                                ext = os.path.splitext(src)[1]
                                 if ext:
                                     type = ext[1:]
                                 else:
-                                	type = 'auto'
+                                    type = 'auto'
                             subprocess.check_call(['mount', '-t', type, '-o', 'loop,noatime,ro,'+opts, src, path])
                             dirlist.append(path + '=nfsro')
                         else:
-                        	raise Exception('Path '+base['path']+' can\'t be mounted')
+                          raise Exception('Path '+base['path']+' can\'t be mounted')
             if 'quota' in template:
                 quota = int(template['quota'])
             if quota > 0:
@@ -208,53 +209,53 @@ class JailBuilder(Object):
             subprocess.check_call(['mount', '-t', 'aufs', '-o', 'noatime,rw,dirs=' + ':'.join(dirlist), 'aufs', self.root])
             if 'insert' in template: 
                 for src in template['insert']:
-                	src = os.path.realpath(src)
+                    src = os.path.realpath(src)
                     if os.path.isdir(src):
-                    	subprocess.check_call(['rsync', '-a', src, self.root])
+                        subprocess.check_call(['rsync', '-a', src, self.root])
                     elif os.path.isfile(src):
                         name = os.path.basename(src).split('.')
                         if name[-1] == 'zip':
-                        	subprocess.check_call(['unzip', '-d', self.root, src])
+                            subprocess.check_call(['unzip', '-d', self.root, src])
                         elif name[-1] == 'tar':
-                        	subprocess.check_call(['tar', '-C', self.root, '-x', '-f', src])
+                            subprocess.check_call(['tar', '-C', self.root, '-x', '-f', src])
                         elif name[-1] == 'tbz' or name[-1] == 'tbz2' or (name[-1] == 'bz' or name[-1] == 'bz2') and name[-2] == 'tar':
-                        	subprocess.check_call(['tar', '-C', self.root, '-x', '-j', '-f', src])
+                            subprocess.check_call(['tar', '-C', self.root, '-x', '-j', '-f', src])
                         elif name[-1] == 'tgz'  or name[-1] == 'gz' and name[-2] == 'tar':
-                        	subprocess.check_call(['tar', '-C', self.root, '-x', '-z', '-f', src])
+                            subprocess.check_call(['tar', '-C', self.root, '-x', '-z', '-f', src])
                         elif name[-1] == 'lzma' and name[-2] == 'tar':
-                        	subprocess.check_call(['tar', '-C', self.root, '-x', '--lzma', '-f', src])
+                            subprocess.check_call(['tar', '-C', self.root, '-x', '--lzma', '-f', src])
                         else:
-                        	raise Exception('Path '+src+ ' can\'t be inserted')
+                          raise Exception('Path '+src+ ' can\'t be inserted')
                     else:
                         raise Exception('Path '+src+ ' can\'t be inserted')
             if 'remove' in template:
                 for path in template['remove']:
-                	subprocess.check_call(['rm', '-rf', jailPath(self.root, path)])
+                  subprocess.check_call(['rm', '-rf', jailPath(self.root, path)])
             if 'bind' in template:
                 for bind in template['bind']:
                     if isinstance(bind, str):
                         bind = { 'src' : bind }
-            		src = os.path.realpath(bind['src'])
-            		dst = jailPath(self.root, bind.get('dst',src))
-                	opts = bind.get('opts', '')
-                	rec = bind.get('recursive', 0)
+                    src = os.path.realpath(bind['src'])
+                    dst = jailPath(self.root, bind.get('dst',src))
+                    opts = bind.get('opts', '')
+                    rec = bind.get('recursive', 0)
                     if rec:
-                    	rec = 'rbind'
+                        rec = 'rbind'
                     else:
-                    	rec = 'bind'
+                        rec = 'bind'
                     subprocess.check_call(['mount', '-o', rec + ',' + opts, src, dst])
             if 'script' in template:
                 for script in template['script']:
-                	params = script.split(' ')
+                    params = script.split(' ')
                     runner = JailExec(root=self.root, path=params[0], args=params[1:], search=True)
                     process = Process(target=runner.run)
                     process.start()
                     process.join(self.scriptTimeout)
                     if process.is_alive():
-                    	process.terminate()
-                    	raise Exception('Script '+script+' failed to finish before timeout')
+                        process.terminate()
+                        raise Exception('Script '+script+' failed to finish before timeout')
                     if process.exitcode != 0:
-                    	raise Exception('Script '+script+' returned '+str(process.exitcode))
+                        raise Exception('Script '+script+' returned '+str(process.exitcode))
         except:
             self.destroy()
             raise
@@ -316,7 +317,7 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
                 with open(os.path.join(par, limit), 'r') as s:
                     with open(os.path.join(path, limit), 'w') as d:
                         for l in s:
-                    	    d.write(l)
+                            d.write(l)
         return { 'res' : 'OK' }
     def cmd_LIMITCG(self, input):
         path = jailPath(self.cg_root, input['group'])
@@ -325,8 +326,8 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
             with open(file, 'w') as f:
                 f.write(str(value))
         if 'memory' in input:
-        	set_limit('memory.limit_in_bytes', int(input['memory']))
-        	set_limit('memory.soft_limit_in_bytes', int(input['memory']))
+          set_limit('memory.limit_in_bytes', int(input['memory']))
+          set_limit('memory.soft_limit_in_bytes', int(input['memory']))
 
         return { 'res' : 'OK' }
     def cmd_ASSIGNCG(self, input):
@@ -343,11 +344,11 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         killer = True
         #TODO: po ilu probach sie poddac?
         while killer:
-        	killer = False
+            killer = False
             with open(os.path.join(path, 'tasks'), 'r') as f:
                 for pid in f:
-                	killer = True
-                	os.kill(int(pid), signal.SIGKILL)
+                    killer = True
+                    os.kill(int(pid), signal.SIGKILL)
             time.sleep(1)
         os.rmdir(path)
         return { 'res' : 'OK' }
@@ -381,7 +382,7 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
 
 
 
-def create_handler(submit, test, root, cgroot):
+def create_handler(submit, test, root, cgroot, quiet):
     class Handler(JailHandler):
         def __init__(self, *args, **kwargs):
             self.submit_id = submit
@@ -389,42 +390,51 @@ def create_handler(submit, test, root, cgroot):
             self.root_path = root
             self.cg_root = cgroot
             JailHandler.__init__(self, *args, **kwargs)
+        def log_message(self, *args, **kwargs):
+            if not quiet:
+                super(Handler, self).log_message(*args, **kwargs)
+        def log_request(self, *args, **kwargs):
+            if not quiet:
+                super(Handler, self).log_request(*args, **kwargs)
     return Handler
 
 
-def run_server(host, port):
+def run_server(host, port, quiet=False):
     server_class = BaseHTTPServer.HTTPServer
-    httpd = server_class((host, port), create_handler(1, 2, '/jail', '/cgroup'))
+    httpd = server_class((host, port), create_handler(1, 2, '/jail', '/cgroup', quiet))
     try:
         httpd.serve_forever()
     finally:
         httpd.server_close()
 
 def judge():
-	from optparse import OptionParser
+    from optparse import OptionParser
     parser = OptionParser(usage="usage: %prog [options] DIR")
-	parser.add_option("-D", "--destroy",
-	    default=False,
-	    action="store_true",
-	    help="Destroy created chroot")
-	parser.add_option("-S", "--server",
-	    default=False,
-	    action="store_true",
-	    help="Run server")
-	(options, args) = parser.parse_args()
+    parser.add_option("-D", "--destroy",
+        default=False,
+        action="store_true",
+        help="Destroy created chroot")
+    parser.add_option("-S", "--server",
+        default=False,
+        action="store_true",
+        help="Run server")
+    (options, args) = parser.parse_args()
 
-	path = args[0]
-	temp = args[1]
+    path = args[0]
+    temp = args[1]
 
     jb = JailBuilder(root=path, template=temp)
     if options.destroy:
-    	jb.destroy()
+        jb.destroy()
     elif options.server:
         run_server('127.0.0.1', 8765)
     else:
-    	jb.create()
-    	jr = JailRun(root=path, path='bash', search=True) 
-    	jr.run()
+        try:
+            jb.create()
+            jr = JailRun(root=path, path='bash', search=True) 
+            jr.run()
+        finally:
+            jb.destroy()
 
 if __name__ == "__main__":
-  judge()
+    judge()

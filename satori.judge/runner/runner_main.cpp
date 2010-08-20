@@ -88,6 +88,7 @@ static struct
   int           ns_ipc;
   int           ns_net;
   int           ns_mount;
+  int           mount_proc;
   int           ns_pid;
   int           ns_uts;
   const char*   c_host;
@@ -134,6 +135,7 @@ static struct poptOption CONFIG_OPT[] =
   { "ns-ipc",         0,   POPT_ARG_NONE,   &config.ns_ipc,         0, "enable ipc namespace",                               0 },
   { "ns-net",         0,   POPT_ARG_NONE,   &config.ns_net,         0, "enable network namespace",                           0 },
   { "ns-mount",       0,   POPT_ARG_NONE,   &config.ns_mount,       0, "enable mount namespace",                             0 },
+  { "mount-proc",     0,   POPT_ARG_NONE,   &config.mount_proc,     0, "remount proc filesystem",                            0 },
   { "ns-pid",         0,   POPT_ARG_NONE,   &config.ns_pid,         0, "enable pid namespace",                               0 },
   { "ns-uts",         0,   POPT_ARG_NONE,   &config.ns_uts,         0, "enable uts namespace",                               0 },
   { "control-host",   0,   POPT_ARG_STRING, &config.c_host,         0, "set controller host HOST",                           "HOST" },
@@ -384,6 +386,7 @@ int main(int argc, const char** argv)
   run.new_ipc = config.ns_ipc;
   run.new_net = config.ns_net;
   run.new_mount = config.ns_mount;
+  run.mount_proc = config.mount_proc;
   run.new_pid = config.ns_pid;
   run.new_uts = config.ns_uts;
   if (config.c_group)

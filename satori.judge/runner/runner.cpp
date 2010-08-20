@@ -345,7 +345,7 @@ bool Runner::MountsInfo::Available()
   struct stat s;
   if (stat("/proc/mounts", &s))
     return false;
-  return s.st_dev == (dev_t)0;
+  return major(s.st_dev) == 0;
 }
 
 Runner::~Runner()
@@ -618,11 +618,10 @@ void Runner::Controller::CheckOK(const std::string& call, const map<string, stri
   }
 }
 
-Runner::Controller::Controller(const string& _host, int _port, const string& _secret)
+Runner::Controller::Controller(const string& _host, int _port)
 {
   host = _host;
   port = _port;
-  secret = _secret;
 }
 
 void Runner::Controller::GroupCreate(const string& cgroup)
@@ -846,7 +845,7 @@ void Runner::run_child()
     Fail("chdir('%s') failed", dir.c_str());
   if (dir != "")
   {
-    if (pivot)
+    if (new_mount && pivot)
     {
       const char* oldroot = "tmp/__oldroot__";
       bool rem = (mkdir(oldroot, S_IRUSR | S_IWUSR | S_IXUSR) == 0);
@@ -901,18 +900,15 @@ void Runner::run_child()
     if (chdir("/"))
       Fail("chdir('/') failed");
 
-  if (new_mount)
+  if (new_mount && mount_proc)
   {
-    if (MountsInfo::Available())
-    {
-      umount2("/proc", MNT_DETACH);
-      mount("proc", "/proc", "proc", 0, NULL);
-    }
+    umount2("/proc", MNT_DETACH);
+    if (mount("proc", "/proc", "proc", 0, NULL))
+      Fail("mount('proc', '/proc', 'proc') failed");
   }
 
   if (cgroup != "" && controller)
   { 
-    controller->GroupCreate(cgroup);
     Controller::Limits limits;
     if (cgroup_memory > 0)
       limits.memory = cgroup_memory;
@@ -1294,8 +1290,14 @@ void Runner::Run()
     else
       Initializer::debug_fds.insert(debfd);
   }
+  if (pivot && !new_mount)
+    Fail("Can't run pivot without mount namespace");
+  if (mount_proc && !new_mount)
+    Fail("Can't run mount_proc without mount namespace");
   if (controller_host != "" || controller_port > 0)
-    controller = new Controller(controller_host, controller_port, "SeCrEt");
+    controller = new Controller(controller_host, controller_port);
+  if (cgroup != "" && controller)
+    controller->GroupCreate(cgroup);
   if (ptrace_safe)
     ptrace = true;
   if (user == "" && thread_count > 0)

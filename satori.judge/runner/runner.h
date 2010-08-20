@@ -120,13 +120,12 @@ class Runner
       private:
         std::string host;
         int port;
-        std::string secret;
         static bool Parse(const std::string&, std::map<std::string, std::string>&);
         static bool Dump(const std::map<std::string, std::string>&, std::string&);
         bool Contact(const std::string&, const std::map<std::string, std::string>&, std::map<std::string, std::string>&);
         static void CheckOK(const std::string&, const std::map<std::string, std::string>&);
       public:
-        Controller(const std::string&, int, const std::string&);
+        Controller(const std::string&, int);
         void GroupCreate(const std::string&);
         void GroupJoin(const std::string&);
         void GroupDestroy(const std::string&);
@@ -253,6 +252,7 @@ class Runner
     bool new_ipc;
     bool new_net;
     bool new_mount;
+    bool mount_proc;
     bool new_pid;
     bool new_uts;
     bool search_path;
@@ -319,6 +319,7 @@ class Runner
       , new_ipc(false)
       , new_net(false)
       , new_mount(false)
+      , mount_proc(false)
       , new_pid(false)
       , new_uts(false)
       , search_path(false)
