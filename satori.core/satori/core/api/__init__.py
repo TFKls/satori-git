@@ -3,6 +3,7 @@
 import Contestant
 import Contest
 import ContestRanking
+import Judge
 import Login
 import MessageContest
 import MessageGlobal
