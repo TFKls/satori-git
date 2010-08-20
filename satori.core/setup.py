@@ -19,6 +19,7 @@ setup(name='satori.core',
         'satori.dbev',
         'satori.events',
         'satori.objects',
+        'setproctitle',
     ],
     entry_points='''
         [console_scripts]
