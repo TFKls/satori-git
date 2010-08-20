@@ -41,9 +41,9 @@ def start_console():
     import code
     import readline
     console = code.InteractiveConsole()
-    console.runcode('import satori.client.common as satori_classes')
+    console.runcode('from satori.client.common import *')
     print
-    print 'satori.client.common is imported as satori_classes'
+    print 'satori.client.common classes are imported'
     print
     console.interact()
 
