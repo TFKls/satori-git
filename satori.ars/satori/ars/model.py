@@ -59,12 +59,16 @@ class ListType(Type):
         return self.element_type.needs_conversion()
 
     def convert_to_ars(self, value):
+        if value is None:
+        	return None
         if self.needs_conversion():
         	return [self.element_type.convert_to_ars(elem) for elem in value]
         else:
         	return value
 
     def convert_from_ars(self, value):
+        if value is None:
+        	return None
         if self.needs_conversion():
         	return [self.element_type.convert_from_ars(elem) for elem in value]
         else:
@@ -87,6 +91,8 @@ class SetType(Type):
         return self.element_type.needs_conversion()
 
     def convert_to_ars(self, value):
+        if value is None:
+        	return None
         if self.needs_conversion():
             new_value = set()
             for elem in value:
@@ -96,6 +102,8 @@ class SetType(Type):
         	return value
 
     def convert_from_ars(self, value):
+        if value is None:
+        	return None
         if self.needs_conversion():
             new_value = set()
             for elem in value:
@@ -123,6 +131,8 @@ class MapType(Type):
         return self.key_type.needs_conversion() or self.value_type.needs_conversion()
 
     def convert_to_ars(self, value):
+        if value is None:
+        	return None
         if self.needs_conversion():
             new_value = dict()
             for (key, elem) in value.iteritems():
@@ -132,6 +142,8 @@ class MapType(Type):
         	return value
 
     def convert_from_ars(self, value):
+        if value is None:
+        	return None
         if self.needs_conversion():
             new_value = dict()
             for (key, elem) in value.iteritems():
@@ -284,6 +296,8 @@ class Structure(NamedType):
         return any(field.type.needs_conversion() for field in self.fields.items)
 
     def convert_to_ars(self, value):
+        if value is None:
+        	return None
         if self.needs_conversion():
         	new_value = {}
             for field in self.fields.items:
@@ -299,6 +313,8 @@ class Structure(NamedType):
         	return value
 
     def convert_from_ars(self, value):
+        if value is None:
+        	return None
         if self.needs_conversion():
         	new_value = {}
             for field in self.fields.items:
