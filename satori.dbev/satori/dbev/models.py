@@ -56,24 +56,49 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 """
-        repair_version_table_function = """
-CREATE OR REPLACE FUNCTION repair_version_table(name TEXT) RETURNS INTEGER AS $$
+        create_version_table_function = """
+CREATE OR REPLACE FUNCTION create_version_table(_table TEXT, _key TEXT) RETURNS TEXT AS $$
 DECLARE
-    con RECORD;
-    count INTEGER;
+    _exec TEXT;
+    _vtable TEXT;
+    _cols TEXT[];
+    _rec RECORD;
+    i INTEGER;
+    j INTEGER;
 BEGIN
-    count = 0;
-    FOR con in (SELECT constraint_name FROM information_schema.table_constraints WHERE table_name=name and constraint_type='UNIQUE') LOOP
-        EXECUTE 'ALTER TABLE ' || quote_ident(name) || ' DROP CONSTRAINT ' || quote_ident(con.constraint_name);
-        count = count + 1;
+    _vtable := _table || '__versions';
+    _exec := 'DROP TABLE IF EXISTS ' || quote_ident(_vtable);
+    EXECUTE _exec;
+    _exec := 'CREATE TABLE ' || quote_ident(_vtable) || ' (';
+    FOR _rec in (
+        SELECT a.attname, format_type(a.atttypid, a.atttypmod) AS type from pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid
+        WHERE c.relname=_table AND a.attnum > 0 ORDER BY a.attnum
+    ) LOOP
+        IF _rec.attname <> '_version_transaction' THEN
+            _exec := _exec || quote_ident(_rec.attname) || ' ' || _rec.type;
+            IF _rec.attname = _key THEN
+                _exec := _exec || ' NOT NULL';
+            END IF;
+            _exec := _exec || ',';
+        END IF;
     END LOOP;
-    RETURN count;
+    _exec := _exec || '_version_transaction integer NOT NULL,';
+    _exec := _exec || '_version_prev integer,';
+    _exec := _exec || '_version_next integer,';
+    _exec := _exec || '_version_user integer,';
+    _exec := _exec || '_version_date timestamp with time zone default now(),';
+    _exec := _exec || 'PRIMARY KEY(' || quote_ident(_key) || ',_version_transaction)';
+    _exec := _exec || ')';
+    EXECUTE _exec;
+    RETURN _exec;
 END;
 $$ LANGUAGE plpgsql;
 """
+
         create_full_view_function = """
-CREATE OR REPLACE FUNCTION create_full_view(_name TEXT, _tables TEXT[], _keys TEXT[]) RETURNS TEXT AS $$
+CREATE OR REPLACE FUNCTION create_full_view(_tables TEXT[], _keys TEXT[]) RETURNS TEXT AS $$
 DECLARE
+    _name TEXT;
     _exec TEXT;
     _cols TEXT[];
     _vers TEXT[];
@@ -81,8 +106,9 @@ DECLARE
     i INTEGER;
     j INTEGER;
 BEGIN
-    _exec := 'CREATE OR REPLACE VIEW ' || quote_ident(_name) || ' AS SELECT ';
     i := array_lower(_tables, 1);
+    _name := quote_ident(_tables[i] || '__view');
+    _exec := 'CREATE OR REPLACE VIEW ' || quote_ident(_name) || ' AS SELECT ';
     _exec := _exec || (quote_ident('t' || i) || '.' || quote_ident(_keys[i])) || ' AS id, ';
     FOR i IN array_lower(_tables, 1)..array_upper(_tables, 1) LOOP
         FOR _rec in (
@@ -112,8 +138,9 @@ END;
 $$ LANGUAGE plpgsql;
 """
         create_version_function_function = """
-CREATE OR REPLACE FUNCTION create_version_function(_name TEXT, _tables TEXT[], _keys TEXT[]) RETURNS TEXT AS $$
+CREATE OR REPLACE FUNCTION create_version_function(_tables TEXT[], _keys TEXT[]) RETURNS TEXT AS $$
 DECLARE
+    _name TEXT;
     _exec TEXT;
     _vtables TEXT[];
     _cols TEXT[];
@@ -122,15 +149,17 @@ DECLARE
     i INTEGER;
     j INTEGER;
 BEGIN
+    i := array_lower(_tables, 1);
+    _name := quote_ident(_tables[i] || '__version_view');
     _exec = '';
     FOR i IN array_lower(_tables, 1)..array_upper(_tables, 1) LOOP
         SELECT INTO j COUNT(*) FROM pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid
         WHERE c.relname=_tables[i] AND a.attnum > 0 AND a.attname = '_version_transaction';
         IF j > 0 THEN
-            _exec := _exec || 'CREATE OR REPLACE FUNCTION ' || quote_ident(_tables[i] || '_tableversion') || '(_id INTEGER, _ver INTEGER) RETURNS INTEGER AS ''';
+            _exec := _exec || 'CREATE OR REPLACE FUNCTION ' || quote_ident(_tables[i] || '__version_id') || '(_id INTEGER, _ver INTEGER) RETURNS INTEGER AS ''';
             _exec := _exec || 'DECLARE _v INTEGER;';
             _exec := _exec || 'BEGIN SELECT INTO _v MAX(_version_transaction) FROM ' || quote_ident(_tables[i]) || '__versions';
-            _exec := _exec || ' WHERE ' || quote_ident(_keys[i]) || '=_id AND _version_transaction<=_ver;';
+            _exec := _exec || ' WHERE ' || quote_ident(_keys[i]) || '=_id AND _version_transaction<=_ver AND _version_next>_ver;';
             _exec := _exec || 'RETURN _v; END; '' LANGUAGE plpgsql;';
             EXECUTE _exec;
             _exec := '';
@@ -182,7 +211,7 @@ BEGIN
         SELECT INTO j COUNT(*) FROM pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid
         WHERE c.relname=_tables[i] AND a.attnum > 0 AND a.attname = '_version_transaction';
         IF j > 0 THEN
-            _exec := _exec || ' AND ' || quote_ident('t' || i) || '._version_transaction = ' || quote_ident(_tables[i] || '_tableversion') || '(_id,_ver)';
+            _exec := _exec || ' AND ' || quote_ident('t' || i) || '._version_transaction = ' || quote_ident(_tables[i] || '__version_id') || '(_id,_ver)';
         END IF;
     END LOOP;
     _exec := _exec || '; END; '' LANGUAGE plpgsql;';
@@ -193,7 +222,7 @@ $$ LANGUAGE plpgsql;
 """
 
 
-        return (set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, repair_version_table_function, create_full_view_function, create_version_function_function)
+        return (set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function)
 
 
 class Notification(models.Model):
@@ -202,5 +231,5 @@ class Notification(models.Model):
     table       = models.CharField(max_length=50)
     object      = models.IntegerField()
     transaction = models.IntegerField()
-    entry       = models.IntegerField(null=True, blank=True)
+    previous    = models.IntegerField(null=True)
     user        = UserField()
