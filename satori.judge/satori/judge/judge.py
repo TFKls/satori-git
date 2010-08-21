@@ -377,9 +377,7 @@ class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
         return { 'res' : 'OK' }
 
     def cmd_PING(self, input):
-        input['ping'] = 'pong'
-        return input
-
+        return { 'res' : 'OK' }
 
 
 def create_handler(submit, test, root, cgroot, quiet):
