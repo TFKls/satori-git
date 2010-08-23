@@ -16,8 +16,8 @@ class Privilege(Object):
     startOn  = models.DateTimeField(null=True)
     finishOn = models.DateTimeField(null=True)
 
-    class Meta:                                                # pylint: disable-msg=C0111
-        unique_together = (('role', 'object', 'right'),)
+    #class Meta:                                                # pylint: disable-msg=C0111
+    #    unique_together = (('role', 'object', 'right'),)
 
 class PrivilegeEvents(events.Events):
     model = Privilege
