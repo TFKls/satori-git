@@ -19,7 +19,7 @@ from satori.core.sec.tools import RightCheck, RoleSet, Token
 from satori.core.sec.store import Store
 
 from satori.objects import DispatchOn, Argument, ReturnValue
-from satori.core.models import Object, User, Login, OpenIdentity, Global
+from satori.core.models import Object, User, Login, OpenIdentity, Global, Role
 from satori.ars.wrapper import Struct, StaticWrapper, TypedMap
 
 def openid_salt():
