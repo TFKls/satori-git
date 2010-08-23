@@ -14,7 +14,7 @@ contest = ModelWrapper(Contest)
 @Argument('user', type=User)
 @ReturnValue(type=Contestant)
 def find_contestant(token, self, user):
-    return Contestant.objects.filter(contest=self, accepted=True, children__id=user.id)[0]
+    return Contestant.objects.filter(contest=self, children__id=user.id)[0]
 @contest.find_contestant.can
 def find_contestant_check(token, self, user):
     return token.user == user or self.demand_right(token, 'MANAGE')
