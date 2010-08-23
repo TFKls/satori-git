@@ -137,7 +137,7 @@ def start_server():
             process.join()
         exit(0)
 
-#    signal(SIGINT, handle_signal)
+    signal(SIGINT, handle_signal)
     signal(SIGTERM, handle_signal)
     
     while True:
