@@ -1,6 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import collections
+import datetime
+import time
 import types
 import sys
 import copy
@@ -16,17 +18,17 @@ class TypedListType(type):
 
     def __instancecheck__(cls, obj):
         if not isinstance(elem, collections.Sequence):
-        	return False
+            return False
 
         for elem in obj:
             if not isinstance(elem, cls.elem_type):
-            	return False
+                return False
 
         return True
 
     def ars_type(cls):
         if not hasattr(cls, '_ars_type'):
-        	cls._ars_type = model.ListType(python_to_ars_type(cls.elem_type))
+            cls._ars_type = model.ListType(python_to_ars_type(cls.elem_type))
 
         return cls._ars_type
 
@@ -44,21 +46,21 @@ class TypedMapType(type):
 
     def __instancecheck__(cls, obj):
         if not isinstance(elem, collections.Mapping):
-        	return False
+            return False
 
         for (key, value) in obj.items:
             if not isinstance(key, cls.key_type):
-            	return False
+                return False
             if not isinstance(value, cls.value_type):
-            	return False
+                return False
 
         return True
 
     def ars_type(cls):
         if not hasattr(cls, '_ars_type'):
-        	ars_key_type = python_to_ars_type(cls.key_type)
-        	ars_value_type = python_to_ars_type(cls.value_type)
-        	cls._ars_type = model.MapType(key_type=ars_key_type, value_type=ars_value_type)
+            ars_key_type = python_to_ars_type(cls.key_type)
+            ars_value_type = python_to_ars_type(cls.value_type)
+            cls._ars_type = model.MapType(key_type=ars_key_type, value_type=ars_value_type)
 
         return cls._ars_type
 
@@ -76,17 +78,17 @@ class StructType(type):
     def __instancecheck__(cls, obj):
         for (name, type_, optional) in cls.fields:
             if not ((name in obj) or optional):
-            	return False
+                return False
             if name in obj:
                 if not isinstance(obj[name], type_):
-                	return False
+                    return False
         return True
 
     def ars_type(cls):
         if not hasattr(cls, '_ars_type'):
-        	cls._ars_type = model.Structure(name=Name(ClassName(cls.name)))
+            cls._ars_type = model.Structure(name=Name(ClassName(cls.name)))
             for (name, type_, optional) in cls.fields:
-            	cls._ars_type.addField(name=Name(FieldName(name)), type=python_to_ars_type(type_), optional=optional)
+                cls._ars_type.addField(name=Name(FieldName(name)), type=python_to_ars_type(type_), optional=optional)
 
         return cls._ars_type
 
@@ -95,20 +97,40 @@ def Struct(name, fields):
     return StructType(name, (), {'fields': fields})
 
 
+class DateTimeTypeAlias(model.TypeAlias):
+    def __init__(self, ):
+        super(DateTimeTypeAlias, self).__init__(name=Name(ClassName('DateTime')), target_type=model.Int64)
+
+    def needs_conversion(self):
+        return True
+
+    def convert_to_ars(self, value):
+        if value is None:
+            return None
+
+        return long(time.mktime(value.timetuple()))
+
+    def convert_from_ars(self, value):
+        if value is None:
+            return None
+
+        return datetime.fromtimestamp(value)
+
 python_basic_types = {
     types.NoneType: model.Void,
     types.IntType: model.Int32,
     types.LongType: model.Int64,
     types.StringType: model.String,
     types.BooleanType: model.Boolean,
+    datetime.datetime: DateTimeTypeAlias(),
 }
 
 def python_to_ars_type(type_):
     if type_ in python_basic_types:
-    	return python_basic_types[type_]
+        return python_basic_types[type_]
 
     if hasattr(type_, 'ars_type'):
-    	return type_.ars_type()
+        return type_.ars_type()
 
     raise RuntimeError('Cannot convert type {0} to ars type.'.format(type_))
 
@@ -197,7 +219,7 @@ class ProcedureWrapper(Wrapper):
 
         def proc(*args, **kwargs):
             if not can(*args, **kwargs):
-            	raise Exception('Access denied.')
+                raise Exception('Access denied.')
             result = implement(*args, **kwargs)
             return filter(result, *args, **kwargs)
 
@@ -269,12 +291,12 @@ def wrap(ars_proc):
     arg_defaults = [None] * arg_count
     ars_arg_types = []
     for i in range(arg_count):
-    	argument = signature.arguments[signature.positional[i]]
+        argument = signature.arguments[signature.positional[i]]
         param_type = extract_ars_type(argument.constraint)
         optional = param_type[1]
         if argument.mode == ArgumentMode.OPTIONAL:
-        	optional = True
-        	arg_defaults[i] = argument.value
+            optional = True
+            arg_defaults[i] = argument.value
 
 
         ars_proc.addParameter(model.Parameter(name=Name(ParameterName(signature.positional[i])), type=param_type[0], optional=optional))
@@ -284,12 +306,12 @@ def wrap(ars_proc):
         newargs = [None] * arg_count
     
         for i in middleware:
-        	i.process_request(args, kwargs)
+            i.process_request(args, kwargs)
         
         try:
             for i in range(arg_count):
                 if i < len(args):
-                	newargs[i] = ars_arg_types[i].convert_from_ars(args[i])
+                    newargs[i] = ars_arg_types[i].convert_from_ars(args[i])
                 if arg_names[i] in kwargs:
                     newargs[i] = ars_arg_types[i].convert_from_ars(kwargs[arg_names[i]])
                 else:
