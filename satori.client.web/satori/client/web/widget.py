@@ -173,9 +173,9 @@ class ManageUsersWidget(Widget):
         self.pending = list()
         for t in Contestant.filter(contest=c):
             if t.accepted:
-                self.accepted.append(c.members())
+                self.accepted.append(t.members())
             else:
-                self.pending.append(c.members())
+                self.pending.append(t.members())
 
 
 class ManageNewsWidget(Widget):
