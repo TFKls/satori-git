@@ -288,6 +288,7 @@ class RightCheck(Object):
         res = self._cache_get(role, object, right)
         if res is not None:
             return res
+        res = False
         for priv in Privilege.objects.filter(role = role, object = object, right = right):
         	if priv.startOn is not None and priv.startOn > self._ts or priv.finishOn is not None and priv.finishOn < self._ts:
         		continue
