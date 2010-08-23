@@ -75,22 +75,40 @@ class JudgeDispatcherClient(object):
         self.lock.release()
         return result[1]
 
-def judge_generator():
-    sleep(10)
+    def set_result(self, result):
+        self.lock.acquire()
+        self.connection.send(Send(Event(type='judge_dispatcher_finished', submit_id=result.submit.id, test_id=result.test.id, test_result_id=result.id)))
+        self.lock.release()
 
-    c = Contestant.objects.all()[0]
-    pm = ProblemMapping.objects.all()[0]
-    t = Test.objects.all()[0]
-    s = Submit(contestant=c, problem=pm)
-    s.save()
-    yield Send(Event(type='judge_dispatcher_enqueue', test_id=t.id, submit_id=s.id))
-    sleep(1)
-    s = Submit(contestant=c, problem=pm)
-    s.save()
-    yield Send(Event(type='judge_dispatcher_enqueue', test_id=t.id, submit_id=s.id))
-    sleep(30)
-    s = Submit(contestant=c, problem=pm)
-    s.save()
-    yield Send(Event(type='judge_dispatcher_enqueue', test_id=t.id, submit_id=s.id))
+def judge_generator(slave):
+    qid = QueueId('new_submits')
+    yield Attach(qid)
+    yield Map({'type': 'db', 'model': 'core.submit'}, qid)
+
+    while True:
+        queue, event = yield Receive()
+        if queue == qid:
+        	sub = Submit.get(id=event.object)
+        	suite = sub.problem.default_test_suite
+            (dispatcher_module, dispatcher_func) = suite.dispatcher.rsplit('.',1)
+            dispatcher_module = __import__(dispatcher_module, globals(), locals(), [ dispatcher_func ], -1)
+            dispatcher = dispatcher_module.__getitem__(dispatcher_func)
+            slave.schedule(dispatcher(sub, suite))
 
 
+def default_serial_dispatcher(submit, suite):
+    qid = QueueId('dispatcher_' + '_'.join([str(x) for x in [submit.id, suite.id]]))
+    yield Attach(qid)
+    yield Map({'type': 'judge_dispatcher_finished', 'submit_id': submit.id}, qid)
+    for test in suite.tests:
+        try:
+        	result = TestResult.get(submit=submit, test=test)
+        except:
+            yield Send(Event(type='judge_dispatcher_enqueue', test_id=test.id, submit_id=submit.id))
+            while True:
+        	    queue, event = yield Receive()
+                if queue = qid and event.test_id = test.id and event.submit_id = submit.id:
+                	result = TestResult.get(id=event.test_result_id)
+                	break
+        #TODO: Group results
+        pass
