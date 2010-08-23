@@ -106,12 +106,12 @@ def notifier_coroutine():
                                                 if field in rec:
                                                     event['new.'+field] = rec[field]
                                             yield Send(event)
-                                        if action == 'U' and events.on_update:
+                                        if action == 'U' and reg.on_update:
                                             for field in reg.on_update:
                                                 if field in rec:
                                                     event['new.'+field] = rec[field]
                                             yield Send(event)
-                                        if action == 'D' and events.on_delete:
+                                        if action == 'D' and reg.on_delete:
                                             for field in reg.on_delete:
                                                 if field in rec:
                                                     event['old.'+field] = rec[field]
