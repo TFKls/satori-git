@@ -34,7 +34,8 @@ def MyContestant(c):
 	    return cu
     else:
 	return None
-    
+	
+
 def CurrentContestant(d):
 	return MyContestant(ActiveContest(d))
 

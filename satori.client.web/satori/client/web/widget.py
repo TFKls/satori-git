@@ -169,8 +169,13 @@ class ManageUsersWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/manusers.html'
         c = ActiveContest(params)
-        self.accepted = Contestant.filter(contest=c,accepted=True)
-        self.pending = Contestant.filter(contest=c,accepted=False)
+        self.accepted = list()
+        self.pending = list()
+        for t in Contestant.filter(contest=c):
+            if t.accepted:
+                self.accepted.append(c.members())
+            else:
+                self.pending.append(c.members())
 
 
 class ManageNewsWidget(Widget):
