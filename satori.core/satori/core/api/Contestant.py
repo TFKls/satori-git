@@ -12,7 +12,7 @@ contestant._fill_module(__name__)
 
 @contestant.method
 @Argument('token', type=Token)
-@Argument('self' type=Contestant)
+@Argument('self', type=Contestant)
 @ReturnValue(type=TypedList(User))
 def members(token, self)
     return [r.child.cast_user for r in RoleMapping.filter(parent = self, model =' core.User')]
