@@ -12,7 +12,7 @@ class Object(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.model:
-        	  self.model = self._meta.app_label + '.' + self._meta.object_name
+        	  self.model = self._meta.app_label + '.' + self._meta.module_name
         super(Object, self).save(*args, **kwargs)
     
     @classmethod
