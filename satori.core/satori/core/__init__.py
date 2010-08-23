@@ -87,7 +87,7 @@ def start_server_judge_generator():
     from satori.events import Slave
     from satori.core.judge_dispatcher import judge_generator
     slave = Slave(connection=Client(address=('localhost', 38888)))
-    slave.schedule(judge_generator())
+    slave.schedule(judge_generator(slave))
     print 'judge generator starting'
     try:
         slave.run()
