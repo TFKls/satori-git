@@ -107,7 +107,7 @@ def default_serial_dispatcher(submit, suite):
             yield Send(Event(type='judge_dispatcher_enqueue', test_id=test.id, submit_id=submit.id))
             while True:
         	    queue, event = yield Receive()
-                if queue = qid and event.test_id = test.id and event.submit_id = submit.id:
+                if queue == qid and event.test_id == test.id and event.submit_id == submit.id:
                 	result = TestResult.get(id=event.test_result_id)
                 	break
         #TODO: Group results
