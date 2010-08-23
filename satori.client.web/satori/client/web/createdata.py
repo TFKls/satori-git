@@ -10,28 +10,72 @@ def create(request):
 #    User.objects.all().delete()
 #    MessageGlobal.objects.all().delete()
 #    MessageContest.objects.all().delete()
+    for object in Privilege.filter():
+        try:
+            object.delete()
+        except:
+            pass
     for object in User.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in Contest.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in Contestant.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in Problem.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in ProblemMapping.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in MessageGlobal.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in MessageContest.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in RoleMapping.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
+    for object in Role.filter():
+        try:
+            object.delete()
+        except:
+            pass
     for object in Test.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in TestSuite.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
     for object in TestMapping.filter():
-        object.delete()
+        try:
+            object.delete()
+        except:
+            pass
+        
     paladin = Security.register(login='paladin', fullname='Lech Duraj', password='paladin')
     dijkstra = Security.register(fullname='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')
     Privilege.create_global(role = paladin, right='ADMIN')
@@ -42,6 +86,8 @@ def create(request):
     c3 = Contest.create_contest(name = 'Kontest moderowany')
     c4 = Contest.create_contest(name = 'Kontest publiczny')
     Privilege.create(object = c2, role = paladin, right='JOIN')
+    Privilege.create(object = c3, role = paladin, right='APPLY')
+    Privilege.create(object = c4, role = paladin, right='JOIN')
     Privilege.create(object = c2, role = paladin, right='MANAGE')
     cc2 = c2.join_contest()
     

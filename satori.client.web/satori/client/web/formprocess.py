@@ -137,13 +137,9 @@ def LogoutRequest(request):
 
 
 def JoinContestRequest(request):
-    user_o = UserById(request.POST['user_id'])
-    contest_o = ContestById(request.POST['contest_id'])
-    Contestant.filter(user=user_o,contest=contest_o)[0]
-    if contest_o.joining=='Public':
-        cu.accepted=True
-    d = DefaultLayout()
-    d['content'] = [{'name' : ['selectcontest']}]
+    contest = ContestById(request.POST['contest_id'])
+    contest.join_contest()
+    d = DefaultLayout(maincontent='selectcontest')
     return GetLink(d,'')
 
 def AcceptUserRequest(request):
