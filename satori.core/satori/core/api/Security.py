@@ -19,7 +19,7 @@ from satori.core.sec.tools import RightCheck, RoleSet, Token
 from satori.core.sec.store import Store
 
 from satori.objects import DispatchOn, Argument, ReturnValue
-from satori.core.models import Object, User, Login, OpenIdentity
+from satori.core.models import Object, User, Login, OpenIdentity, Global, Role
 from satori.ars.wrapper import Struct, StaticWrapper, TypedMap
 
 def openid_salt():
@@ -36,6 +36,18 @@ OpenIdRedirect = Struct('OpenIdRedirect', (
 ))
 
 security = StaticWrapper('Security')
+
+@security.method
+@ReturnValue(type=Role)
+def anonymous():
+    globe = Global.get_instance()
+    return globe.anonymous
+
+@security.method
+@ReturnValue(type=Role)
+def authenticated():
+    globe = Global.get_instance()
+    return globe.authenticated
 
 @security.method
 @Argument('token', type=Token)
