@@ -39,8 +39,6 @@ class Object(models.Model):
         checker = RightCheck()
         roleset = RoleSet(token=token)
         return checker(roleset, self, str(right))
-        if not cani:
-        	raise 'Insufficient rights'
 
 class ObjectEvents(events.Events):
     model = Object
