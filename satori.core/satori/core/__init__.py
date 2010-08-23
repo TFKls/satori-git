@@ -23,7 +23,7 @@ def start_server_event_master():
     from multiprocessing.connection import Listener
     from satori.events import Master 
     from satori.events.mapper import TrivialMapper
-    listener = Listener(address=('localhost', 38888))
+    listener = Listener(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT))
     master = Master(mapper=TrivialMapper())
     master.listen(listener)
     print 'event master starting'
@@ -38,7 +38,7 @@ def start_server_thrift_server():
     import satori.core.api
     from satori.ars.thrift import ThriftServer
     wrapper.register_middleware(cwrapper.TransactionMiddleware())
-    server = ThriftServer(transport=TServerSocket(port=38889))
+    server = ThriftServer(transport=TServerSocket(port=satori.core.setup.settings.THRIFT_PORT))
     server.contracts.update(wrapper.generate_contracts().items)
     print 'thrift server starting'
     server.run()
@@ -48,7 +48,7 @@ def start_server_dbev_notifier():
     setproctitle('satori: dbev notifier')
     from multiprocessing.connection import Client
     from satori.dbev.notifier import notifier
-    connection = Client(address=('localhost', 38888))
+    connection = Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT))
     print 'dbev notifier starting'
     notifier(connection)
 
@@ -57,7 +57,7 @@ def start_server_event_slave():
     setproctitle('satori: event slave')
     from multiprocessing.connection import Client
     from satori.events import Slave, QueueId, Attach, Map, Receive
-    slave = Slave(connection=Client(address=('localhost', 38888)))
+    slave = Slave(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
     def dump_events():
         queue_id = QueueId("*")
         yield Attach(queue_id)
@@ -75,7 +75,7 @@ def start_server_judge_dispatcher():
     from multiprocessing.connection import Client
     from satori.events import Slave
     from satori.core.judge_dispatcher import judge_dispatcher
-    slave = Slave(connection=Client(address=('localhost', 38888)))
+    slave = Slave(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
     slave.schedule(judge_dispatcher())
     print 'judge dispatcher starting'
     slave.run()
@@ -86,7 +86,7 @@ def start_server_judge_generator():
     from multiprocessing.connection import Client
     from satori.events import Slave
     from satori.core.judge_dispatcher import judge_generator
-    slave = Slave(connection=Client(address=('localhost', 38888)))
+    slave = Slave(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
     slave.schedule(judge_generator(slave))
     print 'judge generator starting'
     try:
@@ -147,5 +147,5 @@ def manage():
     from django.core.management import execute_manager
     import satori.core.settings as settings
 
-   	execute_manager(settings)
+    execute_manager(settings)
 

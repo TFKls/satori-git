@@ -3,6 +3,7 @@ import collections
 import os
 from threading import Lock
 from time import sleep
+import satori.core.setup
 from satori.events import QueueId, Attach, Map, Receive, Send, Event
 from satori.core.models import TestResult
 from multiprocessing.connection import Client
@@ -55,7 +56,7 @@ class JudgeDispatcherClient(object):
     def __init__(self, pid):
         self.lock = Lock()
         self.lock.acquire()
-        self.connection = Client(address=('localhost', 38888))
+        self.connection = Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT))
         queue = QueueId('judge_dispatcher_client_' + str(pid))
         self.connection.send(Attach(queue))
         self.connection.recv()
