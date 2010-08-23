@@ -4,9 +4,9 @@ from satori.ars import ars2py
 import sys
 
 def transport_factory():
-    return TSocket(host='satori.tcs.uj.edu.pl', port=38889)
+    return TSocket(host='localhost', port=38889)
 
-ars2py.blob_host = 'satori.tcs.uj.edu.pl'
+ars2py.blob_host = 'localhost'
 ars2py.blob_port = 38887
 
 print 'Bootstrapping client...'

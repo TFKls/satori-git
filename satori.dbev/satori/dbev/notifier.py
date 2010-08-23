@@ -2,10 +2,12 @@
 import select
 import psycopg2.extensions
 import satori.core.setup                                       # pylint: disable-msg=W0611
+import traceback
 from django.db import connection
 from django.db import models
 from satori.dbev.events import registry
 from satori.events import Event, KeepAlive, Send, Slave
+from satori.core.models import Object
 
 def notifier(connection):
     slave = Slave(connection)
@@ -14,66 +16,112 @@ def notifier(connection):
 
 def row_to_dict(cursor, row):
     res = {}
-    for i in range(len(row)):
-    	res[cursor.description[i][0]] = row[i]
+    if row != None:
+        for i in range(len(row)):
+            res[cursor.description[i][0]] = row[i]
     return res
 
 def notifier_coroutine():
     qn = connection.ops.quote_name
-    qv = lambda x : '\''+str(x)+'\''
-    notifications = models.get_model('dbev','notification')
-    cursor = connection.cursor()
-    con = connection.connection
-    con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
-    con.commit()
-    cursor = con.cursor()
-    cursor.execute('LISTEN '+notifications.notification+';')
-
     while True:
-        if select.select([con], [], [], 5) == ([], [], []):
-            yield KeepAlive()
-        else:
-        	con.poll()
-        	if con.notifies:
-                while con.notifies:
-            		con.notifies.pop()
-                for notification in notifications.objects.all():
+        try:
+            cursor = connection.cursor()
+            con = connection.connection
+            con.set_isolation_level(psycopg2.extensions.ISOLATION_LEVEL_AUTOCOMMIT)
+            con.commit()
+            cursor = con.cursor()
+            cursor.execute('LISTEN satori;')
 
-                    modeln = notification.table.split('.')
-                    model = models.get_model(modeln[0], modeln[1])
-                    obj = model.objects.get(id=notification.object)
-                    try:
-                        modeln = obj.model.split('.')
-                        model = models.get_model(modeln[0], modeln[1])
-                        obj = model.objects.get(id=notification.object)
-                    except:
-                        pass
-                    tab = model._meta.db_table + '__version_view'
+            while True:
+                if select.select([con], [], [], 5) == ([], [], []):
+                    yield KeepAlive()
+                else:
+                    con.poll()
+                    if con.notifies:
+                        while con.notifies:
+                            con.notifies.pop()
+                        while True:
+                            cursor.execute('SELECT min(transaction) AS transaction FROM dbev_notification')
+                            res = row_to_dict(cursor, cursor.fetchone())
+                            if 'transaction' not in res:
+                            	break
+                            if res['transaction'] == None:
+                            	break
+                            transaction = int(res['transaction'])
+                            cursor.execute('SELECT * FROM dbev_notification WHERE transaction=%s', [transaction])
+                            events = {}
+                            for row in cursor:
+                                res = row_to_dict(cursor, row)
+                                if 'object' not in res:
+                                	continue
+                                id = int(res['object'])
+                                table = str(res['table'])
+                                if id not in events:
+                                    events[id] = {}
+                                events[id][table] = res
+                            print events
+                            for id, tables in events.iteritems():
+                                action = ''
+                                user = None
+                                previous = None
+                                for table, data in tables.iteritems():
+                                    action = data['action']
+                                    if data['user'] != None:
+                                        user = int(data['user'])
+                                    if data['previous'] != None:
+                                    	if previous == None or previous < int(data['previous']):
+                                        	previous = int(data['previous'])
 
-                    cursor.execute('SELECT * FROM ' + tab + '(' + str(notification.object) + ',' + str(notification.transaction) + ')')
-                    rec = row_to_dict(cursor, cursor.fetchone())
+                                if action == 'D':
+                                	ftrans = transaction-1
+                                else:
+                                	ftrans = transaction
 
-                    events = registry._registry[model]
-                    if notification.action == 'D' and not notification.entry:
-                        version = versions.objects.filter(_version_transaction=notification.transaction).extra(where=[qn(model._meta.pk.column) + ' = ' + str(notification.object)]).get()
-                        version.delete()
-                        notification.delete()
-                        continue
-                    event = Event(type='db')
-                    event.action = notification.action
-                    event.model = rec.model
-                    event.object = notification.object
-                    event.transaction = notification.transaction
-                    event.entry = notification.entry
-                    event.user = notification.user
-                    if notification.action == 'I' and events.on_insert:
-                        for field in events.on_insert:
-                            event['new.'+field] = rec[field]
-                    if notification.action == 'U' and events.on_update:
-                        for field in events.on_update:
-                            event['new.'+field] = rec[field]
-                    if notification.action == 'D' and events.on_delete:
-                        for field in events.on_delete:
-                            event['old.'+field] = rec[field]
-                    yield Send(event)
-                    notification.delete()
+                                cursor.execute('SELECT model FROM ' + Object._meta.db_table + '__version_view(%s,%s)', [id, ftrans])
+                                res = row_to_dict(cursor, cursor.fetchone())
+                                if 'model' not in res:
+                                	continue
+                                modelname = res['model']
+                                model = models.get_model(*modelname.split('.'))
+                                basemodel = model;
+                                for table, data in tables.iteritems():
+                                    newmodel = models.get_model(*table.split('.'))
+                                    if issubclass(basemodel, newmodel):
+                                        basemodel = newmodel
+
+                                cursor.execute('SELECT model FROM ' + model._meta.db_table + '__version_view(%s,%s)', [id, ftrans])
+                                rec = row_to_dict(cursor, cursor.fetchone())
+                                while issubclass(model, basemodel):
+                                    event = Event(type='db')
+                                    event.object = id
+                                    event.transaction = transaction
+                                    event.action = action
+                                    event.user = user
+                                    event.previous = previous
+                                    event.model = model._meta.app_label + '.' + model._meta.module_name
+                                    if model in registry._registry:
+                                        reg = registry._registry[model]
+                                        if action == 'I' and reg.on_insert:
+                                            for field in reg.on_insert:
+                                                if field in rec:
+                                                    event['new.'+field] = rec[field]
+                                            yield Send(event)
+                                        if action == 'U' and events.on_update:
+                                            for field in reg.on_update:
+                                                if field in rec:
+                                                    event['new.'+field] = rec[field]
+                                            yield Send(event)
+                                        if action == 'D' and events.on_delete:
+                                            for field in reg.on_delete:
+                                                if field in rec:
+                                                    event['old.'+field] = rec[field]
+                                            yield Send(event)
+                                    if len(model._meta.parents.items()) > 0:
+                                        model = model._meta.parents.items()[0][0]
+                                    else:
+                                        break
+                            cursor.execute('DELETE FROM dbev_notification WHERE transaction=%s', [int(transaction)])
+        except GeneratorExit:
+            raise
+        except:
+            traceback.print_exc()

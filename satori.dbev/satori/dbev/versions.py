@@ -26,7 +26,7 @@ class UserField(models.IntegerField):
             ', '.join([str(key) + " = " + str(val) for key, val in fields.iteritems()]),
             ' AND '.join([str(key) + " = " + str(val) for key, val in where.iteritems()]))
 
-    def delete_sql(self, table, where)
+    def delete_sql(self, table, where):
         return 'DELETE FROM {0} WHERE {1}'.format(table,
             ' AND '.join([str(key) + " = " + str(val) for key, val in where.iteritems()]))
 
@@ -89,9 +89,9 @@ class UserField(models.IntegerField):
         while issubclass(mod, models.Model):
         	tabs.append(str(mod._meta.db_table))
         	keys.append(str(mod._meta.pk.column))
-            try:
-            	mod = mod._meta.parents.items()[0][0]
-            except:
+            if len(mod._meta.parents.items()) > 0:
+                mod = mod._meta.parents.items()[0][0]
+            else:
                 break
 
         modify_original = """

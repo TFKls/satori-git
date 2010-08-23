@@ -159,7 +159,7 @@ BEGIN
             _exec := _exec || 'CREATE OR REPLACE FUNCTION ' || quote_ident(_tables[i] || '__version_id') || '(_id INTEGER, _ver INTEGER) RETURNS INTEGER AS ''';
             _exec := _exec || 'DECLARE _v INTEGER;';
             _exec := _exec || 'BEGIN SELECT INTO _v MAX(_version_transaction) FROM ' || quote_ident(_tables[i]) || '__versions';
-            _exec := _exec || ' WHERE ' || quote_ident(_keys[i]) || '=_id AND _version_transaction<=_ver AND _version_next>_ver;';
+            _exec := _exec || ' WHERE ' || quote_ident(_keys[i]) || '=_id AND _version_transaction<=_ver AND _version_next IS NULL OR _version_next>_ver;';
             _exec := _exec || 'RETURN _v; END; '' LANGUAGE plpgsql;';
             EXECUTE _exec;
             _exec := '';
