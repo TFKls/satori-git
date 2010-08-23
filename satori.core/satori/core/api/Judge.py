@@ -11,6 +11,8 @@ from satori.core.sec.tools import Token
 from satori.ars.wrapper import Struct, StaticWrapper, TypedList
 from satori.core.cwrapper import Attribute
 from satori.core.judge_dispatcher import JudgeDispatcherClient
+import Test as ApiTest
+import Submit as ApiSubmit
 
 judge = StaticWrapper('Judge')
 
@@ -29,7 +31,11 @@ def get_next(token):
     print next
     if next.test_result_id is None:
     	return None
-    return {'test_result': TestResult.objects.get(id=next.test_result_id), 'test_contents': [], 'submit_contents': []}
+    ret = {}
+    ret['test_result'] = TestResult.objects.get(id=next.test_result_id)
+    ret['test_contents'] = ApiTest.Test__Oa__get_list(token, ret['test_result'].test)
+    ret['submit_contents'] = ApiSubmit.Submit__Oa__get_list(token, ret['test_result'].submit)
+    return ret
 
 @judge.method
 @Argument('token', type=Token)
