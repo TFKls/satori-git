@@ -14,7 +14,7 @@ contestant._fill_module(__name__)
 @Argument('token', type=Token)
 @Argument('self', type=Contestant)
 @ReturnValue(type=TypedList(User))
-def members(token, self)
+def members(token, self):
     return [r.child.cast_user for r in RoleMapping.filter(parent = self, model =' core.User')]
     
 #TODO: members.can method (rights needed?)
