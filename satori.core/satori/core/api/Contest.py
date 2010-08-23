@@ -61,7 +61,7 @@ def create_contest_check(token, name):
 def join_contest(token, self):
     c = Contestant()
     c.contest = self
-    c.accepted = self.demand_right(token, 'JOIN')
+    c.accepted = bool(self.demand_right(token, 'JOIN'))
     c.save()
     if c.accepted:
         RoleMapping(parent = self.contestant_role, child = c).save()

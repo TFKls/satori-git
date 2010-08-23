@@ -225,6 +225,8 @@ class SelectContestWidget(Widget):
         self.mayjoin = []
         self.other = []
         self.user = CurrentUser()
+        self.params = params
+        self.path = path
         for c in Contest.filter():
             cu = MyContestant(c)
             d = DefaultLayout()

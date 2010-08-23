@@ -42,9 +42,9 @@ def Allowed(o, str):
 	return True
 
 # default dictionary, if need to return to main screen
-def DefaultLayout(dict = {}):
+def DefaultLayout(dict = {}, maincontent = 'news'):
 	a = ActiveContest(dict)
-	d = {'name' : ['cover'], 'cover' :[{'name' : ['main'], 'content' : [{'name' : ['news']} ], 'loginspace' : [{'name' : ['loginform']}]}]}
+	d = {'name' : ['cover'], 'cover' :[{'name' : ['main'], 'content' : [{'name' : [maincontent]} ], 'loginspace' : [{'name' : ['loginform']}]}]}
 	#d = {'name' : ['main'], 'content' : [{'name' : ['news']} ], 'login' : [{'name' : ['login']}]}
 	if a:
 		d['contestid'] = [str(a.id)]
