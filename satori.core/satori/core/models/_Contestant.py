@@ -14,9 +14,6 @@ class Contestant(Role):
     accepted   = models.BooleanField(default=False)
     invisible  = models.BooleanField(default=False)
 
-    def __str__(self):
-        return self.user.fullname+' ('+self.contest.name+')'
-
 
 class ContestantEvents(events.Events):
     model = Contestant

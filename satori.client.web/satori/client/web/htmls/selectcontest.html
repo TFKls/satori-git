@@ -27,9 +27,9 @@
         <td class="buttoncell">
         {% if mayjoin %}
         <form action="process.join" method="post">
-            <input type="hidden" name="user_id" value="{{ widget.user.id }}"/>
             <input type="hidden" name="contest_id" value="{{ c.id }}"/>
-            <input type="hidden" name="back_path" value=""/>
+            <input type="hidden" name="back_dict" value="{{ widget.params }}"/>            
+            <input type="hidden" name="back_path" value="{{ widget.path }}"/>
             <input type="submit" class="applybutton" value="Join"/>
         </form>
         {% endif %}

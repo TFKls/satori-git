@@ -8,8 +8,11 @@
 </tr>
 {% for cu in widget.accepted %}
 <tr>
-    <td>{{cu.user.login}} </td>
-    <td>{{cu.user.fullname}}</td>
+<td>
+{% for u in cu %}
+{{u.fullname}} ({{u.login}}) <br/>
+{% endfor %}
+</td>
     <td></td>
 {% endfor %}
 </tr>
@@ -24,8 +27,10 @@
 </tr>
 {% for cu in widget.pending %}
 <tr>
-    <td>{{cu.user.login}} </td>
-    <td>{{cu.user.fullname}}</td>
+{% for u in cu %}
+    <td>{{u.user.login}} </td>
+    <td>{{u.user.fullname}}</td>
+{% endfor %}
     <td>
         <form action="process.accept" method="post">
             <input type="hidden" name="conuser_id" value="{{ cu.id }}"/>

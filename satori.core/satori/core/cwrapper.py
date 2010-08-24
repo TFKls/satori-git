@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import types
+import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
 from satori.ars import model, wrapper
 from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorName
@@ -103,6 +104,7 @@ field_basic_types = {
     models.CharField: types.StringType,
     models.TextField: types.StringType,
     models.BooleanField: types.BooleanType,
+    models.DateTimeField: datetime.datetime,
 }
 
 
@@ -132,6 +134,7 @@ def generate_field_procedures(model, field):
 @DispatchOn(field=models.CharField)
 @DispatchOn(field=models.TextField)
 @DispatchOn(field=models.BooleanField)
+@DispatchOn(field=models.DateTimeField)
 @DispatchOn(field=models.ForeignKey)
 def generate_field_procedures(model, field):
     field_name = field.name

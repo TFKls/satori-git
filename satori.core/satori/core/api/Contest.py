@@ -14,7 +14,7 @@ contest = ModelWrapper(Contest)
 @Argument('user', type=User)
 @ReturnValue(type=Contestant)
 def find_contestant(token, self, user):
-    return Contestant.objects.filter(contest=self, accepted=True, children__id=user.id)[0]
+    return Contestant.objects.filter(contest=self, children__id=user.id)[0]
 @contest.find_contestant.can
 def find_contestant_check(token, self, user):
     return token.user == user or self.demand_right(token, 'MANAGE')
@@ -61,7 +61,7 @@ def create_contest_check(token, name):
 def join_contest(token, self):
     c = Contestant()
     c.contest = self
-    c.accepted = self.demand_right(token, 'JOIN')
+    c.accepted = bool(self.demand_right(token, 'JOIN'))
     c.save()
     if c.accepted:
         RoleMapping(parent = self.contestant_role, child = c).save()

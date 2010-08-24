@@ -169,8 +169,13 @@ class ManageUsersWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/manusers.html'
         c = ActiveContest(params)
-        self.accepted = Contestant.filter(contest=c,accepted=True)
-        self.pending = Contestant.filter(contest=c,accepted=False)
+        self.accepted = list()
+        self.pending = list()
+        for t in Contestant.filter(contest=c):
+            if t.accepted:
+                self.accepted.append(t.members())
+            else:
+                self.pending.append(t.members())
 
 
 class ManageNewsWidget(Widget):
@@ -225,6 +230,8 @@ class SelectContestWidget(Widget):
         self.mayjoin = []
         self.other = []
         self.user = CurrentUser()
+        self.params = params
+        self.path = path
         for c in Contest.filter():
             cu = MyContestant(c)
             d = DefaultLayout()

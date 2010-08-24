@@ -21,6 +21,13 @@ DATABASE_PORT = ''
 
 CACHE_BACKEND = 'memcached://localhost:11211'
 
+EVENT_HOST = 'localhost'
+EVENT_PORT = 38888
+THRIFT_HOST = '0.0.0.0'
+THRIFT_PORT = 38889
+BLOB_HOST = '0.0.0.0'
+BLOB_PORT = 38887
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
