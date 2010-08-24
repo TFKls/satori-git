@@ -80,7 +80,7 @@ def accept_contestant(token, self, contestant):
     if contestant.contest != self:
     	raise "Go away"
     contestant.accepted = True
-    RoleMapping(parent = self.contestant_role, child = c).save()
+    RoleMapping(parent = self.contestant_role, child = contestant).save()
 #TODO: RoleMapping may exist!
     contestant.save()
     return contestant

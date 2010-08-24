@@ -139,16 +139,15 @@ def LogoutRequest(request):
 def JoinContestRequest(request):
     contest = ContestById(request.POST['contest_id'])
     contest.join_contest()
-    d = DefaultLayout(maincontent='selectcontest')
+    d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
 
 def AcceptUserRequest(request):
-    cu = Contestant(request.POST['conuser_id'])
-    cu.accepted = True
-    d = DefaultLayout()
-    d['content'] = [{'name' : ['manusers']}]
-    d['contestid'] = [str(cu.contest.id)]
-    return GetLink(d,request.POST['back_path'])
+    cu = Contestant.filter(id=int(request.POST['conuser_id']))[0]
+    contest = cu.contest
+    contest.accept_contestant(cu)
+    d = ParseURL(request.POST['back_to'])
+    return GetLink(d,'')
 
 def SubmitRequest(request):
     d = ParseURL(request.POST['back_to'])

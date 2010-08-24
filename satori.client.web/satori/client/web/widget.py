@@ -171,13 +171,13 @@ class ManageUsersWidget(Widget):
         c = ActiveContest(params)
         self.accepted = list()
         self.pending = list()
-        self.debug = "Debug: "
+        self.back_to = ToString(params)
+        self.path = path
         for t in Contestant.filter(contest=c):
             if t.accepted:
-                self.accepted.append(t.members())
-                self.debug = self.debug + str(len(t.members()))
+                self.accepted.append([t,t.members()])
             else:
-                self.pending.append(t.members())
+                self.pending.append([t,t.members()])
 
 
 class ManageNewsWidget(Widget):
@@ -232,7 +232,7 @@ class SelectContestWidget(Widget):
         self.mayjoin = []
         self.other = []
         self.user = CurrentUser()
-        self.params = params
+        self.back_to = ToString(params)
         self.path = path
         for c in Contest.filter():
             cu = MyContestant(c)
