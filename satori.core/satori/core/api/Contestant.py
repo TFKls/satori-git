@@ -17,7 +17,8 @@ contestant._fill_module(__name__)
 def members(token, self):
     result = list()
     for r in RoleMapping.objects.filter(parent = self):
-        result.append(r.child.cast_user)
+        if r.child.model = 'core.user':
+            result.append(r.child.cast_user)
     return result
     
 #TODO: members.can method (rights needed?)
