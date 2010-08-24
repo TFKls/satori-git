@@ -1,5 +1,7 @@
 <div id="header">
-    {% include "htmls/banner.html" %}
+    {% with widget.header as widget %}
+    {% include widget.htmlFile %}
+    {% endwith %}
 </div>
 <div id="container">
     <div class="colmask threecol"> 
@@ -17,9 +19,6 @@
                 <div class="col2"> 
                     <!-- Column 2 start --> 
                     <img src="files/logoAlpha.png" id="logo" alt="">
-        {% with widget.loginform as widget %}
-        {% include widget.htmlFile %}
-        {% endwith %}
                     {% with widget.menu as widget %}
                     {% include widget.htmlFile %}
                     {% endwith %}

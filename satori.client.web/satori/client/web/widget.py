@@ -255,6 +255,7 @@ class MainWidget(Widget):
             _params['content'] = [{'name' : ['news']}]
         self.menu = MenuWidget(params,path,path)
         self.content = Widget.FromDictionary(params,path+'|content(0)');
+        self.header = HeaderWidget(params,path,path)
         self.params = _params
 
 # cover widget
@@ -265,3 +266,31 @@ class CoverWidget(Widget):
         d = DefaultLayout(params)
         self.cover = Widget.FromDictionary(params,'cover(0)');
 #        self.startLink = GetLink(d,'')
+
+# header menu
+class HeaderWidget(Widget):
+    pathName = 'header'
+    def __init__(self, params, path, content_path):
+        self.htmlFile = 'htmls/header.html'
+        self.menuitems = []
+        contest = ActiveContest(params)
+        user = CurrentUser()
+        cuser = CurrentContestant(params)
+        def addwidget(check,label,wname, isLeft = False, object = None,rights = ''):
+            params_copy = deepcopy(params)
+            d = follow(params_copy, content_path)
+            if not check:
+                return
+            if object and not Allowed(object,rights):
+                return
+            f = { 'name' : [wname], 'override' : ["1"] };
+            d['content'] = [f]
+            self.menuitems.append([label,GetLink(params_copy,''), isLeft])
+
+        addwidget(True, 'News', 'news', True)
+        addwidget(True, 'Contests', 'selectcontest', True)
+        addwidget(user, 'Virtual Contests', 'selectvcontests', True)
+        addwidget(user, 'Profile', 'profile', False)
+        addwidget(not user, 'Sign In', 'loginform', False)
+        if user:
+            self.username = user.fullname

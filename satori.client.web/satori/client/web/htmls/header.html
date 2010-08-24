@@ -1,0 +1,20 @@
+﻿<ul class="headerLeftUl">
+    {% for name, link, isLeft in widget.menuitems %}
+        {% if isLeft %}
+            <li><a href="{{link}}">{{name}}</a></li>
+        {% endif %}
+    {% endfor %}
+</ul>
+<ul class="headerRightUl">
+    {% if widget.username %}
+        <li>Logged in as {{widget.username}}</li>
+    {% endif %}
+    {% for name, link, isLeft in widget.menuitems %}
+        {% if not isLeft %}
+            <li><a href="{{link}}">{{name}}</a></li>
+        {% endif %}
+    {% endfor %}
+    {% if widget.username %}
+        <li><a href='process.logout'>Sign out</a></li>
+    {% endif %}
+</ul>

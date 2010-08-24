@@ -163,23 +163,28 @@ body {
 	padding:0;
 }
 
-#header ul li a {
+#header ul li {
 	display:block;
 	margin:0 0 0 0px;
-	text-align:center;
-	text-decoration:none;
-	position:relative;
+		position:relative;
 	float: left;
 	line-height:1.3em;
+    text-align:center;
 	color: #CCCCCC;
 }
 
-#header ul.headerLeftUl li a {	
+#header ul li a {
+    text-align:center;
+	text-decoration:none;
+	color: #CCCCCC;
+}
+
+#header ul.headerLeftUl li {	
    padding:3px 2em;
 	left:0em;
 }
 
-#header ul.headerRightUl li a {
+#header ul.headerRightUl li {
 	padding:3px 1em;
 	right:0em;
 }
