@@ -272,6 +272,20 @@ class DeleteWrapper(wrapper.ProcedureWrapper):
         super(DeleteWrapper, self).__init__(delete, parent)
 
 
+class DemandRightWrapper(wrapper.ProcedureWrapper):
+    def __init__(self, parent):
+        model = parent._model
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('right', type=str)
+        @ReturnValue(type=bool)
+        def demand_right(token, self, right):
+            return self.demand_right(token, right)
+
+        super(DemandRightWrapper, self).__init__(demand_right, parent)
+
+
 Attribute = wrapper.Struct('Attribute', (
     ('name', str, False),
     ('is_blob', bool, False),
@@ -365,6 +379,7 @@ class ModelWrapper(wrapper.StaticWrapper):
         self._add_child(GetStructWrapper(self))
         self._add_child(CreateWrapper(self))
         self._add_child(DeleteWrapper(self))
+        self._add_child(DemandRightWrapper(self))
         self._add_child(OpenAttributeWrapper(self))
 
 
