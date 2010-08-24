@@ -21,6 +21,7 @@ class Submit(Object):
             ret.append((self.contestant.contest,'OBSERVE'))
         if right == 'OVERRIDE':
             ret.append((self.contestant.contest,'MANAGE'))
+        return ret
 
 class SubmitEvents(events.Events):
     model = Submit
