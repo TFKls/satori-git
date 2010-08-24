@@ -171,9 +171,11 @@ class ManageUsersWidget(Widget):
         c = ActiveContest(params)
         self.accepted = list()
         self.pending = list()
+        self.debug = "Debug: "
         for t in Contestant.filter(contest=c):
             if t.accepted:
                 self.accepted.append(t.members())
+                self.debug = self.debug + str(len(t.members()))
             else:
                 self.pending.append(t.members())
 
