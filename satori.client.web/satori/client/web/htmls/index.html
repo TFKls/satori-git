@@ -1,25 +1,37 @@
-﻿<div id="header">
-{% include "htmls/banner.html" %}
+<div id="header">
+    {% include "htmls/banner.html" %}
 </div>
-
-<div id="middle">
-
-    <div id="leftmenu">
-        
-        {% with widget.loginform as widget %}
-        {% include widget.htmlFile %}
-        {% endwith %}
-
-        {% with widget.menu as widget %}
-        {% include widget.htmlFile %}
-        {% endwith %}
-    </div>
-    
-    <div id="content">
-        {% with widget.content as widget %}
-        {% include widget.htmlFile %}
-        {% endwith %}
-    </div>
+<div id="container">
+    <div class="colmask threecol"> 
+        <div class="colmid"> 
+            <div class="colleft"> 
+                <div class="col1"> 
+                    <!-- Column 1 start - Main Column--> 
+                    <div id="content">
+                        {% with widget.content as widget %}
+                        {% include widget.htmlFile %}
+                        {% endwith %}
+                    </div>
+                    <!-- Column 1 end --> 
+                </div> 
+                <div class="col2"> 
+                    <!-- Column 2 start --> 
+                    <img src="files/logoAlpha.png" id="logo" alt="">
+                    {% with widget.menu as widget %}
+                    {% include widget.htmlFile %}
+                    {% endwith %}
+                    <!-- Column 2 end --> 
+                </div> 
+                <div class="col3"> 
+                    <!-- Column 3 start --> 
+                    <div class="tcslogo">
+                        <img src="files/tcslogo.png"></img>
+                    </div>
+                    <!-- Column 3 end --> 
+                </div> 
+            </div> 
+        </div> 
+    </div> 
 </div>
 <div id="footer">
             Debug:
@@ -30,3 +42,4 @@
         </ul>
 
 </div>  
+
