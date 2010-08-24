@@ -77,16 +77,16 @@ class MenuWidget(Widget):
         addwidget(True, 'News', 'news')
         addwidget(True, 'About', 'about')
         addwidget(not contest,'Select contest','selectcontest')
-        addwidget(contest,'Problems','problems',contest,'seeproblems')
-        addwidget(cuser,'Submit','submit',contest,'submit')
-        addwidget(contest,'Results','results',contest,'seeresults')
-        addwidget(contest,'Ranking','ranking',contest,'seeranking')
-        addwidget(cuser,'Manage contest','mancontest',contest,'manage')
+        addwidget(contest,'Problems','problems',contest,'VIEW')
+        addwidget(cuser,'Submit','submit',contest,'SUBMIT')
+        addwidget(contest,'Results','results',contest,'VIEW')
+        addwidget(contest,'Ranking','ranking',contest,'VIEW')
+        addwidget(cuser,'Manage contest','mancontest',contest,'MANAGE')
         if cuser:
-            addwidget(user,'Manage news','mannews',contest,'manage_news')
-        else:
-            addwidget(user,'Manage news','mannews',True,'manage_news')
-        addwidget(contest,'Manage users','manusers',contest,'manage_users')
+            addwidget(user,'Manage news','mannews',contest,'MANAGE')
+#        else:
+#            addwidget(user,'Manage news','mannews',Global.get_instance(),'MANAGENEWS')
+        addwidget(contest,'Manage users','manusers',contest,'MANAGE')
         addlink(contest,'Main screen',DefaultLayout())
 
 # about table (to test ajah)
