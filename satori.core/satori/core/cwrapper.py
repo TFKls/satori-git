@@ -302,7 +302,7 @@ class OpenAttributeWrapper(wrapper.Wrapper):
             ret = {}
             ret['name'] = oa.name
             if oa.oatype == OpenAttribute.OATYPES_BLOB:
-            	ret['value'] = oa.blob_hash.hash
+            	ret['value'] = oa.blob.hash
                 ret['is_blob'] = True
             elif oa.oatype == OpenAttribute.OATYPES_STRING:
                 ret['value'] = oa.string_value
