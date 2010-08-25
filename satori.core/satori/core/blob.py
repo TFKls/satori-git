@@ -38,7 +38,7 @@ def server_get(request, token, obj, oa, name):
         return HttpResponseNotFound()
     if oa.oatype != OpenAttribute.OATYPES_BLOB:
         return HttpResponseForbidden()
-    blob = oa.blob_hash
+    blob = oa.blob
     def reader():
         blob.open('r')
         while True:
@@ -66,7 +66,7 @@ def server_put(request, token, obj, oa, name):
         len = len - r
     blob.close()
     blob.save()
-    oa.blob_hash = blob
+    oa.blob = blob
     oa.save()
     res = HttpResponse()
     res.write('OK')
