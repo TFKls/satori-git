@@ -3,7 +3,7 @@
 from satori.objects import Argument, ReturnValue
 from satori.ars.wrapper import TypedList
 from satori.core.cwrapper import ModelWrapper
-from satori.core.models import Contest, Contestant, User, ProblemMapping, Submit, Global, Role, RoleMapping, Privilege
+from satori.core.models import Contest, Contestant, User, ProblemMapping, Submit, Global, Role, RoleMapping, Privilege, OpenAttribute, Blob
 from satori.core.sec import Token
 
 contest = ModelWrapper(Contest)
@@ -96,17 +96,20 @@ def accept_contestant_check(token, self, contestant):
 @Argument('filename', type=str)
 @ReturnValue(type=Submit)
 def submit(token, self, problem_mapping, content, filename):
-    contestant = self.find_contestant(token, token.user)
-    if contestant.contest != self:
-    	raise "Go away"
+    contestant = Contestant.objects.filter(contest=self, children__id=token.user.id)[0]
     if problem_mapping.contest != self:
     	raise "Go away"
     submit = Submit()
     submit.contestant = contestant
     submit.problem = problem_mapping
-#TODO: submit.open_attr['content'] = content
-#TODO: submit.open_attr['filename'] = filename
 	submit.save()
+	OpenAttribute(object=submit, name='filename', oatype=OpenAttribute.OATYPES_STRING, string_value=filename).save()
+	blob = Blob()
+	blob.open('w')
+	blob.write(content)
+	blob.close()
+	blob.save()
+	OpenAttribute(object=submit, name='content', oatype=OpenAttribute.OATYPES_BLOB, blob=blob).save()
 	return submit
 @contest.submit.can
 def submit_check(token, self, problem_mapping, content, filename):
