@@ -27,7 +27,7 @@ class TestSuite(Object):
 
     def save(self, *args, **kwargs):
         if self.name == None:
-            self.name = datetime.now()
+            self.name = str(datetime.now())
         super(TestSuite,self).save(*args,**kwargs)
         
     class Meta:                                                # pylint: disable-msg=C0111

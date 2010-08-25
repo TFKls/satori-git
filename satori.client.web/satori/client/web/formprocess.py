@@ -169,8 +169,8 @@ def ContestRightsRequest(request):
     d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
 
-def AlterSuiteRequest(request)
-    pm = ProblemMappind.filter(id=int(request.POST['pm_id']))[0]
+def AlterSuiteRequest(request):
+    pm = ProblemMapping.filter(id=int(request.POST['pm_id']))[0]
     dts = pm.default_test_suite
     nts = TestSuite.create(problem = pm.problem, dispatcher = dts.dispatcher)
     for k in request.POST.keys():
@@ -178,6 +178,7 @@ def AlterSuiteRequest(request)
             t = Test.filter(id=int(k[4:]))[0]
             TestMapping.create(test = t, suite = nts)
     pm.default_test_suite = nts
+    yyyyyy
     d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
     
@@ -217,7 +218,7 @@ def EditMessageRequest(request):
         return GetLink(d,'')
 
 
-allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'createcontest' : CreateContestRequest, 'contestrights' : ContestRightsRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
+allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'createcontest' : CreateContestRequest, 'contestrights' : ContestRightsRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest, 'altersuite' : AlterSuiteRequest}
 
 def process(argstr,request):
     res = allreqs[argstr](request)
