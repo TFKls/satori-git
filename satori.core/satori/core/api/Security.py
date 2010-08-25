@@ -74,9 +74,9 @@ def global_right_have(token, right):
 
 @security.method
 @Argument('login', type=str)
-@Argument('namespace', type=str, default='')
+@Argument('namespace', type=str)
 @ReturnValue(type=bool)
-def login_free(login, namespace):
+def login_free(login, namespace=''):
     return len(Login.objects.filter(namespace=namespace, login=login)) == 0
 
 @security.method
@@ -95,9 +95,9 @@ def register(login, password, fullname):
 @security.method
 @Argument('login', type=str)
 @Argument('password', type=str)
-@Argument('namespace', type=str, default='')
+@Argument('namespace', type=str)
 @ReturnValue(type=Token)
-def login(login, password, namespace):
+def login(login, password, namespace=''):
     login = Login.objects.get(namespace=namespace, login=login)
     if login.check_password(password):
         auth = 'login'
@@ -109,9 +109,9 @@ def login(login, password, namespace):
 @Argument('login', type=str)
 @Argument('old', type=str)
 @Argument('new', type=str)
-@Argument('namespace', type=str, default='')
+@Argument('namespace', type=str)
 @ReturnValue(type=Token)
-def passwd(login, old, new, namespace):
+def passwd(login, old, new, namespace=''):
     login = Login.objects.get(namespace=namespace, login=login)
     if login.change_password(old, new):
         auth = 'login'
@@ -258,11 +258,11 @@ def openid_register_finish(token, args, return_to):
 @security.method
 @Argument('login', type=str)
 @Argument('password', type=str)
-@Argument('namespace', type=str, default='')
 @Argument('openid', type=str)
 @Argument('return_to', type=str)
+@Argument('namespace', type=str)
 @ReturnValue(type=OpenIdRedirect)
-def openid_add_start(login, openid, return_to):
+def openid_add_start(login, password, openid, return_to, namespace=''):
     login = Login.objects.get(namespace=namespace, login=login)
     if login.check_password(password):
         res = openid_generic_start(openid=openid, return_to=return_to, user_id=str(token.user.id), ax=True)
