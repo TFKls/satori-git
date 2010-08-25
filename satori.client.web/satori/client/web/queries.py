@@ -40,7 +40,9 @@ def CurrentContestant(d):
 	return MyContestant(ActiveContest(d))
 
 def Allowed(o, str):
-	return o.demand_right(str)
+    if o=='global':
+        return Security.global_right_have(str)
+    return o.demand_right(str)
 
 # default dictionary, if need to return to main screen
 def DefaultLayout(dict = {}, maincontent = 'news'):

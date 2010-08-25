@@ -68,6 +68,16 @@ def right_have(token, object, right):
     return checker(roleset, object, right)
 
 @security.method
+@Argument('token', type=Token)
+@Argument('right', type=str)
+@ReturnValue(type=bool)
+def global_right_have(token, right):
+    checker = RightCheck()
+    roleset = RoleSet(token=token)
+    object = Global.get_instance()
+    return checker(roleset, object, right)
+
+@security.method
 @Argument('login', type=str)
 @Argument('namespace', type=str, default='')
 @ReturnValue(type=bool)

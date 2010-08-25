@@ -84,8 +84,8 @@ class MenuWidget(Widget):
         addwidget(contest,'Manage contest','mancontest',contest,'MANAGE')
         if cuser:
             addwidget(user,'Manage news','mannews',contest,'MANAGE')
-#        else:
-#            addwidget(user,'Manage news','mannews',Global.get_instance(),'MANAGENEWS')
+        else:
+            addwidget(user,'Manage news','mannews','global','ADMIN')
         addwidget(contest,'Manage users','manusers',contest,'MANAGE')
         addlink(contest,'Switch contest',DefaultLayout())
 
@@ -234,7 +234,7 @@ class SelectContestWidget(Widget):
         self.user = CurrentUser()
         self.back_to = ToString(params)
         self.path = path
-        self.cancreate = bool(CurrentUser())
+        self.cancreate = Allowed('global','ADMIN')
         for c in Contest.filter():
             cu = MyContestant(c)
             d = DefaultLayout()
