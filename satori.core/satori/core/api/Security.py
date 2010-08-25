@@ -63,19 +63,14 @@ def whoami(token):
 @Argument('right', type=str)
 @ReturnValue(type=bool)
 def right_have(token, object, right):
-    checker = RightCheck()
-    roleset = RoleSet(token=token)
-    return checker(roleset, object, right)
+    return object.demand_right(token, right)
 
 @security.method
 @Argument('token', type=Token)
 @Argument('right', type=str)
 @ReturnValue(type=bool)
 def global_right_have(token, right):
-    checker = RightCheck()
-    roleset = RoleSet(token=token)
-    object = Global.get_instance()
-    return checker(roleset, object, right)
+    return Global.get_instance().demand_right(token, right)
 
 @security.method
 @Argument('login', type=str)
