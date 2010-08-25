@@ -94,7 +94,7 @@ def convert_from(elem, type):
 def wrap(_client, _proc, _procname):
     _implementation = _proc.implementation
     _rettype = _proc.return_type
-    _args = [(NamingStyle.PYTHON.format(param.name), param.type, param.optional) for param in _proc.parameters.items]
+    _args = [(param.name, param.type, param.optional) for param in _proc.parameters.items]
 
     _token_type = None
     if _args and (_args[0][0] == 'token'):
@@ -145,12 +145,12 @@ def wrap(_client, _proc, _procname):
     return func
 
 def generate_class(client, contract):
-    class_name = NamingStyle.PYTHON.format(contract.name)
+    class_name = contract.name
     class_bases = (object, )
     class_dict = {}
 
     for proc in contract.procedures:
-        meth_name = NamingStyle.PYTHON.format(Name(*proc.name.components[1:]))
+        meth_name = proc.name.split('_', 1)[1]
         class_dict[meth_name] = wrap(client, proc, meth_name)
 
     def __init__(self, id):
@@ -159,18 +159,18 @@ def generate_class(client, contract):
     def __getattr__(self, name):
         if name == 'id':
         	return self._id
-        if (name[-5:] == '__get') or (name[-5:] == '__set'):
+        if (name[-5:] == '_get') or (name[-5:] == '_set'):
         	raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
-        if hasattr(self, name + '__get'):
-        	return getattr(self, name + '__get')()
+        if hasattr(self, name + '_get'):
+        	return getattr(self, name + '_get')()
         else:
         	raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
         
     def __setattr__(self, name, value):
-        if name[-5:] == '__set':
+        if name[-5:] == '_set':
         	return super(self.__class__, self).__setattr__(name, value)
-        if hasattr(self, name + '__set'):
-        	return getattr(self, name + '__set')(value)
+        if hasattr(self, name + '_set'):
+        	return getattr(self, name + '_set')(value)
         else:
         	return super(self.__class__, self).__setattr__(name, value)
 
@@ -194,14 +194,11 @@ def generate_classes(client):
     for contract in client.contracts:
     	types.extend(namedTypes(contract))
     for contract in client.contracts:
-        c_name = NamingStyle.PYTHON.format(contract.name)
-
         newcls = generate_class(client, contract)
 
-        id_name = NamingStyle.IDENTIFIER.format(Name(ClassName(c_name + 'Id')))
-        if id_name in types.IDENTIFIER:
-        	types.IDENTIFIER[id_name].__realclass = newcls
+        if (contract.name + 'Id') in types.names:
+        	types[contract.name + 'Id'].__realclass = newcls
 
-        classes[c_name] = newcls
+        classes[contract.name] = newcls
     return classes
 

@@ -89,11 +89,11 @@ def judge_generator(slave):
     while True:
         queue, event = yield Receive()
         if queue == qid:
-        	sub = Submit.get(id=event.object)
+        	sub = Submit.objects.get(id=event.object)
         	suite = sub.problem.default_test_suite
             (dispatcher_module, dispatcher_func) = suite.dispatcher.rsplit('.',1)
             dispatcher_module = __import__(dispatcher_module, globals(), locals(), [ dispatcher_func ], -1)
-            dispatcher = dispatcher_module.__getitem__(dispatcher_func)
+            dispatcher = getattr(dispatcher_module, dispatcher_func)
             slave.schedule(dispatcher(sub, suite))
 
 
@@ -103,13 +103,13 @@ def default_serial_dispatcher(submit, suite):
     yield Map({'type': 'judge_dispatcher_finished', 'submit_id': submit.id}, qid)
     for test in suite.tests:
         try:
-        	result = TestResult.get(submit=submit, test=test)
+        	result = TestResult.objects.get(submit=submit, test=test)
         except:
             yield Send(Event(type='judge_dispatcher_enqueue', test_id=test.id, submit_id=submit.id))
             while True:
         	    queue, event = yield Receive()
                 if queue == qid and event.test_id == test.id and event.submit_id == submit.id:
-                	result = TestResult.get(id=event.test_result_id)
+                	result = TestResult.objects.get(id=event.test_result_id)
                 	break
         #TODO: Group results
         pass
