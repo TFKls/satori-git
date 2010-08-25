@@ -17,7 +17,6 @@ class Global(Object):
 
     def save(self, *args, **kwargs):
         self.guardian = 1
-        super(Global, self).save(*args, **kwargs)
         anonymous = Role(name='ANONYMOUS', absorbing=False)
         anonymous.save()
         self.anonymous = anonymous
