@@ -26,7 +26,7 @@ class TestSuite(Object):
             ret.append((self.problem,'EDIT'))
         return ret
 
-    def save(self, *args, **kwargs)
+    def save(self, *args, **kwargs):
         if self.name == None:
             self.name = datetime.now()
         super(TestSuite,self).save(*args,**kwargs)
