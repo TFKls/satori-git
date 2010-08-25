@@ -39,3 +39,16 @@
 {% endfor %}
 </table>
 
+
+
+{% if widget.cancreate %}
+<h2 class="subtitle">Create new contest</h2>
+<form action="process.createcontest" method="post">
+
+Name: <input type="text" name="contestname"/>
+<input type="hidden" name="back_to" value="{{ widget.back_to }}"/>            
+<input type="hidden" name="back_path" value="{{ widget.path }}"/>
+<input type="submit" value="Create"/>
+</form>
+
+{% endif %}

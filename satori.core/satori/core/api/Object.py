@@ -6,3 +6,4 @@ from satori.core.models import Object
 object = ModelWrapper(Object)
 
 object._fill_module(__name__)
+

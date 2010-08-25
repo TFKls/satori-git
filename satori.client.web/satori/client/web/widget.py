@@ -81,13 +81,13 @@ class MenuWidget(Widget):
         addwidget(cuser,'Submit','submit',contest,'SUBMIT')
         addwidget(contest,'Results','results',contest,'VIEW')
         addwidget(contest,'Ranking','ranking',contest,'VIEW')
-        addwidget(cuser,'Manage contest','mancontest',contest,'MANAGE')
+        addwidget(contest,'Manage contest','mancontest',contest,'MANAGE')
         if cuser:
             addwidget(user,'Manage news','mannews',contest,'MANAGE')
 #        else:
 #            addwidget(user,'Manage news','mannews',Global.get_instance(),'MANAGENEWS')
         addwidget(contest,'Manage users','manusers',contest,'MANAGE')
-        addlink(contest,'Main screen',DefaultLayout())
+        addlink(contest,'Switch contest',DefaultLayout())
 
 # about table (to test ajah)
 class AboutWidget(Widget):
@@ -234,6 +234,7 @@ class SelectContestWidget(Widget):
         self.user = CurrentUser()
         self.back_to = ToString(params)
         self.path = path
+        self.cancreate = bool(CurrentUser())
         for c in Contest.filter():
             cu = MyContestant(c)
             d = DefaultLayout()

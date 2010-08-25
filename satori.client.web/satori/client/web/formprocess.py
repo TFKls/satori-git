@@ -135,6 +135,11 @@ def LogoutRequest(request):
     set_token('')
     return GetLink(DefaultLayout(),'')
 
+def CreateContestRequest(request):
+    if request.POST['contestname']:
+        Contest.create_contest(request.POST['contestname'])
+    d = ParseURL(request.POST['back_to'])
+    return GetLink(d,'')
 
 def JoinContestRequest(request):
     contest = ContestById(request.POST['contest_id'])
@@ -185,7 +190,7 @@ def EditMessageRequest(request):
         return GetLink(d,'')
 
 
-allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
+allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'createcontest' : CreateContestRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
 
 def process(argstr,request):
     res = allreqs[argstr](request)
