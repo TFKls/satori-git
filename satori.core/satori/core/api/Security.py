@@ -262,7 +262,7 @@ def openid_register_finish(token, args, return_to):
 @Argument('return_to', type=str)
 @Argument('namespace', type=str)
 @ReturnValue(type=OpenIdRedirect)
-def openid_add_start(login, passsword, openid, return_to, namespace=''):
+def openid_add_start(login, password, openid, return_to, namespace=''):
     login = Login.objects.get(namespace=namespace, login=login)
     if login.check_password(password):
         res = openid_generic_start(openid=openid, return_to=return_to, user_id=str(token.user.id), ax=True)
