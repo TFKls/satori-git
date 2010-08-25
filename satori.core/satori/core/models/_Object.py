@@ -24,6 +24,7 @@ class Object(models.Model):
         return cls._ars_type
 
     def inherit_right(self, right):
+        from satori.core.models import Global
         right = str(right)
         ret = list()
         if right == 'VIEW':
@@ -36,10 +37,14 @@ class Object(models.Model):
         	ret.append((self, 'EDIT'))
         if right == 'EDIT':
         	ret.append((self, 'MANAGE'))
-        if right == 'GRANT':
+        if right == 'MANAGE_PRIVILEGES':
+        	ret.append((Global.get_instance(), 'MANAGE_PRIVILEGES'))
         	ret.append((self, 'MANAGE'))
         if right != 'ADMIN':
-        	  ret.append((self, 'ADMIN'))
+        	ret.append((self, 'ADMIN'))
+        if right == 'ADMIN':
+        	ret.append((Global.get_instance(), 'ADMIN'))
+
         return ret
     
     def demand_right(self, token, right):
