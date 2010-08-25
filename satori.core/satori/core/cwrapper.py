@@ -22,19 +22,13 @@ class DjangoTypeAlias(model.TypeAlias):
         super(DjangoTypeAlias, self).__init__(name=(model_._meta.object_name + 'Id'), target_type=model.Int64)
         self.model = model_
 
-    def needs_conversion(self):
+    def do_needs_conversion(self):
         return True
 
-    def convert_to_ars(self, value):
-        if value is None:
-        	return None
-
+    def do_convert_to_ars(self, value):
         return value.id
 
-    def convert_from_ars(self, value):
-        if value is None:
-        	return None
-
+    def do_convert_from_ars(self, value):
         return self.model.objects.get(id=value)
 
 

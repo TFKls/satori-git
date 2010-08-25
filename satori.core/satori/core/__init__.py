@@ -47,7 +47,7 @@ def start_server_blob_server():
     setproctitle('satori: blob server')
     from django.core.handlers.wsgi import WSGIHandler
     from cherrypy.wsgiserver import CherryPyWSGIServer
-    server = CherryPyWSGIServer(('0.0.0.0', 38887), WSGIHandler())
+    server = CherryPyWSGIServer((satori.core.setup.settings.BLOB_HOST, satori.core.setup.settings.BLOB_PORT), WSGIHandler())
     print 'blob server starting'
     try:
         server.start()

@@ -9,6 +9,15 @@ import copy
 from satori.objects import Signature, Argument, ArgumentMode, ReturnValue, ConstraintDisjunction, TypeConstraint
 from satori.ars.model import NamedTuple, TypeAlias, ListType, MapType, Structure, Procedure, Contract, Void, Int32, Int64, String, Boolean
 
+class NullableArsStructure(Structure):
+    def convert_to_ars(self, value):
+        
+        pass
+
+    def convert_from_ars(self, value):
+        pass
+
+
 class TypedListType(type):
     def __new__(mcs, name, bases, dict_):
         elem_type = dict_['elem_type']
@@ -68,6 +77,8 @@ def TypedMap(key_type, value_type):
     return TypedMapType('', (), {'key_type': key_type, 'value_type': value_type})
 
 
+
+
 class StructType(type):
     def __new__(mcs, name, bases, dict_):
         assert 'fields' in dict_
@@ -100,20 +111,15 @@ class DateTimeTypeAlias(TypeAlias):
     def __init__(self, ):
         super(DateTimeTypeAlias, self).__init__(name='DateTime', target_type=Int64)
 
-    def needs_conversion(self):
+    def do_needs_conversion(self):
         return True
 
-    def convert_to_ars(self, value):
-        if value is None:
-            return None
-
+    def do_convert_to_ars(self, value):
         return long(time.mktime(value.timetuple()))
 
-    def convert_from_ars(self, value):
-        if value is None:
-            return None
-
+    def do_convert_from_ars(self, value):
         return datetime.fromtimestamp(value)
+
 
 python_basic_types = {
     types.NoneType: Void,

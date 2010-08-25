@@ -37,15 +37,48 @@ class NamedElement(Element):
 class Type(Element):
     """Abstract. A base class for ARS data types.
     """
+    
+    def __init__(self):
+        self.converter = None
 
-    def needs_conversion(self):
+    def do_needs_conversion(self):
         return False
 
-    def convert_to_ars(self, value):
+    def do_convert_to_ars(self, value):
         return value
 
-    def convert_from_ars(self, value):
+    def do_convert_from_ars(self, value):
         return value
+
+    def needs_conversion(self):
+        if self.converter is not None:
+        	return self.converter.needs_conversion()
+        else:
+        	return self.do_needs_conversion()
+
+    def convert_to_ars(self, value):
+        if value is None:
+        	return None
+        
+        if not self.needs_conversion():
+        	return value
+
+        if self.converter is not None:
+        	return self.converter.convert_to_ars(value)
+        else:
+        	return self.do_convert_to_ars(value)
+
+    def convert_from_ars(self, value):
+        if value is None:
+        	return None
+        
+        if not self.needs_conversion():
+        	return value
+
+        if self.converter is not None:
+        	return self.converter.convert_from_ars(value)
+        else:
+        	return self.do_convert_from_ars(value)
 
 
 class NamedType(NamedElement, Type):
@@ -96,24 +129,14 @@ class ListType(Type):
     def __str__(self):
         return 'List<'+str(self.element_type)+'>'
 
-    def needs_conversion(self):
+    def do_needs_conversion(self):
         return self.element_type.needs_conversion()
 
-    def convert_to_ars(self, value):
-        if value is None:
-        	return None
-        if self.needs_conversion():
-        	return [self.element_type.convert_to_ars(elem) for elem in value]
-        else:
-        	return value
+    def do_convert_to_ars(self, value):
+        return [self.element_type.convert_to_ars(elem) for elem in value]
 
-    def convert_from_ars(self, value):
-        if value is None:
-        	return None
-        if self.needs_conversion():
-        	return [self.element_type.convert_from_ars(elem) for elem in value]
-        else:
-        	return value
+    def do_convert_from_ars(self, value):
+       	return [self.element_type.convert_from_ars(elem) for elem in value]
 
 
 class SetType(Type):
@@ -128,30 +151,20 @@ class SetType(Type):
     def __str__(self):
         return 'Set<'+str(self.element_type)+'>'
 
-    def needs_conversion(self):
+    def do_needs_conversion(self):
         return self.element_type.needs_conversion()
 
-    def convert_to_ars(self, value):
-        if value is None:
-        	return None
-        if self.needs_conversion():
-            new_value = set()
-            for elem in value:
-            	new_value.add(self.element_type.convert_to_ars(elem))
-            return new_value
-        else:
-        	return value
+    def do_convert_to_ars(self, value):
+        new_value = set()
+        for elem in value:
+            new_value.add(self.element_type.convert_to_ars(elem))
+        return new_value
 
-    def convert_from_ars(self, value):
-        if value is None:
-        	return None
-        if self.needs_conversion():
-            new_value = set()
-            for elem in value:
-            	new_value.add(self.element_type.convert_from_ars(elem))
-            return new_value
-        else:
-        	return value
+    def do_convert_from_ars(self, value):
+        new_value = set()
+        for elem in value:
+            new_value.add(self.element_type.convert_from_ars(elem))
+        return new_value
 
 
 class MapType(Type):
@@ -168,30 +181,20 @@ class MapType(Type):
     def __str__(self):
         return 'Map<'+str(self.key_type)+','+str(self.value_type)+'>'
 
-    def needs_conversion(self):
+    def do_needs_conversion(self):
         return self.key_type.needs_conversion() or self.value_type.needs_conversion()
 
-    def convert_to_ars(self, value):
-        if value is None:
-        	return None
-        if self.needs_conversion():
-            new_value = dict()
-            for (key, elem) in value.iteritems():
-            	new_value[self.key_type.convert_to_ars(key)] = self.value_type.convert_to_ars(elem)
-            return new_value
-        else:
-        	return value
+    def do_convert_to_ars(self, value):
+        new_value = dict()
+        for (key, elem) in value.iteritems():
+            new_value[self.key_type.convert_to_ars(key)] = self.value_type.convert_to_ars(elem)
+        return new_value
 
-    def convert_from_ars(self, value):
-        if value is None:
-        	return None
-        if self.needs_conversion():
-            new_value = dict()
-            for (key, elem) in value.iteritems():
-            	new_value[self.key_type.convert_from_ars(key)] = self.value_type.convert_from_ars(elem)
-            return new_value
-        else:
-        	return value
+    def do_convert_from_ars(self, value):
+        new_value = dict()
+        for (key, elem) in value.iteritems():
+            new_value[self.key_type.convert_from_ars(key)] = self.value_type.convert_from_ars(elem)
+        return new_value
 
 
 class NamedTuple(Object):
@@ -266,40 +269,30 @@ class Structure(NamedType):
             field = Field(**kwargs)
         self.fields.append(field)
     
-    def needs_conversion(self):
+    def do_needs_conversion(self):
         return any(field.type.needs_conversion() for field in self.fields.items)
 
-    def convert_to_ars(self, value):
-        if value is None:
-        	return None
-        if self.needs_conversion():
-        	new_value = {}
-            for field in self.fields.items:
-                if field.name in value:
-                    if field.type.needs_conversion():
-                    	new_value[field.name] = field.type.convert_to_ars(value[field.name])
-                    else:
-                    	new_value[field.name] = value[field.name]
+    def do_convert_to_ars(self, value):
+        new_value = {}
+        for field in self.fields.items:
+            if field.name in value:
+                if field.type.needs_conversion():
+                    new_value[field.name] = field.type.convert_to_ars(value[field.name])
+                else:
+                    new_value[field.name] = value[field.name]
 
-            return new_value
-        else:
-        	return value
+        return new_value
 
-    def convert_from_ars(self, value):
-        if value is None:
-        	return None
-        if self.needs_conversion():
-        	new_value = {}
-            for field in self.fields.items:
-                if field.name in value:
-                    if field.type.needs_conversion():
-                    	new_value[field.name] = field.type.convert_from_ars(value[field.name])
-                    else:
-                        new_value[field.name] = value[field.name]
+    def do_convert_from_ars(self, value):
+        new_value = {}
+        for field in self.fields.items:
+            if field.name in value:
+                if field.type.needs_conversion():
+                    new_value[field.name] = field.type.convert_from_ars(value[field.name])
+                else:
+                    new_value[field.name] = value[field.name]
 
-            return new_value
-        else:
-        	return value
+        return new_value
 
 
 class Parameter(Field):
