@@ -115,7 +115,7 @@ def dummy_test():
     from satori.events import Slave
     from satori.core.judge_dispatcher import judge_generator
     from satori.events import QueueId, Attach, Map, Receive, Send, Event
-    slave = Slave(connection=Client(address=('localhost', 38888)))
+    slave = Slave(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
 
     def gen_1():
         print 'q0'
