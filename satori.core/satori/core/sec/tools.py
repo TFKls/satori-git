@@ -267,7 +267,7 @@ class RightCheck(Object):
 
     def __init__(self):
         self._ts = datetime.now()
-        cache = {}
+        RightCheck.cache = {}
         pass
     
     def _cache_key(self, role, object, right):
