@@ -18,7 +18,7 @@ class ContestRanking(Object):
 
     def inherit_right(self, right):
         right = str(right)
-        ret = list()
+        ret = super(ContestRanking, self).inherit_right(right)
         if right == 'VIEW':
             ret.append((self.contest,'MANAGE'))
         return ret

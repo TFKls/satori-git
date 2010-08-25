@@ -18,7 +18,7 @@ class Problem(Object):
 
     def inherit_right(self, right):
         right = str(right)
-        ret = list()
+        ret = super(Problem, self).inherit_right(right)
         if right == 'EDIT':
             pass
         return ret

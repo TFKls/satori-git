@@ -34,13 +34,6 @@ class Global(Object):
             g.save()
         return g
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = list()
-        if right != 'ADMIN':
-        	ret.append((self, 'ADMIN'))
-        return ret
-
 class GlobalEvents(events.Events):
     model = Global
     on_insert = on_update = on_delete = []

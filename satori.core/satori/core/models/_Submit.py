@@ -16,7 +16,7 @@ class Submit(Object):
     
     def inherit_right(self, right):
         right = str(right)
-        ret = list()
+        ret = super(Submit, self).inherit_right(right)
         if right == 'VIEW':
             ret.append((self.contestant.contest,'OBSERVE'))
         if right == 'OVERRIDE':

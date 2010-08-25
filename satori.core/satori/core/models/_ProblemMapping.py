@@ -23,9 +23,11 @@ class ProblemMapping(Object):
 
     def inherit_right(self, right):
         right = str(right)
-        ret = list()
+        ret = super(ProblemMapping, self).inherit_right(right)
         if right == 'EDIT':
             ret.append((self.contest,'MANAGE'))
+        if right == 'SUBMIT':
+        	ret.append((self.contest,'SUBMIT'))
         return ret
     
 

@@ -24,17 +24,17 @@ class OpenAttribute(models.Model):
 
     oatype       = models.IntegerField(choices=OATYPES)
     string_value = models.TextField(null=True)
-    blob_hash    = models.ForeignKey('Blob', null=True)
+    blob         = models.ForeignKey('Blob', null=True)
 
     def save(self, *args, **kwargs):
         str = self.string_value
-        blo = self.blob_hash
+        blo = self.blob
         self.string_value = None
-        self.blob_hash = None
+        self.blob = None
         if self.oatype == OATYPES_STRING:
         	self.string_value = str
         if self.oatype == OATYPES_BLOB:
-        	self.blob_hash = blo
+        	self.blob = blo
         super(OpenAttribute, self).save(*args, **kwargs)
 
     class Meta:                                                # pylint: disable-msg=C0111

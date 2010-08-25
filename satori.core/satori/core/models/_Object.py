@@ -28,8 +28,16 @@ class Object(models.Model):
         ret = list()
         if right == 'VIEW':
         	ret.append((self, 'MODERATE'))
+        if right == 'ATTRIBUTE_READ':
+        	ret.append((self, 'VIEW'))
+        if right == 'ATTRIBUTE_WRITE':
+        	ret.append((self, 'EDIT'))
         if right == 'MODERATE':
         	ret.append((self, 'EDIT'))
+        if right == 'EDIT':
+        	ret.append((self, 'MANAGE'))
+        if right == 'GRANT':
+        	ret.append((self, 'MANAGE'))
         if right != 'ADMIN':
         	  ret.append((self, 'ADMIN'))
         return ret

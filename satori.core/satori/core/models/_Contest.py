@@ -20,7 +20,7 @@ class Contest(Object):
 
     def inherit_right(self, right):
         right = str(right)
-        ret = list()
+        ret = super(Contest, self).inherit_right(right)
         if right == 'VIEW' or right == 'OBSERVE' or right == 'VIEWTASKS':
             ret.append((self,'MANAGE'))
         if right == 'APPLY':
