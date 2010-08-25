@@ -169,10 +169,18 @@ class ManageUsersWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/manusers.html'
         c = ActiveContest(params)
+        self.contest = c
         self.accepted = list()
         self.pending = list()
         self.back_to = ToString(params)
         self.path = path
+        jo = 0
+        if explicit_right(c,Security.authenticated(),"APPLY"):
+            jo = 1
+        if explicit_right(c,Security.authenticated(),"JOIN"):
+            jo = 2
+        self.joining_options=[["no_joining","Only when added",jo==0],["moderated","By acceptation",jo==1],["public","Freely",jo==2]]
+        self.anonymous_view = explicit_right(c,Security.anonymous(),"VIEW")
         for t in Contestant.filter(contest=c):
             if t.accepted:
                 self.accepted.append([t,t.members()])
@@ -221,7 +229,27 @@ class ProblemsWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/problems.html'
         c = ActiveContest(params)
-        self.problems = ProblemMapping.filter(contest=c)
+        self.problems = list()
+        for p in ProblemMapping.filter(contest=c):
+            editlink = GetLink(DefaultLayout(dict = params,maincontent = 'editprmap',problemid = [str(p.id)]),'')
+            self.problems.append([p,editlink])
+
+class EditPMWidget(Widget):
+    pathName = 'editprmap'
+    def __init__(self,params,path):
+        self.htmlFile='htmls/editprmap.html'
+        d = follow(params,path)
+        id = int(d['problemid'][0])
+        p = ProblemMapping.filter(id=id)[0]
+        self.pm = p
+        self.problem = p.problem
+        self.tests = list()
+        self.back_to = ToString(params)
+        self.path = path
+        dts = p.default_test_suite
+        for t in Test.filter(problem = p.problem):
+            checked = bool(TestMapping.filter(test=t,suite=dts))
+            self.tests.append([t,checked])
 
 # contest selection screen (a possible main content)
 class SelectContestWidget(Widget):

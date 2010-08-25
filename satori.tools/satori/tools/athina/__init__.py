@@ -199,7 +199,7 @@ def athina_import():
             if problem['checker'] != None:
                 problem['testsuite'].oa_set_blob('checker', problem['checker'])
             if problem['sizelimit'] != None:
-                problem['testsuite'].Oa__set_str('sizelimit', str(problem['sizelimit']))
+                problem['testsuite'].oa_set_str('sizelimit', str(problem['sizelimit']))
             for num, test in problem['tests'].iteritems():
                 test['object'] = Test.create(name=options.name + '_' + problem['problem'] + '_default_' + str(test['test']), owner = Security.whoami(), problem = problem['object'], environment = options.environment)
                 if test['input'] != None:
@@ -207,9 +207,9 @@ def athina_import():
                 if test['output'] != None:
                     test['object'].oa_set_blob('output', test['output'])
                 if test['memlimit'] != None:
-                    test['object'].Oa__set_str('memlimit', str(test['memlimit']))
+                    test['object'].oa_set_str('memlimit', str(test['memlimit']))
                 if test['timelimit'] != None:
-                    test['object'].Oa__set_str('timelimit', str(test['timelimit']))
+                    test['object'].oa_set_str('timelimit', str(test['timelimit']))
                 TestMapping.create(test=test['object'], suite=problem['testsuite'], order=test['test'])
         except:
             problem['testsuite'] = TestSuite.filter(name=options.name + '_' + problem['problem'] + '_default')[0]

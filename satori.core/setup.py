@@ -20,6 +20,7 @@ setup(name='satori.core',
         'satori.events',
         'satori.objects',
         'setproctitle',
+        'cherrypy',
     ],
     entry_points='''
         [console_scripts]

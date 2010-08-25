@@ -5,11 +5,11 @@
     <td>Code</td>
     <td>Title</td>
 </tr>
-{% for p in widget.problems %}
+{% for p,editlink in widget.problems %}
 <tr>
     <td>{{p.code}} </td>
-    <td>{{p.title}}</td>
-{% endfor %}
+    <td><a href="{{ editlink }}">{{p.title}}</a></td>
 </tr>
+{% endfor %}
 </table>
 

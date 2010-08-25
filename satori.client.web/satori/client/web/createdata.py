@@ -95,19 +95,19 @@ def create(request):
     p1 = Problem.create(name = "SORT", description = "Zadanie o sortowaniu")
     p2 = Problem.create(name = "COW", description = "Zadanie o krowie")
     p3 = Problem.create(name = "WUWU", description = "Zadanie o wuwuzeli")
-    ts1 = TestSuite.create(owner = paladin, problem = p1, name = "Testy do SORT")
+    ts1 = TestSuite.create(problem = p1, name = "Testy do SORT")
     for i in range(1,4):
-        t = Test.create(owner = paladin, problem = p1, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania SORT.")
+        t = Test.create(problem = p1, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania SORT.")
         TestMapping.create(suite=ts1,test=t,order=i)
     tp2 = []
-    ts2 = TestSuite.create(owner = paladin, problem = p2, name = "Testy do COW")
+    ts2 = TestSuite.create(problem = p2, name = "Testy do COW")
     for i in range(1,2):
-        t = Test.create(owner = paladin, problem = p2, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania COW.")
+        t = Test.create(problem = p2, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania COW.")
         TestMapping.create(suite=ts2,test=t,order=i)
     tp3 = []
-    ts3 = TestSuite.create(owner = paladin, problem = p3, name = "Testy do WUWU")
+    ts3 = TestSuite.create(problem = p3, name = "Testy do WUWU")
     for i in range(1,3):
-        t = Test.create(owner = paladin, problem = p3, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania WUWU.")
+        t = Test.create(problem = p3, name = "Test "+str(i), description = "Test numer "+str(i)+" do zadania WUWU.")
         TestMapping.create(suite=ts3,test=t,order=i)
     
     ProblemMapping.create(problem = p1, contest = c4, code = "A", title = "Harry Potter i sortownia smieci", default_test_suite=ts1)

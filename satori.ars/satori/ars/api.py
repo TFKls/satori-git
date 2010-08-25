@@ -3,10 +3,7 @@
 """
 
 
-from satori.objects import Object
-
-
-class Reader(Object):
+class Reader(object):
     """Abstract. Reads ARS Contract(s) from a file-like objects.
     """
 
@@ -15,38 +12,20 @@ class Reader(Object):
         """
         raise NotImplementedError()
 
-    @property
-    def contracts(self):
-        """Abstract. Set. The Contract(s) read by this Reader.
-        """
-        raise NotImplementedError()
 
-
-class Writer(Object):
+class Writer(object):
     """Abstract. Writes ARS Contract(s) to a file-like object.
     """
 
-    @property
-    def contracts(self):
-        """Abstract. MutableSet. The Contract(s) to be written by this Writer.
-        """
-        raise NotImplementedError()
-
-    def writeTo(self, target):
+    def writeTo(self, contracts, target):
         """Abstract. Write Contract(s) to file.
         """
         raise NotImplementedError()
 
 
-class Server(Object):
+class Server(object):
     """Abstract. Server ARS Contract(s).
     """
-
-    @property
-    def contracts(self):
-        """Abstract. MutableSet. The Contract(s) to be served by this Server.
-        """
-        raise NotImplementedError()
 
     def run(self):
         """Abstract. Run the server.
@@ -54,15 +33,9 @@ class Server(Object):
         raise NotImplementedError()
 
 
-class Client(Object):
+class Client(object):
     """Abstract. Client fo ARS Contract(s).
     """
-
-    @property
-    def contracts(self):
-        """Abstract. MutableSet. The Contract(s) to be handled by this Client.
-        """
-        raise NotImplementedError()
 
     def start(self):
         """Abstract. Start the client. Implement the Procedure(s) in Contract(s).

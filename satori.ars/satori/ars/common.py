@@ -10,37 +10,10 @@ from satori.ars.model import Field, Structure, Parameter, Procedure, Contract
 from satori.ars.api import Writer
 
 
-class ContractMixin(Object):
-    """Mix-in. Provides the `contracts` property.
-    """
-
-    @Argument('changeContracts', type=bool)
-    def __init__(self, changeContracts):
-        self._contracts = set()
-        self._changeContracts = changeContracts
-
-    def _get_contracts(self):
-        if self._changeContracts:
-            return self._contracts
-        else:
-            return frozenset(self._contracts)
-
-    def _set_contracts(self, value):
-        if not self._changeContracts:
-            raise RuntimeError("The 'contracts' property cannot be assigned to.")
-        contracts = list(value)
-        self._contracts.clear()
-        for contract in contracts:
-            self._contracts.add(contract)
-
-    contracts = property(_get_contracts, _set_contracts)
-
-
-class TopologicalWriter(ContractMixin, Writer):
+class TopologicalWriter(Writer):
     """Abstract. A base for Writers which process the elements in topological order.
     """
 
-    @Argument('changeContracts', fixed=True)
     def __init__(self):
         pass
 
@@ -80,16 +53,17 @@ class TopologicalWriter(ContractMixin, Writer):
     @DispatchOn(item=Procedure)
     def _dependencies(self, item):
         yield item.return_type
-        yield item.error_type
         for parameter in item.parameters:
             yield parameter
+        for exception_type in item.exception_types:
+            yield exception_type
 
     @DispatchOn(item=Contract)
     def _dependencies(self, item):
         for procedure in item.procedures:
             yield procedure
 
-    def writeTo(self, target):
+    def writeTo(self, contracts, target):
         done = set()
         def _recwrite(item):
             if item in done:
@@ -98,7 +72,7 @@ class TopologicalWriter(ContractMixin, Writer):
             for dependency in self._dependencies(item):
                 _recwrite(dependency)
             self._write(item, target)
-        for contract in self._contracts:
+        for contract in contracts:
             _recwrite(contract)
 
 class TopologicalSortedWriter(TopologicalWriter):
@@ -116,7 +90,7 @@ class TopologicalSortedWriter(TopologicalWriter):
         """
         raise NotImplementedError()
 
-    def writeTo(self, target):
+    def writeTo(self, contracts, target):
         ready = sortedset()
         deps = dict()
         fol = dict()
@@ -133,7 +107,7 @@ class TopologicalSortedWriter(TopologicalWriter):
             	_recfind(dependency)
             	fol[dependency].append(item)
 
-        for contract in self._contracts:
+        for contract in contracts:
         	_recfind(contract)
 
         while len(ready) > 0:

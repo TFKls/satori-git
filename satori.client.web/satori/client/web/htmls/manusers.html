@@ -1,3 +1,23 @@
+<h4>Global rights</h4>
+<form action="process.contestrights" method="POST">
+    <input type="hidden" name="contest_id" value="{{ widget.contest.id }}"/>
+    <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
+    <input type="hidden" name="back_path" value="{{ widget.path }}"/>
+    Non-authenticated users may view: 
+    <input type="checkbox" name="anonymous_view" {% if widget.anonymous_view %} checked {% endif %}/><br/>
+    Registered users may join:
+    <select name="joining_by">
+    {% for optionno,optionname,selected in widget.joining_options %}
+        <option value="{{optionno}}" {% if selected %} selected {% endif %}>{{ optionname }}</option>
+    {% endfor %}
+    </select><br/>
+
+    <input type="submit" value="Set global rights"/>
+
+</form>
+
+
+
 
 <h4>Accepted users</h4>
 <table class="list_table">

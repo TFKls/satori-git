@@ -19,7 +19,7 @@ def resolve_model(self, model, rel_model):
 class DjangoTypeAlias(model.TypeAlias):
     @Argument('model', type=models.base.ModelBase)
     def __init__(self, model_):
-        super(DjangoTypeAlias, self).__init__(name=Name(ClassName(model_._meta.object_name + 'Id')), target_type=model.Int64)
+        super(DjangoTypeAlias, self).__init__(name=(model_._meta.object_name + 'Id'), target_type=model.Int64)
         self.model = model_
 
     def needs_conversion(self):
@@ -163,11 +163,11 @@ def generate_field_procedures(model, field):
 
 class FieldWrapper(wrapper.Wrapper):
     def __init__(self, field, parent):
-        super(FieldWrapper, self).__init__(field.name, parent, FieldName)
+        super(FieldWrapper, self).__init__(field.name, parent)
         self._field = field
 
         for proc in generate_field_procedures(parent._model, field):
-            self._add_child(wrapper.ProcedureWrapper(proc, self, AccessorName))
+            self._add_child(wrapper.ProcedureWrapper(proc, self))
 
 
 class FilterWrapper(wrapper.ProcedureWrapper):
@@ -208,16 +208,16 @@ class GetStructWrapper(wrapper.ProcedureWrapper):
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @ReturnValue(type=struct)
-        def getStruct(token, self):
+        def get_struct(token, self):
             ret = {}
 
             for (name, type, optional) in struct.fields:
-                if self.getattr(name) is not None:
-                	ret[name] = self.getattr(name)
+                if getattr(self, name) is not None:
+                	ret[name] = getattr(self, name)
 
             return ret
 
-        super(GetStructWrapper, self).__init__(getStruct, parent)
+        super(GetStructWrapper, self).__init__(get_struct, parent)
 
 
 class CreateWrapper(wrapper.ProcedureWrapper):
@@ -294,7 +294,7 @@ Attribute = wrapper.Struct('Attribute', (
 
 class OpenAttributeWrapper(wrapper.Wrapper):
     def __init__(self, parent):
-        super(OpenAttributeWrapper, self).__init__('oa', parent, ClassName)
+        super(OpenAttributeWrapper, self).__init__('oa', parent)
 
         model = parent._model
 

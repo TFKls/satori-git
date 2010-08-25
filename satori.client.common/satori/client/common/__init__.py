@@ -1,6 +1,7 @@
 from thrift.transport.TSocket import TSocket
 from satori.ars.thrift import ThriftReader, ThriftClient, ThreadedThriftClient
 from satori.ars import ars2py
+from satori.ars.model import NamedTuple
 import sys
 
 def transport_factory():
@@ -11,7 +12,7 @@ ars2py.blob_port = 38887
 
 print 'Bootstrapping client...'
 
-_bootstrap_client = ThriftClient(transport_factory())
+_bootstrap_client = ThriftClient(transport_factory(), NamedTuple())
 _bootstrap_client.start(bootstrap=True)
 _bootstrap_client.stop()
 

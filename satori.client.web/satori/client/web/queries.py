@@ -44,12 +44,17 @@ def Allowed(o, str):
         return Security.global_right_have(str)
     return o.demand_right(str)
 
+def explicit_right(object,role,right):
+    return bool(Privilege.filter(role=role, object=object, right=right))
+
 # default dictionary, if need to return to main screen
-def DefaultLayout(dict = {}, maincontent = 'news'):
+def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
 	a = ActiveContest(dict)
+	params = kwargs
+	params['name'] = [maincontent]
 	d = {'name' : ['cover'], 
          'cover' :[{'name' : ['main'], 
-                    'content' : [{'name' : [maincontent]} ], 
+                    'content' : [params], 
                     'loginspace' : [{'name' : ['loginform']}],
                     'headerspace' : [{'name': ['header']}]
                   }]

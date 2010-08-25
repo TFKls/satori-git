@@ -14,8 +14,7 @@ def export_thrift():
     import satori.core.api
     from satori.ars.thrift import ThriftWriter
     writer = ThriftWriter()
-    writer.contracts.update(wrapper.generate_contracts().items)
-    writer.writeTo(stdout)
+    writer.writeTo(wrapper.generate_contracts(), stdout)
 
 def start_server_event_master():
     from setproctitle import setproctitle
@@ -33,15 +32,28 @@ def start_server_thrift_server():
     from setproctitle import setproctitle
     setproctitle('satori: thrift server')
     from thrift.transport.TSocket import TServerSocket
+    from thrift.server.TServer import TThreadedServer
     from satori.ars import wrapper
     from satori.core import cwrapper
     import satori.core.api
     from satori.ars.thrift import ThriftServer
     wrapper.register_middleware(cwrapper.TransactionMiddleware())
-    server = ThriftServer(transport=TServerSocket(port=satori.core.setup.settings.THRIFT_PORT))
-    server.contracts.update(wrapper.generate_contracts().items)
+    server = ThriftServer(TThreadedServer, TServerSocket(port=satori.core.setup.settings.THRIFT_PORT), wrapper.generate_contracts())
     print 'thrift server starting'
     server.run()
+
+def start_server_blob_server():
+    from setproctitle import setproctitle
+    setproctitle('satori: blob server')
+    from django.core.handlers.wsgi import WSGIHandler
+    from cherrypy.wsgiserver import CherryPyWSGIServer
+    server = CherryPyWSGIServer(('0.0.0.0', 38887), WSGIHandler())
+    print 'blob server starting'
+    try:
+        server.start()
+    except KeyboardInterrupt:
+        server.stop()
+
 
 def start_server_dbev_notifier():
     from setproctitle import setproctitle
@@ -95,6 +107,43 @@ def start_server_judge_generator():
         traceback.print_exc()
     print 'judge generator finishing'
 
+
+def dummy_test():
+    from setproctitle import setproctitle
+    setproctitle('satori: dummy test')
+    from multiprocessing.connection import Client
+    from satori.events import Slave
+    from satori.core.judge_dispatcher import judge_generator
+    from satori.events import QueueId, Attach, Map, Receive, Send, Event
+    slave = Slave(connection=Client(address=('localhost', 38888)))
+
+    def gen_1():
+        print 'q0'
+        yield Attach('q1')
+        print 'q1'
+        yield Attach('q2')
+        print 'q2'
+        yield Attach('q3')
+        print 'q3'
+
+    def gen_2():
+        print 'R0'
+        yield Receive()
+        print 'R1'
+        yield Receive()
+        print 'R2'
+        yield Receive()
+        print 'R3'
+
+    slave.schedule(gen_1())
+    slave.schedule(gen_2())
+    from time import sleep
+    sleep(20)
+    print 'dummy test starting'
+    slave.run()
+
+
+
 def start_server():
     from setproctitle import setproctitle
     setproctitle('satori: master')
@@ -113,6 +162,10 @@ def start_server():
     thrift_server.start()
     processes.append(thrift_server)
     
+    blob_server = Process(target=start_server_blob_server)
+    blob_server.start()
+    processes.append(blob_server)
+    
     dbev_notifier = Process(target=start_server_dbev_notifier)
     dbev_notifier.start()
     processes.append(dbev_notifier)
@@ -128,6 +181,10 @@ def start_server():
     judge_generator = Process(target=start_server_judge_generator)
     judge_generator.start()
     processes.append(judge_generator)
+    
+    dummy_testp = Process(target=dummy_test)
+    dummy_testp.start()
+    processes.append(dummy_testp)
     
     from signal import signal, SIGINT, SIGTERM, pause
 

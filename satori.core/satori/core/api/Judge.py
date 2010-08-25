@@ -33,8 +33,8 @@ def get_next(token):
     	return None
     ret = {}
     ret['test_result'] = TestResult.objects.get(id=next.test_result_id)
-    ret['test_contents'] = ApiTest.Test__Oa__get_list(token, ret['test_result'].test)
-    ret['submit_contents'] = ApiSubmit.Submit__Oa__get_list(token, ret['test_result'].submit)
+    ret['test_contents'] = ApiTest.Test_oa_get_list(token, ret['test_result'].test)
+    ret['submit_contents'] = ApiSubmit.Submit_oa_get_list(token, ret['test_result'].submit)
     return ret
 
 @judge.method
