@@ -1,14 +1,22 @@
+# vim:ts=4:sts=4:sw=4:expandtab
 from thrift.transport.TSocket import TSocket
 from satori.ars.thrift import ThriftReader, ThriftClient, ThreadedThriftClient
 from satori.ars import ars2py
 from satori.ars.model import NamedTuple
 import sys
+import getpass
 
 def transport_factory():
+    if getpass.getuser() == 'gutowski':
+        return TSocket(host='localhost', port=39889)
+    if getpass.getuser() == 'zzzmwm01':
+        return TSocket(host='localhost', port=37889)
+    if getpass.getuser() == 'duraj':
+        return TSocket(host='localhost', port=36889)
     return TSocket(host='satori.tcs.uj.edu.pl', port=38889)
 
-ars2py.blob_host = 'satori.tcs.uj.edu.pl'
-ars2py.blob_port = 38887
+ars2py.blob_host = 'localhost'
+ars2py.blob_port = 39887
 
 print 'Bootstrapping client...'
 
