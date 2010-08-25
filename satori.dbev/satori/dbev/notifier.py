@@ -41,7 +41,6 @@ def handle_notifications(cursor):
             if id not in events:
                 events[id] = {}
             events[id][table] = res
-        print events
         for id, tables in events.iteritems():
             action = ''
             user = None
@@ -67,7 +66,7 @@ def handle_notifications(cursor):
             model = models.get_model(*modelname.split('.'))
             basemodel = model;
             for table, data in tables.iteritems():
-                newmodel = models.get_model(*table.split('.'))
+                newmodel = models.get_model(*table.split('_', 1))
                 if issubclass(basemodel, newmodel):
                     basemodel = newmodel
 
@@ -83,17 +82,17 @@ def handle_notifications(cursor):
                 event.model = model._meta.app_label + '.' + model._meta.module_name
                 if model in registry._registry:
                     reg = registry._registry[model]
-                    if action == 'I' and reg.on_insert:
+                    if action == 'I' and reg.on_insert != None:
                         for field in reg.on_insert:
                             if field in rec:
                                 event['new.'+field] = rec[field]
                         yield Send(event)
-                    if action == 'U' and reg.on_update:
+                    if action == 'U' and reg.on_update != None:
                         for field in reg.on_update:
                             if field in rec:
                                 event['new.'+field] = rec[field]
                         yield Send(event)
-                    if action == 'D' and reg.on_delete:
+                    if action == 'D' and reg.on_delete != None:
                         for field in reg.on_delete:
                             if field in rec:
                                 event['old.'+field] = rec[field]

@@ -59,15 +59,20 @@ $$ LANGUAGE plpgsql;
         create_version_table_function = """
 CREATE OR REPLACE FUNCTION create_version_table(_table TEXT, _key TEXT) RETURNS TEXT AS $$
 DECLARE
-    _exec TEXT;
+    _exec TEXT := '';
+    _texec TEXT := '';
     _vtable TEXT;
     _cols TEXT[];
     _rec RECORD;
     i INTEGER;
     j INTEGER;
 BEGIN
+    _exec := 'ALTER TABLE ' || quote_ident(_table) || ' ADD COLUMN _version_transaction integer NOT NULL DEFAULT get_transaction_id();';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
     _vtable := _table || '__versions';
     _exec := 'DROP TABLE IF EXISTS ' || quote_ident(_vtable);
+    _texec := _texec || _exec || ';';
     EXECUTE _exec;
     _exec := 'CREATE TABLE ' || quote_ident(_vtable) || ' (';
     FOR _rec in (
@@ -89,8 +94,9 @@ BEGIN
     _exec := _exec || '_version_date timestamp with time zone default now(),';
     _exec := _exec || 'PRIMARY KEY(' || quote_ident(_key) || ',_version_transaction)';
     _exec := _exec || ')';
+    _texec := _texec || _exec || ';';
     EXECUTE _exec;
-    RETURN _exec;
+    RETURN _texec;
 END;
 $$ LANGUAGE plpgsql;
 """
@@ -98,8 +104,8 @@ $$ LANGUAGE plpgsql;
         create_full_view_function = """
 CREATE OR REPLACE FUNCTION create_full_view(_tables TEXT[], _keys TEXT[]) RETURNS TEXT AS $$
 DECLARE
+    _exec TEXT := '';
     _name TEXT;
-    _exec TEXT;
     _cols TEXT[];
     _vers TEXT[];
     _rec RECORD;
@@ -140,8 +146,9 @@ $$ LANGUAGE plpgsql;
         create_version_function_function = """
 CREATE OR REPLACE FUNCTION create_version_function(_tables TEXT[], _keys TEXT[]) RETURNS TEXT AS $$
 DECLARE
+    _exec TEXT := '';
+    _texec TEXT := '';
     _name TEXT;
-    _exec TEXT;
     _vtables TEXT[];
     _cols TEXT[];
     _vers TEXT[];
@@ -151,25 +158,24 @@ DECLARE
 BEGIN
     i := array_lower(_tables, 1);
     _name := quote_ident(_tables[i] || '__version_view');
-    _exec = '';
     FOR i IN array_lower(_tables, 1)..array_upper(_tables, 1) LOOP
         SELECT INTO j COUNT(*) FROM pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid
         WHERE c.relname=_tables[i] AND a.attnum > 0 AND a.attname = '_version_transaction';
         IF j > 0 THEN
-            _exec := _exec || 'CREATE OR REPLACE FUNCTION ' || quote_ident(_tables[i] || '__version_id') || '(_id INTEGER, _ver INTEGER) RETURNS INTEGER AS ''';
+            _exec := 'CREATE OR REPLACE FUNCTION ' || quote_ident(_tables[i] || '__version_id') || '(_id INTEGER, _ver INTEGER) RETURNS INTEGER AS ''';
             _exec := _exec || 'DECLARE _v INTEGER;';
             _exec := _exec || 'BEGIN SELECT INTO _v MAX(_version_transaction) FROM ' || quote_ident(_tables[i]) || '__versions';
             _exec := _exec || ' WHERE ' || quote_ident(_keys[i]) || '=_id AND _version_transaction<=_ver AND _version_next IS NULL OR _version_next>_ver;';
             _exec := _exec || 'RETURN _v; END; '' LANGUAGE plpgsql;';
+            _texec := _texec || _exec || ';';
             EXECUTE _exec;
-            _exec := '';
             _vtables := _vtables || (quote_ident(_tables[i] || '__versions'));
         ELSE
             _vtables := _vtables || (quote_ident(_tables[i]));
         END IF;
     END LOOP;
 
-    _exec := _exec || 'CREATE OR REPLACE FUNCTION ' || quote_ident(_name) || '(_id INTEGER, _ver INTEGER) RETURNS TABLE(id integer';
+    _exec := 'CREATE OR REPLACE FUNCTION ' || quote_ident(_name) || '(_id INTEGER, _ver INTEGER) RETURNS TABLE(id integer';
     FOR i IN array_lower(_tables, 1)..array_upper(_tables, 1) LOOP
         FOR _rec in (
             SELECT a.attname, format_type(a.atttypid, a.atttypmod) AS type from pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid
@@ -215,14 +221,138 @@ BEGIN
         END IF;
     END LOOP;
     _exec := _exec || '; END; '' LANGUAGE plpgsql;';
+    _texec := _texec || _exec || ';';
     EXECUTE _exec;
-    RETURN _exec;
+    RETURN _texec;
 END;
 $$ LANGUAGE plpgsql;
 """
 
+        create_triggers_function = """
+CREATE OR REPLACE FUNCTION create_triggers(_table TEXT, _key TEXT, _notify TEXT) RETURNS TEXT AS $$
+DECLARE
+    _exec TEXT := '';
+    _texec TEXT := '';
+    _rec RECORD;
+BEGIN
+    _exec := 'CREATE OR REPLACE FUNCTION ' || quote_ident(_table || '__on_after_insert') || '() RETURNS TRIGGER AS $' || '$';
+    _exec := _exec || 'BEGIN INSERT INTO ' || quote_ident(_table || '__versions') || '(';
+    FOR _rec in (
+        SELECT a.attname from pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid WHERE c.relname=_table AND a.attnum > 0 ORDER BY a.attnum
+    ) LOOP
+        IF _rec.attname <> '_version_transaction' THEN
+            _exec := _exec || quote_ident(_rec.attname) || ', ';
+        END IF;
+    END LOOP;
+    _exec := _exec || '_version_transaction, _version_prev, _version_user';
+    _exec := _exec || ') VALUES(';
+    FOR _rec in (
+        SELECT a.attname from pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid WHERE c.relname=_table AND a.attnum > 0 ORDER BY a.attnum
+    ) LOOP
+        IF _rec.attname <> '_version_transaction' THEN
+            _exec := _exec || 'new.' || quote_ident(_rec.attname) || ', ';
+        END IF;
+    END LOOP;
+    _exec := _exec || 'get_transaction_id(), get_transaction_id(), get_user_id());';
+    _exec := _exec || 'INSERT INTO dbev_notification(action, "table", object, transaction, previous, "user") VALUES(''I'', ''' || _table || ''', new.' || quote_ident(_key);
+    _exec := _exec || ', get_transaction_id(), NULL, get_user_id());';
+    _exec := _exec || 'NOTIFY ' || quote_ident(_notify) || ';';
+    _exec := _exec || 'RETURN new; END; $' || '$ LANGUAGE plpgsql;';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
+    _exec := 'CREATE TRIGGER ' || quote_ident(_table || '__after_insert') || ' AFTER INSERT ON ';
+    _exec := _exec || quote_ident(_table) || ' FOR EACH ROW EXECUTE PROCEDURE ' || quote_ident(_table || '__on_after_insert') || '();';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
 
-        return (set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function)
+    _exec := 'CREATE OR REPLACE FUNCTION ' || quote_ident(_table || '__on_before_update') || '() RETURNS TRIGGER AS $' || '$';
+    _exec := _exec || 'BEGIN IF old <> new THEN new._version_transaction = get_transaction_id(); END IF; RETURN new; END; $' || '$ LANGUAGE plpgsql;';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
+    _exec := 'CREATE TRIGGER ' || quote_ident(_table || '__before_update') || ' BEFORE UPDATE ON ';
+    _exec := _exec || quote_ident(_table) || ' FOR EACH ROW EXECUTE PROCEDURE ' || quote_ident(_table || '__on_before_update') || '();';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
+
+    _exec := 'CREATE OR REPLACE FUNCTION ' || quote_ident(_table || '__on_after_update') || '() RETURNS TRIGGER AS $' || '$';
+    _exec := _exec || 'BEGIN IF old = new THEN return new; END IF;';
+    _exec := _exec || 'UPDATE ' || quote_ident(_table || '__versions') || ' SET _version_next = get_transaction_id() WHERE ';
+    _exec := _exec || quote_ident(_key) || ' = new.' || quote_ident(_key) || ' AND _version_next IS NULL;';
+    _exec := _exec || 'DELETE FROM ' || quote_ident(_table || '__versions') || ' WHERE _version_transaction = get_transaction_id() AND ';
+    _exec := _exec || quote_ident(_key) || ' = new.' || quote_ident(_key) || ';';
+    _exec := _exec || 'INSERT INTO ' || quote_ident(_table || '__versions') || '(';
+    FOR _rec in (
+        SELECT a.attname from pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid WHERE c.relname=_table AND a.attnum > 0 ORDER BY a.attnum
+    ) LOOP
+        IF _rec.attname <> '_version_transaction' THEN
+            _exec := _exec || quote_ident(_rec.attname) || ', ';
+        END IF;
+    END LOOP;
+    _exec := _exec || '_version_transaction, _version_prev, _version_user';
+    _exec := _exec || ') VALUES(';
+    FOR _rec in (
+        SELECT a.attname from pg_class c LEFT JOIN pg_attribute a ON a.attrelid = c.oid WHERE c.relname=_table AND a.attnum > 0 ORDER BY a.attnum
+    ) LOOP
+        IF _rec.attname <> '_version_transaction' THEN
+            _exec := _exec || 'new.' || quote_ident(_rec.attname) || ', ';
+        END IF;
+    END LOOP;
+    _exec := _exec || 'get_transaction_id(), old._version_transaction, get_user_id());';
+    _exec := _exec || 'UPDATE dbev_notification SET "user"=get_user_id() WHERE "table"=''' || _table || ''' AND object=new.' || quote_ident(_key);
+    _exec := _exec || ' AND transaction=get_transaction_id(); IF NOT found THEN ';
+    _exec := _exec || 'INSERT INTO dbev_notification(action, "table", object, transaction, previous, "user") VALUES(''U'', ''' || _table || ''', new.' || quote_ident(_key);
+    _exec := _exec || ', get_transaction_id(), old._version_transaction, get_user_id()); END IF;';
+    _exec := _exec || 'NOTIFY ' || quote_ident(_notify) || ';';
+    _exec := _exec || 'RETURN new; END; $' || '$ LANGUAGE plpgsql;';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
+    _exec := 'CREATE TRIGGER ' || quote_ident(_table || '__after_update') || ' AFTER UPDATE ON ';
+    _exec := _exec || quote_ident(_table) || ' FOR EACH ROW EXECUTE PROCEDURE ' || quote_ident(_table || '__on_after_update') || '();';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
+
+    _exec := 'CREATE OR REPLACE FUNCTION ' || quote_ident(_table || '__on_after_delete') || '() RETURNS TRIGGER AS $' || '$';
+    _exec := _exec || 'BEGIN UPDATE ' || quote_ident(_table || '__versions') || ' SET _version_next = get_transaction_id() WHERE ';
+    _exec := _exec || quote_ident(_key) || ' = old.' || quote_ident(_key) || ' AND _version_next IS NULL;';
+    _exec := _exec || 'DELETE FROM ' || quote_ident(_table || '__versions') || ' WHERE _version_transaction = get_transaction_id() AND ';
+    _exec := _exec || quote_ident(_key) || ' = old.' || quote_ident(_key) || ';';
+    _exec := _exec || 'UPDATE dbev_notification SET action=''D'', "user"=get_user_id() WHERE "table"=''' || _table || ''' AND object=old.' || quote_ident(_key);
+    _exec := _exec || ' AND transaction=get_transaction_id(); IF NOT found THEN ';
+    _exec := _exec || 'INSERT INTO dbev_notification(action, "table", object, transaction, previous, "user") VALUES(''D'', ''' || _table || ''', old.' || quote_ident(_key);
+    _exec := _exec || ', get_transaction_id(), old._version_transaction, get_user_id()); END IF;';
+    _exec := _exec || 'NOTIFY ' || quote_ident(_notify) || ';';
+    _exec := _exec || 'RETURN old; END; $' || '$ LANGUAGE plpgsql;';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
+    _exec := 'CREATE TRIGGER ' || quote_ident(_table || '__after_delete') || ' AFTER DELETE ON ';
+    _exec := _exec || quote_ident(_table) || ' FOR EACH ROW EXECUTE PROCEDURE ' || quote_ident(_table || '__on_after_delete') || '();';
+    _texec := _texec || _exec || ';';
+    EXECUTE _exec;
+    RETURN _texec;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+        install_versions_function = """
+CREATE OR REPLACE FUNCTION install_versions(_table TEXT, _key TEXT, _tables TEXT[], _keys TEXT[], _notify TEXT) RETURNS TEXT AS $$
+DECLARE
+    _texec TEXT := '';
+    _exec TEXT := '';
+BEGIN
+    SELECT INTO _exec create_version_table(_table, _key);
+    _texec := _texec || _exec;
+    SELECT INTO _exec create_full_view(_tables, _keys);
+    _texec := _texec || _exec;
+    SELECT INTO _exec create_version_function(_tables, _keys);
+    _texec := _texec || _exec;
+    SELECT INTO _exec create_triggers(_table, _key, _notify);
+    _texec := _texec || _exec;
+    RETURN _texec;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+        return (set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function)
 
 
 class Notification(models.Model):
