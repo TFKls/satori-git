@@ -421,7 +421,7 @@ class ThriftProcessor(TProcessor):
             except Exception as ex:
                 traceback.print_exc()
                 raise TApplicationException(TApplicationException.UNKNOWN,
-                    "Error processing exception: " + ex.message)
+                    "Exception: " + ex.message)
             perf.end('call')
 
             # send the reply
@@ -469,6 +469,7 @@ class ThriftProcessor(TProcessor):
             x = TApplicationException()
             x.read(iproto)
             iproto.readMessageEnd()
+            x.args = (x.message,)
             raise x
         result = self._recv(procedure.results_struct, iproto)
         iproto.readMessageEnd()
