@@ -169,6 +169,18 @@ def ContestRightsRequest(request):
     d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
 
+def AlterSuiteRequest(request)
+    pm = ProblemMappind.filter(id=int(request.POST['pm_id']))[0]
+    dts = pm.default_test_suite
+    nts = TestSuite.create(problem = pm.problem, dispatcher = dts.dispatcher)
+    for k in request.POST.keys():
+        if k[0:3] == 'test':
+            t = Test.filter(id=int(k[4:]))[0]
+            TestMapping.create(test = t, suite = nts)
+    pm.default_test_suite = nts
+    d = ParseURL(request.POST['back_to'])
+    return GetLink(d,'')
+    
 def SubmitRequest(request):
     d = ParseURL(request.POST['back_to'])
     d['content'] = [{'name' : ['results']}]

@@ -244,6 +244,8 @@ class EditPMWidget(Widget):
         self.pm = p
         self.problem = p.problem
         self.tests = list()
+        self.back_to = ToString(params)
+        self.path = path
         dts = p.default_test_suite
         for t in Test.filter(problem = p.problem):
             checked = bool(TestMapping.filter(test=t,suite=dts))
