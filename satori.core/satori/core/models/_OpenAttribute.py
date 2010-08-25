@@ -40,6 +40,6 @@ class OpenAttribute(models.Model):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('object', 'name'),)
 
-#class OpenAttributeEvents(events.Events):
-#    model = OpenAttribute
-#    on_insert = on_update = on_delete = []
+class OpenAttributeEvents(events.Events):
+    model = OpenAttribute
+    on_insert = on_update = on_delete = []
