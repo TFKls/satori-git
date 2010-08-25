@@ -4,6 +4,7 @@ from django.db import models
 from satori.dbev import events
 from satori.core.models._Object import Object
 from satori.core.models.modules import DISPATCHERS
+from datetime import datetime
 
 class TestSuite(Object):
     """Model. A group of tests, with dispatch and aggregation algorithm.
@@ -25,6 +26,11 @@ class TestSuite(Object):
             ret.append((self.problem,'EDIT'))
         return ret
 
+    def save(self, *args, **kwargs)
+        if self.name == None:
+            self.name = datetime.now()
+        super(TestSuite,self).save(*args,**kwargs)
+        
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
 

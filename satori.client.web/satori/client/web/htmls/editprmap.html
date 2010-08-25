@@ -1,0 +1,19 @@
+
+<h2>Problem {{ widget.pm.code }}: {{widget.pm.title}}</h2>
+
+Based on problem {{ widget.problem.name }}.
+
+<h4>Tests</h4>
+
+<table>
+<form action="process.altersuite" method="POST">
+<input type="hidden" value="{{widget.pm.id}}"/>
+{% for t,checked in widget.tests %}
+<tr>
+    <td>{{t.name}}</td>
+    <td>{{t.description}}</td>
+    <td><input type="checkbox" value="{{t.id}}" {% if checked %}checked{% endif %}/></td>
+</tr>
+{% endfor %}
+</form>
+</table>

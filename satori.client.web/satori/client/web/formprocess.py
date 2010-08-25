@@ -30,7 +30,7 @@ def LoginRequest(request):
     try:
         set_token(Security.login(login=login, password=password))
     except:
-        follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+        pass
     return GetLink(d,path)
 
 def OpenIdStartRequest(request):
@@ -154,6 +154,21 @@ def AcceptUserRequest(request):
     d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
 
+def ContestRightsRequest(request):
+    c = ContestById(request.POST['contest_id'])
+    for rg in Privilege.filter(object=c, role=Security.anonymous(), right='VIEW'):
+        rg.delete()
+    if 'anonymous_view' in request.POST.keys():
+        Privilege.create(object=c, role=Security.anonymous(), right='VIEW')
+    for rg in Privilege.filter(object=c, role=Security.authenticated()):
+        rg.delete()
+    if request.POST['joining_by']=='moderated':
+        Privilege.create(object=c, role=Security.authenticated(), right='APPLY')
+    if request.POST['joining_by']=='public':
+        Privilege.create(object=c, role=Security.authenticated(), right='JOIN')
+    d = ParseURL(request.POST['back_to'])
+    return GetLink(d,'')
+
 def SubmitRequest(request):
     d = ParseURL(request.POST['back_to'])
     d['content'] = [{'name' : ['results']}]
@@ -190,7 +205,7 @@ def EditMessageRequest(request):
         return GetLink(d,'')
 
 
-allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'createcontest' : CreateContestRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
+allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'createcontest' : CreateContestRequest, 'contestrights' : ContestRightsRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest}
 
 def process(argstr,request):
     res = allreqs[argstr](request)
