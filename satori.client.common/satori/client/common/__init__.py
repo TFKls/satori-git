@@ -1,4 +1,3 @@
-# vim:ts=4:sts=4:sw=4:expandtab
 from thrift.transport.TSocket import TSocket
 from satori.ars.thrift import ThriftReader, ThriftClient, ThreadedThriftClient
 from satori.ars import ars2py

@@ -174,11 +174,10 @@ def AlterSuiteRequest(request):
     dts = pm.default_test_suite
     nts = TestSuite.create(problem = pm.problem, dispatcher = dts.dispatcher)
     for k in request.POST.keys():
-        if k[0:3] == 'test':
+        if k[0:4] == 'test':
             t = Test.filter(id=int(k[4:]))[0]
-            TestMapping.create(test = t, suite = nts)
+            TestMapping.create(test = t, suite = nts, order=t.id)
     pm.default_test_suite = nts
-    yyyyyy
     d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
     

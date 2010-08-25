@@ -26,7 +26,7 @@ class TestSuite(Object):
         return ret
 
     def save(self, *args, **kwargs):
-        if self.name == None:
+        if not self.name:
             self.name = str(datetime.now())
         super(TestSuite,self).save(*args,**kwargs)
         
