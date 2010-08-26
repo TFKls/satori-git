@@ -7,6 +7,7 @@ from satori.client.web.widgets._ManageContestWidget import ManageContestWidget
 from satori.client.web.widgets._ManageNewsWidget import ManageNewsWidget
 from satori.client.web.widgets._ManageUsersWidget import ManageUsersWidget
 from satori.client.web.widgets._LoginWidget import LoginWidget
+from satori.client.web.widgets._ProblemsWidget import ProblemsWidget
 from satori.client.web.widgets._RegisterWidget import RegisterWidget
 from satori.client.web.widgets._ResultsWidget import ResultsWidget
 from satori.client.web.widgets._HeaderWidget import HeaderWidget
