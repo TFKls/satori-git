@@ -45,7 +45,20 @@ class LoginWidget(Widget):
         else:
             self.htmlFile = 'htmls/loginform.html'
             self.back_to = ToString(params)
-            self.lw_path = path;
+            self.lw_path = path
+
+# register box
+class RegisterWidget(Widget):
+    pathName = 'registerform'
+    def __init__(self, params, path):
+        el = CurrentUser()
+        if el:
+            self.htmlFile = 'htmls/logged.html'
+            self.name = el.fullname
+        else:
+            self.htmlFile = 'htmls/registerform.html'
+            self.back_to = ToString(params)
+            self.lw_path = path
 
 # left menu
 class MenuWidget(Widget):
@@ -321,5 +334,6 @@ class HeaderWidget(Widget):
         addwidget(user, 'Virtual Contests', 'selectvcontests', True)
         addwidget(user, 'Profile', 'profile', False)
         addwidget(not user, 'Sign In', 'loginform', False)
+        addwidget(not user, 'Register', 'registerform', False)
         if user:
             self.username = user.fullname
