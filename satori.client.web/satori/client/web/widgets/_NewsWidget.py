@@ -1,5 +1,6 @@
 ﻿from satori.client.web.queries import *
 from satori.client.common import *
+from satori.client.web.postmarkup import render_bbcode
 from satori.client.web.widgets import Widget
 
 # news table (a possible main content)
