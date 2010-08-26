@@ -1,6 +1,7 @@
 ﻿from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from satori.client.common import *
+from satori.client.web.widgets import Widget
 
 class ProblemsWidget(Widget):
     pathName = 'problems'
