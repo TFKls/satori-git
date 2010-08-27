@@ -1,6 +1,6 @@
 ﻿
 from URLDictionary import *
-from satori.client.common import *
+from satori.client.common.remote import *
 
 # Module for database queries
 
@@ -45,7 +45,7 @@ def Allowed(o, str):
     return o.demand_right(str)
 
 def explicit_right(object,role,right):
-    return bool(Privilege.filter(role=role, object=object, right=right))
+    return bool(Privilege.filter({'role':role, 'object':object, 'right':right}))
 
 # default dictionary, if need to return to main screen
 def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
