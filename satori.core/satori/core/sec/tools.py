@@ -73,7 +73,7 @@ class Token(Object):
                 self.user_id = ''
                 self.auth = ''
                 self.data_id = ''
-                self.deadline = datetime.fromtimestamp(0.0)
+                self.deadline = datetime.max
             else:
                 try:
                     raw = self._decrypt(token).split('\n')

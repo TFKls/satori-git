@@ -26,7 +26,7 @@ SubmitToCheck = Struct('SubmitToCheck', (
 @Argument('token', type=Token)
 @ReturnValue(type=(SubmitToCheck, NoneType))
 def get_next(token):
-    u = User.objects.all()[0]
+    u = token.User
     next = JudgeDispatcherClient.get_instance().get_next(u)
     print next
     if next.test_result_id is None:

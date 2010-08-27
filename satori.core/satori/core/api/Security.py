@@ -51,10 +51,10 @@ def authenticated():
 
 @security.method
 @Argument('token', type=Token)
-@ReturnValue(type=User)
+@ReturnValue(type=(User, NoneType))
 def whoami(token):
     if not token.valid:
-        raise Exception("Provided token is invalid.")
+        raise Exception("Provided token is expired.")
     return token.user
 
 @security.method
