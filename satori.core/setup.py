@@ -21,6 +21,7 @@ setup(name='satori.core',
         'satori.objects',
         'setproctitle',
         'cherrypy',
+        'ipaddr',
     ],
     entry_points='''
         [console_scripts]

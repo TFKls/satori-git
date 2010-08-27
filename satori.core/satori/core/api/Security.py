@@ -283,7 +283,16 @@ def openid_add_finish(token, args, return_to):
     res = openid_generic_finish(token, args, return_to, user)
     return res
 
-
+@security.method
+@Argument('ip', type=str)
+@Argument('secret', type=str)
+@ReturnValue(type=Token)
+def machine_login(ip, secret):
+    for machine in Machine.objects.filter(secret=secret):
+        net = ipaddr.IPv4Network(machine.address + '/' + machine.netmask)
+        addr = ipaddr.IPv4Address(ip)
+        if addr in net:
+        	  return Token(user=machine, auth='machine', validity=timedelta(hours=24))
 
 security._fill_module(__name__)
 
