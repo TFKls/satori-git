@@ -333,6 +333,25 @@ class OpenAttributeWrapper(wrapper.Wrapper):
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
+        @Argument('name', type=str)
+        @Argumeny('value', type=str)
+        @ReturnValue(type=types.NoneType)
+        def set_blob_mem(token, self, name, value):
+            try:
+                oa = self.attributes.get(name=name)
+            except:
+                oa = OpenAttribute(object=self, name=name)
+            blob = Blob()
+            blob.open('w')
+            blob.write(value)
+            blob.close()
+            blob.save()
+            oa.oatype = OpenAttribute.OATYPES_BLOB
+            oa.blob = blob
+            oa.save()
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
         @Argument('attributes', type=wrapper.TypedList(Attribute))
         @ReturnValue(type=types.NoneType)
         def set_list(token, self, attributes):
