@@ -376,6 +376,7 @@ class OpenAttributeWrapper(wrapper.Wrapper):
         self._add_child(wrapper.ProcedureWrapper(get, self))
         self._add_child(wrapper.ProcedureWrapper(get_list, self))
         self._add_child(wrapper.ProcedureWrapper(set_str, self))
+        self._add_child(wrapper.ProcedureWrapper(set_blob_mem, self))
         self._add_child(wrapper.ProcedureWrapper(set_list, self))
         self._add_child(wrapper.ProcedureWrapper(delete, self))
 
