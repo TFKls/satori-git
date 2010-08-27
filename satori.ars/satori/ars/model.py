@@ -52,33 +52,33 @@ class Type(Element):
 
     def needs_conversion(self):
         if self.converter is not None:
-        	return self.converter.needs_conversion()
+            return self.converter.needs_conversion()
         else:
-        	return self.do_needs_conversion()
+            return self.do_needs_conversion()
 
     def convert_to_ars(self, value):
         if value is None:
-        	return None
+            return None
         
         if not self.needs_conversion():
-        	return value
+            return value
 
         if self.converter is not None:
-        	return self.converter.convert_to_ars(value)
+            return self.converter.convert_to_ars(value)
         else:
-        	return self.do_convert_to_ars(value)
+            return self.do_convert_to_ars(value)
 
     def convert_from_ars(self, value):
         if value is None:
-        	return None
+            return None
         
         if not self.needs_conversion():
-        	return value
+            return value
 
         if self.converter is not None:
-        	return self.converter.convert_from_ars(value)
+            return self.converter.convert_from_ars(value)
         else:
-        	return self.do_convert_from_ars(value)
+            return self.do_convert_from_ars(value)
 
 
 class NamedType(NamedElement, Type):
@@ -136,7 +136,7 @@ class ListType(Type):
         return [self.element_type.convert_to_ars(elem) for elem in value]
 
     def do_convert_from_ars(self, value):
-       	return [self.element_type.convert_from_ars(elem) for elem in value]
+        return [self.element_type.convert_from_ars(elem) for elem in value]
 
 
 class SetType(Type):
@@ -209,7 +209,7 @@ class NamedTuple(Object):
     def append(self, item):
         if item.name in self.names:
             if self.names[item.name] == item:
-            	return
+                return
             else:
                 raise ArgumentError("duplicate item name")
         self.names[item.name] = item
@@ -224,9 +224,9 @@ class NamedTuple(Object):
                 else:
                     raise ArgumentError("duplicate item name")
             else:
-            	items.append(item)
+                items.append(item)
         for item in items:
-        	self.append(item)
+            self.append(item)
 
     def __iter__(self):
         return self.items.__iter__()
@@ -236,7 +236,7 @@ class NamedTuple(Object):
     
     def __getitem__(self, index):
         if isinstance(index, str):
-        	return self.names[index]
+            return self.names[index]
         else:
             return self.items[index]
 
@@ -388,7 +388,7 @@ def namedTypes(item):
 def namedTypes(item):
     nt = namedTypes(item.return_type)
     for parameter in item.parameters:
-    	nt.extend(namedTypes(parameter))
+        nt.extend(namedTypes(parameter))
     for exception_type in item.exception_types:
         nt.extend(namedTypes(exception_type))
     return nt
@@ -397,5 +397,5 @@ def namedTypes(item):
 def namedTypes(item):
     nt = NamedTuple()
     for procedure in item.procedures:
-    	nt.extend(namedTypes(procedure))
+        nt.extend(namedTypes(procedure))
     return nt

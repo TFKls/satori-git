@@ -1,6 +1,6 @@
 ﻿from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
-from satori.client.common import *
+from satori.client.common.remote import *
 from _Widget import Widget
 
 class SubmitWidget(Widget):
@@ -11,6 +11,6 @@ class SubmitWidget(Widget):
         c = ActiveContest(params)
         self.problems = []
         self.cid = CurrentContestant(params).id
-        for p in ProblemMapping.filter(contest=c):
+        for p in ProblemMapping.filter({'contest':c}):
             if Allowed(p,'submit'):
                 self.problems.append(p)

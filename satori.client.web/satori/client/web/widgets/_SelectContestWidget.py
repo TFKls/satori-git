@@ -1,6 +1,6 @@
 ﻿from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
-from satori.client.common import *
+from satori.client.common.remote import *
 from _Widget import Widget
 
 # contest selection screen (a possible main content)

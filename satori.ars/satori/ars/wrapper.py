@@ -10,12 +10,38 @@ from satori.objects import Signature, Argument, ArgumentMode, ReturnValue, Const
 from satori.ars.model import NamedTuple, TypeAlias, ListType, MapType, Structure, Procedure, Contract, Void, Int32, Int64, String, Boolean
 
 class NullableArsStructure(Structure):
-    def convert_to_ars(self, value):
-        
-        pass
+    def __init__(self, name):
+        super(NullableArsStructure, self).__init__(name)
+        self.add_field(name='null_fields', type=Int64, optional=True)
 
-    def convert_from_ars(self, value):
-        pass
+    def do_needs_conversion(self):
+        return True
+
+    def do_convert_to_ars(self, value):
+        value['null_fields'] = 0L
+
+        for (ind, field) in enumerate(self.fields):
+            if (field.name in value) and (value[field.name] is None):
+            	value['null_fields'] = value['null_fields'] | (1 << (ind + self.base))
+            	del value[field.name]
+
+        print repr(value['null_fields'])
+
+        return super(NullableArsStructure, self).do_convert_to_ars(value)
+
+    def do_convert_from_ars(self, value):
+        value = super(NullableArsStructure, self).do_convert_from_ars(value)
+
+        if not 'null_fields' in value:
+        	return value
+
+        for (ind, field) in enumerate(self.fields):
+            if value['null_fields'] & (1 << (ind + self.base)):
+                value[field.name] = None
+        
+        del value['null_fields']
+
+        return value
 
 
 class TypedListType(type):
@@ -77,8 +103,6 @@ def TypedMap(key_type, value_type):
     return TypedMapType('', (), {'key_type': key_type, 'value_type': value_type})
 
 
-
-
 class StructType(type):
     def __new__(mcs, name, bases, dict_):
         assert 'fields' in dict_
@@ -96,7 +120,7 @@ class StructType(type):
 
     def ars_type(cls):
         if not hasattr(cls, '_ars_type'):
-            cls._ars_type = Structure(name=cls.name)
+            cls._ars_type = NullableArsStructure(name=cls.name)
             for (field_name, field_type, field_optional) in cls.fields:
                 cls._ars_type.add_field(name=field_name, type=python_to_ars_type(field_type), optional=field_optional)
 

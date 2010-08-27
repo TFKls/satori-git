@@ -84,12 +84,12 @@ class JudgeDispatcherClient(object):
 def judge_generator(slave):
     qid = QueueId('new_submits')
     yield Attach(qid)
-    yield Map({'type': 'db', 'model': 'core.submit'}, qid)
+    yield Map({'type': 'db', 'model': 'core_submit'}, qid)
 
     while True:
         queue, event = yield Receive()
         if queue == qid:
-        	sub = Submit.objects.get(id=event.object)
+        	sub = Submit.objects.get(id=event.object_id)
         	suite = sub.problem.default_test_suite
             (dispatcher_module, dispatcher_func) = suite.dispatcher.rsplit('.',1)
             dispatcher_module = __import__(dispatcher_module, globals(), locals(), [ dispatcher_func ], -1)

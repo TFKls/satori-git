@@ -2,7 +2,7 @@
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 #from satori.core.models import *
-from satori.client.common import *
+from satori.client.common.remote import *
 from satori.client.web.postmarkup import render_bbcode
 
 class MetaWidget(type):

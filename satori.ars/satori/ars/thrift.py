@@ -14,7 +14,7 @@ __all__ = (
 from collections import Set
 from StringIO import StringIO
 import traceback
-from types import ClassType, TypeType
+from types import ClassType, TypeType, FunctionType
 import threading
 
 from pyparsing import Forward, Group, Literal, Optional, Regex, StringEnd
@@ -28,7 +28,7 @@ from ..thrift.server.TServer import TThreadedServer
 from ..thrift.transport.TTransport import TServerTransportBase, TTransportBase
 from ..thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
-from satori.objects import Object, Argument, Signature, DispatchOn, ArgumentError
+from satori.objects import Object, Argument, ArgumentMode, Signature, DispatchOn, ArgumentError
 from satori.ars.model import Type, NamedType, AtomicType, Boolean, Float, Int8, Int16, Int32, Int64, String, Void
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, Exception as ArsException, TypeAlias
 from satori.ars.model import Element, NamedElement, Parameter, Procedure, Contract, NamedTuple
@@ -517,88 +517,94 @@ class ThriftServer(Server):
         return server.serve()
 
 
-class ThriftClient(Client):
-
-    @Argument('transport', type=TTransportBase)
+class ThriftClient(threading.local):
     @Argument('contracts', type=NamedTuple)
-    def __init__(self, transport, contracts):
+    @Argument('transport_factory', type=FunctionType)
+    def __init__(self, contracts, transport_factory):
         super(ThriftClient, self).__init__()
-        self._transport = transport
-        self.contracts = contracts
+        self._contracts = contracts
+        self._transport_factory = transport_factory
+        self._started = False
 
-    def wrap(self, procedure):
+    def _wrap(self, procedure):
         names = [parameter.name for parameter in procedure.parameters]
-        values_type = Signature(names).Values
+        sign = Signature(names)
+        for param in procedure.parameters:
+            if param.optional:
+            	sign.arguments[param.name].mode = ArgumentMode.OPTIONAL
+        values_type = sign.Values
 
         def proc(*args, **kwargs):
+            if not self._started:
+            	self.start()
+
             values = values_type(*args, **kwargs)
             return self._processor.call(procedure, values.named, self._protocol, self._protocol)
 
         proc.func_name = procedure.name
         return proc
-        
-    def start(self, bootstrap=False):
-        self._transport.open()
-        self._protocol = TBinaryProtocol(self._transport) #TODO: find a better protocol?
 
-        if bootstrap:
-            self.contracts = NamedTuple()
-            idl_proc = Procedure(return_type=String, name='Server_getIDL')
-            idl_cont = Contract(name='Server')
-            idl_cont.add_procedure(idl_proc)
-            self.contracts.append(idl_cont)
-            idl = ThriftProcessor(self.contracts).call(idl_proc, [], self._protocol, self._protocol)
-            server = False
-            try:
-                import satori.core.setup
-                from satori.ars import wrapper
-                import satori.core.api
-                self.contracts.extend(wrapper.generate_contracts())
-                writer = ThriftWriter()
-                idl2 = StringIO()
-                writer.writeTo(self.contracts, idl2)
-                idl2 = idl2.getvalue()
-                first = "\n".join(sorted(idl.split("\n")))
-                second = "\n".join(sorted(idl2.split("\n")))
-                if first != second:
-                	print first, "\n--- ---\n", second
-                	print "Server and client api mismatch. Downloading server version."
-                	server = True
-            except:
-                raise
-                server = True
-            if server:
-                print "Server and client api mismatch. Using server version."
-                idl_reader = ThriftReader()
-                idl_io = StringIO(idl)
-                self.contracts = idl_reader.readFrom(idl_io)
-
-        self._processor = ThriftProcessor(self.contracts)
-        for contract in self.contracts:
+    def wrap_all(self):
+        for contract in self._contracts:
             for procedure in contract.procedures:
-                procedure.implementation = self.wrap(procedure)
+                procedure.implementation = self._wrap(procedure)
+        return self._contracts
 
-    def stop(self):
-        for contract in self.contracts:
+    def unwrap_all(self):
+        for contract in self._contracts:
             for procedure in contract.procedures:
                 procedure.implementation = None
-        self._transport.close()
+        return self._contracts
 
-    def call(self, procedure, kwargs):
-        return self._processor.call(procedure, kwargs, self._protocol, self._protocol)
-
-
-class ThreadedThriftClient(threading.local):
-    def __init__(self, contracts, transport_factory):
-        super(ThreadedThriftClient, self).__init__()
-        self.contracts = contracts
-        self._transport = transport_factory()
+    def start(self):
+        if self._started:
+        	self.stop()
+        	
+        self._transport = self._transport_factory()
         self._transport.open()
         self._protocol = TBinaryProtocol(self._transport)
-        self._processor = ThriftProcessor(contracts)
+        self._processor = ThriftProcessor(self._contracts)
+        self._started = True
 
-    def call(self, procedure, kwargs):
-        return self._processor.call(procedure, kwargs, self._protocol, self._protocol)
+    def stop(self):
+        if self._started:
+            self._transport.close()
+            self._started = False
+
+
+def BootstrapThriftClient(transport_factory):
+    contracts = NamedTuple()
+
+    idl_proc = Procedure(return_type=String, name='Server_getIDL')
+    idl_cont = Contract(name='Server')
+    idl_cont.add_procedure(idl_proc)
+    contracts.append(idl_cont)
+
+    bootstrap_client = ThriftClient(contracts, transport_factory)
+    bootstrap_client.wrap_all()
+    idl = idl_proc.implementation()
+    bootstrap_client.stop()
+    
+    import satori.core.setup
+    from satori.ars import wrapper
+    import satori.core.api
+    contracts.extend(wrapper.generate_contracts())
+    writer = ThriftWriter()
+    idl2 = StringIO()
+    writer.writeTo(contracts, idl2)
+    idl2 = idl2.getvalue()
+    first = "\n".join(sorted(idl.split("\n")))
+    second = "\n".join(sorted(idl2.split("\n")))
+
+    if first != second:
+        print "Server and client api mismatch. Using server version."
+        idl_reader = ThriftReader()
+        idl_io = StringIO(idl)
+        contracts = idl_reader.readFrom(idl_io)
+
+    client = ThriftClient(contracts, transport_factory)
+
+    return client
 
 
 class ThriftReader(Reader):

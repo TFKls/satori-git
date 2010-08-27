@@ -3,7 +3,7 @@ from URLDictionary import *
 from queries import *
 from django.db import models
 #from satori.core.models import *
-from satori.client.common import *
+from satori.client.common.remote import *
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 
@@ -28,7 +28,7 @@ def LoginRequest(request):
     login = vars['username']
     password = vars['password']
     try:
-        set_token(Security.login(login=login, password=password))
+        token_container.set_token(Security.login(login=login, password=password))
     except:
         pass
     return GetLink(d,path)
@@ -58,7 +58,7 @@ def OpenIdStartRequest(request):
     print finisher
     try:
         res = Security.openid_login_start(openid=openid, return_to=finisher)
-        set_token(res['token'])
+        token_container.set_token(res['token'])
         if res['html']:
         	ret = HttpResponse()
         	ret.write(res['html'])
@@ -76,7 +76,7 @@ def OpenIdCheckRequest(request):
     d = ParseURL(back_to)
     print dict(request.REQUEST.items())
     try:
-        set_token(Security.openid_login_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
+        token_container.set_token(Security.openid_login_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
     except:
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
     return GetLink(d,path)
@@ -108,7 +108,7 @@ def OpenIdRegisterRequest(request):
     print finisher
     try:
         res = Security.openid_register_start(openid=openid, return_to=finisher, login=login)
-        set_token(res['token'])
+        token_container.set_token(res['token'])
         if res['html']:
         	ret = HttpResponse()
         	ret.write(res['html'])
@@ -126,13 +126,13 @@ def OpenIdConfirmRequest(request):
     d = ParseURL(back_to)
     print dict(request.REQUEST.items())
     try:
-        set_token(Security.openid_register_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
+        token_container.set_token(Security.openid_register_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
     except:
         follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
     return GetLink(d,path)
 
 def LogoutRequest(request):
-    set_token('')
+    token_container.set_token('')
     return GetLink(DefaultLayout(),'')
 
 def CreateContestRequest(request):
@@ -148,7 +148,7 @@ def JoinContestRequest(request):
     return GetLink(d,'')
 
 def AcceptUserRequest(request):
-    cu = Contestant.filter(id=int(request.POST['conuser_id']))[0]
+    cu = Contestant.filter({'id':int(request.POST['conuser_id'])})[0]
     contest = cu.contest
     contest.accept_contestant(cu)
     d = ParseURL(request.POST['back_to'])
@@ -156,27 +156,27 @@ def AcceptUserRequest(request):
 
 def ContestRightsRequest(request):
     c = ContestById(request.POST['contest_id'])
-    for rg in Privilege.filter(object=c, role=Security.anonymous(), right='VIEW'):
+    for rg in Privilege.filter({'object':c, 'role':Security.anonymous(), 'right':'VIEW'}):
         rg.delete()
     if 'anonymous_view' in request.POST.keys():
-        Privilege.create(object=c, role=Security.anonymous(), right='VIEW')
-    for rg in Privilege.filter(object=c, role=Security.authenticated()):
+        Privilege.create({'object':c, 'role':Security.anonymous(), 'right':'VIEW'})
+    for rg in Privilege.filter({'object':c, 'role':Security.authenticated()}):
         rg.delete()
     if request.POST['joining_by']=='moderated':
-        Privilege.create(object=c, role=Security.authenticated(), right='APPLY')
+        Privilege.create({'object':c, 'role':Security.authenticated(), 'right':'APPLY'})
     if request.POST['joining_by']=='public':
-        Privilege.create(object=c, role=Security.authenticated(), right='JOIN')
+        Privilege.create({'object':c, 'role':Security.authenticated(), 'right':'JOIN'})
     d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
 
 def AlterSuiteRequest(request):
-    pm = ProblemMapping.filter(id=int(request.POST['pm_id']))[0]
+    pm = ProblemMapping.filter({'id':int(request.POST['pm_id'])})[0]
     dts = pm.default_test_suite
-    nts = TestSuite.create(problem = pm.problem, dispatcher = dts.dispatcher)
+    nts = TestSuite.create({'problem ': pm.problem, 'dispatcher ': dts.dispatcher})
     for k in request.POST.keys():
         if k[0:4] == 'test':
-            t = Test.filter(id=int(k[4:]))[0]
-            TestMapping.create(test = t, suite = nts, order=t.id)
+            t = Test.filter({'id':int(k[4:])})[0]
+            TestMapping.create({'test': t, 'suite': nts, 'order':t.id})
     pm.default_test_suite = nts
     d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
