@@ -170,9 +170,9 @@ class FilterWrapper(wrapper.ProcedureWrapper):
         model = parent._model
 
         @Argument('token', type=Token)
-        @Argument('values', type=DjangoStruct(model))
+        @Argument('values', type=(DjangoStruct(model), types.NoneType))
         @ReturnValue(type=wrapper.TypedList(model))
-        def filter(token, values):
+        def filter(token, values={}):
             return model.objects.filter(**values)
 
         super(FilterWrapper, self).__init__(filter, parent)
