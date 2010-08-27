@@ -180,6 +180,12 @@ def AlterSuiteRequest(request):
     pm.default_test_suite = nts
     d = ParseURL(request.POST['back_to'])
     return GetLink(d,'')
+
+def CreateProblemRequest(request):
+    p = Problem.create_problem(name=request.POST['name'])
+    p.description = request.POST['description']
+    d = ParseURL(request.POST['back_to'])
+    return GetLink(d,'')
     
 def SubmitRequest(request):
     d = ParseURL(request.POST['back_to'])
@@ -217,7 +223,7 @@ def EditMessageRequest(request):
         return GetLink(d,'')
 
 
-allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'createcontest' : CreateContestRequest, 'contestrights' : ContestRightsRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest, 'altersuite' : AlterSuiteRequest}
+allreqs = {'register': RegisterRequest, 'login' : LoginRequest, 'openid_register' : OpenIdRegisterRequest, 'openid_confirm' : OpenIdConfirmRequest, 'openid_start' : OpenIdStartRequest, 'openid_check': OpenIdCheckRequest, 'logout' : LogoutRequest, 'createcontest' : CreateContestRequest, 'contestrights' : ContestRightsRequest, 'join' : JoinContestRequest, 'accept' : AcceptUserRequest, 'submit' : SubmitRequest, 'editmsg' : EditMessageRequest, 'createproblem' : CreateProblemRequest, 'altersuite' : AlterSuiteRequest}
 
 def process(argstr,request):
     res = allreqs[argstr](request)

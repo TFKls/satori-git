@@ -4,11 +4,13 @@
 <tr class="header">
     <td>Code</td>
     <td>Title</td>
+    <td></td>
 </tr>
 {% for p,editlink in widget.problems %}
 <tr>
     <td>{{p.code}} </td>
-    <td><a href="{{ editlink }}">{{p.title}}</a></td>
+    <td>{{p.title}}</td>
+    <td><a href="{{ editlink }}">Edit</a></td>
 </tr>
 {% endfor %}
 </table>

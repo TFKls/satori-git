@@ -44,4 +44,5 @@ class MenuWidget(Widget):
         else:
             addwidget(user,'Manage news','mannews','global','ADMIN')
         addwidget(contest,'Manage users','manusers',contest,'MANAGE')
+        addwidget(user, 'Problem repository','repository','global','ADMIN')
         addlink(contest,'Switch contest',DefaultLayout())
