@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Object import Object
 
 class Message(Object):
@@ -17,7 +17,7 @@ class Message(Object):
     def __str__(self):
         return self.topic
 
-class MessageEvents(events.Events):
+class MessageEvents(Events):
     model = Message
     on_insert = on_update = ['topic', 'time']
     on_delete = []

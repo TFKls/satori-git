@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Object import Object
 from satori.core.models.modules import AGGREGATORS
 
@@ -28,7 +28,7 @@ class ContestRanking(Object):
 
 
 
-class ContestRankingEvents(events.Events):
+class ContestRankingEvents(Events):
     model = ContestRanking
     on_insert = on_update = ['contest', 'name']
     on_delete = []

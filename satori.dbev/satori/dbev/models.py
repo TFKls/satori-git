@@ -1,6 +1,31 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import satori.core.setup                                       # pylint: disable-msg=W0611
 from django.db import models
+from satori.dbev.events import registry
+
+
+def install_versions_sql(model):
+    qv = lambda x : '\''+str(x)+'\''
+    tabs = []
+    keys = []
+    mod = model
+    while issubclass(mod, models.Model):
+        tabs.append(str(mod._meta.db_table))
+        keys.append(str(mod._meta.pk.column))
+        if len(mod._meta.parents.items()) > 0:
+            mod = mod._meta.parents.items()[0][0]
+        else:
+            break
+
+    return """
+        SELECT install_versions({0}, {1}, {2}, {3}, 'satori');
+    """.format(
+        qv(model._meta.db_table),
+        qv(model._meta.pk.column),
+        'ARRAY[' + ','.join([qv(tab) for tab in tabs]) + ']',
+        'ARRAY[' + ','.join([qv(key) for key in keys]) + ']',
+    )
+
 
 class UserField(models.IntegerField):
     def __init__(self):
@@ -351,8 +376,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 """
-
-        return (set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function)
+        ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function]
+        for model in registry:
+        	ret.append(install_versions_sql(model))
+        return tuple(ret);
 
 
 class Notification(models.Model):

@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Role import Role
 
 class User(Role):
@@ -17,7 +17,7 @@ class User(Role):
 
     # add validation
 
-class UserEvents(events.Events):
+class UserEvents(Events):
     model = User
     on_insert = on_update = ['name']
     on_delete = []

@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Object import Object
 
 class Contest(Object):
@@ -29,7 +29,7 @@ class Contest(Object):
     
 
     
-class ContestEvents(events.Events):
+class ContestEvents(Events):
     model = Contest
     on_insert = on_update = ['name']
     on_delete = []

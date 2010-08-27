@@ -1,6 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import satori.core.setup                                       # pylint: disable-msg=W0611
-from satori.dbev import versions
 
 class AlreadyRegistered(Exception):
     pass
@@ -8,23 +7,7 @@ class AlreadyRegistered(Exception):
 class NotRegistered(Exception):
     pass
 
-class EventsRegistry(object):
-    """
-    Registry of Events classes.
-    """
-    def __init__(self):
-        self._registry = {}
-
-    def register(self, model, events):
-        if model in self._registry:
-            raise AlreadyRegistered('The model %s is already registered' % model.__name__)
-        for parent in model._meta.parents.keys():
-            if parent not in self._registry:
-            	raise NotRegistered('Parent model %s is not registered' % parent.__name__)
-        self._registry[model] = events(self)
-        versions.Versions(model, events)
-
-registry = EventsRegistry()
+registry = {}
 
 class EventsBase(type):
     """
@@ -35,7 +18,16 @@ class EventsBase(type):
         parents = [b for b in bases if isinstance(b, EventsBase)]
         if not parents:
             return super_new(cls, name, bases, attrs)
-        registry.register(attrs.pop('model'), super_new(cls, name, bases, attrs)) 
+        events = super_new(cls, name, bases, attrs) 
+        model = attrs.pop('model')
+        if model in registry:
+            raise AlreadyRegistered('The model %s is already registered' % model.__name__)
+        for parent in model._meta.parents.keys():
+            if parent not in registry:
+            	raise NotRegistered('Parent model %s is not registered' % parent.__name__)
+        registry[model] = events()
+        return events
+
 
 class Events(object):
     """
@@ -46,8 +38,3 @@ class Events(object):
     on_insert = None
     on_update = None
     on_delete = None
-    versions = True
-
-    def __init__(self, registry):
-        self.registry = registry
-        super(Events, self).__init__()

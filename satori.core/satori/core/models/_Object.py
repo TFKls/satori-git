@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 
 class Object(models.Model):
     """Model. Base for all database objects. Provides common GUID space.
@@ -53,6 +53,6 @@ class Object(models.Model):
         roleset = RoleSet(token=token)
         return checker(roleset, self, str(right))
 
-class ObjectEvents(events.Events):
+class ObjectEvents(Events):
     model = Object
     on_insert = on_update = on_delete = []

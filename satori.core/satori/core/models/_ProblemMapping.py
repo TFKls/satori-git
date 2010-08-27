@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Object import Object
 
 class ProblemMapping(Object):
@@ -34,7 +34,7 @@ class ProblemMapping(Object):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'code'), ('contest', 'problem'))
 
-class ProblemMappingEvents(events.Events):
+class ProblemMappingEvents(Events):
     model = ProblemMapping
     on_insert = on_update = ['contest', 'problem']
     on_delete = []

@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Role import Role
 
 class Contestant(Role):
@@ -15,7 +15,7 @@ class Contestant(Role):
     invisible  = models.BooleanField(default=False)
 
 
-class ContestantEvents(events.Events):
+class ContestantEvents(Events):
     model = Contestant
     on_insert = on_update = ['name', 'contest']
     on_delete = []

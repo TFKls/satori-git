@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Object import Object
 
 class RoleMapping(Object):
@@ -20,7 +20,7 @@ class RoleMapping(Object):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('parent', 'child'),)
 
-class RoleMappingEvents(events.Events):
+class RoleMappingEvents(Events):
     model = RoleMapping
     on_insert = on_update = ['parent', 'child']
     on_delete = []

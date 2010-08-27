@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Message import Message
 
 class MessageContest(Message):
@@ -15,7 +15,7 @@ class MessageContest(Message):
     def __str__(self):
         return self.topic+" ("+self.contest.name+")"
 
-class MessageContestEvents(events.Events):
+class MessageContestEvents(Events):
     model = MessageContest
     on_insert = on_update = ['topic', 'time']
     on_delete = []

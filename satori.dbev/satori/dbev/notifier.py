@@ -70,7 +70,7 @@ def handle_notifications(cursor):
                 if issubclass(basemodel, newmodel):
                     basemodel = newmodel
 
-            cursor.execute('SELECT model FROM ' + model._meta.db_table + '__version_view(%s,%s)', [id, ftrans])
+            cursor.execute('SELECT * FROM ' + model._meta.db_table + '__version_view(%s,%s)', [id, ftrans])
             rec = row_to_dict(cursor, cursor.fetchone())
             while issubclass(model, basemodel):
                 event = Event(type='db')
@@ -80,8 +80,8 @@ def handle_notifications(cursor):
                 event.user = user
                 event.previous = previous
                 event.model = model._meta.app_label + '.' + model._meta.module_name
-                if model in registry._registry:
-                    reg = registry._registry[model]
+                if model in registry:
+                    reg = registry[model]
                     if action == 'I' and reg.on_insert != None:
                         for field in reg.on_insert:
                             if field in rec:

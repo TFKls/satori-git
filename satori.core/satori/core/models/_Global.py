@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Object import Object
 from satori.core.models._Role import Role
 
@@ -34,6 +34,6 @@ class Global(Object):
             g.save()
         return g
 
-class GlobalEvents(events.Events):
+class GlobalEvents(Events):
     model = Global
     on_insert = on_update = on_delete = []

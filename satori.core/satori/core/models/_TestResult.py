@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Object import Object
 
 class TestResult(Object):
@@ -17,7 +17,7 @@ class TestResult(Object):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('submit', 'test'),)
 
-class TestResultEvents(events.Events):
+class TestResultEvents(Events):
     model = TestResult
     on_insert = on_update = ['submit', 'test', 'tester']
     on_delete = []

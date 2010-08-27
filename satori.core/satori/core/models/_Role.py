@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 from satori.core.models._Object import Object
 
 class Role(Object):
@@ -16,7 +16,7 @@ class Role(Object):
     finishOn    = models.DateTimeField(null=True)
     children    = models.ManyToManyField("self", related_name='parents', through='RoleMapping', symmetrical=False)
 
-class RoleEvents(events.Events):
+class RoleEvents(Events):
     model = Role
     on_insert = on_update = ['name']
     on_delete = []

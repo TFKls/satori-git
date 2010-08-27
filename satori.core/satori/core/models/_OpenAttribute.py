@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
-from satori.dbev import events
+from satori.dbev import Events
 
 OATYPES_STRING = 1
 OATYPES_BLOB = 2
@@ -40,6 +40,6 @@ class OpenAttribute(models.Model):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('object', 'name'),)
 
-class OpenAttributeEvents(events.Events):
+class OpenAttributeEvents(Events):
     model = OpenAttribute
     on_insert = on_update = on_delete = []
