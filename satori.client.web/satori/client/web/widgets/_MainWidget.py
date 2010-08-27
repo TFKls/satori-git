@@ -1,7 +1,10 @@
 ﻿from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from satori.client.common import *
-from satori.client.web.widgets import Widget, LoginWidget, HeaderWidget, MenuWidget
+from _Widget import Widget
+from _LoginWidget import LoginWidget
+from _HeaderWidget import HeaderWidget
+from _MenuWidget import MenuWidget
 
 # base widget
 class MainWidget(Widget):

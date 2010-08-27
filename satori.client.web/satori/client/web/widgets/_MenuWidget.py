@@ -2,7 +2,7 @@
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from satori.client.web.postmarkup import render_bbcode
-from satori.client.web.widgets import Widget
+from _Widget import Widget
 
 # left menu
 class MenuWidget(Widget):

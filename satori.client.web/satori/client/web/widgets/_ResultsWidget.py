@@ -2,7 +2,7 @@
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from satori.client.common import *
-from satori.client.web.widgets import Widget
+from _Widget import Widget
 
 # results table (a possible main content)
 class ResultsWidget(Widget):

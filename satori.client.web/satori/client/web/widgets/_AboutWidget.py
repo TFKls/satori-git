@@ -1,4 +1,4 @@
-﻿from satori.client.web.widgets import Widget
+﻿from _Widget import Widget
 
 # about table (to test ajah)
 class AboutWidget(Widget):

@@ -1,4 +1,4 @@
-﻿from satori.client.web.widgets import Widget
+﻿from _Widget import Widget
 
 # ranking (a possible main content)
 class RankingWidget(Widget):

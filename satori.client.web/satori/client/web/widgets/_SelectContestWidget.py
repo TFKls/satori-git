@@ -1,7 +1,7 @@
 ﻿from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from satori.client.common import *
-from satori.client.web.widgets import Widget
+from _Widget import Widget
 
 # contest selection screen (a possible main content)
 class SelectContestWidget(Widget):
