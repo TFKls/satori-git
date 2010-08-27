@@ -10,7 +10,7 @@ from django.db import transaction
 from django.db.models.fields.related import add_lazy_relation
 from satori.ars import perf
 from satori.core.sec.tools import Token
-from satori.core.models import OpenAttribute
+from satori.core.models import OpenAttribute, Blob
 
 def resolve_model(self, model, rel_model):
     self.model = model
@@ -334,7 +334,7 @@ class OpenAttributeWrapper(wrapper.Wrapper):
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
-        @Argumeny('value', type=str)
+        @Argument('value', type=str)
         @ReturnValue(type=types.NoneType)
         def set_blob_mem(token, self, name, value):
             try:
