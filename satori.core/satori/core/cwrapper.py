@@ -46,20 +46,20 @@ class DjangoModelType(type):
 
     def __instancecheck__(cls, obj):
         if not isinstance(cls.model, models.base.ModelBase):
-        	raise RuntimeError('{0} not resolved.'.format(cls.__name__))
+            raise RuntimeError('{0} not resolved.'.format(cls.__name__))
 
         return isinstance(obj, cls.model)
 
     def ars_type(cls):
         if not isinstance(cls.model, models.base.ModelBase):
-        	raise RuntimeError('{0} not resolved.'.format(cls.__name__))
+            raise RuntimeError('{0} not resolved.'.format(cls.__name__))
 
         return cls.model.ars_type()
 
 
 def DjangoModel(model, rel_model=None):
     if isinstance(model, models.base.ModelBase):
-    	return model
+        return model
 
     return DjangoModelType('', (), {'model': model, 'rel_model': rel_model})
 
@@ -74,7 +74,8 @@ class DjangoStructType(wrapper.StructType):
         for field in model._meta.fields:
             field_type = django_field_to_python_type(model, field)
             if field_type is not None:
-            	fields.append((field.name, field_type, bool(field.null)))
+#                fields.append((field.name, field_type, bool(field.null)))
+                fields.append((field.name, field_type, True))
 
         fields.sort()
 
@@ -168,27 +169,11 @@ class FilterWrapper(wrapper.ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
 
-        struct = DjangoStruct(model)
-        sorted = [('token', Token, False)] + struct.fields
-        names = [x[0] for x in sorted]
-
-        def filter(token, *args, **kwargs):
-            for i in range(len(args)):
-                if args[i] is not None:
-                    kwargs[names[i + 1]] = args[i]
-
-            return model.objects.filter(**kwargs)
-
-        sign = Signature(names)
-        sign.set(filter)
-
-        for (name, type, optional) in sorted:
-            if name == 'token':
-                Argument(name, type=type)(filter)
-            else:
-                Argument(name, type=(type, types.NoneType))(filter)
-
-        ReturnValue(type=wrapper.TypedList(model))(filter)
+        @Argument('token', type=Token)
+        @Argument('values', type=DjangoStruct(model))
+        @ReturnValue(type=wrapper.TypedList(model))
+        def filter(token, values):
+            return model.objects.filter(**values)
 
         super(FilterWrapper, self).__init__(filter, parent)
 
@@ -206,8 +191,7 @@ class GetStructWrapper(wrapper.ProcedureWrapper):
             ret = {}
 
             for (name, type, optional) in struct.fields:
-                if getattr(self, name) is not None:
-                	ret[name] = getattr(self, name)
+                ret[name] = getattr(self, name)
 
             return ret
 
@@ -218,35 +202,16 @@ class CreateWrapper(wrapper.ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
         
-        struct = DjangoStruct(model)
-        sorted = [('token', Token, False)] + filter(lambda x: x[0] != 'id', struct.fields)
-        names = [x[0] for x in sorted]
+        @Argument('token', type=Token)
+        @Argument('values', type=DjangoStruct(model))
+        @ReturnValue(type=model)
+        def create(token, values):
+            if 'id' in values:
+            	del values['id']
 
-        def create(token, *args, **kwargs):
-            for i in range(len(args)):
-                if args[i] is not None:
-                    kwargs[names[i + 1]] = args[i]
-
-            ret = model(**kwargs)
+            ret = model(**values)
             ret.save()
             return ret
-
-        sign = Signature(names)
-        sign.set(create)
-
-        for (name, type, optional) in sorted:
-            if name == 'token':
-                Argument(name, type=type)(create)
-            else:
-                Argument(name, type=(type, types.NoneType))(create)
-
-#        for (name, type, optional) in sorted:
-#            if optional:
-#                Argument(name, type=(type, types.NoneType))(create)
-#            else:
-#                Argument(name, type=type)(create)
-
-        ReturnValue(type=model)(create)
         
         super(CreateWrapper, self).__init__(create, parent)
 
@@ -296,7 +261,7 @@ class OpenAttributeWrapper(wrapper.Wrapper):
             ret = {}
             ret['name'] = oa.name
             if oa.oatype == OpenAttribute.OATYPES_BLOB:
-            	ret['value'] = oa.blob.hash
+                ret['value'] = oa.blob.hash
                 ret['is_blob'] = True
             elif oa.oatype == OpenAttribute.OATYPES_STRING:
                 ret['value'] = oa.string_value
@@ -357,7 +322,7 @@ class OpenAttributeWrapper(wrapper.Wrapper):
         def set_list(token, self, attributes):
             for struct in attributes:
                 if struct['is_blob']:
-                	raise Exception('Cannot set blob attribute using set_list')
+                    raise Exception('Cannot set blob attribute using set_list')
                 try:
                     oa = self.attributes.get(name=struct['name'])
                 except:
