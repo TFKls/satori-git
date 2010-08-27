@@ -8,12 +8,12 @@ setup(name='satori.judge',
     ],
     install_requires=[
         'setuptools',
-        'python-prctl',
         'python-unshare',
         'pyyaml',
     ],
     entry_points='''
         [console_scripts]
-        satori.judge = satori.judge:start_judge
+        satori.judge_init = satori.judge:judge_init
+        satori.judge_try = satori.judge:judge_try
     ''',
 )
