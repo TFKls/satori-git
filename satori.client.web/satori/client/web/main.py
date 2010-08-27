@@ -4,7 +4,7 @@ from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from satori.client.common import *
 from URLDictionary import *
-from widget import *
+from satori.client.web.widgets import Widget
 from formprocess import *
                 
 def load(request,argstr,path = ""):
