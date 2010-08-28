@@ -1,19 +1,11 @@
-from satori.client.web.widgets._Widget import Widget
-from satori.client.web.widgets._AboutWidget import AboutWidget
-from satori.client.web.widgets._RankingWidget import RankingWidget
-from satori.client.web.widgets._CoverWidget import CoverWidget
-from satori.client.web.widgets._EditPMWidget import EditPMWidget
-from satori.client.web.widgets._ManageContestWidget import ManageContestWidget
-from satori.client.web.widgets._ManageNewsWidget import ManageNewsWidget
-from satori.client.web.widgets._ManageUsersWidget import ManageUsersWidget
-from satori.client.web.widgets._LoginWidget import LoginWidget
-from satori.client.web.widgets._ProblemsWidget import ProblemsWidget
-from satori.client.web.widgets._RegisterWidget import RegisterWidget
-from satori.client.web.widgets._RepositoryWidget import RepositoryWidget
-from satori.client.web.widgets._ResultsWidget import ResultsWidget
-from satori.client.web.widgets._HeaderWidget import HeaderWidget
-from satori.client.web.widgets._MenuWidget import MenuWidget
-from satori.client.web.widgets._MainWidget import MainWidget
-from satori.client.web.widgets._NewsWidget import NewsWidget
-from satori.client.web.widgets._SelectContestWidget import SelectContestWidget
-from satori.client.web.widgets._SubmitWidget import SubmitWidget
+import os, re
+
+widgetDir = os.path.dirname(__file__)
+files = os.listdir(widgetDir)
+
+for fname in files:
+    m = re.match('^_([a-zA-Z]*)\.py$', fname)
+    if m:
+        widName = m.group(1)
+        todo = 'from _{0} import {0}'.format(widName)
+        exec todo
