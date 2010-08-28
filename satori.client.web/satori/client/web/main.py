@@ -5,7 +5,7 @@ from django.core.urlresolvers import reverse
 from satori.client.common.remote import *
 from URLDictionary import *
 from satori.client.web.widgets import Widget
-from formprocess import *
+from requests import process
                 
 def load(request,argstr,path = ""):
 	Session.request = request
