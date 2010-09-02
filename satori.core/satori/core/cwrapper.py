@@ -4,7 +4,6 @@ import types
 import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
 from satori.ars import model, wrapper
-from satori.ars.naming import Name, ClassName, MethodName, FieldName, AccessorName
 from django.db import models
 from django.db import transaction
 from django.db.models.fields.related import add_lazy_relation
