@@ -13,13 +13,13 @@ class Login(Object):
     __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_login')
 
-    namespace = models.CharField(max_length=64, default='')
+    nspace    = models.CharField(max_length=64, default='') # Nie moze byc namespace - slowo kluczowe w Thrifcie
     login     = models.CharField(max_length=64)
     password  = models.CharField(max_length=128)
     user      = models.ForeignKey('User', related_name='authorized_logins')
 
     class Meta:                                                # pylint: disable-msg=C0111
-        unique_together = (('namespace', 'login'),)
+        unique_together = (('nspace', 'login'),)
 
     def set_password(self, password):
         chars = string.letters + string.digits
