@@ -74,10 +74,10 @@ def global_right_have(token, right):
 
 @security.method
 @Argument('login', type=str)
-@Argument('namespace', type=str)
+@Argument('nspace', type=str) # Nie moze byc namespace - slowo kluczowe w Thrifcie
 @ReturnValue(type=bool)
-def login_free(login, namespace=''):
-    return len(Login.objects.filter(namespace=namespace, login=login)) == 0
+def login_free(login, nspace=''):
+    return len(Login.objects.filter(nspace=nspace, login=login)) == 0
 
 @security.method
 @Argument('login', type=str)
@@ -95,28 +95,28 @@ def register(login, password, fullname):
 @security.method
 @Argument('login', type=str)
 @Argument('password', type=str)
-@Argument('namespace', type=str)
+@Argument('nspace', type=str) # Nie moze byc namespace - slowo kluczowe w Thrifcie
 @ReturnValue(type=Token)
-def login(login, password, namespace=''):
-    login = Login.objects.get(namespace=namespace, login=login)
+def login(login, password, nspace=''):
+    login = Login.objects.get(nspace=nspace, login=login)
     if login.check_password(password):
         auth = 'login'
-        if namespace != '':
-            auth = auth + '.' + namespace
+        if nspace != '':
+            auth = auth + '.' + nspace
     	return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
 
 @security.method
 @Argument('login', type=str)
-@Argument('old', type=str)
-@Argument('new', type=str)
-@Argument('namespace', type=str)
+@Argument('old_passwd', type=str)
+@Argument('new_passwd', type=str) # Nie moze byc new - slowo kluczowe w Thrifcie
+@Argument('nspace', type=str) # Nie moze byc namespace - slowo kluczowe w Thrifcie
 @ReturnValue(type=Token)
-def passwd(login, old, new, namespace=''):
-    login = Login.objects.get(namespace=namespace, login=login)
-    if login.change_password(old, new):
+def passwd(login, old_passwd, new_passwd, nspace=''):
+    login = Login.objects.get(nspace=nspace, login=login)
+    if login.change_password(old_passwd, new_passwd):
         auth = 'login'
-        if namespace != '':
-            auth = auth + '.' + namespace
+        if nspace != '':
+            auth = auth + '.' + nspace
     	return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
 
 def openid_realm(url):
@@ -224,11 +224,11 @@ def openid_login_start(openid, return_to):
 
 @security.method
 @Argument('token', type=Token)
-@Argument('args', type=TypedMap(str, str))
+@Argument('arg_map', type=TypedMap(str, str)) # Nie moze byc args - slowo kluczowe w Thrifcie
 @Argument('return_to', type=str)
 @ReturnValue(type=Token)
-def openid_login_finish(token, args, return_to):
-    return openid_generic_finish(token, args, return_to)
+def openid_login_finish(token, arg_map, return_to):
+    return openid_generic_finish(token, arg_map, return_to)
 
 @security.method
 @Argument('login', type=str)
@@ -246,13 +246,13 @@ def openid_register_start(login, openid, return_to):
 
 @security.method
 @Argument('token', type=Token)
-@Argument('args', type=TypedMap(str, str))
+@Argument('arg_map', type=TypedMap(str, str)) # Nie moze byc args - slowo kluczowe w Thrifcie
 @Argument('return_to', type=str)
 @ReturnValue(type=Token)
-def openid_register_finish(token, args, return_to):
+def openid_register_finish(token, arg_map, return_to):
     session = token.data
     user = User.objects.get(id=session['satori.openid.user'])
-    res = openid_generic_finish(token, args, return_to, user)
+    res = openid_generic_finish(token, arg_map, return_to, user)
     return res
 
 @security.method
@@ -260,10 +260,10 @@ def openid_register_finish(token, args, return_to):
 @Argument('password', type=str)
 @Argument('openid', type=str)
 @Argument('return_to', type=str)
-@Argument('namespace', type=str)
+@Argument('nspace', type=str) # Nie moze byc namespace - slowo kluczowe w Thrifcie
 @ReturnValue(type=OpenIdRedirect)
-def openid_add_start(login, password, openid, return_to, namespace=''):
-    login = Login.objects.get(namespace=namespace, login=login)
+def openid_add_start(login, password, openid, return_to, nspace=''):
+    login = Login.objects.get(nspace=nspace, login=login)
     if login.check_password(password):
         res = openid_generic_start(openid=openid, return_to=return_to, user_id=str(token.user.id), ax=True)
         session = res['token'].data
@@ -274,13 +274,13 @@ def openid_add_start(login, password, openid, return_to, namespace=''):
 
 @security.method
 @Argument('token', type=Token)
-@Argument('args', type=TypedMap(str, str))
+@Argument('arg_map', type=TypedMap(str, str)) # Nie moze byc args - slowo kluczowe w Thrifcie
 @Argument('return_to', type=str)
 @ReturnValue(type=Token)
-def openid_add_finish(token, args, return_to):
+def openid_add_finish(token, arg_map, return_to):
     session = token.data
     user = User.objects.get(id=session['satori.openid.user'])
-    res = openid_generic_finish(token, args, return_to, user)
+    res = openid_generic_finish(token, arg_map, return_to, user)
     return res
 
 @security.method
