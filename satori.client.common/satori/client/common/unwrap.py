@@ -1,5 +1,5 @@
 from satori.ars.model import *
-from satori.ars.wrapper import DateTimeTypeAlias, NullableArsStructure
+from satori.ars.wrapper import DateTimeTypeAlias, NullableArsStructure, String
 from satori.ars import perf
 from token_container import token_container
 
@@ -110,6 +110,8 @@ def unwrap_classes(contracts):
     for type in types:
         if type.name == 'DateTime':
             type.converter = DateTimeTypeAlias
+        if type.name == 'Token':
+            type.converter = String
         if type is Structure:
             if type.fields and (type.fields[0].name == 'null_values'):
                 newtype = NullableArsStructure(name=type.name)
