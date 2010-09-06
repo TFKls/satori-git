@@ -41,6 +41,8 @@ from .protocol import KeepAlive, ProtocolError
 from .api import Manager
 from .master import Master
 from .slave import Slave
+from .client2 import Client2
+from .slave2 import Slave2
 
 
 __all__ = (
