@@ -197,6 +197,25 @@ class GetStructWrapper(wrapper.ProcedureWrapper):
         super(GetStructWrapper, self).__init__(get_struct, parent)
 
 
+class SetStructWrapper(wrapper.ProcedureWrapper):
+    def __init__(self, parent):
+        model = parent._model
+
+        struct = DjangoStruct(model)
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('value', type=struct)
+        @ReturnValue(type=types.NoneType)
+        def set_struct(token, self, value):
+            for (name, type, optional) in struct.fields:
+            	if (name in value) and (name != 'id'):
+                    setattr(self, name, value[name])
+            self.save()
+
+        super(SetStructWrapper, self).__init__(set_struct, parent)
+
+
 class CreateWrapper(wrapper.ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
@@ -355,6 +374,7 @@ class ModelWrapper(wrapper.StaticWrapper):
 
         self._add_child(FilterWrapper(self))
         self._add_child(GetStructWrapper(self))
+        self._add_child(SetStructWrapper(self))
         self._add_child(CreateWrapper(self))
         self._add_child(DeleteWrapper(self))
         self._add_child(DemandRightWrapper(self))
