@@ -19,14 +19,16 @@
     </td>
 {% endif %}
 </tr>
-{% for p,editlink,sdate,enddate in widget.problems %}
+{% for p,editlink,sdate,fdate in widget.problems %}
 <tr>
     <td>{{p.code}} </td>
     <td>{{p.title}}</td>
 {% if widget.manage %}
     <td>
+        {{sdate}}
     </td>
     <td>
+        {{fdate}}
     </td>
     <td>
         <input type="checkbox" value="pr{{p.id}}"/>
@@ -38,13 +40,13 @@
 </tr>
 {% endfor %}
 </table>
+{% if widget.manage %}
 
 With selected: <br/>
 <input type="submit" name="publish" value="Publish"/><br/>
 <input type="submit" name="hide" value="Hide"/>
 
 
-{% if widget.manage %}
 </form>
 {% endif %}
 
