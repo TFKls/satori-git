@@ -599,7 +599,7 @@ def BootstrapThriftClient(transport_factory):
     first = "\n".join(sorted(idl.split("\n")))
     second = "\n".join(sorted(idl2.split("\n")))
 
-    if True:# first != second:
+    if first != second:
         print "Server and client api mismatch. Using server version."
         idl_reader = ThriftReader()
         idl_io = StringIO(idl)
