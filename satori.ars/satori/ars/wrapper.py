@@ -165,16 +165,19 @@ def python_to_ars_type(type_):
 
 
 wrapper_list = []
-contract_list = NamedTuple()
 middleware = []
 
 class Wrapper(object):
     @Argument('name', type=str)
-    def __init__(self, name, parent):
+    def __init__(self, name, parent, base=None):
+        if parent and base:
+        	raise Exception('Wrapper cannot have base and parent')
+
         self._children = []
         self._name = name
         self._parent = parent
         self._want = True
+        self._base = base
 
         if parent is None:
             wrapper_list.append(self)
@@ -271,8 +274,8 @@ class ProcedureWrapper(Wrapper):
 
 
 class StaticWrapper(Wrapper):
-    def __init__(self, name):
-        super(StaticWrapper, self).__init__(name, None)
+    def __init__(self, name, base=None):
+        super(StaticWrapper, self).__init__(name, None, base)
 
     def method(self, proc):
         self._add_child(ProcedureWrapper(proc, self))
@@ -362,8 +365,13 @@ def wrap(name, proc):
 
     return ars_proc
 
-def generate_contract(wrapper):
-    contract = Contract(name=wrapper._name)
+def generate_contract(wrapper, contract_list):
+    if wrapper._base:
+    	base = contract_list[wrapper._base._name]
+    else:
+    	base = None
+
+    contract = Contract(name=wrapper._name, base=base)
 
     for (name, proc) in wrapper._generate_procedures().iteritems():
         contract.add_procedure(wrap(name, proc))
@@ -371,9 +379,10 @@ def generate_contract(wrapper):
     return contract
 
 def generate_contracts():
-    if not contract_list.items:
-        for wrapper in wrapper_list:
-            contract_list.append(generate_contract(wrapper))
+    contract_list = NamedTuple()
+
+    for wrapper in wrapper_list:
+        contract_list.append(generate_contract(wrapper, contract_list))
 
     return contract_list
 

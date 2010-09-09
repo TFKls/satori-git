@@ -72,8 +72,7 @@ class DjangoStructType(wrapper.StructType):
 
         for field in model._meta.fields:
             field_type = django_field_to_python_type(model, field)
-            if field_type is not None:
-#                fields.append((field.name, field_type, bool(field.null)))
+            if (field.name != 'model') and (not field.name.startswith('parent_')) and (field_type is not None):
                 fields.append((field.name, field_type, True))
 
         fields.sort()
@@ -209,7 +208,7 @@ class SetStructWrapper(wrapper.ProcedureWrapper):
         @ReturnValue(type=types.NoneType)
         def set_struct(token, self, value):
             for (name, type, optional) in struct.fields:
-            	if (name in value) and (name != 'id'):
+                if (name in value) and (name != 'id'):
                     setattr(self, name, value[name])
             self.save()
 
@@ -225,7 +224,7 @@ class CreateWrapper(wrapper.ProcedureWrapper):
         @ReturnValue(type=model)
         def create(token, values):
             if 'id' in values:
-            	del values['id']
+                del values['id']
 
             ret = model(**values)
             ret.save()
@@ -364,21 +363,34 @@ class OpenAttributeWrapper(wrapper.Wrapper):
         self._add_child(wrapper.ProcedureWrapper(delete, self))
 
 
-class ModelWrapper(wrapper.StaticWrapper):
+class ModelWrapperClass(wrapper.StaticWrapper):
     def __init__(self, model):
-        super(ModelWrapper, self).__init__(model._meta.object_name)
+        if len(model._meta.parents) > 1:
+            raise Exception('Wrappers don\'t support models with multiple bases.')
+
+        base_wrapper = None
+        if model._meta.parents:
+            base_wrapper = ModelWrapper(model._meta.parents.keys()[0])
+
+        super(ModelWrapperClass, self).__init__(model._meta.object_name, base_wrapper)
         self._model = model
         
-        for field in model._meta.fields:
-            self._add_child(FieldWrapper(field, self))
+#        for field in model._meta.local_fields:
+#            self._add_child(FieldWrapper(field, self))
 
         self._add_child(FilterWrapper(self))
         self._add_child(GetStructWrapper(self))
         self._add_child(SetStructWrapper(self))
         self._add_child(CreateWrapper(self))
         self._add_child(DeleteWrapper(self))
-        self._add_child(DemandRightWrapper(self))
-        self._add_child(OpenAttributeWrapper(self))
+
+
+model_wrappers = {}
+
+def ModelWrapper(model):
+    if model not in model_wrappers:
+        model_wrappers[model] = ModelWrapperClass(model)
+    return model_wrappers[model]
 
 
 class TransactionMiddleware(object):

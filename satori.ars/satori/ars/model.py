@@ -197,11 +197,12 @@ class MapType(Type):
         return new_value
 
 
-class NamedTuple(Object):
+class NamedTuple(object):
     """A list of NamedElements that have unique names.
     """
 
     def __init__(self):
+        super(NamedTuple, self).__init__()
         self.names = dict()
         self.items = list()
     
@@ -332,8 +333,9 @@ Exception = Structure
 
 class Contract(NamedElement):
 
-    def __init__(self, name):
+    def __init__(self, name, base=None):
         super(Contract, self).__init__(name)
+        self.base = base
         self.procedures = NamedTuple()
 
     def add_procedure(self, procedure=None, **kwargs):
@@ -396,6 +398,8 @@ def namedTypes(item):
 @DispatchOn(item=Contract)
 def namedTypes(item):
     nt = NamedTuple()
+    if item.base:
+        nt.extend(namedTypes(item.base))
     for procedure in item.procedures:
         nt.extend(namedTypes(procedure))
     return nt

@@ -137,6 +137,9 @@ class ThriftWriter(TopologicalWriter):
     def _write(self, item, target): # pylint: disable-msg=E0102
         target.write('service ')
         self._reference(item, target)
+        if item.base:
+        	target.write(' extends ')
+        	self._reference(item.base, target)
         target.write(' {')
         sep = '\n\t'
         for procedure in item.procedures:
@@ -596,7 +599,7 @@ def BootstrapThriftClient(transport_factory):
     first = "\n".join(sorted(idl.split("\n")))
     second = "\n".join(sorted(idl2.split("\n")))
 
-    if first != second:
+    if True:# first != second:
         print "Server and client api mismatch. Using server version."
         idl_reader = ThriftReader()
         idl_io = StringIO(idl)
@@ -628,18 +631,24 @@ class ThriftReader(Reader):
         self.setType('binary', String)
         self.setType('slist', String)
 
-    def setConst(self, name, type):
-        self._consts[name] = type
-        return [type]
+    def setConst(self, name, const):
+        self._consts[name] = const
+        return [const]
     def getConst(self, name):
         return self._consts[name]
     def clearConst(self):
         self._consts = {}
 
+    def setService(self, name, service):
+        self._services.append(service)
+        return [service]
+    def getService(self, name):
+        return self._services[name]
+    def clearService(self):
+        self._services = NamedTuple()
+
     def __init__(self):
         super(ThriftReader, self).__init__()
-        self._types = {}
-        self._consts = {}
         class Junk(Suppress):
             def __init__(self, str):
                 super(Junk, self).__init__(Literal(str))
@@ -800,17 +809,23 @@ class ThriftReader(Reader):
             return [par]
         idlField.setParseAction(lambda s,l,t: idlFieldAction(self,s,l,t))
 
+        idlServiceName     =  idlIdentifier.copy().setParseAction(lambda s,l,t:
+                                  [self.getService(t[0])])
+
         idlService         =  Junk('service') + \
                               idlIdentifier.setResultsName('name') + \
                               Optional(Junk('extends') + \
-                                  idlIdentifier.setResultsName('base')) + \
+                              idlServiceName.setResultsName('base')) + \
                               Junk('{') + \
                               Group(ZeroOrMore(idlFunction)).setResultsName('funcs') + \
                               Junk('}')
         def idlServiceAction(self,s,l,t):
-            con = Contract(name=t['name'])
+            if not 'base' in t:
+            	t['base'] = None
+            con = Contract(name=t['name'], base=t['base'])
             for p in t['funcs']:
                 con.add_procedure(p)
+            self.setService(t['name'], con)
             return [con]
         idlService.setParseAction(lambda s,l,t: idlServiceAction(self,s,l,t))
 
@@ -834,14 +849,20 @@ class ThriftReader(Reader):
                               Junk('{') + \
                               Group(ZeroOrMore(idlField)).setResultsName('fields') + \
                               Junk('}') + Optional(idlAnnotation)
-        idlStruct.setParseAction(lambda s,l,t: idlExceptionAction(self,s,l,t))
+        def idlStructAction(self,s,l,t):
+            str = Structure(name=t['name'])
+            for f in t['fields']:
+                str.add_field(type=f['type'], optional=f['optional'], name=f['name'])
+            self.setType(t['name'], str)
+            return [str]
+        idlStruct.setParseAction(lambda s,l,t: idlStructAction(self,s,l,t))
 
         idlUnion           =  Junk('union') + \
                               idlIdentifier.setResultsName('name') + \
                               Junk('{') + \
                               Group(ZeroOrMore(idlField)).setResultsName('fields') + \
                               Junk('}')
-        idlUnion.setParseAction(lambda s,l,t: idlExceptionAction(self,s,l,t)) #TODO: repair it?
+        idlUnion.setParseAction(lambda s,l,t: idlStructureAction(self,s,l,t)) #TODO: repair it?
 
         idlSenum           =  Junk('senum') + \
                               idlIdentifier.setResultsName('name') + \
@@ -910,13 +931,10 @@ class ThriftReader(Reader):
         self.idlDocument = idlDocument
 
     def readFrom(self, file):
-        thrift = file.read()
         self.clearType()
         self.clearConst()
+        self.clearService()
+        thrift = file.read()
         parsed = self.idlDocument.parseString(thrift, parseAll=True)
-        contracts = NamedTuple()
-        for i in parsed:
-            if isinstance(i, Contract):
-                contracts.append(i)
-        return contracts
+        return self._services
 

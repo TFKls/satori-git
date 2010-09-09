@@ -17,6 +17,10 @@ class UnwrapTypeAlias(TypeAlias):
     def do_convert_from_ars(self, value):
         return self.cls(value)
 
+class UnwrapBase(object):
+    def __init__(self, id, first=True):
+        super(UnwrapBase, self).__init__()
+
 
 def unwrap_proc(_proc):
     _procname = _proc.name
@@ -66,41 +70,51 @@ def unwrap_proc(_proc):
 
     return func
 
-def unwrap_class(contract):
+def unwrap_class(contract, base, fields):
     class_name = contract.name
-    class_bases = (object, )
     class_dict = {}
 
     for proc in contract.procedures:
         meth_name = proc.name.split('_', 1)[1]
         class_dict[meth_name] = unwrap_proc(proc)
 
-    def __init__(self, id):
-        self._id = id
+    if fields is not None:
+        def __init__(self, id, first=True):
+            super(new_class, self).__init__(id, False)
+            if first:
+                self._id = id
+                self._struct = None
 
-    def __getattr__(self, name):
-        if name == 'id':
-            return self._id
-        if (name[-4:] == '_get') or (name[-4:] == '_set'):
-            raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
-        if hasattr(self, name + '_get'):
-            return getattr(self, name + '_get')()
-        else:
-            raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
-        
-    def __setattr__(self, name, value):
-        if name[-4:] == '_set':
-            return super(self.__class__, self).__setattr__(name, value)
-        if hasattr(self, name + '_set'):
-            return getattr(self, name + '_set')(value)
-        else:
-            return super(self.__class__, self).__setattr__(name, value)
+        def __getattr__(self, name):
+            if name in fields:
+                if self._struct is None:
+                    self._struct = self.get_struct()
+                if name in self._struct:
+                    return self._struct[name]
+                else:
+                    # or raise error?
+                    return None
+            else:
+                raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
+            
+        def __setattr__(self, name, value):
+            if name == 'id':
+                raise Exception('Object id cannot be changed')
 
-    class_dict['__init__'] = __init__
-    class_dict['__getattr__'] = __getattr__
-    class_dict['__setattr__'] = __setattr__
+            if name in fields:
+                self.set_struct({name: value})
+                if self._struct is not None:
+                    self._struct[name] = value
+            else:
+                return super(new_class, self).__setattr__(name, value)
 
-    return type(class_name, class_bases, class_dict)
+        class_dict['__init__'] = __init__
+        class_dict['__getattr__'] = __getattr__
+        class_dict['__setattr__'] = __setattr__
+
+    new_class = type(class_name, (base,), class_dict)
+    return new_class
+
 
 def unwrap_classes(contracts):
     types = NamedTuple()
@@ -109,7 +123,7 @@ def unwrap_classes(contracts):
 
     for type in types:
         if type.name == 'DateTime':
-            type.converter = DateTimeTypeAlias
+            type.converter = DateTimeTypeAlias()
         if type.name == 'Token':
             type.converter = String
         if type is Structure:
@@ -121,7 +135,21 @@ def unwrap_classes(contracts):
 
     classes = {}
     for contract in contracts:
-        newcls = unwrap_class(contract)
+        if contract.base:
+            base = classes[contract.base.name]
+        else:
+            base = UnwrapBase
+
+        if contract.name + 'Struct' in types.names:
+            struct = types[contract.name + 'Struct']
+            if isinstance(struct.converter, NullableArsStructure):
+                fields = [field.name for field in struct.fields[1:]]
+            else:
+                fields = [field.name for field in struct.fields]
+        else:
+            fields = None
+            
+        newcls = unwrap_class(contract, base, fields)
         classes[contract.name] = newcls
 
         if (contract.name + 'Id') in types.names:
