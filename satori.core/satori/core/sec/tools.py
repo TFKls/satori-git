@@ -34,13 +34,13 @@ class TokenTypeAlias(model.TypeAlias):
     def __init__(self):
         super(TokenTypeAlias, self).__init__(name='Token', target_type=model.String)
 
-    def needs_conversion(self):
+    def do_needs_conversion(self):
         return True
 
-    def convert_to_ars(self, value):
+    def do_convert_to_ars(self, value):
         return str(value)
 
-    def convert_from_ars(self, value):
+    def do_convert_from_ars(self, value):
         return Token(value)
 
 

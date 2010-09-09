@@ -1,0 +1,17 @@
+<h4>Problems</h4>
+<table>
+{% for p,editlink in widget.problems %}
+    <tr>
+        <td><a href="{{editlink}}">{{ p.name }}</a></td><td>{{ p.description }}</td>
+    </tr>
+{% endfor %}
+</table>
+
+<h4>Add new problem</h4>
+<form action="process.createproblem" method="POST">
+<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+<input type="hidden" name="back_path" value="{{widget.back_path}}"/>
+Name: <input type="text" name="name"/><br/>
+Description: <textarea name="description"></textarea><br/>
+<input type="submit" value="Add problem"/>
+</form>
