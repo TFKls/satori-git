@@ -142,7 +142,7 @@ class DateTimeTypeAlias(TypeAlias):
         return long(time.mktime(value.timetuple()))
 
     def do_convert_from_ars(self, value):
-        return datetime.fromtimestamp(value)
+        return datetime.datetime.fromtimestamp(value)
 
 
 python_basic_types = {
