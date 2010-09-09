@@ -16,6 +16,7 @@ from StringIO import StringIO
 import traceback
 from types import ClassType, TypeType, FunctionType
 import threading
+import socket
 
 from pyparsing import Forward, Group, Literal, Optional, Regex, StringEnd
 from pyparsing import Suppress, ZeroOrMore;
@@ -542,7 +543,15 @@ class ThriftClient(threading.local):
             	self.start()
 
             values = values_type(*args, **kwargs)
-            return self._processor.call(procedure, values.named, self._protocol, self._protocol)
+            try:
+                return self._processor.call(procedure, values.named, self._protocol, self._protocol)
+            except socket.error as e:
+                if e[0] == 32:
+                	self.stop()
+                	self.start()
+                    return self._processor.call(procedure, values.named, self._protocol, self._protocol)
+                else:
+                	raise
 
         proc.func_name = procedure.name
         return proc
