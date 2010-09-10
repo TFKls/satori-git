@@ -144,9 +144,9 @@ def generate_field_procedures(model, field):
 
     @Argument('token', type=Token)
     @Argument('self', type=model)
-    @Argument('value', type=(field_type, types.NoneType))
+    @Argument('value', type=field_type)
     @ReturnValue(type=types.NoneType)
-    def set(token, self, value):
+    def set(token, self, value=None):
         setattr(self, field_name, value)
         self.save()
         return value
@@ -168,7 +168,7 @@ class FilterWrapper(wrapper.ProcedureWrapper):
         model = parent._model
 
         @Argument('token', type=Token)
-        @Argument('values', type=(DjangoStruct(model), types.NoneType))
+        @Argument('values', type=DjangoStruct(model))
         @ReturnValue(type=wrapper.TypedList(model))
         def filter(token, values={}):
             return model.objects.filter(**values)
