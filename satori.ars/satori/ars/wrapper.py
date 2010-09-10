@@ -281,19 +281,19 @@ class StaticWrapper(Wrapper):
         self._add_child(ProcedureWrapper(proc, self))
 
 
-class WrapperBase(type):
-    def __new__(mcs, name, bases, dict_):
-        newdict = {}
-
-        for elem in dict_.itervalues():
-            if isinstance(elem, Wrapper):
-                for (name, proc) in elem._generate_procedures().iteritems():
-                    newdict[name] = staticmethod(proc)
-                    
-        return type.__new__(mcs, name, bases, newdict)
-
-class WrapperClass(object):
-    __metaclass__ = WrapperBase
+#class WrapperBase(type):
+#    def __new__(mcs, name, bases, dict_):
+#        newdict = {}
+#
+#        for elem in dict_.itervalues():
+#            if isinstance(elem, Wrapper):
+#                for (name, proc) in elem._generate_procedures().iteritems():
+#                    newdict[name] = staticmethod(proc)
+#                    
+#        return type.__new__(mcs, name, bases, newdict)
+#
+#class WrapperClass(object):
+#    __metaclass__ = WrapperBase
 
 def is_nonetype_constraint(constraint):
     return isinstance(constraint, TypeConstraint) and (constraint.type == types.NoneType)
@@ -302,12 +302,12 @@ def extract_ars_type(constraint):
     if isinstance(constraint, ConstraintDisjunction):
         if len(constraint.members) == 2:
             if is_nonetype_constraint(constraint.members[0]):
-                return (extract_ars_type(constraint.members[1])[0], True)
+                return extract_ars_type(constraint.members[1])
             elif is_nonetype_constraint(constraint.members[1]):
-                return (extract_ars_type(constraint.members[0])[0], True)
+                return extract_ars_type(constraint.members[0])
 
     if isinstance(constraint, TypeConstraint):
-        return (python_to_ars_type(constraint.type), False)
+        return python_to_ars_type(constraint.type)
 
     raise RuntimeError("Cannot extract type from constraint: " + str(constraint))
 
@@ -315,7 +315,7 @@ def extract_ars_type(constraint):
 def wrap(name, proc):
     signature = Signature.of(proc)
 
-    (ars_ret_type, ars_ret_optional) = extract_ars_type(signature.return_value.constraint)
+    ars_ret_type = extract_ars_type(signature.return_value.constraint)
 
     arg_names = signature.positional
     arg_count = len(signature.positional)
@@ -324,12 +324,11 @@ def wrap(name, proc):
     arg_numbers = {}
     for i in range(arg_count):
         argument = signature.arguments[signature.positional[i]]
-        (param_type, optional) = extract_ars_type(argument.constraint)
-        optional = optional or (argument.mode == ArgumentMode.OPTIONAL)
+        param_type = extract_ars_type(argument.constraint)
+        optional = argument.mode == ArgumentMode.OPTIONAL
         ars_arg_types.append(param_type)
         ars_arg_optional.append(optional)
         arg_numbers[signature.positional[i]] = i
-
 
     def reimplementation(*args, **kwargs):
         args = list(args)
