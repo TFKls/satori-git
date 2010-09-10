@@ -33,6 +33,7 @@ from satori.objects import Object, Argument, ArgumentMode, Signature, DispatchOn
 from satori.ars.model import Type, NamedType, AtomicType, Boolean, Float, Int8, Int16, Int32, Int64, String, Void
 from satori.ars.model import Field, ListType, MapType, SetType, Structure, Exception as ArsException, TypeAlias
 from satori.ars.model import Element, NamedElement, Parameter, Procedure, Contract, NamedTuple
+from satori.ars.model import ars_deepcopy_tuple
 from satori.ars.api import Server, Reader, Client
 from satori.ars.common import TopologicalWriter
 
@@ -600,7 +601,7 @@ def BootstrapThriftClient(transport_factory):
     import satori.core.setup
     from satori.ars import wrapper
     import satori.core.api
-    contracts.extend(wrapper.generate_contracts())
+    contracts.extend(ars_deepcopy_tuple(wrapper.generate_contracts()))
     writer = ThriftWriter()
     idl2 = StringIO()
     writer.writeTo(contracts, idl2)
