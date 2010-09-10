@@ -197,18 +197,19 @@ class MapType(Type):
         return new_value
 
 
-class NamedTuple(Object):
+class NamedTuple(object):
     """A list of NamedElements that have unique names.
     """
 
     def __init__(self):
+        super(NamedTuple, self).__init__()
         self.names = dict()
         self.items = list()
     
     @Argument('item', type=NamedElement)
     def append(self, item):
-        if item.name in self.names:
-            if self.names[item.name] == item:
+        if item.name in self:
+            if self[item.name] == item:
                 return
             else:
                 raise ArgumentError("duplicate item name")
@@ -217,9 +218,9 @@ class NamedTuple(Object):
 
     def extend(self, tuple):
         items = list()
-        for item in tuple.items:
-            if item.name in self.names:
-                if self.names[item.name] == item:
+        for item in tuple:
+            if item.name in self:
+                if self[item.name] == item:
                     pass
                 else:
                     raise ArgumentError("duplicate item name")
@@ -227,6 +228,9 @@ class NamedTuple(Object):
                 items.append(item)
         for item in items:
             self.append(item)
+
+    def __contains__(self, elem):
+        return elem in self.names
 
     def __iter__(self):
         return self.items.__iter__()
@@ -327,13 +331,14 @@ class Procedure(NamedElement):
         self.exception_types.append(exception_type)
         self.results_struct.add_field(name='error', type=exception_type, optional=True)
 
-Exception = Structure
-
+class Exception(Structure):
+    pass
 
 class Contract(NamedElement):
 
-    def __init__(self, name):
+    def __init__(self, name, base=None):
         super(Contract, self).__init__(name)
+        self.base = base
         self.procedures = NamedTuple()
 
     def add_procedure(self, procedure=None, **kwargs):
@@ -396,6 +401,92 @@ def namedTypes(item):
 @DispatchOn(item=Contract)
 def namedTypes(item):
     nt = NamedTuple()
+    if item.base:
+        nt.extend(namedTypes(item.base))
     for procedure in item.procedures:
         nt.extend(namedTypes(procedure))
     return nt
+
+
+@DispatchOn(item=types.NoneType)
+def ars_deepcopy(item, named):
+    return None
+
+@DispatchOn(item=AtomicType)
+def ars_deepcopy(item, named):
+    return item
+
+@DispatchOn(item=ListType)
+def ars_deepcopy(item, named):
+    return ListType(element_type=ars_deepcopy(item.element_type, named))
+
+@DispatchOn(item=SetType)
+def ars_deepcopy(item, named):
+    return SetType(element_type=ars_deepcopy(item.element_type, named))
+
+@DispatchOn(item=MapType)
+def ars_deepcopy(item, named):
+    return MapType(key_type=ars_deepcopy(item.key_type, named), value_type=ars_deepcopy(item.value_type, named))
+
+@DispatchOn(item=TypeAlias)
+def ars_deepcopy(item, named):
+    if item.name in named:
+    	return named[item.name]
+    ret = TypeAlias(name=item.name, target_type=ars_deepcopy(item.target_type, named))
+    named.append(ret)
+    return ret
+
+@DispatchOn(item=Field)
+def ars_deepcopy(item, named):
+    return Field(name=item.name, type=ars_deepcopy(item.type, named), optional=item.optional)
+
+@DispatchOn(item=Structure)
+def ars_deepcopy(item, named):
+    if item.name in named:
+    	return named[item.name]
+    ret = Structure(name=item.name, base=item.base)
+    for field in item.fields:
+        ret.add_field(ars_deepcopy(field, named))
+    named.append(ret)
+    return ret
+
+@DispatchOn(item=Exception)
+def ars_deepcopy(item, named):
+    if item.name in named:
+    	return named[item.name]
+    ret = Exception(name=item.name, base=item.base)
+    for field in item.fields:
+        ret.add_field(ars_deepcopy(field, named))
+    named.append(ret)
+    return ret
+
+@DispatchOn(item=Parameter)
+def ars_deepcopy(item, named):
+    return Parameter(name=item.name, type=ars_deepcopy(item.type, named), optional=item.optional, default=item.default)
+
+@DispatchOn(item=Procedure)
+def ars_deepcopy(item, named):
+    ret = Procedure(name=item.name, return_type=ars_deepcopy(item.return_type, named), implementation=item.implementation)
+    for parameter in item.parameters:
+        ret.add_parameter(ars_deepcopy(parameter, named))
+    for exception in item.exception_types:
+        ret.add_exception(ars_deepcopy(exception, named))
+    return ret
+
+@DispatchOn(item=Contract)
+def ars_deepcopy(item, named):
+    if item.name in named:
+    	return named[item.name]
+    ret = Contract(name=item.name, base=ars_deepcopy(item.base, named))
+    for procedure in item.procedures:
+        ret.add_procedure(ars_deepcopy(procedure, named))
+    named.append(ret)
+    return ret
+
+def ars_deepcopy_tuple(item):
+    named = NamedTuple()
+    ret = NamedTuple()
+    for elem in item:
+    	ret.append(ars_deepcopy(elem, named))
+    return ret
+
