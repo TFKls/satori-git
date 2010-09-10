@@ -11,8 +11,8 @@ from satori.core.sec.tools import Token
 from satori.ars.wrapper import Struct, StaticWrapper, TypedList
 from satori.core.cwrapper import Attribute
 from satori.core.judge_dispatcher import JudgeDispatcherClient
-import Test as ApiTest
-import Submit as ApiSubmit
+import ApiTest
+import ApiSubmit
 
 judge = StaticWrapper('Judge')
 
