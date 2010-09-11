@@ -1,5 +1,8 @@
 {% if widget.manage %}
-<form action="process.pubtime" method="POST">
+<form action="process.publish" method="POST">
+<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+<input type="hidden" name="back_path" value="{{widget.back_path}}"/>
+
 {% endif %}
 <h4>Problems</h4>
 <table class="list_table">
@@ -31,7 +34,7 @@
         {{fdate}}
     </td>
     <td>
-        <input type="checkbox" value="pr{{p.id}}"/>
+        <input type="checkbox" name="pr{{p.id}}"/>
     </td>
     <td>
         <a href="{{ editlink }}">Edit</a> 
@@ -43,10 +46,9 @@
 {% if widget.manage %}
 
 With selected: <br/>
-<input type="submit" name="publish" value="Publish"/><br/>
-<input type="submit" name="hide" value="Hide"/>
-
-
+Publish on <input type="text" name="pub_time"/> (leave blank to publish now)<br/>
+Stop submit on <input type="text" name="hide_time"/> (leave blank to publish indefinitely)<br/>
+<input type="submit" value="Confirm"/>
 </form>
 {% endif %}
 

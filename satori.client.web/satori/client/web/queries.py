@@ -9,7 +9,7 @@ def UserById(uid):
 	return User(int(uid))
 
 def ContestById(cid):
-	return Contest(int(cid))
+	return Contest.filter({'id' : int(cid)})[0]
 
 def CurrentUser():
   try:

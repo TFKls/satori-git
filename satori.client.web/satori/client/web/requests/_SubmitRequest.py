@@ -10,8 +10,11 @@ class SubmitRequest(Request):
     @classmethod
     def process(cls, request):
         d = ParseURL(request.POST['back_to'])
-        d['content'] = [{'name' : ['results']}]
-        p = ProblemMapping(int(request.POST['problem']))
-        c = Contestant(int(request.POST['cid']))
-        s = Submit(problem = p, owner = c, shortstatus = "Waiting")
-        return GetLink(d,'')
+        ret = DefaultLayout(dict=d,maincontent='results')
+        p = ProblemMapping.filter({id : int(request.POST['problem'])})[0]
+        if not ('content' in request.FILES.keys()):
+            raise "Empty submits not allowed!"
+        submit = request.FILES['content']
+        c = p.contest;
+        c.submit(problem_mapping=p, content=submit.read(), filename=submit.name)
+        return GetLink(ret,'')

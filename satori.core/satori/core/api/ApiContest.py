@@ -47,8 +47,8 @@ def create_contest(token, name):
     r.save()
     c.contestant_role = r
     c.save()
-    p = Privilege(role = token.user, object = c, right='MANAGE')
-    p.save()
+    Privilege(role = token.user, object = c, right='MANAGE').save()
+    Privilege(role = r, object = c, right='VIEW').save()
     return c
 @contest.create_contest.can
 def create_contest_check(token, name):

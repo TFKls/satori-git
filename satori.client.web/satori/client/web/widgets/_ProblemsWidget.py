@@ -20,12 +20,12 @@ class ProblemsWidget(Widget):
             ftime = None
             privs = Privilege.filter({'role' : r, 'object' : p, 'right' : 'SUBMIT'})
             for priv in privs:
-                if (not priv.startOn or priv.startOn>datetime.now()) and (not prov.finishOn or priv.endOn<datetime.now()):
+                if ((not priv.startOn) or priv.startOn>datetime.now()) and ((not priv.finishOn) or priv.endOn<datetime.now()):
                     published = True
                 stime = str(priv.startOn)
                 ftime = str(priv.finishOn)
             if published:
-                self.stime = 'Published'
+                stime = 'Published'
             self.problems.append([p,editlink,stime,ftime])
         self.potential = Problem.filter()
         self.back_to = ToString(params)
