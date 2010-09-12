@@ -1,11 +1,11 @@
-from satori.ars.model import *
-from satori.ars.wrapper import DateTimeTypeAlias, NullableArsStructure, String
+from satori.ars.model import ArsTypeAlias, ArsInt64, ArsStructure
+from satori.ars.wrapper import ArsDateTime, ArsNullableStructure
 from satori.ars import perf
 from token_container import token_container
 
-class UnwrapTypeAlias(TypeAlias):
+class ArsUnwrapClass(ArsTypeAlias):
     def __init__(self, cls):
-        super(UnwrapTypeAlias, self).__init__(cls.__name__, Int64)
+        super(ArsUnwrapClass, self).__init__(name=cls.__name__, target_type=ArsInt64)
         self.cls = cls
 
     def do_needs_conversion(self):
@@ -17,12 +17,13 @@ class UnwrapTypeAlias(TypeAlias):
     def do_convert_from_ars(self, value):
         return self.cls(value)
 
+
 class UnwrapBase(object):
     def __init__(self, id, first=True):
         super(UnwrapBase, self).__init__()
 
 
-def unwrap_proc(_proc):
+def unwrap_procedure(_proc):
     _procname = _proc.name
     _implementation = _proc.implementation
     _rettype = _proc.return_type
@@ -70,13 +71,13 @@ def unwrap_proc(_proc):
 
     return func
 
-def unwrap_class(contract, base, fields):
-    class_name = contract.name
+def unwrap_service(service, base, fields):
+    class_name = service.name
     class_dict = {}
 
-    for proc in contract.procedures:
+    for proc in service.procedures:
         meth_name = proc.name.split('_', 1)[1]
-        class_dict[meth_name] = unwrap_proc(proc)
+        class_dict[meth_name] = unwrap_procedure(proc)
 
     if fields is not None:
         def __init__(self, id, first=True):
@@ -116,44 +117,41 @@ def unwrap_class(contract, base, fields):
     return new_class
 
 
-def unwrap_classes(contracts):
-    types = NamedTuple()
-    for contract in contracts:
-        types.extend(namedTypes(contract))
-
-    for type in types:
+def unwrap_interface(interface):
+    for type in interface.types:
         if type.name == 'DateTime':
-            type.converter = DateTimeTypeAlias()
-        if type.name == 'Token':
-            type.converter = String
-        if type is Structure:
+            type.converter = ArsDateTime()
+        elif type is ArsStructure:
             if type.fields and (type.fields[0].name == 'null_values'):
-                newtype = NullableArsStructure(name=type.name)
+                newtype = ArsNullableStructure(name=type.name)
                 for field in type.fields[1:]:
                     newtype.add_field(field)
                 type.converter = newtype
 
     classes = {}
-    for contract in contracts:
-        if contract.base:
-            base = classes[contract.base.name]
+    for service in interface.services:
+        if service.base:
+            base = classes[service.base.name]
         else:
             base = UnwrapBase
 
-        if contract.name + 'Struct' in types.names:
-            struct = types[contract.name + 'Struct']
-            if isinstance(struct.converter, NullableArsStructure):
+        if service.name + 'Struct' in interface.types:
+            struct = interface.types[service.name + 'Struct']
+            if isinstance(struct.converter, ArsNullableStructure):
                 fields = [field.name for field in struct.fields[1:]]
             else:
                 fields = [field.name for field in struct.fields]
         else:
             fields = None
             
-        newcls = unwrap_class(contract, base, fields)
-        classes[contract.name] = newcls
+        newcls = unwrap_service(service, base, fields)
+        classes[service.name] = newcls
 
-        if (contract.name + 'Id') in types.names:
-            types[contract.name + 'Id'].converter = UnwrapTypeAlias(newcls)
+        if (service.name + 'Id') in interface.types:
+            interface.types[service.name + 'Id'].converter = ArsUnwrapClass(newcls)
+    
+    for constant in interface.constants:
+    	classes[constant.name] = constant.type.convert_from_ars(constant.value)
 
     return classes
 

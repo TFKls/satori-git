@@ -11,7 +11,6 @@ __all__ = (
 )
 
 
-from collections import Set
 from StringIO import StringIO
 import traceback
 from types import ClassType, TypeType, FunctionType
@@ -19,7 +18,7 @@ import threading
 import socket
 
 from pyparsing import Forward, Group, Literal, Optional, Regex, StringEnd
-from pyparsing import Suppress, ZeroOrMore;
+from pyparsing import Suppress, ZeroOrMore
 from pyparsing import cStyleComment, dblSlashComment, pythonStyleComment
 from pyparsing import dblQuotedString, sglQuotedString, removeQuotes
 
@@ -29,52 +28,57 @@ from ..thrift.server.TServer import TThreadedServer
 from ..thrift.transport.TTransport import TServerTransportBase, TTransportBase
 from ..thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
-from satori.objects import Object, Argument, ArgumentMode, Signature, DispatchOn, ArgumentError
-from satori.ars.model import Type, NamedType, AtomicType, Boolean, Float, Int8, Int16, Int32, Int64, String, Void
-from satori.ars.model import Field, ListType, MapType, SetType, Structure, Exception as ArsException, TypeAlias
-from satori.ars.model import Element, NamedElement, Parameter, Procedure, Contract, NamedTuple
-from satori.ars.model import ars_deepcopy_tuple
-from satori.ars.api import Server, Reader, Client
-from satori.ars.common import TopologicalWriter
+from satori.objects import Argument, ArgumentMode, Signature, DispatchOn
+from satori.ars.model import ArsElement, ArsNamedElement, ArsNamedTuple
+from satori.ars.model import ArsType, ArsNamedType, ArsTypeAlias, ArsAtomicType
+from satori.ars.model import ArsList, ArsMap, ArsSet, ArsVoid, ArsBoolean
+from satori.ars.model import ArsFloat, ArsInt8, ArsInt16, ArsInt32, ArsInt64, ArsString
+from satori.ars.model import ArsField, ArsStructure, ArsException, ArsConstant
+from satori.ars.model import ArsParameter, ArsProcedure, ArsService, ArsInterface
 
-import perf
 import sys
 
+def gen_idl_service():
+    idl_proc = ArsProcedure(return_type=ArsString, name='Server_getIDL')
+    idl_serv = ArsService(name='Server')
+    idl_serv.add_procedure(idl_proc)
+    return (idl_serv, idl_proc)
 
-class ThriftWriter(TopologicalWriter):
+
+class ThriftWriter(object):
     """An ARS Writer spitting out thrift IDL.
     """
 
     ATOMIC_NAMES = {
-        Boolean: 'bool',
-        Int8:    'byte',
-        Int16:   'i16',
-        Int32:   'i32',
-        Int64:   'i64',
-        Float:   'double',
-        String:  'string',
-        Void:    'void',
+        ArsBoolean: 'bool',
+        ArsInt8:    'byte',
+        ArsInt16:   'i16',
+        ArsInt32:   'i32',
+        ArsInt64:   'i64',
+        ArsFloat:   'double',
+        ArsString:  'string',
+        ArsVoid:    'void',
     }
 
-    @DispatchOn(item=Element)
+    @DispatchOn(item=ArsElement)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         raise RuntimeError("Unhandled Element type '{0}'".format(item.__class__.__name__))
 
-    @DispatchOn(item=NamedElement)
+    @DispatchOn(item=ArsNamedElement)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write(item.name)
 
-    @DispatchOn(item=AtomicType)
+    @DispatchOn(item=ArsAtomicType)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write(ThriftWriter.ATOMIC_NAMES[item])
 
-    @DispatchOn(item=ListType)
+    @DispatchOn(item=ArsList)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write('list<')
         self._reference(item.element_type, target)
         target.write('>')
 
-    @DispatchOn(item=MapType)
+    @DispatchOn(item=ArsMap)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write('map<')
         self._reference(item.key_type, target)
@@ -82,34 +86,13 @@ class ThriftWriter(TopologicalWriter):
         self._reference(item.value_type, target)
         target.write('>')
 
-    @DispatchOn(item=SetType)
+    @DispatchOn(item=ArsSet)
     def _reference(self, item, target): # pylint: disable-msg=E0102
         target.write('set<')
         self._reference(item.element_type, target)
         target.write('>')
 
-    @DispatchOn(item=Element)
-    def _write(self, item, target): # pylint: disable-msg=E0102
-        raise ArgumentError("Unknown Element type '{0}'".format(item.__class__.__name__))
-
-    @DispatchOn(item=Element)
-    def _sortkey(self, item): # pylint: disable-msg=E0102
-        raise ArgumentError("Unknown Element type '{0}'".format(item.__class__.__name__))
-
-    @DispatchOn(item=(AtomicType,ListType,MapType,SetType,Field,Parameter,Procedure))
-    def _write(self, item, target): # pylint: disable-msg=E0102
-        pass
-
-    @DispatchOn(item=(AtomicType,ListType,MapType,SetType,Field,Parameter,Procedure))
-    def _sortkey(self, item): # pylint: disable-msg=E0102
-        pass 
-
-    def _sortkey(self, item):
-        target = StringIO()
-        self._reference(item, target)
-        return str(target)
-
-    @DispatchOn(item=TypeAlias)
+    @DispatchOn(item=ArsTypeAlias)
     def _write(self, item, target): # pylint: disable-msg=E0102
         target.write('typedef ')
         self._reference(item.target_type, target)
@@ -117,7 +100,7 @@ class ThriftWriter(TopologicalWriter):
         self._reference(item, target)
         target.write('\n')
 
-    @DispatchOn(item=Structure)
+    @DispatchOn(item=ArsStructure)
     def _write(self, item, target): # pylint: disable-msg=E0102
         target.write('struct ')
         self._reference(item, target)
@@ -135,7 +118,30 @@ class ThriftWriter(TopologicalWriter):
             ind += 1
         target.write('\n}\n')
 
-    @DispatchOn(item=Contract)
+    @DispatchOn(item=ArsException)
+    def _write(self, item, target): # pylint: disable-msg=E0102
+        target.write('exception ')
+        self._reference(item, target)
+        target.write(' {')
+        sep = '\n\t'
+        ind = 1
+        for field in item.fields:
+            target.write('{0}{1}:'.format(sep, ind))
+            if field.optional:
+                target.write('optional ')
+            self._reference(field.type, target)
+            target.write(' ')
+            self._reference(field, target)
+            sep = '\n\t'
+            ind += 1
+        target.write('\n}\n')
+    
+    @DispatchOn(item=ArsConstant)
+    def _write(self, item, target): # pylint: disable-msg=E0102
+        #TODO
+        pass
+
+    @DispatchOn(item=ArsService)
     def _write(self, item, target): # pylint: disable-msg=E0102
         target.write('service ')
         self._reference(item, target)
@@ -159,8 +165,6 @@ class ThriftWriter(TopologicalWriter):
                 self._reference(parameter.type, target)
                 target.write(' ')
                 self._reference(parameter, target)
-                if parameter.default is not None:
-                    target.write(' = {0}'.format(parameter.default))
                 sep2 = ', '
                 ind += 1
             target.write(')')
@@ -170,107 +174,115 @@ class ThriftWriter(TopologicalWriter):
                 ind = 1
                 for exception_type in procedure.exception_types:
                     target.write('{0}{1}:'.format(sep2, ind))
-                    self._reference(procedure.error_type, target)
-                    target.write(' error')
+                    self._reference(exception_type.type, target)
+                    target.write(' ')
+                    self._reference(exception_type, target)
                     sep2 = ', '
                     ind += 1
                 target.write(')')
             sep = '\n\t'
         target.write('\n}\n')
 
+    def write_to(self, interface, target):
+        for type in interface.types:
+        	self._write(type, target)
+
+        for constant in interface.constants:
+        	self._write(constant, target)
+
+        for service in interface.services:
+        	self._write(service, target)
+
+
 class ThriftProcessor(TProcessor):
     """ARS implementation of thrift.Thrift.TProcessor.
     """
     
-    @Argument('contracts', type=NamedTuple)
-    def __init__(self, contracts):
-        self._procedures = {}
-        for contract in contracts:
-            for procedure in contract.procedures:
-                if procedure.name not in self._procedures:
-                    self._procedures[procedure.name] = procedure
-                elif self._procedures[procedure.name] != procedure:
-                    raise ArgumentError("Ambiguous procedure name: {0}".format(procedure.name))
+    @Argument('interface', type=ArsInterface)
+    def __init__(self, interface):
+        self._procedures = ArsNamedTuple()
+        for service in interface.services:
+        	self._procedures.extend(service.procedures)
         self.seqid = 0
 
     ATOMIC_TYPE = {
-        Boolean: TType.BOOL,
-        Int8:    TType.BYTE,
-        Int16:   TType.I16,
-        Int32:   TType.I32,
-        Int64:   TType.I64,
-        Float:   TType.DOUBLE,
-        String:  TType.STRING,
-        Void:    TType.VOID,
+        ArsBoolean: TType.BOOL,
+        ArsInt8:    TType.BYTE,
+        ArsInt16:   TType.I16,
+        ArsInt32:   TType.I32,
+        ArsInt64:   TType.I64,
+        ArsFloat:   TType.DOUBLE,
+        ArsString:  TType.STRING,
+        ArsVoid:    TType.VOID,
     }
     
-    @DispatchOn(type_=AtomicType)
+    @DispatchOn(type_=ArsAtomicType)
     def _ttype(self, type_):
         return ThriftProcessor.ATOMIC_TYPE[type_]
     
-    @DispatchOn(type_=Structure)
+    @DispatchOn(type_=ArsStructure)
     def _ttype(self, type_):
         return TType.STRUCT
 
-    @DispatchOn(type_=ListType)
+    @DispatchOn(type_=ArsList)
     def _ttype(self, type_):
         return TType.LIST
 
-    @DispatchOn(type_=MapType)
+    @DispatchOn(type_=ArsMap)
     def _ttype(self, type_):
         return TType.MAP
 
-    @DispatchOn(type_=SetType)
+    @DispatchOn(type_=ArsSet)
     def _ttype(self, type_):
         return TType.SET
     
-    @DispatchOn(type_=TypeAlias)
+    @DispatchOn(type_=ArsTypeAlias)
     def _ttype(self, type_):
         return self._ttype(type_.target_type)
 
     ATOMIC_SEND = {
-        Boolean: 'writeBool',
-        Int8:    'writeByte',
-        Int16:   'writeI16',
-        Int32:   'writeI32',
-        Int64:   'writeI64',
-        Float:   'writeDouble',
-        String:  'writeString',
+        ArsBoolean: 'writeBool',
+        ArsInt8:    'writeByte',
+        ArsInt16:   'writeI16',
+        ArsInt32:   'writeI32',
+        ArsInt64:   'writeI64',
+        ArsFloat:   'writeDouble',
+        ArsString:  'writeString',
     }
 
-    @DispatchOn(type_=Type)
+    @DispatchOn(type_=ArsType)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         raise RuntimeError("Unhandled ARS type: {0}".format(type_))
 
-    @DispatchOn(type_=AtomicType)
+    @DispatchOn(type_=ArsAtomicType)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
-        if type_ != Void:
+        if type_ != ArsVoid:
             getattr(proto, ThriftProcessor.ATOMIC_SEND[type_])(value)
     
-    @DispatchOn(type_=TypeAlias)
+    @DispatchOn(type_=ArsTypeAlias)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         return self._send(value, type_.target_type, proto)
 
-    @DispatchOn(type_=Structure)
+    @DispatchOn(type_=ArsStructure)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         proto.writeStructBegin(type_.name)
         for index, field in enumerate(type_.fields):
             fvalue = value.get(field.name, None)
             if fvalue is not None:
-                proto.writeFieldBegin(field.name, self._ttype(field.type), index + type_.base)
+                proto.writeFieldBegin(field.name, self._ttype(field.type), index + type_.base_index)
                 self._send(fvalue, field.type, proto)
                 proto.writeFieldEnd()
         proto.writeFieldStop()
         proto.writeStructEnd()
 
-    @DispatchOn(type_=ListType)
+    @DispatchOn(type_=ArsList)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         proto.writeListBegin(self._ttype(type_.element_type), len(value))
         for item in value:
             self._send(item, type_.element_type, proto)
         proto.writeListEnd()
 
-    @DispatchOn(type_=MapType)
+    @DispatchOn(type_=ArsMap)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         proto.writeMapBegin(self._ttype(type_.key_type), self._ttype(type_.value_type),
                             len(value))
@@ -279,7 +291,7 @@ class ThriftProcessor(TProcessor):
             self._send(value[key], type_.value_type, proto)
         proto.writeMapEnd()
 
-    @DispatchOn(type_=SetType)
+    @DispatchOn(type_=ArsSet)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         proto.writeSetBegin(self._ttype(type_.element_type), len(value))
         for item in value:
@@ -287,52 +299,31 @@ class ThriftProcessor(TProcessor):
         proto.writeSetEnd()
     
     ATOMIC_RECV = {
-        Boolean: 'readBool',
-        Int8:    'readByte',
-        Int16:   'readI16',
-        Int32:   'readI32',
-        Int64:   'readI64',
-        Float:   'readDouble',
-        String:  'readString',
+        ArsBoolean: 'readBool',
+        ArsInt8:    'readByte',
+        ArsInt16:   'readI16',
+        ArsInt32:   'readI32',
+        ArsInt64:   'readI64',
+        ArsFloat:   'readDouble',
+        ArsString:  'readString',
     }
 
-    @DispatchOn(type_=Type)
+    @DispatchOn(type_=ArsType)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         raise RuntimeError("Unhandled ARS type: {0}".format(type_))
 
-    @DispatchOn(type_=AtomicType)
+    @DispatchOn(type_=ArsAtomicType)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
-        if type_ == Void:
+        if type_ == ArsVoid:
             return None
         else:
             return getattr(proto, ThriftProcessor.ATOMIC_RECV[type_])()
     
-    @DispatchOn(type_=TypeAlias)
+    @DispatchOn(type_=ArsTypeAlias)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         return self._recv(type_.target_type, proto)
     
-    def _recvFields(self, fields, proto):
-        value = {}
-        proto.readStructBegin()
-        while True:
-            fname, ftype, findex = proto.readFieldBegin()
-            if ftype == TType.STOP:
-                break
-            field = fields[findex]
-            if fname is None:
-                fname = field.name
-            elif fname != field.name:
-                proto.skip(ftype)
-                # TODO: warning: field name mismatch
-            if ftype != self._ttype(field.type):
-                proto.skip(ftype)
-                # TODO: warning: field type mismatch
-            value[field.name] = self._recv(field.type, proto)
-            proto.readFieldEnd()
-        proto.readStructEnd()
-        return value
-
-    @DispatchOn(type_=Structure)
+    @DispatchOn(type_=ArsStructure)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         value = {}
         proto.readStructBegin()
@@ -340,7 +331,7 @@ class ThriftProcessor(TProcessor):
             fname, ftype, findex = proto.readFieldBegin()
             if ftype == TType.STOP:
                 break
-            field = type_.fields[findex - type_.base]
+            field = type_.fields[findex - type_.base_index]
             if fname is None:
                 fname = field.name
             elif fname != field.name:
@@ -359,7 +350,7 @@ class ThriftProcessor(TProcessor):
                 raise Exception("No value for a mandatory field {0}".format(field.name))
         return value
 
-    @DispatchOn(type_=ListType)
+    @DispatchOn(type_=ArsList)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         value = []
         itype, count = proto.readListBegin()
@@ -370,7 +361,7 @@ class ThriftProcessor(TProcessor):
         proto.readListEnd()
         return value
 
-    @DispatchOn(type_=MapType)
+    @DispatchOn(type_=ArsMap)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         value = {}
         ktype, vtype, count = proto.readMapBegin()
@@ -385,7 +376,7 @@ class ThriftProcessor(TProcessor):
         proto.readMapEnd()
         return value
 
-    @DispatchOn(type_=SetType)
+    @DispatchOn(type_=ArsSet)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         value = set()
         itype, count = proto.readSetBegin()
@@ -400,7 +391,7 @@ class ThriftProcessor(TProcessor):
         """Processes a single client request.
         """
         pname, _, seqid = iproto.readMessageBegin()
-        perf.begin('process')
+#        perf.begin('process')
         print pname
         try:
             # find the procedure to call
@@ -413,13 +404,13 @@ class ThriftProcessor(TProcessor):
             procedure = self._procedures[pname] # TApplicationException.UNKNOWN_METHOD
 
             # parse arguments
-            perf.begin('recv')
+#            perf.begin('recv')
             arguments = self._recv(procedure.parameters_struct, iproto)
             iproto.readMessageEnd()
-            perf.end('recv')
+#            perf.end('recv')
             
             # call the registered implementation
-            perf.begin('call')
+#            perf.begin('call')
             result = {}
             try:
                 result['result'] = procedure.implementation(**arguments)
@@ -427,29 +418,29 @@ class ThriftProcessor(TProcessor):
                 traceback.print_exc()
                 raise TApplicationException(TApplicationException.UNKNOWN,
                     "Exception: " + ex.message)
-            perf.end('call')
+#            perf.end('call')
 
             # send the reply
-            perf.begin('send')
+#            perf.begin('send')
             oproto.writeMessageBegin(pname, TMessageType.REPLY, seqid)
             self._send(result, procedure.results_struct, oproto)
             oproto.writeMessageEnd()
-            perf.end('send')
+#            perf.end('send')
         except TApplicationException as ex:
             # handle protocol errors
-            perf.begin('except')
+#            perf.begin('except')
             oproto.writeMessageBegin(pname, TMessageType.EXCEPTION, seqid)
             ex.write(oproto)
             oproto.writeMessageEnd()
-            perf.end('except')
+#            perf.end('except')
         finally:
-            perf.begin('flush')
+#            perf.begin('flush')
             oproto.trans.flush()
-            perf.end('flush')
-            perf.end('process')
+#            perf.end('flush')
+#            perf.end('process')
 
     def call(self, procedure, args, iproto, oproto):
-        perf.begin('call')
+#        perf.begin('call')
         if isinstance(procedure, str):
             try:
                 procedure = self._procedures[procedure]
@@ -457,19 +448,19 @@ class ThriftProcessor(TProcessor):
                 raise TApplicationException(TApplicationException.UNKNOWN_METHOD,
                     "Unknown method '{0}'".format(name))
         
-        perf.begin('send')
+#        perf.begin('send')
         oproto.writeMessageBegin(procedure.name, TMessageType.CALL, self.seqid)
         self.seqid = self.seqid + 1
         self._send(args, procedure.parameters_struct, oproto)
         oproto.writeMessageEnd()
         oproto.trans.flush()
-        perf.end('send')
+#        perf.end('send')
 
-        perf.begin('wait')
+#        perf.begin('wait')
         (fname, mtype, rseqid) = iproto.readMessageBegin()
-        perf.end('wait')
+#        perf.end('wait')
 
-        perf.begin('recv')
+#        perf.begin('recv')
         if mtype == TMessageType.EXCEPTION:
             x = TApplicationException()
             x.read(iproto)
@@ -478,8 +469,8 @@ class ThriftProcessor(TProcessor):
             raise x
         result = self._recv(procedure.results_struct, iproto)
         iproto.readMessageEnd()
-        perf.end('recv')
-        perf.end('call')
+#        perf.end('recv')
+#        perf.end('call')
 
         if 'result' in result:
         	return result['result']
@@ -490,48 +481,40 @@ class ThriftProcessor(TProcessor):
 #        raise TApplicationException(TApplicationException.MISSING_RESULT, "Static_call_me failed: unknown result");
 
 
-class ThriftServer(Server):
+class ThriftServer(object):
     
     @Argument('server_type', type=(ClassType, TypeType), default=TThreadedServer)
     @Argument('transport', type=TServerTransportBase)
-    @Argument('contracts', type=NamedTuple)
-    def __init__(self, server_type, transport, contracts):
+    @Argument('interface', type=ArsInterface)
+    def __init__(self, server_type, transport, interface):
         super(ThriftServer, self).__init__()
         self._server_type = server_type
         self._transport = transport
-        self.contracts = contracts
+        self._interface = interface
     
     def run(self):
-        idl_proc = Procedure(return_type=String, name='Server_getIDL')
-        idl_cont = Contract(name='Server')
-        idl_cont.add_procedure(idl_proc)
-        self.contracts.append(idl_cont)
+        (idl_serv, idl_proc) = gen_idl_service()
+        self._interface.add_service(idl_serv)
         writer = ThriftWriter()
         idl = StringIO()
-        writer.writeTo(self.contracts, idl)
+        writer.write_to(self._interface, idl)
         idl = idl.getvalue()
-        def do_idl():
-            perf.clear('process')
-            perf.clear('call')
-            perf.clear('delete')
-            return idl
-        idl_proc.implementation = do_idl
-#        idl_proc.implementation = lambda: idl
-        processor = ThriftProcessor(self.contracts)
+        idl_proc.implementation = lambda: idl
+        processor = ThriftProcessor(self._interface)
         server = self._server_type(processor, self._transport)
         return server.serve()
 
 
 class ThriftClient(threading.local):
-    @Argument('contracts', type=NamedTuple)
+    @Argument('interface', type=ArsInterface)
     @Argument('transport_factory', type=FunctionType)
-    def __init__(self, contracts, transport_factory):
+    def __init__(self, interface, transport_factory):
         super(ThriftClient, self).__init__()
-        self._contracts = contracts
+        self._interface = interface
         self._transport_factory = transport_factory
         self._started = False
 
-    def _wrap(self, procedure):
+    def _wrap_procedure(self, procedure):
         names = [parameter.name for parameter in procedure.parameters]
         sign = Signature(names)
         for param in procedure.parameters:
@@ -558,16 +541,14 @@ class ThriftClient(threading.local):
         return proc
 
     def wrap_all(self):
-        for contract in self._contracts:
-            for procedure in contract.procedures:
-                procedure.implementation = self._wrap(procedure)
-        return self._contracts
+        for service in self._interface.services:
+            for procedure in service.procedures:
+                procedure.implementation = self._wrap_procedure(procedure)
 
     def unwrap_all(self):
-        for contract in self._contracts:
-            for procedure in contract.procedures:
+        for service in self._interface.services:
+            for procedure in service.procedures:
                 procedure.implementation = None
-        return self._contracts
 
     def start(self):
         if self._started:
@@ -576,7 +557,7 @@ class ThriftClient(threading.local):
         self._transport = self._transport_factory()
         self._transport.open()
         self._protocol = TBinaryProtocol(self._transport)
-        self._processor = ThriftProcessor(self._contracts)
+        self._processor = ThriftProcessor(self._interface)
         self._started = True
 
     def stop(self):
@@ -585,15 +566,12 @@ class ThriftClient(threading.local):
             self._started = False
 
 
-def BootstrapThriftClient(transport_factory):
-    contracts = NamedTuple()
+def bootstrap_thrift_client(transport_factory):
+    interface = ArsInterface()
+    (idl_serv, idl_proc) = gen_idl_service()
+    interface.add_service(idl_serv)
 
-    idl_proc = Procedure(return_type=String, name='Server_getIDL')
-    idl_cont = Contract(name='Server')
-    idl_cont.add_procedure(idl_proc)
-    contracts.append(idl_cont)
-
-    bootstrap_client = ThriftClient(contracts, transport_factory)
+    bootstrap_client = ThriftClient(interface, transport_factory)
     bootstrap_client.wrap_all()
     idl = idl_proc.implementation()
     bootstrap_client.stop()
@@ -601,61 +579,68 @@ def BootstrapThriftClient(transport_factory):
     import satori.core.setup
     from satori.ars import wrapper
     import satori.core.api
-    contracts.extend(ars_deepcopy_tuple(wrapper.generate_contracts()))
+    interface = wrapper.generate_interface().deepcopy()
+    interface.add_service(idl_serv)
     writer = ThriftWriter()
     idl2 = StringIO()
-    writer.writeTo(contracts, idl2)
+    writer.write_to(interface, idl2)
     idl2 = idl2.getvalue()
-    first = "\n".join(sorted(idl.split("\n")))
-    second = "\n".join(sorted(idl2.split("\n")))
 
-    if first != second:
+#    print idl
+#    print '-----------------'
+#    print idl2
+
+#    first = "\n".join(sorted(idl.split("\n")))
+#    second = "\n".join(sorted(idl2.split("\n")))
+
+#    if first != second:
+    if idl != idl2:
         print "Server and client api mismatch. Using server version."
         idl_reader = ThriftReader()
         idl_io = StringIO(idl)
-        contracts = idl_reader.readFrom(idl_io)
+        interface = idl_reader.read_from(idl_io)
 
-    client = ThriftClient(contracts, transport_factory)
+    client = ThriftClient(interface, transport_factory)
+    client.wrap_all()
 
-    return client
+    return (interface, client)
 
 
-class ThriftReader(Reader):
-    def setType(self, name, type):
-        self._types[name] = type
+class ThriftReader(object):
+    ATOMIC_TYPES = {
+        'bool': ArsBoolean,
+        'byte': ArsInt8,
+        'i16': ArsInt16,
+        'i32': ArsInt32,
+        'i64': ArsInt64,
+        'double': ArsFloat,
+        'string': ArsString,
+        'void': ArsVoid,
+        'binary': ArsString,
+        'slist': ArsString,
+    }
+
+    def add_type(self, type):
+        self._interface.types.append(type)
         return [type]
-    def getType(self, name):
-        if isinstance(name,Type):
+    def get_type(self, name):
+        if isinstance(name,ArsType):
             return name
-        return self._types[name]
-    def clearType(self):
-        self._types = {}
-        self.setType('bool', Boolean)
-        self.setType('byte', Int8)
-        self.setType('i16', Int16)
-        self.setType('i32', Int32)
-        self.setType('i64', Int64)
-        self.setType('double', Float)
-        self.setType('string', String)
-        self.setType('void', Void)
-        self.setType('binary', String)
-        self.setType('slist', String)
+        if name in self.ATOMIC_TYPES:
+        	return self.ATOMIC_TYPES[name]
+        return self._interface.types[name]
 
-    def setConst(self, name, const):
-        self._consts[name] = const
+    def add_constant(self, const):
+        self._interface.constants.append(const)
         return [const]
-    def getConst(self, name):
-        return self._consts[name]
-    def clearConst(self):
-        self._consts = {}
+    def get_constant(self, name):
+        return self._interface.constants[name]
 
-    def setService(self, name, service):
-        self._services.append(service)
+    def add_service(self, service):
+        self._interface.services.append(service)
         return [service]
-    def getService(self, name):
-        return self._services[name]
-    def clearService(self):
-        self._services = NamedTuple()
+    def get_service(self, name):
+        return self._interface.services[name]
 
     def __init__(self):
         super(ThriftReader, self).__init__()
@@ -699,7 +684,7 @@ class ThriftReader(Reader):
 
         idlConstValue      << (idlIntConstant ^ idlDoubleConstant ^ idlLiteral ^ \
                               idlIdentifier.copy().setParseAction(lambda s,l,t:
-                                  [self.getConst(t[0])]
+                                  [self.get_constant(t[0])]
                               ) ^ idlConstList ^ idlConstMap)
 
         idlCppType         =  Junk('cpp_type') + idlLiteral
@@ -719,14 +704,14 @@ class ThriftReader(Reader):
                               idlFieldType.setResultsName('base') + \
                               Junk('>') + Optional(idlCppType)
         idlListType.setParseAction(lambda s,l,t:
-            [ListType(t['base'])]
+            [ArsList(t['base'])]
         )
 
         idlSetType         =  Junk('set') + Optional(idlCppType) + Junk('<') + \
                               idlFieldType.setResultsName('base') + \
                               Junk('>')
         idlSetType.setParseAction(lambda s,l,t:
-            [SetType(t['base'])]
+            [ArsSet(t['base'])]
         )
 
         idlMapType         =  Junk('map') + Optional(idlCppType) + Junk('<') + \
@@ -735,7 +720,7 @@ class ThriftReader(Reader):
                               idlFieldType.setResultsName('basev') + \
                               Junk('>')
         idlMapType.setParseAction(lambda s,l,t:
-            [MapType(t['basek'], t['basev'])]
+            [ArsMap(t['basek'], t['basev'])]
         )
 
         idlContainerType   =  (idlMapType ^ idlSetType ^ idlListType) + \
@@ -747,13 +732,13 @@ class ThriftReader(Reader):
                               Literal('string') ^ Literal('binary') ^ \
                               Literal('slist')) + \
                               Suppress(Optional(idlAnnotation))
-        idlBaseType.setParseAction(lambda s,l,t: [self.getType(t[0])])
+        idlBaseType.setParseAction(lambda s,l,t: [self.get_type(t[0])])
 
         idlDefinitionType  =  idlBaseType ^ idlContainerType
 
         idlFieldType       << (idlBaseType ^ idlContainerType ^ \
                               idlIdentifier.copy().setParseAction(lambda s,l,t:
-                                  [self.getType(t[0])])
+                                  [self.get_type(t[0])])
                               )
 
         idlField           =  Forward()
@@ -767,7 +752,7 @@ class ThriftReader(Reader):
 
         idlFunctionType    =  idlFieldType ^ \
                               (Literal('void').setParseAction(lambda s,l,t:
-                                  [self.getType(t[0])])
+                                  [self.get_type(t[0])])
                               )
 
         idlFunction        =  Optional(Junk('oneway')) + \
@@ -779,9 +764,9 @@ class ThriftReader(Reader):
                               Optional(idlThrows).setResultsName('throw') + \
                               idlListSeparator
         def idlFunctionAction(self,s,l,t):
-            proc = Procedure(return_type=t['ret'], name=t['name'])
+            proc = ArsProcedure(return_type=t['ret'], name=t['name'])
             for p in t['params']:
-                proc.add_parameter(type=p['type'], optional=p['optional'], name=p['name'], default=p.get('def', False))
+                proc.add_parameter(type=p['type'], optional=p['optional'], name=p['name'])
             if 'throw' in t:
                 for f in t['throw'][0]['fields']:
                     proc.add_exception(f['type'])
@@ -820,7 +805,7 @@ class ThriftReader(Reader):
         idlField.setParseAction(lambda s,l,t: idlFieldAction(self,s,l,t))
 
         idlServiceName     =  idlIdentifier.copy().setParseAction(lambda s,l,t:
-                                  [self.getService(t[0])])
+                                  [self.get_service(t[0])])
 
         idlService         =  Junk('service') + \
                               idlIdentifier.setResultsName('name') + \
@@ -832,11 +817,11 @@ class ThriftReader(Reader):
         def idlServiceAction(self,s,l,t):
             if not 'base' in t:
             	t['base'] = None
-            con = Contract(name=t['name'], base=t['base'])
+            serv = ArsService(name=t['name'], base=t['base'])
             for p in t['funcs']:
-                con.add_procedure(p)
-            self.setService(t['name'], con)
-            return [con]
+                serv.add_procedure(p)
+            self.add_service(serv)
+            return [serv]
         idlService.setParseAction(lambda s,l,t: idlServiceAction(self,s,l,t))
 
 
@@ -849,7 +834,7 @@ class ThriftReader(Reader):
             str = ArsException(name=t['name'])
             for f in t['fields']:
                 str.add_field(type=f['type'], optional=f['optional'], name=f['name'])
-            self.setType(t['name'], str)
+            self.add_type(str)
             return [str]
         idlException.setParseAction(lambda s,l,t: idlExceptionAction(self,s,l,t))
 
@@ -860,10 +845,10 @@ class ThriftReader(Reader):
                               Group(ZeroOrMore(idlField)).setResultsName('fields') + \
                               Junk('}') + Optional(idlAnnotation)
         def idlStructAction(self,s,l,t):
-            str = Structure(name=t['name'])
+            str = ArsStructure(name=t['name'])
             for f in t['fields']:
                 str.add_field(type=f['type'], optional=f['optional'], name=f['name'])
-            self.setType(t['name'], str)
+            self.add_type(str)
             return [str]
         idlStruct.setParseAction(lambda s,l,t: idlStructAction(self,s,l,t))
 
@@ -881,7 +866,7 @@ class ThriftReader(Reader):
                                   idlLiteral + idlListSeparator
                               )).setResultsName('fields') + \
                               Junk('}')
-        idlSenum.setParseAction(lambda s,l,t : self.setType(t['name'], Int32))
+        idlSenum.setParseAction(lambda s,l,t : self.add_type(ArsTypeAlias(name=t['name'], target_type=ArsInt32)))
 
         idlEnum            =  Junk('enum') + \
                               idlIdentifier.setResultsName('name') + \
@@ -891,13 +876,13 @@ class ThriftReader(Reader):
                                   idlListSeparator
                               )) + \
                               Junk('}')
-        idlEnum.setParseAction(lambda s,l,t : self.setType(t['name'], Int32))
+        idlEnum.setParseAction(lambda s,l,t : self.add_type(ArsTypeAlias(name=t['name'], target_type=ArsInt32)))
 
         idlTypedef         =  Junk('typedef') + \
                               idlDefinitionType.setResultsName('type') + \
                               idlIdentifier.setResultsName('name')
         idlTypedef.setParseAction(lambda s,l,t :
-            self.setType(t['name'], TypeAlias(target_type=t['type'], name=t['name']))
+            self.add_type(ArsTypeAlias(target_type=t['type'], name=t['name']))
         )
 
         idlConst           =  Junk('const') + \
@@ -907,7 +892,7 @@ class ThriftReader(Reader):
                               idlConstValue.setResultsName('value') + \
                               idlListSeparator
         idlConst.setParseAction(lambda s,l,t :
-            self.setConst(t['name'], t['value'])
+            self.add_constant(ArsConstant(name=t['name'], type=t['type'], value=t['value']))
         )
 
         idlDefinition      =  idlConst ^ idlTypedef ^ idlEnum ^ idlSenum ^ \
@@ -940,11 +925,9 @@ class ThriftReader(Reader):
 
         self.idlDocument = idlDocument
 
-    def readFrom(self, file):
-        self.clearType()
-        self.clearConst()
-        self.clearService()
+    def read_from(self, file):
+        self._interface = ArsInterface()
         thrift = file.read()
-        parsed = self.idlDocument.parseString(thrift, parseAll=True)
-        return self._services
+        self.idlDocument.parseString(thrift, parseAll=True)
+        return self._interface
 

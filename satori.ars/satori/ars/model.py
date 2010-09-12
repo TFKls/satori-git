@@ -2,43 +2,45 @@
 """An in-memory model for an exported service.
 """
 
-import types
-from satori.objects import Object, Argument, ArgumentError, DispatchOn
+from types import NoneType, FunctionType
+from satori.objects import Object, Argument, DispatchOn
 
 
 __all__ = (
-    'Boolean', 'Int16', 'Int32', 'Int64', 'String', 'Void',
-    'Field', 'ListType', 'MapType', 'SetType', 'Structure', 'TypeAlias',
-    'Parameter', 'Procedure', 'Contract',
-    'NamedTuple', 'namedTypes'
+    'ArsElement', 'ArsType', 'ArsNamedType', 'ArsTypeAlias', 'ArsVoid',
+    'ArsBoolean', 'ArsInt8', 'ArsInt16', 'ArsInt32', 'ArsInt64', 'ArsString',
+    'ArsList', 'ArsMap', 'ArsSet', 'ArsField', 'ArsStructure', 'ArsException',
+    'ArsParameter', 'ArsProcedure', 'ArsService',
+    'ArsNamedTuple', 'ArsInterface'
 )
 
 
-class Element(object):
+class ArsElement(object):
     """Abstract. A base class for ARS model elements.
     """
 
     pass
 
 
-class NamedElement(Element):
+class ArsNamedElement(ArsElement):
     """Abstract. A base class for ARS model elements that have a name.
     """
 
     @Argument('name', type=str)
     def __init__(self, name):
-        super(NamedElement, self).__init__()
+        super(ArsNamedElement, self).__init__()
         self.name = name
 
     def __str__(self):
         return self.__class__.__name__ + ':' + self.name
 
 
-class Type(Element):
+class ArsType(ArsElement):
     """Abstract. A base class for ARS data types.
     """
     
     def __init__(self):
+        super(ArsType, self).__init__()
         self.converter = None
 
     def do_needs_conversion(self):
@@ -81,53 +83,62 @@ class Type(Element):
             return self.do_convert_from_ars(value)
 
 
-class NamedType(NamedElement, Type):
-    """Abstract. A Type that has a name.
+class ArsNamedType(ArsNamedElement, ArsType):
+    """Abstract. An ArsType that has a name.
     """
 
     def __init__(self, name):
-        super(NamedType, self).__init__(name)
+        super(ArsNamedType, self).__init__(name)
 
 
-class AtomicType(NamedType):
-    """A Type without (visible) internal structure.
+class ArsAtomicType(ArsNamedType):
+    """An ArsType without (visible) internal structure.
     """
 
     def __init__(self, name):
-        super(AtomicType, self).__init__(name)
+        super(ArsAtomicType, self).__init__(name)
 
 
-Boolean = AtomicType(name='Boolean')
-Int8 = AtomicType(name='Int8')
-Int16 = AtomicType(name='Int16')
-Int32 = AtomicType(name='Int32')
-Int64 = AtomicType(name='Int64')
-Float = AtomicType(name='Float')
-String = AtomicType(name='String')
-Void = AtomicType(name='Void')
+ArsBoolean = ArsAtomicType(name='ArsBoolean')
+ArsInt8 = ArsAtomicType(name='ArsInt8')
+ArsInt16 = ArsAtomicType(name='ArsInt16')
+ArsInt32 = ArsAtomicType(name='ArsInt32')
+ArsInt64 = ArsAtomicType(name='ArsInt64')
+ArsFloat = ArsAtomicType(name='ArsFloat')
+ArsString = ArsAtomicType(name='ArsString')
+ArsVoid = ArsAtomicType(name='ArsVoid')
 
 
-class TypeAlias(NamedType):
-    """A named alias for a Type.
+class ArsTypeAlias(ArsNamedType):
+    """A named alias for an ArsType.
     """
 
-    @Argument('target_type', type=Type)
+    @Argument('target_type', type=ArsType)
     def __init__(self, name, target_type):
-        super(TypeAlias, self).__init__(name)
+        super(ArsTypeAlias, self).__init__(name)
         self.target_type = target_type
 
+    def do_needs_conversion(self):
+        return self.target_type.needs_conversion()
 
-class ListType(Type):
-    """A List Type.
+    def do_convert_to_ars(self, value):
+        return self.target_type.convert_to_ars(value)
+
+    def do_convert_from_ars(self, value):
+        return self.target_type.convert_from_ars(value)
+
+
+class ArsList(ArsType):
+    """An ArsType representing a list.
     """
 
-    @Argument('element_type', type=Type)
+    @Argument('element_type', type=ArsType)
     def __init__(self, element_type):
-        super(ListType, self).__init__()
+        super(ArsList, self).__init__()
         self.element_type = element_type
 
     def __str__(self):
-        return 'List<'+str(self.element_type)+'>'
+        return 'ArsList<'+str(self.element_type)+'>'
 
     def do_needs_conversion(self):
         return self.element_type.needs_conversion()
@@ -139,17 +150,17 @@ class ListType(Type):
         return [self.element_type.convert_from_ars(elem) for elem in value]
 
 
-class SetType(Type):
-    """A Set Type.
+class ArsSet(ArsType):
+    """An ArsType representing set.
     """
 
-    @Argument('element_type', type=Type)
+    @Argument('element_type', type=ArsType)
     def __init__(self, element_type):
-        super(SetType, self).__init__()
+        super(ArsSet, self).__init__()
         self.element_type = element_type
 
     def __str__(self):
-        return 'Set<'+str(self.element_type)+'>'
+        return 'ArsSet<'+str(self.element_type)+'>'
 
     def do_needs_conversion(self):
         return self.element_type.needs_conversion()
@@ -167,19 +178,19 @@ class SetType(Type):
         return new_value
 
 
-class MapType(Type):
-    """A Map Type.
+class ArsMap(ArsType):
+    """An ArsType representing a key-value mapping.
     """
 
-    @Argument('key_type', type=Type)
-    @Argument('value_type', type=Type)
+    @Argument('key_type', type=ArsType)
+    @Argument('value_type', type=ArsType)
     def __init__(self, key_type, value_type):
-        super(MapType, self).__init__()
+        super(ArsMap, self).__init__()
         self.key_type = key_type
         self.value_type = value_type
 
     def __str__(self):
-        return 'Map<'+str(self.key_type)+','+str(self.value_type)+'>'
+        return 'ArsMap<'+str(self.key_type)+','+str(self.value_type)+'>'
 
     def do_needs_conversion(self):
         return self.key_type.needs_conversion() or self.value_type.needs_conversion()
@@ -197,22 +208,22 @@ class MapType(Type):
         return new_value
 
 
-class NamedTuple(object):
-    """A list of NamedElements that have unique names.
+class ArsNamedTuple(object):
+    """A list of ArsNamedElements that have unique names. Something like an ordered dictionary.
     """
 
     def __init__(self):
-        super(NamedTuple, self).__init__()
+        super(ArsNamedTuple, self).__init__()
         self.names = dict()
         self.items = list()
     
-    @Argument('item', type=NamedElement)
+    @Argument('item', type=ArsNamedElement)
     def append(self, item):
         if item.name in self:
             if self[item.name] == item:
                 return
             else:
-                raise ArgumentError("duplicate item name")
+                raise ValueError('Duplicate item name')
         self.names[item.name] = item
         self.items.append(item)
 
@@ -223,14 +234,19 @@ class NamedTuple(object):
                 if self[item.name] == item:
                     pass
                 else:
-                    raise ArgumentError("duplicate item name")
+                    raise ValueError('Duplicate item name')
             else:
                 items.append(item)
         for item in items:
             self.append(item)
 
     def __contains__(self, elem):
-        return elem in self.names
+        if isinstance(elem, str):
+            return elem in self.names
+        elif isinstance(elem, ArsNamedObject):
+            return (elem.name in self.names) and (self.names[elem.name] == elem)
+        else:
+            return False
 
     def __iter__(self):
         return self.items.__iter__()
@@ -241,36 +257,41 @@ class NamedTuple(object):
     def __getitem__(self, index):
         if isinstance(index, str):
             return self.names[index]
-        else:
+        elif isinstance(index, int):
             return self.items[index]
+        else:
+            raise TypeError('ArsNamedTuple index should be int or str')
 
     def __str__(self):
-        return 'NamedTuple[' + ','.join(str(item) for item in self.items) + ']'
+        return 'ArsNamedTuple[' + ','.join(str(item) for item in self.items) + ']'
 
 
-class Field(NamedElement):
-    """A single field of Structure.
+class ArsField(ArsNamedElement):
+    """A single field of an ArsStructure.
     """
 
-
-    @Argument('type', type=Type)
+    @Argument('type', type=ArsType)
     @Argument('optional', type=bool)
     def __init__(self, name, type, optional=False):                        # pylint: disable-msg=W0622
-        super(Field, self).__init__(name)
+        super(ArsField, self).__init__(name)
         self.type = type
         self.optional = optional
     
 
-class Structure(NamedType):
+class ArsStructure(ArsNamedType):
+    """An ArsType that represents a named structure.
+    """
 
-    def __init__(self, name, base=1):
-        super(Structure, self).__init__(name)
-        self.fields = NamedTuple()
-        self.base = base
+    @Argument('base_index', type=int)
+    def __init__(self, name, base_index=1):
+        super(ArsStructure, self).__init__(name)
+        self.fields = ArsNamedTuple()
+        self.base_index = base_index
 
+    @Argument('field', type=ArsField)
     def add_field(self, field=None, **kwargs):
         if field is None:
-            field = Field(**kwargs)
+            field = ArsField(**kwargs)
         self.fields.append(field)
     
     def do_needs_conversion(self):
@@ -299,194 +320,193 @@ class Structure(NamedType):
         return new_value
 
 
-class Parameter(Field):
+class ArsParameter(ArsField):
+    """A single parameter of ArsProcedure.
+    """
 
-    def __init__(self, name, type, optional=False, default=None):               # pylint: disable-msg=W0622
-        super(Parameter, self).__init__(name, type, optional)
-        self.default = default
+    def __init__(self, name, type, optional=False):               # pylint: disable-msg=W0622
+        super(ArsParameter, self).__init__(name, type, optional)
 
 
-class Procedure(NamedElement):
+class ArsProcedure(ArsNamedElement):
+    """A procedure that can be remotely called.
+    """
 
-    @Argument('return_type', type=Type)
-    @Argument('implementation', type=(types.FunctionType,None))
-    def __init__(self, name, return_type=Void, implementation=None):
-        super(Procedure, self).__init__(name)
+    @Argument('return_type', type=ArsType)
+    @Argument('implementation', type=(FunctionType,NoneType))
+    def __init__(self, name, return_type, implementation=None):
+        super(ArsProcedure, self).__init__(name)
         self.return_type = return_type
         self.implementation = implementation
-        self.parameters = NamedTuple()
+        self.parameters = ArsNamedTuple()
         self.exception_types = []
 
-        self.parameters_struct = Structure(name + '_args')
-        self.results_struct = Structure(name + '_result', 0)
+        self.parameters_struct = ArsStructure(name + '_args')
+        self.results_struct = ArsStructure(name + '_result', 0)
         self.results_struct.add_field(name='result', type=return_type, optional=True)
 
+    @Argument('parameter', type=ArsParameter)
     def add_parameter(self, parameter=None, **kwargs):
         if parameter is None:
-            parameter = Parameter(**kwargs)
+            parameter = ArsParameter(**kwargs)
         self.parameters.append(parameter)
         self.parameters_struct.add_field(parameter)
 
     def add_exception(self, exception_type):
         self.exception_types.append(exception_type)
-        self.results_struct.add_field(name='error', type=exception_type, optional=True)
+        self.results_struct.add_field(name='error'+str(len(self.exception_types)), type=exception_type, optional=True)
 
-class Exception(Structure):
+
+class ArsException(ArsStructure):
     pass
 
-class Contract(NamedElement):
+
+class ArsService(ArsNamedElement):
+    """A group of ArsProcedures.
+    """
 
     def __init__(self, name, base=None):
-        super(Contract, self).__init__(name)
+        super(ArsService, self).__init__(name)
         self.base = base
-        self.procedures = NamedTuple()
+        self.procedures = ArsNamedTuple()
 
+    @Argument('procedure', type=ArsProcedure)
     def add_procedure(self, procedure=None, **kwargs):
         if procedure is None:
-            procedure = Procedure(**kwargs)
+            procedure = ArsProcedure(**kwargs)
         self.procedures.append(procedure)
 
 
-@DispatchOn(item=AtomicType)
-def namedTypes(item):
-    nt = NamedTuple()
-    nt.append(item)
-    return nt
+class ArsConstant(ArsNamedElement):
+    """An element with a constant value.
+    """
 
-@DispatchOn(item=TypeAlias)
-def namedTypes(item):
-    nt = namedTypes(item.target_type)
-    nt.append(item)
-    return nt
-
-@DispatchOn(item=ListType)
-def namedTypes(item):
-    return namedTypes(item.element_type)
-
-@DispatchOn(item=MapType)
-def namedTypes(item):
-    nt = namedTypes(item.key_type)
-    nt.extend(namedTypes(item.value_type))
-    return nt
-
-@DispatchOn(item=SetType)
-def namedTypes(item):
-    return namedTypes(item.element_type)
-
-@DispatchOn(item=Field)
-def namedTypes(item):
-    return namedTypes(item.type)
-
-@DispatchOn(item=Structure)
-def namedTypes(item):
-    nt = NamedTuple()
-    for field in item.fields:
-        nt.extend(namedTypes(field))
-    nt.append(item)
-    return nt
-
-@DispatchOn(item=Parameter)
-def namedTypes(item):
-    return namedTypes(item.type)
-
-@DispatchOn(item=Procedure)
-def namedTypes(item):
-    nt = namedTypes(item.return_type)
-    for parameter in item.parameters:
-        nt.extend(namedTypes(parameter))
-    for exception_type in item.exception_types:
-        nt.extend(namedTypes(exception_type))
-    return nt
-
-@DispatchOn(item=Contract)
-def namedTypes(item):
-    nt = NamedTuple()
-    if item.base:
-        nt.extend(namedTypes(item.base))
-    for procedure in item.procedures:
-        nt.extend(namedTypes(procedure))
-    return nt
+    @Argument('type', type=ArsType)
+    def __init__(self, name, type, value):
+        super(ArsConstant, self).__init__(name)
+        self.type = type
+        self.value = value
 
 
-@DispatchOn(item=types.NoneType)
-def ars_deepcopy(item, named):
-    return None
+class ArsInterface(ArsElement):
+    """A group of ArsNamedTypes, ArsConstants and ArsServices.
+    """
 
-@DispatchOn(item=AtomicType)
-def ars_deepcopy(item, named):
-    return item
+    def __init__(self):
+        self.types = ArsNamedTuple()
+        self.constants = ArsNamedTuple()
+        self.services = ArsNamedTuple()
 
-@DispatchOn(item=ListType)
-def ars_deepcopy(item, named):
-    return ListType(element_type=ars_deepcopy(item.element_type, named))
+    @DispatchOn(type=ArsType)
+    def add_type(self, type):
+        raise TypeError('Unknown ArsType type: {0}'.format(type.__class__.__name__))
 
-@DispatchOn(item=SetType)
-def ars_deepcopy(item, named):
-    return SetType(element_type=ars_deepcopy(item.element_type, named))
+    @DispatchOn(type=ArsAtomicType)
+    def add_type(self, type):
+        pass
 
-@DispatchOn(item=MapType)
-def ars_deepcopy(item, named):
-    return MapType(key_type=ars_deepcopy(item.key_type, named), value_type=ars_deepcopy(item.value_type, named))
+    @DispatchOn(type=ArsTypeAlias)
+    def add_type(self, type):
+        self.add_type(type.target_type)
+        self.types.append(type)
 
-@DispatchOn(item=TypeAlias)
-def ars_deepcopy(item, named):
-    if item.name in named:
-    	return named[item.name]
-    ret = TypeAlias(name=item.name, target_type=ars_deepcopy(item.target_type, named))
-    named.append(ret)
-    return ret
+    @DispatchOn(type=ArsList)
+    def add_type(self, type):
+        self.add_type(type.element_type)
 
-@DispatchOn(item=Field)
-def ars_deepcopy(item, named):
-    return Field(name=item.name, type=ars_deepcopy(item.type, named), optional=item.optional)
+    @DispatchOn(type=ArsSet)
+    def add_type(self, type):
+        self.add_type(type.element_type)
 
-@DispatchOn(item=Structure)
-def ars_deepcopy(item, named):
-    if item.name in named:
-    	return named[item.name]
-    ret = Structure(name=item.name, base=item.base)
-    for field in item.fields:
-        ret.add_field(ars_deepcopy(field, named))
-    named.append(ret)
-    return ret
+    @DispatchOn(type=ArsMap)
+    def add_type(self, type):
+        self.add_type(type.key_type)
+        self.add_type(type.value_type)
 
-@DispatchOn(item=Exception)
-def ars_deepcopy(item, named):
-    if item.name in named:
-    	return named[item.name]
-    ret = Exception(name=item.name, base=item.base)
-    for field in item.fields:
-        ret.add_field(ars_deepcopy(field, named))
-    named.append(ret)
-    return ret
+    @DispatchOn(type=ArsStructure)
+    def add_type(self, type):
+        for field in type.fields:
+            self.add_type(field.type)
+        self.types.append(type)
 
-@DispatchOn(item=Parameter)
-def ars_deepcopy(item, named):
-    return Parameter(name=item.name, type=ars_deepcopy(item.type, named), optional=item.optional, default=item.default)
+    @Argument('constant', type=ArsConstant)
+    def add_constant(self, constant=None, **kwargs):
+        if constant is None:
+            constant = ArsConstant(**kwargs)
+        self.add_type(constant.type)
+        self.constants.append(constant)
 
-@DispatchOn(item=Procedure)
-def ars_deepcopy(item, named):
-    ret = Procedure(name=item.name, return_type=ars_deepcopy(item.return_type, named), implementation=item.implementation)
-    for parameter in item.parameters:
-        ret.add_parameter(ars_deepcopy(parameter, named))
-    for exception in item.exception_types:
-        ret.add_exception(ars_deepcopy(exception, named))
-    return ret
+    @Argument('service', type=ArsService)
+    def add_service(self, service):
+        if service.base:
+            self.add_service(service.base)
+        for procedure in service.procedures:
+            self.add_type(procedure.return_type)
+            for parameter in procedure.parameters:
+                self.add_type(parameter.type)
+            for exception in procedure.exception_types:
+                self.add_type(exception)
+        self.services.append(service)
 
-@DispatchOn(item=Contract)
-def ars_deepcopy(item, named):
-    if item.name in named:
-    	return named[item.name]
-    ret = Contract(name=item.name, base=ars_deepcopy(item.base, named))
-    for procedure in item.procedures:
-        ret.add_procedure(ars_deepcopy(procedure, named))
-    named.append(ret)
-    return ret
+    @DispatchOn(type=ArsAtomicType)
+    def deepcopy_type(self, type, new_interface):
+        return type
 
-def ars_deepcopy_tuple(item):
-    named = NamedTuple()
-    ret = NamedTuple()
-    for elem in item:
-    	ret.append(ars_deepcopy(elem, named))
-    return ret
+    @DispatchOn(type=ArsNamedType)
+    def deepcopy_type(self, type, new_interface):
+        return new_interface.types[type.name]
 
+    @DispatchOn(type=ArsList)
+    def deepcopy_type(self, type, new_interface):
+        return ArsList(element_type=self.deepcopy_type(type.element_type, new_interface))
+
+    @DispatchOn(type=ArsSet)
+    def deepcopy_type(self, type, new_interface):
+        return ArsSet(element_type=self.deepcopy_type(type.element_type, new_interface))
+
+    @DispatchOn(type=ArsMap)
+    def deepcopy_type(self, type, new_interface):
+        return ArsMap(key_type=self.deepcopy_type(type.key_type, new_interface), value_type=self.deepcopy_type(type.value_type, new_interface))
+
+    @DispatchOn(type=ArsTypeAlias)
+    def deepcopy_type_first(self, type, new_interface):
+        return ArsTypeAlias(name=type.name, target_type=self.deepcopy_type(type.target_type, new_interface))
+        
+    @DispatchOn(type=ArsStructure)
+    def deepcopy_type_first(self, type, new_interface):
+        ret = ArsStructure(name=type.name, base_index=type.base_index)
+        for field in type.fields:
+            ret.add_field(name=field.name, type=self.deepcopy_type(field.type, new_interface), optional=field.optional)
+        return ret
+
+    @DispatchOn(type=ArsException)
+    def deepcopy_type_first(self, type, new_interface):
+        ret = ArsException(name=type.name, base_index=type.base_index)
+        for field in type.fields:
+            ret.add_field(name=field.name, type=self.deepcopy_type(field.type, new_interface), optional=field.optional)
+        return ret
+
+    def deepcopy(self):
+        ret = ArsInterface()
+
+        for type in self.types:
+            ret.types.append(self.deepcopy_type_first(type, ret))
+
+        for constant in self.constants:
+            ret.constants.append(ArsConstant(type=self.deepcopy_type(constant.type, ret), value=type.value))
+
+        for service in self.services:
+            if service.base:
+                ret_service = ArsService(name=service.name, base=ret.services[service.base.name])
+            else:
+                ret_service = ArsService(name=service.name)
+            for procedure in service.procedures:
+                ret_procedure = ArsProcedure(name=procedure.name, return_type=self.deepcopy_type(procedure.return_type, ret), implementation=procedure.implementation)
+                for parameter in procedure.parameters:
+                    ret_procedure.add_parameter(name=parameter.name, type=self.deepcopy_type(parameter.type, ret), optional=parameter.optional)
+                for exception in procedure.exception_types:
+                    ret_procedure.add_exception(self.deepcopy_type(exception))
+                ret_service.add_procedure(ret_procedure)
+            ret.services.append(ret_service)
+
+        return ret

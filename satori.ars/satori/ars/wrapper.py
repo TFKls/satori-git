@@ -1,18 +1,19 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-import collections
-import datetime
-import time
-import types
+from collections import Sequence, Mapping
+from datetime import datetime
+from time import mktime
+from types import NoneType, FunctionType
 import sys
 import copy
 from satori.objects import Signature, Argument, ArgumentMode, ReturnValue, ConstraintDisjunction, TypeConstraint
-from satori.ars.model import NamedTuple, TypeAlias, ListType, MapType, Structure, Procedure, Contract, Void, Int32, Int64, String, Boolean
+from satori.ars.model import ArsInterface, ArsTypeAlias, ArsList, ArsMap, ArsStructure, ArsProcedure, ArsService
+from satori.ars.model import ArsVoid, ArsInt32, ArsInt64, ArsString, ArsBoolean
 
-class NullableArsStructure(Structure):
+class ArsNullableStructure(ArsStructure):
     def __init__(self, name):
-        super(NullableArsStructure, self).__init__(name)
-        self.add_field(name='null_fields', type=Int64, optional=True)
+        super(ArsNullableStructure, self).__init__(name)
+        self.add_field(name='null_fields', type=ArsInt64, optional=True)
 
     def do_needs_conversion(self):
         return True
@@ -22,21 +23,19 @@ class NullableArsStructure(Structure):
 
         for (ind, field) in enumerate(self.fields):
             if (field.name in value) and (value[field.name] is None):
-            	value['null_fields'] = value['null_fields'] | (1 << (ind + self.base))
+            	value['null_fields'] = value['null_fields'] | (1 << (ind + self.base_index))
             	del value[field.name]
 
-        print repr(value['null_fields'])
-
-        return super(NullableArsStructure, self).do_convert_to_ars(value)
+        return super(ArsNullableStructure, self).do_convert_to_ars(value)
 
     def do_convert_from_ars(self, value):
-        value = super(NullableArsStructure, self).do_convert_from_ars(value)
+        value = super(ArsNullableStructure, self).do_convert_from_ars(value)
 
         if not 'null_fields' in value:
         	return value
 
         for (ind, field) in enumerate(self.fields):
-            if value['null_fields'] & (1 << (ind + self.base)):
+            if value['null_fields'] & (1 << (ind + self.base_index)):
                 value[field.name] = None
         
         del value['null_fields']
@@ -51,7 +50,7 @@ class TypedListType(type):
         return type.__new__(mcs, name, bases, dict_)
 
     def __instancecheck__(cls, obj):
-        if not isinstance(elem, collections.Sequence):
+        if not isinstance(elem, Sequence):
             return False
 
         for elem in obj:
@@ -62,7 +61,7 @@ class TypedListType(type):
 
     def ars_type(cls):
         if not hasattr(cls, '_ars_type'):
-            cls._ars_type = ListType(python_to_ars_type(cls.elem_type))
+            cls._ars_type = ArsList(python_to_ars_type(cls.elem_type))
 
         return cls._ars_type
 
@@ -79,7 +78,7 @@ class TypedMapType(type):
         return type.__new__(mcs, name, bases, dict_)
 
     def __instancecheck__(cls, obj):
-        if not isinstance(elem, collections.Mapping):
+        if not isinstance(elem, Mapping):
             return False
 
         for (key, value) in obj.items:
@@ -94,7 +93,7 @@ class TypedMapType(type):
         if not hasattr(cls, '_ars_type'):
             ars_key_type = python_to_ars_type(cls.key_type)
             ars_value_type = python_to_ars_type(cls.value_type)
-            cls._ars_type = MapType(key_type=ars_key_type, value_type=ars_value_type)
+            cls._ars_type = ArsMap(key_type=ars_key_type, value_type=ars_value_type)
 
         return cls._ars_type
 
@@ -120,7 +119,7 @@ class StructType(type):
 
     def ars_type(cls):
         if not hasattr(cls, '_ars_type'):
-            cls._ars_type = NullableArsStructure(name=cls.name)
+            cls._ars_type = ArsNullableStructure(name=cls.name)
             for (field_name, field_type, field_optional) in cls.fields:
                 cls._ars_type.add_field(name=field_name, type=python_to_ars_type(field_type), optional=field_optional)
 
@@ -131,27 +130,27 @@ def Struct(name, fields):
     return StructType(name, (), {'fields': fields})
 
 
-class DateTimeTypeAlias(TypeAlias):
+class ArsDateTime(ArsTypeAlias):
     def __init__(self, ):
-        super(DateTimeTypeAlias, self).__init__(name='DateTime', target_type=Int64)
+        super(ArsDateTime, self).__init__(name='DateTime', target_type=ArsInt64)
 
     def do_needs_conversion(self):
         return True
 
     def do_convert_to_ars(self, value):
-        return long(time.mktime(value.timetuple()))
+        return long(mktime(value.timetuple()))
 
     def do_convert_from_ars(self, value):
-        return datetime.datetime.fromtimestamp(value)
+        return datetime.fromtimestamp(value)
 
 
 python_basic_types = {
-    types.NoneType: Void,
-    types.IntType: Int32,
-    types.LongType: Int64,
-    types.StringType: String,
-    types.BooleanType: Boolean,
-    datetime.datetime: DateTimeTypeAlias(),
+    NoneType: ArsVoid,
+    int: ArsInt32,
+    long: ArsInt64,
+    str: ArsString,
+    bool: ArsBoolean,
+    datetime: ArsDateTime(),
 }
 
 def python_to_ars_type(type_):
@@ -223,7 +222,7 @@ def emptyFilter(retval, *args, **kwargs):
 
 
 class ProcedureWrapper(Wrapper):
-    @Argument('implement', type=types.FunctionType)
+    @Argument('implement', type=FunctionType)
     def __init__(self, implement, parent):
         super(ProcedureWrapper, self).__init__(implement.__name__, parent)
 
@@ -296,7 +295,7 @@ class StaticWrapper(Wrapper):
 #    __metaclass__ = WrapperBase
 
 def is_nonetype_constraint(constraint):
-    return isinstance(constraint, TypeConstraint) and (constraint.type == types.NoneType)
+    return isinstance(constraint, TypeConstraint) and (constraint.type == NoneType)
 
 def extract_ars_type(constraint):
     if isinstance(constraint, ConstraintDisjunction):
@@ -312,7 +311,7 @@ def extract_ars_type(constraint):
     raise RuntimeError("Cannot extract type from constraint: " + str(constraint))
 
 
-def wrap(name, proc):
+def generate_procedure(name, proc):
     signature = Signature.of(proc)
 
     ars_ret_type = extract_ars_type(signature.return_value.constraint)
@@ -357,33 +356,34 @@ def wrap(name, proc):
                 ret = i.process_response(args, kwargs, ret)
             return ret
 
-    ars_proc = Procedure(name=name, implementation=reimplementation, return_type=ars_ret_type)
+    ars_proc = ArsProcedure(name=name, implementation=reimplementation, return_type=ars_ret_type)
 
     for i in range(arg_count):
         ars_proc.add_parameter(name=signature.positional[i], type=ars_arg_types[i], optional=ars_arg_optional[i])
 
     return ars_proc
 
-def generate_contract(wrapper, contract_list):
-    if wrapper._base:
-    	base = contract_list[wrapper._base._name]
-    else:
-    	base = None
-
-    contract = Contract(name=wrapper._name, base=base)
+def generate_service(wrapper, base):
+    service = ArsService(name=wrapper._name, base=base)
 
     for (name, proc) in wrapper._generate_procedures().iteritems():
-        contract.add_procedure(wrap(name, proc))
+        service.add_procedure(generate_procedure(name, proc))
 
-    return contract
+    return service
 
-def generate_contracts():
-    contract_list = NamedTuple()
+
+def generate_interface():
+    interface = ArsInterface()
 
     for wrapper in wrapper_list:
-        contract_list.append(generate_contract(wrapper, contract_list))
+        if wrapper._base:
+            base = interface.services[wrapper._base._name]
+        else:
+            base = None
+        interface.add_service(generate_service(wrapper, base))
 
-    return contract_list
+    return interface
+
 
 def register_middleware(obj):
     middleware.append(obj)
