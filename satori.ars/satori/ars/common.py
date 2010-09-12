@@ -4,9 +4,9 @@
 
 from blist import sortedset
 
-from satori.objects import Object, Argument, DispatchOn
-from satori.ars.model import Element, ListType, MapType, SetType, TypeAlias
-from satori.ars.model import Field, Structure, Parameter, Procedure, Contract
+from satori.objects import Argument, DispatchOn
+from satori.ars.model import ArsElement, ArsList, ArsMap, ArsSet, ArsTypeAlias
+from satori.ars.model import ArsField, ArsStructure, ArsProcedure, ArsService
 from satori.ars.api import Writer
 
 
@@ -24,33 +24,33 @@ class TopologicalWriter(Writer):
         """
         raise NotImplementedError()
 
-    @DispatchOn(item=Element)
+    @DispatchOn(item=ArsElement)
     def _dependencies(self, item):
         return []
 
-    @DispatchOn(item=(ListType, SetType))
+    @DispatchOn(item=(ArsList, ArsSet))
     def _dependencies(self, item):
         yield item.element_type
 
-    @DispatchOn(item=MapType)
+    @DispatchOn(item=ArsMap)
     def _dependencies(self, item):
         yield item.key_type
         yield item.value_type
 
-    @DispatchOn(item=TypeAlias)
+    @DispatchOn(item=ArsTypeAlias)
     def _dependencies(self, item):
         yield item.target_type
 
-    @DispatchOn(item=(Field, Parameter))
+    @DispatchOn(item=ArsField)
     def _dependencies(self, item):
         yield item.type
 
-    @DispatchOn(item=Structure)
+    @DispatchOn(item=ArsStructure)
     def _dependencies(self, item):
         for field in item.fields:
             yield field
 
-    @DispatchOn(item=Procedure)
+    @DispatchOn(item=ArsProcedure)
     def _dependencies(self, item):
         yield item.return_type
         for parameter in item.parameters:
@@ -58,12 +58,12 @@ class TopologicalWriter(Writer):
         for exception_type in item.exception_types:
             yield exception_type
 
-    @DispatchOn(item=Contract)
+    @DispatchOn(item=ArsService)
     def _dependencies(self, item):
         for procedure in item.procedures:
             yield procedure
 
-    def writeTo(self, contracts, target):
+    def write_to(self, services, target):
         done = set()
         def _recwrite(item):
             if item in done:
@@ -72,14 +72,13 @@ class TopologicalWriter(Writer):
             for dependency in self._dependencies(item):
                 _recwrite(dependency)
             self._write(item, target)
-        for contract in contracts:
-            _recwrite(contract)
+        for service in services:
+            _recwrite(service)
 
 class TopologicalSortedWriter(TopologicalWriter):
     """Abstract. A base for Writers which process the elements in topological order.
     """
 
-    @Argument('changeContracts', fixed=True)
     def __init__(self):
         pass
 
@@ -90,7 +89,7 @@ class TopologicalSortedWriter(TopologicalWriter):
         """
         raise NotImplementedError()
 
-    def writeTo(self, contracts, target):
+    def write_to(self, contracts, target):
         ready = sortedset()
         deps = dict()
         fol = dict()

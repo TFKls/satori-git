@@ -18,8 +18,8 @@ class Object(models.Model):
     @classmethod
     def ars_type(cls):
         if not '_ars_type' in cls.__dict__:
-            from satori.core import cwrapper
-        	cls._ars_type = cwrapper.DjangoTypeAlias(cls)
+            from satori.core.cwrapper import ArsDjangoModel
+        	cls._ars_type = ArsDjangoModel(cls)
 
         return cls._ars_type
 

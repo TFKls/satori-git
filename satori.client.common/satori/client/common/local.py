@@ -1,12 +1,11 @@
 import satori.core.api
-from satori.ars.model import ars_deepcopy_tuple
-from satori.ars.wrapper import generate_contracts
-from unwrap import unwrap_classes
+from satori.ars.wrapper import generate_interface
+from unwrap import unwrap_interface
 from token_container import token_container
 
 #TODO: blobs
 
-_classes = unwrap_classes(ars_deepcopy_tuple(generate_contracts()))
+_classes = unwrap_interface(generate_interface().deepcopy())
 
 _module = sys.modules[__name__]
 for name, value in _classes.iteritems():
