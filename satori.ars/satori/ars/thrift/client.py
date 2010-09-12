@@ -13,14 +13,7 @@ from satori.objects import Argument, Signature, ArgumentMode
 from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 
 from processor import ThriftProcessor
-from writer import ThriftWriter
 from reader import ThriftReader
-
-def gen_idl_service():
-    idl_proc = ArsProcedure(return_type=ArsString, name='Server_getIDL')
-    idl_serv = ArsService(name='Server')
-    idl_serv.add_procedure(idl_proc)
-    return (idl_serv, idl_proc)
 
 class ThriftClient(threading.local):
     @Argument('interface', type=ArsInterface)
@@ -86,7 +79,9 @@ class ThriftClient(threading.local):
 @Argument('transport_factory', type=FunctionType)
 def bootstrap_thrift_client(transport_factory):
     interface = ArsInterface()
-    (idl_serv, idl_proc) = gen_idl_service()
+    idl_proc = ArsProcedure(return_type=ArsString, name='Server_getIDL')
+    idl_serv = ArsService(name='Server')
+    idl_serv.add_procedure(idl_proc)
     interface.add_service(idl_serv)
 
     bootstrap_client = ThriftClient(interface, transport_factory)
@@ -94,29 +89,8 @@ def bootstrap_thrift_client(transport_factory):
     idl = idl_proc.implementation()
     bootstrap_client.stop()
     
-    import satori.core.setup
-    from satori.ars import wrapper
-    import satori.core.api
-    interface = wrapper.generate_interface().deepcopy()
-    interface.add_service(idl_serv)
-    writer = ThriftWriter()
-    idl2 = StringIO()
-    writer.write_to(interface, idl2)
-    idl2 = idl2.getvalue()
-
-#    print idl
-#    print '-----------------'
-#    print idl2
-
-#    first = "\n".join(sorted(idl.split("\n")))
-#    second = "\n".join(sorted(idl2.split("\n")))
-
-#    if first != second:
-    if idl != idl2:
-        print "Server and client api mismatch. Using server version."
-        idl_reader = ThriftReader()
-        idl_io = StringIO(idl)
-        interface = idl_reader.read_from(idl_io)
+    idl_reader = ThriftReader()
+    interface = idl_reader.read_from_string(idl)
 
     client = ThriftClient(interface, transport_factory)
     client.wrap_all()
