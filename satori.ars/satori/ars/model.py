@@ -7,9 +7,10 @@ from satori.objects import Object, Argument, DispatchOn
 
 
 __all__ = (
-    'ArsElement', 'ArsType', 'ArsNamedType', 'ArsTypeAlias', 'ArsVoid',
-    'ArsBoolean', 'ArsInt8', 'ArsInt16', 'ArsInt32', 'ArsInt64', 'ArsString',
-    'ArsList', 'ArsMap', 'ArsSet', 'ArsField', 'ArsStructure', 'ArsException',
+    'ArsElement', 'ArsNamedElement', 'ArsType', 'ArsNamedType', 'ArsAtomicType',
+    'ArsTypeAlias', 'ArsVoid', 'ArsBoolean', 'ArsFloat', 'ArsInt8', 'ArsInt16',
+    'ArsInt32', 'ArsInt64', 'ArsString', 'ArsList', 'ArsMap', 'ArsSet',
+    'ArsField', 'ArsStructure', 'ArsException', 'ArsConstant',
     'ArsParameter', 'ArsProcedure', 'ArsService',
     'ArsNamedTuple', 'ArsInterface'
 )
