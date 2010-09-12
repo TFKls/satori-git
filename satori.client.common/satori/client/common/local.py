@@ -1,3 +1,4 @@
+import sys
 import satori.core.api
 from satori.ars.wrapper import generate_interface
 from unwrap import unwrap_interface
