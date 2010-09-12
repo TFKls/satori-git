@@ -8,7 +8,7 @@ setup(name='satori.ars',
     ],
     install_requires=[
         'setuptools',
-        'pyparsing',
+        'ply',
         'satori.objects',
         'blist',
     ]
