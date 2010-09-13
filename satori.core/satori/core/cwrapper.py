@@ -240,9 +240,7 @@ class DeleteWrapper(ProcedureWrapper):
         @Argument('self', type=model)
         @ReturnValue(type=NoneType)
         def delete(token, self):
-            perf.begin('delete')
             self.delete()
-            perf.end('delete')
 
         super(DeleteWrapper, self).__init__(delete, parent)
 
