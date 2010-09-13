@@ -74,6 +74,9 @@ class Blob(models.Model):
     def write(self, *args, **kwargs):
         return self._buffer.write(*args, **kwargs)
 
+    def length(self):
+        return len(self.data)
+
     def __setattr__(self, name, value):
         if name == 'hash':
             return
