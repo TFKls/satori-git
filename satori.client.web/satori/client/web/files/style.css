@@ -83,7 +83,7 @@ body {
 	color: #CCCCCC;
 }
 
-#header ul li a, a:visited, a:active {
+#header ul li a, #header ul li a:visited, #header ul li a:active {
     text-align:center;
 	text-decoration:none;
 	color: #CCCCCC;
@@ -115,6 +115,7 @@ body {
 
 #navigationPanel li {
 	padding: 1em 0 0em 0em;
+    text-align: left;
 }
 
 #navigationPanel a, a:visited, a:active{

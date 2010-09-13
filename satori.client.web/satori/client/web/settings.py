@@ -85,4 +85,5 @@ INSTALLED_APPS = (
     'satori.dbev',
     'satori.core',
     'satori.client.web',
+    'django.contrib.webdesign',
 )
