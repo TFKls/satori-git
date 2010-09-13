@@ -48,6 +48,7 @@ def server_get(request, token, obj, oa, name):
             yield data
         blob.close()
     res = HttpResponse(reader())
+    res['content-length'] = str(blob.length())
     return res
 
 def server_put(request, token, obj, oa, name):
@@ -71,3 +72,32 @@ def server_put(request, token, obj, oa, name):
     res = HttpResponse()
     res.write('OK')
     return res
+
+def upload(request):
+    if request.method not in ['PUT']:
+        return HttpResponseNotAllowed(['PUT'])
+
+    print 'a'
+    token = Token(request.COOKIES.get('satori_token', ''))
+    if not Global.get_instance().demand_right(token, 'ADMIN'):
+        return HttpResponseForbidden()
+
+    print 'b'
+    try:
+        blob = Blob()
+        length = int(request.environ.get('CONTENT_LENGTH', 0))
+        blob.open('w')
+        while(length > 0):
+            r = min(length, 16)
+            data = request.environ['wsgi.input'].read(r)
+            blob.write(data)
+            length = length - r
+        blob.close()
+        blob.save()
+        res = HttpResponse(blob.hash)
+        res['content-length'] = str(len(blob.hash))
+        return res
+    except:
+        traceback.print_exc()
+        return HttpResponseServerError()
+
