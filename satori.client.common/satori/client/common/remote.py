@@ -1,8 +1,8 @@
 import sys
 import getpass
 from thrift.transport.TSocket import TSocket
-from satori.ars.thrift import BootstrapThriftClient
-from unwrap import unwrap_classes
+from satori.ars.thrift import bootstrap_thrift_client
+from unwrap import unwrap_interface
 from token_container import token_container
 
 #TODO: blobs
@@ -18,8 +18,8 @@ def transport_factory():
 
 print 'Bootstrapping client...'
 
-_client = BootstrapThriftClient(transport_factory)
-_classes = unwrap_classes(_client.wrap_all())
+(_interface, _client) = bootstrap_thrift_client(transport_factory)
+_classes = unwrap_interface(_interface)
 
 _module = sys.modules[__name__]
 for name, value in _classes.iteritems():

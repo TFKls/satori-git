@@ -23,16 +23,16 @@ from satori.objects import Object, Argument
 from satori.core.settings import SECRET_KEY
 from satori.core.sec.store import Store
 from satori.core.models import Session, Role, User, Privilege, Global, Object as modelObject
-from satori.ars import model
+from satori.ars.model import ArsTypeAlias, ArsString
 
 class TokenError(Exception):
     """Exception. Provided token is invalid.
     """
     pass
 
-class TokenTypeAlias(model.TypeAlias):
+class ArsToken(ArsTypeAlias):
     def __init__(self):
-        super(TokenTypeAlias, self).__init__(name='Token', target_type=model.String)
+        super(ArsToken, self).__init__(name='Token', target_type=ArsString)
 
     def do_needs_conversion(self):
         return True
@@ -52,7 +52,7 @@ class Token(Object):
     @classmethod
     def ars_type(cls):
         if not hasattr(cls, '_ars_type'):
-        	cls._ars_type = TokenTypeAlias()
+        	cls._ars_type = ArsToken()
 
         return cls._ars_type
 

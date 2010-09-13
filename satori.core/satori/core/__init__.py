@@ -14,7 +14,7 @@ def export_thrift():
     import satori.core.api
     from satori.ars.thrift import ThriftWriter
     writer = ThriftWriter()
-    writer.writeTo(wrapper.generate_contracts(), stdout)
+    writer.write_to(wrapper.generate_interface(), stdout)
 
 def start_server_event_master():
     from setproctitle import setproctitle
@@ -38,7 +38,7 @@ def start_server_thrift_server():
     import satori.core.api
     from satori.ars.thrift import ThriftServer
     wrapper.register_middleware(cwrapper.TransactionMiddleware())
-    server = ThriftServer(TThreadedServer, TServerSocket(port=satori.core.setup.settings.THRIFT_PORT), wrapper.generate_contracts())
+    server = ThriftServer(TThreadedServer, TServerSocket(port=satori.core.setup.settings.THRIFT_PORT), wrapper.generate_interface())
     print 'thrift server starting'
     server.run()
 
