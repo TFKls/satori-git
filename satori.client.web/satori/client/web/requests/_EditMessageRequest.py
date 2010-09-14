@@ -15,21 +15,20 @@ class EditMessageRequest(Request):
             return GetLink(d,'');
         if 'add' in pv.keys():
             if pv['msgtype']=='contest_only':
-                c = Contest(pv['contest_id'])
-                MessageContest(topic = pv['msgtopic'], contest = c, content = pv['msgcontent'])
+                c = ContestById(pv['contest_id'])
+                MessageContest.create({'topic': pv['msgtopic'], 'contest': c, 'content' : pv['msgcontent']})
             else:
                 mso = (pv['msgtype']=='mainscreen_only')
-                MessageGlobal(topic = pv['msgtopic'], content = pv['msgcontent'], mainscreenonly = mso)
+                MessageGlobal.create({'topic' : pv['msgtopic'], 'content' : pv['msgcontent'], 'mainscreenonly' : mso})
             return GetLink(d,'')
         m = None
         try:
-            m = MessageGlobal(pv['msgid'])
+            m = MessageGlobal.filter({'id' : int(pv['msgid'])})[0]
         except:
-            m = MessageContest(pv['msgid'])
+            m = MessageContest.filter({'id' : int(pv['msgid'])})[0]
         if 'edit' in pv.keys():
             m.topic = pv['msgtopic']
             m.content = pv['msgcontent']
-            m.save()
             return GetLink(d,'')
         if 'delete' in pv.keys():
             m.delete()

@@ -47,8 +47,10 @@
 
 With selected: <br/>
 Publish on <input type="text" name="pub_time"/> (leave blank to publish now)<br/>
-Stop submit on <input type="text" name="hide_time"/> (leave blank to publish indefinitely)<br/>
-<input type="submit" value="Confirm"/>
+Submissions until <input type="text" name="hide_time"/> (leave blank to publish indefinitely)<br/>
+<input type="submit" name="confirm" value="Set dates"/><br/>
+<input type="submit" name="stop" value="Stop submissions"/>
+<input type="submit" name="hide" value="Hide"/>
 </form>
 {% endif %}
 

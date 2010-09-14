@@ -22,10 +22,10 @@ class ResultsWidget(Widget):
                 s = {}
                 id = str(o.id)
                 s["id"] = id
-                s["time"] = c.id
+                s["time"] = o.time
                 s["user"] = o.contestant.id
                 s["problem"] = o.problem.code
-                s["status"] = o.contestant.contest.id
+                s["status"] = "?"
                 s["details"] = "Submit details"
                 _shown = deepcopy(shown)
                 if id in _shown:

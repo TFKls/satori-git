@@ -9,6 +9,9 @@
     {% if widget.username %}
         <li>Logged in as {{widget.username}}</li>
     {% endif %}
+    {% if widget.contest %}
+        <li>Selected contest {{widget.contest}}</li>
+    {% endif %}
     {% for name, link, isLeft in widget.menuitems %}
         {% if not isLeft %}
             <li><a href="{{link}}">{{name}}</a></li>

@@ -10,7 +10,7 @@ class ManageNewsWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/mannews.html'
         self.contest = ActiveContest(params)
-        self.canglobal = Allowed(True,'managenews')
+        self.canglobal = Allowed('global','ADMIN')
         self.messages = []
         d = follow(params,path)
         _params = deepcopy(params)
@@ -18,9 +18,9 @@ class ManageNewsWidget(Widget):
         if 'edit' in d.keys():
             self.editing = True
             try:
-                msg = MessageGlobal(d['edit'][0])
-            except MessageGlobal.DoesNotExist:
-                msg = MessageContest(d['edit'][0])
+                msg = MessageGlobal.filter({'id' : int(d['edit'][0])})[0]
+            except:
+                msg = MessageContest.filter({'id' : int(d['edit'][0])})[0]
             self.msgtopic = msg.topic
             self.msgcontent = msg.content
             self.msgid = msg.id

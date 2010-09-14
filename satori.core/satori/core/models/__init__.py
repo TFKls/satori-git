@@ -24,6 +24,7 @@ from satori.core.models._ProblemResult import ProblemResult
 from satori.core.models._Role import Role
 from satori.core.models._RoleMapping import RoleMapping
 from satori.core.models._Session import Session
+from satori.core.models._Subpage import Subpage
 from satori.core.models._Submit import Submit
 from satori.core.models._Test import Test
 from satori.core.models._TestMapping import TestMapping
