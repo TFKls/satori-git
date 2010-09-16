@@ -58,19 +58,19 @@ def server_put(request, token, obj, oa, name):
     	oa = OpenAttribute(object=obj, name=name)
     oa.oatype=OpenAttribute.OATYPES_BLOB
     blob = Blob()
-    len = int(request.environ.get('CONTENT_LENGTH', 0))
+    length = int(request.environ.get('CONTENT_LENGTH', 0))
     blob.open('w')
-    while(len > 0):
-        r = min(len, 16)
+    while(length > 0):
+        r = min(length, 16)
         data = request.environ['wsgi.input'].read(r)
         blob.write(data)
-        len = len - r
+        length = length - r
     blob.close()
     blob.save()
     oa.blob = blob
     oa.save()
-    res = HttpResponse()
-    res.write('OK')
+    res = HttpResponse(blob.hash)
+    res['content-length'] = str(len(blob.hash))
     return res
 
 def upload(request):
