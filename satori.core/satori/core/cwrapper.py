@@ -275,13 +275,25 @@ class OpenAttributeWrapper(Wrapper):
             ret = {}
             ret['name'] = oa.name
             if oa.oatype == OpenAttribute.OATYPES_BLOB:
-                ret['value'] = oa.blob.hash
                 ret['is_blob'] = True
+                ret['value'] = oa.blob.hash
             elif oa.oatype == OpenAttribute.OATYPES_STRING:
-                ret['value'] = oa.string_value
                 ret['is_blob'] = False
+                ret['value'] = oa.string_value
             return ret
 
+        def struct_to_oa(self, struct):
+            try:
+                oa = self.attributes.get(name=struct['name'])
+            except:
+                oa = OpenAttribute(object=self, name=struct['name'])
+            if struct['is_blob']:
+                oa.oatype = OpenAttribute.OATYPES_BLOB
+                oa.blob = Blob.objects.get(hash=struct['value'])
+            else:
+                oa.oatype = OpenAttribute.OATYPES_STRING
+                oa.string_value = struct['value']
+            oa.save()
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
@@ -292,9 +304,43 @@ class OpenAttributeWrapper(Wrapper):
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
+        @Argument('name', type=str)
+        @ReturnValue(type=str)
+        def get_str(token, self, name):
+            struct = oa_to_struct(self.attributes.get(name=name))
+            if struct['is_blob']:
+            	raise Exception('The attribute is not a string attribute')
+            return struct['value']
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @ReturnValue(type=str)
+        def get_blob(token, self, name):
+            raise Exception('Not implemented')
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @ReturnValue(type=str)
+        def get_blob_hash(token, self, name):
+            struct = oa_to_struct(self.attributes.get(name=name))
+            if not struct['is_blob']:
+            	raise Exception('The attribute is not a blob attribute')
+            return struct['value']
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
         @ReturnValue(type=TypedList(Attribute))
         def get_list(token, self):
             return [oa_to_struct(oa) for oa in self.attributes.all()]
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('value', type=Attribute)
+        @ReturnValue(type=NoneType)
+        def set(token, self, value):
+            struct_to_oa(self, value)
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
@@ -302,32 +348,24 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('value', type=str)
         @ReturnValue(type=NoneType)
         def set_str(token, self, name, value):
-            try:
-                oa = self.attributes.get(name=name)
-            except:
-                oa = OpenAttribute(object=self, name=name)
-            oa.oatype = OpenAttribute.OATYPES_STRING
-            oa.string_value = value
-            oa.save()
+            struct_to_oa(self, {'name': name, 'value': value, 'is_blob': False})
+        
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @Argument('value', type=str)
+        @ReturnValue(type=NoneType)
+        def set_blob(token, self, name, value):
+            raise Exception('Not implemented.')
+
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
         @Argument('value', type=str)
         @ReturnValue(type=NoneType)
-        def set_blob_mem(token, self, name, value):
-            try:
-                oa = self.attributes.get(name=name)
-            except:
-                oa = OpenAttribute(object=self, name=name)
-            blob = Blob()
-            blob.open('w')
-            blob.write(value)
-            blob.close()
-            blob.save()
-            oa.oatype = OpenAttribute.OATYPES_BLOB
-            oa.blob = blob
-            oa.save()
+        def set_blob_hash(token, self, name, value):
+            struct_to_oa(self, {'name': name, 'value': value, 'is_blob': True})
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
@@ -335,15 +373,7 @@ class OpenAttributeWrapper(Wrapper):
         @ReturnValue(type=NoneType)
         def set_list(token, self, attributes):
             for struct in attributes:
-                if struct['is_blob']:
-                    raise Exception('Cannot set blob attribute using set_list')
-                try:
-                    oa = self.attributes.get(name=struct['name'])
-                except:
-                    oa = OpenAttribute(object=self, name=struct['name'])
-                oa.oatype = OpenAttribute.OATYPES_STRING
-                oa.string_value = struct['value']
-                oa.save()
+            	struct_to_oa(self, struct)
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
@@ -353,9 +383,14 @@ class OpenAttributeWrapper(Wrapper):
             self.attributes.get(name=name).delete()
 
         self._add_child(ProcedureWrapper(get, self))
+        self._add_child(ProcedureWrapper(get_str, self))
+        self._add_child(ProcedureWrapper(get_blob, self))
+        self._add_child(ProcedureWrapper(get_blob_hash, self))
         self._add_child(ProcedureWrapper(get_list, self))
+        self._add_child(ProcedureWrapper(set, self))
         self._add_child(ProcedureWrapper(set_str, self))
-        self._add_child(ProcedureWrapper(set_blob_mem, self))
+        self._add_child(ProcedureWrapper(set_blob, self))
+        self._add_child(ProcedureWrapper(set_blob_hash, self))
         self._add_child(ProcedureWrapper(set_list, self))
         self._add_child(ProcedureWrapper(delete, self))
 
