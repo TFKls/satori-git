@@ -71,13 +71,28 @@ def unwrap_procedure(_proc):
 
     return func
 
-def unwrap_service(service, base, fields):
+def unwrap_service(service, base, fields, BlobReader, BlobWriter):
     class_name = service.name
     class_dict = {}
 
     for proc in service.procedures:
         meth_name = proc.name.split('_', 1)[1]
-        class_dict[meth_name] = unwrap_procedure(proc)
+        if meth_name.endswith('_get_blob'):
+            group_name = meth_name[:-9]
+            if group_name == 'oa':
+            	group_name = None
+            def blob_get(self, name):
+                return BlobReader(class_name, self.id, name, group_name)
+            class_dict[meth_name] = blob_get
+        elif meth_name.endswith('_set_blob'):
+            group_name = meth_name[:-9]
+            if group_name == 'oa':
+            	group_name = None
+            def blob_set(self, name, length):
+                return BlobWriter(length, class_name, self.id, name, group_name)
+            class_dict[meth_name] = blob_set
+        else:
+            class_dict[meth_name] = unwrap_procedure(proc)
 
     if fields is not None:
         def __init__(self, id, first=True):
@@ -117,7 +132,7 @@ def unwrap_service(service, base, fields):
     return new_class
 
 
-def unwrap_interface(interface):
+def unwrap_interface(interface, BlobReader, BlobWriter):
     for type in interface.types:
         if type.name == 'DateTime':
             type.converter = ArsDateTime()
@@ -144,7 +159,7 @@ def unwrap_interface(interface):
         else:
             fields = None
             
-        newcls = unwrap_service(service, base, fields)
+        newcls = unwrap_service(service, base, fields, BlobReader, BlobWriter)
         classes[service.name] = newcls
 
         if (service.name + 'Id') in interface.types:
