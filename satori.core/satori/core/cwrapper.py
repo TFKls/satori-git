@@ -298,8 +298,12 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
-        @ReturnValue(type=Attribute)
+        @ReturnValue(type=(Attribute, NoneType))
         def get(token, self, name):
+            try:
+                oa = self.attributes.get(name=name)
+            except:
+                return None
             return oa_to_struct(self.attributes.get(name=name))
 
         @Argument('token', type=Token)
@@ -307,7 +311,11 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=str)
         def get_str(token, self, name):
-            struct = oa_to_struct(self.attributes.get(name=name))
+            try:
+                oa = self.attributes.get(name=name)
+            except:
+                return None
+            struct = oa_to_struct(oa)
             if struct['is_blob']:
             	raise Exception('The attribute is not a string attribute')
             return struct['value']
@@ -324,7 +332,11 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=str)
         def get_blob_hash(token, self, name):
-            struct = oa_to_struct(self.attributes.get(name=name))
+            try:
+                oa = self.attributes.get(name=name)
+            except:
+                return None
+            struct = oa_to_struct(oa)
             if not struct['is_blob']:
             	raise Exception('The attribute is not a blob attribute')
             return struct['value']
