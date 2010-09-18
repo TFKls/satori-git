@@ -2,6 +2,7 @@
 from satori.client.web.queries import *
 from satori.client.common.remote import *
 from datetime import datetime
+from operator import attrgetter,itemgetter
 from _Widget import Widget
 
 class ProblemsWidget(Widget):
@@ -14,7 +15,10 @@ class ProblemsWidget(Widget):
         self.manage = c.demand_right("MANAGE")
         self.problems = list()
         for p in ProblemMapping.filter({'contest':c}):
-            editlink = GetLink(DefaultLayout(dict = params,maincontent = 'editprmap',problemid = [str(p.id)]),'')
+            entry = {}
+            entry['code'] = p.code
+            entry['showlink'] = GetLink(DefaultLayout(dict = params,maincontent = 'showpm',problemid = [str(p.id)]),'')
+            entry['editlink'] = GetLink(DefaultLayout(dict = params,maincontent = 'editprmap',problemid = [str(p.id)]),'')
             published = False
             stime = None
             ftime = None
@@ -26,7 +30,11 @@ class ProblemsWidget(Widget):
                 ftime = str(priv.finishOn)
             if published:
                 stime = 'Published'
-            self.problems.append([p,editlink,stime,ftime])
+            entry['stime'] = stime
+            entry['ftime'] = ftime
+            entry['p'] = p
+            self.problems.append(entry)
+        self.problems.sort(key=itemgetter('code'))
         self.potential = Problem.filter()
         self.back_to = ToString(params)
         self.back_path = path

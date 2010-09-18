@@ -22,22 +22,22 @@
     </td>
 {% endif %}
 </tr>
-{% for p,editlink,sdate,fdate in widget.problems %}
+{% for entry in widget.problems %}
 <tr>
-    <td>{{p.code}} </td>
-    <td>{{p.title}}</td>
+    <td>{{entry.p.code}} </td>
+    <td><a href="{{ entry.showlink }}">{{entry.p.title}}</a></td>
 {% if widget.manage %}
     <td>
-        {{sdate}}
+        {{entry.stime}}
     </td>
     <td>
-        {{fdate}}
+        {{entry.ftime}}
     </td>
     <td>
-        <input type="checkbox" name="pr{{p.id}}"/>
+        <input type="checkbox" name="pr{{entry.p.id}}"/>
     </td>
     <td>
-        <a href="{{ editlink }}">Edit</a> 
+        <a href="{{ entry.editlink }}">Edit</a> 
     </td>
 {% endif %}
 </tr>

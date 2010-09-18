@@ -29,8 +29,9 @@ class ManageNewsWidget(Widget):
         for m in MessageGlobal.filter():
             if not ActiveContest(params) or not m.mainscreenonly:
                 self.messages.append({'id' : m.id, 'type' : 'global', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time, 'canedit' : Allowed(m,'edit')})
-        for m in MessageContest.filter({'contest':ActiveContest(params)}):
-                self.messages.append({'id' : m.id, 'type' : 'contest', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time, 'canedit' : Allowed(m,'edit')})
+        if ActiveContest(params):
+            for m in MessageContest.filter({'contest':ActiveContest(params)}):
+                    self.messages.append({'id' : m.id, 'type' : 'contest', 'topic' : m.topic, 'content' : render_bbcode(m.content), 'time' : m.time, 'canedit' : Allowed(m,'edit')})
         for md in self.messages:
             if md['canedit']:
                 _d['edit'] = [str(md['id'])]

@@ -69,3 +69,8 @@ def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
 	if a:
 		d['contestid'] = [str(a.id)]
 	return d
+
+
+def text2html(text):
+    return text
+    
