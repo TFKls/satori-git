@@ -136,11 +136,12 @@ def unwrap_interface(interface, BlobReader, BlobWriter):
     for type in interface.types:
         if type.name == 'DateTime':
             type.converter = ArsDateTime()
-        elif type is ArsStructure:
-            if type.fields and (type.fields[0].name == 'null_values'):
+        elif isinstance(type, ArsStructure):
+            if type.fields and (type.fields[0].name == 'null_fields'):
                 newtype = ArsNullableStructure(name=type.name)
-                for field in type.fields[1:]:
-                    newtype.add_field(field)
+                for field in type.fields:
+                    if field.name != 'null_fields':
+                        newtype.add_field(field)
                 type.converter = newtype
 
     classes = {}
@@ -153,7 +154,7 @@ def unwrap_interface(interface, BlobReader, BlobWriter):
         if service.name + 'Struct' in interface.types:
             struct = interface.types[service.name + 'Struct']
             if isinstance(struct.converter, ArsNullableStructure):
-                fields = [field.name for field in struct.fields[1:]]
+                fields = [field.name for field in struct.fields][1:]
             else:
                 fields = [field.name for field in struct.fields]
         else:
