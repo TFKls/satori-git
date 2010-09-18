@@ -11,6 +11,12 @@ class AlterPMRequest(Request):
     def process(cls, request):
         pm = ProblemMapping.filter({'id':int(request.POST['pm_id'])})[0]
         pm.statement = request.POST['statement']
+        if 'pdfstatement' in request.FILES.keys():
+            pdf = request.FILES['pdfstatement']
+            writer = anonymous_blob(pdf.size)
+            writer.write(pdf.read())
+            phash = writer.close()
+            pm.oa_set_blob_hash('pdfstatement',phash)
         pm.code = request.POST['code']
         pm.title = request.POST['title']
         d = ParseURL(request.POST['back_to'])

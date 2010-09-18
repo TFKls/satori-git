@@ -9,6 +9,7 @@
 <tr class="header">
     <td>Code</td>
     <td>Title</td>
+    <td>PDF</td>
 {% if widget.manage %}
     <td>
         Publish from
@@ -25,7 +26,20 @@
 {% for entry in widget.problems %}
 <tr>
     <td>{{entry.p.code}} </td>
-    <td><a href="{{ entry.showlink }}">{{entry.p.title}}</a></td>
+    <td>
+        {% if entry.showlink %}
+        <a href="{{ entry.showlink }}">
+            {{entry.p.title}}
+        </a>
+        {% else %}
+            {{entry.p.title}}
+        {% endif %}
+    </td>
+    <td>
+        {% if entry.pdf %}
+            <a href="getfile.pdfstatement.{{entry.p.id}}">pdf</a>
+        {% endif %}
+    </td>
 {% if widget.manage %}
     <td>
         {{entry.stime}}
