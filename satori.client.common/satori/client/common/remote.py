@@ -88,7 +88,7 @@ class BlobReader(object):
 
             self.res = self.con.getresponse()
             if self.res.status != 200:
-                raise Exception("Server returned %d (%s) answer." % (res.status, res.reason))
+                raise Exception("Server returned %d (%s) answer." % (self.res.status, self.res.reason))
             self.length = int(self.res.getheader('Content-length'))
         except:
             self.con.close()
