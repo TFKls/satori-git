@@ -3,13 +3,16 @@
 
 Based on problem {{ widget.problem.name }}.
 
-<form action="process.alterpm" method="POST">
+<form action="process.alterpm" method="POST" enctype="multipart/form-data">
 <h4>Settings</h4>
 Code:<input type="text" name="code" value="{{ widget.pm.code }}"/><br/>
 Title:<input type="text" name="title" value="{{ widget.pm.title }}"/><br/>
 
 <h4>Statement</h4>
 <textarea name="statement" rows="15" cols="50">{{widget.pm.statement}}</textarea>
+<br/>
+
+PDF statement:<input type="file" name="pdfstatement"/>
 <br/>
 <input type="submit" value="Confirm changes"/>
 <input type="hidden" name="pm_id" value="{{widget.pm.id}}"/>

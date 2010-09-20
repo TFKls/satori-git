@@ -3,6 +3,7 @@
 """
 
 from satori.objects import Object, Argument
+from types import NoneType
 import BaseHTTPServer
 import cgi
 from multiprocessing import Process, Pipe
@@ -49,7 +50,7 @@ def jailPath(root, path):
     return os.path.join(root, os.path.abspath(os.path.join('/',path))[1:])
 
 class JailExec(Object):
-    @Argument('root', type=str, default='/jail')
+    @Argument('root', type=str)
     @Argument('path', type=str)
     @Argument('args', default=[])
     @Argument('search', type=bool, default=False)
@@ -68,9 +69,8 @@ class JailExec(Object):
             os.execv(self.path, self.args)
 
 class JailRun(Object):
-    oldroot = '__oldroot__'
 
-    @Argument('root', type=str, default='/jail')
+    @Argument('root', type=str)
     @Argument('path', type=str)
     @Argument('args', default=[])
     @Argument('search', type=bool, default=False)
@@ -152,17 +152,15 @@ class JailRun(Object):
 
 
 class JailBuilder(Object):
-    safePath = '/cdrom'
-    safeExtension = '.template'
     scriptTimeout = 5
 
-    @Argument('root', type=str, default='/jail')
-    @Argument('template', type=str, default='/cdrom/jail.template')
-    def __init__(self, root, template):
-        if not checkSubPath(self.safePath, template) or os.path.splitext(template)[1] != self.safeExtension:
-            raise Exception('Template '+template+' is not safe')
+    @Argument('root', type=str)
+    @Argument('template_path', type=str)
+    @Argument('template', type=str)
+    def __init__(self, root, template, template_path):
+        template = os.path.split(template)[1]
         self.root = root
-        self.template = template
+        self.template = os.path.join(template_path, template + '.template')
 
     def create(self):
         try:
@@ -404,35 +402,3 @@ def run_server(host, port, quiet=False):
         httpd.serve_forever()
     finally:
         httpd.server_close()
-
-def judge():
-    from optparse import OptionParser
-    parser = OptionParser(usage="usage: %prog [options] DIR")
-    parser.add_option("-D", "--destroy",
-        default=False,
-        action="store_true",
-        help="Destroy created chroot")
-    parser.add_option("-S", "--server",
-        default=False,
-        action="store_true",
-        help="Run server")
-    (options, args) = parser.parse_args()
-
-    path = args[0]
-    temp = args[1]
-
-    jb = JailBuilder(root=path, template=temp)
-    if options.destroy:
-        jb.destroy()
-    elif options.server:
-        run_server('127.0.0.1', 8765)
-    else:
-        try:
-            jb.create()
-            jr = JailRun(root=path, path='bash', search=True) 
-            jr.run()
-        finally:
-            jb.destroy()
-
-if __name__ == "__main__":
-    judge()
