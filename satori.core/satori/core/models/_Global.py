@@ -19,6 +19,8 @@ class Global(Object):
     generators = models.OneToOneField('AttributeGroup', related_name='group_global_generators')
 
     def save(self):
+        self.guardian = 1
+
         try:
             x = self.checkers
         except AttributeGroup.DoesNotExist:
@@ -35,14 +37,14 @@ class Global(Object):
 
         try:
             x = self.authenticated
-        except AttributeGroup.DoesNotExist:
+        except Role.DoesNotExist:
             authenticated = Role(name='AUTHENTICATED', absorbing=False)
             authenticated.save()
             self.authenticated = authenticated
 
         try:
             x = self.anonymous
-        except AttributeGroup.DoesNotExist:
+        except Role.DoesNotExist:
             anonymous = Role(name='ANONYMOUS', absorbing=False)
             anonymous.save()
             self.anonymous = anonymous
