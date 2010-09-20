@@ -38,6 +38,7 @@ def start_server_thrift_server():
     import satori.core.api
     from satori.ars.thrift import ThriftServer
     wrapper.register_middleware(cwrapper.TransactionMiddleware())
+    wrapper.register_middleware(wrapper.TypeConversionMiddleware())
     server = ThriftServer(TThreadedServer, TServerSocket(port=satori.core.setup.settings.THRIFT_PORT), wrapper.generate_interface())
     print 'thrift server starting'
     server.run()

@@ -280,6 +280,21 @@ class StaticWrapper(Wrapper):
         self._add_child(ProcedureWrapper(proc, self))
 
 
+class TypeConversionMiddleware(object):
+    def process_request(self, proc, args, kwargs):
+        for i in range(min(len(args), len(proc.parameters))):
+            args[i] = proc.parameters[i].type.convert_from_ars(args[i])
+
+        for arg_name in kwargs:
+            kwargs[arg_name] = proc.parameters[arg_name].type.convert_from_ars(kwargs[arg_name])
+
+    def process_exception(self, proc, args, kwargs, exception):
+        pass
+
+    def process_response(self, proc, args, kwargs, ret):
+        return proc.return_type.convert_to_ars(ret)
+
+
 def is_nonetype_constraint(constraint):
     return isinstance(constraint, TypeConstraint) and (constraint.type == NoneType)
 
@@ -298,54 +313,37 @@ def extract_ars_type(constraint):
 
 
 def generate_procedure(name, proc):
-    signature = Signature.of(proc)
-
-    ars_ret_type = extract_ars_type(signature.return_value.constraint)
-
-    arg_names = signature.positional
-    arg_count = len(signature.positional)
-    ars_arg_types = []
-    ars_arg_optional = []
-    arg_numbers = {}
-    for i in range(arg_count):
-        argument = signature.arguments[signature.positional[i]]
-        param_type = extract_ars_type(argument.constraint)
-        optional = argument.mode == ArgumentMode.OPTIONAL
-        ars_arg_types.append(param_type)
-        ars_arg_optional.append(optional)
-        arg_numbers[signature.positional[i]] = i
+    ars_proc = None
 
     def reimplementation(*args, **kwargs):
         args = list(args)
     
-        for i in middleware:
-            i.process_request(args, kwargs)
-        
         try:
-            newargs = []
-            newkwargs = {}
-            for i in range(min(len(args), arg_count)):
-                newargs.append(ars_arg_types[i].convert_from_ars(args[i]))
+            for i in middleware:
+                i.process_request(ars_proc, args, kwargs)
+        
+            ret = proc(*args, **kwargs)
 
-            for arg_name in kwargs:
-                newkwargs[arg_name] = ars_arg_types[arg_numbers[arg_name]].convert_from_ars(kwargs[arg_name])
-
-            ret = proc(*newargs, **newkwargs)
-
-            ret = ars_ret_type.convert_to_ars(ret)
+            for i in reversed(middleware):
+                ret = i.process_response(ars_proc, args, kwargs, ret)
         except Exception as exception:
             for i in reversed(middleware):
-                i.process_exception(args, kwargs, exception)
+                i.process_exception(ars_proc, args, kwargs, exception)
             raise
         else:
-            for i in reversed(middleware):
-                ret = i.process_response(args, kwargs, ret)
             return ret
 
-    ars_proc = ArsProcedure(name=name, implementation=reimplementation, return_type=ars_ret_type)
+    signature = Signature.of(proc)
+    ret_type = extract_ars_type(signature.return_value.constraint)
 
-    for i in range(arg_count):
-        ars_proc.add_parameter(name=signature.positional[i], type=ars_arg_types[i], optional=ars_arg_optional[i])
+    ars_proc = ArsProcedure(name=name, implementation=reimplementation, return_type=ret_type)
+    
+    for arg_name in signature.positional:
+        argument = signature.arguments[arg_name]
+        arg_type = extract_ars_type(argument.constraint)
+        arg_optional = (argument.mode == ArgumentMode.OPTIONAL)
+
+        ars_proc.add_parameter(name=arg_name, type=arg_type, optional=arg_optional)
 
     return ars_proc
 
