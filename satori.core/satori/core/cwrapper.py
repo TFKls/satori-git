@@ -503,22 +503,19 @@ class TransactionMiddleware(object):
     commit, the commit is done when a successful response is created. If an
     exception happens, the database is rolled back.
     """
-    def process_request(self, args, kwargs):
+    def process_request(self, proc, args, kwargs):
         """Enters transaction management"""
-        print 'tenter'
         transaction.enter_transaction_management()
         transaction.managed(True)
 
-    def process_exception(self, args, kwargs, exception):
+    def process_exception(self, proc, args, kwargs, exception):
         """Rolls back the database and leaves transaction management"""
-        print 'texcept'
         if transaction.is_dirty():
             transaction.rollback()
         transaction.leave_transaction_management()
 
-    def process_response(self, args, kwargs, ret):
+    def process_response(self, proc, args, kwargs, ret):
         """Commits and leaves transaction management."""
-        print 'tleave'
         if transaction.is_managed():
             if transaction.is_dirty():
                 transaction.commit()
