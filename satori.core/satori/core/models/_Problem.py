@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Object import Object
+from satori.core.models._AttributeGroup import AttributeGroup
 
 class Problem(Object):
     """Model. Description of an (abstract) problems.
@@ -12,6 +13,17 @@ class Problem(Object):
 
     name        = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, default="")
+    default_test_data = models.OneToOneField('AttributeGroup', related_name='group_problem_defaulttestdata')
+
+    def save(self):
+        try:
+            x = self.default_test_data
+        except AttributeGroup.DoesNotExist:
+            default_test_data = AttributeGroup()
+            default_test_data.save()
+            self.default_test_data = default_test_data
+
+        super(Problem, self).save()
     
     def __str__(self):
         return self.name+" ("+self.description+")"

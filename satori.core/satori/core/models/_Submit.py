@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Object import Object
+from satori.core.models._AttributeGroup import AttributeGroup
 
 class Submit(Object):
     """Model. Single problem solution (within or outside of a Contest).
@@ -12,7 +13,18 @@ class Submit(Object):
 
     contestant  = models.ForeignKey('Contestant')
     problem     = models.ForeignKey('ProblemMapping')
+    data    = models.OneToOneField('AttributeGroup', related_name='group_submit_data')
     time        = models.DateTimeField(auto_now_add=True)
+    
+    def save(self):
+        try:
+            x = self.data
+        except AttributeGroup.DoesNotExist:
+            data = AttributeGroup()
+            data.save()
+            self.data = data
+
+        super(Submit, self).save()
     
     def inherit_right(self, right):
         right = str(right)

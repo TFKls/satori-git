@@ -18,8 +18,8 @@ judge = StaticWrapper('Judge')
 
 SubmitToCheck = Struct('SubmitToCheck', (
     ('test_result', TestResult, True),
-    ('test_contents', TypedList(Attribute), False),
-    ('submit_contents', TypedList(Attribute), False)
+    ('test_data', TypedList(Attribute), False),
+    ('submit_data', TypedList(Attribute), False)
 ))
 
 @judge.method
@@ -33,8 +33,8 @@ def get_next(token):
     	return None
     ret = {}
     ret['test_result'] = TestResult.objects.get(id=next.test_result_id)
-    ret['test_contents'] = ApiTest.Test_oa_get_list(token, ret['test_result'].test)
-    ret['submit_contents'] = ApiSubmit.Submit_oa_get_list(token, ret['test_result'].submit)
+    ret['test_data'] = ApiTest.Test_data_get_list(token, ret['test_result'].test)
+    ret['submit_data'] = ApiSubmit.Submit_data_get_list(token, ret['test_result'].submit)
     return ret
 
 @judge.method

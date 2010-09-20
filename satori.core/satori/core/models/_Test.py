@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Object import Object
+from satori.core.models._AttributeGroup import AttributeGroup
 
 class Test(Object):
     """Model. Single test.
@@ -14,6 +15,17 @@ class Test(Object):
     name        = models.CharField(max_length=50)
     description = models.TextField(blank=True, default="")
     environment = models.CharField(max_length=50)
+    data    = models.OneToOneField('AttributeGroup', related_name='group_test_data')
+
+    def save(self):
+        try:
+            x = self.data
+        except AttributeGroup.DoesNotExist:
+            data = AttributeGroup()
+            data.save()
+            self.data = data
+
+        super(Test, self).save()
 
     def inherit_right(self, right):
         right = str(right)

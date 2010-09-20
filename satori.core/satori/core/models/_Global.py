@@ -4,6 +4,7 @@ from django.db import models
 from satori.dbev import Events
 from satori.core.models._Object import Object
 from satori.core.models._Role import Role
+from satori.core.models._AttributeGroup import AttributeGroup
 
 class Global(Object):
     """Model. Special Global object for privileges.
@@ -14,17 +15,40 @@ class Global(Object):
 
     anonymous = models.ForeignKey('Role', related_name='global_anonymous+')
     authenticated = models.ForeignKey('Role', related_name='global_authenticated+')
+    checkers  = models.OneToOneField('AttributeGroup', related_name='group_global_checkers')
+    generators = models.OneToOneField('AttributeGroup', related_name='group_global_generators')
 
-    def save(self, *args, **kwargs):
-        self.guardian = 1
-        anonymous = Role(name='ANONYMOUS', absorbing=False)
-        anonymous.save()
-        self.anonymous = anonymous
-        authenticated = Role(name='AUTHENTICATED', absorbing=False)
-        authenticated.save()
-        self.authenticated = authenticated
-        super(Global, self).save(*args, **kwargs)
+    def save(self):
+        try:
+            x = self.checkers
+        except AttributeGroup.DoesNotExist:
+            checkers = AttributeGroup()
+            checkers.save()
+            self.checkers = checkers
 
+        try:
+            x = self.generators
+        except AttributeGroup.DoesNotExist:
+            generators = AttributeGroup()
+            generators.save()
+            self.generators = generators
+
+        try:
+            x = self.authenticated
+        except AttributeGroup.DoesNotExist:
+            authenticated = Role(name='AUTHENTICATED', absorbing=False)
+            authenticated.save()
+            self.authenticated = authenticated
+
+        try:
+            x = self.anonymous
+        except AttributeGroup.DoesNotExist:
+            anonymous = Role(name='ANONYMOUS', absorbing=False)
+            anonymous.save()
+            self.anonymous = anonymous
+
+        super(Global, self).save()
+    
     @staticmethod
     def get_instance():
         try:

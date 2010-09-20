@@ -5,5 +5,7 @@ from satori.core.models import ProblemMapping
 
 problem_mapping = ModelWrapper(ProblemMapping)
 
+problem_mapping.attributes('statement')
+
 problem_mapping._fill_module(__name__)
 

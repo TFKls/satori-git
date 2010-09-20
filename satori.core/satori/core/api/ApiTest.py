@@ -5,5 +5,7 @@ from satori.core.models import Test
 
 test = ModelWrapper(Test)
 
+test.attributes('data')
+
 test._fill_module(__name__)
 

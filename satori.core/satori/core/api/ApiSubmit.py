@@ -5,5 +5,7 @@ from satori.core.models import Submit
 
 submit = ModelWrapper(Submit)
 
+submit.attributes('data')
+
 submit._fill_module(__name__)
 

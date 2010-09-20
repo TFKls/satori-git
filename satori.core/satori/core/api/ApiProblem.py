@@ -7,6 +7,8 @@ from satori.core.sec import Token
 
 problem = ModelWrapper(Problem)
 
+problem.attributes('default_test_data')
+
 @problem.method
 @Argument('token', type=Token)
 @Argument('name', type=str)

@@ -8,6 +8,8 @@ from satori.core.sec import Token
 
 contest = ModelWrapper(Contest)
 
+contest.attributes('files')
+
 @contest.method
 @Argument('token', type=Token)
 @Argument('self', type=Contest)
@@ -103,13 +105,13 @@ def submit(token, self, problem_mapping, content, filename):
     submit.contestant = contestant
     submit.problem = problem_mapping
 	submit.save()
-	OpenAttribute(object=submit, name='filename', oatype=OpenAttribute.OATYPES_STRING, string_value=filename).save()
+	OpenAttribute(object=submit.data, name='filename', oatype=OpenAttribute.OATYPES_STRING, string_value=filename).save()
 	blob = Blob()
 	blob.open('w')
 	blob.write(content)
 	blob.close()
 	blob.save()
-	OpenAttribute(object=submit, name='content', oatype=OpenAttribute.OATYPES_BLOB, blob=blob).save()
+	OpenAttribute(object=submit.data, name='content', oatype=OpenAttribute.OATYPES_BLOB, blob=blob).save()
 	return submit
 @contest.submit.can
 def submit_check(token, self, problem_mapping, content, filename):

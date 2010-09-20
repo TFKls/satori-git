@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Object import Object
+from satori.core.models._AttributeGroup import AttributeGroup
 
 class Contest(Object):
     """Model. Description of a contest.
@@ -12,7 +13,18 @@ class Contest(Object):
     
     name        = models.CharField(max_length=50, unique=True)
     problems    = models.ManyToManyField('Problem', through='ProblemMapping')
+    files       = models.OneToOneField('AttributeGroup', related_name='group_contest_files')
     contestant_role = models.ForeignKey('Role')
+
+    def save(self):
+        try:
+            x = self.files
+        except AttributeGroup.DoesNotExist:
+            files = AttributeGroup()
+            files.save()
+            self.files = files
+
+        super(Contest, self).save()
 
     def __str__(self):
         return self.name

@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Object import Object
+from satori.core.models._AttributeGroup import AttributeGroup
 
 class ProblemMapping(Object):
     """Model. Intermediary for many-to-many relationship between Contests and
@@ -15,8 +16,18 @@ class ProblemMapping(Object):
     problem     = models.ForeignKey('Problem')
     code        = models.CharField(max_length=10)
     title       = models.CharField(max_length=64)
-    statement   = models.TextField(blank=True, default="")
+    statement   = models.OneToOneField('AttributeGroup', related_name='group_problemmapping_statement')
     default_test_suite = models.ForeignKey('TestSuite')
+
+    def save(self):
+        try:
+            x = self.statement
+        except AttributeGroup.DoesNotExist:
+            statement = AttributeGroup()
+            statement.save()
+            self.statement = statement
+
+        super(ProblemMapping, self).save()
     
     def __str__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
@@ -27,7 +38,7 @@ class ProblemMapping(Object):
         if right == 'EDIT':
             ret.append((self.contest,'MANAGE'))
         if right == 'SUBMIT':
-        	ret.append((self.contest,'SUBMIT'))
+            ret.append((self.contest,'SUBMIT'))
         return ret
     
 
