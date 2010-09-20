@@ -118,9 +118,11 @@ def django_field_to_python_type(model, field):
 def generate_field_procedures(model, field):
     return []
 
+
 @DispatchOn(field=models.AutoField)
 def generate_field_procedures(model, field):
     return []
+
 
 @DispatchOn(field=models.IntegerField)
 @DispatchOn(field=models.CharField)
@@ -153,13 +155,31 @@ def generate_field_procedures(model, field):
     return [set, get]
 
 
+def can_view(token, object):
+    return object.demand_right(token, 'VIEW')
+
+
+def can_edit(token, object):
+    return object.demand_right(token, 'EDIT')
+
+
 class FieldWrapper(Wrapper):
     def __init__(self, field, parent):
         super(FieldWrapper, self).__init__(field.name, parent)
         self._field = field
+        self._can_read = can_view
+        self._can_write = can_edit
 
-        for proc in generate_field_procedures(parent._model, field):
-            self._add_child(ProcedureWrapper(proc, self))
+    def can_read(self, func):
+        self._can_read = func
+        return func
+
+    def can_write(self, func):
+        self._can_write = func
+        return func
+
+#        for proc in generate_field_procedures(parent._model, field):
+#            self._add_child(ProcedureWrapper(proc, self))
 
 
 class FilterWrapper(ProcedureWrapper):
@@ -245,31 +265,39 @@ class DeleteWrapper(ProcedureWrapper):
         super(DeleteWrapper, self).__init__(delete, parent)
 
 
-class DemandRightWrapper(ProcedureWrapper):
-    def __init__(self, parent):
-        model = parent._model
-
-        @Argument('token', type=Token)
-        @Argument('self', type=model)
-        @Argument('right', type=str)
-        @ReturnValue(type=bool)
-        def demand_right(token, self, right):
-            return self.demand_right(token, right)
-
-        super(DemandRightWrapper, self).__init__(demand_right, parent)
-
-
 Attribute = Struct('Attribute', (
     ('name', str, False),
     ('is_blob', bool, False),
     ('value', str, False)
 ))
 
+
+def can_attribute_read(token, object):
+    return object.demand_right(token, 'ATTRIBUTE_READ')
+
+
+def can_attribute_write(token, object):
+    return object.demand_right(token, 'ATTRIBUTE_WRITE')
+
+
 class OpenAttributeWrapper(Wrapper):
-    def __init__(self, parent):
-        super(OpenAttributeWrapper, self).__init__('oa', parent)
+    def __init__(oaw_self, parent, group_name):
+        if group_name is None:
+            wrapper_name = 'oa'
+        else:
+            wrapper_name = group_name
+
+        super(OpenAttributeWrapper, oaw_self).__init__(wrapper_name, parent)
+        oaw_self._can_read = can_attribute_read
+        oaw_self._can_write = can_attribute_write
 
         model = parent._model
+
+        def get_group(object):
+            if group_name:
+            	return getattr(object, group_name)
+            else:
+            	return object            
 
         def oa_to_struct(oa):
             ret = {}
@@ -282,11 +310,18 @@ class OpenAttributeWrapper(Wrapper):
                 ret['value'] = oa.string_value
             return ret
 
-        def struct_to_oa(self, struct):
+        def oa_to_struct_name(object, name):
             try:
-                oa = self.attributes.get(name=struct['name'])
+                oa = get_group(object).attributes.get(name)
             except:
-                oa = OpenAttribute(object=self, name=struct['name'])
+                return None
+            return oa_to_struct(oa)
+
+        def struct_to_oa(object, struct):
+            try:
+                oa = get_group(object).attributes.get(name=struct['name'])
+            except:
+                oa = OpenAttribute(object=get_group(object), name=struct['name'])
             if struct['is_blob']:
                 oa.oatype = OpenAttribute.OATYPES_BLOB
                 oa.blob = Blob.objects.get(hash=struct['value'])
@@ -295,31 +330,28 @@ class OpenAttributeWrapper(Wrapper):
                 oa.string_value = struct['value']
             oa.save()
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
         @ReturnValue(type=(Attribute, NoneType))
         def get(token, self, name):
-            try:
-                oa = self.attributes.get(name=name)
-            except:
-                return None
-            return oa_to_struct(self.attributes.get(name=name))
+            return oa_to_struct_name(self, name)
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
         @ReturnValue(type=str)
         def get_str(token, self, name):
-            try:
-                oa = self.attributes.get(name=name)
-            except:
-                return None
-            struct = oa_to_struct(oa)
+            struct = oa_to_struct_name(self, name)
+            if struct is None:
+            	return None
             if struct['is_blob']:
-            	raise Exception('The attribute is not a string attribute')
+                raise Exception('The attribute is not a string attribute')
             return struct['value']
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
@@ -327,26 +359,27 @@ class OpenAttributeWrapper(Wrapper):
         def get_blob(token, self, name):
             raise Exception('Not implemented')
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
         @ReturnValue(type=str)
         def get_blob_hash(token, self, name):
-            try:
-                oa = self.attributes.get(name=name)
-            except:
-                return None
-            struct = oa_to_struct(oa)
+            struct = oa_to_struct_name(self, name)
+            if struct is None:
+            	return None
             if not struct['is_blob']:
-            	raise Exception('The attribute is not a blob attribute')
+                raise Exception('The attribute is not a blob attribute')
             return struct['value']
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @ReturnValue(type=TypedList(Attribute))
         def get_list(token, self):
-            return [oa_to_struct(oa) for oa in self.attributes.all()]
+            return [oa_to_struct(oa) for oa in get_group(self).attributes.all()]
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('value', type=Attribute)
@@ -354,6 +387,7 @@ class OpenAttributeWrapper(Wrapper):
         def set(token, self, value):
             struct_to_oa(self, value)
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
@@ -362,6 +396,7 @@ class OpenAttributeWrapper(Wrapper):
         def set_str(token, self, name, value):
             struct_to_oa(self, {'name': name, 'value': value, 'is_blob': False})
         
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
@@ -370,7 +405,7 @@ class OpenAttributeWrapper(Wrapper):
         def set_blob(token, self, name, value):
             raise Exception('Not implemented.')
 
-
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
@@ -379,32 +414,50 @@ class OpenAttributeWrapper(Wrapper):
         def set_blob_hash(token, self, name, value):
             struct_to_oa(self, {'name': name, 'value': value, 'is_blob': True})
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('attributes', type=TypedList(Attribute))
         @ReturnValue(type=NoneType)
         def set_list(token, self, attributes):
             for struct in attributes:
-            	struct_to_oa(self, struct)
+                struct_to_oa(self, struct)
 
+        @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
         @ReturnValue(type=NoneType)
         def delete(token, self, name):
-            self.attributes.get(name=name).delete()
+            get_group(self).attributes.get(name=name).delete()
 
-        self._add_child(ProcedureWrapper(get, self))
-        self._add_child(ProcedureWrapper(get_str, self))
-        self._add_child(ProcedureWrapper(get_blob, self))
-        self._add_child(ProcedureWrapper(get_blob_hash, self))
-        self._add_child(ProcedureWrapper(get_list, self))
-        self._add_child(ProcedureWrapper(set, self))
-        self._add_child(ProcedureWrapper(set_str, self))
-        self._add_child(ProcedureWrapper(set_blob, self))
-        self._add_child(ProcedureWrapper(set_blob_hash, self))
-        self._add_child(ProcedureWrapper(set_list, self))
-        self._add_child(ProcedureWrapper(delete, self))
+        @oaw_self.get.can
+        @oaw_self.get_str.can
+        @oaw_self.get_blob.can
+        @oaw_self.get_blob_hash.can
+        @oaw_self.get_list.can
+        def wrap_can_read(token, self, *args, **kwargs):
+            return oaw_self._can_read(token, self)
+
+        @oaw_self.set.can
+        @oaw_self.set_str.can
+        @oaw_self.set_blob.can
+        @oaw_self.set_blob_hash.can
+        @oaw_self.set_list.can
+        @oaw_self.delete.can
+        def wrap_can_write(token, self, *args, **kwargs):
+            return oaw_self._can_read(token, self)
+
+    def can_read(self, func):
+        self._can_read = func
+        return func
+
+    def can_write(self, func):
+        self._can_write = func
+        return func
+
+    def method(self, proc):
+        self._add_child(ProcedureWrapper(proc, self))
 
 
 class ModelWrapperClass(StaticWrapper):
@@ -419,14 +472,20 @@ class ModelWrapperClass(StaticWrapper):
         super(ModelWrapperClass, self).__init__(model._meta.object_name, base_wrapper)
         self._model = model
         
-#        for field in model._meta.local_fields:
-#            self._add_child(FieldWrapper(field, self))
+        for field in model._meta.fields:
+            if field in model._meta.local_fields:
+                self._add_child(FieldWrapper(field, self))
+            else:
+                self._add_child(getattr(base_wrapper, field.name))
 
         self._add_child(FilterWrapper(self))
         self._add_child(GetStructWrapper(self))
         self._add_child(SetStructWrapper(self))
         self._add_child(CreateWrapper(self))
         self._add_child(DeleteWrapper(self))
+
+    def attributes(self, name=None):
+        self._add_child(OpenAttributeWrapper(self, name))
 
 
 model_wrappers = {}
