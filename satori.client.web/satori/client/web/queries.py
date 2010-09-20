@@ -1,6 +1,7 @@
 ﻿
 from URLDictionary import *
 from satori.client.common.remote import *
+from datetime import datetime
 
 # Module for database queries
 
@@ -9,7 +10,7 @@ def UserById(uid):
 	return User(int(uid))
 
 def ContestById(cid):
-	return Contest(int(cid))
+	return Contest.filter({'id' : int(cid)})[0]
 
 def CurrentUser():
   try:
@@ -44,8 +45,13 @@ def Allowed(o, str):
         return Security.global_right_have(str)
     return o.demand_right(str)
 
-def explicit_right(object,role,right):
-    return bool(Privilege.filter({'role':role, 'object':object, 'right':right}))
+def explicit_right(object,role,right,moment=datetime.now()):
+    for p in Privilege.filter({'role':role, 'object':object, 'right':right}):
+        if not moment:
+            return True
+        if (not p.startOn or p.StartOn<datetime.now()) and (not p.finishOn or p.finishOn>datetime.now()):
+            return True
+    return False
 
 # default dictionary, if need to return to main screen
 def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
@@ -63,3 +69,8 @@ def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
 	if a:
 		d['contestid'] = [str(a.id)]
 	return d
+
+
+def text2html(text):
+    return text
+    

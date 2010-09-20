@@ -1,17 +1,91 @@
+{% if widget.manage %}
+<form action="process.publish" method="POST">
+<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+<input type="hidden" name="back_path" value="{{widget.back_path}}"/>
 
+{% endif %}
 <h4>Problems</h4>
 <table class="list_table">
 <tr class="header">
     <td>Code</td>
     <td>Title</td>
-    <td></td>
+    <td>PDF</td>
+{% if widget.manage %}
+    <td>
+        Publish from
+    </td>
+    <td>
+        Submit till
+    </td>
+    <td>
+    </td>
+    <td>
+    </td>
+{% endif %}
 </tr>
-{% for p,editlink in widget.problems %}
+{% for entry in widget.problems %}
 <tr>
-    <td>{{p.code}} </td>
-    <td>{{p.title}}</td>
-    <td><a href="{{ editlink }}">Edit</a></td>
+    <td>{{entry.p.code}} </td>
+    <td>
+        {% if entry.showlink %}
+        <a href="{{ entry.showlink }}">
+            {{entry.p.title}}
+        </a>
+        {% else %}
+            {{entry.p.title}}
+        {% endif %}
+    </td>
+    <td>
+        {% if entry.pdf %}
+            <a href="getfile.pdfstatement.{{entry.p.id}}">pdf</a>
+        {% endif %}
+    </td>
+{% if widget.manage %}
+    <td>
+        {{entry.stime}}
+    </td>
+    <td>
+        {{entry.ftime}}
+    </td>
+    <td>
+        <input type="checkbox" name="pr{{entry.p.id}}"/>
+    </td>
+    <td>
+        <a href="{{ entry.editlink }}">Edit</a> 
+    </td>
+{% endif %}
 </tr>
 {% endfor %}
 </table>
+{% if widget.manage %}
 
+With selected: <br/>
+Publish on <input type="text" name="pub_time"/> (leave blank to publish now)<br/>
+Submissions until <input type="text" name="hide_time"/> (leave blank to publish indefinitely)<br/>
+<input type="submit" name="confirm" value="Set dates"/><br/>
+<input type="submit" name="stop" value="Stop submissions"/>
+<input type="submit" name="hide" value="Hide"/>
+</form>
+{% endif %}
+
+
+{% if widget.manage %}
+<h4>Add problem from repository</h4>
+<form action="process.createpm" method="POST"/>
+<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+<input type="hidden" name="back_path" value="{{widget.back_path}}"/>
+<input type="hidden" name="contest" value="{{widget.contest.id}}"/>
+Code:
+<input type="text" name="code"/><br/>
+Title: 
+<input type="text" name="title"/><br/>
+Problem:
+<select name="problem">
+{% for p in widget.potential %}
+    <option value="{{ p.id }}"/> {{ p.name }} ({{p.description}})</option>
+{% endfor %}
+</select>
+<br/>
+<input type="submit" value="Use problem"/>
+</form>
+{% endif %}

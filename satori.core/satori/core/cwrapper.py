@@ -1,13 +1,12 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-import types
-import datetime
+from types import NoneType
+from datetime import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
-from satori.ars import model, wrapper
-from django.db import models
-from django.db import transaction
+from satori.ars.wrapper import StructType, Struct, TypedList, Wrapper, ProcedureWrapper, StaticWrapper
+from satori.ars.model import ArsInt64, ArsTypeAlias
+from django.db import models, transaction
 from django.db.models.fields.related import add_lazy_relation
-from satori.ars import perf
 from satori.core.sec.tools import Token
 from satori.core.models import OpenAttribute, Blob
 
@@ -15,12 +14,12 @@ def resolve_model(self, model, rel_model):
     self.model = model
 
 
-class DjangoTypeAlias(model.TypeAlias):
+class ArsDjangoModel(ArsTypeAlias):
     @Argument('model', type=models.base.ModelBase)
-    def __init__(self, model_):
-        super(DjangoTypeAlias, self).__init__(name=(model_._meta.object_name + 'Id'), target_type=model.Int64)
-        self.model = model_
-
+    def __init__(self, model):
+        super(ArsDjangoModel, self).__init__(name=(model._meta.object_name + 'Id'), target_type=ArsInt64)
+        self.model = model
+        
     def do_needs_conversion(self):
         return True
 
@@ -63,7 +62,7 @@ def DjangoModel(model, rel_model=None):
     return DjangoModelType('', (), {'model': model, 'rel_model': rel_model})
 
 
-class DjangoStructType(wrapper.StructType):
+class DjangoStructType(StructType):
     def __new__(mcs, name, bases, dict_):
         model = dict_['model']
         name = model._meta.object_name + 'Struct'
@@ -72,15 +71,14 @@ class DjangoStructType(wrapper.StructType):
 
         for field in model._meta.fields:
             field_type = django_field_to_python_type(model, field)
-            if field_type is not None:
-#                fields.append((field.name, field_type, bool(field.null)))
+            if (field.name != 'model') and (not field.name.startswith('parent_')) and (field_type is not None):
                 fields.append((field.name, field_type, True))
 
         fields.sort()
 
         dict_['fields'] = fields
 
-        return wrapper.StructType.__new__(mcs, name, bases, dict_)
+        return StructType.__new__(mcs, name, bases, dict_)
 
 
 model_struct_map = {}
@@ -93,12 +91,12 @@ def DjangoStruct(model):
 
 
 field_basic_types = {
-    models.AutoField: types.LongType,
-    models.IntegerField: types.IntType,
-    models.CharField: types.StringType,
-    models.TextField: types.StringType,
-    models.BooleanField: types.BooleanType,
-    models.DateTimeField: datetime.datetime,
+    models.AutoField: long,
+    models.IntegerField: int,
+    models.CharField: str,
+    models.TextField: str,
+    models.BooleanField: bool,
+    models.DateTimeField: datetime,
 }
 
 
@@ -139,15 +137,15 @@ def generate_field_procedures(model, field):
 
     @Argument('token', type=Token)
     @Argument('self', type=model)
-    @ReturnValue(type=(field_type, types.NoneType))
+    @ReturnValue(type=(field_type, NoneType))
     def get(token, self):
         return getattr(self, field_name)
 
     @Argument('token', type=Token)
     @Argument('self', type=model)
-    @Argument('value', type=(field_type, types.NoneType))
-    @ReturnValue(type=types.NoneType)
-    def set(token, self, value):
+    @Argument('value', type=field_type)
+    @ReturnValue(type=NoneType)
+    def set(token, self, value=None):
         setattr(self, field_name, value)
         self.save()
         return value
@@ -155,29 +153,29 @@ def generate_field_procedures(model, field):
     return [set, get]
 
 
-class FieldWrapper(wrapper.Wrapper):
+class FieldWrapper(Wrapper):
     def __init__(self, field, parent):
         super(FieldWrapper, self).__init__(field.name, parent)
         self._field = field
 
         for proc in generate_field_procedures(parent._model, field):
-            self._add_child(wrapper.ProcedureWrapper(proc, self))
+            self._add_child(ProcedureWrapper(proc, self))
 
 
-class FilterWrapper(wrapper.ProcedureWrapper):
+class FilterWrapper(ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
 
         @Argument('token', type=Token)
-        @Argument('values', type=(DjangoStruct(model), types.NoneType))
-        @ReturnValue(type=wrapper.TypedList(model))
+        @Argument('values', type=DjangoStruct(model))
+        @ReturnValue(type=TypedList(model))
         def filter(token, values={}):
             return model.objects.filter(**values)
 
         super(FilterWrapper, self).__init__(filter, parent)
 
 
-class GetStructWrapper(wrapper.ProcedureWrapper):
+class GetStructWrapper(ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
 
@@ -197,7 +195,26 @@ class GetStructWrapper(wrapper.ProcedureWrapper):
         super(GetStructWrapper, self).__init__(get_struct, parent)
 
 
-class CreateWrapper(wrapper.ProcedureWrapper):
+class SetStructWrapper(ProcedureWrapper):
+    def __init__(self, parent):
+        model = parent._model
+
+        struct = DjangoStruct(model)
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('value', type=struct)
+        @ReturnValue(type=NoneType)
+        def set_struct(token, self, value):
+            for (name, type, optional) in struct.fields:
+                if (name in value) and (name != 'id'):
+                    setattr(self, name, value[name])
+            self.save()
+
+        super(SetStructWrapper, self).__init__(set_struct, parent)
+
+
+class CreateWrapper(ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
         
@@ -206,7 +223,7 @@ class CreateWrapper(wrapper.ProcedureWrapper):
         @ReturnValue(type=model)
         def create(token, values):
             if 'id' in values:
-            	del values['id']
+                del values['id']
 
             ret = model(**values)
             ret.save()
@@ -215,22 +232,20 @@ class CreateWrapper(wrapper.ProcedureWrapper):
         super(CreateWrapper, self).__init__(create, parent)
 
 
-class DeleteWrapper(wrapper.ProcedureWrapper):
+class DeleteWrapper(ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
-        @ReturnValue(type=types.NoneType)
+        @ReturnValue(type=NoneType)
         def delete(token, self):
-            perf.begin('delete')
             self.delete()
-            perf.end('delete')
 
         super(DeleteWrapper, self).__init__(delete, parent)
 
 
-class DemandRightWrapper(wrapper.ProcedureWrapper):
+class DemandRightWrapper(ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
 
@@ -244,13 +259,13 @@ class DemandRightWrapper(wrapper.ProcedureWrapper):
         super(DemandRightWrapper, self).__init__(demand_right, parent)
 
 
-Attribute = wrapper.Struct('Attribute', (
+Attribute = Struct('Attribute', (
     ('name', str, False),
     ('is_blob', bool, False),
     ('value', str, False)
 ))
 
-class OpenAttributeWrapper(wrapper.Wrapper):
+class OpenAttributeWrapper(Wrapper):
     def __init__(self, parent):
         super(OpenAttributeWrapper, self).__init__('oa', parent)
 
@@ -260,105 +275,166 @@ class OpenAttributeWrapper(wrapper.Wrapper):
             ret = {}
             ret['name'] = oa.name
             if oa.oatype == OpenAttribute.OATYPES_BLOB:
-                ret['value'] = oa.blob.hash
                 ret['is_blob'] = True
+                ret['value'] = oa.blob.hash
             elif oa.oatype == OpenAttribute.OATYPES_STRING:
-                ret['value'] = oa.string_value
                 ret['is_blob'] = False
+                ret['value'] = oa.string_value
             return ret
 
+        def struct_to_oa(self, struct):
+            try:
+                oa = self.attributes.get(name=struct['name'])
+            except:
+                oa = OpenAttribute(object=self, name=struct['name'])
+            if struct['is_blob']:
+                oa.oatype = OpenAttribute.OATYPES_BLOB
+                oa.blob = Blob.objects.get(hash=struct['value'])
+            else:
+                oa.oatype = OpenAttribute.OATYPES_STRING
+                oa.string_value = struct['value']
+            oa.save()
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
-        @ReturnValue(type=Attribute)
+        @ReturnValue(type=(Attribute, NoneType))
         def get(token, self, name):
+            try:
+                oa = self.attributes.get(name=name)
+            except:
+                return None
             return oa_to_struct(self.attributes.get(name=name))
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
-        @ReturnValue(type=wrapper.TypedList(Attribute))
+        @Argument('name', type=str)
+        @ReturnValue(type=str)
+        def get_str(token, self, name):
+            try:
+                oa = self.attributes.get(name=name)
+            except:
+                return None
+            struct = oa_to_struct(oa)
+            if struct['is_blob']:
+            	raise Exception('The attribute is not a string attribute')
+            return struct['value']
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @ReturnValue(type=str)
+        def get_blob(token, self, name):
+            raise Exception('Not implemented')
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @ReturnValue(type=str)
+        def get_blob_hash(token, self, name):
+            try:
+                oa = self.attributes.get(name=name)
+            except:
+                return None
+            struct = oa_to_struct(oa)
+            if not struct['is_blob']:
+            	raise Exception('The attribute is not a blob attribute')
+            return struct['value']
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @ReturnValue(type=TypedList(Attribute))
         def get_list(token, self):
             return [oa_to_struct(oa) for oa in self.attributes.all()]
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
+        @Argument('value', type=Attribute)
+        @ReturnValue(type=NoneType)
+        def set(token, self, value):
+            struct_to_oa(self, value)
+
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
         @Argument('name', type=str)
         @Argument('value', type=str)
-        @ReturnValue(type=types.NoneType)
+        @ReturnValue(type=NoneType)
         def set_str(token, self, name, value):
-            try:
-                oa = self.attributes.get(name=name)
-            except:
-                oa = OpenAttribute(object=self, name=name)
-            oa.oatype = OpenAttribute.OATYPES_STRING
-            oa.string_value = value
-            oa.save()
+            struct_to_oa(self, {'name': name, 'value': value, 'is_blob': False})
+        
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('name', type=str)
+        @Argument('value', type=str)
+        @ReturnValue(type=NoneType)
+        def set_blob(token, self, name, value):
+            raise Exception('Not implemented.')
+
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
         @Argument('value', type=str)
-        @ReturnValue(type=types.NoneType)
-        def set_blob_mem(token, self, name, value):
-            try:
-                oa = self.attributes.get(name=name)
-            except:
-                oa = OpenAttribute(object=self, name=name)
-            blob = Blob()
-            blob.open('w')
-            blob.write(value)
-            blob.close()
-            blob.save()
-            oa.oatype = OpenAttribute.OATYPES_BLOB
-            oa.blob = blob
-            oa.save()
+        @ReturnValue(type=NoneType)
+        def set_blob_hash(token, self, name, value):
+            struct_to_oa(self, {'name': name, 'value': value, 'is_blob': True})
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
-        @Argument('attributes', type=wrapper.TypedList(Attribute))
-        @ReturnValue(type=types.NoneType)
+        @Argument('attributes', type=TypedList(Attribute))
+        @ReturnValue(type=NoneType)
         def set_list(token, self, attributes):
             for struct in attributes:
-                if struct['is_blob']:
-                    raise Exception('Cannot set blob attribute using set_list')
-                try:
-                    oa = self.attributes.get(name=struct['name'])
-                except:
-                    oa = OpenAttribute(object=self, name=struct['name'])
-                oa.oatype = OpenAttribute.OATYPES_STRING
-                oa.string_value = struct['value']
-                oa.save()
+            	struct_to_oa(self, struct)
 
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @Argument('name', type=str)
-        @ReturnValue(type=types.NoneType)
+        @ReturnValue(type=NoneType)
         def delete(token, self, name):
             self.attributes.get(name=name).delete()
 
-        self._add_child(wrapper.ProcedureWrapper(get, self))
-        self._add_child(wrapper.ProcedureWrapper(get_list, self))
-        self._add_child(wrapper.ProcedureWrapper(set_str, self))
-        self._add_child(wrapper.ProcedureWrapper(set_blob_mem, self))
-        self._add_child(wrapper.ProcedureWrapper(set_list, self))
-        self._add_child(wrapper.ProcedureWrapper(delete, self))
+        self._add_child(ProcedureWrapper(get, self))
+        self._add_child(ProcedureWrapper(get_str, self))
+        self._add_child(ProcedureWrapper(get_blob, self))
+        self._add_child(ProcedureWrapper(get_blob_hash, self))
+        self._add_child(ProcedureWrapper(get_list, self))
+        self._add_child(ProcedureWrapper(set, self))
+        self._add_child(ProcedureWrapper(set_str, self))
+        self._add_child(ProcedureWrapper(set_blob, self))
+        self._add_child(ProcedureWrapper(set_blob_hash, self))
+        self._add_child(ProcedureWrapper(set_list, self))
+        self._add_child(ProcedureWrapper(delete, self))
 
 
-class ModelWrapper(wrapper.StaticWrapper):
+class ModelWrapperClass(StaticWrapper):
     def __init__(self, model):
-        super(ModelWrapper, self).__init__(model._meta.object_name)
+        if len(model._meta.parents) > 1:
+            raise Exception('Wrappers don\'t support models with multiple bases.')
+
+        base_wrapper = None
+        if model._meta.parents:
+            base_wrapper = ModelWrapper(model._meta.parents.keys()[0])
+
+        super(ModelWrapperClass, self).__init__(model._meta.object_name, base_wrapper)
         self._model = model
         
-        for field in model._meta.fields:
-            self._add_child(FieldWrapper(field, self))
+#        for field in model._meta.local_fields:
+#            self._add_child(FieldWrapper(field, self))
 
         self._add_child(FilterWrapper(self))
         self._add_child(GetStructWrapper(self))
+        self._add_child(SetStructWrapper(self))
         self._add_child(CreateWrapper(self))
         self._add_child(DeleteWrapper(self))
-        self._add_child(DemandRightWrapper(self))
-        self._add_child(OpenAttributeWrapper(self))
+
+
+model_wrappers = {}
+
+def ModelWrapper(model):
+    if model not in model_wrappers:
+        model_wrappers[model] = ModelWrapperClass(model)
+    return model_wrappers[model]
 
 
 class TransactionMiddleware(object):

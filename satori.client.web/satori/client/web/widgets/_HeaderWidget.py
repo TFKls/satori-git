@@ -32,3 +32,5 @@ class HeaderWidget(Widget):
         addwidget(not user, 'Register', 'registerform', False)
         if user:
             self.username = user.fullname
+        if contest:
+            self.contest = contest.name

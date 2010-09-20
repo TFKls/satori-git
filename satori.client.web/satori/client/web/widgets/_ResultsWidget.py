@@ -18,15 +18,15 @@ class ResultsWidget(Widget):
             shown = d['shown']
         self.submits = []
         for o in Submit.filter(): # TODO: correct 
-            if o.owner.contest==c:
+            if c.id==o.contestant.contest.id:
                 s = {}
                 id = str(o.id)
                 s["id"] = id
                 s["time"] = o.time
-                s["user"] = o.owner.user.fullname
+                s["user"] = o.contestant.id
                 s["problem"] = o.problem.code
-                s["status"] = o.shortstatus
-                s["details"] = o.longstatus
+                s["status"] = "?"
+                s["details"] = "Submit details"
                 _shown = deepcopy(shown)
                 if id in _shown:
                     s["showdetails"] = True
@@ -39,3 +39,4 @@ class ResultsWidget(Widget):
                 if _shown == []:
                     del d['shown']
                 s["link"] = GetLink(_params,'')
+                self.submits.append(s)

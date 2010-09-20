@@ -1,14 +1,10 @@
-<h3>Messages</h3>
+<!--<h3>Messages</h3> -->
 
 {% for msg in widget.messages %}
-<div class = "newsmsg">
-<span class = "{{ msg.type }}">
-    <div class = "newstitle">
-        {{ msg.topic }}
-    </div>
-    <div class = "newscontent">
-        {{ msg.content|safe }}
-    </div>
-</span>
+<div class = "newsmsg bDots">
+    <span class = "{{ msg.type }}">
+        <h4>{{ msg.topic }}</h4>
+        {{ msg.content|safe }} 
+    </span>
 </div>
 {% endfor %}

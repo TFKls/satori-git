@@ -1,38 +1,16 @@
 body {
-    margin: 0;
-    padding: 0;
-    border: 0;
     font-family: Arial;
 	background: #FFFFFF;
-	min-width: 600px;
-	height: 100%;	
-	min-height: 100%;
     color: #444444;
 }
 
-#container {
-    margin-left: 2em;
-    margin-right: 1em;
+.col1,
+.col2,
+.col3 {
 }
 
-#topMenu {
-    text-align: right;
-    color: #f0f0f0;
-    margin-bottom: 2px;
-}
-
-#topMenu a {
-    margin-right: 2em;
-    margin-left: 2em;
-    font-weight: bold;
-    text-decoration: none;
-    color: #f0f0f0;
-    font-size: 12px;
-    display: inline;
-}
-
-#content {
-    margin: 1em;
+.col2 {
+    border-right: 1px dotted #DDDDDD;
 }
 
 #footer{
@@ -43,11 +21,6 @@ body {
    border-top: 1px dotted #DDDDDD;
 }
 
-.logo{
-    margin: 1em 1em 1em 0em;
-    height: 55px;
-}
-
 .toLeft {
     float: left;
 }
@@ -56,59 +29,6 @@ body {
     float: right;
 }
 
-.colmask {
-	position:relative;	/* This fixes the IE7 overflow hidden bug */
-	clear:both;
-	float:left;
-	width:100%;			/* width of whole page */
-	overflow:hidden;		/* This chops off any overhanging divs */
-}
-/* common column settings */
-.colright,
-.colmid,
-.colleft {
-	float:left;
-	width:100%;			/* width of page */
-	position:relative;
-}
-.col2 {
-    border-right: 1px dotted #DDDDDD;
-}
-.col1,
-.col2,
-.col3 {
-	float:left;
-	position:relative;
-	padding:0 0 1em 0;	/* no left and right padding on columns, we just make them narrower instead 
-					only padding top and bottom is included here, make it whatever value you need */
-	overflow:hidden;
-    min-height: 600px;
-}
-/* 3 Column settings */
-.threecol {
-	/*background: #606060;*/	/* right column background colour */
-}
-.threecol .colmid {
-	right:20%;			/* width of the right column */
-	/*background:#fff;	*/	/* center column background colour */
-}
-.threecol .colleft {
-	right:65%;			/* width of the middle column */
-/*	background:#f4f4f4;*/	/* left column background colour */
-}
-.threecol .col1 {
-	width:65%;			/* width of center column content (column width minus padding on either side) */
-	left:100%;			/* 100% plus left padding of center column */
-}
-.threecol .col2 {
-	width:15%;			/* Width of left column content (column width minus padding on either side) */
-	left:20%;			/* width of (right column) plus (center column left and right padding) plus (left column left padding) */
-}
-.threecol .col3 {
-	width:19%;			/* Width of right column content (column width minus padding on either side) */
-	left:85%;			/* Please make note of the brackets here:
-					(100% - left column width) plus (center column left and right padding) plus (left column left and right padding) plus (right column left padding) */
-}
 /* Footer styles */
 
 .margL {
@@ -121,39 +41,29 @@ body {
     text-align: center;
     color: #000000;
 }
-
 /*                                  HEADER */
 #header {
 	clear: both;
 	float: left;
-	width: 100%;
-   font-family: "Arial", Sans-Serif;
-   background-image: url("gradient.png");
-   background-repeat: repeat-x;
-   background-color: #000000;
-   background-position: left;
-}
-
-#header img {
-	float: left;
-	margin: 1em 1em 1em 1em;
+    font-family: "Arial", Sans-Serif;
+    background-image: url("gradient.png");
+    background-repeat: repeat-x;
+    background-color: #000000;
+    background-position: left;
 }
 
 #header ul {
 	list-style: none;
-	padding: 0em 0em 0em 0em;
-   margin: 0em 0em 0em 0em;
 }
 
 #header ul.headerLeftUl {
-	margin-left: 1em;
 	float: left;
 	font-size: 100%;
 }
+
 #header ul.headerRightUl {
 	float: right;
 	font-size: 90%;
-   margin-right: 1em;
 }
 
 #header ul li {
@@ -166,27 +76,18 @@ body {
 #header ul li {
 	display:block;
 	margin:0 0 0 0px;
-		position:relative;
+	position:relative;
 	float: left;
 	line-height:1.3em;
     text-align:center;
 	color: #CCCCCC;
 }
 
-#header ul li a {
+#header ul li a, #header ul li a:visited, #header ul li a:active {
     text-align:center;
 	text-decoration:none;
 	color: #CCCCCC;
-}
-
-#header ul.headerLeftUl li {	
-   padding:3px 2em;
-	left:0em;
-}
-
-#header ul.headerRightUl li {
-	padding:3px 1em;
-	right:0em;
+	font-size: 95%;
 }
 
 
@@ -204,15 +105,19 @@ body {
 
 	top: 0px;
 }
+
 #navigationPanel ul{
 	list-style-type: none;
 	padding: 0;
 	margin-top: 1em;
 	top: 0px;
 }
+
 #navigationPanel li {
 	padding: 1em 0 0em 0em;
+    text-align: left;
 }
+
 #navigationPanel a, a:visited, a:active{
 	color: #444444;
 	display: block;
@@ -221,92 +126,29 @@ body {
     font-size: 90%;
 }
 
-.hotBox{
-	/*border:solid 1px #777777;#90AC13;*/
-
-	padding: 0;
-	margin: 1em 0em 1em 1em;
-	/*-moz-border-radius: 15px 0 0px 0;*/
-	font-family: "Arial", Sans-Serif;
-    font-size: 90%;
-}
-.hotBoxQuestions ol{
-	font-size: 70%;
-	margin: 1em 0em 0em 2em;
-	padding: 0;
-}
-.hotBoxQuestions li{
-	margin: 0.5em 0em 0em 0em;
-}
-.hotBoxResults ul{
-	margin: 1em 0em 0em 1em;
-	padding: 0;
-}
-.hotBoxResults li{
-	margin: 0.5em 0em 0em 0em;
-}
-
-.hotBoxRanking{
-	
-}
-.hotBoxTitle {
-	/*border-bottom: 1px solid #DEDEDE;
-	text-align: center;*/
-	border-bottom:1px dotted #DDDDDD; /*#90AC13;*/
-	font-weight:bold;
-	padding:4px;
-}
-.hotBoxTitle p {
-	margin: 5px 5px 5px 5px;
-	font-family: "Arial", Sans-Serif;	
-	font-weight: bold;
-	padding-bottom: 4px;
-	color: #777777;/*#6B800D;*/
-}
-
-.hotBoxRanking table {
-	width: 100%;
-	text-align: center;
-	padding: 0;
-	margin: 0;
-	border-collapse: collapse;
- 	border-spacing: 0px;
-    font-size: 90%;
-}
-.hotBoxRanking tr {
-	
-}
-.hotBoxRanking td {
-/*	border-top: 1px dotted #DDDDDD;*/
-	padding: 5px;
-}
-.hotBoxRanking th {
-	border-bottom: 1px dotted #DDDDDD;*/
-	text-transform: uppercase;
-	font-size: 80%;
-	border-top: 0px;
-    margin-bottom: 15px;
-}
-
-.tcslogo {
-    text-align: center;
-    width: 100%;
-    margin-top: 5px;
-}
-
 .logos {
-    height: 100px;
-    width:100%;
+    text-align: center;
 }
 
 .logos td {
-    width: 33%;
     text-align: center;
 }
 
-.news {
-    border-top: 1px dotted #DDDDDD;
-    padding-top: 1em;
+.newsmsg {
+    padding-bottom: 1em;
     margin-top: 1em;
     font-size: 90%;
+}
+
+.bDots {
+    border-bottom: 1px dotted #DDDDDD;
+}
+.rDots {
+    border-right: 1px dotted #DDDDDD;
+}
+.tDots {
+    border-top: 1px dotted #DDDDDD;
+}
+.lDots { 
+    border-left: 1px dotted #DDDDDD;
 }

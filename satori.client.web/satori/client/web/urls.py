@@ -19,6 +19,8 @@ urlpatterns = patterns('',
         {'document_root': os.path.join(PROJECT_PATH,'files')}),
     (r'^process\.(?P<argstr>.*)\.$','satori.client.web.main.loadPOST'),
     (r'^process\.(?P<argstr>.*)$','satori.client.web.main.loadPOST'),
+    (r'^getfile\.(?P<argstr>.*)\.$','satori.client.web.main.loadfile'),
+    (r'^getfile\.(?P<argstr>.*)$','satori.client.web.main.loadfile'),
     (r'^(?P<argstr>.*)\.(?P<path>.*)$', 'satori.client.web.main.load'),
     (r'^(?P<argstr>.*)$', 'satori.client.web.main.load')
      

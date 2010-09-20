@@ -11,8 +11,8 @@ from satori.core.sec.tools import Token
 from satori.ars.wrapper import Struct, StaticWrapper, TypedList
 from satori.core.cwrapper import Attribute
 from satori.core.judge_dispatcher import JudgeDispatcherClient
-import Test as ApiTest
-import Submit as ApiSubmit
+import ApiTest
+import ApiSubmit
 
 judge = StaticWrapper('Judge')
 
@@ -26,7 +26,7 @@ SubmitToCheck = Struct('SubmitToCheck', (
 @Argument('token', type=Token)
 @ReturnValue(type=(SubmitToCheck, NoneType))
 def get_next(token):
-    u = token.User
+    u = token.user
     next = JudgeDispatcherClient.get_instance().get_next(u)
     print next
     if next.test_result_id is None:
@@ -43,5 +43,5 @@ def get_next(token):
 @Argument('result', type=TypedList(Attribute))
 @ReturnValue(type=NoneType)
 def set_result(token, test_result, result):
-    pass
+    JudgeDispatcherClient.get_instance().set_result(test_result)
 

@@ -14,7 +14,7 @@ def export_thrift():
     import satori.core.api
     from satori.ars.thrift import ThriftWriter
     writer = ThriftWriter()
-    writer.writeTo(wrapper.generate_contracts(), stdout)
+    writer.write_to(wrapper.generate_interface(), stdout)
 
 def start_server_event_master():
     from setproctitle import setproctitle
@@ -38,7 +38,7 @@ def start_server_thrift_server():
     import satori.core.api
     from satori.ars.thrift import ThriftServer
     wrapper.register_middleware(cwrapper.TransactionMiddleware())
-    server = ThriftServer(TThreadedServer, TServerSocket(port=satori.core.setup.settings.THRIFT_PORT), wrapper.generate_contracts())
+    server = ThriftServer(TThreadedServer, TServerSocket(port=satori.core.setup.settings.THRIFT_PORT), wrapper.generate_interface())
     print 'thrift server starting'
     server.run()
 
@@ -85,10 +85,10 @@ def start_server_judge_dispatcher():
     from setproctitle import setproctitle
     setproctitle('satori: judge dispatcher')
     from multiprocessing.connection import Client
-    from satori.events import Slave
-    from satori.core.judge_dispatcher import judge_dispatcher
-    slave = Slave(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
-    slave.schedule(judge_dispatcher())
+    from satori.events import Slave2
+    from satori.core.judge_dispatcher import JudgeDispatcher
+    slave = Slave2(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
+    slave.add_client(JudgeDispatcher())
     print 'judge dispatcher starting'
     slave.run()
 
@@ -96,52 +96,16 @@ def start_server_judge_generator():
     from setproctitle import setproctitle
     setproctitle('satori: judge generator')
     from multiprocessing.connection import Client
-    from satori.events import Slave
-    from satori.core.judge_dispatcher import judge_generator
-    slave = Slave(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
-    slave.schedule(judge_generator(slave))
+    from satori.events import Slave2
+    from satori.core.judge_dispatcher import JudgeGenerator
+    slave = Slave2(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
+    slave.add_client(JudgeGenerator())
     print 'judge generator starting'
     try:
         slave.run()
     except:
         traceback.print_exc()
     print 'judge generator finishing'
-
-
-def dummy_test():
-    from setproctitle import setproctitle
-    setproctitle('satori: dummy test')
-    from multiprocessing.connection import Client
-    from satori.events import Slave
-    from satori.core.judge_dispatcher import judge_generator
-    from satori.events import QueueId, Attach, Map, Receive, Send, Event
-    slave = Slave(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
-
-    def gen_1():
-        print 'q0'
-        yield Attach('q1')
-        print 'q1'
-        yield Attach('q2')
-        print 'q2'
-        yield Attach('q3')
-        print 'q3'
-
-    def gen_2():
-        print 'R0'
-        yield Receive()
-        print 'R1'
-        yield Receive()
-        print 'R2'
-        yield Receive()
-        print 'R3'
-
-    slave.schedule(gen_1())
-    slave.schedule(gen_2())
-    from time import sleep
-    sleep(20)
-    print 'dummy test starting'
-    slave.run()
-
 
 
 def start_server():
@@ -181,10 +145,6 @@ def start_server():
     judge_generator = Process(target=start_server_judge_generator)
     judge_generator.start()
     processes.append(judge_generator)
-    
-    dummy_testp = Process(target=dummy_test)
-    dummy_testp.start()
-    processes.append(dummy_testp)
     
     from signal import signal, SIGINT, SIGTERM, pause
 

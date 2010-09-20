@@ -1,11 +1,14 @@
 <h2>Submit</h2>
-<form action="process.submit" method="post">
+<form action="process.submit" method="post" enctype="multipart/form-data">
     <select name="problem">
         {% for p in widget.problems %}
             <option value="{{p.id}}">{{p.code}}: {{p.title}}</option>
         {% endfor %}
     </select>
+    <br/>
+    <input type="file" name="content"/>
+    <br/>
     <input type="submit" class="button" value="Submit"/>
-    <input type="hidden" name="cid" value="{{ widget.cid }}"/>
     <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
+    <input type="hidden" name="back_path" value="{{ widget.back_path }}"/>
 </form>

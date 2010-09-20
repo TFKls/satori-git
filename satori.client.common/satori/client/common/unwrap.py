@@ -1,11 +1,11 @@
-from satori.ars.model import *
-from satori.ars.wrapper import DateTimeTypeAlias, NullableArsStructure
+from satori.ars.model import ArsTypeAlias, ArsInt64, ArsStructure
+from satori.ars.wrapper import ArsDateTime, ArsNullableStructure
 from satori.ars import perf
 from token_container import token_container
 
-class UnwrapTypeAlias(TypeAlias):
+class ArsUnwrapClass(ArsTypeAlias):
     def __init__(self, cls):
-        super(UnwrapTypeAlias, self).__init__(cls.__name__, Int64)
+        super(ArsUnwrapClass, self).__init__(name=cls.__name__, target_type=ArsInt64)
         self.cls = cls
 
     def do_needs_conversion(self):
@@ -18,7 +18,12 @@ class UnwrapTypeAlias(TypeAlias):
         return self.cls(value)
 
 
-def unwrap_proc(_proc):
+class UnwrapBase(object):
+    def __init__(self, id, first=True):
+        super(UnwrapBase, self).__init__()
+
+
+def unwrap_procedure(_proc):
     _procname = _proc.name
     _implementation = _proc.implementation
     _rettype = _proc.return_type
@@ -66,64 +71,103 @@ def unwrap_proc(_proc):
 
     return func
 
-def unwrap_class(contract):
-    class_name = contract.name
-    class_bases = (object, )
+def unwrap_service(service, base, fields, BlobReader, BlobWriter):
+    class_name = service.name
     class_dict = {}
 
-    for proc in contract.procedures:
+    for proc in service.procedures:
         meth_name = proc.name.split('_', 1)[1]
-        class_dict[meth_name] = unwrap_proc(proc)
-
-    def __init__(self, id):
-        self._id = id
-
-    def __getattr__(self, name):
-        if name == 'id':
-            return self._id
-        if (name[-4:] == '_get') or (name[-4:] == '_set'):
-            raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
-        if hasattr(self, name + '_get'):
-            return getattr(self, name + '_get')()
+        if meth_name.endswith('_get_blob'):
+            group_name = meth_name[:-9]
+            if group_name == 'oa':
+            	group_name = None
+            def blob_get(self, name):
+                return BlobReader(class_name, self.id, name, group_name)
+            class_dict[meth_name] = blob_get
+        elif meth_name.endswith('_set_blob'):
+            group_name = meth_name[:-9]
+            if group_name == 'oa':
+            	group_name = None
+            def blob_set(self, name, length):
+                return BlobWriter(length, class_name, self.id, name, group_name)
+            class_dict[meth_name] = blob_set
         else:
-            raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
-        
-    def __setattr__(self, name, value):
-        if name[-4:] == '_set':
-            return super(self.__class__, self).__setattr__(name, value)
-        if hasattr(self, name + '_set'):
-            return getattr(self, name + '_set')(value)
-        else:
-            return super(self.__class__, self).__setattr__(name, value)
+            class_dict[meth_name] = unwrap_procedure(proc)
 
-    class_dict['__init__'] = __init__
-    class_dict['__getattr__'] = __getattr__
-    class_dict['__setattr__'] = __setattr__
+    if fields is not None:
+        def __init__(self, id, first=True):
+            super(new_class, self).__init__(id, False)
+            if first:
+                self._id = id
+                self._struct = None
 
-    return type(class_name, class_bases, class_dict)
+        def __getattr__(self, name):
+            if name in fields:
+                if self._struct is None:
+                    self._struct = self.get_struct()
+                if name in self._struct:
+                    return self._struct[name]
+                else:
+                    # or raise error?
+                    return None
+            else:
+                raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
+            
+        def __setattr__(self, name, value):
+            if name == 'id':
+                raise Exception('Object id cannot be changed')
 
-def unwrap_classes(contracts):
-    types = NamedTuple()
-    for contract in contracts:
-        types.extend(namedTypes(contract))
+            if name in fields:
+                self.set_struct({name: value})
+                if self._struct is not None:
+                    self._struct[name] = value
+            else:
+                return super(new_class, self).__setattr__(name, value)
 
-    for type in types:
+        class_dict['__init__'] = __init__
+        class_dict['__getattr__'] = __getattr__
+        class_dict['__setattr__'] = __setattr__
+
+    new_class = type(class_name, (base,), class_dict)
+    return new_class
+
+
+def unwrap_interface(interface, BlobReader, BlobWriter):
+    for type in interface.types:
         if type.name == 'DateTime':
-            type.converter = DateTimeTypeAlias
-        if type is Structure:
-            if type.fields and (type.fields[0].name == 'null_values'):
-                newtype = NullableArsStructure(name=type.name)
-                for field in type.fields[1:]:
-                    newtype.add_field(field)
+            type.converter = ArsDateTime()
+        elif isinstance(type, ArsStructure):
+            if type.fields and (type.fields[0].name == 'null_fields'):
+                newtype = ArsNullableStructure(name=type.name)
+                for field in type.fields:
+                    if field.name != 'null_fields':
+                        newtype.add_field(field)
                 type.converter = newtype
 
     classes = {}
-    for contract in contracts:
-        newcls = unwrap_class(contract)
-        classes[contract.name] = newcls
+    for service in interface.services:
+        if service.base:
+            base = classes[service.base.name]
+        else:
+            base = UnwrapBase
 
-        if (contract.name + 'Id') in types.names:
-            types[contract.name + 'Id'].converter = UnwrapTypeAlias(newcls)
+        if service.name + 'Struct' in interface.types:
+            struct = interface.types[service.name + 'Struct']
+            if isinstance(struct.converter, ArsNullableStructure):
+                fields = [field.name for field in struct.fields][1:]
+            else:
+                fields = [field.name for field in struct.fields]
+        else:
+            fields = None
+            
+        newcls = unwrap_service(service, base, fields, BlobReader, BlobWriter)
+        classes[service.name] = newcls
+
+        if (service.name + 'Id') in interface.types:
+            interface.types[service.name + 'Id'].converter = ArsUnwrapClass(newcls)
+    
+    for constant in interface.constants:
+    	classes[constant.name] = constant.type.convert_from_ars(constant.value)
 
     return classes
 

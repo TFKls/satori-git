@@ -12,5 +12,5 @@ class SubmitWidget(Widget):
         self.problems = []
         self.cid = CurrentContestant(params).id
         for p in ProblemMapping.filter({'contest':c}):
-            if Allowed(p,'submit'):
+            if Allowed(p,'SUBMIT'):
                 self.problems.append(p)
