@@ -280,20 +280,6 @@ class StaticWrapper(Wrapper):
         self._add_child(ProcedureWrapper(proc, self))
 
 
-#class WrapperBase(type):
-#    def __new__(mcs, name, bases, dict_):
-#        newdict = {}
-#
-#        for elem in dict_.itervalues():
-#            if isinstance(elem, Wrapper):
-#                for (name, proc) in elem._generate_procedures().iteritems():
-#                    newdict[name] = staticmethod(proc)
-#                    
-#        return type.__new__(mcs, name, bases, newdict)
-#
-#class WrapperClass(object):
-#    __metaclass__ = WrapperBase
-
 def is_nonetype_constraint(constraint):
     return isinstance(constraint, TypeConstraint) and (constraint.type == NoneType)
 
