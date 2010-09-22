@@ -5,7 +5,7 @@ from datetime import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
 from satori.ars.wrapper import StructType, Struct, TypedList, Wrapper, ProcedureWrapper, StaticWrapper
 from satori.ars.model import ArsInt64, ArsTypeAlias
-from django.db import models, transaction
+from django.db import models, transaction, connection
 from django.db.models.fields.related import add_lazy_relation
 from satori.core.sec.tools import Token
 from satori.core.models import OpenAttribute, Blob
@@ -521,5 +521,37 @@ class TransactionMiddleware(object):
             if transaction.is_dirty():
                 transaction.commit()
             transaction.leave_transaction_management()
+        return ret
+
+
+class TokenVerifyMiddleware(object):
+    def process_request(self, proc, args, kwargs):
+        if proc.parameters and (proc.parameters[0].name == 'token'):
+            if args:
+            	token = args[0]
+            else:
+            	token = kwargs['token']
+
+            token = Token(token)
+
+            if not token.valid:
+            	raise Exception('The provided token has expired')
+
+            if token.user_id:
+            	userid = int(token.user_id)
+            else:
+            	userid = -2
+        else:
+        	userid = -2
+
+        cursor = connection.cursor()
+        cursor.callproc('set_user_id', [userid])
+        cursor.close()
+
+
+    def process_exception(self, proc, args, kwargs, exception):
+        pass
+
+    def process_response(self, proc, args, kwargs, ret):
         return ret
 
