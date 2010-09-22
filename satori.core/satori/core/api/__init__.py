@@ -6,6 +6,7 @@ import ApiContestRanking
 import ApiGlobal
 import ApiJudge
 import ApiLogin
+import ApiMachine
 import ApiMessageContest
 import ApiMessageGlobal
 import ApiMessage

@@ -415,6 +415,12 @@ class Signature(object):
                 self.arguments[name] = other.arguments[name]
         return self
 
+    def remove_argument(self, name):
+        if name in self.arguments:
+            positional = list(self.positional)
+            positional.remove(name)
+            del self.arguemnts[name]
+
     def set(self, callable_):                                         # pylint: disable-msg=C0103
         """Set this Signature for a given callable.
         """

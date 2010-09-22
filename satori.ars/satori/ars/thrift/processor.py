@@ -6,8 +6,9 @@ import traceback
 
 from thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
 
-from satori.objects import Argument, DispatchOn
+from satori.objects import Argument, DispatchOn, Signature
 from satori.ars.model import *
+from satori.ars.server import server_info
 
 class ThriftProcessor(TProcessor):
     """ARS implementation of thrift.Thrift.TProcessor.
@@ -17,7 +18,7 @@ class ThriftProcessor(TProcessor):
     def __init__(self, interface):
         self._procedures = ArsNamedTuple()
         for service in interface.services:
-        	self._procedures.extend(service.procedures)
+            self._procedures.extend(service.procedures)
         self.seqid = 0
 
     ATOMIC_TYPE = {
@@ -226,6 +227,16 @@ class ThriftProcessor(TProcessor):
             
             # call the registered implementation
 #            perf.begin('call')
+
+            server_info.client_ip = None
+            server_info.client_port = None
+            try:
+                info = iproto.trans.handle.getpeername()
+                server_info.client_ip = str(info[0])
+                server_info.client_port = int(info[1])
+            except:
+                pass
+            print 'Server serving client: ', server_info.client_ip, ':', server_info.client_port
             result = {}
             try:
                 result['result'] = procedure.implementation(**arguments)
@@ -288,9 +299,9 @@ class ThriftProcessor(TProcessor):
 #        perf.end('call')
 
         if 'result' in result:
-        	return result['result']
+            return result['result']
         if 'error' in result:
-        	raise result['error']
+            raise result['error']
         return None
 #       previous line not compatible with Thrift, should be:
 #        raise TApplicationException(TApplicationException.MISSING_RESULT, "Static_call_me failed: unknown result");

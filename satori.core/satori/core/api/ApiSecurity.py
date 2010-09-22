@@ -19,8 +19,9 @@ from satori.core.sec.tools import RightCheck, RoleSet, Token
 from satori.core.sec.store import Store
 
 from satori.objects import DispatchOn, Argument, ReturnValue
-from satori.core.models import Object, User, Login, OpenIdentity, Global, Role
+from satori.core.models import Object, User, Login, OpenIdentity, Global, Role, Machine
 from satori.ars.wrapper import Struct, StaticWrapper, TypedMap
+from satori.ars.server import server_info
 
 def openid_salt():
     chars = string.letters + string.digits
@@ -284,15 +285,11 @@ def openid_add_finish(token, arg_map, return_to):
     return res
 
 @security.method
-@Argument('ip', type=str)
 @Argument('secret', type=str)
 @ReturnValue(type=Token)
-def machine_login(ip, secret):
-    for machine in Machine.objects.filter(secret=secret):
-        net = ipaddr.IPv4Network(machine.address + '/' + machine.netmask)
-        addr = ipaddr.IPv4Address(ip)
-        if addr in net:
-        	  return Token(user=machine, auth='machine', validity=timedelta(hours=24))
+def machine_login(secret):
+    for machine in Machine.objects.all():
+        if machine.check_ip(server_info.client_ip) and machine.check_secret(secret):
+            return Token(user=machine, auth='machine', validity=timedelta(hours=24))
 
 security._fill_module(__name__)
-

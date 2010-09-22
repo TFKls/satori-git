@@ -97,6 +97,7 @@ field_basic_types = {
     models.TextField: str,
     models.BooleanField: bool,
     models.DateTimeField: datetime,
+    models.IPAddressField: str,
 }
 
 

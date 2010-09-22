@@ -10,6 +10,7 @@ from satori.core.models._Contest import Contest
 from satori.core.models._ContestRanking import ContestRanking
 from satori.core.models._Global import Global
 from satori.core.models._Login import Login
+from satori.core.models._Machine import Machine
 from satori.core.models._Message import Message
 from satori.core.models._MessageGlobal import MessageGlobal
 from satori.core.models._MessageContest import MessageContest
