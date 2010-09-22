@@ -35,8 +35,8 @@ def get_next(token):
     	return None
     ret = {}
     ret['test_result'] = TestResult.objects.get(id=next.test_result_id)
-    ret['test_data'] = ApiTest.Test_data_get_list(token, ret['test_result'].test)
-    ret['submit_data'] = ApiSubmit.Submit_data_get_list(token, ret['test_result'].submit)
+    ret['test_data'] = ApiTest.Test_data_get_list.implementation(token, ret['test_result'].test)
+    ret['submit_data'] = ApiSubmit.Submit_data_get_list.implementation(token, ret['test_result'].submit)
     return ret
 
 @judge.method
@@ -45,6 +45,6 @@ def get_next(token):
 @Argument('result', type=TypedList(Attribute))
 @ReturnValue(type=NoneType)
 def set_result(token, test_result, result):
-    ApiTestResult.TestResult_oa_list_set(result)
+    ApiTestResult.TestResult_oa_list_set.implementation(result)
     JudgeDispatcherClient.get_instance().set_result(test_result)
 

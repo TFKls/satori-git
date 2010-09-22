@@ -105,6 +105,7 @@ def submit(token, self, problem_mapping, content, filename):
     submit.contestant = contestant
     submit.problem = problem_mapping
 	submit.save()
+	Privilege(object=submit, role=contestant, right='VIEW').save()
 	OpenAttribute(object=submit.data, name='filename', oatype=OpenAttribute.OATYPES_STRING, string_value=filename).save()
 	blob = Blob()
 	blob.open('w')

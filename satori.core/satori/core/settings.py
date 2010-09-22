@@ -41,6 +41,9 @@ if getpass.getuser() == 'duraj':
 	THRIFT_PORT = 36889
 	BLOB_PORT = 36887
 
+ADMIN_NAME = 'admin'
+ADMIN_PASSWORD = 'admin'
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.

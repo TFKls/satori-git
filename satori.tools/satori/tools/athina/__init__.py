@@ -142,32 +142,23 @@ def athina_import():
 #    print 'submits:  ', submits
 
 
-    from satori.client.common import Security, Privilege, set_token, User, Contest, Problem, TestSuite, Test, Submit, ProblemMapping, TestMapping
+    from satori.client.common.remote import Security, Privilege, token_container, User, Contest, Problem, TestSuite, Test, Submit, ProblemMapping, TestMapping
     try:
         Security.register(options.user, options.password, options.user)
     except:
         pass
 
     mytoken = Security.login(options.user, options.password)
-    set_token(mytoken)
-
-    try:
-        Privilege.create_global(role=Security.whoami(), right='MANAGE_CONTESTS')
-    except:
-        pass
-    try:
-        Privilege.create_global(role=Security.whoami(), right='MANAGE_PROBLEMS')
-    except:
-        pass
-
-    
+    token_container.set_token(mytoken)
 
     try:
         contest = Contest.create_contest(name=options.name)
     except:
-        contest = Contest.filter(name=options.name)[0]
+        contest = Contest.filter({'name':options.name})[0]
     try:
-        Privilege.create(object=contest, role=contest.contestant_role, right='SUBMIT')
+        Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'SUBMIT'})
+        Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'VIEW'})
+        Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'VIEWTASKS'})
     except:
         pass
 
@@ -176,7 +167,7 @@ def athina_import():
         try:
             user['object'] = Security.register(login=options.name + '_' + user['login'], password=user['password'], fullname=user['fullname'])
         except:
-            user['object'] = User.filter(login=options.name + '_' + user['login'])[0]
+            user['object'] = User.filter({'login':options.name + '_' + user['login']})[0]
         try:
             user['contestant'] = contest.create_contestant([user['object']])
         except:
@@ -190,10 +181,10 @@ def athina_import():
         try:
         	problem['object'] = Problem.create_problem(name=options.name + '_' + problem['problem'])
         except:
-            problem['object'] = Problem.filter(name=options.name + '_' + problem['problem'])[0]
+            problem['object'] = Problem.filter({'name':options.name + '_' + problem['problem']})[0]
 
         try:
-        	problem['testsuite'] = TestSuite.create(name=options.name + '_' + problem['problem'] + '_default', owner = Security.whoami(), problem = problem['object'], dispatcher = 'fully.qualified.name')
+            problem['testsuite'] = TestSuite.create({'name':options.name + '_' + problem['problem'] + '_default', 'owner':Security.whoami(), 'problem':problem['object'], 'dispatcher':'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators':'satori.core.judge_dispatcher.default_status_accumulator'})
             if problem['judge'] != None:
                 problem['testsuite'].oa_set_blob('judge', problem['judge'])
             if problem['checker'] != None:
@@ -201,7 +192,7 @@ def athina_import():
             if problem['sizelimit'] != None:
                 problem['testsuite'].oa_set_str('sizelimit', str(problem['sizelimit']))
             for num, test in problem['tests'].iteritems():
-                test['object'] = Test.create(name=options.name + '_' + problem['problem'] + '_default_' + str(test['test']), owner = Security.whoami(), problem = problem['object'], environment = options.environment)
+            	test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'owner':Security.whoami(), 'problem':problem['object'], 'environment':options.environment})
                 if test['input'] != None:
                     test['object'].oa_set_blob('input', test['input'])
                 if test['output'] != None:
@@ -210,23 +201,23 @@ def athina_import():
                     test['object'].oa_set_str('memlimit', str(test['memlimit']))
                 if test['timelimit'] != None:
                     test['object'].oa_set_str('timelimit', str(test['timelimit']))
-                TestMapping.create(test=test['object'], suite=problem['testsuite'], order=test['test'])
+                TestMapping.create({'test':test['object'], 'suite':problem['testsuite'], 'order':test['test']})
         except:
-            problem['testsuite'] = TestSuite.filter(name=options.name + '_' + problem['problem'] + '_default')[0]
+            problem['testsuite'] = TestSuite.filter({'name':options.name + '_' + problem['problem'] + '_default'})[0]
 
         try:
-            problem['mapping'] = ProblemMapping.create(contest=contest, problem=problem['object'], code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite'])
+            problem['mapping'] = ProblemMapping.create({'contest':contest, 'problem':problem['object'], 'code':problem['problem'], 'title':problem['problem'], 'default_test_suite':problem['testsuite']})
         except:
-            problem['mapping'] = ProblemMapping.filter(contest=contest, problem=problem['object'])[0]
+            problem['mapping'] = ProblemMapping.filter({'contest':contest, 'problem':problem['object']})[0]
 
     print problems
 
     for id, submit in submits.iteritems():
     	print ' -> submit ', id
     	user = users[submit['user']]
-        set_token(Security.login(options.name + '_' + user['login'], user['password']))
+        token_container.set_token(Security.login(options.name + '_' + user['login'], user['password']))
     	submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
-    set_token(mytoken)
+    token_container.set_token(mytoken)
 
     print submits
 

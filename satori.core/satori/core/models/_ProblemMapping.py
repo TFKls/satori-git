@@ -35,6 +35,8 @@ class ProblemMapping(Object):
     def inherit_right(self, right):
         right = str(right)
         ret = super(ProblemMapping, self).inherit_right(right)
+        if right == 'VIEW':
+        	ret.append((self.contest,'VIEWTASKS'))
         if right == 'EDIT':
             ret.append((self.contest,'MANAGE'))
         if right == 'SUBMIT':
