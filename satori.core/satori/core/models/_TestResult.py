@@ -12,7 +12,8 @@ class TestResult(Object):
 
     submit      = models.ForeignKey('Submit')
     test        = models.ForeignKey('Test')
-    tester      = models.ForeignKey('User')
+    tester      = models.ForeignKey('User', null=True)
+    pending     = models.BooleanField(default=True)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('submit', 'test'),)

@@ -10,76 +10,116 @@ from satori.core.models import TestResult
 from multiprocessing.connection import Client
 from satori.events import Slave, Attach, Map, Send, Receive
 from satori.core.models import *
+import traceback
 
 class JudgeDispatcher(Client2):
-    queue_enqueue = 'judge_dispatcher_enqueue'
-    queue_dequeue = 'judge_dispatcher_dequeue'
+    queue = 'judge_dispatcher_queue'
+    
+    def __init__(self):
+        super(JudgeDispatcher, self).__init__()
+        self.work_queue = deque()
+        self.work_set = set()
+
+    def append(self, id):
+        if id not in self.work_set:
+        	self.work_queue.append(id)
+        	self.work_set.add(id)
+
+    def pop(self):
+        try:
+            id = self.work_queue.popleft()
+        except IndexError:
+            return None
+        self.work_set.remove(id)
+        return id
 
     def _init(self):
-        self.work_queue = deque()
-        self.attach(self.queue_enqueue)
-        self.attach(self.queue_dequeue)
-        self.map({'type': 'judge_dispatcher_enqueue'}, self.queue_enqueue)
-        self.map({'type': 'judge_dispatcher_dequeue'}, self.queue_dequeue)
+        for test_result in TestResult.objects.filter(pending=True):
+        	self.append(test_result.id)
+        self.attach(self.queue)
+        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'I'}, self.queue)
+        self.map({'type': 'judge_dispatcher_dequeue'}, self.queue)
+        self.map({'type': 'judge_dispatcher_reschedule'}, self.queue)
 
     def handle_event(self, queue, event):
-        if queue == self.queue_enqueue:
-            self.work_queue.append(event)
+        if event.type == 'db':
+            self.append(event.object_id)
             print 'Judge dispatcher: enqueue:', event
-        if queue == self.queue_dequeue:
+        elif event.type == 'judge_dispatcher_reschedule':
+            self.append(event.test_result_id)
+            print 'Judge dispatcher: rescheduling:', event
+        elif queue.type == 'judge_dispatcher_dequeue':
             e = Event(type='judge_dispatcher_dequeue_result')
             e.tag = event.tag
-            try:
-                to_test = self.work_queue.popleft()
-            except IndexError:
-                e.test_result_id = None
-            else:
-                tr = TestResult.objects.filter(test=Test.objects.get(id=to_test.test_id), submit=Submit.objects.get(id=to_test.submit_id))
-                if tr:
-                    tr = tr[0]
-                else:
-                    tr = TestResult(test=Test.objects.get(id=to_test.test_id), submit=Submit.objects.get(id=to_test.submit_id))
+            e.test_result_id = self.pop()
+            if not e.test_result_id is None:
+                tr = TestResult.objects.get(id=e.test_Result_id)
                 tr.tester = User.objects.get(id=event.tester_id)
                 tr.save()
-                e.test_result_id = tr.id
             print 'JudgeDispatcher: dequeue by', event.tester_id, ':', e
             self.send(e)
 
 class JudgeGenerator(Client2):
-    queue = 'judge_generator_new_submits'
+    queue = 'judge_generator_queue'
+
+    def start_judge(self, id):
+        res = TestSuiteResult.objects.get(id=id)
+        sub = res.submit
+        suite = sub.problem.default_test_suite
+        (dispatcher_module, dispatcher_func) = suite.dispatcher.rsplit('.',1)
+        accumulators = suite.accumulators.split(',')
+        dispatcher_module = __import__(dispatcher_module, globals(), locals(), [ dispatcher_func ], -1)
+        dispatcher = getattr(dispatcher_module, dispatcher_func)
+        self.slave.add_client(dispatcher(res, accumulators))
 
     def _init(self):
+        for test_suite_result in TestSuiteResult.objects.filter(pending=True):
+        	self.append(test_suite_result.id)
         self.attach(self.queue)
-        self.map({'type': 'db', 'model': 'core.submit', 'action': 'I'}, self.queue)
+        self.map({'type': 'db', 'model': 'core.testsuiteresult', 'action': 'I'}, self.queue)
+        self.map({'type': 'judge_generator_reschedule'}, self.queue)
 
     def handle_event(self, queue, event):
-        if queue == self.queue:
-        	transaction.enter_transaction_management()
-        	transaction.managed(True)
+        if event.type == 'db':
+        	self.start_judge(event.object_id)
+        elif event.type == 'judge_generator_reschedule':
+        	self.start_judge(event.test_suite_result_id)
 
-        	print 'OID', event.object_id
-        	sub = Submit.objects.get(id=event.object_id)
-        	suite = sub.problem.default_test_suite
-            (dispatcher_module, dispatcher_func) = suite.dispatcher.rsplit('.',1)
-            dispatcher_module = __import__(dispatcher_module, globals(), locals(), [ dispatcher_func ], -1)
-            dispatcher = getattr(dispatcher_module, dispatcher_func)
-            self.slave.add_client(dispatcher(sub, suite))
+class default_status_accumulator(object):
+    def __init__(self, test_suite_result):
+        self.test_suite_result = test_suite_result
+        self._status = 'OK'
 
-            transaction.commit()
-            transaction.leave_transaction_management()
+    def accumulate(self, test_result):
+        status = OpenAttribute.get_str(test_result, 'status')
+        if status is None:
+            status = 'INT'
+        if self._status == 'OK' and status != 'OK':
+        	self._status = status
+
+    def status(self):
+        return self._status == 'OK'
+
+    def finish(self):
+        OpenAttribute.set_str(self.test_suite_result, 'status', self._status)
 
 class default_serial_dispatcher(Client2):
-    def __init__(self, submit, suite):
+    def __init__(self, test_suite_result, accumulators):
         super(default_serial_dispatcher, self).__init__()
-
-        self.submit_id = submit.id
-        self.suite_id = suite.id
-
+        self.test_suite_result = test_suite_result
+        self.submit_id = self.test_suite_result.submit.id
+        self.suite_id = self.test_suite_result.test_suite.id
+        self.accumulators = []
+        for accumulator in accumulators:
+            (accumulator_module, accumulator_class) = accumulatorr.rsplit('.',1)
+            accumulator_module = __import__(accumulator_module, globals(), locals(), [ accumulator_func ], -1)
+            accumulator = getattr(accumulator_module, accumulator_func)
+            self.accumulators.append(accumulator(test_suite_result))
 
     def _init(self):
         self.queue = 'dispatcher_' + '_'.join([str(x) for x in [self.submit_id, self.suite_id]])
         self.attach(self.queue)
-        self.map({'type': 'judge_dispatcher_finished', 'submit_id': self.submit_id}, self.queue)
+        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': True, 'new.submit': self.submit_id}, self.queue) 
 
         self.to_check = deque()
         for test in TestSuite.objects.get(id=self.suite_id).tests.all():
@@ -92,15 +132,35 @@ class default_serial_dispatcher(Client2):
         	next = self.to_check.popleft()
             try:
                 result = TestResult.objects.get(submit__id=self.submit_id, test__id=next)
+                if result.pending:
+                	return
+                for accumulator in accumulators:
+                	accumulator.accumulate(result)
+                for accumulator in accumulators:
+                    if not accumulator.status():
+                    	break
             #TODO: except concrete exception
             except:
-                self.send(Event(type='judge_dispatcher_enqueue', test_id=next, submit_id=self.submit_id))
+                self.to_check.appendleft(next)
+                try:
+                    #TODO:transaction
+                    transaction.enter_transaction_management()
+                    transaction.managed(True)
+                    transaction.commit() #?do i need to?
+                    TestResult(submit=self.test_suite_result.submit, test=Test.objects.get(id=next)).save()
+                    transaction.commit()
+                    transaction.leave_transaction_management()
+                except:
+                    pass
                 return
+        for accumulator in self.accumulators:
+        	accumulator.finish()
 
+		self.test_suite_result.pending = False
         self.finish()
 
     def handle_event(self, queue, event):
-        self.send_test()
+        self.send_test(event)
 
 class JudgeDispatcherClient(object):
     _pid = -1
@@ -135,11 +195,3 @@ class JudgeDispatcherClient(object):
         print 'c'
         self.lock.release()
         return result[1]
-
-    def set_result(self, result):
-        self.lock.acquire()
-        self.connection.send(Send(Event(type='judge_dispatcher_finished', submit_id=result.submit.id, test_id=result.test.id, test_result_id=result.id)))
-        self.connection.recv()
-        self.lock.release()
-
-

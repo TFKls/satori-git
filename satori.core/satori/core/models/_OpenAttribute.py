@@ -26,6 +26,23 @@ class OpenAttribute(models.Model):
     string_value = models.TextField(null=True)
     blob         = models.ForeignKey('Blob', null=True)
 
+    @staticmethod
+    def get_str(obj, name):
+        try:
+            return obj.attributes.get(name=name, oatype=OATYPES_STRING).string_value
+        except:
+            return None
+
+    @staticmethod
+    def set_str(obj, name, value):
+        try:
+            oa = obj.attributes.get(name=name)
+        except:
+            oa = OpenAttribute(object=obj, name=name)
+        oa.type = OATYPES_STRING
+        oa.string_value = value
+        oa.save()
+
     def save(self, *args, **kwargs):
         str = self.string_value
         blo = self.blob

@@ -20,6 +20,7 @@ class TestMapping(Object):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('suite', 'test'), ('suite', 'order'))
+        ordering = ('order',)
 
 class TestMappingEvents(Events):
     model = TestMapping
