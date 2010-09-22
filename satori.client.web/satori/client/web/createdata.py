@@ -15,6 +15,11 @@ def create(request):
             object.delete()
         except:
             pass
+    for object in Machine.filter():
+        try:
+            object.delete()
+        except:
+            pass
     for object in User.filter():
         try:
             object.delete()
@@ -75,11 +80,14 @@ def create(request):
             object.delete()
         except:
             pass
+
         
     paladin = Security.register(login='paladin', fullname='Lech Duraj', password='paladin')
     dijkstra = Security.register(fullname='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')
     Privilege.create_global(role = paladin, right='ADMIN')
     token = Security.login(login='paladin', password='paladin')
+
+    checker = Security.machine_register(secret='sekret', name='checker_one', address='0.0.0.0', netmask='0.0.0.0')
     
     token_container.set_token(token)
     c2 = Contest.create_contest(name = 'Kontest prywatny')

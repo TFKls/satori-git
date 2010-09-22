@@ -285,6 +285,18 @@ def openid_add_finish(token, arg_map, return_to):
     return res
 
 @security.method
+@Argument('name', type=str)
+@Argument('secret', type=str)
+@Argument('address', type=str)
+@Argument('netmask', type=str)
+@ReturnValue(type=Machine)
+def machine_register(name, secret, address, netmask):
+    machine = Machine(login=name, fullname=name, address=address, netmask=netmask)
+    machine.set_secret(secret)
+    machine.save()
+    return machine
+
+@security.method
 @Argument('secret', type=str)
 @ReturnValue(type=Token)
 def machine_login(secret):
