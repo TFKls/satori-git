@@ -10,76 +10,76 @@ def create(request):
 #    User.objects.all().delete()
 #    MessageGlobal.objects.all().delete()
 #    MessageContest.objects.all().delete()
-    for object in Privilege.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in Machine.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in User.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in Contest.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in Contestant.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in Problem.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in ProblemMapping.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in MessageGlobal.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in MessageContest.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in RoleMapping.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in Role.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in Test.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in TestSuite.filter():
-        try:
-            object.delete()
-        except:
-            pass
-    for object in TestMapping.filter():
-        try:
-            object.delete()
-        except:
-            pass
+#    for object in Privilege.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in Machine.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in User.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in Contest.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in Contestant.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in Problem.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in ProblemMapping.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in MessageGlobal.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in MessageContest.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in RoleMapping.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in Role.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in Test.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in TestSuite.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
+#    for object in TestMapping.filter():
+#        try:
+#            object.delete()
+#        except:
+#            pass
 
     token_container.set_token(Security.login(login='admin', password='admin'))
         
