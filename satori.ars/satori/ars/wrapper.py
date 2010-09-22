@@ -258,6 +258,7 @@ class ProcedureWrapper(Wrapper):
             return filter(result, *args, **kwargs)
 
         Signature.of(implement).set(proc)
+        proc.implementation = implement
     
         ret[self._name] = proc
 
