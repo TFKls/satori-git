@@ -16,7 +16,7 @@ class TestMapping(Object):
     order       = models.IntegerField()
     
     def __str__(self):
-        return self.order+": ("+self.suite.name+","+self.test.name+")"
+        return str(self.order)+": ("+self.suite.name+","+self.test.name+")"
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('suite', 'test'), ('suite', 'order'))
