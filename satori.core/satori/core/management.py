@@ -14,7 +14,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     print 'Creating superuser'
 
     token = Token('')
-    admin = ApiSecurity.Security_register.implementation(login=settings.ADMIN_NAME, fullname='Super Admin', password=settings.ADMIN_PASSWORD)
+    admin = ApiSecurity.Security_register.implementation(token=token, login=settings.ADMIN_NAME, fullname='Super Admin', password=settings.ADMIN_PASSWORD)
     ApiPrivilege.Privilege_create_global.implementation(token=token, role=admin, right='ADMIN')
 
 post_syncdb.connect(create_admin)

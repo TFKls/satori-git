@@ -81,11 +81,12 @@ def login_free(login, nspace=''):
     return len(Login.objects.filter(nspace=nspace, login=login)) == 0
 
 @security.method
+@Argument('token', type=Token)
 @Argument('login', type=str)
 @Argument('password', type=str)
 @Argument('fullname', type=str)
 @ReturnValue(type=User)
-def register(login, password, fullname):
+def register(token, login, password, fullname):
     user = User(login=login, fullname=fullname)
     user.save()
     auth = Login(login=login, user=user)
@@ -285,12 +286,13 @@ def openid_add_finish(token, arg_map, return_to):
     return res
 
 @security.method
+@Argument('token', type=Token)
 @Argument('name', type=str)
 @Argument('secret', type=str)
 @Argument('address', type=str)
 @Argument('netmask', type=str)
 @ReturnValue(type=Machine)
-def machine_register(name, secret, address, netmask):
+def machine_register(token, name, secret, address, netmask):
     machine = Machine(login=name, fullname=name, address=address, netmask=netmask)
     machine.set_secret(secret)
     machine.save()
