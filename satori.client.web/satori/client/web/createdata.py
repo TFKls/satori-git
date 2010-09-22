@@ -81,6 +81,7 @@ def create(request):
         except:
             pass
 
+    token_container.set_token(Security.login(login='admin', password='admin'))
         
     paladin = Security.register(login='paladin', fullname='Lech Duraj', password='paladin')
     dijkstra = Security.register(fullname='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')

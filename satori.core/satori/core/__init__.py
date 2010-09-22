@@ -4,6 +4,7 @@ exposed over Thrift.
 """
 
 import satori.core.setup
+import satori.core.management
 import traceback
 
 def export_thrift():
