@@ -8,7 +8,7 @@ from satori.ars.model import *
 from django.db import models, transaction, connection
 from django.db.models.fields.related import add_lazy_relation
 from satori.core.sec.tools import Token
-from satori.core.models import OpenAttribute, Blob
+from satori.core.models import OpenAttribute, Blob, Privilege
 
 def resolve_model(self, model, rel_model):
     self.model = model
@@ -248,6 +248,10 @@ class CreateWrapper(ProcedureWrapper):
 
             ret = model(**values)
             ret.save()
+
+            if token.user:
+                Privilege(object=ret, role=token.user, right='MANAGE').save()
+
             return ret
         
         super(CreateWrapper, self).__init__(create, parent)
@@ -296,9 +300,9 @@ class OpenAttributeWrapper(Wrapper):
 
         def get_group(object):
             if group_name:
-            	return getattr(object, group_name)
+                return getattr(object, group_name)
             else:
-            	return object            
+                return object            
 
         def oa_to_struct(oa):
             ret = {}
@@ -347,7 +351,7 @@ class OpenAttributeWrapper(Wrapper):
         def get_str(token, self, name):
             struct = oa_to_struct_name(self, name)
             if struct is None:
-            	return None
+                return None
             if struct['is_blob']:
                 raise Exception('The attribute is not a string attribute')
             return struct['value']
@@ -368,7 +372,7 @@ class OpenAttributeWrapper(Wrapper):
         def get_blob_hash(token, self, name):
             struct = oa_to_struct_name(self, name)
             if struct is None:
-            	return None
+                return None
             if not struct['is_blob']:
                 raise Exception('The attribute is not a blob attribute')
             return struct['value']
@@ -528,21 +532,21 @@ class TokenVerifyMiddleware(object):
     def process_request(self, proc, args, kwargs):
         if proc.parameters and (proc.parameters[0].name == 'token'):
             if args:
-            	token = args[0]
+                token = args[0]
             else:
-            	token = kwargs['token']
+                token = kwargs['token']
 
             token = Token(token)
 
             if not token.valid:
-            	raise Exception('The provided token has expired')
+                raise Exception('The provided token has expired')
 
             if token.user_id:
-            	userid = int(token.user_id)
+                userid = int(token.user_id)
             else:
-            	userid = -2
+                userid = -2
         else:
-        	userid = -2
+            userid = -2
 
         cursor = connection.cursor()
         cursor.callproc('set_user_id', [userid])
@@ -560,24 +564,24 @@ class CheckRightsMiddleware(object):
     @DispatchOn(type=ArsList)
     def check(self, token, type, value):
         for elem in value:
-        	self.check(token, type.element_type, elem)
+            self.check(token, type.element_type, elem)
 
     @DispatchOn(type=ArsSet)
     def check(self, token, type, value):
         for elem in value:
-        	self.check(token, type.element_type, elem)
+            self.check(token, type.element_type, elem)
 
     @DispatchOn(type=ArsMap)
     def check(self, token, type, value):
         for (key, elem) in value.iteritems():
-        	self.check(token, type.key_type, key)
-        	self.check(token, type.value_type, elem)
+            self.check(token, type.key_type, key)
+            self.check(token, type.value_type, elem)
     
     @DispatchOn(type=ArsStructure)
     def check(self, token, type, value):
         for field in type.fields:
-            if field.name in value:
-            	self.check(token, field.type, value[field.name])        
+            if (field.name in value) and (value[field.name] is not None):
+                self.check(token, field.type, value[field.name])        
 
     @DispatchOn(type=ArsAtomicType)
     def check(self, token, type, value):
@@ -590,25 +594,104 @@ class CheckRightsMiddleware(object):
     @DispatchOn(type=ArsDjangoModel)
     def check(self, token, type, value):
         if not value.demand_right(token, 'VIEW'):
-        	raise type.model.DoesNotExist("%s matching query does not exist." % type.model._meta.object_name)
+            raise type.model.DoesNotExist("%s matching query does not exist." % type.model._meta.object_name)
+
+    @DispatchOn(type=ArsList)
+    def filter(self, token, type, value):
+        if isinstance(type.element_type, ArsDjangoModel):
+        	return [elem for elem in value if elem.demand_right(token, 'VIEW')]
+        else:
+        	return [self.filter(token, type.element_type, elem) for elem in value]
+
+    @DispatchOn(type=ArsSet)
+    def filter(self, token, type, value):
+        ret = set()
+        if isinstance(type.element_type, ArsDjangoModel):
+            for elem in set(value):
+                if elem.demand_right(token, 'VIEW'):
+                    ret.add(elem)
+        else:
+            for elem in value:
+                ret.add(self.filter(token, type.element_type, elem))
+        return ret
+
+    @DispatchOn(type=ArsMap)
+    def filter(self, token, type, value):
+        ret = {}
+        if isinstance(type.key_type, ArsDjangoModel) and isinstance(type.value_type, ArsDjangoModel):
+            for (key, elem) in value.iteritems():
+                if key.demand_right(token, 'VIEW') and elem.demand_right(token, 'VIEW'):
+                	ret[key] = value
+        elif isinstance(type.key_type, ArsDjangoModel):	
+            for (key, elem) in value.iteritems():
+                if key.demand_right(token, 'VIEW'):
+                	ret[key] = self.filter(token, type.value_type, elem)
+        elif isinstance(type.value_type, ArsDjangoModel):	
+            for (key, elem) in value.iteritems():
+                if elem.demand_right(token, 'VIEW'):
+                	ret[self.filter(token, type.key_type, key)] = elem
+        else:
+            for (key, elem) in value.iteritems():
+            	ret[self.filter(token, type.key_type, key)] = self.filter(token, type.value_type, elem)
+        return ret
+    
+    @DispatchOn(type=ArsStructure)
+    def filter(self, token, type, value):
+        ret = {}
+        for field in type.fields:
+            if field.name in value:
+            	if value[field.name] is None:
+            		ret[field.name] = None
+                elif isinstance(field.type, ArsDjangoModel):
+            		if value[field.name].demand_right(token, 'VIEW'):
+            			ret[field.name] = value[field.name]
+                    else:
+                        # delete the field from structure
+                    	pass
+                else:
+                    ret[field.name] = self.filter(token, field.type, value[field.name])
+        return ret
+
+    @DispatchOn(type=ArsAtomicType)
+    def filter(self, token, type, value):
+        return value
+
+    @DispatchOn(type=ArsTypeAlias)
+    def filter(self, token, type, value):
+        return self.filter(token, type.target_type, value)
+
+    @DispatchOn(type=ArsDjangoModel)
+    def filter(self, token, type, value):
+        if value.demand_right(token, 'VIEW'):
+        	return value
+        else:
+            raise Exception('You don\'t have rights to view the returned element.')
 
     def process_request(self, proc, args, kwargs):
         if proc.parameters and (proc.parameters[0].name == 'token'):
             if args:
-            	token = args[0]
+                token = args[0]
             else:
-            	token = kwargs['token']
+                token = kwargs['token']
         else:
-        	token = Token('')
-        	
+            token = Token('')
+            
         for i in range(min(len(args), len(proc.parameters))):
-        	self.check(token, proc.parameters[i].type, args[i])
+            self.check(token, proc.parameters[i].type, args[i])
 
         for arg_name in kwargs:
-        	self.check(token, proc.parameters[arg_name].type, kwargs[arg_name])
+            self.check(token, proc.parameters[arg_name].type, kwargs[arg_name])
 
     def process_exception(self, proc, args, kwargs, exception):
         pass
 
     def process_response(self, proc, args, kwargs, ret):
-        return ret
+        if proc.parameters and (proc.parameters[0].name == 'token'):
+            if args:
+                token = args[0]
+            else:
+                token = kwargs['token']
+        else:
+            token = Token('')
+            
+        return self.filter(token, proc.return_type, ret)
