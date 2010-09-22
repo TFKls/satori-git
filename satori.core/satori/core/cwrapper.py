@@ -4,7 +4,7 @@ from types import NoneType
 from datetime import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
 from satori.ars.wrapper import StructType, Struct, TypedList, Wrapper, ProcedureWrapper, StaticWrapper
-from satori.ars.model import ArsInt64, ArsTypeAlias
+from satori.ars.model import *
 from django.db import models, transaction, connection
 from django.db.models.fields.related import add_lazy_relation
 from satori.core.sec.tools import Token
@@ -555,3 +555,60 @@ class TokenVerifyMiddleware(object):
     def process_response(self, proc, args, kwargs, ret):
         return ret
 
+
+class CheckRightsMiddleware(object):
+    @DispatchOn(type=ArsList)
+    def check(self, token, type, value):
+        for elem in value:
+        	self.check(token, type.element_type, elem)
+
+    @DispatchOn(type=ArsSet)
+    def check(self, token, type, value):
+        for elem in value:
+        	self.check(token, type.element_type, elem)
+
+    @DispatchOn(type=ArsMap)
+    def check(self, token, type, value):
+        for (key, elem) in value.iteritems():
+        	self.check(token, type.key_type, key)
+        	self.check(token, type.value_type, elem)
+    
+    @DispatchOn(type=ArsStructure)
+    def check(self, token, type, value):
+        for field in type.fields:
+            if field.name in value:
+            	self.check(token, field.type, value[field.name])        
+
+    @DispatchOn(type=ArsAtomicType)
+    def check(self, token, type, value):
+        pass
+
+    @DispatchOn(type=ArsTypeAlias)
+    def check(self, token, type, value):
+        self.check(token, type.target_type, value)
+
+    @DispatchOn(type=ArsDjangoModel)
+    def check(self, token, type, value):
+        if not value.demand_right(token, 'VIEW'):
+        	raise type.model.DoesNotExist("%s matching query does not exist." % type.model._meta.object_name)
+
+    def process_request(self, proc, args, kwargs):
+        if proc.parameters and (proc.parameters[0].name == 'token'):
+            if args:
+            	token = args[0]
+            else:
+            	token = kwargs['token']
+        else:
+        	token = Token('')
+        	
+        for i in range(min(len(args), len(proc.parameters))):
+        	self.check(token, proc.parameters[i].type, args[i])
+
+        for arg_name in kwargs:
+        	self.check(token, proc.parameters[arg_name].type, kwargs[arg_name])
+
+    def process_exception(self, proc, args, kwargs, exception):
+        pass
+
+    def process_response(self, proc, args, kwargs, ret):
+        return ret

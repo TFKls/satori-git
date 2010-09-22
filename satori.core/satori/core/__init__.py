@@ -41,6 +41,7 @@ def start_server_thrift_server():
     wrapper.register_middleware(cwrapper.TransactionMiddleware())
     wrapper.register_middleware(cwrapper.TokenVerifyMiddleware())
     wrapper.register_middleware(wrapper.TypeConversionMiddleware())
+    wrapper.register_middleware(cwrapper.CheckRightsMiddleware())
     server = ThriftServer(TThreadedServer, TServerSocket(port=satori.core.setup.settings.THRIFT_PORT), wrapper.generate_interface())
     print 'thrift server starting'
     server.run()
