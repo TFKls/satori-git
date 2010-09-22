@@ -73,11 +73,32 @@ class JailRun(Object):
     @Argument('root', type=str)
     @Argument('path', type=str)
     @Argument('args', default=[])
+    @Argument('host_eth', type=str, default='vethsh')
+    @Argument('host_ip', type=str, default='192.168.100.101')
+    @Argument('guest_eth', type=str, default='vethsg')
+    @Argument('guest_ip', type=str, default='192.168.100.102')
+    @Argument('netmask', type=str, default='255.255.255.0')
+    @Argument('control_port', type=int, default=8765)
+    @Argument('cgroup', type=str, default='runner')
+    @Argument('cgroup_memory', type=int, default=64*1024*1024)
+    @Argument('cgroup_time', type=int, default=64*1024*1024)
+    @Argument('debug', type=str, default='')
+
     @Argument('search', type=bool, default=False)
-    def __init__(self, root, path, args, search):
+    def __init__(self, root, path, args, host_eth, host_ip, guest_eth, guest_ip, netmask, cgroup, cgroup_memory, cgroup_time, run_memory, debug, search):
         self.root = root
         self.path = path
         self.args = [self.path] + args
+        self.host_eth = host_eth
+        self.host_ip = host_ip
+        self.guest_eth = guest_eth
+        self.guest_ip = guest_ip
+        self.netmask = netmask
+        self.control_port = control_port
+        self.cgroup = cgroup
+        self.cgroup_memory = cgroup_memory
+        self.cgroup_time = cgroup_time
+        self.debug = debug
         self.search = search
 
     def child(self, pipe):
@@ -87,8 +108,8 @@ class JailRun(Object):
             pipe.send(1)
 #WAIT FOR PARENT CREATE VETH
             pipe.recv()
-            subprocess.check_call(['ifconfig', 'vethsg', '192.168.100.102/24', 'up'])
-            subprocess.check_call(['route', 'add', 'default', 'gw', '192.168.100.101'])
+            subprocess.check_call(['ifconfig', self.guest_eth, self.guest_ip+'/'+self.netmask, 'up'])
+            subprocess.check_call(['route', 'add', 'default', 'gw', self.host_ip])
             subprocess.check_call(['ifconfig', 'lo', '127.0.0.1/8', 'up'])
             subprocess.check_call(['iptables', '-t', 'filter', '-F'])
             subprocess.check_call(['iptables', '-t', 'nat', '-F'])
@@ -111,10 +132,12 @@ class JailRun(Object):
             pipe.recv()
             pipe.close()
 
-            runargs = [ 'runner', '--debug', '/runner.debug.txt', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
-            runargs += [ '--control-host', '192.168.100.101', '--control-port', '8765', '--cgroup', 'runner', '--cgroup-memory', str(1024*1024*64) ]
+            runargs = [ 'runner', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
+            runargs += [ '--control-host', self.host_ip, '--control-port', str(self.control_port), '--cgroup', cgroup, '--cgroup-memory', str(self.cgroup_memory), '--cgroup-time', str(self.cgroup_time) ]
             if self.search:
                 runargs.append('--search')
+            if self.debug:
+                runargs.append('--debug', self.debug)
             runargs += self.args
             print runargs
             os.execvp('runner', runargs)
@@ -124,7 +147,7 @@ class JailRun(Object):
             pipe.close()
 
     def parent(self):
-        subprocess.check_call(['ip', 'link', 'add', 'name', 'vethsh', 'type', 'veth', 'peer', 'name', 'vethsg'])
+        subprocess.check_call(['ip', 'link', 'add', 'name', self.host_eth, 'type', 'veth', 'peer', 'name', self.guest_eth])
         subprocess.check_call(['mount', '--make-rshared', self.root])
         pipe, pipec = Pipe()
         try:
@@ -132,9 +155,9 @@ class JailRun(Object):
             child.start()
 #WAIT FOR CHILD START AND UNSHARE
             pipe.recv()
-            subprocess.check_call(['ifconfig', 'vethsh', '192.168.100.101/24', 'up'])
-            subprocess.check_call(['ip', 'link', 'set', 'vethsg', 'netns', str(child.pid)])
-            controller = Process(target = run_server, args=('192.168.100.101', 8765, True))
+            subprocess.check_call(['ifconfig', self.host_eth, self.host_ip+'/'+self.netmask, 'up'])
+            subprocess.check_call(['ip', 'link', 'set', self.guest_eth, 'netns', str(child.pid)])
+            controller = Process(target = run_server, args=(self.host_ip, self.control_port, True))
             controller.start()
             pipe.send(1)
 #WAIT FOR CHILD CONFIGURE NETWORK AND PIVOT ROOT
