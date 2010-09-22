@@ -693,5 +693,6 @@ class CheckRightsMiddleware(object):
                 token = kwargs['token']
         else:
             token = Token('')
-            
+        if ret is None:
+        	return ret
         return self.filter(token, proc.return_type, ret)
