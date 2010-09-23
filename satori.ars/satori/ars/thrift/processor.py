@@ -5,6 +5,7 @@
 import traceback
 
 from thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
+from thrift.transport.TTransport import TFramedTransport
 
 from satori.objects import Argument, DispatchOn, Signature, Namespace
 from satori.ars.model import *
@@ -292,7 +293,10 @@ class ThriftProcessor(TProcessor):
             server_info.client_ip = None
             server_info.client_port = None
             try:
-                info = iproto.trans.handle.getpeername()
+                if isinstance(iproto.trans, TFramedTransport):
+                	info = iproto.trans._TFramedTransport__trans.handle.getpeername()
+                else:
+                    info = iproto.trans.handle.getpeername()
                 server_info.client_ip = str(info[0])
                 server_info.client_port = int(info[1])
             except:
