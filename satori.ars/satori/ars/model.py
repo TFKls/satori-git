@@ -3,7 +3,7 @@
 """
 
 from types import NoneType, FunctionType
-from satori.objects import Object, Argument, DispatchOn
+from satori.objects import Object, Argument, DispatchOn, Namespace, NoneObj
 
 
 __all__ = (
@@ -296,7 +296,8 @@ class ArsStructure(ArsNamedType):
         self.fields.append(field)
     
     def do_needs_conversion(self):
-        return any(field.type.needs_conversion() for field in self.fields.items)
+        return True
+#        return any(field.type.needs_conversion() for field in self.fields.items)
 
     def do_convert_to_ars(self, value):
         new_value = {}
@@ -306,8 +307,8 @@ class ArsStructure(ArsNamedType):
                     new_value[field.name] = field.type.convert_to_ars(value[field.name])
                 else:
                     new_value[field.name] = value[field.name]
-
-        return new_value
+ 
+        return NoneObj(Namespace(new_value))
 
     def do_convert_from_ars(self, value):
         new_value = {}
