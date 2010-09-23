@@ -62,12 +62,14 @@ def athina_import():
     if True:
         for d in range(10):
             for submit in os.listdir(get_path('data', str(d))):
+                with open(get_path('problem', str(d), submit), 'r') as f:
+                    problem = f.readline().strip(" \n\t\x00")
+                if problem[0:2] == "__":
+                	continue
                 with open(get_path('data', str(d), submit), 'r') as f:
                     data = f.read()
                 with open(get_path('filename', str(d), submit), 'r') as f:
                     filename = f.readline().strip(" \n\t\x00")
-                with open(get_path('problem', str(d), submit), 'r') as f:
-                    problem = f.readline().strip(" \n\t\x00")
                 with open(get_path('time', str(d), submit), 'r') as f:
                     time = f.readline().strip(" \n\t\x00")
                 with open(get_path('user', str(d), submit), 'r') as f:

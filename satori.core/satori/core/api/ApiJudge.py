@@ -12,6 +12,7 @@ from satori.ars.wrapper import Struct, StaticWrapper, TypedList
 from satori.core.cwrapper import Attribute
 from satori.core.judge_dispatcher import JudgeDispatcherClient
 
+import ApiObject
 import ApiTest
 import ApiTestResult
 import ApiSubmit
@@ -45,6 +46,8 @@ def get_next(token):
 @Argument('result', type=TypedList(Attribute))
 @ReturnValue(type=NoneType)
 def set_result(token, test_result, result):
-    ApiTestResult.TestResult_oa_list_set.implementation(result)
-    JudgeDispatcherClient.get_instance().set_result(test_result)
+    ApiObject.Object_oa_set_list.implementation(token, test_result, result)
+    test_result.pending = False
+    test_result.save()
+    #JudgeDispatcherClient.get_instance().set_result(test_result)
 

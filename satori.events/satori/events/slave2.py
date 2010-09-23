@@ -1,7 +1,7 @@
 from collections import deque
 from _multiprocessing import Connection
 from satori.objects import Argument
-from .protocol import Attach, Detach, Map, Unmap, Send, Receive, KeepAlive, ProtocolError
+from .protocol import Attach, Detach, Disconnect, Map, Unmap, Send, Receive, KeepAlive, ProtocolError
 
 class Slave2(object):
     @Argument('connection', type=Connection)
@@ -9,8 +9,8 @@ class Slave2(object):
         self.connection = connection
         self.queue_clients = dict()
         self.clients = set()
-        self.added_clients = set()
-        self.removed_clients = set()
+        self.added_clients = deque()
+        self.removed_clients = deque()
 
     def attach(self, client, queue):
         if queue not in self.queue_clients:
@@ -40,38 +40,36 @@ class Slave2(object):
         self.connection.recv()
 
     def add_client(self, client):
-        self.added_clients.add(client)
+        self.added_clients.append(client)
 
     def remove_client(self, client):
-        self.removed_clients.add(client)
+        self.removed_clients.append(client)
 
     def run(self):
         try:
             while True:
-                if self.added_clients:
-                    for client in self.added_clients:
-                        self.clients.add(client)
-                        client.init(self)
+                while self.added_clients:
+                    client = self.added_clients.popleft()
+                    self.clients.add(client)
+                    client.init(self)
 
-                    self.added_clients.clear()
+                while self.removed_clients:
+                    client = self.removed_clients.popleft()
+                    for queue in set(self.queue_clients):
+                        if client in self.queue_clients[queue]:
+                            self.detach(client, queue)
+                    client.deinit()
+                    self.clients.remove(client)
 
-                if self.removed_clients:
-                    for client in self.removed_clients:
-                        for queue in set(self.queue_clients):
-                            if client in self.queue_clients[queue]:
-                                self.detach(client, queue)
-
-                        client.deinit()
-                        self.clients.remove(client)
-
-                    self.removed_clients.clear()
+                if not self.clients:
+                	  break
 
                 self.connection.send(Receive())
                 (queue, event) = self.connection.recv()
                 if queue in self.queue_clients:
                     client = self.queue_clients[queue].popleft()
                     client.handle_event(queue, event)
-                    self.queue_clients[queue].append(client)
+                self.queue_clients[queue].append(client)
         finally:
             for client in self.clients:
                 for queue in set(self.queue_clients):
@@ -83,7 +81,6 @@ class Slave2(object):
             self.clients.clear()
 
         self.connection.send(Disconnect())
-        self.connection.recv()
 
         self.running = False
 

@@ -3,7 +3,7 @@
 from satori.objects import Argument, ReturnValue
 from satori.ars.wrapper import TypedList
 from satori.core.cwrapper import ModelWrapper
-from satori.core.models import Contest, Contestant, User, ProblemMapping, Submit, Global, Role, RoleMapping, Privilege, OpenAttribute, Blob
+from satori.core.models import *
 from satori.core.sec import Token
 
 contest = ModelWrapper(Contest)
@@ -113,6 +113,7 @@ def submit(token, self, problem_mapping, content, filename):
 	blob.close()
 	blob.save()
 	OpenAttribute(object=submit.data, name='content', oatype=OpenAttribute.OATYPES_BLOB, blob=blob).save()
+	TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
 	return submit
 @contest.submit.can
 def submit_check(token, self, problem_mapping, content, filename):

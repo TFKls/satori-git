@@ -39,7 +39,7 @@ class OpenAttribute(models.Model):
             oa = obj.attributes.get(name=name)
         except:
             oa = OpenAttribute(object=obj, name=name)
-        oa.type = OATYPES_STRING
+        oa.oatype = OATYPES_STRING
         oa.string_value = value
         oa.save()
 
