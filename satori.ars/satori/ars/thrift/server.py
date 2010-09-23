@@ -6,8 +6,8 @@ from StringIO import StringIO
 from types import ClassType, TypeType
 
 from thrift.server.TServer import TThreadedServer
-from thrift.transport.TTransport import TServerTransportBase
-from thrift.protocol.TBinaryProtocol import TBinaryProtocol
+from thrift.transport.TTransport import TServerTransportBase, TFramedTransportFactory
+from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 
 from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 from satori.objects import Argument
@@ -37,5 +37,5 @@ class ThriftServer(object):
         idl = idl.getvalue()
         idl_proc.implementation = lambda: idl
         processor = ThriftProcessor(self._interface)
-        server = self._server_type(processor, self._transport)
+        server = self._server_type(processor, self._transport, TFramedTransportFactory(), TBinaryProtocolFactory())
         return server.serve()

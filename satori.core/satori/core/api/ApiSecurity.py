@@ -39,14 +39,16 @@ OpenIdRedirect = Struct('OpenIdRedirect', (
 security = StaticWrapper('Security')
 
 @security.method
+@Argument('token', type=Token)
 @ReturnValue(type=Role)
-def anonymous():
+def anonymous(token):
     globe = Global.get_instance()
     return globe.anonymous
 
 @security.method
+@Argument('token', type=Token)
 @ReturnValue(type=Role)
-def authenticated():
+def authenticated(token):
     globe = Global.get_instance()
     return globe.authenticated
 

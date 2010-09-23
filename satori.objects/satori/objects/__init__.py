@@ -11,9 +11,45 @@ __all__ = (
 from inspect import getargspec
 from sys import _getframe
 import types
-import typed
-import typed.specialize
 
+
+class Namespace(dict):
+    """A dictionary whose elements can be accessed as attributes.
+    """
+
+    def __init__(self, *args, **kwargs):
+        super(Namespace, self).__init__(*args, **kwargs)
+
+    def __hasattr__(self, key):
+        return key in self
+
+    def __getattribute__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            return super(Namespace, self).__getattribute__(key)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+class NoneObj(object):
+    def __init__(self, obj):
+        self.__obj = obj
+
+    def __getattribute__(self, key):
+        try:
+            return super(NoneObj, self).__getattribute__(key)
+        except:
+            try:
+                return getattr(self.__obj, key)
+            except:
+                return None
 
 MAGIC_ORG = 'objects/original'
 MAGIC_SIG = 'objects/signature'
@@ -66,8 +102,6 @@ class ArgumentConstraint(object):
     def parse(spec):
         if spec is None:
             return TypeConstraint(types.NoneType)
-        if isinstance(spec, typed.specialize.Type):
-            return TypedConstraint(spec)
         if isinstance(spec, (types.ClassType, types.TypeType)):
             return TypeConstraint(spec)
         if isinstance(spec, types.TupleType):
@@ -214,27 +248,6 @@ class TypeConstraint(ArgumentConstraint):
         if isinstance(other, TypeConstraint):
             return issubclass(self.type, other.type)
         return super(TypeConstraint, self).__le__(other)
-
-    def __str__(self):
-        return "instance of {0}".format(self.type)
-
-
-class TypedConstraint(ArgumentConstraint):
-    """Constraint. Requires the value to be an instance of a specific inquisitive type from typed package.
-    """
-
-    def __init__(self, type_):
-        self.type = type_
-
-    def invalid(self, value):
-        if typed.isinstance(value, self.type):
-            return None
-        return "{0} is not an instance of {1}".format(value, self.type)
-
-    def __le__(self, other):
-        if isinstance(other, TypedConstraint):
-            return typed.issubclass(self.type, other.type)
-        return super(TypedConstraint, self).__le__(other)
 
     def __str__(self):
         return "instance of {0}".format(self.type)
