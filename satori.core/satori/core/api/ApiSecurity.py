@@ -19,7 +19,7 @@ from satori.core.sec.tools import RightCheck, RoleSet, Token
 from satori.core.sec.store import Store
 
 from satori.objects import DispatchOn, Argument, ReturnValue
-from satori.core.models import Object, User, Login, OpenIdentity, Global, Role, Machine
+from satori.core.models import Object, User, Login, OpenIdentity, Global, Role, Machine, Privilege
 from satori.ars.wrapper import Struct, StaticWrapper, TypedMap
 from satori.ars.server import server_info
 
@@ -37,6 +37,12 @@ OpenIdRedirect = Struct('OpenIdRedirect', (
 ))
 
 security = StaticWrapper('Security')
+
+@security.method
+@Argument('s', type=str)
+@ReturnValue(type=str)
+def id(s):
+    return s
 
 @security.method
 @Argument('token', type=Token)
@@ -94,6 +100,7 @@ def register(token, login, password, fullname):
     auth = Login(login=login, user=user)
     auth.set_password(password)
     auth.save()
+    Privilege(object=user, role=user, right='MANAGE').save()
     return user
 
 @security.method
