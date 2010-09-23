@@ -15,6 +15,32 @@ import typed
 import typed.specialize
 
 
+class Namespace(dict):
+    """A dictionary whose elements can be accessed as attributes.
+    """
+
+    def __init__(self, *args, **kwargs):
+        dict.__init__(self, *args, **kwargs)
+
+    def __hasattr__(self, key):
+        return key in self
+
+    def __getattr__(self, key):
+        try:
+            return self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+    def __setattr__(self, key, value):
+        self[key] = value
+
+    def __delattr__(self, key):
+        try:
+            del self[key]
+        except KeyError:
+            raise AttributeError(key)
+
+
 MAGIC_ORG = 'objects/original'
 MAGIC_SIG = 'objects/signature'
 MAGIC_DIS = 'objects.DispatchOn/argument name'
