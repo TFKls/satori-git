@@ -11,8 +11,6 @@ __all__ = (
 from inspect import getargspec
 from sys import _getframe
 import types
-import typed
-import typed.specialize
 
 
 class Namespace(dict):
@@ -92,8 +90,6 @@ class ArgumentConstraint(object):
     def parse(spec):
         if spec is None:
             return TypeConstraint(types.NoneType)
-        if isinstance(spec, typed.specialize.Type):
-            return TypedConstraint(spec)
         if isinstance(spec, (types.ClassType, types.TypeType)):
             return TypeConstraint(spec)
         if isinstance(spec, types.TupleType):
@@ -240,27 +236,6 @@ class TypeConstraint(ArgumentConstraint):
         if isinstance(other, TypeConstraint):
             return issubclass(self.type, other.type)
         return super(TypeConstraint, self).__le__(other)
-
-    def __str__(self):
-        return "instance of {0}".format(self.type)
-
-
-class TypedConstraint(ArgumentConstraint):
-    """Constraint. Requires the value to be an instance of a specific inquisitive type from typed package.
-    """
-
-    def __init__(self, type_):
-        self.type = type_
-
-    def invalid(self, value):
-        if typed.isinstance(value, self.type):
-            return None
-        return "{0} is not an instance of {1}".format(value, self.type)
-
-    def __le__(self, other):
-        if isinstance(other, TypedConstraint):
-            return typed.issubclass(self.type, other.type)
-        return super(TypedConstraint, self).__le__(other)
 
     def __str__(self):
         return "instance of {0}".format(self.type)
