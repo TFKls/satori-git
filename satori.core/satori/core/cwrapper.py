@@ -317,7 +317,7 @@ class OpenAttributeWrapper(Wrapper):
 
         def oa_to_struct_name(object, name):
             try:
-                oa = get_group(object).attributes.get(name)
+                oa = get_group(object).attributes.get(name=name)
             except:
                 return None
             return oa_to_struct(oa)
