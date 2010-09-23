@@ -18,16 +18,16 @@ class Namespace(dict):
     """
 
     def __init__(self, *args, **kwargs):
-        dict.__init__(self, *args, **kwargs)
+        super(Namespace, self).__init__(*args, **kwargs)
 
     def __hasattr__(self, key):
         return key in self
 
-    def __getattr__(self, key):
+    def __getattribute__(self, key):
         try:
             return self[key]
         except KeyError:
-            raise AttributeError(key)
+            return super(Namespace, self).__getattribute__(key)
 
     def __setattr__(self, key, value):
         self[key] = value
@@ -38,6 +38,18 @@ class Namespace(dict):
         except KeyError:
             raise AttributeError(key)
 
+class NoneObj(object):
+    def __init__(self, obj):
+        self.__obj = obj
+
+    def __getattribute__(self, key):
+        try:
+            return super(NoneObj, self).__getattribute__(key)
+        except:
+            try:
+                return getattr(self.__obj, key)
+            except:
+                return None
 
 MAGIC_ORG = 'objects/original'
 MAGIC_SIG = 'objects/signature'
