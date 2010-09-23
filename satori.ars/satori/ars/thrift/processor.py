@@ -6,9 +6,13 @@ import traceback
 
 from thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
 
-from satori.objects import Argument, DispatchOn, Signature
+from satori.objects import Argument, DispatchOn, Signature, Namespace
 from satori.ars.model import *
 from satori.ars.server import server_info
+try:
+    from thrift.protocol import fastbinary
+except:
+    fastbinary = None
 
 class ThriftProcessor(TProcessor):
     """ARS implementation of thrift.Thrift.TProcessor.
@@ -17,6 +21,7 @@ class ThriftProcessor(TProcessor):
     @Argument('interface', type=ArsInterface)
     def __init__(self, interface):
         self._procedures = ArsNamedTuple()
+        self._typeargs_map = {}
         for service in interface.services:
             self._procedures.extend(service.procedures)
         self.seqid = 0
@@ -203,6 +208,62 @@ class ThriftProcessor(TProcessor):
         proto.readSetEnd()
         return value
 
+    @DispatchOn(type_=ArsAtomicType)
+    def _typeargs(self, type_):
+        return (self.ATOMIC_TYPE[type_], None)
+
+    @DispatchOn(type_=ArsList)
+    def _typeargs(self, type_):
+        return (TType.LIST, self.typeargs(type_.element_type))
+
+    @DispatchOn(type_=ArsSet)
+    def _typeargs(self, type_):
+        return (TType.SET, self.typeargs(type_.element_type))
+
+    @DispatchOn(type_=ArsMap)
+    def _typeargs(self, type_):
+        (ktype, kargs) = self.typeargs(type_.key_type)
+        (vtype, vargs) = self.typeargs(type_.value_type)
+
+        return (TType.MAP, (ktype, kargs, vtype, vargs))
+
+    @DispatchOn(type_=ArsTypeAlias)
+    def _typeargs(self, type_):
+        return self.typeargs(type_.target_type)
+
+    @DispatchOn(type_=ArsStructure)
+    def _typeargs(self, type_):
+        fields = []
+        for i in range(type_.base_index):
+        	fields.append(None)
+
+        for (i, field) in enumerate(type_.fields):
+        	(ftype, fargs) = self.typeargs(field.type)
+        	fields.append((i + type_.base_index, ftype, field.name, fargs, None))
+
+        return (TType.STRUCT, (Namespace, tuple(fields)))
+
+    def typeargs(self, type_):
+        if type_ not in self._typeargs_map:
+        	self._typeargs_map[type_] = self._typeargs(type_)
+        return self._typeargs_map[type_]
+
+    def send_struct(self, value, struct, oproto):
+        if fastbinary is not None:
+        	print 'fastbinary'
+        	oproto.trans.write(fastbinary.encode_binary(value, self.typeargs(struct)[1]))
+        else:
+        	self._send(value, struct, oproto)
+
+    def recv_struct(self, struct, iproto):
+        if fastbinary is not None:
+        	print 'fastbinary'
+        	ret = Namespace()
+        	fastbinary.decode_binary(ret, iproto.trans, self.typeargs(struct)[1])
+        	return ret
+        else:
+        	return self._recv(struct, iproto)
+
     def process(self, iproto, oproto):
         """Processes a single client request.
         """
@@ -221,7 +282,7 @@ class ThriftProcessor(TProcessor):
 
             # parse arguments
 #            perf.begin('recv')
-            arguments = self._recv(procedure.parameters_struct, iproto)
+            arguments = self.recv_struct(procedure.parameters_struct, iproto)
             iproto.readMessageEnd()
 #            perf.end('recv')
             
@@ -237,7 +298,7 @@ class ThriftProcessor(TProcessor):
             except:
                 pass
             print 'Server serving client: ', server_info.client_ip, ':', server_info.client_port
-            result = {}
+            result = Namespace()
             try:
                 result['result'] = procedure.implementation(**arguments)
             except Exception as ex:
@@ -249,7 +310,7 @@ class ThriftProcessor(TProcessor):
             # send the reply
 #            perf.begin('send')
             oproto.writeMessageBegin(pname, TMessageType.REPLY, seqid)
-            self._send(result, procedure.results_struct, oproto)
+            self.send_struct(result, procedure.results_struct, oproto)
             oproto.writeMessageEnd()
 #            perf.end('send')
         except TApplicationException as ex:
@@ -277,7 +338,7 @@ class ThriftProcessor(TProcessor):
 #        perf.begin('send')
         oproto.writeMessageBegin(procedure.name, TMessageType.CALL, self.seqid)
         self.seqid = self.seqid + 1
-        self._send(args, procedure.parameters_struct, oproto)
+        self.send_struct(Namespace(args), procedure.parameters_struct, oproto)
         oproto.writeMessageEnd()
         oproto.trans.flush()
 #        perf.end('send')
@@ -293,7 +354,7 @@ class ThriftProcessor(TProcessor):
             iproto.readMessageEnd()
             x.args = (x.message,)
             raise x
-        result = self._recv(procedure.results_struct, iproto)
+        result = self.recv_struct(procedure.results_struct, iproto)
         iproto.readMessageEnd()
 #        perf.end('recv')
 #        perf.end('call')
