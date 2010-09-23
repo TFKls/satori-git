@@ -99,15 +99,35 @@ class ArsAtomicType(ArsNamedType):
     def __init__(self, name):
         super(ArsAtomicType, self).__init__(name)
 
-
 ArsBoolean = ArsAtomicType(name='ArsBoolean')
 ArsInt8 = ArsAtomicType(name='ArsInt8')
 ArsInt16 = ArsAtomicType(name='ArsInt16')
 ArsInt32 = ArsAtomicType(name='ArsInt32')
 ArsInt64 = ArsAtomicType(name='ArsInt64')
 ArsFloat = ArsAtomicType(name='ArsFloat')
-ArsString = ArsAtomicType(name='ArsString')
 ArsVoid = ArsAtomicType(name='ArsVoid')
+
+
+class ArsStringType(ArsAtomicType):
+    """An ArsType without (visible) internal structure.
+    """
+
+    def __init__(self, name):
+        super(ArsStringType, self).__init__(name)
+
+    def do_needs_conversion(self):
+        return True
+
+    def do_convert_to_ars(self, value):
+        if isinstance(value, unicode):
+        	return value.encode('utf-8')
+        else:
+            return value
+
+    def do_convert_from_ars(self, value):
+        return unicode(value, 'utf-8')
+
+ArsString = ArsStringType(name='ArsString')
 
 
 class ArsTypeAlias(ArsNamedType):
