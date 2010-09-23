@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Object import Object
+from satori.core.models._Global import Global
 
 class Privilege(Object):
     """Model. Represents single right on object granted to the role.
@@ -18,6 +19,30 @@ class Privilege(Object):
 
     #class Meta:                                                # pylint: disable-msg=C0111
     #    unique_together = (('role', 'object', 'right'),)
+
+    @staticmethod
+    def grant(role, object, right, start_on, finish_on):
+        (priv, created) = Privilege.get_or_create(role=role, object=object, right=right)
+        priv.startOn = start_on
+        priv.finishOn = finish_on
+        priv.save()
+
+    @staticmethod
+    def revoke(role, object, right):
+        try:
+            priv = Privilege.get(role=role, object=object, right=right)
+            priv.delete()
+        except:
+            pass
+
+    @staticmethod
+    def global_grant(role, right, start_on, finish_on):
+        Privilege.grant(role, Global.get_instance(), right, start_on, finish_on)
+
+    @staticmethod
+    def global_revoke(role, right):
+        Privilege.global_revoke(role, Global.get_instance(), right)
+
 
 class PrivilegeEvents(Events):
     model = Privilege
