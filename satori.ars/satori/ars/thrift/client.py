@@ -7,6 +7,7 @@ import threading
 import socket
 from types import FunctionType
 
+from thrift.transport.TTransport import TFramedTransport, TTransportException
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
 from satori.objects import Argument, Signature, ArgumentMode
@@ -39,6 +40,10 @@ class ThriftClient(threading.local):
             values = values_type(*args, **kwargs)
             try:
                 return self._processor.call(procedure, values.named, self._protocol, self._protocol)
+            except TTransportException:
+                self.stop()
+                self.start()
+                return self._processor.call(procedure, values.named, self._protocol, self._protocol)
             except socket.error as e:
                 if e[0] == 32:
                 	self.stop()
@@ -64,7 +69,7 @@ class ThriftClient(threading.local):
         if self._started:
         	self.stop()
         	
-        self._transport = self._transport_factory()
+        self._transport = TFramedTransport(self._transport_factory())
         self._transport.open()
         self._protocol = TBinaryProtocol(self._transport)
         self._processor = ThriftProcessor(self._interface)
