@@ -21,8 +21,8 @@ class Privilege(Object):
     #    unique_together = (('role', 'object', 'right'),)
 
     @staticmethod
-    def grant(role, object, right, start_on, finish_on):
-        (priv, created) = Privilege.get_or_create(role=role, object=object, right=right)
+    def grant(role, object, right, start_on=None, finish_on=None):
+        (priv, created) = Privilege.objects.get_or_create(role=role, object=object, right=right)
         priv.startOn = start_on
         priv.finishOn = finish_on
         priv.save()
@@ -30,13 +30,13 @@ class Privilege(Object):
     @staticmethod
     def revoke(role, object, right):
         try:
-            priv = Privilege.get(role=role, object=object, right=right)
+            priv = Privilege.objects.get(role=role, object=object, right=right)
             priv.delete()
         except:
             pass
 
     @staticmethod
-    def global_grant(role, right, start_on, finish_on):
+    def global_grant(role, right, start_on=None, finish_on=None):
         Privilege.grant(role, Global.get_instance(), right, start_on, finish_on)
 
     @staticmethod

@@ -47,14 +47,14 @@ PrivilegeTimes = Struct('PrivilegeTimes', (
 @Argument('role', type=Role)
 @Argument('object', type=Object)
 @Argument('right', type=basestring)
-@Argument('start_on', type=datetime)
-@Argument('finish_on', type=datetime)
+@Argument('start_on', type=(datetime, NoneType))
+@Argument('finish_on', type=(datetime, NoneType))
 @ReturnValue(type=NoneType)
 def grant(token, role, object, right, start_on=None, finish_on=None):
-    Privilege.grant(role, object, right, start_in, finish_on)
+    Privilege.grant(role, object, right, start_on, finish_on)
 
 @privilege.grant.can
-def grant_can(token, role, object, right, start_on, finish_on):
+def grant_can(token, role, object, right, start_on=None, finish_on=None):
     return object.demand_right(token, 'MANAGE_PRIVILEGES')
 
 @privilege.method
@@ -91,14 +91,14 @@ def get_can(token, role, object, right):
 @Argument('token', type=Token)
 @Argument('role', type=Role)
 @Argument('right', type=basestring)
-@Argument('start_on', type=datetime)
-@Argument('finish_on', type=datetime)
+@Argument('start_on', type=(datetime, NoneType))
+@Argument('finish_on', type=(datetime, NoneType))
 @ReturnValue(type=NoneType)
 def global_grant(token, role, right, start_on=None, finish_on=None):
-    Privilege.global_grant(role, right, start_in, finish_on)
+    Privilege.global_grant(role, right, start_on, finish_on)
 
 @privilege.global_grant.can
-def global_grant_can(token, role, right, start_on, finish_on):
+def global_grant_can(token, role, right, start_on=None, finish_on=None):
     return Global.get_instance().demand_right(token, 'MANAGE_PRIVILEGES')
 
 @privilege.method
