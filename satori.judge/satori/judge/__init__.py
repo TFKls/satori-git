@@ -31,7 +31,7 @@ def judge_bash():
     jb = JailBuilder(root=jail_dir, template=options.template, template_path=templates_dir)
     try:
         jb.create()
-        jr = JailRun(root=jail_dir, path='bash', search=True)
+        jr = JailRun(root=jail_dir, cgroup_path=cgroup_dir, path='bash', search=True)
         jr.run()
     except:
         traceback.print_exc()
@@ -73,7 +73,7 @@ def judge_loop():
                 judge_src.close()
                 os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
                 judge_src.close()
-                jr = JailRun(submit=submit, root=jail_dir, path='/judge', debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time)
+                jr = JailRun(submit=submit, root=jail_dir, cgroup_path=cgroup_dir, path='/judge', debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time)
                 res = jr.run()
                 if debug:
                     dh = anonymous_blob_path(debug)

@@ -183,6 +183,7 @@ class JailBuilder(Object):
 class JailRun(Object):
 
     @Argument('root', type=str)
+    @Argument('cgroup_path', type=str)
     @Argument('path', type=str)
     @Argument('args', default=[])
     @Argument('host_eth', type=str, default='vethsh')
@@ -196,8 +197,10 @@ class JailRun(Object):
     @Argument('cgroup_time', type=int, default=5*60*1000)
     @Argument('debug', type=str, default='')
     @Argument('search', type=bool, default=False)
-    def __init__(self, root, path, args, host_eth, host_ip, guest_eth, guest_ip, netmask, control_port, cgroup, cgroup_memory, cgroup_time, debug, search):
+    def __init__(self, submit, root, cgroup_path, path, args, host_eth, host_ip, guest_eth, guest_ip, netmask, control_port, cgroup, cgroup_memory, cgroup_time, debug, search):
+        self.submit = submit
         self.root = root
+        self.cgroup_path = cgroup_path
         self.path = path
         self.args = [self.path] + args
         self.host_eth = host_eth
@@ -310,33 +313,51 @@ class JailRun(Object):
                     self.end_headers()
                     self.wfile.write(str(ex))
             def cmd_GETSUBMIT(self, input):
-                #TODO: Thrift get data
                 output = {}
-                output['id'] = self.submit_id
+                for field in self.jail_run.submit['submit_data']:
+                    if not field['is_blob']:
+                        output[field['name']] = field['value']
+                    else:
+                        output[field['name']] = None
                 return output
             def cmd_GETTEST(self, input):
-                #TODO: Thrift get data
                 output = {}
-                output['id'] = self.test_id
+                for field in self.jail_run.submit['test_data']:
+                    if not field['is_blob']:
+                        output[field['name']] = field['value']
+                    else:
+                        output[field['name']] = None
                 return output
             def cmd_GETCACHE(self, input):
                 hash = gen_hash(input['what'])
-                fname = jailPath(self.root_path, input['where'])
+                fname = jailPath(self.jail_run.root, input['where'])
                 #TODO: Przeszukac cache
                 return { 'res' : 'OK' }
             def cmd_PUTCACHE(self, input):
                 hash = gen_hash(input['what'])
-                fname = jailPath(self.root_path, input['where'])
+                fname = jailPath(self.jail_run.root, input['where'])
                 type = input['how']
                 #TODO: Handle cache
                 return { 'res' : 'OK' }
             def cmd_GETBLOB(self, input):
                 hash = input['hash']
-                fname = jailPath(self.root_path, input['where'])
+                fname = jailPath(self.jail_run.root, input['where'])
+                #TODO: Thrift get blob
+                return { 'res' : 'OK' }
+            def cmd_GETTESTBLOB(self, input):
+                name = input['name']
+                fname = jailPath(self.jail_run.root, input['where'])
+                self.jail_run.submit['test_result'].test.data_get_blob_path(name, fname)
+                #TODO: Thrift get blob
+                return { 'res' : 'OK' }
+            def cmd_GETSUBMITTBLOB(self, input):
+                name = input['name']
+                fname = jailPath(self.jail_run.root, input['where'])
+                self.jail_run.submit['test_result'].submit.data_get_blob_path(name, fname)
                 #TODO: Thrift get blob
                 return { 'res' : 'OK' }
             def cmd_CREATECG(self, input):
-                path = jailPath(self.cg_root, input['group'])
+                path = jailPath(self.jail_run.cgroup_path, input['group'])
                 if not os.path.isdir(path):
                     os.mkdir(path)
                     par = os.path.join(path, '..')
@@ -347,7 +368,7 @@ class JailRun(Object):
                                     d.write(l)
                 return { 'res' : 'OK' }
             def cmd_LIMITCG(self, input):
-                path = jailPath(self.cg_root, input['group'])
+                path = jailPath(self.jail_run.cgroup_path, input['group'])
                 def set_limit(type, value):
                     file = os.path.join(path, type)
                     with open(file, 'w') as f:
@@ -358,8 +379,8 @@ class JailRun(Object):
 
                 return { 'res' : 'OK' }
             def cmd_ASSIGNCG(self, input):
-                path = jailPath(self.cg_root, input['group'])
-                file = jailPath(self.root_path, input['file'])
+                path = jailPath(self.jail_run.cgroup_path, input['group'])
+                file = jailPath(self.jail_run.root, input['file'])
                 pid = int((subprocess.Popen(["fuser", file], stdout=subprocess.PIPE).communicate()[0]).split(':')[-1])
                 #TODO: Check pid
                 print 'Gotya ', pid
@@ -367,7 +388,7 @@ class JailRun(Object):
                     f.write(str(pid))
                 return { 'res' : 'OK' }
             def cmd_DESTROYCG(self, input):
-                path = os.path.join(jailPath(self.cg_root, input['group']))
+                path = os.path.join(jailPath(self.jail_run.cgroup_path, input['group']))
                 killer = True
                 #TODO: po ilu probach sie poddac?
                 while killer:
@@ -380,7 +401,7 @@ class JailRun(Object):
                 os.rmdir(path)
                 return { 'res' : 'OK' }
             def cmd_QUERYCG(self, input):
-                path = os.path.join(jailPath(self.cg_root, input['group']))
+                path = os.path.join(jailPath(self.jail_run.cgroup_path, input['group']))
                 output = {}
                 with open(os.path.join(path, 'cpuacct.stat'), 'r') as f:
                     _, output['cpu.user'] = f.readline().split()
@@ -391,14 +412,14 @@ class JailRun(Object):
                 return output
 
             def cmd_CREATEJAIL(self, input):
-                path = os.path.join(jailPath(self.root_path, input['path']))
+                path = os.path.join(jailPath(self.jail_run.root, input['path']))
                 template = input['template']
                 jb = JailBuilder(root=path, template=template)
                 jb.create()
                 return { 'res' : 'OK' }
 
             def cmd_DESTROYJAIL(self, input):
-                path = os.path.join(jailPath(self.root_path, input['path']))
+                path = os.path.join(jailPath(self.jail_run.root, input['path']))
                 jb = JailBuilder(root=path)
                 jb.destroy()
                 return { 'res' : 'OK' }
