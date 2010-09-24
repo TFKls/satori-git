@@ -1,3 +1,5 @@
+import os
+import shutil
 from satori.ars.model import ArsTypeAlias, ArsInt64, ArsStructure
 from satori.ars.wrapper import ArsDateTime, ArsNullableStructure
 from satori.ars import perf
