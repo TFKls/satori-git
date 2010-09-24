@@ -10,15 +10,22 @@ class ContestRightsRequest(Request):
     @classmethod
     def process(cls, request):
         c = ContestById(request.POST['contest_id'])
-        for rg in Privilege.filter({'object':c, 'role':Security.anonymous(), 'right':'VIEW'}):
-            rg.delete()
+        anonymous = Security.anonymous()
+        authenticated = Security.authenticated()
         if 'anonymous_view' in request.POST.keys():
-            Privilege.create({'object':c, 'role':Security.anonymous(), 'right':'VIEW'})
-        for rg in Privilege.filter({'object':c, 'role':Security.authenticated()}):
-            rg.delete()
-        if request.POST['joining_by']=='moderated':
-            Privilege.create({'object':c, 'role':Security.authenticated(), 'right':'APPLY'})
-        if request.POST['joining_by']=='public':
-            Privilege.create({'object':c, 'role':Security.authenticated(), 'right':'JOIN'})
+        	Privilege.grant(anonymous, c, 'VIEW')
+        else:
+            Privilege.revoke(anonymous, c, 'VIEW')
+
+        if request.POST['joining_by'] == 'moderated':
+        	Privilege.grant(authenticated, c, 'APPLY')
+        	Privilege.revoke(authenticated, c, 'JOIN')
+        elif request.POST['joining_by'] == 'public':
+        	Privilege.revoke(authenticated, c, 'APPLY')
+        	Privilege.grant(authenticated, c, 'JOIN')
+        else:
+        	Privilege.revoke(authenticated, c, 'APPLY')
+        	Privilege.revoke(authenticated, c, 'JOIN')
+
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')

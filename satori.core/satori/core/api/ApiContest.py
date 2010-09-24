@@ -49,8 +49,8 @@ def create_contest(token, name):
     r.save()
     c.contestant_role = r
     c.save()
-    Privilege(role = token.user, object = c, right='MANAGE').save()
-    Privilege(role = r, object = c, right='VIEW').save()
+    Privilege.grant(token.user, c, 'MANAGE')
+    Privilege.grant(r, c, 'VIEW')
     return c
 @contest.create_contest.can
 def create_contest_check(token, name):
@@ -105,7 +105,7 @@ def submit(token, self, problem_mapping, content, filename):
     submit.contestant = contestant
     submit.problem = problem_mapping
 	submit.save()
-	Privilege(object=submit, role=contestant, right='VIEW').save()
+	Privilege.grant(contestant, submit, 'VIEW')
 	OpenAttribute(object=submit.data, name='filename', oatype=OpenAttribute.OATYPES_STRING, string_value=filename).save()
 	blob = Blob()
 	blob.open('w')

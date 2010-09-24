@@ -250,7 +250,7 @@ class CreateWrapper(ProcedureWrapper):
             ret.save()
 
             if token.user:
-                Privilege(object=ret, role=token.user, right='MANAGE').save()
+                Privilege.grant(token.user, ret, 'MANAGE')
 
             return ret
         

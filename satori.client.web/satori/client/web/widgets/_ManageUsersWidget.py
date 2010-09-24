@@ -13,13 +13,15 @@ class ManageUsersWidget(Widget):
         self.pending = list()
         self.back_to = ToString(params)
         self.path = path
-        jo = 0
-        if explicit_right(c,Security.authenticated(),"APPLY"):
+        authenticated = Security.authenticated()
+        if Privilege.get(authenticated, c, 'JOIN') is not None:
+        	jo = 2
+        elif Privilege.get(authenticated, c, 'APPLY') is not None:
             jo = 1
-        if explicit_right(c,Security.authenticated(),"JOIN"):
-            jo = 2
+        else:
+        	jo = 0
         self.joining_options=[["no_joining","Only when added",jo==0],["moderated","By acceptation",jo==1],["public","Freely",jo==2]]
-        self.anonymous_view = explicit_right(c,Security.anonymous(),"VIEW")
+        self.anonymous_view = Privilege.get(Security.anonymous(), c, 'VIEW') is not None
         for t in Contestant.filter({'contest':c}):
             if t.accepted:
                 self.accepted.append([t,t.members()])

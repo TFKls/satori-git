@@ -100,7 +100,7 @@ def register(token, login, password, fullname):
     auth = Login(login=login, user=user)
     auth.set_password(password)
     auth.save()
-    Privilege(object=user, role=user, right='MANAGE').save()
+    Privilege.grant(user, user, 'MANAGE')
     return user
 
 @security.method

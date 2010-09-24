@@ -17,9 +17,9 @@ def create_problem(token, name):
     o = Problem()
     o.name = name
     o.save()
-    p = Privilege(role = token.user, object = o, right='MANAGE')
-    p.save()
+    Privilege.grant(token.user, o, 'MANAGE')
     return o
+
 @problem.create_problem.can
 def create_problem_check(token, name):
     return Global.get_instance().demand_right(token, 'MANAGE_PROBLEMS')

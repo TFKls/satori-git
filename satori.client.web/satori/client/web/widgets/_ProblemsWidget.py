@@ -27,12 +27,12 @@ class ProblemsWidget(Widget):
             published = False
             stime = None
             ftime = None
-            privs = Privilege.filter({'role' : r, 'object' : p, 'right' : 'SUBMIT'})
-            for priv in privs:
-                if ((not priv.startOn) or priv.startOn>datetime.now()) and ((not priv.finishOn) or priv.endOn<datetime.now()):
-                    published = True
-                stime = str(priv.startOn)
-                ftime = str(priv.finishOn)
+            times = Privilege.get(r, p, 'SUBMIT')
+            if times:
+                if ((times.start_on is None) or (times.start_on < datetime.now())) and ((times.finish_on is None) or (times.finish_on > datetime.now())):
+                	published = True
+                stime = str(priv.start_on)
+                ftime = str(times.finish_on)
             if published:
                 stime = 'Published'
             entry['stime'] = stime

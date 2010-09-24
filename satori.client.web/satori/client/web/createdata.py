@@ -85,7 +85,7 @@ def create(request):
         
     paladin = Security.register(login='paladin', fullname='Lech Duraj', password='paladin')
     dijkstra = Security.register(fullname='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')
-    Privilege.create_global(role = paladin, right='ADMIN')
+    Privilege.global_grant(paladin, 'ADMIN')
     token = Security.login(login='paladin', password='paladin')
 
     checker = Security.machine_register(secret='sekret', name='checker_one', address='0.0.0.0', netmask='0.0.0.0')
@@ -94,10 +94,10 @@ def create(request):
     c2 = Contest.create_contest(name = 'Kontest prywatny')
     c3 = Contest.create_contest(name = 'Kontest moderowany')
     c4 = Contest.create_contest(name = 'Kontest publiczny')
-    Privilege.create({'object': c2, 'role': paladin, 'right':'JOIN'})
-    Privilege.create({'object': c3, 'role': paladin, 'right':'APPLY'})
-    Privilege.create({'object': c4, 'role': paladin, 'right':'JOIN'})
-    Privilege.create({'object': c2, 'role': paladin, 'right':'MANAGE'})
+    Privilege.grant(paladin, c2, 'JOIN')
+    Privilege.grant(paladin, c3, 'APPLY')
+    Privilege.grant(paladin, c4, 'JOIN')
+    Privilege.grant(paladin, c2, 'MANAGE')
     cc2 = c2.join_contest()
     
     
