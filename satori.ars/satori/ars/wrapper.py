@@ -149,6 +149,8 @@ python_basic_types = {
     int: ArsInt32,
     long: ArsInt64,
     str: ArsString,
+    unicode: ArsString,
+    basestring: ArsString,
     bool: ArsBoolean,
     datetime: ArsDateTime(),
 }
