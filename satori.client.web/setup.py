@@ -12,6 +12,7 @@ setup(name='satori.client.web',
         'setuptools',
         'Thrift',
         'satori.client.common',
+        'Sphinx',
     ],
     entry_points='''
         [console_scripts]
