@@ -77,12 +77,10 @@ def upload(request):
     if request.method not in ['PUT']:
         return HttpResponseNotAllowed(['PUT'])
 
-    print 'a'
     token = Token(request.COOKIES.get('satori_token', ''))
     if not Global.get_instance().demand_right(token, 'ADMIN'):
         return HttpResponseForbidden()
 
-    print 'b'
     try:
         blob = Blob()
         length = int(request.environ.get('CONTENT_LENGTH', 0))

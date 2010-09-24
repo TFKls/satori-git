@@ -31,7 +31,6 @@ SubmitToCheck = Struct('SubmitToCheck', (
 def get_next(token):
     u = token.user
     next = JudgeDispatcherClient.get_instance().get_next(u)
-    print next
     if next.test_result_id is None:
     	return None
     ret = {}

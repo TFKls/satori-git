@@ -283,7 +283,6 @@ class RightCheck(Object):
         return None
     
     def _single_check(self, role, object, right):
-        print role.id, object.id, right
         res = self._cache_get(role, object, right)
         if res is not None:
             return res

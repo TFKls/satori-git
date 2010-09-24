@@ -45,7 +45,7 @@ class PollScheduler(Scheduler):
         fileno = client.fileno
         if fileno in self.fdmap:
             return
-        print 'PollScheduler: registered new client with fd', fileno
+        #print 'PollScheduler: registered new client with fd', fileno
         self.fdmap[fileno] = client
         self.waits.register(fileno, select.POLLIN | select.POLLHUP | select.POLLERR)
 
@@ -110,9 +110,9 @@ class ListenerClient(Client):
         """Receive the next command from this Client.
         """
         try:
-            print 'ListenerClient: waiting for connection'
+            #print 'ListenerClient: waiting for connection'
             connection = self.listener.accept()
-            print 'ListenerClient: got connection'
+            #print 'ListenerClient: got connection'
         except:
             raise ProtocolError("Listener.accept() failed")
         ConnectionClient(scheduler=self.scheduler, connection=connection)
@@ -151,7 +151,8 @@ class Master(Manager):
         ListenerClient(scheduler=self.scheduler, listener=listener)
 
     def _print(self, command, sender):
-        print 'event master: received', command, 'from', sender
+        pass
+        #print 'event master: received', command, 'from', sender
 
     def _handleKeepAlive(self, _command, sender):
         self._print(_command, sender)

@@ -80,7 +80,7 @@ def start_server_event_slave():
         mapping = yield Map(dict(), queue_id)
         while True:
             queue, event = yield Receive()
-            print 'queue', queue, 'received', event
+            #print 'queue', queue, 'received', event
     slave.schedule(dump_events())
     print 'event slave starting'
     slave.run()

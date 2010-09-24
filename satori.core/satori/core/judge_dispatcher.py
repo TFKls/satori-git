@@ -191,10 +191,7 @@ class JudgeDispatcherClient(object):
         self.lock.acquire()
         self.connection.send(Send(Event(type='judge_dispatcher_dequeue', tag=str(self._pid), tester_id=user.id)))
         self.connection.recv()
-        print 'a'
         self.connection.send(Receive())
-        print 'b'
         result = self.connection.recv()
-        print 'c'
         self.lock.release()
         return result[1]
