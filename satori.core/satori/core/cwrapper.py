@@ -3,7 +3,7 @@
 from types import NoneType
 from datetime import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
-from satori.ars.wrapper import StructType, Struct, TypedList, Wrapper, ProcedureWrapper, StaticWrapper
+from satori.ars.wrapper import StructType, Struct, TypedList, TypedMap, Wrapper, ProcedureWrapper, StaticWrapper
 from satori.ars.model import *
 from django.db import models, transaction, connection
 from django.db.models.fields.related import add_lazy_relation
@@ -383,6 +383,16 @@ class OpenAttributeWrapper(Wrapper):
         @ReturnValue(type=TypedList(Attribute))
         def get_list(token, self):
             return [oa_to_struct(oa) for oa in get_group(self).attributes.all()]
+
+        @oaw_self.method
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @ReturnValue(type=TypedMap(unicode, Attribute))
+        def get_map(token, self):
+            ret = {}
+            for oa in get_group(self).attributes.all():
+            	ret[oa.name] = oa_to_struct(oa)
+            return ret
 
         @oaw_self.method
         @Argument('token', type=Token)
