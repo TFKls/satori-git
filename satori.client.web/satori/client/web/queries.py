@@ -2,6 +2,7 @@
 from URLDictionary import *
 from satori.client.common.remote import *
 from datetime import datetime
+from xml.dom import minidom
 
 # Module for database queries
 
@@ -71,3 +72,11 @@ def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
 def text2html(text):
     return text
     
+
+def parse_judge(judge_content):
+    xml = ''
+    for line in judge_content.splitlines(True):
+        if line[0:2]=="#@":
+            xml = xml+line.strip("#@")
+#    tree = minidom
+    return xml

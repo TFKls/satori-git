@@ -12,4 +12,10 @@ class EditProblemWidget(Widget):
         p = Problem.filter({'id':id})[0]
         self.p = p
         self.checkers = Global.get_instance().checkers_get_list()
-        self.defjudge = p.default_test_data_get_blob_hash("judge")
+        self.back_to = ToString(params)
+        self.back_path = path
+        if p.default_test_data_get_blob_hash("judge"):
+            reader = p.default_test_data_get_blob("judge")
+            judge_content = reader.read(reader.length)
+            reader.close()
+            self.judge = parse_judge(judge_content)

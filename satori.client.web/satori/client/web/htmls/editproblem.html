@@ -1,16 +1,23 @@
 <h3>{{ p.name }}</h3>
 
-Select default checker:
 <form action="process.set_default_td" method="POST">
-<select name="default_checker">
-{% for c in widget.checkers %}
-<option value="{{c.value}}">{{c.name}}</option>
-{% endfor %}
-</select>
-<input type="submit" value="Select"/>
-<br/>
-{% if widget.defjudge %}
-Default test data
-{% endif %}
+    Select default checker:
+    <select name="default_judge">
+        <option value="">None</option>
+        {% for c in widget.checkers %}
+        <option value="{{c.value}}">{{c.name}}</option>
+        {% endfor %}
+    </select>
+    <input type="submit" value="Select"/>
+    <br/>
+    {% if widget.judge %}
+    Default test data
+    <textarea>
+        {{ widget.judge }}
+    </textarea>
+    {% endif %}
+    <input type="hidden" name="id" value="{{widget.p.id}}"/>
+    <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+    <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
 </form>
 
