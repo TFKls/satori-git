@@ -68,112 +68,6 @@ class JailExec(Object):
         else:
             os.execv(self.path, self.args)
 
-class JailRun(Object):
-
-    @Argument('root', type=str)
-    @Argument('path', type=str)
-    @Argument('args', default=[])
-    @Argument('host_eth', type=str, default='vethsh')
-    @Argument('host_ip', type=str, default='192.168.100.101')
-    @Argument('guest_eth', type=str, default='vethsg')
-    @Argument('guest_ip', type=str, default='192.168.100.102')
-    @Argument('netmask', type=str, default='255.255.255.0')
-    @Argument('control_port', type=int, default=8765)
-    @Argument('cgroup', type=str, default='runner')
-    @Argument('cgroup_memory', type=int, default=64*1024*1024)
-    @Argument('cgroup_time', type=int, default=64*1024*1024)
-    @Argument('debug', type=str, default='')
-
-    @Argument('search', type=bool, default=False)
-    def __init__(self, root, path, args, host_eth, host_ip, guest_eth, guest_ip, netmask, cgroup, cgroup_memory, cgroup_time, run_memory, debug, search):
-        self.root = root
-        self.path = path
-        self.args = [self.path] + args
-        self.host_eth = host_eth
-        self.host_ip = host_ip
-        self.guest_eth = guest_eth
-        self.guest_ip = guest_ip
-        self.netmask = netmask
-        self.control_port = control_port
-        self.cgroup = cgroup
-        self.cgroup_memory = cgroup_memory
-        self.cgroup_time = cgroup_time
-        self.debug = debug
-        self.search = search
-
-    def child(self, pipe):
-        try:
-            unshare.unshare(unshare.CLONE_NEWNS | unshare.CLONE_NEWUTS | unshare.CLONE_NEWIPC | unshare.CLONE_NEWNET)
-
-            pipe.send(1)
-#WAIT FOR PARENT CREATE VETH
-            pipe.recv()
-            subprocess.check_call(['ifconfig', self.guest_eth, self.guest_ip+'/'+self.netmask, 'up'])
-            subprocess.check_call(['route', 'add', 'default', 'gw', self.host_ip])
-            subprocess.check_call(['ifconfig', 'lo', '127.0.0.1/8', 'up'])
-            subprocess.check_call(['iptables', '-t', 'filter', '-F'])
-            subprocess.check_call(['iptables', '-t', 'nat', '-F'])
-            subprocess.check_call(['iptables', '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT'])
-            subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
-            subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
-            subprocess.check_call(['iptables', '-P', 'INPUT', 'DROP'])
-            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-o', 'lo', '-j', 'ACCEPT'])
-            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
-            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
-            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'owner', '--uid-owner', 'root', '-j', 'ACCEPT'])
-            subprocess.check_call(['iptables', '-P', 'OUTPUT', 'DROP'])
-            subprocess.check_call(['iptables', '-P', 'FORWARD', 'DROP'])
-            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'PREROUTING', 'ACCEPT'])
-            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'POSTROUTING', 'ACCEPT'])
-            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'OUTPUT', 'ACCEPT'])
-
-            pipe.send(1)
-#WAIT FOR PARENT CLEANUP
-            pipe.recv()
-            pipe.close()
-
-            runargs = [ 'runner', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
-            runargs += [ '--control-host', self.host_ip, '--control-port', str(self.control_port), '--cgroup', cgroup, '--cgroup-memory', str(self.cgroup_memory), '--cgroup-time', str(self.cgroup_time) ]
-            if self.search:
-                runargs.append('--search')
-            if self.debug:
-                runargs.append('--debug', self.debug)
-            runargs += self.args
-            print runargs
-            os.execvp('runner', runargs)
-        except:
-            raise
-        finally:
-            pipe.close()
-
-    def parent(self):
-        subprocess.check_call(['ip', 'link', 'add', 'name', self.host_eth, 'type', 'veth', 'peer', 'name', self.guest_eth])
-        subprocess.check_call(['mount', '--make-rshared', self.root])
-        pipe, pipec = Pipe()
-        try:
-            child = Process(target = self.child, args=(pipec,))
-            child.start()
-#WAIT FOR CHILD START AND UNSHARE
-            pipe.recv()
-            subprocess.check_call(['ifconfig', self.host_eth, self.host_ip+'/'+self.netmask, 'up'])
-            subprocess.check_call(['ip', 'link', 'set', self.guest_eth, 'netns', str(child.pid)])
-            controller = Process(target = run_server, args=(self.host_ip, self.control_port, True))
-            controller.start()
-            pipe.send(1)
-#WAIT FOR CHILD CONFIGURE NETWORK AND PIVOT ROOT
-            pipe.recv()
-            pipe.send(1)
-        except:
-            raise
-        finally:
-            pipe.close()
-        child.join()
-        controller.terminate()
-
-    def run(self):
-        self.parent()
-
-
 class JailBuilder(Object):
     scriptTimeout = 5
 
@@ -286,142 +180,246 @@ class JailBuilder(Object):
         shutil.rmtree(self.root)
 
 
+class JailRun(Object):
 
-class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+    @Argument('root', type=str)
+    @Argument('path', type=str)
+    @Argument('args', default=[])
+    @Argument('host_eth', type=str, default='vethsh')
+    @Argument('host_ip', type=str, default='192.168.100.101')
+    @Argument('guest_eth', type=str, default='vethsg')
+    @Argument('guest_ip', type=str, default='192.168.100.102')
+    @Argument('netmask', type=str, default='255.255.255.0')
+    @Argument('control_port', type=int, default=8765)
+    @Argument('cgroup', type=str, default='runner')
+    @Argument('cgroup_memory', type=int, default=64*1024*1024)
+    @Argument('cgroup_time', type=int, default=5*60*1000)
+    @Argument('debug', type=str, default='')
+    @Argument('search', type=bool, default=False)
+    def __init__(self, root, path, args, host_eth, host_ip, guest_eth, guest_ip, netmask, control_port, cgroup, cgroup_memory, cgroup_time, debug, search):
+        self.root = root
+        self.path = path
+        self.args = [self.path] + args
+        self.host_eth = host_eth
+        self.host_ip = host_ip
+        self.guest_eth = guest_eth
+        self.guest_ip = guest_ip
+        self.netmask = netmask
+        self.control_port = control_port
+        self.cgroup = cgroup
+        self.cgroup_memory = cgroup_memory
+        self.cgroup_time = cgroup_time
+        self.debug = debug
+        self.search = search
 
-    def do_POST(self):
-        s = self.rfile.read(int(self.headers['Content-Length']))
-        input = yaml.load(s)
-        cmd = 'cmd_' + self.path[1:]
+    def child(self, pipe):
         try:
-            output = getattr(self, cmd)(input)
-            self.send_response(200)
-            self.send_header("Content-type", "text/yaml; charset=utf-8")
-            self.end_headers()
-            yaml.dump(output, self.wfile)
-        except Exception as ex:
-            self.send_response(500)
-            self.end_headers()
-            self.wfile.write(str(ex))
-    def cmd_GETSUBMIT(self, input):
-        #TODO: Thrift get data
-        output = {}
-        output['id'] = self.submit_id
-        return output
-    def cmd_GETTEST(self, input):
-        #TODO: Thrift get data
-        output = {}
-        output['id'] = self.test_id
-        return output
-    def cmd_GETCACHE(self, input):
-        hash = gen_hash(input['what'])
-        fname = jailPath(self.root_path, input['where'])
-        #TODO: Przeszukac cache
-        return { 'res' : 'OK' }
-    def cmd_PUTCACHE(self, input):
-        hash = gen_hash(input['what'])
-        fname = jailPath(self.root_path, input['where'])
-        type = input['how']
-        #TODO: Handle cache
-        return { 'res' : 'OK' }
-    def cmd_GETBLOB(self, input):
-        hash = input['hash']
-        fname = jailPath(self.root_path, input['where'])
-        #TODO: Thrift get blob
-        return { 'res' : 'OK' }
-    def cmd_CREATECG(self, input):
-        path = jailPath(self.cg_root, input['group'])
-        if not os.path.isdir(path):
-            os.mkdir(path)
-            par = os.path.join(path, '..')
-            for limit in [ 'cpuset.cpus', 'cpuset.mems', ]:
-                with open(os.path.join(par, limit), 'r') as s:
-                    with open(os.path.join(path, limit), 'w') as d:
-                        for l in s:
-                            d.write(l)
-        return { 'res' : 'OK' }
-    def cmd_LIMITCG(self, input):
-        path = jailPath(self.cg_root, input['group'])
-        def set_limit(type, value):
-            file = os.path.join(path, type)
-            with open(file, 'w') as f:
-                f.write(str(value))
-        if 'memory' in input:
-          set_limit('memory.limit_in_bytes', int(input['memory']))
-          set_limit('memory.soft_limit_in_bytes', int(input['memory']))
+            unshare.unshare(unshare.CLONE_NEWNS | unshare.CLONE_NEWUTS | unshare.CLONE_NEWIPC | unshare.CLONE_NEWNET)
 
-        return { 'res' : 'OK' }
-    def cmd_ASSIGNCG(self, input):
-        path = jailPath(self.cg_root, input['group'])
-        file = jailPath(self.root_path, input['file'])
-        pid = int((subprocess.Popen(["fuser", file], stdout=subprocess.PIPE).communicate()[0]).split(':')[-1])
-        #TODO: Check pid
-        print 'Gotya ', pid
-        with open(os.path.join(path, 'tasks'), 'w') as f:
-            f.write(str(pid))
-        return { 'res' : 'OK' }
-    def cmd_DESTROYCG(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['group']))
-        killer = True
-        #TODO: po ilu probach sie poddac?
-        while killer:
-            killer = False
-            with open(os.path.join(path, 'tasks'), 'r') as f:
-                for pid in f:
-                    killer = True
-                    os.kill(int(pid), signal.SIGKILL)
-            time.sleep(1)
-        os.rmdir(path)
-        return { 'res' : 'OK' }
-    def cmd_QUERYCG(self, input):
-        path = os.path.join(jailPath(self.cg_root, input['group']))
-        output = {}
-        with open(os.path.join(path, 'cpuacct.stat'), 'r') as f:
-            _, output['cpu.user'] = f.readline().split()
-            _, output['cpu.system'] = f.readline().split()
-        with open(os.path.join(path, 'memory.max_usage_in_bytes'), 'r') as f:
-            output['memory'] = f.readline()
-        output['res'] = 'OK'
-        return output
+            pipe.send(1)
+#WAIT FOR PARENT CREATE VETH
+            pipe.recv()
+            subprocess.check_call(['ifconfig', self.guest_eth, self.guest_ip, 'netmask', self.netmask, 'up'])
+            subprocess.check_call(['route', 'add', 'default', 'gw', self.host_ip])
+            subprocess.check_call(['ifconfig', 'lo', '127.0.0.1/8', 'up'])
+            subprocess.check_call(['iptables', '-t', 'filter', '-F'])
+            subprocess.check_call(['iptables', '-t', 'nat', '-F'])
+            subprocess.check_call(['iptables', '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
+            subprocess.check_call(['iptables', '-P', 'INPUT', 'DROP'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-o', 'lo', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'owner', '--uid-owner', 'root', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-P', 'OUTPUT', 'DROP'])
+            subprocess.check_call(['iptables', '-P', 'FORWARD', 'DROP'])
+            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'PREROUTING', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'POSTROUTING', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-t', 'nat', '-P', 'OUTPUT', 'ACCEPT'])
 
-    def cmd_CREATEJAIL(self, input):
-        path = os.path.join(jailPath(self.root_path, input['path']))
-        template = input['template']
-        jb = JailBuilder(root=path, template=template)
-        jb.create()
-        return { 'res' : 'OK' }
+            pipe.send(1)
+#WAIT FOR PARENT CLEANUP
+            pipe.recv()
+            pipe.close()
 
-    def cmd_DESTROYJAIL(self, input):
-        path = os.path.join(jailPath(self.root_path, input['path']))
-        jb = JailBuilder(root=path)
-        jb.destroy()
-        return { 'res' : 'OK' }
+            runargs = [ 'runner', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
+            runargs += [ '--control-host', self.host_ip, '--control-port', str(self.control_port), '--cgroup', self.cgroup, '--cgroup-memory', str(self.cgroup_memory), '--cgroup-cputime', str(self.cgroup_time) ]
+            if self.search:
+                runargs += [ '--search' ]
+            if self.debug:
+                runargs += [ '--debug', self.debug ]
+            runargs += self.args
+            print runargs
+            os.execvp('runner', runargs)
+        except:
+            raise
+        finally:
+            pipe.close()
 
-    def cmd_PING(self, input):
-        return { 'res' : 'OK' }
+    def parent(self):
+        subprocess.call(['ip', 'link', 'del', self.host_eth])
+        subprocess.check_call(['ip', 'link', 'add', 'name', self.host_eth, 'type', 'veth', 'peer', 'name', self.guest_eth])
+        subprocess.check_call(['mount', '--make-rshared', self.root])
+        pipe, pipec = Pipe()
+        try:
+            child = Process(target = self.child, args=(pipec,))
+            child.start()
+#WAIT FOR CHILD START AND UNSHARE
+            pipe.recv()
+            subprocess.check_call(['ifconfig', self.host_eth, self.host_ip, 'netmask', self.netmask, 'up'])
+            subprocess.check_call(['ip', 'link', 'set', self.guest_eth, 'netns', str(child.pid)])
+            controller = Process(target = self.run_server, args=(self.host_ip, self.control_port, True))
+            controller.start()
+            pipe.send(1)
+#WAIT FOR CHILD CONFIGURE NETWORK AND PIVOT ROOT
+            pipe.recv()
+            pipe.send(1)
+        except:
+            raise
+        finally:
+            pipe.close()
+        child.join()
+        controller.terminate()
+        self.result = [{'is_blob':False, 'name':'status', 'value':'OK'}]
 
+    def run(self):
+        self.parent()
+        return self.result
+        
 
-def create_handler(submit, test, root, cgroot, quiet):
-    class Handler(JailHandler):
-        def __init__(self, *args, **kwargs):
-            self.submit_id = submit
-            self.test_id = test
-            self.root_path = root
-            self.cg_root = cgroot
-            JailHandler.__init__(self, *args, **kwargs)
-        def log_message(self, *args, **kwargs):
-            if not quiet:
-                super(Handler, self).log_message(*args, **kwargs)
-        def log_request(self, *args, **kwargs):
-            if not quiet:
-                super(Handler, self).log_request(*args, **kwargs)
-    return Handler
+    def create_handler(self, quiet):
+        qquiet = quiet
 
+        class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
+            quiet = qquiet
+            jail_run = self
 
-def run_server(host, port, quiet=False):
-    server_class = BaseHTTPServer.HTTPServer
-    httpd = server_class((host, port), create_handler(1, 2, '/jail', '/cgroup', quiet))
-    try:
-        httpd.serve_forever()
-    finally:
-        httpd.server_close()
+            def do_POST(self):
+                s = self.rfile.read(int(self.headers['Content-Length']))
+                input = yaml.load(s)
+                cmd = 'cmd_' + self.path[1:]
+                try:
+                    output = getattr(self, cmd)(input)
+                    self.send_response(200)
+                    self.send_header("Content-type", "text/yaml; charset=utf-8")
+                    self.end_headers()
+                    yaml.dump(output, self.wfile)
+                except Exception as ex:
+                    self.send_response(500)
+                    self.end_headers()
+                    self.wfile.write(str(ex))
+            def cmd_GETSUBMIT(self, input):
+                #TODO: Thrift get data
+                output = {}
+                output['id'] = self.submit_id
+                return output
+            def cmd_GETTEST(self, input):
+                #TODO: Thrift get data
+                output = {}
+                output['id'] = self.test_id
+                return output
+            def cmd_GETCACHE(self, input):
+                hash = gen_hash(input['what'])
+                fname = jailPath(self.root_path, input['where'])
+                #TODO: Przeszukac cache
+                return { 'res' : 'OK' }
+            def cmd_PUTCACHE(self, input):
+                hash = gen_hash(input['what'])
+                fname = jailPath(self.root_path, input['where'])
+                type = input['how']
+                #TODO: Handle cache
+                return { 'res' : 'OK' }
+            def cmd_GETBLOB(self, input):
+                hash = input['hash']
+                fname = jailPath(self.root_path, input['where'])
+                #TODO: Thrift get blob
+                return { 'res' : 'OK' }
+            def cmd_CREATECG(self, input):
+                path = jailPath(self.cg_root, input['group'])
+                if not os.path.isdir(path):
+                    os.mkdir(path)
+                    par = os.path.join(path, '..')
+                    for limit in [ 'cpuset.cpus', 'cpuset.mems', ]:
+                        with open(os.path.join(par, limit), 'r') as s:
+                            with open(os.path.join(path, limit), 'w') as d:
+                                for l in s:
+                                    d.write(l)
+                return { 'res' : 'OK' }
+            def cmd_LIMITCG(self, input):
+                path = jailPath(self.cg_root, input['group'])
+                def set_limit(type, value):
+                    file = os.path.join(path, type)
+                    with open(file, 'w') as f:
+                        f.write(str(value))
+                if 'memory' in input:
+                  set_limit('memory.limit_in_bytes', int(input['memory']))
+                  set_limit('memory.soft_limit_in_bytes', int(input['memory']))
+
+                return { 'res' : 'OK' }
+            def cmd_ASSIGNCG(self, input):
+                path = jailPath(self.cg_root, input['group'])
+                file = jailPath(self.root_path, input['file'])
+                pid = int((subprocess.Popen(["fuser", file], stdout=subprocess.PIPE).communicate()[0]).split(':')[-1])
+                #TODO: Check pid
+                print 'Gotya ', pid
+                with open(os.path.join(path, 'tasks'), 'w') as f:
+                    f.write(str(pid))
+                return { 'res' : 'OK' }
+            def cmd_DESTROYCG(self, input):
+                path = os.path.join(jailPath(self.cg_root, input['group']))
+                killer = True
+                #TODO: po ilu probach sie poddac?
+                while killer:
+                    killer = False
+                    with open(os.path.join(path, 'tasks'), 'r') as f:
+                        for pid in f:
+                            killer = True
+                            os.kill(int(pid), signal.SIGKILL)
+                    time.sleep(1)
+                os.rmdir(path)
+                return { 'res' : 'OK' }
+            def cmd_QUERYCG(self, input):
+                path = os.path.join(jailPath(self.cg_root, input['group']))
+                output = {}
+                with open(os.path.join(path, 'cpuacct.stat'), 'r') as f:
+                    _, output['cpu.user'] = f.readline().split()
+                    _, output['cpu.system'] = f.readline().split()
+                with open(os.path.join(path, 'memory.max_usage_in_bytes'), 'r') as f:
+                    output['memory'] = f.readline()
+                output['res'] = 'OK'
+                return output
+
+            def cmd_CREATEJAIL(self, input):
+                path = os.path.join(jailPath(self.root_path, input['path']))
+                template = input['template']
+                jb = JailBuilder(root=path, template=template)
+                jb.create()
+                return { 'res' : 'OK' }
+
+            def cmd_DESTROYJAIL(self, input):
+                path = os.path.join(jailPath(self.root_path, input['path']))
+                jb = JailBuilder(root=path)
+                jb.destroy()
+                return { 'res' : 'OK' }
+
+            def cmd_PING(self, input):
+                return { 'res' : 'OK' }
+
+            def log_message(self, *args, **kwargs):
+                if not self.quiet:
+                    super(Handler, self).log_message(*args, **kwargs)
+            def log_request(self, *args, **kwargs):
+                if not self.quiet:
+                    super(Handler, self).log_request(*args, **kwargs)
+
+        return JailHandler
+
+    def run_server(self, host, port, quiet=False):
+        server_class = BaseHTTPServer.HTTPServer
+        handler_class = self.create_handler(quiet)
+        httpd = server_class((host, port), handler_class)
+        try:
+            httpd.serve_forever()
+        finally:
+            httpd.server_close()

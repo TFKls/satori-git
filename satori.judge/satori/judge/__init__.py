@@ -1,5 +1,9 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-from satori.judge.judge import run_server, JailBuilder, JailRun
+from satori.judge.judge import JailBuilder, JailRun
+import os
+import stat
+import sys
+import shutil
 import time
 import subprocess
 import traceback
@@ -10,6 +14,11 @@ templates_dir = '/templates'
 templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
 secret = 'sekret'
 sleep_time = 5
+cgroup = 'runner'
+cgroup_memory = 512*1024*1024
+cgroup_time = 5*60*1000
+default_judge = '/bin/judge'
+debug = '/judge.debug.txt'
 
 def judge_bash():
     from optparse import OptionParser
@@ -30,32 +39,46 @@ def judge_bash():
         jb.destroy()
 
 def judge_loop():
-    from satori.client.common.remote import token_container, Security, Judge
+    from satori.client.common.remote import token_container, Security, Judge, anonymous_blob_path
     token_container.set_token(Security.machine_login(secret))
+    
+
     while True:
         print 'fetch'
         submit = Judge.get_next()
         if submit != None:
-            print 'hello'
-            continue
+            print 'hello', submit
             tr = submit['test_result']
-            td = submit['test_contents']
-            sd = submit['submit_contents']
+            td = submit['test_data']
+            sd = submit['submit_data']
 
-            template=td.get('template', 'default')
+            td = dict([(x['name'], x) for x in td])
+            sd = dict([(x['name'], x) for x in sd])
 
+            template = 'default'
+            if 'template' in td and not td['template']['is_blob']:
+                template = td['template']['value']
+                
             jb = JailBuilder(root=jail_dir, template=template, template_path=templates_dir)
             try:
                 jb.create()
-                #judge_src = tr.test.data_get_blob('judge')
-                judge_src = open('/bin/ls', 'r')
+                judge_src = open(default_judge, 'r')
+                length = os.path.getsize(default_judge)
+                if 'judge' in td and td['judge']['is_blob']:
+                    judge_src = tr.test.data_get_blob('judge')
+                    length = judge_src.length
                 dst_path = os.path.join(jail_dir, 'judge')
                 with open(dst_path, 'w') as judge_dst:
-                    shutil.copyfileobj(judge_src, judge_dst, judge_src.length)
+                    shutil.copyfileobj(judge_src, judge_dst, length)
+                judge_src.close()
                 os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
                 judge_src.close()
-                jr = JailRun(submit=submit, root=jail_dir, path='/judge')
-                jr.run()
+                jr = JailRun(submit=submit, root=jail_dir, path='/judge', debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time)
+                res = jr.run()
+                if debug:
+                    dh = anonymous_blob_path(debug)
+                    res.append({'is_blob':True, 'name':'debug.judge', 'value':dh})
+                Judge.set_result(tr, res)
             except:
                 traceback.print_exc()
             finally:
@@ -64,6 +87,17 @@ def judge_loop():
             time.sleep(sleep_time)
 
 def judge_initialize():
+    try:
+        from satori.client.common.remote import token_container, Security, Machine, Privilege
+        token_container.set_token(Security.login('admin', 'admin'))
+        try:
+            machine = Security.machine_register(name='checker', secret=secret, address='0.0.0.0', netmask='0.0.0.0')
+        except:
+            machine = Machine.filter({'login':'checker'})[0]
+        Privilege.create_global(role=machine, right='ADMIN')
+    except:
+        traceback.print_exc()
+        pass
     if False:
         subprocess.check_call(['busybox', 'mdev', '-s'])
         subprocess.check_call(['mkdir', '-p', '/dev/pts'])

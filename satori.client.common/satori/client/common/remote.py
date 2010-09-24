@@ -1,4 +1,6 @@
 import sys
+import os
+import shutil
 import getpass
 from httplib import HTTPConnection
 from thrift.transport.TSocket import TSocket
