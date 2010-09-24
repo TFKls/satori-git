@@ -251,14 +251,12 @@ class ThriftProcessor(TProcessor):
 
     def send_struct(self, value, struct, oproto):
         if fastbinary is not None:
-        	print 'fastbinary'
         	oproto.trans.write(fastbinary.encode_binary(value, self.typeargs(struct)[1]))
         else:
         	self._send(value, struct, oproto)
 
     def recv_struct(self, struct, iproto):
         if fastbinary is not None:
-        	print 'fastbinary'
         	ret = Namespace()
         	fastbinary.decode_binary(ret, iproto.trans, self.typeargs(struct)[1])
         	return ret
@@ -270,7 +268,6 @@ class ThriftProcessor(TProcessor):
         """
         pname, _, seqid = iproto.readMessageBegin()
 #        perf.begin('process')
-        print pname
         try:
             # find the procedure to call
             if not pname in self._procedures:
@@ -301,7 +298,7 @@ class ThriftProcessor(TProcessor):
                 server_info.client_port = int(info[1])
             except:
                 pass
-            print 'Server serving client: ', server_info.client_ip, ':', server_info.client_port
+            print 'Server serving client: ', server_info.client_ip, ':', server_info.client_port, ',', pname
             result = Namespace()
             try:
                 result['result'] = procedure.implementation(**arguments)

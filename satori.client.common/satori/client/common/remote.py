@@ -107,6 +107,12 @@ class BlobReader(object):
 
 def anonymous_blob(length):
     return BlobWriter(length)
+def anonymous_blob_path(path):
+    with open(path, 'r') as src:
+        ln = os.fstat(src.fileno()).st_size
+        blob = anonymous_blob(ln)
+        shutil.copyfileobj(src, blob, ln)
+    return blob.close()
 
 (_interface, _client) = bootstrap_thrift_client(transport_factory)
 _classes = unwrap_interface(_interface, BlobReader, BlobWriter)
