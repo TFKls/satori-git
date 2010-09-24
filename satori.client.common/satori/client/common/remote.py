@@ -1,4 +1,6 @@
 import sys
+import os
+import shutil
 import getpass
 from httplib import HTTPConnection
 from thrift.transport.TSocket import TSocket
@@ -21,9 +23,9 @@ elif getpass.getuser() == 'duraj':
     client_port = 36889
     blob_port = 36887
 else:
-    client_host = 'satori.tcs.uj.edu.pl'
-    client_port = 38889
-    blob_port = 38887
+    client_host = 'student.tcs.uj.edu.pl'
+    client_port = 39889
+    blob_port = 39887
 
 def transport_factory():
     return TSocket(host=client_host, port=client_port)
