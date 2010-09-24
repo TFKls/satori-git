@@ -15,6 +15,12 @@ class Contestant(Role):
     invisible  = models.BooleanField(default=False)
 
 
+    def inherit_right(self, right):
+        right = str(right)
+        ret = super(Contestant,self).inherit_right(right)
+        ret.append((self.contest,right))
+        return ret
+
 class ContestantEvents(Events):
     model = Contestant
     on_insert = on_update = ['name', 'contest']

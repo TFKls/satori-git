@@ -1,0 +1,16 @@
+<h3>{{ p.name }}</h3>
+
+Select default checker:
+<form action="process.set_default_td" method="POST">
+<select name="default_checker">
+{% for c in widget.checkers %}
+<option value="{{c.value}}">{{c.name}}</option>
+{% endfor %}
+</select>
+<input type="submit" value="Select"/>
+<br/>
+{% if widget.defjudge %}
+Default test data
+{% endif %}
+</form>
+

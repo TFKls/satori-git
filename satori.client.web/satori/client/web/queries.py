@@ -13,10 +13,7 @@ def ContestById(cid):
 	return Contest.filter({'id' : int(cid)})[0]
 
 def CurrentUser():
-  try:
     return Security.whoami()
-  except:
-    return None
 
 def ActiveContest(d):
 	if not 'contestid' in d.keys():

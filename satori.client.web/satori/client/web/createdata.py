@@ -1,5 +1,6 @@
 from django.http import HttpResponse
 from satori.client.common.remote import *
+from os.path import getsize,dirname
 import crypt
 
 def create(request):
@@ -91,6 +92,7 @@ def create(request):
     checker = Security.machine_register(secret='sekret', name='checker_one', address='0.0.0.0', netmask='0.0.0.0')
     
     token_container.set_token(token)
+    Privilege.create({'object' : Global.get_instance(), 'role' : Security.anonymous(), 'right' : 'VIEW_BASICS'})
     c2 = Contest.create_contest(name = 'Kontest prywatny')
     c3 = Contest.create_contest(name = 'Kontest moderowany')
     c4 = Contest.create_contest(name = 'Kontest publiczny')
@@ -125,4 +127,11 @@ def create(request):
     MessageGlobal.create({'topic':"Wiadomosc pierwsza", 'content':"BZZZZZ!", 'mainscreenonly':True})
     MessageGlobal.create({'topic':"Wiadomosc systemowa", 'content':"Oglaszamy, ze za 5 minuBZZZZZ!", 'mainscreenonly':False})
     MessageContest.create({'topic':"Wiadomosc powitalna", 'content':"Publiczne BZZZZZ!", 'contest':c4})
+    g = Global.get_instance()
+    sucks = open(dirname(__file__)+'/simple_uzi_checker.py')
+    size = getsize(dirname(__file__)+'/simple_uzi_checker.py')
+    writer = anonymous_blob(size)
+    writer.write(sucks.read())
+    hash = writer.close()
+    g.checkers_set_blob_hash('Simple UZI Checker',hash)
     return HttpResponse('OK!')

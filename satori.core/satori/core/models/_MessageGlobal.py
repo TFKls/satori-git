@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Message import Message
+from satori.core.models._Global import Global
 
 class MessageGlobal(Message):
     """Model. Description of a text message - main screen msg.
@@ -14,6 +15,13 @@ class MessageGlobal(Message):
     
     def __str__(self):
         return self.topic+" (Global)"
+        
+    def inherit_right(self, right):
+        right = str(right)
+        ret = super(MessageGlobal,self).inherit_right(right)
+        if right=='VIEW':
+            ret.append((Global.get_instance(),'VIEW_BASICS'))
+        return ret
 
 class MessageGlobalEvents(Events):
     model = MessageGlobal
