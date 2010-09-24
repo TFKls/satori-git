@@ -1,4 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+import os,sys,shutil
 
 def athina_import():
     import os,sys,getpass
@@ -187,18 +188,19 @@ def athina_import():
 
         try:
             problem['testsuite'] = TestSuite.create({'name':options.name + '_' + problem['problem'] + '_default', 'owner':Security.whoami(), 'problem':problem['object'], 'dispatcher':'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators':'satori.core.judge_dispatcher.default_status_accumulator'})
-            if problem['judge'] != None:
-                problem['testsuite'].oa_set_blob('judge', problem['judge'])
-            if problem['checker'] != None:
-                problem['testsuite'].oa_set_blob('checker', problem['checker'])
             if problem['sizelimit'] != None:
                 problem['testsuite'].oa_set_str('sizelimit', str(problem['sizelimit']))
             for num, test in problem['tests'].iteritems():
             	test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'owner':Security.whoami(), 'problem':problem['object'], 'environment':options.environment})
+
+                if problem['judge'] != None:
+                    test['object'].data_set_blob_path('judge', problem['judge'])
+                if problem['checker'] != None:
+                    test['object'].data_set_blob_path('checker', problem['checker'])
                 if test['input'] != None:
-                    test['object'].oa_set_blob('input', test['input'])
+                    test['object'].data_set_blob_path('input', test['input'])
                 if test['output'] != None:
-                    test['object'].oa_set_blob('output', test['output'])
+                    test['object'].data_set_blob_path('output', test['output'])
                 if test['memlimit'] != None:
                     test['object'].oa_set_str('memlimit', str(test['memlimit']))
                 if test['timelimit'] != None:
