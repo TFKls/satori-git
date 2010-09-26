@@ -449,7 +449,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('attributes', type=TypedMap(unicode, AnonymousAttribute))
         @ReturnValue(type=NoneType)
         def set_map(token, self, attributes):
-            for name, struct in attributes:
+            for name, struct in attributes.items():
                 if 'name' in struct and struct['name'] != None and struct['name'] != name:
                     raise ValueError('Name mismatch')
                 struct['name'] = name
