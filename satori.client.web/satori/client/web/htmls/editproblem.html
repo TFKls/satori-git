@@ -1,23 +1,46 @@
 <h3>{{ p.name }}</h3>
 
-<form action="process.set_default_td" method="POST">
-    Select default checker:
-    <select name="default_judge">
+<form action="process.set_default_td" method="POST" enctype="multipart/form-data">
+    Select default judge:
+    <select name="default_judge" onChange="submit();">
         <option value="">None</option>
-        {% for c in widget.checkers %}
-        <option value="{{c.value}}">{{c.name}}</option>
+        {% for c in widget.judges %}
+        <option value="{{c.value}}" {% if c.value == widget.judgehash %} selected="selected" {% endif %}>{{c.name}}</option>
         {% endfor %}
     </select>
-    <input type="submit" value="Select"/>
     <br/>
     {% if widget.judge %}
-    Default test data
-    <textarea>
-        {{ widget.judge }}
-    </textarea>
+    <h4>Default test data</h4>
+        {% for field in widget.judge %}
+            {{ field.description }}:
+            {% if field.type == "value" %}
+                <input type="text" name="default_{{field.name}}" value="{{field.cv}}"/>
+            {% else %}
+                <input type="file" name="default_{{field.name}}"/>                
+                {% if field.cv %}
+                    <a href="process.getfile.defaulttestdata.{{widget.p.id}}.{{field.name}}">(file uploaded)</a>
+                    <input type="checkbox" name="default_{{field.name}}_clear"/> Clear
+                {% endif %}
+            {% endif %}
+            <br/>
+        {% endfor%}
     {% endif %}
     <input type="hidden" name="id" value="{{widget.p.id}}"/>
     <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
     <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
+    <input type="submit" name="valchange" value="Change"/>
 </form>
 
+<h4>Tests</h4>
+<table>
+{% for t in widget.tests %}
+    <tr>
+    <td>
+        {{t.name}}
+    </td>
+    <td>
+        {{t.description}}
+    </td>
+    </tr>
+{% endfor %}
+</table>
