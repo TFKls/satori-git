@@ -636,9 +636,10 @@ void Runner::Controller::GroupJoin(const string& cgroup)
   map<string, string> input, output;
   input["group"] = cgroup;
   char buf[64];
-  snprintf(buf, sizeof(buf), "/tmp/__cgroup__.%ld.lock", (long)time(NULL));
-  input["file"] = buf+5;
-  int fd = open(input["file"].c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+  snprintf(buf, sizeof(buf), "__cgroup__.%ld.lock", (long)time(NULL));
+  input["file"] = buf;
+  snprintf(buf, sizeof(buf), "/tmp/%s", input["file"].c_str());
+  int fd = open(buf, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if (fd < 0)
     Fail("open('%s') failed", input["file"].c_str());
   Contact("ASSIGNCG", input, output);

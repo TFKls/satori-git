@@ -22,8 +22,13 @@ parser.add_option('-P', '--control-port', dest='port', default=8765, action='sto
 
 options.user = 'runner'
 options.group = 'runner'
+options.directory = '/runner'
 options.compile_time = 60*1000
 options.compile_memory = 64*1024*1024
+options.execute_time = 10*1000
+options.execute_memory = 64*1024*1024
+options.check_time = 60*1000
+options.check_memory = 64*1024*1024
 
 
 
@@ -42,13 +47,14 @@ print communicate('PING', {'hello':'hello'})
 submit = communicate('GETSUBMIT')
 test   = communicate('GETTEST')
 
-result = 'OK'
-
 filename   = submit['filename']
 fileext    = filename.split(".")[-1].lower()
 language   = ""
 compile    = []
-sizelimit  = int(test.get('sizelimit', 100*1024))
+size_limit   = int(test.get('sizelimit', 100*1024))
+time_limit   = int(test.get('time', options.execute_time))
+memory_limit = int(test.get('memory', options.execute_memory))
+checker      = 'checker' in test
 
 if fileext == 'c':
     language = 'c'
@@ -61,10 +67,10 @@ elif fileext in ["pas", "p", "pp"]:
     compile  = [ '/usr/bin/fpc', '-Sgic', '-Xs', '-viwnh', '-OG2', '-Wall', 'solution.pas', '-osolution.x']
 
 communicate('CREATEJAIL', {'path': '/jail', 'template': 'judge'})
-communicate('GETSUBMITBLOB', {'name': 'content', 'path': '/jail/tmp/solution.'+language})
+communicate('GETSUBMITBLOB', {'name': 'content', 'path': '/jail'+options.directory+'/solution.'+language})
 #COMPILE
 compile_run = ["runner", "--quiet",
-      "--root=/jail", "--work-dir=/tmp", "--env=empty",
+      "--root=/jail", "--work-dir="+options.directory, "--env=simple",
       "--setuid="+options.user, "--setgid="+options.group,
       "--control-host="+options.host, "--control-port="+str(options.port),
       "--cgroup=/compile",
@@ -79,133 +85,71 @@ compile_run = ["runner", "--quiet",
 compile_run += compile
 ret = subprocess.call(compile_run)
 if ret:
-    result = "CME"
+    communicate('SETSTRING', {'name': 'status', 'value': 'CME'})
+    sys.exit(0)
+communicate('SETBLOB', {'name': 'compile.log', 'path': '/compile.log'})
 
 
-print ' '.join(compile_run)
-subprocess.call(['bash'])
-
-
-
-
-
-communicate('GETTESTBLOB', {'name': 'input', 'path': '/jail/tmp/data.in'})
+communicate('GETTESTBLOB', {'name': 'input', 'path': '/tmp/data.in'})
 #RUN
+execute_run = ["runner",
+      "--root=/jail", "--work-dir="+options.directory, "--env=empty",
+      "--setuid="+options.user, "--setgid="+options.group,
+      "--control-host="+options.host, "--control-port="+str(options.port),
+      "--cgroup=/execute",
+      "--cgroup-memory="+str(memory_limit),
+      "--cgroup-cputime="+str(time_limit),
+      "--max-memory="+str(memory_limit),
+      "--max-cputime="+str(time_limit),
+      "--max-realtime="+str(int(1.5*time_limit)),
+      "--max-threads=1", "--max-files=4",
+      "--stdin=/tmp/data.in",
+      "--stdout=/tmp/data.out", "--trunc-stdout",
+      "--stderr=/dev/null",
+      "--memlock",
+      "--priority=30"]
+execute_run += [options.directory+"/solution.x"]
+res = subprocess.Popen(execute_run, stdout = subprocess.PIPE).communicate()[0];
+print "RES : "+res
+ret = res.split()[0]
+print "RET : "+ret
+communicate('SETSTRING', {'name': 'execute.log', 'value': res})
+if ret != "OK":
+    communicate('SETSTRING', {'name': 'status', 'value': ret})
+    sys.exit(0)
 
 
-communicate('GETTESTBLOB', {'name': 'output', 'path': '/jail/tmp/data.out'})
+communicate('GETTESTBLOB', {'name': 'output', 'path': '/tmp/data.hint'})
 #TEST
-
-exefile = ""
-logging.info("Compiling HASH "+str(judge.hash)+" JID "+str(judge.submit.id)+" -- Problem: "+judge.problem.id+" -- Timestamp: "+submittime)
-logging.info("Filename: "+filename+" from "+judge.user.id+" in "+roomname+" ("+fullname+")")
-try:
-  subprocess.call(["mkchroot", "-D", "/athina/chroot"], stdout = open("/dev/null", "w"), stderr = subprocess.STDOUT)
-  subprocess.check_call(["mkchroot", "--base=full", "--quota=128", "/athina/chroot"], stdout = open("/dev/null", "w"), stderr = subprocess.STDOUT)
-  if language == "gnuc":
-    judge.submit.getfile("data", "/athina/chroot/tmp/src.c")
-    ret = subprocess.call(["runner", "--quiet",
-      "--root=/athina/chroot", "--work-dir=/tmp", "--env=full",
-      "--setuid="+str(athinauid), "--setgid="+str(athinagid),
-      "--max-realtime=60000", "--max-cputime=60000", "--max-memory="+str(64*1024*1024),
-      "--stdout=/athina/chroot/compile.log", "--trunc-stdout",
-      "--stderr=__STDOUT__",
-      "--priority=30",
-      "/usr/bin/gcc", "-static", "-O2", "-Wall", "src.c", "-lm", "-obin", "-include", "stdio.h", "-include", "stdlib.h", "-include", "string.h"])
-    if ret:
-      judge.result = "CME"
-  elif language == "cxx":
-    judge.submit.getfile("data", "/athina/chroot/tmp/src.cpp")
-    ret = subprocess.call(["runner", "--quiet",
-      "--root=/athina/chroot", "--work-dir=/tmp", "--env=full",
-      "--setuid="+str(athinauid), "--setgid="+str(athinagid),
-      "--max-realtime=60000", "--max-cputime=60000", "--max-memory="+str(64*1024*1024),
-      "--stdout=/athina/chroot/compile.log", "--trunc-stdout",
-      "--stderr=__STDOUT__",
-      "--priority=30",
-      "/usr/bin/g++", "-static", "-O2", "-Wall", "src.cpp", "-obin", "-include", "cstdio", "-include", "cstdlib", "-include", "cstring"])
-    if ret:
-      judge.result = "CME"
-  elif language == "pascal":
-    judge.submit.getfile("data", "/athina/chroot/tmp/src.pas")
-    ret = subprocess.call(["runner", "--quiet",
-      "--root=/athina/chroot", "--work-dir=/tmp", "--env=full",
-      "--setuid="+str(athinauid), "--setgid="+str(athinagid),
-      "--max-realtime=60000", "--max-cputime=60000", "--max-memory="+str(64*1024*1024),
-      "--stdout=/athina/chroot/compile.log", "--trunc-stdout",
-      "--stderr=__STDOUT__",
-      "--priority=30",
-      "/usr/bin/fpc", "-Sgic", "-Xs", "-viwnh", "-OG2", "-Wall", "src.pas", "-obin"])
-    if ret:
-      judge.result = "CME"
-  with open("/athina/chroot/compile.log") as f:
-    judge.log += str(f.read(65536))
-
-  if os.path.exists("/athina/chroot/tmp/bin"):
-    with open("/athina/chroot/tmp/bin","r") as f:
-      exefile = f.read();
-finally:
-  subprocess.call(["mkchroot", "-D", "/athina/chroot"], stdout = open("/dev/null", "w"), stderr = subprocess.STDOUT)
-
-if judge.result == "" and exefile == "":
-  judge.result = "CME"
-  judge.log += "Compilation failed.\n"
-elif judge.result == "":
-  judge.result = "OK";
-  numtests = int(judge.problem.get("testcount"))
-  checkfile = judge.problem.get("checker")
-  for i in range(0, numtests):
-    try:
-      judge.settest(i)
-      subprocess.call(["mkchroot", "-D", "/athina/chroot"], stdout = open("/dev/null", "w"), stderr = subprocess.STDOUT)
-      subprocess.check_call(["mkchroot", "--base=full", "--quota=512", "/athina/chroot"], stdout = open("/dev/null", "w"), stderr = subprocess.STDOUT)
-      tle = int(judge.test.get("tle"))
-      mem = int(judge.test.get("mem"))
-      judge.test.getfile("in", "/athina/chroot/in")
-      judge.test.getfile("out", "/athina/chroot/hint")
-      with open("/athina/chroot/tmp/exec","w") as f:
-        f.write(exefile)
-      os.chmod("/athina/chroot/tmp/exec",0755)
-      print "run"
-      res = subprocess.Popen(["runner",
-        "--root=/athina/chroot", "--work-dir=/tmp", "--env=empty",
-        "--setuid="+str(athinauid), "--setgid="+str(athinagid),
-        "--max-realtime="+str(15*int(tle)), "--max-cputime="+str(10*int(tle)), "--max-memory="+str(mem),
-        "--max-threads=1", "--max-files=4",
-        "--stdin=/athina/chroot/in",
-        "--stdout=/athina/chroot/out", "--trunc-stdout",
-        "--stderr=/dev/null",
-        "--memlock",
-        "--priority=30",
-        "/tmp/exec"], stdout = subprocess.PIPE).communicate()[0];
-      print "RES : "+res
-      ret = res.split()[0]
-      print "RET : "+ret
-      judge.log += " ".join(res.split()) + "\n"
-      if ret != "OK":
-        judge.result = ret
-        break
-      if checkfile == "":
-        ret = subprocess.call(["diff", "-q", "-w", "/athina/chroot/hint", "/athina/chroot/out"])
-        if ret != 0:
-          judge.result = "ANS"
-          break
-      else:
-        with open("/athina/chroot/tmp/exec","w") as f:
-          f.write(checkfile)
-        os.chmod("/athina/chroot/tmp/exec",0755)
-        ret = subprocess.call(["runner", "--quiet",
-          "--root=/athina/chroot", "--work-dir=/tmp", "--env=empty",
-          "--setuid="+str(athinauid), "--setgid="+str(athinagid),
-          "--max-realtime=60000", "--max-cputime=60000", "--max-memory="+str(256*1024*1024),
+if checker:
+    communicate('GETTESTBLOB', {'name': 'checker', 'path': '/tmp/checker.x'})
+    os.chmod("/tmp/checker.x",0755)
+    check_run = ["runner", "--quiet",
+          "--root=/", "--work-dir=/tmp", "--env=simple",
+          "--setuid="+options.user, "--setgid="+options.group,
+          "--control-host="+options.host, "--control-port="+str(options.port),
+          "--cgroup=/check",
+          "--cgroup-memory="+str(options.check_memory),
+          "--cgroup-cputime="+str(options.check_time),
+          "--max-memory="+str(options.check_memory),
+          "--max-cputime="+str(options.check_time),
+          "--max-realtime="+str(options.check_time),
+          "--stdout=/check.log", "--trunc-stdout",
+          "--stderr=__STDOUT__",
           "--max-threads=1", "--max-files=7",
-          "--priority=30",
-          "/tmp/exec", "/in", "/hint", "/out"])
-        if ret != 0:
-          judge.result = "ANS"
-          break
-    except:
-      logging.warning("Test failed")
-#          pass
-    finally:
-      subprocess.call(["mkchroot", "-D", "/athina/chroot"], stdout = open("/dev/null", "w"), stderr = subprocess.STDOUT)
+          "--priority=30"]
+    check_run += ["/tmp/checker.x", "/tmp/data.in", "/tmp/data.hint", "/tmp/data.out"]
+    ret = subprocess.call(check_run)
+    if ret != 0:
+        communicate('SETSTRING', {'name': 'status', 'value': 'ANS'})
+        sys.exit(0)
+else:
+    ret = subprocess.call(["diff", "-q", "-w", "/tmp/data.hint", "/tmp/data.out"])
+    if ret != 0:
+        communicate('SETSTRING', {'name': 'status', 'value': 'ANS'})
+        sys.exit(0)
+
+communicate('SETSTRING', {'name': 'status', 'value': 'OK'})
+#print ' '.join(compile_run)
+#print ' '.join(execute_run)
+#subprocess.call(['bash'])

@@ -58,32 +58,28 @@ def judge_loop():
             td = submit['test_data']
             sd = submit['submit_data']
 
-            td = dict([(x['name'], x) for x in td])
-            sd = dict([(x['name'], x) for x in sd])
 
             template = 'default'
-            if 'template' in td and not td['template']['is_blob']:
-                template = td['template']['value']
+            if 'judge.template' in td and not td['judge.template']['is_blob']:
+                template = td['judge.template']['value']
                 
             jb = JailBuilder(root=jail_dir, template=template, template_path=templates_dir)
             try:
                 jb.create()
-                judge_src = open(default_judge, 'r')
-                length = os.path.getsize(default_judge)
-                if 'judge' in td and td['judge']['is_blob']:
-                    judge_src = tr.test.data_get_blob('judge')
-                    length = judge_src.length
                 dst_path = os.path.join(jail_dir, 'judge')
-                with open(dst_path, 'w') as judge_dst:
-                    shutil.copyfileobj(judge_src, judge_dst, length)
-                judge_src.close()
+                if 'judge' in td and td['judge']['is_blob']:
+                    tr.test.data_get_blob_path('judge', dst_path)
+                else:
+                    with open(default_judge, 'r') as judge_src:
+                        with open(dst_path, 'w') as judge_dst:
+                            shutil.copyfileobj(judge_src, judge_dst)
                 os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
-                judge_src.close()
                 jr = JailRun(submit=submit, root=jail_dir, cgroup_path=cgroup_dir, template_path=templates_dir, path='/judge', debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time, host_eth=host_eth, host_ip=host_ip, guest_eth=guest_eth, guest_ip=guest_ip, netmask=netmask, control_port=control_port, args = ['--control-host', host_ip, '--control-port', str(control_port)])
                 res = jr.run()
                 if debug:
                     dh = anonymous_blob_path(debug)
-                    res.append({'is_blob':True, 'name':'judge.log', 'value':dh})
+                    res['judge.log'] = {'is_blob':True, 'value':dh}
+                print 'judge result', res
                 Judge.set_result(tr, res)
             except:
                 traceback.print_exc()

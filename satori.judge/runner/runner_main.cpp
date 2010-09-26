@@ -304,7 +304,12 @@ int main(int argc, const char** argv)
   if (config.stdout)
     run.output = config.stdout;
   if (config.stderr)
-    run.error = config.stderr;
+  {
+    if (strcmp(config.stderr, "__STDOUT__") == 0)
+      run.error_to_output = true;
+    else
+      run.error = config.stderr;
+  }
   if (config.stdouttrunc)
     run.output_trunc = true;
   if (config.stderrtrunc)

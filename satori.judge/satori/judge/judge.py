@@ -6,6 +6,7 @@ from satori.objects import Object, Argument
 from types import NoneType
 import BaseHTTPServer
 import cgi
+import datetime
 from multiprocessing import Process, Pipe, Manager
 import os
 import sys
@@ -285,7 +286,7 @@ class JailRun(Object):
             pipe.recv()
             subprocess.check_call(['ifconfig', self.host_eth, self.host_ip, 'netmask', self.netmask, 'up'])
             subprocess.check_call(['ip', 'link', 'set', self.guest_eth, 'netns', str(child.pid)])
-            controller = Process(target = self.run_server, args=(self.host_ip, self.control_port, pipe, False))
+            controller = Process(target = self.run_server, args=(self.host_ip, self.control_port, pipe, result, True))
             controller.start()
 #WAIT FOR CHILD CONFIGURE NETWORK AND PIVOT ROOT
         except:
@@ -303,7 +304,7 @@ class JailRun(Object):
 
     def create_handler(self, quiet, result):
         qquiet = quiet
-        result['status'] = {'is_blob':False, 'name':'status', 'value':'OK'}
+        result['status'] = {'is_blob':False, 'value':'INT'}
         rresult = result
 
         class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):
@@ -312,12 +313,14 @@ class JailRun(Object):
             jail_run = self
 
             def do_POST(self):
+                stime = datetime.datetime.now()
                 s = self.rfile.read(int(self.headers['Content-Length']))
                 input = yaml.load(s)
                 cmd = 'cmd_' + self.path[1:]
+                raw_output = {}
                 try:
-                    output = getattr(self, cmd)(input)
-                    output = yaml.dump(output)
+                    raw_output = getattr(self, cmd)(input)
+                    output = yaml.dump(raw_output)
                     self.send_response(200)
                     self.send_header("Content-Type", "text/yaml; charset=utf-8")
                     self.send_header("Content-Length", len(output))
@@ -328,21 +331,24 @@ class JailRun(Object):
                     self.send_response(500)
                     self.end_headers()
                     self.wfile.write(str(ex))
+                etime = datetime.datetime.now()
+                if cmd != 'cmd_QUERYCG':
+                    print 'served ', cmd, input, raw_output, stime, etime, etime - stime
             def cmd_GETSUBMIT(self, input):
                 output = {}
-                for field in self.jail_run.submit['submit_data']:
+                for name, field in self.jail_run.submit['submit_data'].items():
                     if not field['is_blob']:
-                        output[field['name']] = field['value']
+                        output[name] = field['value']
                     else:
-                        output[field['name']] = None
+                        output[name] = None
                 return output
             def cmd_GETTEST(self, input):
                 output = {}
-                for field in self.jail_run.submit['test_data']:
+                for name, field in self.jail_run.submit['test_data'].items():
                     if not field['is_blob']:
-                        output[field['name']] = field['value']
+                        output[name] = field['value']
                     else:
-                        output[field['name']] = None
+                        output[name] = None
                 return output
             def cmd_GETCACHE(self, input):
                 hash = gen_hash(input['what'])
@@ -454,6 +460,17 @@ class JailRun(Object):
                 path = os.path.join(jailPath(self.jail_run.root, input['path']))
                 jb = JailBuilder(root=path, template_path=self.jail_run.template_path)
                 jb.destroy()
+                return { 'res' : 'OK' }
+
+            def cmd_SETSTRING(self, input):
+                self.result[input['name']] = {'is_blob': False, 'value': input['value']}
+                return { 'res' : 'OK' }
+
+            def cmd_SETBLOB(self, input):
+                from satori.client.common.remote import anonymous_blob_path
+                path = os.path.join(jailPath(self.jail_run.root, input['path']))
+                hash = anonymous_blob_path(path)
+                self.result[input['name']] = {'is_blob': True, 'value': hash}
                 return { 'res' : 'OK' }
 
             def cmd_PING(self, input):
