@@ -100,10 +100,6 @@ def athina_import():
                 checker = get_path(dir, 'checker')
             else:
                 checker = None
-            if os.path.exists(get_path(dir, 'judge')):
-                judge = get_path(dir, 'judge')
-            else:
-                judge = None
             tests = {}
             for t in range(testcount):
                 input = get_path(dir, str(t) + '.in')
@@ -136,7 +132,6 @@ def athina_import():
                 'testcount' : testcount,
                 'sizelimit' : sizelimit,
                 'checker'   : checker,
-                'judge'     : judge,
                 'tests'     : tests,
             }
 
@@ -193,8 +188,6 @@ def athina_import():
             for num, test in problem['tests'].iteritems():
             	test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'owner':Security.whoami(), 'problem':problem['object'], 'environment':options.environment})
 
-                if problem['judge'] != None:
-                    test['object'].data_set_blob_path('judge', problem['judge'])
                 if problem['checker'] != None:
                     test['object'].data_set_blob_path('checker', problem['checker'])
                 if test['input'] != None:
@@ -202,9 +195,9 @@ def athina_import():
                 if test['output'] != None:
                     test['object'].data_set_blob_path('output', test['output'])
                 if test['memlimit'] != None:
-                    test['object'].oa_set_str('memlimit', str(test['memlimit']))
+                    test['object'].data_set_str('memory', str(test['memlimit']))
                 if test['timelimit'] != None:
-                    test['object'].oa_set_str('timelimit', str(test['timelimit']))
+                    test['object'].data_set_str('time', str(test['timelimit']))
                 TestMapping.create({'test':test['object'], 'suite':problem['testsuite'], 'order':test['test']})
         except:
             problem['testsuite'] = TestSuite.filter({'name':options.name + '_' + problem['problem'] + '_default'})[0]
