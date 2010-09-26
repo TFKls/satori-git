@@ -74,9 +74,20 @@ def text2html(text):
     
 
 def parse_judge(judge_content):
+    ret = []
     xml = ''
     for line in judge_content.splitlines(True):
         if line[0:2]=="#@":
             xml = xml+line.strip("#@")
-#    tree = minidom
-    return xml
+    tree = minidom.parseString(xml)
+    idata = tree.getElementsByTagName("input")[0]
+    for n in idata.childNodes:
+        if n.nodeName=="value" or n.nodeName=="file":
+            d = {}
+            d["type"] = n.nodeName
+            d["name"] = n.getAttribute("name")
+            d["description"] = n.getAttribute("description")
+            d["required"] = n.getAttribute("required")=="true"
+            d["default"] = n.getAttribute("default")
+            ret.append(d)
+    return ret
