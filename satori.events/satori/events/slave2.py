@@ -69,7 +69,7 @@ class Slave2(object):
                 if queue in self.queue_clients:
                     client = self.queue_clients[queue].popleft()
                     client.handle_event(queue, event)
-                self.queue_clients[queue].append(client)
+                    self.queue_clients[queue].append(client)
         finally:
             for client in self.clients:
                 for queue in set(self.queue_clients):
