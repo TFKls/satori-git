@@ -637,7 +637,7 @@ void Runner::Controller::GroupJoin(const string& cgroup)
   input["group"] = cgroup;
   char buf[64];
   snprintf(buf, sizeof(buf), "/tmp/__cgroup__.%ld.lock", (long)time(NULL));
-  input["file"] = buf;
+  input["file"] = buf+5;
   int fd = open(input["file"].c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if (fd < 0)
     Fail("open('%s') failed", input["file"].c_str());

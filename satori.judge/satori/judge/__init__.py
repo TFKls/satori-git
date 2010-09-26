@@ -11,7 +11,8 @@ import traceback
 jail_dir = '/jail'
 cgroup_dir = '/cgroup'
 templates_dir = '/templates'
-templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
+#templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
+templates_src = None
 secret = 'sekret'
 sleep_time = 5
 cgroup = 'runner'
@@ -19,6 +20,12 @@ cgroup_memory = 512*1024*1024
 cgroup_time = 5*60*1000
 default_judge = '/bin/judge'
 debug = '/judge.debug.txt'
+host_eth = 'vethsh'
+host_ip = '192.168.100.101'
+guest_eth = 'vethsg'
+guest_ip = '192.168.100.102'
+netmask = '255.255.255.0'
+control_port = 8765
 
 def judge_bash():
     from optparse import OptionParser
@@ -31,7 +38,7 @@ def judge_bash():
     jb = JailBuilder(root=jail_dir, template=options.template, template_path=templates_dir)
     try:
         jb.create()
-        jr = JailRun(root=jail_dir, cgroup_path=cgroup_dir, path='bash', search=True)
+        jr = JailRun(submit={}, root=jail_dir, cgroup_path=cgroup_dir, template_path=templates_dir, path='bash', search=True, debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time, host_eth=host_eth, host_ip=host_ip, guest_eth=guest_eth, guest_ip=guest_ip, netmask=netmask, control_port=control_port )
         jr.run()
     except:
         traceback.print_exc()
@@ -44,10 +51,9 @@ def judge_loop():
     
 
     while True:
-        print 'fetch'
         submit = Judge.get_next()
         if submit != None:
-            print 'hello', submit
+            print 'Got something to judge:', submit
             tr = submit['test_result']
             td = submit['test_data']
             sd = submit['submit_data']
@@ -73,11 +79,11 @@ def judge_loop():
                 judge_src.close()
                 os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
                 judge_src.close()
-                jr = JailRun(submit=submit, root=jail_dir, cgroup_path=cgroup_dir, path='/judge', debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time)
+                jr = JailRun(submit=submit, root=jail_dir, cgroup_path=cgroup_dir, template_path=templates_dir, path='/judge', debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time, host_eth=host_eth, host_ip=host_ip, guest_eth=guest_eth, guest_ip=guest_ip, netmask=netmask, control_port=control_port, args = ['--control-host', host_ip, '--control-port', str(control_port)])
                 res = jr.run()
                 if debug:
                     dh = anonymous_blob_path(debug)
-                    res.append({'is_blob':True, 'name':'debug.judge', 'value':dh})
+                    res.append({'is_blob':True, 'name':'judge.log', 'value':dh})
                 Judge.set_result(tr, res)
             except:
                 traceback.print_exc()
@@ -130,14 +136,16 @@ def judge_initialize():
 
     subprocess.check_call(['mkdir', '-p', cgroup_dir])
     subprocess.check_call(['mount', '-t', 'cgroup', '-o', 'rw,nosuid,noexec,relatime,memory,cpuacct,cpuset', 'cgroup', cgroup_dir])
-    subprocess.check_call(['mkdir', '-p', templates_dir])
-    subprocess.check_call(['mount', templates_src, templates_dir])
+    if templates_src:
+        subprocess.check_call(['mkdir', '-p', templates_dir])
+        subprocess.check_call(['mount', templates_src, templates_dir])
 
 def judge_finalize():
         subprocess.call(['umount', '-l', cgroup_dir])
         subprocess.call(['rmdir', cgroup_dir])
-        subprocess.call(['umount', '-l', templates_dir])
-        subprocess.call(['rmdir', templates_dir])
+        if templates_src:
+            subprocess.call(['umount', '-l', templates_dir])
+            subprocess.call(['rmdir', templates_dir])
         #subprocess.call(['reboot', '-f'])
 
 def judge_init():
