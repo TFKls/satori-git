@@ -275,6 +275,11 @@ Attribute = Struct('Attribute', (
     ('is_blob', bool, False),
     ('value', str, False)
 ))
+AnonymousAttribute = Struct('AnonymousAttribute', (
+    ('is_blob', bool, False),
+    ('value', str, False),
+    ('name', str, True)
+))
 
 
 def can_attribute_read(token, object):
@@ -436,6 +441,18 @@ class OpenAttributeWrapper(Wrapper):
         @ReturnValue(type=NoneType)
         def set_list(token, self, attributes):
             for struct in attributes:
+                struct_to_oa(self, struct)
+
+        @oaw_self.method
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('attributes', type=TypedMap(unicode, AnonymousAttribute))
+        @ReturnValue(type=NoneType)
+        def set_map(token, self, attributes):
+            for name, struct in attributes:
+                if 'name' in struct and struct['name'] != None and struct['name'] != name:
+                    raise ValueError('Name mismatch')
+                struct['name'] = name
                 struct_to_oa(self, struct)
 
         @oaw_self.method
