@@ -1064,12 +1064,12 @@ void Runner::run_child()
         ;
     }
 
+  Debug("Environment initialized! Go!");
   for (int f=getdtablesize(); f >= 3; f--)
     close(f);
   if (descriptor_count > 0)
     set_rlimit("DESCRIPTORS", RLIMIT_NOFILE, descriptor_count);
 
-  Debug("Environment initialized! Go!");
   if(search_path)
     execvp(exec.c_str(), argv);
   else
