@@ -197,7 +197,7 @@ def athina_import():
                 if test['memlimit'] != None:
                     test['object'].data_set_str('memory', str(test['memlimit']))
                 if test['timelimit'] != None:
-                    test['object'].data_set_str('time', str(test['timelimit']))
+                    test['object'].data_set_str('time', str(int(test['timelimit'])*10))
                 TestMapping.create({'test':test['object'], 'suite':problem['testsuite'], 'order':test['test']})
         except:
             problem['testsuite'] = TestSuite.filter({'name':options.name + '_' + problem['problem'] + '_default'})[0]

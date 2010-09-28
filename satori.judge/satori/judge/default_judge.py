@@ -29,23 +29,25 @@ options.execute_time = 10*1000
 options.execute_memory = 64*1024*1024
 options.check_time = 60*1000
 options.check_memory = 64*1024*1024
+options.debug = True
 
 
 
-def communicate(cmd, args={}):
+def communicate(cmd, args={}, check=True):
     yam = yaml.dump(args)
-    con = httplib.HTTPConnection(options.host, options.port)
-    con.request("POST", "/" + cmd, yam, {'Content-Length': len(yam)})
-    res = con.getresponse()
-    return yaml.load(res.read())
+    try:
+        con = httplib.HTTPConnection(options.host, options.port)
+        con.request('POST', '/' + cmd, yam)
+        res = con.getresponse()
+        ret = yaml.load(res.read())
+    except:
+        raise Exception('Communication '+cmd+' failed')
+    if check and ('res' not in ret or ret['res'] != 'OK'):
+        raise Exception('Communication '+cmd+' finished with failure')
+    return ret
 
-
-
-print 'hello'
-print communicate('PING', {'hello':'hello'})
-
-submit = communicate('GETSUBMIT')
-test   = communicate('GETTEST')
+submit = communicate('GETSUBMIT', check=False)
+test   = communicate('GETTEST', check=False)
 
 filename   = submit['filename']
 fileext    = filename.split(".")[-1].lower()
@@ -67,6 +69,7 @@ elif fileext in ["pas", "p", "pp"]:
     compile  = [ '/usr/bin/fpc', '-Sgic', '-Xs', '-viwnh', '-OG2', '-Wall', 'solution.pas', '-osolution.x']
 
 communicate('CREATEJAIL', {'path': '/jail', 'template': 'judge'})
+
 communicate('GETSUBMITBLOB', {'name': 'content', 'path': '/jail'+options.directory+'/solution.'+language})
 #COMPILE
 compile_run = ["runner", "--quiet",
@@ -82,6 +85,8 @@ compile_run = ["runner", "--quiet",
       "--stdout=/compile.log", "--trunc-stdout",
       "--stderr=__STDOUT__",
       "--priority=30"]
+if options.debug:
+    compile_run += [ '--debug', '/compile.debug.log' ]
 compile_run += compile
 ret = subprocess.call(compile_run)
 if ret:
@@ -108,12 +113,14 @@ execute_run = ["runner",
       "--stderr=/dev/null",
       "--memlock",
       "--priority=30"]
+if options.debug:
+    execute_run += [ '--debug', '/execute.debug.log' ]
 execute_run += [options.directory+"/solution.x"]
 res = subprocess.Popen(execute_run, stdout = subprocess.PIPE).communicate()[0];
-print "RES : "+res
 ret = res.split()[0]
-print "RET : "+ret
 communicate('SETSTRING', {'name': 'execute.log', 'value': res})
+
+
 if ret != "OK":
     communicate('SETSTRING', {'name': 'status', 'value': ret})
     sys.exit(0)
@@ -138,16 +145,15 @@ if checker:
           "--stderr=__STDOUT__",
           "--max-threads=1", "--max-files=7",
           "--priority=30"]
+    if options.debug:
+        check_run += [ '--debug', '/check.debug.log' ]
     check_run += ["/tmp/checker.x", "/tmp/data.in", "/tmp/data.hint", "/tmp/data.out"]
     ret = subprocess.call(check_run)
-    if ret != 0:
-        communicate('SETSTRING', {'name': 'status', 'value': 'ANS'})
-        sys.exit(0)
 else:
     ret = subprocess.call(["diff", "-q", "-w", "/tmp/data.hint", "/tmp/data.out"])
-    if ret != 0:
-        communicate('SETSTRING', {'name': 'status', 'value': 'ANS'})
-        sys.exit(0)
+if ret != 0:
+    communicate('SETSTRING', {'name': 'status', 'value': 'ANS'})
+    sys.exit(0)
 
 communicate('SETSTRING', {'name': 'status', 'value': 'OK'})
 #print ' '.join(compile_run)

@@ -422,9 +422,11 @@ class JailRun(Object):
                 pid = self.fuser(file)
                 #TODO: Check pid
                 print 'Gotya ', pid
-                with open(os.path.join(path, 'tasks'), 'w') as f:
-                    f.write(str(pid))
-                return { 'res' : 'OK' }
+                if pid is not None:
+                    with open(os.path.join(path, 'tasks'), 'w') as f:
+                        f.write(str(pid))
+                    return { 'res' : 'OK' }
+                return { 'res' : 'FAIL' }
             def cmd_DESTROYCG(self, input):
                 path = self.cgroup_path(input['group'])
                 killer = True
