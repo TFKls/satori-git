@@ -644,8 +644,8 @@ void Runner::Controller::GroupJoin(const string& cgroup)
     Fail("open('%s') failed", input["file"].c_str());
   Contact("ASSIGNCG", input, output);
   close(fd);
-  if (unlink(input["file"].c_str()))
-    Fail("unlink('%s') failed", input["file"].c_str());
+  if (unlink(buf))
+    Fail("unlink('%s') failed", buf)
   CheckOK("ASSIGNCG", output);
 }
 void Runner::Controller::GroupDestroy(const string& cgroup)
