@@ -17,12 +17,13 @@ class SetDefaultTDRequest(Request):
         d = ParseURL(request.POST['back_to'])
         if not 'valchange' in request.POST.keys():
             return GetLink(d,'')
-        for name,value in request.POST.keys():
-            pass
+        for name,value in request.POST.iteritems():
+            if name[0:6]=="value_":
+                p.default_test_data_set_str(name[6:],value)
         for name,f in request.FILES.iteritems():
             if not name+"_clear" in request.POST.keys():
                 writer = anonymous_blob(f.size)
                 writer.write(f.read())
                 fhash = writer.close()
-                p.default_test_data_set_blob_hash(name[8:],fhash)
+                p.default_test_data_set_blob_hash(name[5:],fhash)
         return GetLink(d,'')

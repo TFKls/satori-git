@@ -25,11 +25,16 @@ class EditProblemWidget(Widget):
             reader.close()
             self.judge = parse_judge(judge_content)
             for d in self.judge:
-                cv = p.default_test_data_get(d["name"])
+                if d["type"]=="value":
+                    cv = p.default_test_data_get_str(d["name"])
+                else:
+                    cv = p.default_test_data_get_blob_hash(d["name"])
                 if not cv and d["default"]:
                     cv = d["default"]
                 if cv:
                     d["cv"] = cv
         self.tests = []
-#        for t in Test.filter({'problem' : p}):
-#            link = DefaultLayout(maincontest='testedi
+        for t in Test.filter({'problem' : p}):
+            link = ToString(DefaultLayout(maincontent='edittest',dict=params,testid=[str(t.id)],action=['edit']))
+            self.tests.append([t,link])
+        self.addlink = ToString(DefaultLayout(maincontent='edittest',dict=params,problemid=[str(p.id)],action=['add']))
