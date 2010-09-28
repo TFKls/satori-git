@@ -636,7 +636,10 @@ void Runner::Controller::GroupJoin(const string& cgroup)
   map<string, string> input, output;
   input["group"] = cgroup;
   char buf[64];
-  snprintf(buf, sizeof(buf), "__cgroup__.%ld.lock", (long)time(NULL));
+
+  timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  snprintf(buf, sizeof(buf), "__cgroup__.%ld.%ld.%ld.lock", (long)ts.tv_sec, (long)ts.tv_nsec, (long) ((char*)this - NULL));
   input["file"] = buf;
   snprintf(buf, sizeof(buf), "/tmp/%s", input["file"].c_str());
   int fd = open(buf, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
@@ -1066,6 +1069,7 @@ void Runner::run_child()
   if (descriptor_count > 0)
     set_rlimit("DESCRIPTORS", RLIMIT_NOFILE, descriptor_count);
 
+  Debug("Environment initialized! Go!");
   if(search_path)
     execvp(exec.c_str(), argv);
   else
@@ -1077,8 +1081,6 @@ void Runner::run_parent()
 {
   Debug("spawn child %d", (int)child);
   runners[child] = this;
-  close(pipefd[1]);
-  close(pipefd[0]);
   if (!ptrace)
     offspring.insert(child);
 
@@ -1086,6 +1088,9 @@ void Runner::run_parent()
   if (clock_gettime(CLOCK_REALTIME, &ts))
     Fail("clock_gettime(CLOCK_REALTIME) failed");
   start_time = miliseconds(ts);
+
+  close(pipefd[1]);
+  close(pipefd[0]);
 }
 
 void Runner::process_child(long epid)
