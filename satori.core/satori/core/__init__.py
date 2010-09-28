@@ -173,11 +173,8 @@ def start_server():
         pause()
 
 def manage():
-    import os
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.core.settings'
-
     from django.core.management import execute_manager
-    from django.conf import settings
+    import satori.core.settings
 
-    execute_manager(settings)
+    execute_manager(satori.core.settings)
 
