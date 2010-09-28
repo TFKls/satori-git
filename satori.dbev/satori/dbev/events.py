@@ -1,5 +1,4 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-import satori.core.setup                                       # pylint: disable-msg=W0611
 
 class AlreadyRegistered(Exception):
     pass

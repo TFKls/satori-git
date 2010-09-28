@@ -4,7 +4,6 @@ import os
 from django.db import transaction
 from threading import Lock
 from time import sleep
-import satori.core.setup
 from satori.events import Event, Client2
 from satori.core.models import TestResult
 from multiprocessing.connection import Client

@@ -1,7 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import select
 import psycopg2.extensions
-import satori.core.setup                                       # pylint: disable-msg=W0611
 import traceback
 from django.db import connection
 from django.db import models
