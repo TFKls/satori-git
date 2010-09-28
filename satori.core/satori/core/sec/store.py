@@ -4,7 +4,7 @@ __all__ = (
     'Store',
 )
 
-from satori.core.settings import SECRET_KEY
+from django.conf import settings
 from satori.core.models import Nonce, Association
 from django.db.models import F
 from openid.store.interface import OpenIDStore
@@ -86,7 +86,7 @@ class Store(OpenIDStore):
     
     def getAuthKey(self):
         h = hashlib.md5()
-        h.update(SECRET_KEY)
+        h.update(settings.SECRET_KEY)
         return h.hexdigest()[:self.AUTH_KEY_LEN]
     
     def isDumb(self):

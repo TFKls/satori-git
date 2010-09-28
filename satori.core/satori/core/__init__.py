@@ -3,8 +3,6 @@
 exposed over Thrift.
 """
 
-import satori.core.setup
-import satori.core.management
 import traceback
 
 def export_thrift():
@@ -18,18 +16,20 @@ def export_thrift():
     writer.write_to(wrapper.generate_interface(), stdout)
 
 def start_server_event_master():
+    from django.conf import settings
     from setproctitle import setproctitle
     setproctitle('satori: event master')
     from multiprocessing.connection import Listener
     from satori.events import Master 
     from satori.events.mapper import TrivialMapper
-    listener = Listener(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT))
+    listener = Listener(address=(settings.EVENT_HOST, settings.EVENT_PORT))
     master = Master(mapper=TrivialMapper())
     master.listen(listener)
     print 'event master starting'
     master.run()
 
 def start_server_thrift_server():
+    from django.conf import settings
     from setproctitle import setproctitle
     setproctitle('satori: thrift server')
     from thrift.transport.TSocket import TServerSocket
@@ -42,16 +42,17 @@ def start_server_thrift_server():
     wrapper.register_middleware(cwrapper.TokenVerifyMiddleware())
     wrapper.register_middleware(wrapper.TypeConversionMiddleware())
     wrapper.register_middleware(cwrapper.CheckRightsMiddleware())
-    server = ThriftServer(TThreadedServer, TServerSocket(port=satori.core.setup.settings.THRIFT_PORT), wrapper.generate_interface())
+    server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), wrapper.generate_interface())
     print 'thrift server starting'
     server.run()
 
 def start_server_blob_server():
+    from django.conf import settings
     from setproctitle import setproctitle
     setproctitle('satori: blob server')
     from django.core.handlers.wsgi import WSGIHandler
     from cherrypy.wsgiserver import CherryPyWSGIServer
-    server = CherryPyWSGIServer((satori.core.setup.settings.BLOB_HOST, satori.core.setup.settings.BLOB_PORT), WSGIHandler())
+    server = CherryPyWSGIServer((settings.BLOB_HOST, settings.BLOB_PORT), WSGIHandler())
     print 'blob server starting'
     try:
         server.start()
@@ -60,20 +61,22 @@ def start_server_blob_server():
 
 
 def start_server_dbev_notifier():
+    from django.conf import settings
     from setproctitle import setproctitle
     setproctitle('satori: dbev notifier')
     from multiprocessing.connection import Client
     from satori.dbev.notifier import notifier
-    connection = Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT))
+    connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
     print 'dbev notifier starting'
     notifier(connection)
 
 def start_server_event_slave():
+    from django.conf import settings
     from setproctitle import setproctitle
     setproctitle('satori: event slave')
     from multiprocessing.connection import Client
     from satori.events import Slave, QueueId, Attach, Map, Receive
-    slave = Slave(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
+    slave = Slave(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
     def dump_events():
         queue_id = QueueId("*")
         yield Attach(queue_id)
@@ -86,23 +89,25 @@ def start_server_event_slave():
     slave.run()
 
 def start_server_judge_dispatcher():
+    from django.conf import settings
     from setproctitle import setproctitle
     setproctitle('satori: judge dispatcher')
     from multiprocessing.connection import Client
     from satori.events import Slave2
     from satori.core.judge_dispatcher import JudgeDispatcher
-    slave = Slave2(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
+    slave = Slave2(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
     slave.add_client(JudgeDispatcher())
     print 'judge dispatcher starting'
     slave.run()
 
 def start_server_judge_generator():
+    from django.conf import settings
     from setproctitle import setproctitle
     setproctitle('satori: judge generator')
     from multiprocessing.connection import Client
     from satori.events import Slave2
     from satori.core.judge_dispatcher import JudgeGenerator
-    slave = Slave2(connection=Client(address=(satori.core.setup.settings.EVENT_HOST, satori.core.setup.settings.EVENT_PORT)))
+    slave = Slave2(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
     slave.add_client(JudgeGenerator())
     print 'judge generator starting'
     try:
@@ -113,6 +118,9 @@ def start_server_judge_generator():
 
 
 def start_server():
+    import os
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.core.settings'
+
     from setproctitle import setproctitle
     setproctitle('satori: master')
 
@@ -165,8 +173,11 @@ def start_server():
         pause()
 
 def manage():
+    import os
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.core.settings'
+
     from django.core.management import execute_manager
-    import satori.core.settings as settings
+    from django.conf import settings
 
     execute_manager(settings)
 

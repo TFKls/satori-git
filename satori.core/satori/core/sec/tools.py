@@ -17,10 +17,10 @@ import string
 import urlparse
 import urllib
 from django.core import cache
+from django.conf import settings
 from django.db import models
 from Crypto.Cipher import AES
 from satori.objects import Object, Argument
-from satori.core.settings import SECRET_KEY
 from satori.core.sec.store import Store
 from satori.core.models import Session, Role, User, Privilege, Global, Object as modelObject
 from satori.ars.model import ArsTypeAlias, ArsString
@@ -65,7 +65,7 @@ class Token(Object):
     @Argument('validity', type=(timedelta, None), default=None)
     @Argument('deadline', type=(datetime, None), default=None)
     def __init__(self, token, key, user, user_id, auth, data, validity, deadline):
-        self.key = key or SECRET_KEY
+        self.key = key or settings.SECRET_KEY
         self.data_id = ''
         if token is not None:
             if token == '':

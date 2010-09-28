@@ -7,7 +7,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     if (app != satori.core.models) or (Object not in created_models):
     	return
 
-    from satori.core import settings
+    from django.conf import settings
     from satori.core.api import ApiSecurity, ApiPrivilege
     from satori.core.sec import Token
     
