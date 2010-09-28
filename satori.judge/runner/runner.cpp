@@ -645,7 +645,7 @@ void Runner::Controller::GroupJoin(const string& cgroup)
   Contact("ASSIGNCG", input, output);
   close(fd);
   if (unlink(buf))
-    Fail("unlink('%s') failed", buf)
+    Fail("unlink('%s') failed", buf);
   CheckOK("ASSIGNCG", output);
 }
 void Runner::Controller::GroupDestroy(const string& cgroup)

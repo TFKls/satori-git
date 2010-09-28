@@ -23,7 +23,7 @@ elif getpass.getuser() == 'duraj':
     client_port = 36889
     blob_port = 36887
 else:
-    client_host = 'satori.tcs.uj.edu.pl'
+    client_host = 'localhost'
     client_port = 38889
     blob_port = 38887
 
