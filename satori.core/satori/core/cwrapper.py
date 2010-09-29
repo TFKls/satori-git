@@ -273,7 +273,8 @@ class DeleteWrapper(ProcedureWrapper):
 Attribute = Struct('Attribute', (
     ('name', str, False),
     ('is_blob', bool, False),
-    ('value', str, False)
+    ('value', str, False),
+    ('filename', str, True),
 ))
 
 
@@ -300,40 +301,12 @@ class OpenAttributeWrapper(Wrapper):
 
         def get_group(object):
             if group_name:
-                return getattr(object, group_name)
+                return getattr(object, group_name).attributes
             else:
-                return object            
+                return object.attributes
 
-        def oa_to_struct(oa):
-            ret = {}
-            ret['name'] = oa.name
-            if oa.oatype == OpenAttribute.OATYPES_BLOB:
-                ret['is_blob'] = True
-                ret['value'] = oa.blob.hash
-            elif oa.oatype == OpenAttribute.OATYPES_STRING:
-                ret['is_blob'] = False
-                ret['value'] = oa.string_value
-            return ret
-
-        def oa_to_struct_name(object, name):
-            try:
-                oa = get_group(object).attributes.get(name=name)
-            except:
-                return None
-            return oa_to_struct(oa)
-
-        def struct_to_oa(object, struct):
-            try:
-                oa = get_group(object).attributes.get(name=struct['name'])
-            except:
-                oa = OpenAttribute(object=get_group(object), name=struct['name'])
-            if struct['is_blob']:
-                oa.oatype = OpenAttribute.OATYPES_BLOB
-                oa.blob = Blob.objects.get(hash=struct['value'])
-            else:
-                oa.oatype = OpenAttribute.OATYPES_STRING
-                oa.string_value = struct['value']
-            oa.save()
+        def oats(oa):
+            return {'name': oa.name, 'is_blob': oa.is_blob, 'value': oa.value, 'filename': oa.filename}
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -341,7 +314,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=(Attribute, NoneType))
         def get(token, self, name):
-            return oa_to_struct_name(self, name)
+            return oats(get_group(self).oa_get(name))
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -349,12 +322,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=str)
         def get_str(token, self, name):
-            struct = oa_to_struct_name(self, name)
-            if struct is None:
-                return None
-            if struct['is_blob']:
-                raise Exception('The attribute is not a string attribute')
-            return struct['value']
+            return get_group(self).oa_get_str(name)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -370,19 +338,14 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=str)
         def get_blob_hash(token, self, name):
-            struct = oa_to_struct_name(self, name)
-            if struct is None:
-                return None
-            if not struct['is_blob']:
-                raise Exception('The attribute is not a blob attribute')
-            return struct['value']
+            return get_group(self).oa_get_blob_hash(name)
 
         @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @ReturnValue(type=TypedList(Attribute))
         def get_list(token, self):
-            return [oa_to_struct(oa) for oa in get_group(self).attributes.all()]
+            return [oats(x) for x in get_group(self).all()]
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -390,8 +353,8 @@ class OpenAttributeWrapper(Wrapper):
         @ReturnValue(type=TypedMap(unicode, Attribute))
         def get_map(token, self):
             ret = {}
-            for oa in get_group(self).attributes.all():
-            	ret[oa.name] = oa_to_struct(oa)
+            for oa in get_group(self).all():
+            	ret[oa.name] = oats(oa)
             return ret
 
         @oaw_self.method
@@ -400,7 +363,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('value', type=Attribute)
         @ReturnValue(type=NoneType)
         def set(token, self, value):
-            struct_to_oa(self, value)
+            get_group(self).oa_set(value.name, value)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -409,7 +372,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('value', type=str)
         @ReturnValue(type=NoneType)
         def set_str(token, self, name, value):
-            struct_to_oa(self, {'name': name, 'value': value, 'is_blob': False})
+            get_group(self).oa_set_str(name, value)
         
         @oaw_self.method
         @Argument('token', type=Token)
@@ -425,9 +388,10 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('self', type=model)
         @Argument('name', type=str)
         @Argument('value', type=str)
+        @Argument('filename', type=str)
         @ReturnValue(type=NoneType)
-        def set_blob_hash(token, self, name, value):
-            struct_to_oa(self, {'name': name, 'value': value, 'is_blob': True})
+        def set_blob_hash(token, self, name, value, filename=''):
+            get_group(self).oa_set_blob_hash(name, value, filename)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -435,8 +399,9 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('attributes', type=TypedList(Attribute))
         @ReturnValue(type=NoneType)
         def set_list(token, self, attributes):
+            g = get_group(self)
             for struct in attributes:
-                struct_to_oa(self, struct)
+                g.oa_set(struct.name, struct)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -444,7 +409,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=NoneType)
         def delete(token, self, name):
-            get_group(self).attributes.get(name=name).delete()
+            get_group(self).delete(name)
 
         @oaw_self.get.can
         @oaw_self.get_str.can
@@ -520,21 +485,28 @@ class TransactionMiddleware(object):
     """
     def process_request(self, proc, args, kwargs):
         """Enters transaction management"""
+        print 'tenter'
         transaction.enter_transaction_management()
         transaction.managed(True)
 
     def process_exception(self, proc, args, kwargs, exception):
         """Rolls back the database and leaves transaction management"""
+        print 'trollback'
         if transaction.is_dirty():
             transaction.rollback()
         transaction.leave_transaction_management()
+        from django.db import connection
+        print connection.queries
 
     def process_response(self, proc, args, kwargs, ret):
         """Commits and leaves transaction management."""
+        print 'tcommit'
         if transaction.is_managed():
             if transaction.is_dirty():
                 transaction.commit()
             transaction.leave_transaction_management()
+        from django.db import connection
+        print connection.queries
         return ret
 
 

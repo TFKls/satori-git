@@ -1,58 +1,151 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from base64 import urlsafe_b64encode
+from django.conf import settings
 from django.db import models
+from hashlib import sha384
+import os
+from tempfile import NamedTemporaryFile
+
 from satori.dbev import Events
 
-OATYPES_STRING = 1
-OATYPES_BLOB = 2
+class BlobReader(object):
+    def __init__(self, hash):
+        self.file = open(os.path.join(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash), 'rb')
 
-OATYPES = (
-    (OATYPES_STRING, 'String Attribute'),
-    (OATYPES_BLOB, 'Blob Attribute'),
-)
+    def length(self):
+        return os.fstat(self.file.fileno()).st_size
+
+    def read(self, size=-1):
+        return self.file.read(size)
+
+    def close(self):
+        self.file.close()
+
+
+class BlobWriter(object):
+    def __init__(self):
+        dirname = os.path.join(settings.BLOB_DIR, 'temp')
+        if not os.path.exists(dirname):
+        	os.makedirs(dirname, 0700)
+        self.file = NamedTemporaryFile(dir=dirname, delete=False)
+        self.hash = sha384()
+
+    def write(self, data):
+        self.file.write(data)
+        self.hash.update(data)
+
+    def close(self):
+        self.file.close()
+        hash = urlsafe_b64encode(self.hash.digest())
+        filename = '{0}/{1}/{2}/{3}/{4}'.format(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash)
+        dirname = os.path.dirname(filename)
+        if os.path.exists(filename):
+        	origfile = open(filename, 'rb')
+        	newfile = open(self.file.name, 'rb')
+            origlen = os.fstat(origfile.fileno()).st_size
+            newlen = os.fstat(newfile.fileno()).st_size
+            if origlen != newlen:
+            	raise Exception('HASH COLLISION! {0} {1}'.format(filename, self.file.name))
+            while origlen > 0:
+            	origdata = origfile.read(min(origlen, 1024))
+            	newdata = newfile.read(min(origlen, 1024))
+                if origdata != newdata:
+            	    raise Exception('HASH COLLISION! {0} {1}'.format(filename, self.file.name))
+            	origlen -= 1024
+           	origfile.close()
+            newfile.close()
+        if not os.path.exists(dirname):
+        	os.makedirs(dirname, 0700)
+        os.rename(self.file.name, filename)
+        return hash
+
+
+class OpenAttributeManager(models.Manager):
+    use_for_related_fields = True
+
+    def oa_get(self, name):
+        try:
+            oa = self.get(name=name)
+            return oa
+        except OpenAttribute.DoesNotExist:
+            return None
+
+    def oa_get_str(self, name):
+        oa = self.oa_get(name)
+        if oa is None:
+        	return None
+        elif oa.is_blob:
+            raise RuntimeError('Bad attribute type: {0} is not a string attribute.'.format(name))
+        else:
+        	return oa.value
+
+    def oa_get_blob_hash(self, name):
+        oa = self.oa_get(name)
+        print 'X', oa
+        if oa is None:
+        	print 'X1'
+        	return None
+        elif not oa.is_blob:
+            print 'X2'
+            raise RuntimeError('Bad attribute type: {0} is not a blob attribute.'.format(name))
+        else:
+        	print 'X3'
+        	return oa.value
+
+    def oa_open_blob(self, name):
+        oa = self.oa_get(name)
+        if oa is None:
+        	return None
+        elif not oa.is_blob:
+            raise RuntimeError('Bad attribute type: {0} is not a blob attribute.'.format(name))
+        else:
+        	return BlobReader(oa.value)
+
+    def oa_set(self, name, oa):
+        (newoa, created) = self.get_or_create(name=name)
+        newoa.is_blob = oa.is_blob
+        newoa.value = oa.value
+        newoa.filename = oa.filename
+        newoa.save()
+
+    def oa_set_str(self, name, value):
+        self.oa_set(name, OpenAttribute(is_blob=False, value=value))
+
+    def oa_set_blob_hash(self, name, hash, filename=''):
+        self.oa_set(name, OpenAttribute(is_blob=True, value=hash, filename=filename))
+
+    def oa_delete(self, name):
+        oa = self.oa_get(name)
+        if oa is not None:
+        	oa.delete()
+
 
 class OpenAttribute(models.Model):
     """Model. Base for all kinds of open attributes.
     """
     __module__ = "satori.core.models"
 
-    OATYPES_STRING = OATYPES_STRING
-    OATYPES_BLOB = OATYPES_BLOB
-
     object      = models.ForeignKey('Object', related_name='attributes')
     name        = models.CharField(max_length=50)
+    is_blob     = models.BooleanField()
+    value       = models.TextField()
+    filename    = models.CharField(max_length=50)
 
-    oatype       = models.IntegerField(choices=OATYPES)
-    string_value = models.TextField(null=True)
-    blob         = models.ForeignKey('Blob', null=True)
-
-    @staticmethod
-    def get_str(obj, name):
-        try:
-            return obj.attributes.get(name=name, oatype=OATYPES_STRING).string_value
-        except:
-            return None
-
-    @staticmethod
-    def set_str(obj, name, value):
-        try:
-            oa = obj.attributes.get(name=name)
-        except:
-            oa = OpenAttribute(object=obj, name=name)
-        oa.oatype = OATYPES_STRING
-        oa.string_value = value
-        oa.save()
+    objects = OpenAttributeManager()
 
     def save(self, *args, **kwargs):
-        str = self.string_value
-        blo = self.blob
-        self.string_value = None
-        self.blob = None
-        if self.oatype == OATYPES_STRING:
-        	self.string_value = str
-        if self.oatype == OATYPES_BLOB:
-        	self.blob = blo
+        if not self.is_blob:
+            self.filename = ''
         super(OpenAttribute, self).save(*args, **kwargs)
+
+    @staticmethod
+    def create_blob():
+        return BlobWriter()
+
+    @staticmethod
+    def open_blob(hash):
+        return BlobReader(hash)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('object', 'name'),)

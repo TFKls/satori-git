@@ -28,6 +28,8 @@ THRIFT_PORT = 38889
 BLOB_HOST = '0.0.0.0'
 BLOB_PORT = 38887
 
+BLOB_DIR = '/home/zzzmwm01/test2/tmp/blob'
+
 if getpass.getuser() == 'gutowski':
 	EVENT_PORT = 39888
 	THRIFT_PORT = 39889

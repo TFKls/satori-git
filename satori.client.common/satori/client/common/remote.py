@@ -31,11 +31,9 @@ def transport_factory():
 print 'Bootstrapping client...'
 
 class BlobWriter(object):
-    def __init__(self, length, model=None, id=None, name=None, group=None):
-        if group:
+    def __init__(self, length, model=None, id=None, name=None, group='oa', filename=''):
+        if model:
             url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, name)
-        elif model:
-            url = '/blob/{0}/{1}/{2}'.format(model, str(id), name)
         else:
             url = '/blob/upload'
 
@@ -43,6 +41,7 @@ class BlobWriter(object):
         headers['Host'] = client_host
         headers['Cookie'] = 'satori_token=' + token_container.get_token()
         headers['Content-length'] = str(length)
+        headers['Filename'] = filename
 
         self.con = HTTPConnection(client_host, blob_port)
         try:
@@ -71,11 +70,8 @@ class BlobWriter(object):
         return ret
 
 class BlobReader(object):
-    def __init__(self, model, id, name, group=None):
-        if group:
-            url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, name)
-        else:
-            url = '/blob/{0}/{1}/{2}'.format(model, str(id), name)
+    def __init__(self, model, id, name, group='oa'):
+        url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, name)
 
         headers = {}
         headers['Host'] = client_host

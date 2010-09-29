@@ -5,15 +5,26 @@ exposed over Thrift.
 
 import traceback
 
+def get_ars_interface():
+    from satori.ars import wrapper
+    from satori.core import cwrapper
+    import satori.core.api
+    if not wrapper.middleware:
+        wrapper.register_middleware(cwrapper.TransactionMiddleware())
+        wrapper.register_middleware(cwrapper.TokenVerifyMiddleware())
+        wrapper.register_middleware(wrapper.TypeConversionMiddleware())
+        wrapper.register_middleware(cwrapper.CheckRightsMiddleware())
+    return wrapper.generate_interface()
+
 def export_thrift():
     """Entry Point. Writes the Thrift contract of the server to standard output.
     """
+    import os
+    os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.core.settings'
     from sys import stdout
-    from satori.ars import wrapper
-    import satori.core.api
     from satori.ars.thrift import ThriftWriter
     writer = ThriftWriter()
-    writer.write_to(wrapper.generate_interface(), stdout)
+    writer.write_to(get_ars_interface(), stdout)
 
 def start_server_event_master():
     from django.conf import settings
@@ -34,15 +45,8 @@ def start_server_thrift_server():
     setproctitle('satori: thrift server')
     from thrift.transport.TSocket import TServerSocket
     from thrift.server.TServer import TThreadedServer
-    from satori.ars import wrapper
-    from satori.core import cwrapper
-    import satori.core.api
     from satori.ars.thrift import ThriftServer
-    wrapper.register_middleware(cwrapper.TransactionMiddleware())
-    wrapper.register_middleware(cwrapper.TokenVerifyMiddleware())
-    wrapper.register_middleware(wrapper.TypeConversionMiddleware())
-    wrapper.register_middleware(cwrapper.CheckRightsMiddleware())
-    server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), wrapper.generate_interface())
+    server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), get_ars_interface())
     print 'thrift server starting'
     server.run()
 

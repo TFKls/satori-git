@@ -81,8 +81,6 @@ def unwrap_service(service, base, fields, BlobReader, BlobWriter):
         meth_name = proc.name.split('_', 1)[1]
         if meth_name.endswith('_get_blob'):
             group_name = meth_name[:-9]
-            if group_name == 'oa':
-            	group_name = None
             def blob_get(self, name):
                 return BlobReader(class_name, self.id, name, group_name)
             class_dict[meth_name] = blob_get
@@ -94,15 +92,13 @@ def unwrap_service(service, base, fields, BlobReader, BlobWriter):
             class_dict[meth_name+'_path'] = blob_get_path
         elif meth_name.endswith('_set_blob'):
             group_name = meth_name[:-9]
-            if group_name == 'oa':
-            	group_name = None
-            def blob_set(self, name, length):
-                return BlobWriter(length, class_name, self.id, name, group_name)
+            def blob_set(self, name, length, filename=''):
+                return BlobWriter(length, class_name, self.id, name, group_name, filename)
             class_dict[meth_name] = blob_set
             def blob_set_path(self, name, path):
                 with open(path, 'r') as src:
                     ln = os.fstat(src.fileno()).st_size
-                    blob = blob_set(self, name, ln)
+                    blob = blob_set(self, name, ln, os.path.basename(path))
                     shutil.copyfileobj(src, blob, ln)
                 return blob.close()
             class_dict[meth_name+'_path'] = blob_set_path
