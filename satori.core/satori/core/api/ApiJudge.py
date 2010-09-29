@@ -10,7 +10,7 @@ from satori.core.models import TestResult, User
 from satori.core.sec.tools import Token
 from satori.ars.wrapper import Struct, StaticWrapper, TypedList, TypedMap
 from satori.core.cwrapper import Attribute, AnonymousAttribute
-from satori.core.judge_dispatcher import JudgeDispatcherClient
+from satori.core.checking.check_queue_client import CheckQueueClient
 
 import ApiObject
 import ApiTest
@@ -30,7 +30,7 @@ SubmitToCheck = Struct('SubmitToCheck', (
 @ReturnValue(type=(SubmitToCheck, NoneType))
 def get_next(token):
     u = token.user
-    next = JudgeDispatcherClient.get_instance().get_next(u)
+    next = CheckQueueClient.get_instance().get_next(u)
     if next.test_result_id is None:
     	return None
     ret = {}
@@ -48,5 +48,4 @@ def set_result(token, test_result, result):
     ApiObject.Object_oa_set_map.implementation(token, test_result, result)
     test_result.pending = False
     test_result.save()
-    #JudgeDispatcherClient.get_instance().set_result(test_result)
 

@@ -92,33 +92,33 @@ def start_server_event_slave():
     print 'event slave starting'
     slave.run()
 
-def start_server_judge_dispatcher():
+def start_server_check_queue():
     from django.conf import settings
     from setproctitle import setproctitle
-    setproctitle('satori: judge dispatcher')
+    setproctitle('satori: check queue')
     from multiprocessing.connection import Client
     from satori.events import Slave2
-    from satori.core.judge_dispatcher import JudgeDispatcher
+    from satori.core.checking.check_queue import CheckQueue
     slave = Slave2(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
-    slave.add_client(JudgeDispatcher())
-    print 'judge dispatcher starting'
+    slave.add_client(CheckQueue())
+    print 'check queue starting'
     slave.run()
 
-def start_server_judge_generator():
+def start_server_dispatcher_runner():
     from django.conf import settings
     from setproctitle import setproctitle
-    setproctitle('satori: judge generator')
+    setproctitle('satori: dispatcher runner')
     from multiprocessing.connection import Client
     from satori.events import Slave2
-    from satori.core.judge_dispatcher import JudgeGenerator
+    from satori.core.checking.dispatcher_runner import DispatcherRunner
     slave = Slave2(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
-    slave.add_client(JudgeGenerator())
-    print 'judge generator starting'
+    slave.add_client(DispatcherRunner())
+    print 'dispatcher runner starting'
     try:
         slave.run()
     except:
         traceback.print_exc()
-    print 'judge generator finishing'
+    print 'dispatcher runner finishing'
 
 
 def start_server():
@@ -154,13 +154,13 @@ def start_server():
     event_slave.start()
     processes.append(event_slave)
     
-    judge_dispatcher = Process(target=start_server_judge_dispatcher)
-    judge_dispatcher.start()
-    processes.append(judge_dispatcher)
+    check_queue = Process(target=start_server_check_queue)
+    check_queue.start()
+    processes.append(check_queue)
     
-    judge_generator = Process(target=start_server_judge_generator)
-    judge_generator.start()
-    processes.append(judge_generator)
+    dispatcher_runner = Process(target=start_server_dispatcher_runner)
+    dispatcher_runner.start()
+    processes.append(dispatcher_runner)
     
     from signal import signal, SIGINT, SIGTERM, pause
 

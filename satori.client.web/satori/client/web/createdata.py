@@ -106,17 +106,17 @@ def create(request):
     p1 = Problem.create({'name': "SORT", 'description': "Zadanie o sortowaniu"})
     p2 = Problem.create({'name': "COW", 'description': "Zadanie o krowie"})
     p3 = Problem.create({'name': "WUWU", 'description': "Zadanie o wuwuzeli"})
-    ts1 = TestSuite.create({'problem': p1, 'name': "Testy do SORT", 'dispatcher' : 'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators' : 'satori.core.judge_dispatcher.default_status_accumulator'})
+    ts1 = TestSuite.create({'problem': p1, 'name': "Testy do SORT", 'dispatcher' : 'SerialDispatcher', 'accumulators' : 'StatusAccumulator'})
     for i in range(1,4):
         t = Test.create({'problem':p1, 'name':"Test "+str(i), 'description':"Test numer "+str(i)+" do zadania SORT."})
         TestMapping.create({'suite':ts1, 'test':t, 'order':i})
     tp2 = []
-    ts2 = TestSuite.create({'problem': p2, 'name': "Testy do COW", 'dispatcher' : 'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators' : 'satori.core.judge_dispatcher.default_status_accumulator'})
+    ts2 = TestSuite.create({'problem': p2, 'name': "Testy do COW", 'dispatcher' : 'SerialDispatcher', 'accumulators' : 'StatusAccumulator'})
     for i in range(1,2):
         t = Test.create({'problem':p2, 'name':"Test "+str(i), 'description':"Test numer "+str(i)+" do zadania COW."})
         TestMapping.create({'suite':ts2, 'test':t, 'order':i})
     tp3 = []
-    ts3 = TestSuite.create({'problem': p3, 'name': "Testy do WUWU", 'dispatcher' : 'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators' : 'satori.core.judge_dispatcher.default_status_accumulator'})
+    ts3 = TestSuite.create({'problem': p3, 'name': "Testy do WUWU", 'dispatcher' : 'SerialDispatcher', 'accumulators' : 'StatusAccumulator'})
     for i in range(1,3):
         t = Test.create({'problem':p3, 'name':"Test "+str(i), 'description':"Test numer "+str(i)+" do zadania WUWU."})
         TestMapping.create({'suite':ts3, 'test':t, 'order':i})
