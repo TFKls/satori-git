@@ -13,6 +13,7 @@ urlpatterns = patterns('',
     # (r'^blob/(?P<model>[^/]+)/(?P<id>\d+)/(?P<name>[^/]+)$','satori.core.blob.server'),
     (r'^blob/(?P<model>[^/]+)/(?P<id>\d+)/(?P<group>[^/]+)/(?P<name>[^/]+)$','satori.core.blob.server'),
     (r'^blob/upload$','satori.core.blob.upload'),
+    (r'^blob/download/(?P<hash>[^/]+)$','satori.core.blob.upload'),
     # (r'^admin/doc/', include('django.contrib.admindocs.urls')),
     # (r'^admin/', include(admin.site.urls)),
 )
