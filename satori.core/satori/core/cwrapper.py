@@ -414,11 +414,11 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('attributes', type=TypedMap(unicode, AnonymousAttribute))
         @ReturnValue(type=NoneType)
         def set_map(token, self, attributes):
+            g = get_group(self)
             for name, struct in attributes.items():
-                if 'name' in struct and struct['name'] != None and struct['name'] != name:
+                if ('name' in struct) and (struct['name'] is not None) and (struct['name'] != name):
                     raise ValueError('Name mismatch')
-                struct['name'] = name
-                struct_to_oa(self, struct)
+                g.oa_set(name, struct)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -502,28 +502,18 @@ class TransactionMiddleware(object):
     """
     def process_request(self, proc, args, kwargs):
         """Enters transaction management"""
-        print 'tenter'
         transaction.enter_transaction_management()
         transaction.managed(True)
 
     def process_exception(self, proc, args, kwargs, exception):
         """Rolls back the database and leaves transaction management"""
-        print 'trollback'
-        if transaction.is_dirty():
-            transaction.rollback()
+        transaction.rollback()
         transaction.leave_transaction_management()
-        from django.db import connection
-        print connection.queries
 
     def process_response(self, proc, args, kwargs, ret):
         """Commits and leaves transaction management."""
-        print 'tcommit'
-        if transaction.is_managed():
-            if transaction.is_dirty():
-                transaction.commit()
-            transaction.leave_transaction_management()
-        from django.db import connection
-        print connection.queries
+        transaction.commit()
+        transaction.leave_transaction_management()
         return ret
 
 
