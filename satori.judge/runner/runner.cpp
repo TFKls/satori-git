@@ -636,15 +636,19 @@ void Runner::Controller::GroupJoin(const string& cgroup)
   map<string, string> input, output;
   input["group"] = cgroup;
   char buf[64];
-  snprintf(buf, sizeof(buf), "/tmp/__cgroup__.%ld.lock", (long)time(NULL));
+
+  timespec ts;
+  clock_gettime(CLOCK_REALTIME, &ts);
+  snprintf(buf, sizeof(buf), "__cgroup__.%ld.%ld.%ld.lock", (long)ts.tv_sec, (long)ts.tv_nsec, (long) ((char*)this - NULL));
   input["file"] = buf;
-  int fd = open(input["file"].c_str(), O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
+  snprintf(buf, sizeof(buf), "/tmp/%s", input["file"].c_str());
+  int fd = open(buf, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
   if (fd < 0)
     Fail("open('%s') failed", input["file"].c_str());
   Contact("ASSIGNCG", input, output);
   close(fd);
-  if (unlink(input["file"].c_str()))
-    Fail("unlink('%s') failed", input["file"].c_str());
+  if (unlink(buf))
+    Fail("unlink('%s') failed", buf);
   CheckOK("ASSIGNCG", output);
 }
 void Runner::Controller::GroupDestroy(const string& cgroup)
@@ -1060,6 +1064,7 @@ void Runner::run_child()
         ;
     }
 
+  Debug("Environment initialized! Go!");
   for (int f=getdtablesize(); f >= 3; f--)
     close(f);
   if (descriptor_count > 0)
@@ -1076,8 +1081,6 @@ void Runner::run_parent()
 {
   Debug("spawn child %d", (int)child);
   runners[child] = this;
-  close(pipefd[1]);
-  close(pipefd[0]);
   if (!ptrace)
     offspring.insert(child);
 
@@ -1085,6 +1088,9 @@ void Runner::run_parent()
   if (clock_gettime(CLOCK_REALTIME, &ts))
     Fail("clock_gettime(CLOCK_REALTIME) failed");
   start_time = miliseconds(ts);
+
+  close(pipefd[1]);
+  close(pipefd[0]);
 }
 
 void Runner::process_child(long epid)

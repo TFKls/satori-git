@@ -12,8 +12,11 @@ class MessageContest(Message):
     
     contest = models.ForeignKey('Contest')
     
-    def __str__(self):
-        return self.topic+" ("+self.contest.name+")"
+    def inherit_right(self, right):
+        right = str(right)
+        ret = super(MessageContest,self).inherit_right(right)
+        ret.append((self.contest,right))
+        return ret
 
 class MessageContestEvents(Events):
     model = MessageContest

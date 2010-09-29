@@ -23,7 +23,7 @@ class ResultsWidget(Widget):
                 id = str(o.id)
                 s["id"] = id
                 s["time"] = o.time
-                s["user"] = o.contestant.id
+                s["user"] = o.contestant.name_auto()
                 s["problem"] = o.problem.code
                 s["status"] = "?"
                 s["details"] = "Submit details"

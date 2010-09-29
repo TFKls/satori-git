@@ -15,12 +15,13 @@ class ProblemsWidget(Widget):
         self.manage = c.demand_right("MANAGE")
         self.problems = list()
         for p in ProblemMapping.filter({'contest':c}):
+            statement = p.statement_get_str('text')
             entry = {}
             entry['code'] = p.code
-            if p.statement:
+            if statement:
                 entry['showlink'] = GetLink(DefaultLayout(dict = params,maincontent = 'showpm',problemid = [str(p.id)]),'')
             try:
-                entry['pdf'] = p.oa_get_blob_hash('pdfstatement')
+                entry['pdf'] = p.statement_get_blob_hash('pdf')
             except:
                 pass
             entry['editlink'] = GetLink(DefaultLayout(dict = params,maincontent = 'editprmap',problemid = [str(p.id)]),'')

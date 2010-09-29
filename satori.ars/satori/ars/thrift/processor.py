@@ -295,6 +295,8 @@ class ThriftProcessor(TProcessor):
                 else:
                     info = iproto.trans.handle.getpeername()
                 server_info.client_ip = str(info[0])
+                if server_info.client_ip[0:7] == '::ffff:':
+                    server_info.client_ip = server_info.client_ip[7:]
                 server_info.client_port = int(info[1])
             except:
                 pass

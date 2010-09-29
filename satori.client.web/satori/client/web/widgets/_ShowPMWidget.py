@@ -10,4 +10,4 @@ class ShowPMWidget(Widget):
         pm = ProblemMapping.filter({'id' : int(d['problemid'][0])})[0]
         self.pm = pm
         self.back_to = ToString(params)
-        self.statement = text2html(str(pm.statement))
+        self.statement = text2html(pm.statement_get_str('text'))
