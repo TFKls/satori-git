@@ -128,10 +128,6 @@ def create(request):
     MessageGlobal.create({'topic':"Wiadomosc systemowa", 'content':"Oglaszamy, ze za 5 minuBZZZZZ!", 'mainscreenonly':False})
     MessageContest.create({'topic':"Wiadomosc powitalna", 'content':"Publiczne BZZZZZ!", 'contest':c4})
     g = Global.get_instance()
-    sucks = open(dirname(__file__)+'/simple_uzi_checker.py')
-    size = getsize(dirname(__file__)+'/simple_uzi_checker.py')
-    writer = anonymous_blob(size)
-    writer.write(sucks.read())
-    hash = writer.close()
-    g.checkers_set_blob_hash('Simple UZI Checker',hash)
+    print dirname(__file__)+'/simple_uzi_checker.py'
+    g.checkers_set_blob_path('Simple UZI Checker', dirname(__file__)+'/simple_uzi_checker.py')
     return HttpResponse('OK!')
