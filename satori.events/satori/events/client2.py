@@ -2,18 +2,11 @@ class Client2(object):
     def __init__(self):
         super(Client2, self).__init__()
 
-    def _init(self):
-        pass
-
-    def init(self, slave):
-        self.slave = slave
-        self._init()
-
-    def _deinit(self):
+    def init(self):
         pass
 
     def deinit(self):
-        self._deinit()
+        pass
 
     def finish(self):
         self.slave.remove_client(self)

@@ -51,7 +51,8 @@ class Slave2(object):
                 while self.added_clients:
                     client = self.added_clients.popleft()
                     self.clients.add(client)
-                    client.init(self)
+		    client.slave = self
+                    client.init()
 
                 while self.removed_clients:
                     client = self.removed_clients.popleft()
@@ -81,6 +82,4 @@ class Slave2(object):
             self.clients.clear()
 
         self.connection.send(Disconnect())
-
-        self.running = False
 
