@@ -12,9 +12,7 @@ from satori.dbev import Events
 class BlobReader(object):
     def __init__(self, hash):
         self.file = open(os.path.join(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash), 'rb')
-
-    def length(self):
-        return os.fstat(self.file.fileno()).st_size
+        self.length = os.fstat(self.file.fileno()).st_size
 
     def read(self, size=-1):
         return self.file.read(size)
