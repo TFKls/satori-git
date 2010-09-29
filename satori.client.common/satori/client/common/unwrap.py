@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 import os
 import shutil
 from satori.ars.model import ArsTypeAlias, ArsInt64, ArsStructure
@@ -73,6 +75,39 @@ def unwrap_procedure(_proc):
 
     return func
 
+def unwrap_blob_get(class_dict, class_name, meth_name, BlobReader):
+    group_name = meth_name[:-9]
+
+    def blob_get(self, name):
+        return BlobReader(class_name, self.id, name, group_name)
+
+    class_dict[meth_name] = blob_get
+
+    def blob_get_path(self, name, path):
+        with open(path, 'w') as dst:
+            blob = blob_get(self, name)
+            shutil.copyfileobj(blob, dst, blob.length)
+        return blob.close()
+
+    class_dict[meth_name + '_path'] = blob_get_path
+
+def unwrap_blob_set(class_dict, class_name, meth_name, BlobWriter):
+    group_name = meth_name[:-9]
+
+    def blob_set(self, name, length, filename=''):
+        return BlobWriter(length, class_name, self.id, name, group_name, filename)
+
+    class_dict[meth_name] = blob_set
+
+    def blob_set_path(self, name, path):
+        with open(path, 'r') as src:
+            ln = os.fstat(src.fileno()).st_size
+            blob = blob_set(self, name, ln, os.path.basename(path))
+            shutil.copyfileobj(src, blob, ln)
+        return blob.close()
+
+    class_dict[meth_name + '_path'] = blob_set_path
+
 def unwrap_service(service, base, fields, BlobReader, BlobWriter):
     class_name = service.name
     class_dict = {}
@@ -80,28 +115,9 @@ def unwrap_service(service, base, fields, BlobReader, BlobWriter):
     for proc in service.procedures:
         meth_name = proc.name.split('_', 1)[1]
         if meth_name.endswith('_get_blob'):
-            group_name = meth_name[:-9]
-            def blob_get(self, name):
-                return BlobReader(class_name, self.id, name, group_name)
-            class_dict[meth_name] = blob_get
-            def blob_get_path(self, name, path):
-                with open(path, 'w') as dst:
-                    blob = blob_get(self, name)
-                    shutil.copyfileobj(blob, dst, blob.length)
-                return blob.close()
-            class_dict[meth_name+'_path'] = blob_get_path
+            unwrap_blob_get(class_dict, class_name, meth_name, BlobReader)
         elif meth_name.endswith('_set_blob'):
-            group_name = meth_name[:-9]
-            def blob_set(self, name, length, filename=''):
-                return BlobWriter(length, class_name, self.id, name, group_name, filename)
-            class_dict[meth_name] = blob_set
-            def blob_set_path(self, name, path):
-                with open(path, 'r') as src:
-                    ln = os.fstat(src.fileno()).st_size
-                    blob = blob_set(self, name, ln, os.path.basename(path))
-                    shutil.copyfileobj(src, blob, ln)
-                return blob.close()
-            class_dict[meth_name+'_path'] = blob_set_path
+            unwrap_blob_set(class_dict, class_name, meth_name, BlobWriter)
         else:
             class_dict[meth_name] = unwrap_procedure(proc)
 

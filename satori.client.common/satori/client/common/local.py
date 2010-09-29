@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 import sys
 import satori.core.api
 from satori.ars.wrapper import generate_interface
