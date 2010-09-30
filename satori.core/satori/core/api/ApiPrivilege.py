@@ -118,15 +118,15 @@ def global_revoke_can(token, role, right):
 @Argument('role', type=Role)
 @Argument('right', type=basestring)
 @ReturnValue(type=PrivilegeTimes)
-def get(token, role, right):
+def global_get(token, role, right):
     try:
         priv = Privilege.objects.get(role=role, object=Global.get_instance(), right=right)
         return Namespace(start_on=priv.start_on, finish_on=priv.finish_on)
     except Privilege.DoesNotExist:
         return None
 
-@privilege.get.can
-def get_can(token, role, right):
+@privilege.global_get.can
+def global_get_can(token, role, right):
     return Global.get_instance().demand_right(token, 'MANAGE_PRIVILEGES')
 
 privilege._fill_module(__name__)
