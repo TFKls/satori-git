@@ -14,8 +14,8 @@ class Privilege(Object):
     role     = models.ForeignKey('Role', related_name='privileges')
     object   = models.ForeignKey('Object', related_name='privileged')
     right    = models.CharField(max_length=64)
-    startOn  = models.DateTimeField(null=True)
-    finishOn = models.DateTimeField(null=True)
+    start_on  = models.DateTimeField(null=True)
+    finish_on = models.DateTimeField(null=True)
 
     #class Meta:                                                # pylint: disable-msg=C0111
     #    unique_together = (('role', 'object', 'right'),)
@@ -23,8 +23,8 @@ class Privilege(Object):
     @staticmethod
     def grant(role, object, right, start_on=None, finish_on=None):
         (priv, created) = Privilege.objects.get_or_create(role=role, object=object, right=right)
-        priv.startOn = start_on
-        priv.finishOn = finish_on
+        priv.start_on = start_on
+        priv.finish_on = finish_on
         priv.save()
 
     @staticmethod
