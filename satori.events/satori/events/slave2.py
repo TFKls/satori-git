@@ -53,7 +53,7 @@ class Slave2(object):
                 while self.added_clients:
                     client = self.added_clients.popleft()
                     self.clients.add(client)
-            client.slave = self
+                    client.slave = self
                     client.init()
 
                 while self.removed_clients:
