@@ -13,7 +13,7 @@ class StatusAccumulator(object):
         if status is None:
             status = 'INT'
         if self._status == 'OK' and status != 'OK':
-        self._status = status
+            self._status = status
 
     def status(self):
         return self._status == 'OK'
