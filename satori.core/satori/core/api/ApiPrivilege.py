@@ -3,7 +3,7 @@
 from datetime import datetime
 from types import NoneType
 
-from satori.objects import Argument, ReturnValue
+from satori.objects import Argument, ReturnValue, Namespace
 from satori.core.cwrapper import ModelWrapper, Struct
 from satori.core.models import Privilege, Role, Global, Object
 from satori.core.sec import Token
