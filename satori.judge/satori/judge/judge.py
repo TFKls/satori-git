@@ -124,7 +124,7 @@ class JailBuilder(Object):
                 dirlist.append(path + '=rw')
             dirlist.reverse()
             subprocess.check_call(['mount', '-t', 'aufs', '-o', 'noatime,rw,dirs=' + ':'.join(dirlist), 'aufs', self.root])
-            if 'insert' in template: 
+            if 'insert' in template:
                 for src in template['insert']:
                     src = os.path.realpath(src)
                     if os.path.isdir(src):
@@ -300,7 +300,7 @@ class JailRun(Object):
     def run(self):
         self.parent()
         return self.result
-        
+
 
     def create_handler(self, quiet, result):
         qquiet = quiet
@@ -422,9 +422,11 @@ class JailRun(Object):
                 pid = self.fuser(file)
                 #TODO: Check pid
                 print 'Gotya ', pid
-                with open(os.path.join(path, 'tasks'), 'w') as f:
-                    f.write(str(pid))
-                return { 'res' : 'OK' }
+                if pid is not None:
+                    with open(os.path.join(path, 'tasks'), 'w') as f:
+                        f.write(str(pid))
+                    return { 'res' : 'OK' }
+                return { 'res' : 'FAIL' }
             def cmd_DESTROYCG(self, input):
                 path = self.cgroup_path(input['group'])
                 killer = True

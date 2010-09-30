@@ -1,5 +1,4 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-import satori.core.setup                                       # pylint: disable-msg=W0611
 from django.db import models
 from satori.dbev.events import registry
 
@@ -378,7 +377,7 @@ $$ LANGUAGE plpgsql;
 """
         ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function]
         for model in registry:
-        	ret.append(install_versions_sql(model))
+            ret.append(install_versions_sql(model))
         return tuple(ret);
 
 

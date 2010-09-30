@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from collections import deque
 from _multiprocessing import Connection
 from satori.objects import Argument
@@ -34,7 +36,7 @@ class Slave2(object):
     def unmap(self, mapping):
         self.connection.send(Unmap(mapping))
         self.connection.recv()
-        
+
     def send(self, event):
         self.connection.send(Send(event))
         self.connection.recv()
@@ -51,7 +53,8 @@ class Slave2(object):
                 while self.added_clients:
                     client = self.added_clients.popleft()
                     self.clients.add(client)
-                    client.init(self)
+                    client.slave = self
+                    client.init()
 
                 while self.removed_clients:
                     client = self.removed_clients.popleft()
@@ -62,7 +65,7 @@ class Slave2(object):
                     self.clients.remove(client)
 
                 if not self.clients:
-                	  break
+                      break
 
                 self.connection.send(Receive())
                 (queue, event) = self.connection.recv()
@@ -81,6 +84,4 @@ class Slave2(object):
             self.clients.clear()
 
         self.connection.send(Disconnect())
-
-        self.running = False
 

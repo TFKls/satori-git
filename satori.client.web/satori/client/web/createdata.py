@@ -106,17 +106,17 @@ def create(request):
     p1 = Problem.create({'name': "SORT", 'description': "Zadanie o sortowaniu"})
     p2 = Problem.create({'name': "COW", 'description': "Zadanie o krowie"})
     p3 = Problem.create({'name': "WUWU", 'description': "Zadanie o wuwuzeli"})
-    ts1 = TestSuite.create({'problem': p1, 'name': "Testy do SORT", 'dispatcher' : 'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators' : 'satori.core.judge_dispatcher.default_status_accumulator'})
+    ts1 = TestSuite.create({'problem': p1, 'name': "Testy do SORT", 'dispatcher' : 'SerialDispatcher', 'accumulators' : 'StatusAccumulator'})
     for i in range(1,4):
         t = Test.create({'problem':p1, 'name':"Test "+str(i), 'description':"Test numer "+str(i)+" do zadania SORT."})
         TestMapping.create({'suite':ts1, 'test':t, 'order':i})
     tp2 = []
-    ts2 = TestSuite.create({'problem': p2, 'name': "Testy do COW", 'dispatcher' : 'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators' : 'satori.core.judge_dispatcher.default_status_accumulator'})
+    ts2 = TestSuite.create({'problem': p2, 'name': "Testy do COW", 'dispatcher' : 'SerialDispatcher', 'accumulators' : 'StatusAccumulator'})
     for i in range(1,2):
         t = Test.create({'problem':p2, 'name':"Test "+str(i), 'description':"Test numer "+str(i)+" do zadania COW."})
         TestMapping.create({'suite':ts2, 'test':t, 'order':i})
     tp3 = []
-    ts3 = TestSuite.create({'problem': p3, 'name': "Testy do WUWU", 'dispatcher' : 'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators' : 'satori.core.judge_dispatcher.default_status_accumulator'})
+    ts3 = TestSuite.create({'problem': p3, 'name': "Testy do WUWU", 'dispatcher' : 'SerialDispatcher', 'accumulators' : 'StatusAccumulator'})
     for i in range(1,3):
         t = Test.create({'problem':p3, 'name':"Test "+str(i), 'description':"Test numer "+str(i)+" do zadania WUWU."})
         TestMapping.create({'suite':ts3, 'test':t, 'order':i})
@@ -128,10 +128,6 @@ def create(request):
     MessageGlobal.create({'topic':"Wiadomosc systemowa", 'content':"Oglaszamy, ze za 5 minuBZZZZZ!", 'mainscreenonly':False})
     MessageContest.create({'topic':"Wiadomosc powitalna", 'content':"Publiczne BZZZZZ!", 'contest':c4})
     g = Global.get_instance()
-    sucks = open(dirname(__file__)+'/simple_uzi_checker.py')
-    size = getsize(dirname(__file__)+'/simple_uzi_checker.py')
-    writer = anonymous_blob(size)
-    writer.write(sucks.read())
-    hash = writer.close()
-    g.checkers_set_blob_hash('Simple UZI Checker',hash)
+    print dirname(__file__)+'/simple_uzi_checker.py'
+    g.checkers_set_blob_path('Simple UZI Checker', dirname(__file__)+'/simple_uzi_checker.py')
     return HttpResponse('OK!')

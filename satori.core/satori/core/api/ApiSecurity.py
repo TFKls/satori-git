@@ -114,7 +114,7 @@ def login(login, password, nspace=''):
         auth = 'login'
         if nspace != '':
             auth = auth + '.' + nspace
-    	return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
+        return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
 
 @security.method
 @Argument('login', type=str)
@@ -128,7 +128,7 @@ def passwd(login, old_passwd, new_passwd, nspace=''):
         auth = 'login'
         if nspace != '':
             auth = auth + '.' + nspace
-    	return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
+        return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
 
 def openid_realm(url):
     callback = urlparse.urlparse(url)
@@ -141,7 +141,7 @@ def openid_modify_callback(url, salt):
     query = []
     for key, vlist in qs.items():
         for value in vlist:
-        	query.append((key,value))
+            query.append((key,value))
     query = urllib.urlencode(query)
     return urlparse.urlunparse((callback.scheme, callback.netloc, callback.path, callback.params, query, callback.fragment))
 
@@ -197,7 +197,7 @@ def openid_generic_start(openid, return_to, user_id ='', valid =1, ax =False):
     else:
         form = request.formMarkup(realm, callback, False, {'id': 'satori_openid_form'})
         html = '<html><body onload="document.getElementById(\'satori_openid_form\').submit()">' + form + '</body></html>'
-    token = Token(user_id=user_id, auth='openid', data=session, validity=timedelta(hours=valid)) 
+    token = Token(user_id=user_id, auth='openid', data=session, validity=timedelta(hours=valid))
     return {
         'token' : token,
         'redirect' : redirect,
@@ -223,7 +223,7 @@ def openid_generic_finish(token, args, return_to, user =None):
     else:
         identity = OpenIdentity.objects.get(identity=response.identity_url)
     openid_get_ax(response, identity, update=True)
-    token = Token(user=identity.user, auth='openid', validity=timedelta(hours=6)) 
+    token = Token(user=identity.user, auth='openid', validity=timedelta(hours=6))
     return token
 
 @security.method

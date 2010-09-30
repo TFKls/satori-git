@@ -80,7 +80,7 @@ def join_contest_check(token, self):
 @ReturnValue(type=Contestant)
 def accept_contestant(token, self, contestant):
     if contestant.contest != self:
-    	raise "Go away"
+        raise "Go away"
     contestant.accepted = True
     RoleMapping(parent = self.contestant_role, child = contestant).save()
 #TODO: RoleMapping may exist!
@@ -100,21 +100,21 @@ def accept_contestant_check(token, self, contestant):
 def submit(token, self, problem_mapping, content, filename):
     contestant = Contestant.objects.filter(contest=self, children__id=token.user.id)[0]
     if problem_mapping.contest != self:
-    	raise "Go away"
+        raise "Go away"
     submit = Submit()
     submit.contestant = contestant
     submit.problem = problem_mapping
-	submit.save()
-	Privilege.grant(contestant, submit, 'VIEW')
-	OpenAttribute(object=submit.data, name='filename', oatype=OpenAttribute.OATYPES_STRING, string_value=filename).save()
-	blob = Blob()
-	blob.open('w')
-	blob.write(content)
-	blob.close()
-	blob.save()
-	OpenAttribute(object=submit.data, name='content', oatype=OpenAttribute.OATYPES_BLOB, blob=blob).save()
-	TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
-	return submit
+    submit.save()
+    Privilege.grant(contestant, submit, 'VIEW')
+    OpenAttribute(object=submit.data, name='filename', oatype=OpenAttribute.OATYPES_STRING, string_value=filename).save()
+    blob = Blob()
+    blob.open('w')
+    blob.write(content)
+    blob.close()
+    blob.save()
+    OpenAttribute(object=submit.data, name='content', oatype=OpenAttribute.OATYPES_BLOB, blob=blob).save()
+    TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
+    return submit
 @contest.submit.can
 def submit_check(token, self, problem_mapping, content, filename):
     return problem_mapping.demand_right(token, 'SUBMIT')

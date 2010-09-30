@@ -12,10 +12,10 @@ class MessageGlobal(Message):
     parent_message = models.OneToOneField(Message, parent_link=True, related_name='cast_messageglobal')
 
     mainscreenonly = models.BooleanField()
-    
+
     def __str__(self):
         return self.topic+" (Global)"
-        
+
     def inherit_right(self, right):
         right = str(right)
         ret = super(MessageGlobal,self).inherit_right(right)

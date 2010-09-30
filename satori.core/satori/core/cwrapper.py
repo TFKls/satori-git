@@ -19,7 +19,7 @@ class ArsDjangoModel(ArsTypeAlias):
     def __init__(self, model):
         super(ArsDjangoModel, self).__init__(name=(model._meta.object_name + 'Id'), target_type=ArsInt64)
         self.model = model
-        
+
     def do_needs_conversion(self):
         return True
 
@@ -37,7 +37,7 @@ class DjangoModelType(type):
         name = 'DjangoType(' + str(model) + ')'
 
         cls = type.__new__(mcs, name, bases, dict_)
-        
+
         add_lazy_relation(rel_model, cls, model, resolve_model)
 
         return cls
@@ -134,7 +134,7 @@ def generate_field_procedures(model, field):
 def generate_field_procedures(model, field):
     field_name = field.name
     field_type = django_field_to_python_type(model, field)
-    
+
     if field_type is None:
         return []
 
@@ -238,7 +238,7 @@ class SetStructWrapper(ProcedureWrapper):
 class CreateWrapper(ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
-        
+
         @Argument('token', type=Token)
         @Argument('values', type=DjangoStruct(model))
         @ReturnValue(type=model)
@@ -253,7 +253,7 @@ class CreateWrapper(ProcedureWrapper):
                 Privilege.grant(token.user, ret, 'MANAGE')
 
             return ret
-        
+
         super(CreateWrapper, self).__init__(create, parent)
 
 
@@ -273,7 +273,8 @@ class DeleteWrapper(ProcedureWrapper):
 Attribute = Struct('Attribute', (
     ('name', str, False),
     ('is_blob', bool, False),
-    ('value', str, False)
+    ('value', str, False),
+    ('filename', str, True),
 ))
 AnonymousAttribute = Struct('AnonymousAttribute', (
     ('is_blob', bool, False),
@@ -305,40 +306,12 @@ class OpenAttributeWrapper(Wrapper):
 
         def get_group(object):
             if group_name:
-                return getattr(object, group_name)
+                return getattr(object, group_name).attributes
             else:
-                return object            
+                return object.attributes
 
-        def oa_to_struct(oa):
-            ret = {}
-            ret['name'] = oa.name
-            if oa.oatype == OpenAttribute.OATYPES_BLOB:
-                ret['is_blob'] = True
-                ret['value'] = oa.blob.hash
-            elif oa.oatype == OpenAttribute.OATYPES_STRING:
-                ret['is_blob'] = False
-                ret['value'] = oa.string_value
-            return ret
-
-        def oa_to_struct_name(object, name):
-            try:
-                oa = get_group(object).attributes.get(name=name)
-            except:
-                return None
-            return oa_to_struct(oa)
-
-        def struct_to_oa(object, struct):
-            try:
-                oa = get_group(object).attributes.get(name=struct['name'])
-            except:
-                oa = OpenAttribute(object=get_group(object), name=struct['name'])
-            if struct['is_blob']:
-                oa.oatype = OpenAttribute.OATYPES_BLOB
-                oa.blob = Blob.objects.get(hash=struct['value'])
-            else:
-                oa.oatype = OpenAttribute.OATYPES_STRING
-                oa.string_value = struct['value']
-            oa.save()
+        def oats(oa):
+            return {'name': oa.name, 'is_blob': oa.is_blob, 'value': oa.value, 'filename': oa.filename}
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -346,7 +319,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=(Attribute, NoneType))
         def get(token, self, name):
-            return oa_to_struct_name(self, name)
+            return oats(get_group(self).oa_get(name))
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -354,12 +327,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=str)
         def get_str(token, self, name):
-            struct = oa_to_struct_name(self, name)
-            if struct is None:
-                return None
-            if struct['is_blob']:
-                raise Exception('The attribute is not a string attribute')
-            return struct['value']
+            return get_group(self).oa_get_str(name)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -375,19 +343,14 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=str)
         def get_blob_hash(token, self, name):
-            struct = oa_to_struct_name(self, name)
-            if struct is None:
-                return None
-            if not struct['is_blob']:
-                raise Exception('The attribute is not a blob attribute')
-            return struct['value']
+            return get_group(self).oa_get_blob_hash(name)
 
         @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
         @ReturnValue(type=TypedList(Attribute))
         def get_list(token, self):
-            return [oa_to_struct(oa) for oa in get_group(self).attributes.all()]
+            return [oats(x) for x in get_group(self).all()]
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -395,8 +358,8 @@ class OpenAttributeWrapper(Wrapper):
         @ReturnValue(type=TypedMap(unicode, Attribute))
         def get_map(token, self):
             ret = {}
-            for oa in get_group(self).attributes.all():
-            	ret[oa.name] = oa_to_struct(oa)
+            for oa in get_group(self).all():
+                ret[oa.name] = oats(oa)
             return ret
 
         @oaw_self.method
@@ -405,7 +368,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('value', type=Attribute)
         @ReturnValue(type=NoneType)
         def set(token, self, value):
-            struct_to_oa(self, value)
+            get_group(self).oa_set(value.name, value)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -414,8 +377,8 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('value', type=str)
         @ReturnValue(type=NoneType)
         def set_str(token, self, name, value):
-            struct_to_oa(self, {'name': name, 'value': value, 'is_blob': False})
-        
+            get_group(self).oa_set_str(name, value)
+
         @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
@@ -430,9 +393,10 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('self', type=model)
         @Argument('name', type=str)
         @Argument('value', type=str)
+        @Argument('filename', type=str)
         @ReturnValue(type=NoneType)
-        def set_blob_hash(token, self, name, value):
-            struct_to_oa(self, {'name': name, 'value': value, 'is_blob': True})
+        def set_blob_hash(token, self, name, value, filename=''):
+            get_group(self).oa_set_blob_hash(name, value, filename)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -440,8 +404,9 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('attributes', type=TypedList(Attribute))
         @ReturnValue(type=NoneType)
         def set_list(token, self, attributes):
+            g = get_group(self)
             for struct in attributes:
-                struct_to_oa(self, struct)
+                g.oa_set(struct.name, struct)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -449,11 +414,11 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('attributes', type=TypedMap(unicode, AnonymousAttribute))
         @ReturnValue(type=NoneType)
         def set_map(token, self, attributes):
+            g = get_group(self)
             for name, struct in attributes.items():
-                if 'name' in struct and struct['name'] != None and struct['name'] != name:
+                if ('name' in struct) and (struct['name'] is not None) and (struct['name'] != name):
                     raise ValueError('Name mismatch')
-                struct['name'] = name
-                struct_to_oa(self, struct)
+                g.oa_set(name, struct)
 
         @oaw_self.method
         @Argument('token', type=Token)
@@ -461,7 +426,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=NoneType)
         def delete(token, self, name):
-            get_group(self).attributes.get(name=name).delete()
+            get_group(self).delete(name)
 
         @oaw_self.get.can
         @oaw_self.get_str.can
@@ -503,7 +468,7 @@ class ModelWrapperClass(StaticWrapper):
 
         super(ModelWrapperClass, self).__init__(model._meta.object_name, base_wrapper)
         self._model = model
-        
+
         for field in model._meta.fields:
             if field in model._meta.local_fields:
                 self._add_child(FieldWrapper(field, self))
@@ -542,16 +507,13 @@ class TransactionMiddleware(object):
 
     def process_exception(self, proc, args, kwargs, exception):
         """Rolls back the database and leaves transaction management"""
-        if transaction.is_dirty():
-            transaction.rollback()
+        transaction.rollback()
         transaction.leave_transaction_management()
 
     def process_response(self, proc, args, kwargs, ret):
         """Commits and leaves transaction management."""
-        if transaction.is_managed():
-            if transaction.is_dirty():
-                transaction.commit()
-            transaction.leave_transaction_management()
+        transaction.commit()
+        transaction.leave_transaction_management()
         return ret
 
 
@@ -603,12 +565,12 @@ class CheckRightsMiddleware(object):
         for (key, elem) in value.iteritems():
             self.check(token, type.key_type, key)
             self.check(token, type.value_type, elem)
-    
+
     @DispatchOn(type=ArsStructure)
     def check(self, token, type, value):
         for field in type.fields:
             if (field.name in value) and (value[field.name] is not None):
-                self.check(token, field.type, value[field.name])        
+                self.check(token, field.type, value[field.name])
 
     @DispatchOn(type=ArsAtomicType)
     def check(self, token, type, value):
@@ -626,9 +588,9 @@ class CheckRightsMiddleware(object):
     @DispatchOn(type=ArsList)
     def filter(self, token, type, value):
         if isinstance(type.element_type, ArsDjangoModel):
-        	return [elem for elem in value if elem.demand_right(token, 'VIEW')]
+            return [elem for elem in value if elem.demand_right(token, 'VIEW')]
         else:
-        	return [self.filter(token, type.element_type, elem) for elem in value]
+            return [self.filter(token, type.element_type, elem) for elem in value]
 
     @DispatchOn(type=ArsSet)
     def filter(self, token, type, value):
@@ -648,33 +610,33 @@ class CheckRightsMiddleware(object):
         if isinstance(type.key_type, ArsDjangoModel) and isinstance(type.value_type, ArsDjangoModel):
             for (key, elem) in value.iteritems():
                 if key.demand_right(token, 'VIEW') and elem.demand_right(token, 'VIEW'):
-                	ret[key] = value
-        elif isinstance(type.key_type, ArsDjangoModel):	
+                    ret[key] = value
+        elif isinstance(type.key_type, ArsDjangoModel):
             for (key, elem) in value.iteritems():
                 if key.demand_right(token, 'VIEW'):
-                	ret[key] = self.filter(token, type.value_type, elem)
-        elif isinstance(type.value_type, ArsDjangoModel):	
+                    ret[key] = self.filter(token, type.value_type, elem)
+        elif isinstance(type.value_type, ArsDjangoModel):
             for (key, elem) in value.iteritems():
                 if elem.demand_right(token, 'VIEW'):
-                	ret[self.filter(token, type.key_type, key)] = elem
+                    ret[self.filter(token, type.key_type, key)] = elem
         else:
             for (key, elem) in value.iteritems():
-            	ret[self.filter(token, type.key_type, key)] = self.filter(token, type.value_type, elem)
+                ret[self.filter(token, type.key_type, key)] = self.filter(token, type.value_type, elem)
         return ret
-    
+
     @DispatchOn(type=ArsStructure)
     def filter(self, token, type, value):
         ret = {}
         for field in type.fields:
             if field.name in value:
-            	if value[field.name] is None:
-            		ret[field.name] = None
+                if value[field.name] is None:
+                    ret[field.name] = None
                 elif isinstance(field.type, ArsDjangoModel):
-            		if value[field.name].demand_right(token, 'VIEW'):
-            			ret[field.name] = value[field.name]
+                    if value[field.name].demand_right(token, 'VIEW'):
+                        ret[field.name] = value[field.name]
                     else:
                         # delete the field from structure
-                    	pass
+                        pass
                 else:
                     ret[field.name] = self.filter(token, field.type, value[field.name])
         return ret
@@ -690,7 +652,7 @@ class CheckRightsMiddleware(object):
     @DispatchOn(type=ArsDjangoModel)
     def filter(self, token, type, value):
         if value.demand_right(token, 'VIEW'):
-        	return value
+            return value
         else:
             raise Exception('You don\'t have rights to view the returned element.')
 
@@ -702,7 +664,7 @@ class CheckRightsMiddleware(object):
                 token = kwargs['token']
         else:
             token = Token('')
-            
+
         for i in range(min(len(args), len(proc.parameters))):
             self.check(token, proc.parameters[i].type, args[i])
 
@@ -721,5 +683,5 @@ class CheckRightsMiddleware(object):
         else:
             token = Token('')
         if ret is None:
-        	return ret
+            return ret
         return self.filter(token, proc.return_type, ret)

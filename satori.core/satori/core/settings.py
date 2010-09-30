@@ -2,6 +2,7 @@
 """Django settings for satori.core.
 """
 import getpass
+import os
 
 DEBUG = True
 TEMPLATE_DEBUG = DEBUG
@@ -28,18 +29,20 @@ THRIFT_PORT = 38889
 BLOB_HOST = '0.0.0.0'
 BLOB_PORT = 38887
 
+BLOB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'tmp', 'blob')
+
 if getpass.getuser() == 'gutowski':
-	EVENT_PORT = 39888
-	THRIFT_PORT = 39889
-	BLOB_PORT = 39887
-if getpass.getuser() == 'zzzmwm01':
-	EVENT_PORT = 37888
-	THRIFT_PORT = 37889
-	BLOB_PORT = 37887
+    EVENT_PORT = 39888
+    THRIFT_PORT = 39889
+    BLOB_PORT = 39887
+if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
+    EVENT_PORT = 37888
+    THRIFT_PORT = 37889
+    BLOB_PORT = 37887
 if getpass.getuser() == 'duraj':
-	EVENT_PORT = 36888
-	THRIFT_PORT = 36889
-	BLOB_PORT = 36887
+    EVENT_PORT = 36888
+    THRIFT_PORT = 36889
+    BLOB_PORT = 36887
 
 ADMIN_NAME = 'admin'
 ADMIN_PASSWORD = 'admin'

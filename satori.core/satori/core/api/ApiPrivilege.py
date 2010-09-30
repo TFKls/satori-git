@@ -25,13 +25,13 @@ def create_global(token, role, right):
 def create_global_check(token, role, right):
     return True
 #TODO: FIX this!
-	return Global.get_instance().demand_right('MANAGE_PRIVILEGES')
+    return Global.get_instance().demand_right('MANAGE_PRIVILEGES')
 
 @privilege.create.can
 def create_check(*args, **kwargs):
     return True
 #TODO: FIX this!
-	return object.demand_right(token, 'MANAGE_PRIVILEGES')
+    return object.demand_right(token, 'MANAGE_PRIVILEGES')
 
 @privilege.delete.can
 def delete_check(token, self):

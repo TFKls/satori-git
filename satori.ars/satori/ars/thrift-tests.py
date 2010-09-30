@@ -1,4 +1,6 @@
-from multiprocessing import Process 
+# vim:ts=4:sts=4:sw=4:expandtab
+
+from multiprocessing import Process
 from unittest import TestCase
 from time import sleep
 
@@ -41,7 +43,7 @@ class Writer(TestCase):
 
 
 class Server(TestCase):
-    
+
     @staticmethod
     def echo(string):
         return string
@@ -59,7 +61,7 @@ class Server(TestCase):
         sleep(1)
         self.transport = TSocket()
         self.transport.open()
-        self.protocol = TBinaryProtocol(self.transport) 
+        self.protocol = TBinaryProtocol(self.transport)
 
     def testEcho(self):
         message = 'Hello, World!'
@@ -86,7 +88,7 @@ class Server(TestCase):
         self.assertEqual(type, TType.STOP)
         self.protocol.readStructEnd()
         self.protocol.readMessageEnd()
-    
+
     def tearDown(self):
         self.transport.close()
         self.server_process.terminate()

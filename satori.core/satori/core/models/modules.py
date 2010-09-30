@@ -2,10 +2,11 @@
 
 # built-in script identifiers
 DISPATCHERS = (
-    ('satori.core.judge_dispatcher.default_serial_dispatcher', 'Serial dispatcher'),
+    ('SerialDispatcher', 'Serial dispatcher'),
+    ('ParalellDispatcher', 'Paralell dispatcher'),
 )
 ACCUMULATORS = (
-    ('satori.core.judge_dispatcher.default_status_accumulator', 'Status accumulator'),
+    ('StatusAccumulator', 'Status accumulator'),
 )
 AGGREGATORS = (
     ('fully.qualified.Name','description'),

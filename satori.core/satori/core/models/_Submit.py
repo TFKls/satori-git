@@ -15,7 +15,7 @@ class Submit(Object):
     problem     = models.ForeignKey('ProblemMapping')
     data    = models.OneToOneField('AttributeGroup', related_name='group_submit_data')
     time        = models.DateTimeField(auto_now_add=True)
-    
+
     def save(self):
         try:
             x = self.data
@@ -25,7 +25,7 @@ class Submit(Object):
             self.data = data
 
         super(Submit, self).save()
-    
+
     def inherit_right(self, right):
         right = str(right)
         ret = super(Submit, self).inherit_right(right)

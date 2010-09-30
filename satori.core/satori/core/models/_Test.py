@@ -33,7 +33,7 @@ class Test(Object):
         if right == 'EDIT':
             ret.append((self.problem,'EDIT'))
         return ret
-    
+
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)

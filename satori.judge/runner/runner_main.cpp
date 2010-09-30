@@ -238,8 +238,8 @@ int finish()
   {
     printf("Status : %d\n", run.result.exit_status);
     printf("Retcode: %d\n", WEXITSTATUS(run.result.exit_status));
-    printf("Memory : %lu\n", run.result.memory);
-    printf("CPU    : %lu\n", run.result.cpu_time);
+    printf("Memory : %lu\n", max(run.result.memory, run.result.cgroup_memory));
+    printf("CPU    : %lu\n", max(run.result.cpu_time, run.result.cgroup_time));
     printf("Time   : %lu\n", run.result.real_time);
     printf("Read   : %lu\n", run.result.sum_read);
     printf("Write  : %lu\n", run.result.sum_write);

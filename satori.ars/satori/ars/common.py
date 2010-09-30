@@ -96,24 +96,24 @@ class TopologicalSortedWriter(TopologicalWriter):
 
         def _recfind(item):
             if item in deps:
-            	return
+                return
             d = list(self._dependencies(item))
             deps[item] = len(d)
             fol[item] = []
             if deps[item] == 0:
-            	ready.add((self._sortkey(item), item,))
+                ready.add((self._sortkey(item), item,))
             for dependency in d:
-            	_recfind(dependency)
-            	fol[dependency].append(item)
+                _recfind(dependency)
+                fol[dependency].append(item)
 
         for contract in contracts:
-        	_recfind(contract)
+            _recfind(contract)
 
         while len(ready) > 0:
-        	item = ready.pop(0)[1]
-        	self._write(item, target)
-        	for f in fol[item]:
-        		deps[f] = deps[f] - 1
+            item = ready.pop(0)[1]
+            self._write(item, target)
+            for f in fol[item]:
+                deps[f] = deps[f] - 1
                 if deps[f] == 0:
-                	ready.add((self._sortkey(f), f,))
+                    ready.add((self._sortkey(f), f,))
 

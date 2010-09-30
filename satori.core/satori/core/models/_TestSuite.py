@@ -18,7 +18,7 @@ class TestSuite(Object):
     tests        = models.ManyToManyField('Test', through='TestMapping')
     dispatcher   = models.CharField(max_length=128, choices=DISPATCHERS)
     accumulators = models.CharField(max_length=1024)
-    
+
     def inherit_right(self, right):
         right = str(right)
         ret = super(TestSuite, self).inherit_right(right)
@@ -30,12 +30,12 @@ class TestSuite(Object):
         if not self.name:
             self.name = str(datetime.now())
         if not self.dispatcher in zip(*DISPATCHERS)[0]:
-        	raise ValueError('Dispatcher '+self.dispatcher+' is not allowed')
+            raise ValueError('Dispatcher '+self.dispatcher+' is not allowed')
         for accumulator in self.accumulators.split(','):
             if not accumulator in zip(*ACCUMULATORS)[0]:
                 raise ValueError('Accumulator '+accumulator+' is not allowed')
         super(TestSuite,self).save(*args,**kwargs)
-        
+
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
 

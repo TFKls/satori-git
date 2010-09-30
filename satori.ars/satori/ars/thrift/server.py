@@ -16,7 +16,7 @@ from processor import ThriftProcessor
 from writer import ThriftWriter
 
 class ThriftServer(object):
-    
+
     @Argument('server_type', type=(ClassType, TypeType), default=TThreadedServer)
     @Argument('transport', type=TServerTransportBase)
     @Argument('interface', type=ArsInterface)
@@ -25,7 +25,7 @@ class ThriftServer(object):
         self._server_type = server_type
         self._transport = transport
         self._interface = interface
-    
+
     def run(self):
         idl_proc = ArsProcedure(return_type=ArsString, name='Server_getIDL')
         idl_serv = ArsService(name='Server')

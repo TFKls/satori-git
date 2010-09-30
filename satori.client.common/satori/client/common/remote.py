@@ -1,7 +1,10 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 import sys
 import os
 import shutil
 import getpass
+import urllib
 from httplib import HTTPConnection
 from thrift.transport.TSocket import TSocket
 from satori.ars.thrift import bootstrap_thrift_client
@@ -14,7 +17,7 @@ if getpass.getuser() == 'gutowski':
     client_host = 'localhost'
     client_port = 39889
     blob_port = 39887
-elif getpass.getuser() == 'zzzmwm01':
+elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     client_host = 'localhost'
     client_port = 37889
     blob_port = 37887
@@ -33,11 +36,9 @@ def transport_factory():
 print 'Bootstrapping client...'
 
 class BlobWriter(object):
-    def __init__(self, length, model=None, id=None, name=None, group=None):
-        if group:
-            url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, name)
-        elif model:
-            url = '/blob/{0}/{1}/{2}'.format(model, str(id), name)
+    def __init__(self, length, model=None, id=None, name=None, group='oa', filename=''):
+        if model:
+            url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, urllib.quote(name))
         else:
             url = '/blob/upload'
 
@@ -45,6 +46,7 @@ class BlobWriter(object):
         headers['Host'] = client_host
         headers['Cookie'] = 'satori_token=' + token_container.get_token()
         headers['Content-length'] = str(length)
+        headers['Filename'] = urllib.quote(filename)
 
         self.con = HTTPConnection(client_host, blob_port)
         try:
@@ -73,11 +75,8 @@ class BlobWriter(object):
         return ret
 
 class BlobReader(object):
-    def __init__(self, model, id, name, group=None):
-        if group:
-            url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, name)
-        else:
-            url = '/blob/{0}/{1}/{2}'.format(model, str(id), name)
+    def __init__(self, model, id, name, group='oa'):
+        url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, urllib.quote(name))
 
         headers = {}
         headers['Host'] = client_host
