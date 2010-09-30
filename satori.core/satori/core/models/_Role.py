@@ -12,8 +12,6 @@ class Role(Object):
 
     name        = models.CharField(max_length=50)
     absorbing   = models.BooleanField(default=False)
-    startOn     = models.DateTimeField(null=True)
-    finishOn    = models.DateTimeField(null=True)
     children    = models.ManyToManyField("self", related_name='parents', through='RoleMapping', symmetrical=False)
 
 class RoleEvents(Events):

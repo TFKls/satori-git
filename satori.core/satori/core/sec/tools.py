@@ -222,8 +222,6 @@ class RoleSetError(Exception):
 
 class RoleSet(Object):
     def _dfs(self, role):
-        if role.startOn is not None and role.startOn > self._ts or role.finishOn is not None and role.finishOn < self._ts:
-            return None
         if role not in self._absorb:
             abs = None
             for parent in role.parents.all():
@@ -288,7 +286,7 @@ class RightCheck(Object):
             return res
         res = False
         for priv in Privilege.objects.filter(role = role, object = object, right = right):
-            if priv.startOn is not None and priv.startOn > self._ts or priv.finishOn is not None and priv.finishOn < self._ts:
+            if priv.start_on is not None and priv.start_on > self._ts or priv.finish_on is not None and priv.finish_on < self._ts:
                 continue
             res = True
             break
