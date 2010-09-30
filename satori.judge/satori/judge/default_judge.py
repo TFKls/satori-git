@@ -31,6 +31,15 @@ options.check_time = 60*1000
 options.check_memory = 64*1024*1024
 options.debug = True
 
+#@<checker name="Default judge">
+#@      <input>
+#@              <value name="time" description="Time limit" required="true"/>
+#@              <value name="memory" description="Memory limit (kbytes)" required="true" default="8192"/>
+#@              <file name="input" description="Input file" required="true"/>
+#@              <file name="hint" description="Output/hint file" required="false"/>
+#@              <file name="checker" description="Specific checker" required="false"/>
+#@      </input>
+#@</checker>
 
 
 def communicate(cmd, args={}, check=True):
@@ -53,7 +62,6 @@ filename   = submit['filename']
 fileext    = filename.split(".")[-1].lower()
 language   = ""
 compile    = []
-size_limit   = int(test.get('sizelimit', 100*1024))
 time_limit   = int(test.get('time', options.execute_time))
 memory_limit = int(test.get('memory', options.execute_memory))
 checker      = 'checker' in test
@@ -126,7 +134,7 @@ if ret != "OK":
     sys.exit(0)
 
 
-communicate('GETTESTBLOB', {'name': 'output', 'path': '/tmp/data.hint'})
+communicate('GETTESTBLOB', {'name': 'hint', 'path': '/tmp/data.hint'})
 #TEST
 if checker:
     communicate('GETTESTBLOB', {'name': 'checker', 'path': '/tmp/checker.x'})

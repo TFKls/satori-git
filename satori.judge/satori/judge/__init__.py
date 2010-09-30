@@ -48,7 +48,7 @@ def judge_bash():
 def judge_loop():
     from satori.client.common.remote import token_container, Security, Judge, anonymous_blob_path
     token_container.set_token(Security.machine_login(secret))
-    
+
 
     while True:
         submit = Judge.get_next()
@@ -62,7 +62,7 @@ def judge_loop():
             template = 'default'
             if 'judge.template' in td and not td['judge.template']['is_blob']:
                 template = td['judge.template']['value']
-                
+
             jb = JailBuilder(root=jail_dir, template=template, template_path=templates_dir)
             try:
                 jb.create()
