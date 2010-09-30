@@ -24,7 +24,7 @@ class Problem(Object):
             self.default_test_data = default_test_data
 
         super(Problem, self).save()
-    
+
     def __str__(self):
         return self.name+" ("+self.description+")"
 
@@ -34,7 +34,7 @@ class Problem(Object):
         if right == 'EDIT':
             pass
         return ret
-    
+
 
 class ProblemEvents(Events):
     model = Problem

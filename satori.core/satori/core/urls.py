@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.conf.urls.defaults import *
 from satori.core.models import *
 

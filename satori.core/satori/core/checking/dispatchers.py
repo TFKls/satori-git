@@ -14,7 +14,7 @@ class SerialDispatcher(Client2):
         self.accumulators = [
                 getattr(accumulators, accumulator)(test_suite_result) for accumulator in accumulator_list
         ]
-        
+
     def send_test(self):
         while self.to_check:
             next_test = Test.get(id=self.to_check.popleft())
@@ -24,7 +24,7 @@ class SerialDispatcher(Client2):
                 return
             else:
                 for accumulator in self.accumulators:
-                	accumulator.accumulate(next_test_result)
+                    accumulator.accumulate(next_test_result)
                 if any(not accumulator.status() for accumulator in self.accumulators):
                     self.finish()
                     return
@@ -34,13 +34,13 @@ class SerialDispatcher(Client2):
     @wrap_transaction
     def init(self):
         self.attach(self.queue)
-        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': True, 'new.submit': self.test_suite_result.submit.id}, self.queue) 
+        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': True, 'new.submit': self.test_suite_result.submit.id}, self.queue)
 
         self.next_test_result_id = -1
 
         self.to_check = deque()
         for test in self.test_suite_result.test_suite.tests.all():
-        	self.to_check.append(test.id)
+            self.to_check.append(test.id)
 
         for accumulator in self.accumulators:
             accumulator.init()
@@ -51,8 +51,8 @@ class SerialDispatcher(Client2):
     def deinit(self):
         for accumulator in self.accumulators:
             accumulator.deinit()
-		self.test_suite_result.pending = False
-		self.test_suite_result.save()
+        self.test_suite_result.pending = False
+        self.test_suite_result.save()
 
     @wrap_transaction
     def handle_event(self, queue, event):
@@ -78,11 +78,11 @@ class ParalellDispatcher(Client2):
         self.accumulators = [
                 getattr(accumulators, accumulator)(test_suite_result) for accumulator in accumulator_list
         ]
-        
+
     @wrap_transaction
     def init(self):
         self.attach(self.queue)
-        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': True, 'new.submit': self.test_suite_result.submit.id}, self.queue) 
+        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': True, 'new.submit': self.test_suite_result.submit.id}, self.queue)
 
         for accumulator in self.accumulators:
             accumulator.init()
@@ -94,7 +94,7 @@ class ParalellDispatcher(Client2):
                 self.wanted_test_result_ids.add(test_result.id)
             else:
                 for accumulator in self.accumulators:
-                	accumulator.accumulate(next_test_result)
+                    accumulator.accumulate(next_test_result)
 #                ?
 #                if any(not accumulator.status() for accumulator in self.accumulators):
 #                    self.finish()
@@ -104,8 +104,8 @@ class ParalellDispatcher(Client2):
     def deinit(self):
         for accumulator in self.accumulators:
             accumulator.deinit()
-		self.test_suite_result.pending = False
-		self.test_suite_result.save()
+        self.test_suite_result.pending = False
+        self.test_suite_result.save()
 
     @wrap_transaction
     def handle_event(self, queue, event):

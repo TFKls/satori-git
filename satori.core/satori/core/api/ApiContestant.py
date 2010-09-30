@@ -32,5 +32,5 @@ def name_auto(token,self):
             ret = ret+","
         ret = ret+s.fullname
     return ret
-    
+
 contestant._fill_module(__name__)

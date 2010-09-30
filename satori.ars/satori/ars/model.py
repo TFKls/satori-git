@@ -39,7 +39,7 @@ class ArsNamedElement(ArsElement):
 class ArsType(ArsElement):
     """Abstract. A base class for ARS data types.
     """
-    
+
     def __init__(self):
         super(ArsType, self).__init__()
         self.converter = None
@@ -62,7 +62,7 @@ class ArsType(ArsElement):
     def convert_to_ars(self, value):
         if value is None:
             return None
-        
+
         if not self.needs_conversion():
             return value
 
@@ -74,7 +74,7 @@ class ArsType(ArsElement):
     def convert_from_ars(self, value):
         if value is None:
             return None
-        
+
         if not self.needs_conversion():
             return value
 
@@ -120,7 +120,7 @@ class ArsStringType(ArsAtomicType):
 
     def do_convert_to_ars(self, value):
         if isinstance(value, unicode):
-        	return value.encode('utf-8')
+            return value.encode('utf-8')
         else:
             return value
 
@@ -237,7 +237,7 @@ class ArsNamedTuple(object):
         super(ArsNamedTuple, self).__init__()
         self.names = dict()
         self.items = list()
-    
+
     @Argument('item', type=ArsNamedElement)
     def append(self, item):
         if item.name in self:
@@ -274,7 +274,7 @@ class ArsNamedTuple(object):
 
     def __len__(self):
         return self.items.__len__()
-    
+
     def __getitem__(self, index):
         if isinstance(index, str):
             return self.names[index]
@@ -297,7 +297,7 @@ class ArsField(ArsNamedElement):
         super(ArsField, self).__init__(name)
         self.type = type
         self.optional = optional
-    
+
 
 class ArsStructure(ArsNamedType):
     """An ArsType that represents a named structure.
@@ -314,7 +314,7 @@ class ArsStructure(ArsNamedType):
         if field is None:
             field = ArsField(**kwargs)
         self.fields.append(field)
-    
+
     def do_needs_conversion(self):
         return True
 #        return any(field.type.needs_conversion() for field in self.fields.items)
@@ -327,7 +327,7 @@ class ArsStructure(ArsNamedType):
                     new_value[field.name] = field.type.convert_to_ars(value[field.name])
                 else:
                     new_value[field.name] = value[field.name]
- 
+
         return NoneObj(Namespace(new_value))
 
     def do_convert_from_ars(self, value):
@@ -493,7 +493,7 @@ class ArsInterface(ArsElement):
     @DispatchOn(type=ArsTypeAlias)
     def deepcopy_type_first(self, type, new_interface):
         return ArsTypeAlias(name=type.name, target_type=self.deepcopy_type(type.target_type, new_interface))
-        
+
     @DispatchOn(type=ArsStructure)
     def deepcopy_type_first(self, type, new_interface):
         ret = ArsStructure(name=type.name, base_index=type.base_index)

@@ -28,7 +28,7 @@ class ProblemMapping(Object):
             self.statement = statement
 
         super(ProblemMapping, self).save()
-    
+
     def __str__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
 
@@ -36,13 +36,13 @@ class ProblemMapping(Object):
         right = str(right)
         ret = super(ProblemMapping, self).inherit_right(right)
         if right == 'VIEW':
-        	ret.append((self.contest,'VIEWTASKS'))
+            ret.append((self.contest,'VIEWTASKS'))
         if right == 'EDIT':
             ret.append((self.contest,'MANAGE'))
         if right == 'SUBMIT':
             ret.append((self.contest,'SUBMIT'))
         return ret
-    
+
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'code'), ('contest', 'problem'))

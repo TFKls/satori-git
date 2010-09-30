@@ -34,7 +34,7 @@ def t_IDENTIFIER(t):
 
 def t_NUMBER(t):
     r'\d+'
-    t.value = int(t.value)    
+    t.value = int(t.value)
     return t
 
 def t_error(t):
@@ -68,7 +68,7 @@ def p_type_map(p):
 def p_type(p):
     """type : IDENTIFIER"""
     if p[1] in ATOMIC_TYPES:
-    	p[0] = ATOMIC_TYPES[p[1]]
+        p[0] = ATOMIC_TYPES[p[1]]
     else:
         p[0] = p.parser.interface.types[p[1]]
 
@@ -111,14 +111,14 @@ def p_structure(p):
     """structure : STRUCTURE IDENTIFIER '{' field_list '}'"""
     p[0] = ArsStructure(name=p[2])
     for field in p[4]:
-    	p[0].add_field(field)
+        p[0].add_field(field)
     p.parser.interface.types.append(p[0])
 
 def p_exception(p):
     """exception : EXCEPTION IDENTIFIER '{' field_list '}'"""
     p[0] = ArsException(name=p[2])
     for field in p[4]:
-    	p[0].add_field(field)
+        p[0].add_field(field)
     p.parser.interface.types.append(p[0])
 
 def p_parameter(p):
@@ -145,7 +145,7 @@ def p_procedure(p):
     """procedure : type IDENTIFIER '(' parameter_list ')' throws may_comma"""
     p[0] = ArsProcedure(name=p[2], return_type=p[1])
     for parameter in p[4]:
-    	p[0].add_parameter(parameter)
+        p[0].add_parameter(parameter)
     for exception in p[6]:
         p[0].add_exception(exception)
 
@@ -169,7 +169,7 @@ def p_service(p):
     """service : SERVICE IDENTIFIER service_base '{' procedure_list '}'"""
     p[0] = ArsService(name=p[2], base=p[3])
     for procedure in p[5]:
-    	p[0].add_procedure(procedure)
+        p[0].add_procedure(procedure)
     p.parser.interface.services.append(p[0])
 
 def p_toplevel_element(p):

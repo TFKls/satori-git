@@ -30,12 +30,12 @@ class ThriftClient(threading.local):
         sign = Signature(names)
         for param in procedure.parameters:
             if param.optional:
-            	sign.arguments[param.name].mode = ArgumentMode.OPTIONAL
+                sign.arguments[param.name].mode = ArgumentMode.OPTIONAL
         values_type = sign.Values
 
         def proc(*args, **kwargs):
             if not self._started:
-            	self.start()
+                self.start()
 
             values = values_type(*args, **kwargs)
             try:
@@ -46,11 +46,11 @@ class ThriftClient(threading.local):
                 return self._processor.call(procedure, values.named, self._protocol, self._protocol)
             except socket.error as e:
                 if e[0] == 32:
-                	self.stop()
-                	self.start()
+                    self.stop()
+                    self.start()
                     return self._processor.call(procedure, values.named, self._protocol, self._protocol)
                 else:
-                	raise
+                    raise
 
         proc.func_name = procedure.name
         return proc
@@ -67,8 +67,8 @@ class ThriftClient(threading.local):
 
     def start(self):
         if self._started:
-        	self.stop()
-        	
+            self.stop()
+
         self._transport = TFramedTransport(self._transport_factory())
         self._transport.open()
         self._protocol = TBinaryProtocol(self._transport)
@@ -93,7 +93,7 @@ def bootstrap_thrift_client(transport_factory):
     bootstrap_client.wrap_all()
     idl = idl_proc.implementation()
     bootstrap_client.stop()
-    
+
     idl_reader = ThriftReader()
     interface = idl_reader.read_from_string(idl)
 

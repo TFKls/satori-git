@@ -27,16 +27,16 @@ def athina_import():
         help='Test environment name')
     (options, args) = parser.parse_args()
     if len(args) != 1:
-	    parser.error('incorrect number of arguments')
+        parser.error('incorrect number of arguments')
     base_dir = args[0]
     if not os.path.exists(os.path.join(base_dir, 'server', 'contest', 'users')):
-    	raise parser.error('provided path is invalid')
+        raise parser.error('provided path is invalid')
 
     def get_path(*args):
         return os.path.join(base_dir, 'server', 'contest', *args)
 
     if not options.user:
-    	options.user = getpass.getuser()
+        options.user = getpass.getuser()
     print 'User: ', options.user
     if not options.password:
         options.password = getpass.getpass('Password: ')
@@ -66,7 +66,7 @@ def athina_import():
                 with open(get_path('problem', str(d), submit), 'r') as f:
                     problem = f.readline().strip(" \n\t\x00")
                 if problem[0:2] == "__":
-                	continue
+                    continue
                 with open(get_path('data', str(d), submit), 'r') as f:
                     data = f.read()
                 with open(get_path('filename', str(d), submit), 'r') as f:
@@ -161,7 +161,7 @@ def athina_import():
         pass
 
     for login, user in users.iteritems():
-    	print ' -> user ', login
+        print ' -> user ', login
         try:
             user['object'] = Security.register(login=options.name + '_' + user['login'], password=user['password'], fullname=user['fullname'])
         except:
@@ -175,9 +175,9 @@ def athina_import():
     print users
 
     for name, problem in problems.iteritems():
-    	print ' -> problem ', name
+        print ' -> problem ', name
         try:
-        	problem['object'] = Problem.create_problem(name=options.name + '_' + problem['problem'])
+            problem['object'] = Problem.create_problem(name=options.name + '_' + problem['problem'])
         except:
             problem['object'] = Problem.filter({'name':options.name + '_' + problem['problem']})[0]
 
@@ -186,7 +186,7 @@ def athina_import():
             if problem['sizelimit'] != None:
                 problem['testsuite'].oa_set_str('sizelimit', str(problem['sizelimit']))
             for num, test in problem['tests'].iteritems():
-            	test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'owner':Security.whoami(), 'problem':problem['object'], 'environment':options.environment})
+                test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'owner':Security.whoami(), 'problem':problem['object'], 'environment':options.environment})
 
                 if problem['checker'] != None:
                     test['object'].data_set_blob_path('checker', problem['checker'])
@@ -210,10 +210,10 @@ def athina_import():
     print problems
 
     for id, submit in submits.iteritems():
-    	print ' -> submit ', id
-    	user = users[submit['user']]
+        print ' -> submit ', id
+        user = users[submit['user']]
         token_container.set_token(Security.login(options.name + '_' + user['login'], user['password']))
-    	submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
+        submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
     token_container.set_token(mytoken)
 
     print submits

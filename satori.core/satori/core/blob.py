@@ -20,9 +20,9 @@ def server(request, model, id, name, group):
 
     try:
         if request.method == 'GET':
-        	return server_get(request, token, model, id, name, group)
+            return server_get(request, token, model, id, name, group)
         elif request.method == 'PUT':
-        	return server_put(request, token, model, id, name, group)
+            return server_put(request, token, model, id, name, group)
     except:
         traceback.print_exc()
         return HttpResponseServerError()
@@ -34,15 +34,15 @@ def server_get(request, token, model, id, name, group):
     except:
         traceback.print_exc()
         return HttpResponseNotFound()
-    
+
     if not can_proc(token, id, name):
-    	return HttpResponseForbidden()
+        return HttpResponseForbidden()
 
     hash = proc(token, id, name)
 
     if hash is None:
         return HttpResponseNotFound()
-    
+
     blob = OpenAttribute.open_blob(hash)
 
     def reader():
@@ -65,7 +65,7 @@ def server_put(request, token, model, id, name, group):
         return HttpResponseNotFound()
 
     if not can_proc(token, id, name, ''):
-    	return HttpResponseForbidden()
+        return HttpResponseForbidden()
 
     print model, id, group, name
 
@@ -116,7 +116,7 @@ def upload(request):
 
     try:
         length = int(request.environ.get('CONTENT_LENGTH', 0))
-        
+
         blob = OpenAttribute.create_blob()
 
         while(length > 0):

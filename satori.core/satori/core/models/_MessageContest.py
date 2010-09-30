@@ -9,9 +9,9 @@ class MessageContest(Message):
     """
     __module__ = "satori.core.models"
     parent_message = models.OneToOneField(Message, parent_link=True, related_name='cast_messagecontest')
-    
+
     contest = models.ForeignKey('Contest')
-    
+
     def inherit_right(self, right):
         right = str(right)
         ret = super(MessageContest,self).inherit_right(right)

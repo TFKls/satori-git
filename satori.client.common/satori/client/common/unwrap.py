@@ -139,7 +139,7 @@ def unwrap_service(service, base, fields, BlobReader, BlobWriter):
                     return None
             else:
                 raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
-            
+
         def __setattr__(self, name, value):
             if name == 'id':
                 raise Exception('Object id cannot be changed')
@@ -186,15 +186,15 @@ def unwrap_interface(interface, BlobReader, BlobWriter):
                 fields = [field.name for field in struct.fields]
         else:
             fields = None
-            
+
         newcls = unwrap_service(service, base, fields, BlobReader, BlobWriter)
         classes[service.name] = newcls
 
         if (service.name + 'Id') in interface.types:
             interface.types[service.name + 'Id'].converter = ArsUnwrapClass(newcls)
-    
+
     for constant in interface.constants:
-    	classes[constant.name] = constant.type.convert_from_ars(constant.value)
+        classes[constant.name] = constant.type.convert_from_ars(constant.value)
 
     return classes
 

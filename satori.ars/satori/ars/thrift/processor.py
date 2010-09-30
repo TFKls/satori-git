@@ -18,7 +18,7 @@ except:
 class ThriftProcessor(TProcessor):
     """ARS implementation of thrift.Thrift.TProcessor.
     """
-    
+
     @Argument('interface', type=ArsInterface)
     def __init__(self, interface):
         self._procedures = ArsNamedTuple()
@@ -37,11 +37,11 @@ class ThriftProcessor(TProcessor):
         ArsString:  TType.STRING,
         ArsVoid:    TType.VOID,
     }
-    
+
     @DispatchOn(type_=ArsAtomicType)
     def _ttype(self, type_):
         return ThriftProcessor.ATOMIC_TYPE[type_]
-    
+
     @DispatchOn(type_=ArsStructure)
     def _ttype(self, type_):
         return TType.STRUCT
@@ -57,7 +57,7 @@ class ThriftProcessor(TProcessor):
     @DispatchOn(type_=ArsSet)
     def _ttype(self, type_):
         return TType.SET
-    
+
     @DispatchOn(type_=ArsTypeAlias)
     def _ttype(self, type_):
         return self._ttype(type_.target_type)
@@ -80,7 +80,7 @@ class ThriftProcessor(TProcessor):
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         if type_ != ArsVoid:
             getattr(proto, ThriftProcessor.ATOMIC_SEND[type_])(value)
-    
+
     @DispatchOn(type_=ArsTypeAlias)
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         return self._send(value, type_.target_type, proto)
@@ -119,7 +119,7 @@ class ThriftProcessor(TProcessor):
         for item in value:
             self._send(item, type_.element_type, proto)
         proto.writeSetEnd()
-    
+
     ATOMIC_RECV = {
         ArsBoolean: 'readBool',
         ArsInt8:    'readByte',
@@ -140,11 +140,11 @@ class ThriftProcessor(TProcessor):
             return None
         else:
             return getattr(proto, ThriftProcessor.ATOMIC_RECV[type_])()
-    
+
     @DispatchOn(type_=ArsTypeAlias)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         return self._recv(type_.target_type, proto)
-    
+
     @DispatchOn(type_=ArsStructure)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
         value = {}
@@ -236,32 +236,32 @@ class ThriftProcessor(TProcessor):
     def _typeargs(self, type_):
         fields = []
         for i in range(type_.base_index):
-        	fields.append(None)
+            fields.append(None)
 
         for (i, field) in enumerate(type_.fields):
-        	(ftype, fargs) = self.typeargs(field.type)
-        	fields.append((i + type_.base_index, ftype, field.name, fargs, None))
+            (ftype, fargs) = self.typeargs(field.type)
+            fields.append((i + type_.base_index, ftype, field.name, fargs, None))
 
         return (TType.STRUCT, (Namespace, tuple(fields)))
 
     def typeargs(self, type_):
         if type_ not in self._typeargs_map:
-        	self._typeargs_map[type_] = self._typeargs(type_)
+            self._typeargs_map[type_] = self._typeargs(type_)
         return self._typeargs_map[type_]
 
     def send_struct(self, value, struct, oproto):
         if fastbinary is not None:
-        	oproto.trans.write(fastbinary.encode_binary(value, self.typeargs(struct)[1]))
+            oproto.trans.write(fastbinary.encode_binary(value, self.typeargs(struct)[1]))
         else:
-        	self._send(value, struct, oproto)
+            self._send(value, struct, oproto)
 
     def recv_struct(self, struct, iproto):
         if fastbinary is not None:
-        	ret = Namespace()
-        	fastbinary.decode_binary(ret, iproto.trans, self.typeargs(struct)[1])
-        	return ret
+            ret = Namespace()
+            fastbinary.decode_binary(ret, iproto.trans, self.typeargs(struct)[1])
+            return ret
         else:
-        	return self._recv(struct, iproto)
+            return self._recv(struct, iproto)
 
     def process(self, iproto, oproto):
         """Processes a single client request.
@@ -283,7 +283,7 @@ class ThriftProcessor(TProcessor):
             arguments = self.recv_struct(procedure.parameters_struct, iproto)
             iproto.readMessageEnd()
 #            perf.end('recv')
-            
+
             # call the registered implementation
 #            perf.begin('call')
 
@@ -291,7 +291,7 @@ class ThriftProcessor(TProcessor):
             server_info.client_port = None
             try:
                 if isinstance(iproto.trans, TFramedTransport):
-                	info = iproto.trans._TFramedTransport__trans.handle.getpeername()
+                    info = iproto.trans._TFramedTransport__trans.handle.getpeername()
                 else:
                     info = iproto.trans.handle.getpeername()
                 server_info.client_ip = str(info[0])
@@ -337,7 +337,7 @@ class ThriftProcessor(TProcessor):
             except KeyError:
                 raise TApplicationException(TApplicationException.UNKNOWN_METHOD,
                     "Unknown method '{0}'".format(name))
-        
+
 #        perf.begin('send')
         oproto.writeMessageBegin(procedure.name, TMessageType.CALL, self.seqid)
         self.seqid = self.seqid + 1

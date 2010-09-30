@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 class Client2(object):
     def __init__(self):
         super(Client2, self).__init__()
@@ -16,7 +18,7 @@ class Client2(object):
 
     def attach(self, queue):
         return self.slave.attach(self, queue)
-    
+
     def detach(self, queue):
         return self.slave.detach(self, queue)
 

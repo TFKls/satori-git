@@ -31,7 +31,7 @@ def start_server_event_master():
     from setproctitle import setproctitle
     setproctitle('satori: event master')
     from multiprocessing.connection import Listener
-    from satori.events import Master 
+    from satori.events import Master
     from satori.events.mapper import TrivialMapper
     listener = Listener(address=(settings.EVENT_HOST, settings.EVENT_PORT))
     master = Master(mapper=TrivialMapper())
@@ -131,37 +131,37 @@ def start_server():
     processes = []
     from multiprocessing import Process
     from time import sleep
-    
+
     event_master = Process(target=start_server_event_master)
     event_master.start()
     processes.append(event_master)
-    
+
     sleep(1)
 
     thrift_server = Process(target=start_server_thrift_server)
     thrift_server.start()
     processes.append(thrift_server)
-    
+
     blob_server = Process(target=start_server_blob_server)
     blob_server.start()
     processes.append(blob_server)
-    
+
     dbev_notifier = Process(target=start_server_dbev_notifier)
     dbev_notifier.start()
     processes.append(dbev_notifier)
-    
+
     event_slave = Process(target=start_server_event_slave)
     event_slave.start()
     processes.append(event_slave)
-    
+
     check_queue = Process(target=start_server_check_queue)
     check_queue.start()
     processes.append(check_queue)
-    
+
     dispatcher_runner = Process(target=start_server_dispatcher_runner)
     dispatcher_runner.start()
     processes.append(dispatcher_runner)
-    
+
     from signal import signal, SIGINT, SIGTERM, pause
 
     def handle_signal(signum, frame):
@@ -172,7 +172,7 @@ def start_server():
 
     signal(SIGINT, handle_signal)
     signal(SIGTERM, handle_signal)
-    
+
     while True:
         pause()
 

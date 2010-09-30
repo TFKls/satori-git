@@ -23,8 +23,8 @@ class ArsNullableStructure(ArsStructure):
 
         for (ind, field) in enumerate(self.fields):
             if (field.name in value) and (value[field.name] is None):
-            	value['null_fields'] = value['null_fields'] | (1 << (ind + self.base_index))
-            	del value[field.name]
+                value['null_fields'] = value['null_fields'] | (1 << (ind + self.base_index))
+                del value[field.name]
 
         return super(ArsNullableStructure, self).do_convert_to_ars(value)
 
@@ -32,12 +32,12 @@ class ArsNullableStructure(ArsStructure):
         value = super(ArsNullableStructure, self).do_convert_from_ars(value)
 
         if not 'null_fields' in value:
-        	return value
+            return value
 
         for (ind, field) in enumerate(self.fields):
             if value['null_fields'] & (1 << (ind + self.base_index)):
                 value[field.name] = None
-        
+
         del value['null_fields']
 
         return value
@@ -172,7 +172,7 @@ class Wrapper(object):
     @Argument('name', type=str)
     def __init__(self, name, parent, base=None):
         if parent and base:
-        	raise Exception('Wrapper cannot have base and parent')
+            raise Exception('Wrapper cannot have base and parent')
 
         self._children = []
         self._name = name
@@ -206,7 +206,7 @@ class Wrapper(object):
 
     def _fill_module(self, name):
         module = sys.modules[name]
-    
+
         procs = self._generate_procedures()
 
         for (name, proc) in procs.iteritems():
@@ -261,7 +261,7 @@ class ProcedureWrapper(Wrapper):
 
         Signature.of(implement).set(proc)
         proc.implementation = implement
-    
+
         ret[self._name] = proc
 
         def proc(*args, **kwargs):
@@ -269,7 +269,7 @@ class ProcedureWrapper(Wrapper):
 
         copy.copy(Signature.of(implement)).set(proc)
         Signature.of(proc).return_value = ReturnValue(type=bool)
-    
+
         ret[self._name + '_can'] = proc
 
         return ret
@@ -320,11 +320,11 @@ def generate_procedure(name, proc):
 
     def reimplementation(*args, **kwargs):
         args = list(args)
-    
+
         try:
             for i in middleware:
                 i.process_request(ars_proc, args, kwargs)
-        
+
             ret = proc(*args, **kwargs)
 
             for i in reversed(middleware):
@@ -340,7 +340,7 @@ def generate_procedure(name, proc):
     ret_type = extract_ars_type(signature.return_value.constraint)
 
     ars_proc = ArsProcedure(name=name, implementation=reimplementation, return_type=ret_type)
-    
+
     for arg_name in signature.positional:
         argument = signature.arguments[arg_name]
         arg_type = extract_ars_type(argument.constraint)

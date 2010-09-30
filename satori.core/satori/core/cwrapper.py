@@ -19,7 +19,7 @@ class ArsDjangoModel(ArsTypeAlias):
     def __init__(self, model):
         super(ArsDjangoModel, self).__init__(name=(model._meta.object_name + 'Id'), target_type=ArsInt64)
         self.model = model
-        
+
     def do_needs_conversion(self):
         return True
 
@@ -37,7 +37,7 @@ class DjangoModelType(type):
         name = 'DjangoType(' + str(model) + ')'
 
         cls = type.__new__(mcs, name, bases, dict_)
-        
+
         add_lazy_relation(rel_model, cls, model, resolve_model)
 
         return cls
@@ -134,7 +134,7 @@ def generate_field_procedures(model, field):
 def generate_field_procedures(model, field):
     field_name = field.name
     field_type = django_field_to_python_type(model, field)
-    
+
     if field_type is None:
         return []
 
@@ -238,7 +238,7 @@ class SetStructWrapper(ProcedureWrapper):
 class CreateWrapper(ProcedureWrapper):
     def __init__(self, parent):
         model = parent._model
-        
+
         @Argument('token', type=Token)
         @Argument('values', type=DjangoStruct(model))
         @ReturnValue(type=model)
@@ -253,7 +253,7 @@ class CreateWrapper(ProcedureWrapper):
                 Privilege.grant(token.user, ret, 'MANAGE')
 
             return ret
-        
+
         super(CreateWrapper, self).__init__(create, parent)
 
 
@@ -359,7 +359,7 @@ class OpenAttributeWrapper(Wrapper):
         def get_map(token, self):
             ret = {}
             for oa in get_group(self).all():
-            	ret[oa.name] = oats(oa)
+                ret[oa.name] = oats(oa)
             return ret
 
         @oaw_self.method
@@ -378,7 +378,7 @@ class OpenAttributeWrapper(Wrapper):
         @ReturnValue(type=NoneType)
         def set_str(token, self, name, value):
             get_group(self).oa_set_str(name, value)
-        
+
         @oaw_self.method
         @Argument('token', type=Token)
         @Argument('self', type=model)
@@ -468,7 +468,7 @@ class ModelWrapperClass(StaticWrapper):
 
         super(ModelWrapperClass, self).__init__(model._meta.object_name, base_wrapper)
         self._model = model
-        
+
         for field in model._meta.fields:
             if field in model._meta.local_fields:
                 self._add_child(FieldWrapper(field, self))
@@ -565,12 +565,12 @@ class CheckRightsMiddleware(object):
         for (key, elem) in value.iteritems():
             self.check(token, type.key_type, key)
             self.check(token, type.value_type, elem)
-    
+
     @DispatchOn(type=ArsStructure)
     def check(self, token, type, value):
         for field in type.fields:
             if (field.name in value) and (value[field.name] is not None):
-                self.check(token, field.type, value[field.name])        
+                self.check(token, field.type, value[field.name])
 
     @DispatchOn(type=ArsAtomicType)
     def check(self, token, type, value):
@@ -588,9 +588,9 @@ class CheckRightsMiddleware(object):
     @DispatchOn(type=ArsList)
     def filter(self, token, type, value):
         if isinstance(type.element_type, ArsDjangoModel):
-        	return [elem for elem in value if elem.demand_right(token, 'VIEW')]
+            return [elem for elem in value if elem.demand_right(token, 'VIEW')]
         else:
-        	return [self.filter(token, type.element_type, elem) for elem in value]
+            return [self.filter(token, type.element_type, elem) for elem in value]
 
     @DispatchOn(type=ArsSet)
     def filter(self, token, type, value):
@@ -610,33 +610,33 @@ class CheckRightsMiddleware(object):
         if isinstance(type.key_type, ArsDjangoModel) and isinstance(type.value_type, ArsDjangoModel):
             for (key, elem) in value.iteritems():
                 if key.demand_right(token, 'VIEW') and elem.demand_right(token, 'VIEW'):
-                	ret[key] = value
-        elif isinstance(type.key_type, ArsDjangoModel):	
+                    ret[key] = value
+        elif isinstance(type.key_type, ArsDjangoModel):
             for (key, elem) in value.iteritems():
                 if key.demand_right(token, 'VIEW'):
-                	ret[key] = self.filter(token, type.value_type, elem)
-        elif isinstance(type.value_type, ArsDjangoModel):	
+                    ret[key] = self.filter(token, type.value_type, elem)
+        elif isinstance(type.value_type, ArsDjangoModel):
             for (key, elem) in value.iteritems():
                 if elem.demand_right(token, 'VIEW'):
-                	ret[self.filter(token, type.key_type, key)] = elem
+                    ret[self.filter(token, type.key_type, key)] = elem
         else:
             for (key, elem) in value.iteritems():
-            	ret[self.filter(token, type.key_type, key)] = self.filter(token, type.value_type, elem)
+                ret[self.filter(token, type.key_type, key)] = self.filter(token, type.value_type, elem)
         return ret
-    
+
     @DispatchOn(type=ArsStructure)
     def filter(self, token, type, value):
         ret = {}
         for field in type.fields:
             if field.name in value:
-            	if value[field.name] is None:
-            		ret[field.name] = None
+                if value[field.name] is None:
+                    ret[field.name] = None
                 elif isinstance(field.type, ArsDjangoModel):
-            		if value[field.name].demand_right(token, 'VIEW'):
-            			ret[field.name] = value[field.name]
+                    if value[field.name].demand_right(token, 'VIEW'):
+                        ret[field.name] = value[field.name]
                     else:
                         # delete the field from structure
-                    	pass
+                        pass
                 else:
                     ret[field.name] = self.filter(token, field.type, value[field.name])
         return ret
@@ -652,7 +652,7 @@ class CheckRightsMiddleware(object):
     @DispatchOn(type=ArsDjangoModel)
     def filter(self, token, type, value):
         if value.demand_right(token, 'VIEW'):
-        	return value
+            return value
         else:
             raise Exception('You don\'t have rights to view the returned element.')
 
@@ -664,7 +664,7 @@ class CheckRightsMiddleware(object):
                 token = kwargs['token']
         else:
             token = Token('')
-            
+
         for i in range(min(len(args), len(proc.parameters))):
             self.check(token, proc.parameters[i].type, args[i])
 
@@ -683,5 +683,5 @@ class CheckRightsMiddleware(object):
         else:
             token = Token('')
         if ret is None:
-        	return ret
+            return ret
         return self.filter(token, proc.return_type, ret)

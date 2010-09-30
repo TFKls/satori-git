@@ -25,7 +25,7 @@ class BlobWriter(object):
     def __init__(self):
         dirname = os.path.join(settings.BLOB_DIR, 'temp')
         if not os.path.exists(dirname):
-        	os.makedirs(dirname, 0700)
+            os.makedirs(dirname, 0700)
         self.file = NamedTemporaryFile(dir=dirname, delete=False)
         self.hash = sha384()
 
@@ -39,22 +39,22 @@ class BlobWriter(object):
         filename = '{0}/{1}/{2}/{3}/{4}'.format(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash)
         dirname = os.path.dirname(filename)
         if os.path.exists(filename):
-        	origfile = open(filename, 'rb')
-        	newfile = open(self.file.name, 'rb')
+            origfile = open(filename, 'rb')
+            newfile = open(self.file.name, 'rb')
             origlen = os.fstat(origfile.fileno()).st_size
             newlen = os.fstat(newfile.fileno()).st_size
             if origlen != newlen:
-            	raise Exception('HASH COLLISION! {0} {1}'.format(filename, self.file.name))
+                raise Exception('HASH COLLISION! {0} {1}'.format(filename, self.file.name))
             while origlen > 0:
-            	origdata = origfile.read(min(origlen, 1024))
-            	newdata = newfile.read(min(origlen, 1024))
+                origdata = origfile.read(min(origlen, 1024))
+                newdata = newfile.read(min(origlen, 1024))
                 if origdata != newdata:
-            	    raise Exception('HASH COLLISION! {0} {1}'.format(filename, self.file.name))
-            	origlen -= 1024
-           	origfile.close()
+                    raise Exception('HASH COLLISION! {0} {1}'.format(filename, self.file.name))
+                origlen -= 1024
+            origfile.close()
             newfile.close()
         if not os.path.exists(dirname):
-        	os.makedirs(dirname, 0700)
+            os.makedirs(dirname, 0700)
         os.rename(self.file.name, filename)
         return hash
 
@@ -72,33 +72,33 @@ class OpenAttributeManager(models.Manager):
     def oa_get_str(self, name):
         oa = self.oa_get(name)
         if oa is None:
-        	return None
+            return None
         elif oa.is_blob:
             raise RuntimeError('Bad attribute type: {0} is not a string attribute.'.format(name))
         else:
-        	return oa.value
+            return oa.value
 
     def oa_get_blob_hash(self, name):
         oa = self.oa_get(name)
         print 'X', oa
         if oa is None:
-        	print 'X1'
-        	return None
+            print 'X1'
+            return None
         elif not oa.is_blob:
             print 'X2'
             raise RuntimeError('Bad attribute type: {0} is not a blob attribute.'.format(name))
         else:
-        	print 'X3'
-        	return oa.value
+            print 'X3'
+            return oa.value
 
     def oa_open_blob(self, name):
         oa = self.oa_get(name)
         if oa is None:
-        	return None
+            return None
         elif not oa.is_blob:
             raise RuntimeError('Bad attribute type: {0} is not a blob attribute.'.format(name))
         else:
-        	return BlobReader(oa.value)
+            return BlobReader(oa.value)
 
     def oa_set(self, name, oa):
         (newoa, created) = self.get_or_create(name=name)
@@ -116,7 +116,7 @@ class OpenAttributeManager(models.Manager):
     def oa_delete(self, name):
         oa = self.oa_get(name)
         if oa is not None:
-        	oa.delete()
+            oa.delete()
 
 
 class OpenAttribute(models.Model):

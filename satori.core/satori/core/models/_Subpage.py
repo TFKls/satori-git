@@ -14,7 +14,7 @@ class Subpage(Object):
     name = models.TextField(blank=False)
     content = models.TextField()
     order = models.IntegerField()
-    
+
     def inherit_right(self, right):
         right = str(right)
         ret = super(Subpage, self).inherit_right(right)

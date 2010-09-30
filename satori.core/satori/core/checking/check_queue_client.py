@@ -12,8 +12,8 @@ class CheckQueueClient(object):
     def get_instance(cls):
         pid = os.getpid()
         if pid != cls._pid:
-        	cls._instance = CheckQueueClient(pid=pid)
-        	cls._pid = pid
+            cls._instance = CheckQueueClient(pid=pid)
+            cls._pid = pid
         return cls._instance
 
     def __init__(self, pid):
@@ -25,7 +25,7 @@ class CheckQueueClient(object):
         self.connection.recv()
         self.connection.send(Map({'type': 'check_queue_dequeue_result', 'tag': str(pid)}, queue))
         self.connection.recv()
-        self.lock.release()                
+        self.lock.release()
 
     def get_next(self, user):
         self.lock.acquire()

@@ -10,7 +10,7 @@ class Contest(Object):
     """
     __module__ = "satori.core.models"
     parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_contest')
-    
+
     name        = models.CharField(max_length=50, unique=True)
     problems    = models.ManyToManyField('Problem', through='ProblemMapping')
     files       = models.OneToOneField('AttributeGroup', related_name='group_contest_files')
@@ -38,9 +38,9 @@ class Contest(Object):
         if right == 'APPLY':
             ret.append((self,'JOIN'))
         return ret
-    
 
-    
+
+
 class ContestEvents(Events):
     model = Contest
     on_insert = on_update = ['name']

@@ -52,7 +52,7 @@ class Token(Object):
     @classmethod
     def ars_type(cls):
         if not hasattr(cls, '_ars_type'):
-        	cls._ars_type = ArsToken()
+            cls._ars_type = ArsToken()
 
         return cls._ars_type
 
@@ -69,7 +69,7 @@ class Token(Object):
         self.data_id = ''
         if token is not None:
             if token == '':
-            	self.salt = self._salt()
+                self.salt = self._salt()
                 self.user_id = ''
                 self.auth = ''
                 self.data_id = ''
@@ -100,7 +100,7 @@ class Token(Object):
                         .format(token)
                     )
         if user is not None and user_id is None:
-        	user_id = str(user.id)
+            user_id = str(user.id)
         if token is None and (user_id is None or auth is None or (validity is None and deadline is None)):
             raise TokenError(
                 "Too few arguments to create a token."
@@ -112,10 +112,10 @@ class Token(Object):
         if auth is not None:
             self.auth = auth
         if data is not None:
-        	ses = Session()
-        	ses.data = pickle.dumps(data)
-        	ses.save()
-        	self.data_id = ses.id
+            ses = Session()
+            ses.data = pickle.dumps(data)
+            ses.save()
+            self.data_id = ses.id
         if deadline is not None:
             self.deadline = deadline
         if validity is not None:
@@ -161,7 +161,7 @@ class Token(Object):
         chars = string.letters + string.digits
         salt = ''
         for i in range(8):
-        	salt += random.choice(chars)
+            salt += random.choice(chars)
         return salt
 
     def _hash(self, data):
@@ -223,7 +223,7 @@ class RoleSetError(Exception):
 class RoleSet(Object):
     def _dfs(self, role):
         if role.startOn is not None and role.startOn > self._ts or role.finishOn is not None and role.finishOn < self._ts:
-        	return None
+            return None
         if role not in self._absorb:
             abs = None
             for parent in role.parents.all():
@@ -246,13 +246,13 @@ class RoleSet(Object):
         globe = Global.get_instance()
         roles = set()
         roles.add(globe.anonymous)
-        if token.user != None and token.valid: 
-        	roles.add(globe.authenticated)
+        if token.user != None and token.valid:
+            roles.add(globe.authenticated)
             try:
                 abs = self._dfs(token.user)
-            
+
                 if abs:
-                	roles.clear()
+                    roles.clear()
                     self._absorb = dict()
                     self._dfs(abs)
                 for (role,a) in self._absorb.items():
@@ -268,7 +268,7 @@ class RightCheck(Object):
         self._ts = datetime.now()
         RightCheck.cache = {}
         pass
-    
+
     def _cache_key(self, role, object, right):
         return 'check_rights_'+str(role.id)+'_'+str(object.id)+'_'+right
     def _cache_set(self, role, object, right, value):
@@ -279,19 +279,19 @@ class RightCheck(Object):
         #return cache.get(self._cache_key(role, object, right), None)
         key = self._cache_key(role, object, right)
         if key in RightCheck.cache:
-        	return RightCheck.cache[key]
+            return RightCheck.cache[key]
         return None
-    
+
     def _single_check(self, role, object, right):
         res = self._cache_get(role, object, right)
         if res is not None:
             return res
         res = False
         for priv in Privilege.objects.filter(role = role, object = object, right = right):
-        	if priv.startOn is not None and priv.startOn > self._ts or priv.finishOn is not None and priv.finishOn < self._ts:
-        		continue
-        	res = True
-        	break
+            if priv.startOn is not None and priv.startOn > self._ts or priv.finishOn is not None and priv.finishOn < self._ts:
+                continue
+            res = True
+            break
         if not res:
             self._cache_set(role, object, right, False)
             model = models.get_model(*object.model.split('.'))
@@ -299,8 +299,8 @@ class RightCheck(Object):
                 object = model.objects.get(id=object.id)
             for (obj,rig) in object.inherit_right(right):
                 if self._single_check(role, obj, rig):
-                	res = True
-                	break
+                    res = True
+                    break
         self._cache_set(role, object, right, res)
         return res
 
@@ -310,5 +310,5 @@ class RightCheck(Object):
     def __call__(self, roleset, object, right):
         ret = False
         for role in roleset.roles:
-        	ret = ret or self._single_check(role, object, right)
+            ret = ret or self._single_check(role, object, right)
         return ret

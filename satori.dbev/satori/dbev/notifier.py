@@ -113,7 +113,7 @@ def notifier_coroutine():
             cursor = con.cursor()
             cursor.execute('LISTEN satori;')
             for action in handle_notifications(cursor):
-            	yield action
+                yield action
 
             while True:
                 if select.select([con], [], [], 5) == ([], [], []):

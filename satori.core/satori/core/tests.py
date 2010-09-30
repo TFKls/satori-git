@@ -40,12 +40,12 @@ class TestToken(unittest.TestCase):
         print 'Validity: ', tok1.validity
         print 'Salt:     ', tok1.salt
 
-        
+
         tok2 = Token(str(tok1))
         self.assertEqual(tok2.user_id, 'test_user')
         self.assertEqual(tok2.auth, 'test_auth')
         self.assertEqual(tok2.salt, tok1.salt)
-        
+
         print 'Token:    ', tok2
         print 'User:     ', tok2.user_id
         print 'Auth:     ', tok2.auth
@@ -98,4 +98,4 @@ class TestLogin(unittest.TestCase):
 
 
 if __name__ == '__main__':
-	unittest.main()
+    unittest.main()

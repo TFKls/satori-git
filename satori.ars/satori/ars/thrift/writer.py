@@ -95,7 +95,7 @@ class ThriftWriter(object):
             sep = '\n\t'
             ind += 1
         target.write('\n}\n')
-    
+
     @DispatchOn(item=ArsConstant)
     def _write(self, item, target): # pylint: disable-msg=E0102
         #TODO
@@ -106,8 +106,8 @@ class ThriftWriter(object):
         target.write('service ')
         self._reference(item, target)
         if item.base:
-        	target.write(' extends ')
-        	self._reference(item.base, target)
+            target.write(' extends ')
+            self._reference(item.base, target)
         target.write(' {')
         sep = '\n\t'
         for procedure in item.procedures:
@@ -145,11 +145,11 @@ class ThriftWriter(object):
 
     def write_to(self, interface, target):
         for type in interface.types:
-        	self._write(type, target)
+            self._write(type, target)
 
         for constant in interface.constants:
-        	self._write(constant, target)
+            self._write(constant, target)
 
         for service in interface.services:
-        	self._write(service, target)
+            self._write(service, target)
 

@@ -32,7 +32,7 @@ def get_next(token):
     u = token.user
     next = CheckQueueClient.get_instance().get_next(u)
     if next.test_result_id is None:
-    	return None
+        return None
     ret = {}
     ret['test_result'] = TestResult.objects.get(id=next.test_result_id)
     ret['test_data'] = ApiTest.Test_data_get_map.implementation(token, ret['test_result'].test)

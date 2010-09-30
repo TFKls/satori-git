@@ -13,7 +13,7 @@ class Message(Object):
     topic       = models.CharField(max_length=50, unique=True)
     content     = models.TextField(blank=True, default="")
     time        = models.DateTimeField(auto_now_add=True)
-    
+
     def __str__(self):
         return self.topic
 

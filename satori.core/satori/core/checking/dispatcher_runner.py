@@ -17,7 +17,7 @@ class DispatcherRunner(Client2):
     @wrap_transaction
     def init(self):
         for test_suite_result in TestSuiteResult.objects.filter(pending=True):
-        	self.start_dispatcher(test_suite_result.id)
+            self.start_dispatcher(test_suite_result.id)
         self.attach(self.queue)
         self.map({'type': 'db', 'model': 'core.testsuiteresult', 'action': 'I'}, self.queue)
         self.map({'type': 'testsuiteresult_reschedule'}, self.queue)
@@ -25,7 +25,7 @@ class DispatcherRunner(Client2):
     @wrap_transaction
     def handle_event(self, queue, event):
         if event.type == 'db':
-        	self.start_dispatcher(event.object_id)
+            self.start_dispatcher(event.object_id)
         elif event.type == 'testsuiteresult_reschedule':
-        	self.start_dispatcher(event.test_suite_result_id)
+            self.start_dispatcher(event.test_suite_result_id)
 

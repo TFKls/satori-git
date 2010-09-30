@@ -50,7 +50,7 @@ class Global(Object):
             self.anonymous = anonymous
 
         super(Global, self).save()
-    
+
     @staticmethod
     def get_instance():
         try:

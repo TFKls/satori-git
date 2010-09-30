@@ -12,14 +12,14 @@ class Object(models.Model):
 
     def save(self, *args, **kwargs):
         if not self.model:
-        	  self.model = self._meta.app_label + '.' + self._meta.module_name
+              self.model = self._meta.app_label + '.' + self._meta.module_name
         super(Object, self).save(*args, **kwargs)
-    
+
     @classmethod
     def ars_type(cls):
         if not '_ars_type' in cls.__dict__:
             from satori.core.cwrapper import ArsDjangoModel
-        	cls._ars_type = ArsDjangoModel(cls)
+            cls._ars_type = ArsDjangoModel(cls)
 
         return cls._ars_type
 
@@ -28,25 +28,25 @@ class Object(models.Model):
         right = str(right)
         ret = list()
         if right == 'VIEW':
-        	ret.append((self, 'MODERATE'))
+            ret.append((self, 'MODERATE'))
         if right == 'ATTRIBUTE_READ':
-        	ret.append((self, 'VIEW'))
+            ret.append((self, 'VIEW'))
         if right == 'ATTRIBUTE_WRITE':
-        	ret.append((self, 'EDIT'))
+            ret.append((self, 'EDIT'))
         if right == 'MODERATE':
-        	ret.append((self, 'EDIT'))
+            ret.append((self, 'EDIT'))
         if right == 'EDIT':
-        	ret.append((self, 'MANAGE'))
+            ret.append((self, 'MANAGE'))
         if right == 'MANAGE_PRIVILEGES':
-        	ret.append((Global.get_instance(), 'MANAGE_PRIVILEGES'))
-        	ret.append((self, 'MANAGE'))
+            ret.append((Global.get_instance(), 'MANAGE_PRIVILEGES'))
+            ret.append((self, 'MANAGE'))
         if right != 'ADMIN':
-        	ret.append((self, 'ADMIN'))
+            ret.append((self, 'ADMIN'))
         if right == 'ADMIN':
-        	ret.append((Global.get_instance(), 'ADMIN'))
+            ret.append((Global.get_instance(), 'ADMIN'))
 
         return ret
-    
+
     def demand_right(self, token, right):
         from satori.core.sec import Token, RoleSet, RightCheck
         checker = RightCheck()

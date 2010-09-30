@@ -15,7 +15,7 @@ import hashlib
 import time
 
 class Store(OpenIDStore):
-    
+
     def storeAssociation(self, server_url, association):
         print 'store: add', server_url, association
         try:
@@ -33,7 +33,7 @@ class Store(OpenIDStore):
         assoc.lifetime = association.lifetime
         assoc.assoc_type = association.assoc_type
         assoc.save()
-    
+
     def getAssociation(self, server_url, handle=None):
         print 'store: get', server_url
         try:
@@ -42,7 +42,7 @@ class Store(OpenIDStore):
                 server_url = server_url
             )
             if handle is not None:
-            	assoc = assoc.filter(handle = handle)
+                assoc = assoc.filter(handle = handle)
             assoc = assoc.order_by('-issued')[0]
             return OpenIdAssociation(
                 handle = assoc.handle,
@@ -53,13 +53,13 @@ class Store(OpenIDStore):
             )
         except:
             return None
-    
+
     def removeAssociation(self, server_url, handle):
         Association.objects.filter(
             server_url = server_url,
             handle = handle,
         ).delete()
-    
+
     def useNonce(self, server_url, timestamp, salt):
         if abs(timestamp - time.time()) > SKEW:
             return False
@@ -73,21 +73,21 @@ class Store(OpenIDStore):
             return True
         except:
             return False
-    
+
     def cleanupNonce(self):
         Nonce.objects.filter(
             timestamp__lt = (int(time.time()) - nonce.SKEW),
         ).delete()
-    
+
     def cleanupAssociations(self):
         Association.objects.filter(
             issued__lt = (int(time.time()) - F('lifetime')),
         ).delete()
-    
+
     def getAuthKey(self):
         h = hashlib.md5()
         h.update(settings.SECRET_KEY)
         return h.hexdigest()[:self.AUTH_KEY_LEN]
-    
+
     def isDumb(self):
         return False

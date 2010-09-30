@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.db.models.signals import post_syncdb
 
 def create_admin(app, created_models, verbosity, **kwargs):
@@ -5,12 +7,12 @@ def create_admin(app, created_models, verbosity, **kwargs):
     from satori.core.models import Object
 
     if (app != satori.core.models) or (Object not in created_models):
-    	return
+        return
 
     from django.conf import settings
     from satori.core.api import ApiSecurity, ApiPrivilege
     from satori.core.sec import Token
-    
+
     print 'Creating superuser'
 
     token = Token('')

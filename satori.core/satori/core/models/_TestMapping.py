@@ -14,7 +14,7 @@ class TestMapping(Object):
     suite       = models.ForeignKey('TestSuite')
     test        = models.ForeignKey('Test')
     order       = models.IntegerField()
-    
+
     def __str__(self):
         return str(self.order)+": ("+self.suite.name+","+self.test.name+")"
 

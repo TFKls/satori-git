@@ -7,7 +7,7 @@ from satori.events import Event, Client2
 
 class CheckQueue(Client2):
     queue = 'check_queue_queue'
-    
+
     def __init__(self):
         super(CheckQueue, self).__init__()
         self.work_queue = deque()
@@ -15,8 +15,8 @@ class CheckQueue(Client2):
 
     def append(self, id):
         if id not in self.work_set:
-        	self.work_queue.append(id)
-        	self.work_set.add(id)
+            self.work_queue.append(id)
+            self.work_set.add(id)
 
     def pop(self):
         try:
@@ -29,7 +29,7 @@ class CheckQueue(Client2):
     @wrap_transaction
     def init(self):
         for test_result in TestResult.objects.filter(pending=True):
-        	self.append(test_result.id)
+            self.append(test_result.id)
         self.attach(self.queue)
         self.map({'type': 'db', 'model': 'core.testresult', 'action': 'I'}, self.queue)
         self.map({'type': 'check_queue_dequeue'}, self.queue)
