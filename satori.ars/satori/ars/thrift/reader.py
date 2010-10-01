@@ -16,6 +16,7 @@ reserved = {
     'extends': 'EXTENDS',
     'list': 'LIST',
     'map': 'MAP',
+    'namespace': 'NAMESPACE',
     'optional': 'OPTIONAL',
     'required': 'REQUIRED',
     'service' : 'SERVICE',
@@ -28,7 +29,7 @@ reserved = {
 tokens = ['IDENTIFIER', 'NUMBER'] + list(reserved.values())
 
 def t_IDENTIFIER(t):
-    r'[a-zA-Z_][a-zA-Z_0-9]*'
+    r'[a-zA-Z_][a-zA-Z_0-9.]*'
     t.type = reserved.get(t.value, 'IDENTIFIER')    # Check for reserved words
     return t
 
@@ -172,12 +173,17 @@ def p_service(p):
         p[0].add_procedure(procedure)
     p.parser.interface.services.append(p[0])
 
+def p_namespace(p):
+    """namespace : NAMESPACE IDENTIFIER IDENTIFIER"""
+    p[0] = None
+
 def p_toplevel_element(p):
     """
     toplevel_element : structure
                      | exception
                      | typedef
                      | service
+                     | namespace
     """
 
 def p_toplevel_end(p):

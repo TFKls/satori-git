@@ -144,6 +144,7 @@ class ThriftWriter(object):
         target.write('\n}\n')
 
     def write_to(self, interface, target):
+        target.write('namespace java satori.thrift.gen\n')
         for type in interface.types:
             self._write(type, target)
 
