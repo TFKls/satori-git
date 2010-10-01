@@ -331,7 +331,7 @@ class ArsStructure(ArsNamedType):
         return NoneObj(Namespace(new_value))
 
     def do_convert_from_ars(self, value):
-        new_value = {}
+        new_value = Namespace()
         for field in self.fields.items:
             if field.name in value:
                 if field.type.needs_conversion():
