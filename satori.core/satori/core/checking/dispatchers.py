@@ -70,7 +70,7 @@ class SerialDispatcher(Client2):
             self.send_test()
 
 
-class ParalellDispatcher(Client2):
+class ParallelDispatcher(Client2):
     def __init__(self, test_suite_result, accumulator_list):
         super(serial_dispatcher, self).__init__()
         self.test_suite_result = test_suite_result

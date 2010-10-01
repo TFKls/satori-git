@@ -3,7 +3,7 @@
 # built-in script identifiers
 DISPATCHERS = (
     ('SerialDispatcher', 'Serial dispatcher'),
-    ('ParalellDispatcher', 'Paralell dispatcher'),
+    ('ParallelDispatcher', 'Parallel dispatcher'),
 )
 ACCUMULATORS = (
     ('StatusAccumulator', 'Status accumulator'),
