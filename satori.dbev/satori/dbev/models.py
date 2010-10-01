@@ -376,7 +376,7 @@ END;
 $$ LANGUAGE plpgsql;
 """
         ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function]
-        for model in registry:
+        for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
             ret.append(install_versions_sql(model))
         return tuple(ret);
 
