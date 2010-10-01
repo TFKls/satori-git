@@ -15,7 +15,7 @@ from satori.core.models._Message import Message
 from satori.core.models._MessageGlobal import MessageGlobal
 from satori.core.models._MessageContest import MessageContest
 from satori.core.models._Nonce import Nonce
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 from satori.core.models._OpenAttribute import OpenAttribute
 from satori.core.models._OpenIdentity import OpenIdentity
 from satori.core.models._Privilege import Privilege

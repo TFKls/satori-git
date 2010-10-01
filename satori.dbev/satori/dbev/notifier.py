@@ -6,7 +6,7 @@ from django.db import connection
 from django.db import models
 from satori.dbev.events import registry
 from satori.events import Event
-from satori.core.models import Object
+from satori.core.models import Entity
 
 def row_to_dict(cursor, row):
     res = {}
@@ -52,7 +52,7 @@ def handle_notifications(cursor, slave):
             else:
                 ftrans = transaction
 
-            cursor.execute('SELECT model FROM ' + Object._meta.db_table + '__version_view(%s,%s)', [id, ftrans])
+            cursor.execute('SELECT model FROM ' + Entity._meta.db_table + '__version_view(%s,%s)', [id, ftrans])
             res = row_to_dict(cursor, cursor.fetchone())
             if 'model' not in res:
                 continue

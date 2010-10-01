@@ -2,14 +2,14 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 
-class ProblemResult(Object):
+class ProblemResult(Entity):
     """Model. Cumulative result of all submits of a particular ProblemMapping by
     a single Contestant.
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_problemresult')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_problemresult')
 
     contestant  = models.ForeignKey('Contestant')
     problem     = models.ForeignKey('ProblemMapping')

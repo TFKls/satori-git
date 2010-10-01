@@ -10,7 +10,7 @@ import ApiMachine
 import ApiMessageContest
 import ApiMessageGlobal
 import ApiMessage
-import ApiObject
+import ApiEntity
 import ApiOpenIdentity
 import ApiPrivilege
 import ApiProblemMapping

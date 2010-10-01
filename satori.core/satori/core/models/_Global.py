@@ -2,11 +2,11 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 from satori.core.models._Role import Role
 from satori.core.models._AttributeGroup import AttributeGroup
 
-class Global(Object):
+class Global(Entity):
     """Model. Special Global object for privileges.
     """
     __module__ = "satori.core.models"

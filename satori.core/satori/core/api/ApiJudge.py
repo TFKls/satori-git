@@ -12,7 +12,7 @@ from satori.ars.wrapper import Struct, StaticWrapper, TypedList, TypedMap
 from satori.core.cwrapper import Attribute, AnonymousAttribute
 from satori.core.checking.check_queue_client import CheckQueueClient
 
-import ApiObject
+import ApiEntity
 import ApiTest
 import ApiTestResult
 import ApiSubmit
@@ -45,7 +45,7 @@ def get_next(token):
 @Argument('result', type=TypedMap(unicode, AnonymousAttribute))
 @ReturnValue(type=NoneType)
 def set_result(token, test_result, result):
-    ApiObject.Object_oa_set_map.implementation(token, test_result, result)
+    ApiEntity.Entity_oa_set_map.implementation(token, test_result, result)
     test_result.pending = False
     test_result.save()
 

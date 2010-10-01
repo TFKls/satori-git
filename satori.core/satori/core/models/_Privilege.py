@@ -2,17 +2,17 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 from satori.core.models._Global import Global
 
-class Privilege(Object):
+class Privilege(Entity):
     """Model. Represents single right on object granted to the role.
     """
     __module__    = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_privilege')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_privilege')
 
     role     = models.ForeignKey('Role', related_name='privileges')
-    object   = models.ForeignKey('Object', related_name='privileged')
+    object   = models.ForeignKey('Entity', related_name='privileged')
     right    = models.CharField(max_length=64)
     start_on  = models.DateTimeField(null=True)
     finish_on = models.DateTimeField(null=True)

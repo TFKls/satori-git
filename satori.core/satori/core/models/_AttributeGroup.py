@@ -2,13 +2,13 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 
-class AttributeGroup(Object):
+class AttributeGroup(Entity):
     """
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_attribute_group')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_attribute_group')
 
 
 class AttributeGroupEvents(Events):

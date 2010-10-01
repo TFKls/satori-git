@@ -2,14 +2,14 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 from satori.core.models.modules import AGGREGATORS
 
-class ContestRanking(Object):
+class ContestRanking(Entity):
     """Model. Ranking in a Contest.
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_contestranking')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_contestranking')
 
     contest     = models.ForeignKey('Contest')
     name        = models.CharField(max_length=50)

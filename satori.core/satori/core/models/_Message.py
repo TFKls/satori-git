@@ -2,13 +2,13 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 
-class Message(Object):
+class Message(Entity):
     """Model. Description of a text message.
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_message')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_message')
 
     topic       = models.CharField(max_length=50, unique=True)
     content     = models.TextField(blank=True, default="")

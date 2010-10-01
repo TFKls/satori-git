@@ -22,7 +22,7 @@ from django.db import models
 from Crypto.Cipher import AES
 from satori.objects import Object, Argument
 from satori.core.sec.store import Store
-from satori.core.models import Session, Role, User, Privilege, Global, Object as modelObject
+from satori.core.models import Session, Role, User, Privilege, Global, Entity
 from satori.ars.model import ArsTypeAlias, ArsString
 
 class TokenError(Exception):
@@ -44,7 +44,7 @@ class ArsToken(ArsTypeAlias):
         return Token(value)
 
 
-class Token(Object):
+class Token(object):
     """
     Class for token manipulation.
     """
@@ -56,15 +56,16 @@ class Token(Object):
 
         return cls._ars_type
 
-    @Argument('token', type=(str, None), default=None)
-    @Argument('key', type=(str, None), default=None)
-    @Argument('user', type=(User, None), default=None)
-    @Argument('user_id', type=(str, None), default=None)
-    @Argument('auth', type=(str, None), default=None)
-    @Argument('data', default=None)
-    @Argument('validity', type=(timedelta, None), default=None)
-    @Argument('deadline', type=(datetime, None), default=None)
-    def __init__(self, token, key, user, user_id, auth, data, validity, deadline):
+    @Argument('token', type=(str, None))
+    @Argument('key', type=(str, None))
+    @Argument('user', type=(User, None))
+    @Argument('user_id', type=(str, None))
+    @Argument('auth', type=(str, None))
+    @Argument('data')
+    @Argument('validity', type=(timedelta, None))
+    @Argument('deadline', type=(datetime, None))
+    def __init__(self, token=None, key=None, user=None, user_id=None, auth=None, data=None, validity=None, deadline=None):
+        super(Token, self).__init__()
         self.key = key or settings.SECRET_KEY
         self.data_id = ''
         if token is not None:
@@ -220,7 +221,7 @@ class RoleSetError(Exception):
     """
     pass
 
-class RoleSet(Object):
+class RoleSet(object):
     def _dfs(self, role):
         if role not in self._absorb:
             abs = None
@@ -239,6 +240,7 @@ class RoleSet(Object):
 
     @Argument('token', type=Token)
     def __init__(self, token):
+        super(RoleSet, self).__init__()
         self._ts = datetime.now()
         self._absorb = dict()
         globe = Global.get_instance()
@@ -259,10 +261,11 @@ class RoleSet(Object):
                 pass
         self.roles = frozenset(roles)
 
-class RightCheck(Object):
+class RightCheck(object):
     cache = {}
 
     def __init__(self):
+        super(RightCheck, self).__init__()
         self._ts = datetime.now()
         RightCheck.cache = {}
         pass
@@ -303,7 +306,7 @@ class RightCheck(Object):
         return res
 
     @Argument('roleset', type=RoleSet)
-    @Argument('object', type=modelObject)
+    @Argument('object', type=Entity)
     @Argument('right', type=str)
     def __call__(self, roleset, object, right):
         ret = False
