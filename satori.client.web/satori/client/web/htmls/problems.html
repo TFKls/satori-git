@@ -12,10 +12,13 @@
     <td>PDF</td>
 {% if widget.manage %}
     <td>
-        Publish from
+        Visible
     </td>
     <td>
-        Submit till
+        Start
+    </td>
+    <td>
+        Finish
     </td>
     <td>
     </td>
@@ -42,10 +45,13 @@
     </td>
 {% if widget.manage %}
     <td>
-        {{entry.stime}}
+        {{entry.visible}}
     </td>
     <td>
-        {{entry.ftime}}
+        {{entry.from}}
+    </td>
+    <td>
+        {{entry.until}}
     </td>
     <td>
         <input type="checkbox" name="pr{{entry.p.id}}"/>
@@ -59,12 +65,14 @@
 </table>
 {% if widget.manage %}
 
-With selected: <br/>
-Publish on <input type="text" name="pub_time"/> (leave blank to publish now)<br/>
-Submissions until <input type="text" name="hide_time"/> (leave blank to publish indefinitely)<br/>
+<h4>Change selected:</h4>
+Set submit times: <br/>
+from <input type="text" name="pub_time"/> (leave blank to publish now)<br/>
+until <input type="text" name="hide_time"/> (leave blank to publish indefinitely)<br/>
 <input type="submit" name="confirm" value="Set dates"/><br/>
-<input type="submit" name="stop" value="Stop submissions"/>
-<input type="submit" name="hide" value="Hide"/>
+<br/>
+<input type="submit" name="stop" value="Immediately stop submissions"/>
+<input type="submit" name="hide" value="Immediately hide selected problems"/>
 </form>
 {% endif %}
 

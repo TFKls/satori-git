@@ -17,26 +17,29 @@ class ResultsWidget(Widget):
         else:
             shown = d['shown']
         self.submits = []
-        for o in Submit.filter(): # TODO: correct 
-            if c.id==o.contestant.contest.id:
-                s = {}
-                id = str(o.id)
-                s["id"] = id
-                s["time"] = o.time
-                s["user"] = o.contestant.name_auto()
-                s["problem"] = o.problem.code
-                s["status"] = "?"
-                s["details"] = "Submit details"
-                _shown = deepcopy(shown)
-                if id in _shown:
-                    s["showdetails"] = True
-                    _shown.remove(id)
-                else:
-                    s["showdetails"] = False
-                    _shown.append(id)
-                _shown.sort()
-                d['shown'] = _shown
-                if _shown == []:
-                    del d['shown']
-                s["link"] = GetLink(_params,'')
-                self.submits.append(s)
+        for cont in Contestant.filter({'contest' : c }):
+            for o in Submit.filter({'contestant': cont}): # TODO: correct 
+                if c.id==o.contestant.contest.id:
+                    s = {}
+                    id = str(o.id)
+                    s["id"] = id
+                    s["time"] = o.time
+                    s["user"] = o.contestant.name_auto()
+                    s["problem"] = o.problem.code
+                    s["status"] = o.get_test_suite_status()
+                    if not s["status"]:
+                        s["status"] = "?"
+                    s["details"] = o.get_test_suite_report()
+                    _shown = deepcopy(shown)
+                    if id in _shown:
+                        s["showdetails"] = True
+                        _shown.remove(id)
+                    else:
+                        s["showdetails"] = False
+                        _shown.append(id)
+                    _shown.sort()
+                    d['shown'] = _shown
+                    if _shown == []:
+                        del d['shown']
+                    s["link"] = GetLink(_params,'')
+                    self.submits.append(s)

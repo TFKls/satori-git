@@ -36,10 +36,19 @@ class EditTestWidget(Widget):
             judge_content = reader.read(reader.length)
             reader.close()
             self.judge = parse_judge(judge_content)
+            j = self.judge
             for d in self.judge:
-                cv = p.default_test_data_get(d["name"])
+                cv = None
                 if t:
-                    cv = t.oa_get(d["name"])
+                    try:
+                        cv = t.oa_get(d["name"])
+                    except:
+                        pass
+                if not cv:
+                    try:
+                        cv = p.default_test_data_get(d["name"])
+                    except:
+                        pass
                 if not cv and d["default"]:
                     cv = {'value' : d["default"]}
                 if cv:

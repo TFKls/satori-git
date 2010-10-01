@@ -15,19 +15,14 @@ class PublishRequest(Request):
         hide = False
         if 'confirm' in request.POST.keys():
             confirm = True
-        if 'stop' in request.POST.keys():
-            stop = True
         if 'hide' in request.POST.keys():
             hide = True
+        if 'stop' in request.POST.keys():
+            stop = True
         for k in request.POST.keys():
             if k[0:2] == 'pr':
                 pm = ProblemMapping.filter({'id':int(k[2:])})[0]
                 c = pm.contest
-                for priv in Privilege.filter({'object' : pm, 'role' : c.contestant_role, 'right' : 'SUBMIT' }):
-                    priv.delete()
-                if hide or (confirm and not explicit_right(object=pm, role=c.contestant_role,right='VIEW')):
-                    for priv in Privilege.filter({'object' : pm, 'role' : c.contestant_role, 'right' : 'VIEW' }):
-                        priv.delete()
                 pt = None;
                 ht = None;
                 if request.POST['pub_time']!='':
@@ -35,8 +30,11 @@ class PublishRequest(Request):
                 if request.POST['hide_time']!='':
                     ht = datetime(request.POST['hide_time'])
                 if confirm:
-                    Privilege.create({'object' : pm, 'role' : c.contestant_role, 'right' : 'SUBMIT', 'startOn' : pt, 'finishOn' : ht })
-                if confirm and not explicit_right(object=pm, role=c.contestant_role,right='VIEW'):
-                    Privilege.create({'object' : pm, 'role' : c.contestant_role, 'right' : 'VIEW', 'startOn' : pt})
+                    Privilege.grant(c.contestant_role, pm, 'SUBMIT', pt, ht)
+                    Privilege.grant(c.contestant_role, pm, 'VIEW', pt)
+                if stop:
+                    Privilege.revoke(c.contestant_role, pm, 'SUBMIT')
+                if hide:
+                    Privilege.revoke(c.contestant_role, pm, 'VIEW')
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')

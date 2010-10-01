@@ -128,6 +128,6 @@ def create(request):
     MessageGlobal.create({'topic':"Wiadomosc systemowa", 'content':"Oglaszamy, ze za 5 minuBZZZZZ!", 'mainscreenonly':False})
     MessageContest.create({'topic':"Wiadomosc powitalna", 'content':"Publiczne BZZZZZ!", 'contest':c4})
     g = Global.get_instance()
-    print dirname(__file__)+'/simple_uzi_checker.py'
-    g.checkers_set_blob_path('Simple UZI Checker', dirname(__file__)+'/simple_uzi_checker.py')
+    print dirname(__file__)+'/default_judge.py'
+    g.checkers_set_blob_path('Default judge', dirname(__file__)+'/default_judge.py')
     return HttpResponse('OK!')
