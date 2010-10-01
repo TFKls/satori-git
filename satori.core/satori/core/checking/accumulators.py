@@ -2,6 +2,7 @@
 
 class StatusAccumulator(object):
     def __init__(self, test_suite_result):
+        super(StatusAccumulator, self).__init__()
         self.test_suite_result = test_suite_result
 
     def init(self):

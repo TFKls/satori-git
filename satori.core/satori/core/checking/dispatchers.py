@@ -8,7 +8,7 @@ from satori.events import Event, Client2
 
 class SerialDispatcher(Client2):
     def __init__(self, test_suite_result, accumulator_list):
-        super(serial_dispatcher, self).__init__()
+        super(SerialDispatcher, self).__init__()
         self.test_suite_result = test_suite_result
         self.queue = 'dispatcher_{0}'.format(test_suite_result.id) #TODO: are we sure, that she's the one?
         self.accumulators = [
@@ -19,7 +19,7 @@ class SerialDispatcher(Client2):
         while self.to_check:
             next_test = Test.get(id=self.to_check.popleft())
             (next_test_result, created) = TestResult.objects.get_or_create(submit=self.test_suite_result.submit, test=next_test)
-            if created:
+            if next_test_result.pending:
                 self.next_test_result_id = next_test_result.id
                 return
             else:
@@ -72,7 +72,7 @@ class SerialDispatcher(Client2):
 
 class ParallelDispatcher(Client2):
     def __init__(self, test_suite_result, accumulator_list):
-        super(serial_dispatcher, self).__init__()
+        super(ParallelDispatcher, self).__init__()
         self.test_suite_result = test_suite_result
         self.queue = 'dispatcher_{0}'.format(test_suite_result.id) #TODO: are we sure, that she's the one?
         self.accumulators = [
@@ -90,7 +90,7 @@ class ParallelDispatcher(Client2):
         self.wanted_test_result_ids = set()
         for test in self.test_suite_result.test_suite.tests.all():
             (test_result, created) = TestResult.objects.get_or_create(submit=self.test_suite_result.submit, test=test)
-            if created:
+            if test_result.pending:
                 self.wanted_test_result_ids.add(test_result.id)
             else:
                 for accumulator in self.accumulators:
