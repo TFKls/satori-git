@@ -1,19 +1,25 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from django.db import transaction
 
-from satori.core.checking import accumulators
+from satori.core.checking.accumulators import accumulators
 from satori.core.checking.utils import wrap_transaction
 from satori.core.models import Test, TestResult
 from satori.events import Event, Client2
 
-class SerialDispatcher(Client2):
-    def __init__(self, test_suite_result, accumulator_list):
-        super(SerialDispatcher, self).__init__()
+class DispatcherBase(Client2):
+    def __init__(self, test_suite_result, accumulator_list, runner): 
+        super(DispatcherBase, self).__init__()
         self.test_suite_result = test_suite_result
-        self.queue = 'dispatcher_{0}'.format(test_suite_result.id) #TODO: are we sure, that she's the one?
+        self.queue = 'dispatcher_{0}'.format(test_suite_result.id)
         self.accumulators = [
-                getattr(accumulators, accumulator)(test_suite_result) for accumulator in accumulator_list
+                accumulators[accumulator](test_suite_result) for accumulator in accumulator_list
         ]
+
+class SerialDispatcher(DispatcherBase):
+    """Serial dispatcher"""
+
+    def __init__(self, test_suite_result, accumulator_list, runner):
+        super(SerialDispatcher, self).__init__(test_suite_result, accumulator_list, runner)
 
     def send_test(self):
         while self.to_check:
@@ -70,14 +76,11 @@ class SerialDispatcher(Client2):
             self.send_test()
 
 
-class ParallelDispatcher(Client2):
-    def __init__(self, test_suite_result, accumulator_list):
-        super(ParallelDispatcher, self).__init__()
-        self.test_suite_result = test_suite_result
-        self.queue = 'dispatcher_{0}'.format(test_suite_result.id) #TODO: are we sure, that she's the one?
-        self.accumulators = [
-                getattr(accumulators, accumulator)(test_suite_result) for accumulator in accumulator_list
-        ]
+class ParallelDispatcher(DispatcherBase):
+    """Parallel dispatcher"""
+
+    def __init__(self, test_suite_result, accumulator_list, runner):
+        super(ParallelDispatcher, self).__init__(test_suite_result, accumulator_list, runner)
 
     @wrap_transaction
     def init(self):
@@ -122,3 +125,8 @@ class ParallelDispatcher(Client2):
 #       ?
 #        if any(not accumulator.status() for accumulator in self.accumulators):
 #            self.finish()
+
+dispatchers = {}
+for item in globals().values():
+    if isinstance(item, type) and issubclass(item, DispatcherBase) and (item != DispatcherBase):
+        dispatchers[item.__name__] = item

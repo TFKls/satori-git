@@ -3,7 +3,6 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Object import Object
-from satori.core.models.modules import DISPATCHERS, ACCUMULATORS
 from datetime import datetime
 
 class TestSuite(Object):
@@ -16,7 +15,7 @@ class TestSuite(Object):
     name         = models.CharField(max_length=50)
     description  = models.TextField(blank=True, default="")
     tests        = models.ManyToManyField('Test', through='TestMapping')
-    dispatcher   = models.CharField(max_length=128, choices=DISPATCHERS)
+    dispatcher   = models.CharField(max_length=128)
     accumulators = models.CharField(max_length=1024)
 
     def inherit_right(self, right):
@@ -27,12 +26,14 @@ class TestSuite(Object):
         return ret
 
     def save(self, *args, **kwargs):
+        from satori.core.checking.dispatchers import dispatchers
+        from satori.core.checking.accumulators import accumulators
         if not self.name:
             self.name = str(datetime.now())
-        if not self.dispatcher in zip(*DISPATCHERS)[0]:
+        if not self.dispatcher in dispatchers:
             raise ValueError('Dispatcher '+self.dispatcher+' is not allowed')
         for accumulator in self.accumulators.split(','):
-            if not accumulator in zip(*ACCUMULATORS)[0]:
+            if not accumulator in accumulators:
                 raise ValueError('Accumulator '+accumulator+' is not allowed')
         super(TestSuite,self).save(*args,**kwargs)
 

@@ -1,6 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from satori.core.models import TestSuiteResult
-from satori.core.checking import dispatchers
+from satori.core.checking.dispatchers import dispatchers
 from satori.core.checking.utils import wrap_transaction
 from satori.events import Event, Client2
 
@@ -10,9 +10,9 @@ class DispatcherRunner(Client2):
     def start_dispatcher(self, id):
         res = TestSuiteResult.objects.get(id=id)
         print 'Dispatcher runner: starting new dispatcher {0} for test suite result {1}'.format(res.test_suite.dispatcher, id)
-        dispatcher = getattr(dispatchers, res.test_suite.dispatcher)
+        dispatcher = dispatchers[res.test_suite.dispatcher]
         accumulators = res.test_suite.accumulators.split(',')
-        self.slave.add_client(dispatcher(res, accumulators))
+        self.slave.add_client(dispatcher(res, accumulators, self))
 
     @wrap_transaction
     def init(self):
