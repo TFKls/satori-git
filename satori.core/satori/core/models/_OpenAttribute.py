@@ -104,7 +104,10 @@ class OpenAttributeManager(models.Manager):
         (newoa, created) = self.get_or_create(name=name)
         newoa.is_blob = oa.is_blob
         newoa.value = oa.value
-        newoa.filename = oa.filename
+        if oa.is_blob and hasattr(oa, 'filename') and oa.filename is not None:
+            newoa.filename = oa.filename
+        else:
+        	newoa.filename = ''
         newoa.save()
 
     def oa_set_str(self, name, value):
