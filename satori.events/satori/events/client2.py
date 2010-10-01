@@ -31,3 +31,6 @@ class Client2(object):
     def send(self, event):
         return self.slave.send(event)
 
+    def keep_alive(self):
+        return self.slave.keep_alive
+

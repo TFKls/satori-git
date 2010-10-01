@@ -13,6 +13,10 @@ class Slave2(object):
         self.clients = set()
         self.added_clients = deque()
         self.removed_clients = deque()
+        self.terminated = False
+
+    def terminate(self):
+        self.terminated = True
 
     def attach(self, client, queue):
         if queue not in self.queue_clients:
@@ -41,6 +45,13 @@ class Slave2(object):
         self.connection.send(Send(event))
         self.connection.recv()
 
+    def keep_alive(self):
+        self.connection.send(KeepAlive())
+        self.connection.recv()
+
+    def disconnect(self):
+        self.connection.send(Disconnect())
+
     def add_client(self, client):
         self.added_clients.append(client)
 
@@ -49,13 +60,7 @@ class Slave2(object):
 
     def run(self):
         try:
-            while True:
-                while self.added_clients:
-                    client = self.added_clients.popleft()
-                    self.clients.add(client)
-                    client.slave = self
-                    client.init()
-
+            while not self.terminated:
                 while self.removed_clients:
                     client = self.removed_clients.popleft()
                     for queue in set(self.queue_clients):
@@ -64,24 +69,37 @@ class Slave2(object):
                     client.deinit()
                     self.clients.remove(client)
 
+                while self.added_clients:
+                    client = self.added_clients.popleft()
+                    self.clients.add(client)
+                    client.slave = self
+                    client.init()
+
                 if not self.clients:
                       break
-
+                
                 self.connection.send(Receive())
-                (queue, event) = self.connection.recv()
+
+                try:
+                    (queue, event) = self.connection.recv()
+                except IOError as e:
+                    if e[0] == 4:
+                        break
+                    else:
+                        raise
+
                 if queue in self.queue_clients:
                     client = self.queue_clients[queue].popleft()
                     client.handle_event(queue, event)
                     self.queue_clients[queue].append(client)
         finally:
+            # not deinitializing remaining clients, only disconnecting from queues
             for client in self.clients:
                 for queue in set(self.queue_clients):
                     if client in self.queue_clients[queue]:
                         self.detach(client, queue)
 
-                client.deinit()
-
             self.clients.clear()
 
-        self.connection.send(Disconnect())
+        self.disconnect()
 
