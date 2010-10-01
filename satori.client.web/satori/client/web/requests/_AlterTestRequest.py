@@ -10,9 +10,11 @@ class AlterTestRequest(Request):
     @classmethod
     def process(cls, request):
         d = ParseURL(request.POST['back_to'])
+        path = request.POST['back_path']
+        d2 = follow(d,path)
         if not 'valchange' in request.POST.keys():
             if request.POST['judge']:
-                d['judge'] = [request.POST['judge']]
+                d2['judge'] = [request.POST['judge']]
             return GetLink(d,'')
         if 'testid' in request.POST.keys():
             ot = Test.filter({'id' : int(request.POST['testid'])})[0]

@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from django.db import transaction
+from collections import deque
 
 from satori.core.checking.accumulators import accumulators
 from satori.core.checking.utils import wrap_transaction
@@ -23,7 +24,7 @@ class SerialDispatcher(DispatcherBase):
 
     def send_test(self):
         while self.to_check:
-            next_test = Test.get(id=self.to_check.popleft())
+            next_test = Test.objects.get(id=self.to_check.popleft())
             (next_test_result, created) = TestResult.objects.get_or_create(submit=self.test_suite_result.submit, test=next_test)
             if next_test_result.pending:
                 self.next_test_result_id = next_test_result.id
