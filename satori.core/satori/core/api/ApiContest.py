@@ -109,7 +109,7 @@ def submit(token, self, problem_mapping, content, filename):
     blob = OpenAttribute.create_blob()
     blob.write(content)
     hash = blob.close()
-    submit.data.attributes.set_blob_hash(name='content', hash=hash, filename=filename)
+    submit.data.attributes.oa_set_blob_hash(name='content', hash=hash, filename=filename)
     TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
     return submit
 @contest.submit.can
