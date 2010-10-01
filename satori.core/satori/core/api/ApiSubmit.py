@@ -41,7 +41,7 @@ def get_test_suite_result(token, self, test_suite=None):
 @Argument('test_suite', type=(TestSuite, NoneType))
 @ReturnValue(type=(unicode, NoneType))
 def get_test_suite_status(token, self, test_suite=None):
-    test_suite_result = Submit_get_test_suite_results.implementation(token, self, test_suite)
+    test_suite_result = Submit_get_test_suite_result.implementation(token, self, test_suite)
 
     if test_suite_result is None:
         return None
@@ -54,7 +54,7 @@ def get_test_suite_status(token, self, test_suite=None):
 @Argument('test_suite', type=(TestSuite, NoneType))
 @ReturnValue(type=(unicode, NoneType))
 def get_test_suite_report(token, self, test_suite=None):
-    test_suite_result = Submit_get_test_suite_results.implementation(token, self, test_suite)
+    test_suite_result = Submit_get_test_suite_result.implementation(token, self, test_suite)
 
     if test_suite_result is None:
         return None
