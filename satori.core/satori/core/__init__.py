@@ -3,7 +3,17 @@
 exposed over Thrift.
 """
 
+import sys
+import os
 import traceback
+from multiprocessing import Process 
+from multiprocessing.connection import Client
+from setproctitle import setproctitle
+import signal as signal_module
+from signal import signal, getsignal, SIGINT, SIGTERM, pause
+from satori.events import Slave2
+
+signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG'))
 
 def get_ars_interface():
     from satori.ars import wrapper
@@ -16,6 +26,99 @@ def get_ars_interface():
         wrapper.register_middleware(cwrapper.CheckRightsMiddleware())
     return wrapper.generate_interface()
 
+class SatoriProcess(Process):
+    def __init__(self, name):
+        super(SatoriProcess, self).__init__()
+        self.name = name
+    
+    def do_handle_signal(self, signum, frame):
+        sys.exit()
+
+    def handle_signal(self, signum, frame):
+        print '{0} caught signal {1}'.format(self.name, signalnames.get(signum, signum))
+        self.do_handle_signal(signum, frame)
+
+    def run(self):
+        os.setsid()
+        setproctitle('satori: {0}'.format(self.name))
+
+        signal(SIGTERM, self.handle_signal)
+
+        print '{0} starting'.format(self.name)
+
+        try:
+            self.do_run()
+        except:
+            print '{0} exited with error'.format(self.name)
+            traceback.print_exc()
+        else:
+            print '{0} exited'.format(self.name)
+
+
+class EventSlaveProcess(SatoriProcess):
+    def __init__(self, name, clients):
+        super(EventSlaveProcess, self).__init__(name)
+        self.clients = clients
+
+    def do_handle_signal(self, signum, frame):
+        self.slave.terminate()
+
+    def do_run(self):
+        self.slave = Slave2(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
+        for client in self.clients:
+            self.slave.add_client(client)
+        self.slave.run()
+
+class EventMasterProcess(SatoriProcess):
+    def __init__(self):
+        super(EventMasterProcess, self).__init__('event master')
+
+    def do_run(self):
+        from django.conf import settings
+        from satori.events import Master
+        from satori.events.mapper import TrivialMapper
+        from multiprocessing.connection import Listener
+        listener = Listener(address=(settings.EVENT_HOST, settings.EVENT_PORT))
+        master = Master(mapper=TrivialMapper())
+        master.listen(listener)
+        master.run()
+
+class ThriftServerProcess(SatoriProcess):
+    def __init__(self):
+        super(ThriftServerProcess, self).__init__('thrift server')
+
+    def do_run(self):
+        from django.conf import settings
+        from thrift.transport.TSocket import TServerSocket
+        from thrift.server.TServer import TThreadedServer
+        from satori.ars.thrift import ThriftServer
+        server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), get_ars_interface())
+        server.run()
+
+class BlobServerProcess(SatoriProcess):
+    def __init__(self):
+        super(BlobServerProcess, self).__init__('blob server')
+
+    def do_handle_signal(self, signum, frame):
+        self.server.stop()
+
+    def do_run(self):
+        from django.conf import settings
+        from django.core.handlers.wsgi import WSGIHandler
+        from cherrypy.wsgiserver import CherryPyWSGIServer
+        self.server = CherryPyWSGIServer((settings.BLOB_HOST, settings.BLOB_PORT), WSGIHandler())
+        self.server.start()
+
+class DbevNotifierProcess(SatoriProcess):
+    def __init__(self):
+        super(DbevNotifierProcess, self).__init__('dbev notifier')
+
+    def do_run(self):
+        from django.conf import settings
+        from satori.dbev.notifier import run_notifier
+        connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
+        run_notifier(Slave2(connection))
+
 def export_thrift():
     """Entry Point. Writes the Thrift contract of the server to standard output.
     """
@@ -25,101 +128,6 @@ def export_thrift():
     from satori.ars.thrift import ThriftWriter
     writer = ThriftWriter()
     writer.write_to(get_ars_interface(), stdout)
-
-def start_server_event_master():
-    from django.conf import settings
-    from setproctitle import setproctitle
-    setproctitle('satori: event master')
-    from multiprocessing.connection import Listener
-    from satori.events import Master
-    from satori.events.mapper import TrivialMapper
-    listener = Listener(address=(settings.EVENT_HOST, settings.EVENT_PORT))
-    master = Master(mapper=TrivialMapper())
-    master.listen(listener)
-    print 'event master starting'
-    master.run()
-
-def start_server_thrift_server():
-    from django.conf import settings
-    from setproctitle import setproctitle
-    setproctitle('satori: thrift server')
-    from thrift.transport.TSocket import TServerSocket
-    from thrift.server.TServer import TThreadedServer
-    from satori.ars.thrift import ThriftServer
-    server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), get_ars_interface())
-    print 'thrift server starting'
-    server.run()
-
-def start_server_blob_server():
-    from django.conf import settings
-    from setproctitle import setproctitle
-    setproctitle('satori: blob server')
-    from django.core.handlers.wsgi import WSGIHandler
-    from cherrypy.wsgiserver import CherryPyWSGIServer
-    server = CherryPyWSGIServer((settings.BLOB_HOST, settings.BLOB_PORT), WSGIHandler())
-    print 'blob server starting'
-    try:
-        server.start()
-    except KeyboardInterrupt:
-        server.stop()
-
-
-def start_server_dbev_notifier():
-    from django.conf import settings
-    from setproctitle import setproctitle
-    setproctitle('satori: dbev notifier')
-    from multiprocessing.connection import Client
-    from satori.dbev.notifier import notifier
-    connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
-    print 'dbev notifier starting'
-    notifier(connection)
-
-def start_server_event_slave():
-    from django.conf import settings
-    from setproctitle import setproctitle
-    setproctitle('satori: event slave')
-    from multiprocessing.connection import Client
-    from satori.events import Slave, QueueId, Attach, Map, Receive
-    slave = Slave(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
-    def dump_events():
-        queue_id = QueueId("*")
-        yield Attach(queue_id)
-        mapping = yield Map(dict(), queue_id)
-        while True:
-            queue, event = yield Receive()
-            #print 'queue', queue, 'received', event
-    slave.schedule(dump_events())
-    print 'event slave starting'
-    slave.run()
-
-def start_server_check_queue():
-    from django.conf import settings
-    from setproctitle import setproctitle
-    setproctitle('satori: check queue')
-    from multiprocessing.connection import Client
-    from satori.events import Slave2
-    from satori.core.checking.check_queue import CheckQueue
-    slave = Slave2(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
-    slave.add_client(CheckQueue())
-    print 'check queue starting'
-    slave.run()
-
-def start_server_dispatcher_runner():
-    from django.conf import settings
-    from setproctitle import setproctitle
-    setproctitle('satori: dispatcher runner')
-    from multiprocessing.connection import Client
-    from satori.events import Slave2
-    from satori.core.checking.dispatcher_runner import DispatcherRunner
-    slave = Slave2(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
-    slave.add_client(DispatcherRunner())
-    print 'dispatcher runner starting'
-    try:
-        slave.run()
-    except:
-        traceback.print_exc()
-    print 'dispatcher runner finishing'
-
 
 def start_server():
     import os
@@ -132,42 +140,39 @@ def start_server():
     from multiprocessing import Process
     from time import sleep
 
-    event_master = Process(target=start_server_event_master)
+    event_master = EventMasterProcess()
     event_master.start()
     processes.append(event_master)
 
     sleep(1)
 
-    thrift_server = Process(target=start_server_thrift_server)
-    thrift_server.start()
-    processes.append(thrift_server)
-
-    blob_server = Process(target=start_server_blob_server)
-    blob_server.start()
-    processes.append(blob_server)
-
-    dbev_notifier = Process(target=start_server_dbev_notifier)
+    dbev_notifier = DbevNotifierProcess()
     dbev_notifier.start()
     processes.append(dbev_notifier)
 
-    event_slave = Process(target=start_server_event_slave)
-    event_slave.start()
-    processes.append(event_slave)
-
-    check_queue = Process(target=start_server_check_queue)
+    from satori.core.checking.check_queue import CheckQueue
+    check_queue = EventSlaveProcess('check queue', [CheckQueue()])
     check_queue.start()
     processes.append(check_queue)
-
-    dispatcher_runner = Process(target=start_server_dispatcher_runner)
+    
+    from satori.core.checking.dispatcher_runner import DispatcherRunner
+    dispatcher_runner = EventSlaveProcess('dispatcher runner', [DispatcherRunner()])
     dispatcher_runner.start()
     processes.append(dispatcher_runner)
 
-    from signal import signal, SIGINT, SIGTERM, pause
+    thrift_server = ThriftServerProcess()
+    thrift_server.start()
+    processes.append(thrift_server)
+
+    blob_server = BlobServerProcess()
+    blob_server.start()
+    processes.append(blob_server)
 
     def handle_signal(signum, frame):
-        for process in processes:
+        for process in reversed(processes):
             process.terminate()
             process.join()
+#            sleep(1)
         exit(0)
 
     signal(SIGINT, handle_signal)

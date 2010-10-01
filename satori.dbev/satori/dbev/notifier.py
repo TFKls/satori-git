@@ -5,13 +5,8 @@ import traceback
 from django.db import connection
 from django.db import models
 from satori.dbev.events import registry
-from satori.events import Event, KeepAlive, Send, Slave
+from satori.events import Event
 from satori.core.models import Object
-
-def notifier(connection):
-    slave = Slave(connection)
-    slave.schedule(notifier_coroutine())
-    slave.run()
 
 def row_to_dict(cursor, row):
     res = {}
@@ -20,7 +15,7 @@ def row_to_dict(cursor, row):
             res[cursor.description[i][0]] = row[i]
     return res
 
-def handle_notifications(cursor):
+def handle_notifications(cursor, slave):
     while True:
         cursor.execute('SELECT min(transaction) AS transaction FROM dbev_notification')
         res = row_to_dict(cursor, cursor.fetchone())
@@ -85,17 +80,17 @@ def handle_notifications(cursor):
                         for field in reg.on_insert:
                             if field in rec:
                                 event['new.'+field] = rec[field]
-                        yield Send(event)
+                        slave.send(event)
                     if action == 'U' and reg.on_update != None:
                         for field in reg.on_update:
                             if field in rec:
                                 event['new.'+field] = rec[field]
-                        yield Send(event)
+                        slave.send(event)
                     if action == 'D' and reg.on_delete != None:
                         for field in reg.on_delete:
                             if field in rec:
                                 event['old.'+field] = rec[field]
-                        yield Send(event)
+                        slave.send(event)
                 if len(model._meta.parents.items()) > 0:
                     model = model._meta.parents.items()[0][0]
                 else:
@@ -103,7 +98,7 @@ def handle_notifications(cursor):
         cursor.execute('DELETE FROM dbev_notification WHERE transaction=%s', [int(transaction)])
 
 
-def notifier_coroutine():
+def run_notifier(slave):
     while True:
         try:
             cursor = connection.cursor()
@@ -112,20 +107,22 @@ def notifier_coroutine():
             con.commit()
             cursor = con.cursor()
             cursor.execute('LISTEN satori;')
-            for action in handle_notifications(cursor):
-                yield action
+            cursor.execute('DELETE FROM dbev_notification;')
 
             while True:
                 if select.select([con], [], [], 5) == ([], [], []):
-                    yield KeepAlive()
+                    slave.keep_alive()
                 else:
                     con.poll()
                     if con.notifies:
                         while con.notifies:
                             con.notifies.pop()
-                        for action in handle_notifications(cursor):
-                            yield action
+                        handle_notifications(cursor, slave)
         except GeneratorExit:
+            return
+        except SystemExit:
             break
         except:
             traceback.print_exc()
+    slave.disconnect()
+
