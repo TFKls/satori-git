@@ -44,7 +44,7 @@ class ThriftClient(threading.local):
                 self.stop()
                 self.start()
                 return self._processor.call(procedure, values.named, self._protocol, self._protocol)
-            except socket.error as e:
+            except IOError as e:
                 if e[0] == 32:
                     self.stop()
                     self.start()
