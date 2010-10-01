@@ -106,13 +106,10 @@ def submit(token, self, problem_mapping, content, filename):
     submit.problem = problem_mapping
     submit.save()
     Privilege.grant(contestant, submit, 'VIEW')
-    OpenAttribute(object=submit.data, name='filename', oatype=OpenAttribute.OATYPES_STRING, string_value=filename).save()
-    blob = Blob()
-    blob.open('w')
+    blob = OpenAttribute.create_blob()
     blob.write(content)
-    blob.close()
-    blob.save()
-    OpenAttribute(object=submit.data, name='content', oatype=OpenAttribute.OATYPES_BLOB, blob=blob).save()
+    hash = blob.close()
+    submit.data.attributes.set_blob_hash(name='content', hash=hash, filename=filename)
     TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
     return submit
 @contest.submit.can
