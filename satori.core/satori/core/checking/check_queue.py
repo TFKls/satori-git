@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from collections import deque
 import traceback
-from satori.core.models import TestResult
+from satori.core.models import TestResult, User
 from satori.core.checking.utils import wrap_transaction
 from satori.events import Event, Client2
 
