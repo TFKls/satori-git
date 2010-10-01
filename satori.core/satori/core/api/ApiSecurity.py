@@ -19,7 +19,7 @@ from satori.core.sec.tools import RightCheck, RoleSet, Token
 from satori.core.sec.store import Store
 
 from satori.objects import DispatchOn, Argument, ReturnValue
-from satori.core.models import Object, User, Login, OpenIdentity, Global, Role, Machine, Privilege
+from satori.core.models import Entity, User, Login, OpenIdentity, Global, Role, Machine, Privilege
 from satori.ars.wrapper import Struct, StaticWrapper, TypedMap
 from satori.ars.server import server_info
 
@@ -68,7 +68,7 @@ def whoami(token):
 
 @security.method
 @Argument('token', type=Token)
-@Argument('object', type=Object)
+@Argument('object', type=Entity)
 @Argument('right', type=str)
 @ReturnValue(type=bool)
 def right_have(token, object, right):

@@ -127,7 +127,7 @@ class OpenAttribute(models.Model):
     """
     __module__ = "satori.core.models"
 
-    object      = models.ForeignKey('Object', related_name='attributes')
+    object      = models.ForeignKey('Entity', related_name='attributes')
     name        = models.CharField(max_length=50)
     is_blob     = models.BooleanField()
     value       = models.TextField()

@@ -2,13 +2,13 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 
-class RoleMapping(Object):
+class RoleMapping(Entity):
     """Model. Intermediary for many-to-many relationship between Roles.
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_rolemapping')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_rolemapping')
 
     parent     = models.ForeignKey('Role', related_name='childmap')
     child      = models.ForeignKey('Role', related_name='parentmap')

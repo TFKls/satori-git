@@ -2,13 +2,13 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 
-class TestResult(Object):
+class TestResult(Entity):
     """Model. Result of a single Test for a single Submit.
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_testresult')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_testresult')
 
     submit      = models.ForeignKey('Submit')
     test        = models.ForeignKey('Test')

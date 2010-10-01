@@ -5,7 +5,7 @@ from types import NoneType
 
 from satori.objects import Argument, ReturnValue, Namespace
 from satori.core.cwrapper import ModelWrapper, Struct
-from satori.core.models import Privilege, Role, Global, Object
+from satori.core.models import Privilege, Role, Global, Entity
 from satori.core.sec import Token
 
 privilege = ModelWrapper(Privilege)
@@ -45,7 +45,7 @@ PrivilegeTimes = Struct('PrivilegeTimes', (
 @privilege.method
 @Argument('token', type=Token)
 @Argument('role', type=Role)
-@Argument('object', type=Object)
+@Argument('object', type=Entity)
 @Argument('right', type=basestring)
 @Argument('start_on', type=(datetime, NoneType))
 @Argument('finish_on', type=(datetime, NoneType))
@@ -60,7 +60,7 @@ def grant_can(token, role, object, right, start_on=None, finish_on=None):
 @privilege.method
 @Argument('token', type=Token)
 @Argument('role', type=Role)
-@Argument('object', type=Object)
+@Argument('object', type=Entity)
 @Argument('right', type=basestring)
 @ReturnValue(type=NoneType)
 def revoke(token, role, object, right):
@@ -73,7 +73,7 @@ def revoke_can(token, role, object, right):
 @privilege.method
 @Argument('token', type=Token)
 @Argument('role', type=Role)
-@Argument('object', type=Object)
+@Argument('object', type=Entity)
 @Argument('right', type=basestring)
 @ReturnValue(type=PrivilegeTimes)
 def get(token, role, object, right):

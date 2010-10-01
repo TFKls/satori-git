@@ -2,14 +2,14 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 from satori.core.models._AttributeGroup import AttributeGroup
 
-class Submit(Object):
+class Submit(Entity):
     """Model. Single problem solution (within or outside of a Contest).
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_submit')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_submit')
 
     contestant  = models.ForeignKey('Contestant')
     problem     = models.ForeignKey('ProblemMapping')

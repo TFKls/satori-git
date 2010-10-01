@@ -2,14 +2,14 @@
 
 from satori.objects import Argument, ReturnValue
 from satori.core.cwrapper import ModelWrapper
-from satori.core.models import Object
+from satori.core.models import Entity
 from satori.core.sec import Token
 
-object = ModelWrapper(Object)
+object = ModelWrapper(Entity)
 
 @object.method
 @Argument('token', type=Token)
-@Argument('self', type=Object)
+@Argument('self', type=Entity)
 @Argument('right', type=str)
 @ReturnValue(type=bool)
 def demand_right(token, self, right):

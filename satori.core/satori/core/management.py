@@ -4,9 +4,9 @@ from django.db.models.signals import post_syncdb
 
 def create_admin(app, created_models, verbosity, **kwargs):
     import satori.core.models
-    from satori.core.models import Object
+    from satori.core.models import Entity
 
-    if (app != satori.core.models) or (Object not in created_models):
+    if (app != satori.core.models) or (Entity not in created_models):
         return
 
     from django.conf import settings

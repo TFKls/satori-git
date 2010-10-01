@@ -2,14 +2,14 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 from datetime import datetime
 
-class TestSuite(Object):
+class TestSuite(Entity):
     """Model. A group of tests, with dispatch and aggregation algorithm.
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_testsuite')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_testsuite')
 
     problem      = models.ForeignKey('Problem')
     name         = models.CharField(max_length=50)

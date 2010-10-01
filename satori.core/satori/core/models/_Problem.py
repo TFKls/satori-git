@@ -2,14 +2,14 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 from satori.core.models._AttributeGroup import AttributeGroup
 
-class Problem(Object):
+class Problem(Entity):
     """Model. Description of an (abstract) problems.
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_problem')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_problem')
 
     name        = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, default="")

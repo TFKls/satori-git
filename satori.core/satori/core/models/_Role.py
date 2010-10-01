@@ -2,13 +2,13 @@
 
 from django.db import models
 from satori.dbev import Events
-from satori.core.models._Object import Object
+from satori.core.models._Entity import Entity
 
-class Role(Object):
+class Role(Entity):
     """Model. Base for authorization "levels".
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Object, parent_link=True, related_name='cast_role')
+    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_role')
 
     name        = models.CharField(max_length=50)
     absorbing   = models.BooleanField(default=False)

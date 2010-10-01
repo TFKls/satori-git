@@ -3,7 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 
-class Object(models.Model):
+class Entity(models.Model):
     """Model. Base for all database objects. Provides common GUID space.
     """
     __module__ = "satori.core.models"
@@ -13,7 +13,7 @@ class Object(models.Model):
     def save(self, *args, **kwargs):
         if not self.model:
               self.model = self._meta.app_label + '.' + self._meta.module_name
-        super(Object, self).save(*args, **kwargs)
+        super(Entity, self).save(*args, **kwargs)
 
     @classmethod
     def ars_type(cls):
@@ -53,6 +53,6 @@ class Object(models.Model):
         roleset = RoleSet(token=token)
         return checker(roleset, self, str(right))
 
-class ObjectEvents(Events):
-    model = Object
+class EntityEvents(Events):
+    model = Entity
     on_insert = on_update = on_delete = []
