@@ -2,6 +2,7 @@
 
 from collections import Sequence, Mapping
 from datetime import datetime
+from operator import itemgetter
 from time import mktime
 from types import NoneType, FunctionType
 import sys
@@ -353,7 +354,7 @@ def generate_procedure(name, proc):
 def generate_service(wrapper, base):
     service = ArsService(name=wrapper._name, base=base)
 
-    for (name, proc) in wrapper._generate_procedures().iteritems():
+    for (name, proc) in sorted(wrapper._generate_procedures().items(), key=itemgetter(0)):
         service.add_procedure(generate_procedure(name, proc))
 
     return service
