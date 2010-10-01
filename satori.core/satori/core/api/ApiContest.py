@@ -98,7 +98,7 @@ def accept_contestant_check(token, self, contestant):
 @Argument('filename', type=str)
 @ReturnValue(type=Submit)
 def submit(token, self, problem_mapping, content, filename):
-    contestant = Contestant.objects.filter(contest=self, children__id=token.user.id)[0]
+    contestant = Contestant.objects.get(contest=self, children__id=token.user.id)
     if problem_mapping.contest != self:
         raise "Go away"
     submit = Submit()

@@ -25,19 +25,30 @@ class ProblemsWidget(Widget):
             except:
                 pass
             entry['editlink'] = GetLink(DefaultLayout(dict = params,maincontent = 'editprmap',problemid = [str(p.id)]),'')
-            published = False
-            stime = None
-            ftime = None
+            entry["visible"] = "No"
             times = Privilege.get(r, p, 'SUBMIT')
             if times:
                 if ((times.start_on is None) or (times.start_on < datetime.now())) and ((times.finish_on is None) or (times.finish_on > datetime.now())):
-                	published = True
-                stime = str(priv.start_on)
-                ftime = str(times.finish_on)
-            if published:
-                stime = 'Published'
-            entry['stime'] = stime
-            entry['ftime'] = ftime
+                    entry["from"] = "Active"
+                    if times.start_on:
+                        entry["from"] = entry["from"]+" from "+times.start_on
+                if times.start_on and times.start_on > datetime.now():
+                    entry["from"] = "Start on "+times.start_on
+                if times.finish_on:
+                    if times.finish_on>datetime_now():
+                        entry["until"] = "Finish on "+times.finish_on
+                    else:
+                        entry["until"] = "Submits ended "+times.finish_on
+                else:
+                    entry["until"] = "Submitable forever"
+                if (times.start_on is None) or (times.start_on < datetime.now()):
+                    entry["visible"] = "Yes"
+            else:
+                entry["from"] = "No dates set"
+            view = Privilege.get(r, p, 'VIEW')
+            if view:
+                if ((view.start_on is None) or (view.start_on < datetime.now())) and ((view.finish_on is None) or (view.finish_on > datetime.now())):
+                    entry["visible"] = "Yes"
             entry['p'] = p
             self.problems.append(entry)
         self.problems.sort(key=itemgetter('code'))

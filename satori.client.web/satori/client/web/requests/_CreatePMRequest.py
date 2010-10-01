@@ -12,7 +12,7 @@ class CreatePMRequest(Request):
     def process(cls,request):
         contest = ContestById(int(request.POST['contest']))
         problem = Problem.filter({'id' : int(request.POST['problem'])})[0]
-        fullts = TestSuite.create({'problem': problem, 'dispatcher': ''})
+        fullts = TestSuite.create({'problem': problem, 'dispatcher': 'SerialDispatcher', 'accumulators': 'StatusAccumulator'})
         for t in Test.filter({'problem' : problem}):
             TestMapping.create({'suite' : fullts, 'test' : t, 'order' : t.id})
         ProblemMapping.create( {'contest' : contest, 'problem' : problem, 'code' : request.POST['code'], 'title' : request.POST['title'],'default_test_suite' : fullts} )
