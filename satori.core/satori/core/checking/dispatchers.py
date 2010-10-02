@@ -1,9 +1,10 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from django.db import transaction
 from collections import deque
+import traceback
 
 from satori.core.checking.accumulators import accumulators
-from satori.core.checking.utils import wrap_transaction
+from satori.core.checking.utils import wrap_transaction_management
 from satori.core.models import Test, TestResult
 from satori.events import Event, Client2
 
@@ -11,10 +12,86 @@ class DispatcherBase(Client2):
     def __init__(self, test_suite_result, accumulator_list, runner): 
         super(DispatcherBase, self).__init__()
         self.test_suite_result = test_suite_result
-        self.queue = 'dispatcher_{0}'.format(test_suite_result.id)
+        self.runner = runner
         self.accumulators = [
                 accumulators[accumulator](test_suite_result) for accumulator in accumulator_list
         ]
+
+    def accumulate(self, test_result):
+        for accumulator in self.accumulators:
+            accumulator.accumulate(test_result)
+
+    def status(self):
+        return all(accumulator.status() for accumulator in self.accumulators)
+
+    def do_init(self):
+        self.error = False
+        self.queue = 'dispatcher_{0}'.format(self.test_suite_result.id)
+        self.attach(self.queue)
+        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': False, 'new.submit': self.test_suite_result.submit.id}, self.queue)
+
+        for accumulator in self.accumulators:
+            accumulator.init()
+
+    def do_deinit(self):
+        for accumulator in self.accumulators:
+            accumulator.deinit()
+
+        self.test_suite_result.pending = False
+        self.test_suite_result.save()
+
+    def do_handle_event(self, queue, event):
+        pass
+    
+    @wrap_transaction_management
+    def init(self):
+        try:
+            self.do_init()
+            transaction.commit()
+        except:
+            print 'Dispatcher failed'
+            traceback.print_exc()
+            self.error = True
+            self.finish()
+            transaction.rollback()
+
+    @wrap_transaction_management
+    def deinit(self):
+        if not self.error:
+            try:
+                self.do_deinit()
+                transaction.commit()
+            except:
+                print 'Dispatcher failed'
+                traceback.print_exc()
+                self.error = True
+                transaction.rollback()
+        if self.error:
+            try:
+                self.test_suite_result.attributes.oa_set_str('status', 'INT')
+                self.test_suite_result.status = 'INT'
+                self.test_suite_result.report = 'Internal error'
+                self.test_suite_result.pending = False
+                self.test_suite_result.save()
+                transaction.commit()
+            except:
+                print 'Dispatcher error handler failed'
+                traceback.print_exc()
+                transaction.rollback()
+        self.runner.dispatcher_stopped(self.test_suite_result)
+
+    @wrap_transaction_management
+    def handle_event(self, queue, event):
+        try:
+            self.do_handle_event(queue, event)
+            transaction.commit()
+        except:
+            print 'Dispatcher failed'
+            traceback.print_exc()
+            self.error = True
+            self.finish()
+            transaction.rollback()
+
 
 class SerialDispatcher(DispatcherBase):
     """Serial dispatcher"""
@@ -30,18 +107,15 @@ class SerialDispatcher(DispatcherBase):
                 self.next_test_result_id = next_test_result.id
                 return
             else:
-                for accumulator in self.accumulators:
-                    accumulator.accumulate(next_test_result)
-                if any(not accumulator.status() for accumulator in self.accumulators):
+                self.accumulate(next_test_result)
+                if not self.status():
                     self.finish()
                     return
 
         self.finish()
 
-    @wrap_transaction
-    def init(self):
-        self.attach(self.queue)
-        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': False, 'new.submit': self.test_suite_result.submit.id}, self.queue)
+    def do_init(self):
+        super(SerialDispatcher, self).do_init()
 
         self.next_test_result_id = -1
 
@@ -49,29 +123,19 @@ class SerialDispatcher(DispatcherBase):
         for test in self.test_suite_result.test_suite.tests.all():
             self.to_check.append(test.id)
 
-        for accumulator in self.accumulators:
-            accumulator.init()
-
         self.send_test()
 
-    @wrap_transaction
-    def deinit(self):
-        for accumulator in self.accumulators:
-            accumulator.deinit()
-        self.test_suite_result.pending = False
-        self.test_suite_result.save()
+    def do_deinit(self):
+        super(SerialDispatcher, self).do_deinit()
 
-    @wrap_transaction
-    def handle_event(self, queue, event):
+    def do_handle_event(self, queue, event):
         if event.object_id != self.next_test_result_id:
             return
 
-        result = TestResult.objects.get(id=event.object_id)
+        test_result = TestResult.objects.get(id=event.object_id)
+        self.accumulate(test_result)
 
-        for accumulator in self.accumulators:
-            accumulator.accumulate(result)
-
-        if any(not accumulator.status() for accumulator in self.accumulators):
+        if not self.status():
             self.finish()
         else:
             self.send_test()
@@ -83,13 +147,8 @@ class ParallelDispatcher(DispatcherBase):
     def __init__(self, test_suite_result, accumulator_list, runner):
         super(ParallelDispatcher, self).__init__(test_suite_result, accumulator_list, runner)
 
-    @wrap_transaction
-    def init(self):
-        self.attach(self.queue)
-        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': False, 'new.submit': self.test_suite_result.submit.id}, self.queue)
-
-        for accumulator in self.accumulators:
-            accumulator.init()
+    def do_init(self):
+        super(ParallelDispatcher, self).do_init()
 
         self.wanted_test_result_ids = set()
         for test in self.test_suite_result.test_suite.tests.all():
@@ -97,35 +156,25 @@ class ParallelDispatcher(DispatcherBase):
             if test_result.pending:
                 self.wanted_test_result_ids.add(test_result.id)
             else:
-                for accumulator in self.accumulators:
-                    accumulator.accumulate(next_test_result)
-#                ?
-#                if any(not accumulator.status() for accumulator in self.accumulators):
-#                    self.finish()
-#                    return
+                self.accumulate(test_result)
 
-    @wrap_transaction
-    def deinit(self):
-        for accumulator in self.accumulators:
-            accumulator.deinit()
-        self.test_suite_result.pending = False
-        self.test_suite_result.save()
+        if not self.wanted_test_result_ids:
+            self.finish()
 
-    @wrap_transaction
-    def handle_event(self, queue, event):
+    def do_deinit(self):
+        super(ParallelDispatcher, self).do_deinit()
+
+    def do_handle_event(self, queue, event):
         if event.object_id not in self.wanted_test_result_ids:
             return
 
         self.wanted_test_result_ids.remove(event.object_id)
 
-        result = TestResult.objects.get(id=event.object_id)
+        test_result = TestResult.objects.get(id=event.object_id)
+        self.accumulate(test_result)
 
-        for accumulator in self.accumulators:
-            accumulator.accumulate(result)
-
-#       ?
-#        if any(not accumulator.status() for accumulator in self.accumulators):
-#            self.finish()
+        if not self.wanted_test_result_ids:
+            self.finish()
 
 dispatchers = {}
 for item in globals().values():

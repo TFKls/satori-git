@@ -14,6 +14,9 @@ class DispatcherRunner(Client2):
         accumulators = res.test_suite.accumulators.split(',')
         self.slave.add_client(dispatcher(res, accumulators, self))
 
+    def dispatcher_stopped(self, test_suite_result):
+        pass
+
     @wrap_transaction
     def init(self):
         for test_suite_result in TestSuiteResult.objects.filter(pending=True):
