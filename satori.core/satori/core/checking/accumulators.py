@@ -23,7 +23,7 @@ class StatusReporter(AccumulatorBase):
         super(StatusReporter, self).__init__(test_suite_result)
 
     def init(self):
-        status = test_suite_result.attributes.oa_get_str('status')
+        status = self.test_suite_result.attributes.oa_get_str('status')
         if status is None:
             status = ''
         self.test_suite_result.status = status
@@ -31,7 +31,7 @@ class StatusReporter(AccumulatorBase):
         self.test_suite_result.save()
 
     def accumulate(self, test_result):
-        status = test_suite_result.attributes.oa_get_str('status')
+        status = self.test_suite_result.attributes.oa_get_str('status')
         if status is None:
             status = ''
         self.test_suite_result.status = status
@@ -39,7 +39,7 @@ class StatusReporter(AccumulatorBase):
         self.test_suite_result.save()
 
     def deinit(self):
-        status = test_suite_result.attributes.oa_get_str('status')
+        status = self.test_suite_result.attributes.oa_get_str('status')
         if status is None:
             status = ''
         self.test_suite_result.status = status

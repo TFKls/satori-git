@@ -20,6 +20,6 @@ class TestResult(Entity):
 
 class TestResultEvents(Events):
     model = TestResult
-    on_insert = on_update = ['submit', 'test', 'tester']
+    on_insert = on_update = ['submit', 'test', 'tester', 'pending']
     on_delete = []
 

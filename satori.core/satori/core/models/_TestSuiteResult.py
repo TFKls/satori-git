@@ -21,5 +21,5 @@ class TestSuiteResult(Entity):
 
 class TestSuiteResultEvents(Events):
     model = TestSuiteResult
-    on_insert = on_update = ['submit', 'test_suite']
+    on_insert = on_update = ['submit', 'test_suite', 'pending']
     on_delete = []

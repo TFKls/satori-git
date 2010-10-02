@@ -41,7 +41,7 @@ class SerialDispatcher(DispatcherBase):
     @wrap_transaction
     def init(self):
         self.attach(self.queue)
-        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': True, 'new.submit': self.test_suite_result.submit.id}, self.queue)
+        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': False, 'new.submit': self.test_suite_result.submit.id}, self.queue)
 
         self.next_test_result_id = -1
 
@@ -86,7 +86,7 @@ class ParallelDispatcher(DispatcherBase):
     @wrap_transaction
     def init(self):
         self.attach(self.queue)
-        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': True, 'new.submit': self.test_suite_result.submit.id}, self.queue)
+        self.map({'type': 'db', 'model': 'core.testresult', 'action': 'U', 'new.pending': False, 'new.submit': self.test_suite_result.submit.id}, self.queue)
 
         for accumulator in self.accumulators:
             accumulator.init()
