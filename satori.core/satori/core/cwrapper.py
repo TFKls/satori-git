@@ -8,7 +8,7 @@ from satori.ars.model import *
 from django.db import models, transaction, connection
 from django.db.models.fields.related import add_lazy_relation
 from satori.core.sec.tools import Token
-from satori.core.models import OpenAttribute, Blob, Privilege
+from satori.core.models import OpenAttribute, Blob, Privilege, Global
 
 def resolve_model(self, model, rel_model):
     self.model = model
@@ -433,17 +433,44 @@ class OpenAttributeWrapper(Wrapper):
         @oaw_self.get_blob.can
         @oaw_self.get_blob_hash.can
         @oaw_self.get_list.can
+        @oaw_self.get_map.can
         def wrap_can_read(token, self, *args, **kwargs):
             return oaw_self._can_read(token, self)
 
-        @oaw_self.set.can
         @oaw_self.set_str.can
         @oaw_self.set_blob.can
-        @oaw_self.set_blob_hash.can
-        @oaw_self.set_list.can
         @oaw_self.delete.can
         def wrap_can_write(token, self, *args, **kwargs):
-            return oaw_self._can_read(token, self)
+            return oaw_self._can_write(token, self)
+
+        @oaw_self.set.can
+        def wrap_can_set(token, self, value):
+            if value.is_blob:
+                raw_blob = Global.get_instance().demand_right(token, 'RAW_BLOB')
+            else:
+                raw_blob = True
+            return oaw_self._can_write(token, self) and raw_blob
+
+        @oaw_self.set_blob_hash.can
+        def wrap_can_set_blob_hash(token, self, name, value, filename=''):
+            raw_blob = Global.get_instance().demand_right(token, 'RAW_BLOB')
+            return oaw_self._can_write(token, self) and raw_blob
+
+        @oaw_self.set_list.can
+        def wrap_can_set_list(token, self, attributes):
+            if any(value.is_blob for value in attributes):
+                raw_blob = Global.get_instance().demand_right(token, 'RAW_BLOB')
+            else:
+                raw_blob = True
+            return oaw_self._can_write(token, self) and raw_blob
+
+        @oaw_self.set_map.can
+        def wrap_can_set_map(token, self, attributes):
+            if any(value.is_blob for value in attributes.values()):
+                raw_blob = Global.get_instance().demand_right(token, 'RAW_BLOB')
+            else:
+                raw_blob = True
+            return oaw_self._can_write(token, self) and raw_blob
 
     def can_read(self, func):
         self._can_read = func
