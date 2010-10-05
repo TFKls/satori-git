@@ -84,8 +84,10 @@ def create(request):
 
     token_container.set_token(Security.login(login='admin', password='admin'))
         
-    paladin = Security.register(login='paladin', fullname='Lech Duraj', password='paladin')
-    dijkstra = Security.register(fullname='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')
+    Security.register(login='paladin', fullname='Lech Duraj', password='paladin')
+    Security.register(fullname='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')
+    paladin = User.filter({'login': 'paladin'})[0]
+    dijkstra = User.filter({'login': 'dijkstra'})[0]
     Privilege.global_grant(paladin, 'ADMIN')
     token = Security.login(login='paladin', password='paladin')
 

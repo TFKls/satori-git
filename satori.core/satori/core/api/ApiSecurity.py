@@ -93,7 +93,7 @@ def login_free(login, nspace=''):
 @Argument('login', type=str)
 @Argument('password', type=str)
 @Argument('fullname', type=str)
-@ReturnValue(type=User)
+@ReturnValue(type=NoneType)
 def register(token, login, password, fullname):
     user = User(login=login, fullname=fullname)
     user.save()
@@ -101,7 +101,6 @@ def register(token, login, password, fullname):
     auth.set_password(password)
     auth.save()
     Privilege.grant(user, user, 'MANAGE')
-    return user
 
 @security.method
 @Argument('login', type=str)
