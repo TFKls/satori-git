@@ -75,6 +75,39 @@ def unwrap_procedure(_proc):
 
     return func
 
+def unwrap_blob_create(class_dict, class_name, meth_name, BlobWriter):
+    @staticmethod
+    def create_blob(length):
+        return BlobWriter(length)
+
+    class_dict[meth_name] = create_blob
+
+    @staticmethod
+    def create_path(path):
+        with open(path, 'r') as src:
+            ln = os.fstat(src.fileno()).st_size
+            blob = BlobWriter(ln)
+            shutil.copyfileobj(src, blob, ln)
+        return blob.close()
+
+    class_dict[meth_name + '_path'] = create_path
+
+def unwrap_blob_open(class_dict, class_name, meth_name, BlobReader):
+    @staticmethod
+    def open_blob(hash):
+        return BlobReader(hash=hash)
+
+    class_dict[meth_name] = open_blob
+
+    @staticmethod
+    def open_path(hash, path):
+        with open(path, 'w') as dst:
+            blob = BlobReader(hash=hash)
+            shutil.copyfileobj(blob, dst, blob.length)
+        return blob.close()
+
+    class_dict[meth_name + '_path'] = open_path
+
 def unwrap_blob_get(class_dict, class_name, meth_name, BlobReader):
     group_name = meth_name[:-9]
 
@@ -114,7 +147,11 @@ def unwrap_service(service, base, fields, BlobReader, BlobWriter):
 
     for proc in service.procedures:
         meth_name = proc.name.split('_', 1)[1]
-        if meth_name.endswith('_get_blob'):
+        if (class_name == 'Blob') and (meth_name == 'create'):
+            unwrap_blob_create(class_dict, class_name, meth_name, BlobWriter)
+        elif (class_name == 'Blob') and (meth_name == 'open'):
+            unwrap_blob_open(class_dict, class_name, meth_name, BlobReader)
+        elif meth_name.endswith('_get_blob'):
             unwrap_blob_get(class_dict, class_name, meth_name, BlobReader)
         elif meth_name.endswith('_set_blob'):
             unwrap_blob_set(class_dict, class_name, meth_name, BlobWriter)

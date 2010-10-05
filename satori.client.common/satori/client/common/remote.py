@@ -36,7 +36,7 @@ def transport_factory():
 print 'Bootstrapping client...'
 
 class BlobWriter(object):
-    def __init__(self, length, model=None, id=None, name=None, group='oa', filename=''):
+    def __init__(self, length, model=None, id=None, name=None, group=None, filename=''):
         if model:
             url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, urllib.quote(name))
         else:
@@ -75,8 +75,11 @@ class BlobWriter(object):
         return ret
 
 class BlobReader(object):
-    def __init__(self, model, id, name, group='oa'):
-        url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, urllib.quote(name))
+    def __init__(self, model=None, id=None, name=None, group=None, hash=None):
+        if model:
+            url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, urllib.quote(name))
+        else:
+            url = '/blob/download/{0}'.format(hash)
 
         headers = {}
         headers['Host'] = client_host
@@ -91,6 +94,7 @@ class BlobReader(object):
             if self.res.status != 200:
                 raise Exception("Server returned %d (%s) answer." % (self.res.status, self.res.reason))
             self.length = int(self.res.getheader('Content-length'))
+            self.filename = self.res.getheader('Filename', '')
         except:
             self.con.close()
             raise
