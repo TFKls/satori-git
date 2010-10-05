@@ -9,9 +9,12 @@ from tempfile import NamedTemporaryFile
 
 from satori.dbev import Events
 
+def blob_filename(hash):
+    return os.path.join(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash)
+
 class BlobReader(object):
     def __init__(self, hash):
-        self.file = open(os.path.join(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash), 'rb')
+        self.file = open(blob_filename(hash), 'rb')
         self.length = os.fstat(self.file.fileno()).st_size
 
     def read(self, size=-1):
@@ -36,7 +39,7 @@ class BlobWriter(object):
     def close(self):
         self.file.close()
         hash = urlsafe_b64encode(self.hash.digest())
-        filename = '{0}/{1}/{2}/{3}/{4}'.format(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash)
+        filename = blob_filename(hash)
         dirname = os.path.dirname(filename)
         if os.path.exists(filename):
             origfile = open(filename, 'rb')
@@ -80,15 +83,11 @@ class OpenAttributeManager(models.Manager):
 
     def oa_get_blob_hash(self, name):
         oa = self.oa_get(name)
-        print 'X', oa
         if oa is None:
-            print 'X1'
             return None
         elif not oa.is_blob:
-            print 'X2'
             raise RuntimeError('Bad attribute type: {0} is not a blob attribute.'.format(name))
         else:
-            print 'X3'
             return oa.value
 
     def oa_open_blob(self, name):
@@ -147,6 +146,10 @@ class OpenAttribute(models.Model):
     @staticmethod
     def open_blob(hash):
         return BlobReader(hash)
+
+    @staticmethod
+    def exists_blob(hash):
+        return os.path.exists(blob_filename(hash))
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('object', 'name'),)
