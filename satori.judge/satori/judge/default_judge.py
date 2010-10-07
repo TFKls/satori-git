@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 import yaml
+import traceback
 
 parser = OptionParser()
 parser.add_option('-H', '--control-host', dest='host', default='192.168.100.101', action='store', type='string')
@@ -50,6 +51,7 @@ def communicate(cmd, args={}, check=True):
         res = con.getresponse()
         ret = yaml.load(res.read())
     except:
+        traceback.print_exc()
         raise Exception('Communication '+cmd+' failed')
     if check and ('res' not in ret or ret['res'] != 'OK'):
         raise Exception('Communication '+cmd+' finished with failure')

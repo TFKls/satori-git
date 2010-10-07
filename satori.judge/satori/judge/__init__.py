@@ -47,7 +47,7 @@ def judge_bash():
 
 def judge_loop():
     from satori.client.common.remote import token_container, Security, Judge, anonymous_blob_path
-    token_container.set_token(Security.machine_login(secret))
+    #token_container.set_token(Security.machine_login(secret))
 
 
     while True:
@@ -58,6 +58,20 @@ def judge_loop():
             td = submit['test_data']
             sd = submit['submit_data']
 
+            submit['test_data'] = {}
+            for n,f in td.items():
+                submit['test_data'][unicode(n)] = {
+                    'is_blob'  : bool(f.is_blob),
+                    'value'    : unicode(f.value),
+                    'filename' : unicode(f.filename)
+                }
+            submit['submit_data'] = {}
+            for n,f in sd.items():
+                submit['submit_data'][unicode(n)] = {
+                    'is_blob'  : bool(f.is_blob),
+                    'value'    : unicode(f.value),
+                    'filename' : unicode(f.filename)
+                }
 
             template = 'default'
             if 'judge.template' in td and not td['judge.template']['is_blob']:
@@ -109,6 +123,7 @@ def judge_initialize():
         subprocess.check_call(['ln', '-s', '/proc/self/fd/2', '/dev/stderr'])
         subprocess.check_call(['/usr/sbin/sshd'])
 
+    subprocess.check_call(['iptables', '-P', 'INPUT', 'ACCEPT'])
     subprocess.check_call(['iptables', '-F', 'INPUT'])
     subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
     subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
@@ -118,6 +133,7 @@ def judge_initialize():
     subprocess.check_call(['iptables', '-A', 'INPUT', '-j', 'LOG'])
     subprocess.check_call(['iptables', '-P', 'INPUT', 'ACCEPT'])
 
+    subprocess.check_call(['iptables', '-P', 'OUTPUT', 'ACCEPT'])
     subprocess.check_call(['iptables', '-F', 'OUTPUT'])
     subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
     subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
@@ -127,6 +143,7 @@ def judge_initialize():
     subprocess.check_call(['iptables', '-A', 'OUTPUT', '-j', 'LOG'])
     subprocess.check_call(['iptables', '-P', 'OUTPUT', 'ACCEPT'])
 
+    subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
     subprocess.check_call(['iptables', '-F', 'FORWARD'])
     subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
 
