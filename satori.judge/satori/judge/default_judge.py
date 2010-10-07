@@ -58,13 +58,13 @@ def communicate(cmd, args={}, check=True):
 submit = communicate('GETSUBMIT', check=False)
 test   = communicate('GETTEST', check=False)
 
-filename   = submit['filename']
+filename   = submit['content']['filename']
 fileext    = filename.split(".")[-1].lower()
 language   = ""
 compile    = []
-time_limit   = int(test.get('time', options.execute_time))
-memory_limit = int(test.get('memory', options.execute_memory))
-checker      = 'checker' in test
+time_limit   = int(test.get('time', {'value' : options.execute_time})['value'])
+memory_limit = int(test.get('memory', {'value' : options.execute_memory})['value'])
+checker      = 'checker' in test and test['checker']['is_blob']
 
 if fileext == 'c':
     language = 'c'

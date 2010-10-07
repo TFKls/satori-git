@@ -11,8 +11,8 @@ import traceback
 jail_dir = '/jail'
 cgroup_dir = '/cgroup'
 templates_dir = '/templates'
-#templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
-templates_src = None
+templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
+#templates_src = None
 secret = 'sekret'
 sleep_time = 5
 cgroup = 'runner'
@@ -67,7 +67,7 @@ def judge_loop():
             try:
                 jb.create()
                 dst_path = os.path.join(jail_dir, 'judge')
-                if 'judge' in td and td['judge']['is_blob']:
+                if False and 'judge' in td and td['judge']['is_blob']:
                     tr.test.data_get_blob_path('judge', dst_path)
                 else:
                     with open(default_judge, 'r') as judge_src:
@@ -78,7 +78,7 @@ def judge_loop():
                 res = jr.run()
                 if debug:
                     dh = anonymous_blob_path(debug)
-                    res['judge.log'] = {'is_blob':True, 'value':dh}
+                    res['judge.log'] = {'is_blob':True, 'value':dh, 'filename': 'judge.log'}
                 print 'judge result', res
                 Judge.set_result(tr, res)
             except:
@@ -96,7 +96,7 @@ def judge_initialize():
             machine = Security.machine_register(name='checker', secret=secret, address='0.0.0.0', netmask='0.0.0.0')
         except:
             machine = Machine.filter({'login':'checker'})[0]
-        Privilege.create_global(role=machine, right='ADMIN')
+        Privilege.global_grant(role=machine, right='ADMIN')
     except:
         traceback.print_exc()
         pass
