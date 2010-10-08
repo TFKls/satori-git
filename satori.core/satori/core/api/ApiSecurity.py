@@ -114,6 +114,8 @@ def login(login, password, nspace=''):
         if nspace != '':
             auth = auth + '.' + nspace
         return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
+    else:
+        raise Exception('Invalid username or password.')
 
 @security.method
 @Argument('login', type=str)
@@ -128,6 +130,8 @@ def passwd(login, old_passwd, new_passwd, nspace=''):
         if nspace != '':
             auth = auth + '.' + nspace
         return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
+    else:
+        raise Exception('Password change failed.')
 
 def openid_realm(url):
     callback = urlparse.urlparse(url)
