@@ -582,7 +582,7 @@ class TokenVerifyMiddleware(object):
             token = Token(token)
 
             if not token.valid:
-                raise Exception('The provided token has expired')
+                raise Exception('TokenError: The provided token has expired')
 
             if token.user_id:
                 userid = int(token.user_id)

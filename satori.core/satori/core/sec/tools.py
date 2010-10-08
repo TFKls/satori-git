@@ -97,7 +97,7 @@ class Token(object):
                     raise
                 except:
                     raise TokenError(
-                        "Provided token '{0}' is invalid."
+                        "TokenError: Provided token '{0}' is invalid."
                         .format(token)
                     )
         if user is not None and user_id is None:

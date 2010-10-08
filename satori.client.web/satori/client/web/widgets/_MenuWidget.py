@@ -1,7 +1,6 @@
 ﻿from copy import deepcopy
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
-from satori.client.web.postmarkup import render_bbcode
 from _Widget import Widget
 
 # left menu

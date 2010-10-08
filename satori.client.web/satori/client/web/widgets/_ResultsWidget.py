@@ -16,8 +16,29 @@ class ResultsWidget(Widget):
             shown = []
         else:
             shown = d['shown']
+        if 'user' in d.keys():
+            curuser = d['user'][0]
+        else:
+            curuser = None
+        self.isadmin = c.demand_right('MANAGE')
+        self.back_to = ToString(params)
+        self.back_path = path
+        
+        cfdict = {'contest' : c}
+        if curuser=='mine' or (not self.isadmin and not curuser):
+            cfdict['id']=CurrentContestant(params).id
+        elif curuser=='all' or (self.isadmin and not curuser):
+            pass
+        else:
+            cfdict['id'] = int(curuser)
+        if self.isadmin:
+            self.users = []
+            self.users.append(['all','All submits',curuser=='all'])
+            self.users.append(['mine','My submits',curuser=='mine'])
+            for cont in Contestant.filter({'contest' : c }):
+                self.users.append([str(cont.id),cont.name_auto(),curuser==str(cont.id)])
         self.submits = []
-        for cont in Contestant.filter({'contest' : c }):
+        for cont in Contestant.filter(cfdict):
             for o in Submit.filter({'contestant': cont}): # TODO: correct 
                 if c.id==o.contestant.contest.id:
                     s = {}
