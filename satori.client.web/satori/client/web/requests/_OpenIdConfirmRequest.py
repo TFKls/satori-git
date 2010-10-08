@@ -18,4 +18,5 @@ class OpenIdConfirmRequest(Request):
             token_container.set_token(Security.openid_register_finish(arg_map=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
         except:
             #follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+            pass
         return GetLink(d,path)

@@ -4,6 +4,7 @@ from satori.client.web.queries import *
 from django.db import models
 from satori.client.common.remote import *
 from _Request import Request
+from django.http import HttpResponse, HttpResponseRedirect
 
 import urlparse
 import urllib
@@ -44,4 +45,5 @@ class OpenIdStartRequest(Request):
             else:
                 return HttpResponseRedirect(res['redirect'])
         except:
-            follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+            #follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+            pass
