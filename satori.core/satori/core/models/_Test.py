@@ -16,6 +16,7 @@ class Test(Entity):
     description = models.TextField(blank=True, default="")
     environment = models.CharField(max_length=50)
     data    = models.OneToOneField('AttributeGroup', related_name='group_test_data')
+    obsolete = models.BooleanField(default=False)
 
     def save(self):
         try:
