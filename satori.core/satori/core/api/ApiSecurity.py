@@ -97,10 +97,10 @@ def login_free(login, nspace=''):
 def register(token, login, password, fullname):
     user = User(login=login, fullname=fullname)
     user.save()
+    Privilege.grant(user, user, 'MANAGE')
     auth = Login(login=login, user=user)
     auth.set_password(password)
     auth.save()
-    Privilege.grant(user, user, 'MANAGE')
 
 @security.method
 @Argument('login', type=str)
@@ -249,6 +249,7 @@ def openid_register_start(login, openid, return_to):
     res = openid_generic_start(openid=openid, return_to=return_to, user_id='', ax=True)
     user = User(login=login, fullname='')
     user.save()
+    Privilege.grant(user, user, 'MANAGE')
     session = res['token'].data
     session['satori.openid.user'] = user.id
     res['token'].data = session
