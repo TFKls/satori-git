@@ -246,7 +246,7 @@ def openid_login_finish(token, arg_map, return_to):
 @Argument('return_to', type=str)
 @ReturnValue(type=OpenIdRedirect)
 def openid_register_start(login, openid, return_to):
-    return openid_generic_start(openid=openid, return_to=return_to, user_id='', ax=True)
+    res = openid_generic_start(openid=openid, return_to=return_to, user_id='', ax=True)
     user = User(login=login, fullname='')
     user.save()
     session = res['token'].data
