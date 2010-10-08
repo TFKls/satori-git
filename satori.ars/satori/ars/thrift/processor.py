@@ -277,16 +277,6 @@ class ThriftProcessor(TProcessor):
                     "Unknown method '{0}'".format(pname))
 
             procedure = self._procedures[pname] # TApplicationException.UNKNOWN_METHOD
-
-            # parse arguments
-#            perf.begin('recv')
-            arguments = self.recv_struct(procedure.parameters_struct, iproto)
-            iproto.readMessageEnd()
-#            perf.end('recv')
-
-            # call the registered implementation
-#            perf.begin('call')
-
             server_info.client_ip = None
             server_info.client_port = None
             try:
@@ -301,6 +291,17 @@ class ThriftProcessor(TProcessor):
             except:
                 pass
             print 'Server serving client: ', server_info.client_ip, ':', server_info.client_port, ',', pname
+
+
+            # parse arguments
+#            perf.begin('recv')
+            arguments = self.recv_struct(procedure.parameters_struct, iproto)
+            iproto.readMessageEnd()
+#            perf.end('recv')
+
+            # call the registered implementation
+#            perf.begin('call')
+
             result = Namespace()
             try:
                 result['result'] = procedure.implementation(**arguments)
