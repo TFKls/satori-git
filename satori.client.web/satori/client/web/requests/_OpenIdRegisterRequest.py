@@ -4,6 +4,7 @@ from satori.client.web.queries import *
 from django.db import models
 from satori.client.common.remote import *
 from _Request import Request
+from django.http import HttpResponse, HttpResponseRedirect
 
 import urlparse
 import urllib
@@ -19,7 +20,6 @@ class OpenIdRegisterRequest(Request):
         openid = vars['openid']
         login = vars['username']
         finisher = request.build_absolute_uri()
-        print finisher
         callback = urlparse.urlparse(finisher)
         qs = urlparse.parse_qs(callback.query)
         qs['back_to'] = (vars['back_to'],)
@@ -34,15 +34,15 @@ class OpenIdRegisterRequest(Request):
         path[-1] = 'openid_confirm'
         path = '.'.join(path)
         finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
-        print finisher
         try:
             res = Security.openid_register_start(openid=openid, return_to=finisher, login=login)
             token_container.set_token(res['token'])
             if res['html']:
                 ret = HttpResponse()
                 ret.write(res['html'])
-                return ret;
+                return ret
             else:
                 return HttpResponseRedirect(res['redirect'])
         except:
-            follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+            #follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+            pass
