@@ -15,15 +15,19 @@ def ParseURL(argstr):
     while pos<length:
         if argstr[pos]==',':
             pos = pos+1
-        m = re.match("(?P<key>[a-zA-Z0-9_]*)\|",argstr[pos:])
+        m = re.match("(?P<key>[a-zA-Z0-9_\-]*)\|",argstr[pos:])
         key = m.group("key")
+        if m.end()==0:
+            raise Exception('URL parse error')
         pos = pos+m.end()
         res[key]= []
         while pos<length and argstr[pos]!=',':
             if argstr[pos]=='+':
                 pos = pos+1
             if argstr[pos]!='(':
-                m = re.match("(?P<val>[a-zA-Z0-9_]*)",argstr[pos:])
+                m = re.match("(?P<val>[a-zA-Z0-9_\-]*)",argstr[pos:])
+                if m.end()==0:
+                    raise Exception('URL parse error')
                 pos = pos+m.end()
                 res[key].append(m.group("val"))
             else:
@@ -66,9 +70,9 @@ def GetLink(dict, path):
 def follow(dict, pathstr):
     d = dict
     if not pathstr or len(pathstr)==0:
-        return d;
+        return d
     path = re.split('\|',pathstr)
     for i in range(0,len(path)):
-        m = re.match("(?P<name>[a-zA-Z0-9_]*)\((?P<index>[0-9]*)\)",path[i])
+        m = re.match("(?P<name>[a-zA-Z0-9_\-]*)\((?P<index>[0-9]*)\)",path[i])
         d = d[m.group("name")][int(m.group("index"))]
     return d

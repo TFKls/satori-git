@@ -52,7 +52,10 @@ def rendertask(rststring, discpath, mathpath):
 
     indexpath = os.path.join(tmpdir,'index.rst')
     tfile = open(indexpath,'w')
-    tfile.write(rststring)
+    if isinstance(rststring, unicode):
+        tfile.write(rststring.encode('utf-8'))
+    else:
+        tfile.write(rststring)    
     tfile.close()
 
     srcdir = tmpdir
@@ -73,6 +76,7 @@ def rendertask(rststring, discpath, mathpath):
     if os.path.exists(outfilepath):
         outfile = open(outfilepath,'r')
         output = outfile.read()
+        output = unicode(output,'utf-8')
         outfile.close()
     else:
         raise Exception('Sphinx html generation error')

@@ -15,7 +15,9 @@ class EditPMWidget(Widget):
         self.tests = list()
         self.back_to = ToString(params)
         self.path = path
-        self.statement = p.statement_get_str('text')
+        s = p.statement_get_str('text')
+        if s:
+            self.statement = s
         dts = p.default_test_suite
         for t in Test.filter({'problem':p.problem}):
             checked = bool(TestMapping.filter({'test':t, 'suite':dts}))

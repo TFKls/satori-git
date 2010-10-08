@@ -10,17 +10,23 @@ from getfile import *
                 
 def load(request,argstr,path = ""):
 	Session.request = request
-	token_container.set_token(request.COOKIES.get('satori_token', ''))
+	try:
+            token_container.set_token(request.COOKIES.get('satori_token', ''))
+        except:
+            token_container.set_token('')
 	params = ParseURL(argstr)
-	w = Widget.FromDictionary(params,path)
-	res = render_to_response(w.htmlFile, {'widget' : w} )
+        w = Widget.FromDictionary(params,path)
+        res = render_to_response(w.htmlFile, {'widget' : w} )
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
 
 def loadPOST(request,argstr=""):
 	Session.request = request
-	token_container.set_token(request.COOKIES.get('satori_token', ''))
+        try:
+            token_container.set_token(request.COOKIES.get('satori_token', ''))
+        except:
+            token_container.set_token('')
 	res = process(argstr,request)
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
@@ -28,7 +34,10 @@ def loadPOST(request,argstr=""):
 
 def loadfile(request,argstr=""):
 	Session.request = request
-	token_container.set_token(request.COOKIES.get('satori_token', ''))
+	try:
+            token_container.set_token(request.COOKIES.get('satori_token', ''))
+        except:
+            token_container.set_token('')
 	res = getfile(argstr,request)
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())

@@ -4,6 +4,7 @@ from satori.client.web.queries import *
 from django.db import models
 from satori.client.common.remote import *
 from _Request import Request
+from django.http import HttpResponse
 
 class AlterTestRequest(Request):
     pathName = 'altertest'

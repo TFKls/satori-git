@@ -3,6 +3,10 @@ from URLDictionary import *
 from satori.client.common.remote import *
 from datetime import datetime
 from xml.dom import minidom
+from satori.client.web.sphinx.translator import rendertask
+from satori.client.web.urls import PROJECT_PATH
+import os
+
 
 # Module for database queries
 
@@ -70,7 +74,7 @@ def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
 
 
 def text2html(text):
-    return text
+    return rendertask(unicode(text), os.path.join(PROJECT_PATH, 'files'), 'files')
     
 
 def parse_judge(judge_content):
