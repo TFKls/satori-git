@@ -19,16 +19,22 @@ class EditTestWidget(Widget):
         self.p = p
         self.test = t
         self.judges = Global.get_instance().checkers_get_list()
-        try:
-            cjudge = p.default_test_data_get_blob("judge")
-            self.judgehash = p.default_test_data_get_blob_hash("judge")
-        except:
-            cjudge = None
-        try:
-            cjudge = t.oa_get_blob("judge")
-            self.judgehash = t_oa_get_blob("judge")
-        except:
-            pass
+        if 'judge' in d.keys():
+            jhash = d['judge'][0]
+        else:
+            try:
+                jhash = p.default_test_data_get_blob_hash("judge")
+            except:
+                jhash = None
+            try:
+                jhash = t.oa_get_blob_hash("judge")
+            except:
+                pass
+        self.judgehash = jhash
+        cjudge = None
+        for j in self.judges:
+            if j.value==jhash:
+                cjudge = Global.get_instance().checkers_get_blob(j.name)
         self.back_to = ToString(params)
         self.back_path = path
         if cjudge:

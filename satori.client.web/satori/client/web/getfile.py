@@ -13,3 +13,21 @@ def getfile(argstr, request):
         response.write(reader.read(reader.length))
         reader.close()
         return response
+    if params[0]=='defaulttestdata':
+        pid = int(params[1])
+        pm = Problem.filter({'id' : int(params[1])})[0]
+        response = HttpResponse(mimetype='application/octet-stream')
+        response['Content-Disposition'] = 'attachment; filename='+pm.name+'.'+params[2]+'.default'
+        reader = pm.default_test_data_get_blob(params[2])
+        response.write(reader.read(reader.length))
+        reader.close()
+        return response
+    if params[0]=='testdata':
+        pid = int(params[1])
+        t = Test.filter({'id' : int(params[1])})[0]
+        response = HttpResponse(mimetype='application/octet-stream')
+        response['Content-Disposition'] = 'attachment; filename='+t.name+'.'+params[2]
+        reader = t.oa_get_blob(params[2])
+        response.write(reader.read(reader.length))
+        reader.close()
+        return response

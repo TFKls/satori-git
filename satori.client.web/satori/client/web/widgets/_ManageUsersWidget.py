@@ -23,7 +23,14 @@ class ManageUsersWidget(Widget):
         self.joining_options=[["no_joining","Only when added",jo==0],["moderated","By acceptation",jo==1],["public","Freely",jo==2]]
         self.anonymous_view = Privilege.get(Security.anonymous(), c, 'VIEW') is not None
         for t in Contestant.filter({'contest':c}):
+            q = {}
+            q['c'] = t
+            q['name'] = t.name_auto()
+            q['members'] = t.members()
+            for member in t.members():
+                if Privilege.get(member,c,'MANAGE'):
+                    q['admin'] = 'Admin'
             if t.accepted:
-                self.accepted.append([t,t.members()])
+                self.accepted.append(q)
             else:
-                self.pending.append([t,t.members()])
+                self.pending.append(q)

@@ -16,6 +16,8 @@ class AlterTestRequest(Request):
         if not 'valchange' in request.POST.keys():
             if request.POST['judge']:
                 d2['judge'] = [request.POST['judge']]
+            elif 'judge' in d2.keys():
+                del d2['judge']
             return GetLink(d,'')
         if 'testid' in request.POST.keys():
             ot = Test.filter({'id' : int(request.POST['testid'])})[0]
