@@ -27,7 +27,7 @@ class EditTestWidget(Widget):
             except:
                 jhash = None
             try:
-                jhash = t.oa_get_blob_hash("judge")
+                jhash = t.data_get_blob_hash("judge")
             except:
                 pass
         self.judgehash = jhash
@@ -47,7 +47,7 @@ class EditTestWidget(Widget):
                 cv = None
                 if t:
                     try:
-                        cv = t.oa_get(d["name"])
+                        cv = t.data_get(d["name"])
                     except:
                         pass
                 if not cv:

@@ -26,14 +26,14 @@ class AlterTestRequest(Request):
         else:
             p = Problem.filter({'id' : int(request.POST['id'])})[0]
             t = Test.create({'problem' : p,'name' : request.POST['testname'],'description' : request.POST['testdesc']})
-        t.oa_set_blob_hash('judge',request.POST['judge'])
+        t.data_set_blob_hash('judge',request.POST['judge'])
         for name,value in request.POST.iteritems():
             if name[0:6]=="value_":
-                t.oa_set_str(name[6:],value)
+                t.data_set_str(name[6:],value)
         for name,f in request.FILES.iteritems():
             if not name+"_clear" in request.POST.keys():
                 writer = anonymous_blob(f.size)
                 writer.write(f.read())
                 fhash = writer.close()
-                t.oa_set_blob_hash(name[5:],fhash)
+                t.data_set_blob_hash(name[5:],fhash)
         return GetLink(DefaultLayout(dict=d,maincontent='editproblem',problemid=[str(p.id)]),'')

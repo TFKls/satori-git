@@ -3,6 +3,7 @@
 from django.db import models
 from satori.dbev import Events
 from satori.core.models._Entity import Entity
+from satori.core.models._Global import Global
 
 class Subpage(Entity):
     """Model. Subpage of a contest.
@@ -19,8 +20,9 @@ class Subpage(Entity):
         right = str(right)
         ret = super(Subpage, self).inherit_right(right)
         if right=='VIEW':
-            if public:
-                ret.append((self.contest,'VIEW'))
+            ret.append((self.contest,'VIEW'))
+            if self.public:
+                ret.append((Global.get_instance().authenticated,'VIEW_BASICS'))
         if right=='EDIT':
             ret.append((self.contest,'MANAGE'))
         return ret

@@ -21,6 +21,7 @@ import ApiRoleMapping
 import ApiRole
 import ApiSecurity
 import ApiSubmit
+import ApiSubpage
 import ApiTestMapping
 import ApiTest
 import ApiTestResult
