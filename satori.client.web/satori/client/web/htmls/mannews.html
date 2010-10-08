@@ -34,7 +34,7 @@
 <p>Already created messages:</p>
 {% for msg in widget.messages %}
 <div class = "newsmsg bDots">
-    <table style="width: 100%">
+    <table class="tlist">
         <tr>
             <td><strong>{{forloop.counter}}.</strong> {{ msg.topic }} </td>
             <td style="width: 6em; text-align: right;"><a class="stdlink" href=" {{ msg.editlink }}"> Edit/delete</a></td>

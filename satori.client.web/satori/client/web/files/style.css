@@ -155,3 +155,7 @@ body {
 .lDots { 
     border-left: 1px dotted #DDDDDD;
 }
+
+table.tlist {
+    width: 100%;
+}

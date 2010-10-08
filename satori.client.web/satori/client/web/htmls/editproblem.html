@@ -13,7 +13,7 @@
     {% if widget.judge %}
     <h4>Default test data</h4>
         <p>Provide default settings for this problem on <strong>{% for c in widget.judges %}{% if c.value == widget.judgehash%}{{c.name}}{%endif%}{%endfor%}</strong></p>
-        <table style="width: 100%">
+        <table class="tlist">
         {% for field in widget.judge %}
             <tr><td>{{ field.description }}:</td>
                 <td>{% if field.type == "value" %}
@@ -42,7 +42,7 @@
 <h4>Tests</h4>
 <p>Below there are given all tests that are connected to this problem. For given problem instance you can always
 pick any subset of this tests as your test suite.</p>
-<table style="width: 100%">
+<table class="tlist">
 {% for t,link in widget.tests %}
     <tr>
     <th>
