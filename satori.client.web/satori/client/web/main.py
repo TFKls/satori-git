@@ -7,6 +7,7 @@ from URLDictionary import *
 from satori.client.web.widgets import Widget
 from requests import process
 from getfile import *
+from queries import DefaultLayout
                 
 def load(request,argstr,path = ""):
 	Session.request = request
@@ -15,8 +16,17 @@ def load(request,argstr,path = ""):
         except:
             token_container.set_token('')
 	params = ParseURL(argstr)
-        w = Widget.FromDictionary(params,path)
-        res = render_to_response(w.htmlFile, {'widget' : w} )
+	try:
+            w = Widget.FromDictionary(params,path)
+            res = render_to_response(w.htmlFile, {'widget' : w} )
+        except Exception as s:
+            if s.message[0:21] == "Exception: TokenError":
+                link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
+                res = HttpResponseRedirect(link)
+                res.set_cookie('satori_token', '')
+                return res
+            else:
+                raise s
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
@@ -27,7 +37,16 @@ def loadPOST(request,argstr=""):
             token_container.set_token(request.COOKIES.get('satori_token', ''))
         except:
             token_container.set_token('')
-	res = process(argstr,request)
+        try:
+            res = process(argstr,request)
+        except Exception as s:
+            if s.message[0:21] == "Exception: TokenError":
+                link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
+                res = HttpResponseRedirect(link)
+                res.set_cookie('satori_token', '')
+                return res
+            else:
+                raise s
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
@@ -38,7 +57,16 @@ def loadfile(request,argstr=""):
             token_container.set_token(request.COOKIES.get('satori_token', ''))
         except:
             token_container.set_token('')
-	res = getfile(argstr,request)
+        try:
+            res = getfile(argstr,request)
+        except Exception as s:
+            if s.message[0:21] == "Exception: TokenError":
+                link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
+                res = HttpResponseRedirect(link)
+                res.set_cookie('satori_token', '')
+                return res
+            else:
+                raise s        
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res

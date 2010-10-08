@@ -24,7 +24,7 @@ class ProblemsWidget(Widget):
                 entry['pdf'] = p.statement_get_blob_hash('pdf')
             except:
                 pass
-            if demand_right(p,'MANAGE'):
+            if Allowed(p,'MANAGE'):
                 entry['editlink'] = GetLink(DefaultLayout(dict = params,maincontent = 'editprmap',problemid = [str(p.id)]),'')
                 entry["visible"] = "No"
                 times = Privilege.get(r, p, 'SUBMIT')
