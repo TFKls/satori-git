@@ -279,7 +279,7 @@ Attribute = Struct('Attribute', (
 AnonymousAttribute = Struct('AnonymousAttribute', (
     ('is_blob', bool, False),
     ('value', str, False),
-    ('name', str, True)
+    ('name', str, True),
     ('filename', str, True),
 ))
 
