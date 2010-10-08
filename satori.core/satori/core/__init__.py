@@ -6,12 +6,13 @@ exposed over Thrift.
 import sys
 import os
 import traceback
+from datetime import datetime
 from multiprocessing import Process 
 from multiprocessing.connection import Client
 from setproctitle import setproctitle
 import signal as signal_module
 from signal import signal, getsignal, SIGINT, SIGTERM, pause
-from satori.events import Slave2
+from satori.events import Slave2, Client2
 
 signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG'))
 
@@ -64,6 +65,7 @@ class EventSlaveProcess(SatoriProcess):
         self.slave.terminate()
 
     def do_run(self):
+        from django.conf import settings
         self.slave = Slave2(connection=Client(address=(settings.EVENT_HOST, settings.EVENT_PORT)))
         for client in self.clients:
             self.slave.add_client(client)
@@ -82,6 +84,15 @@ class EventMasterProcess(SatoriProcess):
         master = Master(mapper=TrivialMapper())
         master.listen(listener)
         master.run()
+
+class DebugQueue(Client2):
+    queue = 'debug_queue'
+    def init(self):
+        self.attach(self.queue)
+        self.map({}, self.queue)
+
+    def handle_event(self, queue, event):
+        print datetime.now(), event
 
 class ThriftServerProcess(SatoriProcess):
     def __init__(self):
@@ -145,6 +156,10 @@ def start_server():
     processes.append(event_master)
 
     sleep(1)
+
+    debug_queue = EventSlaveProcess('debug queue', [DebugQueue()])
+    debug_queue.start()
+    processes.append(debug_queue)
 
     dbev_notifier = DbevNotifierProcess()
     dbev_notifier.start()
