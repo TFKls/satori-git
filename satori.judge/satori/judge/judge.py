@@ -71,7 +71,7 @@ class JailExec(Object):
             os.execv(self.path, self.args)
 
 class JailBuilder(Object):
-    scriptTimeout = 5
+    scriptTimeout = 15
 
     @Argument('root', type=str)
     @Argument('template_path', type=str)
@@ -328,6 +328,8 @@ class JailRun(Object):
                     self.wfile.write(output)
                 except Exception as ex:
                     traceback.print_exc()
+                    print 'Sleep for 10 minutes.'
+                    time.sleep(600)
                     self.send_response(500)
                     self.end_headers()
                     self.wfile.write(str(ex))
@@ -337,18 +339,12 @@ class JailRun(Object):
             def cmd_GETSUBMIT(self, input):
                 output = {}
                 for name, field in self.jail_run.submit['submit_data'].items():
-                    if not field['is_blob']:
-                        output[name] = field['value']
-                    else:
-                        output[name] = None
+                    output[name] = field
                 return output
             def cmd_GETTEST(self, input):
                 output = {}
                 for name, field in self.jail_run.submit['test_data'].items():
-                    if not field['is_blob']:
-                        output[name] = field['value']
-                    else:
-                        output[name] = None
+                    output[name] = field
                 return output
             def cmd_GETCACHE(self, input):
                 hash = gen_hash(input['what'])
@@ -472,7 +468,7 @@ class JailRun(Object):
                 from satori.client.common.remote import anonymous_blob_path
                 path = os.path.join(jailPath(self.jail_run.root, input['path']))
                 hash = anonymous_blob_path(path)
-                self.result[input['name']] = {'is_blob': True, 'value': hash}
+                self.result[input['name']] = {'is_blob': True, 'value': hash, 'filename': os.path.basename(path)}
                 return { 'res' : 'OK' }
 
             def cmd_PING(self, input):

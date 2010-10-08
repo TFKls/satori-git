@@ -403,8 +403,19 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('self', type=model)
         @Argument('attributes', type=TypedList(Attribute))
         @ReturnValue(type=NoneType)
+        def add_list(token, self, attributes):
+            g = get_group(self)
+            for struct in attributes:
+                g.oa_set(struct.name, struct)
+
+        @oaw_self.method
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('attributes', type=TypedList(Attribute))
+        @ReturnValue(type=NoneType)
         def set_list(token, self, attributes):
             g = get_group(self)
+            g.all().delete()
             for struct in attributes:
                 g.oa_set(struct.name, struct)
 
@@ -413,8 +424,21 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('self', type=model)
         @Argument('attributes', type=TypedMap(unicode, AnonymousAttribute))
         @ReturnValue(type=NoneType)
+        def add_map(token, self, attributes):
+            g = get_group(self)
+            for name, struct in attributes.items():
+                if ('name' in struct) and (struct['name'] is not None) and (struct['name'] != name):
+                    raise ValueError('Name mismatch')
+                g.oa_set(name, struct)
+
+        @oaw_self.method
+        @Argument('token', type=Token)
+        @Argument('self', type=model)
+        @Argument('attributes', type=TypedMap(unicode, AnonymousAttribute))
+        @ReturnValue(type=NoneType)
         def set_map(token, self, attributes):
             g = get_group(self)
+            g.all().delete()
             for name, struct in attributes.items():
                 if ('name' in struct) and (struct['name'] is not None) and (struct['name'] != name):
                     raise ValueError('Name mismatch')
@@ -456,6 +480,7 @@ class OpenAttributeWrapper(Wrapper):
             raw_blob = Global.get_instance().demand_right(token, 'RAW_BLOB')
             return oaw_self._can_write(token, self) and raw_blob
 
+        @oaw_self.add_list.can
         @oaw_self.set_list.can
         def wrap_can_set_list(token, self, attributes):
             if any(value.is_blob for value in attributes):
@@ -464,6 +489,7 @@ class OpenAttributeWrapper(Wrapper):
                 raw_blob = True
             return oaw_self._can_write(token, self) and raw_blob
 
+        @oaw_self.add_map.can
         @oaw_self.set_map.can
         def wrap_can_set_map(token, self, attributes):
             if any(value.is_blob for value in attributes.values()):

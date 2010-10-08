@@ -11,8 +11,8 @@ import traceback
 jail_dir = '/jail'
 cgroup_dir = '/cgroup'
 templates_dir = '/templates'
-#templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
-templates_src = None
+templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
+#templates_src = None
 secret = 'sekret'
 sleep_time = 5
 cgroup = 'runner'
@@ -47,7 +47,7 @@ def judge_bash():
 
 def judge_loop():
     from satori.client.common.remote import token_container, Security, Judge, anonymous_blob_path
-    token_container.set_token(Security.machine_login(secret))
+    #token_container.set_token(Security.machine_login(secret))
 
 
     while True:
@@ -58,6 +58,20 @@ def judge_loop():
             td = submit['test_data']
             sd = submit['submit_data']
 
+            submit['test_data'] = {}
+            for n,f in td.items():
+                submit['test_data'][unicode(n)] = {
+                    'is_blob'  : bool(f.is_blob),
+                    'value'    : unicode(f.value),
+                    'filename' : unicode(f.filename)
+                }
+            submit['submit_data'] = {}
+            for n,f in sd.items():
+                submit['submit_data'][unicode(n)] = {
+                    'is_blob'  : bool(f.is_blob),
+                    'value'    : unicode(f.value),
+                    'filename' : unicode(f.filename)
+                }
 
             template = 'default'
             if 'judge.template' in td and not td['judge.template']['is_blob']:
@@ -67,7 +81,7 @@ def judge_loop():
             try:
                 jb.create()
                 dst_path = os.path.join(jail_dir, 'judge')
-                if 'judge' in td and td['judge']['is_blob']:
+                if False and 'judge' in td and td['judge']['is_blob']:
                     tr.test.data_get_blob_path('judge', dst_path)
                 else:
                     with open(default_judge, 'r') as judge_src:
@@ -78,7 +92,7 @@ def judge_loop():
                 res = jr.run()
                 if debug:
                     dh = anonymous_blob_path(debug)
-                    res['judge.log'] = {'is_blob':True, 'value':dh}
+                    res['judge.log'] = {'is_blob':True, 'value':dh, 'filename': 'judge.log'}
                 print 'judge result', res
                 Judge.set_result(tr, res)
             except:
@@ -96,7 +110,7 @@ def judge_initialize():
             machine = Security.machine_register(name='checker', secret=secret, address='0.0.0.0', netmask='0.0.0.0')
         except:
             machine = Machine.filter({'login':'checker'})[0]
-        Privilege.create_global(role=machine, right='ADMIN')
+        Privilege.global_grant(role=machine, right='ADMIN')
     except:
         traceback.print_exc()
         pass
@@ -109,6 +123,7 @@ def judge_initialize():
         subprocess.check_call(['ln', '-s', '/proc/self/fd/2', '/dev/stderr'])
         subprocess.check_call(['/usr/sbin/sshd'])
 
+    subprocess.check_call(['iptables', '-P', 'INPUT', 'ACCEPT'])
     subprocess.check_call(['iptables', '-F', 'INPUT'])
     subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
     subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
@@ -118,6 +133,7 @@ def judge_initialize():
     subprocess.check_call(['iptables', '-A', 'INPUT', '-j', 'LOG'])
     subprocess.check_call(['iptables', '-P', 'INPUT', 'ACCEPT'])
 
+    subprocess.check_call(['iptables', '-P', 'OUTPUT', 'ACCEPT'])
     subprocess.check_call(['iptables', '-F', 'OUTPUT'])
     subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
     subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
@@ -127,6 +143,7 @@ def judge_initialize():
     subprocess.check_call(['iptables', '-A', 'OUTPUT', '-j', 'LOG'])
     subprocess.check_call(['iptables', '-P', 'OUTPUT', 'ACCEPT'])
 
+    subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
     subprocess.check_call(['iptables', '-F', 'FORWARD'])
     subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
 

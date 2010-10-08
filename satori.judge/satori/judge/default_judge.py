@@ -12,6 +12,7 @@ import subprocess
 import sys
 import time
 import yaml
+import traceback
 
 parser = OptionParser()
 parser.add_option('-H', '--control-host', dest='host', default='192.168.100.101', action='store', type='string')
@@ -50,6 +51,7 @@ def communicate(cmd, args={}, check=True):
         res = con.getresponse()
         ret = yaml.load(res.read())
     except:
+        traceback.print_exc()
         raise Exception('Communication '+cmd+' failed')
     if check and ('res' not in ret or ret['res'] != 'OK'):
         raise Exception('Communication '+cmd+' finished with failure')
@@ -58,13 +60,13 @@ def communicate(cmd, args={}, check=True):
 submit = communicate('GETSUBMIT', check=False)
 test   = communicate('GETTEST', check=False)
 
-filename   = submit['filename']
+filename   = submit['content']['filename']
 fileext    = filename.split(".")[-1].lower()
 language   = ""
 compile    = []
-time_limit   = int(test.get('time', options.execute_time))
-memory_limit = int(test.get('memory', options.execute_memory))
-checker      = 'checker' in test
+time_limit   = int(test.get('time', {'value' : options.execute_time})['value'])
+memory_limit = int(test.get('memory', {'value' : options.execute_memory})['value'])
+checker      = 'checker' in test and test['checker']['is_blob']
 
 if fileext == 'c':
     language = 'c'
