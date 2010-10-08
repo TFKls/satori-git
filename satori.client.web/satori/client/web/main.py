@@ -26,7 +26,7 @@ def load(request,argstr,path = ""):
                 res.set_cookie('satori_token', '')
                 return res
             else:
-                raise s
+                raise
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
@@ -46,7 +46,7 @@ def loadPOST(request,argstr=""):
                 res.set_cookie('satori_token', '')
                 return res
             else:
-                raise s
+                raise
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
@@ -66,7 +66,7 @@ def loadfile(request,argstr=""):
                 res.set_cookie('satori_token', '')
                 return res
             else:
-                raise s        
+                raise
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
