@@ -5,12 +5,14 @@ from django.db import models
 from satori.client.common.remote import *
 from _Request import Request
 
-class CreateContestRequest(Request):
-    pathName = 'createcontest'
+class AdjustResultsRequest(Request):
+    pathName = 'adjustresult'
     @classmethod
     def process(cls, request):
-        p = Contest.create_contest(name=request.POST['contestname'])
-        c = p.join_contest()
-        c.invisible = True
         d = ParseURL(request.POST['back_to'])
+        p = request.POST['back_path']
+        d2 = follow(d,p)
+        sel = request.POST['user']
+        if sel:
+            d2['user'] = [sel]        
         return GetLink(d,'')
