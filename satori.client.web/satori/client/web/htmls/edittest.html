@@ -26,7 +26,7 @@ Description
             {% else %}
                 <input type="file" name="file_{{field.name}}"/>                
                 {% if field.cv %}
-                    <a href="getfile.defaulttestdata.{{widget.p.id}}.{{field.name}}">(file uploaded)</a>
+                    <a href="getfile.testdata.{{widget.test.id}}.{{field.name}}">(file uploaded)</a>
                     <input type="checkbox" name="file_{{field.name}}_clear"/> Clear
                 {% endif %}
             {% endif %}
