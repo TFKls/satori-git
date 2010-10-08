@@ -1,18 +1,18 @@
-<h3>Manage news</h3>
+<h3>Create news</h3>
 
+<p>Create new message that will be added to <strong>
+{% if widget.contest %} {{widget.contest.name}} {% else %} Global {% endif %}
+</strong> board:</p>
 <div class="msgeditform">
 <form action = "process.editmsg" method = "post">
     <input type="hidden" name="msgid" value="{{widget.msgid}}">
     <input type="hidden" name="contest_id" value="{{widget.contest.id}}">
     <input type="hidden" name="back_to" value="{{ widget.back_to }}">
-    <div class="msgtopic">
-        <input type="text" name="msgtopic" value="{{ widget.msgtopic }}">
-    </div>
-    <div class="msgcontent">
-        <textarea name="msgcontent" cols="6">{{ widget.msgcontent }}</textarea>
-    </div>
+    <p>Topic:</p>
+    <input type="text" name="msgtopic" value="{{ widget.msgtopic }}" style="width: 100%">
+    <p>Content:</p>
+    <textarea name="msgcontent" rows="10" style="width: 100%">{{ widget.msgcontent }}</textarea>
     {% if not widget.editing %}
-    <div class="msgtype">
         {% if widget.contest %}
         <input type="radio" name="msgtype" value="contest_only" checked>This contest only</input>
         {% endif %}
@@ -20,32 +20,30 @@
         <input type="radio" name="msgtype" value="mainscreen_only"{% if not widget.contest %} checked {% endif %}>Main screen only</input>
         <input type="radio" name="msgtype" value="global">Always visible</input>
         {% endif %}    
-    </div>
     {% endif %}
-    <div class="msgbuttons">
-        {% if widget.editing %}
-        <input type="submit" class="button" name="edit" value="Save">
-        <input type="submit" class="button" name="delete" value="Delete">
-        <input type="submit" class="button" name="cancel" value="Cancel">
-        {% else %}
-        <input type="submit" class="button" name="add" value="Add">
-        {% endif %}
-    </div>
+    {% if widget.editing %}
+    <input type="submit" class="button" name="edit" value="Save">
+    <input type="submit" class="button" name="delete" value="Delete">
+    <input type="submit" class="button" name="cancel" value="Cancel">
+    {% else %}
+    <input type="submit" class="button" name="add" value="Add news" style="float: right">
+    {% endif %}
 </form>
 </div>
-
+<h3>Manage News</h3>
+<p>Already created messages:</p>
 {% for msg in widget.messages %}
-<div class = "newsmsg">
-<span class = "{{ msg.type }}">
-    <div class = "newstitle">
-        {{ msg.topic }}
-    </div>
-    <div class = "newscontent">
-        {{ msg.content|safe }}
-    </div>
-    <div class = "newseditlink">
-        <a class="stdlink" href=" {{ msg.editlink }}"> Edit/delete</a>
-    </div>
+<div class = "newsmsg bDots">
+    <table style="width: 100%">
+        <tr>
+            <td><strong>{{forloop.counter}}.</strong> {{ msg.topic }} </td>
+            <td style="width: 6em; text-align: right;"><a class="stdlink" href=" {{ msg.editlink }}"> Edit/delete</a></td>
+        </tr>
+        <tr>
+            <td>{{ msg.content|escape|truncatewords:30 }} </td>
+            <td></td>
+        </tr>
+    </table>
 </span>
 </div>
 {% endfor %}
