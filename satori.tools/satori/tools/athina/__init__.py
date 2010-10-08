@@ -27,16 +27,16 @@ def athina_import():
         help='Test environment name')
     (options, args) = parser.parse_args()
     if len(args) != 1:
-        parser.error('incorrect number of arguments')
+	    parser.error('incorrect number of arguments')
     base_dir = args[0]
     if not os.path.exists(os.path.join(base_dir, 'server', 'contest', 'users')):
-        raise parser.error('provided path is invalid')
+    	raise parser.error('provided path is invalid')
 
     def get_path(*args):
         return os.path.join(base_dir, 'server', 'contest', *args)
 
     if not options.user:
-        options.user = getpass.getuser()
+    	options.user = getpass.getuser()
     print 'User: ', options.user
     if not options.password:
         options.password = getpass.getpass('Password: ')
@@ -66,7 +66,7 @@ def athina_import():
                 with open(get_path('problem', str(d), submit), 'r') as f:
                     problem = f.readline().strip(" \n\t\x00")
                 if problem[0:2] == "__":
-                    continue
+                	continue
                 with open(get_path('data', str(d), submit), 'r') as f:
                     data = f.read()
                 with open(get_path('filename', str(d), submit), 'r') as f:
@@ -160,44 +160,49 @@ def athina_import():
     except:
         pass
 
-    for login, user in users.iteritems():
-        print ' -> user ', login
+    try:
+        contest.join_contest()
+    except:
+        pass
+
+    for login, user in sorted(users.iteritems()):
+    	print ' -> user ', login
         try:
             user['object'] = Security.register(login=options.name + '_' + user['login'], password=user['password'], fullname=user['fullname'])
         except:
             user['object'] = User.filter({'login':options.name + '_' + user['login']})[0]
-        try:
-            user['contestant'] = contest.create_contestant([user['object']])
-        except:
-            user['contestant'] = contest.find_contestant(user['object'])
+#        try:
+#            user['contestant'] = contest.create_contestant([user['object']])
+#        except:
+#            user['contestant'] = contest.find_contestant(user['object'])
 
 
     print users
 
-    for name, problem in problems.iteritems():
-        print ' -> problem ', name
+    for name, problem in sorted(problems.iteritems()):
+    	print ' -> problem ', name
         try:
-            problem['object'] = Problem.create_problem(name=options.name + '_' + problem['problem'])
+        	problem['object'] = Problem.create_problem(name=options.name + '_' + problem['problem'])
         except:
             problem['object'] = Problem.filter({'name':options.name + '_' + problem['problem']})[0]
 
         try:
-            problem['testsuite'] = TestSuite.create({'name':options.name + '_' + problem['problem'] + '_default', 'owner':Security.whoami(), 'problem':problem['object'], 'dispatcher':'satori.core.judge_dispatcher.default_serial_dispatcher', 'accumulators':'satori.core.judge_dispatcher.default_status_accumulator'})
+            problem['testsuite'] = TestSuite.create({'name':options.name + '_' + problem['problem'] + '_default', 'owner':Security.whoami(), 'problem':problem['object'], 'dispatcher':'ParallelDispatcher', 'accumulators':'StatusAccumulator'})
             if problem['sizelimit'] != None:
                 problem['testsuite'].oa_set_str('sizelimit', str(problem['sizelimit']))
-            for num, test in problem['tests'].iteritems():
-                test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'owner':Security.whoami(), 'problem':problem['object'], 'environment':options.environment})
+            for num, test in sorted(problem['tests'].iteritems()):
+            	test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'owner':Security.whoami(), 'problem':problem['object'], 'environment':options.environment})
 
                 if problem['checker'] != None:
                     test['object'].data_set_blob_path('checker', problem['checker'])
                 if test['input'] != None:
                     test['object'].data_set_blob_path('input', test['input'])
                 if test['output'] != None:
-                    test['object'].data_set_blob_path('output', test['output'])
+                    test['object'].data_set_blob_path('hint', test['output'])
                 if test['memlimit'] != None:
                     test['object'].data_set_str('memory', str(test['memlimit']))
                 if test['timelimit'] != None:
-                    test['object'].data_set_str('time', str(int(test['timelimit'])*10))
+                    test['object'].data_set_str('time', str(10*int(test['timelimit'])))
                 TestMapping.create({'test':test['object'], 'suite':problem['testsuite'], 'order':test['test']})
         except:
             problem['testsuite'] = TestSuite.filter({'name':options.name + '_' + problem['problem'] + '_default'})[0]
@@ -209,11 +214,11 @@ def athina_import():
 
     print problems
 
-    for id, submit in submits.iteritems():
-        print ' -> submit ', id
-        user = users[submit['user']]
-        token_container.set_token(Security.login(options.name + '_' + user['login'], user['password']))
-        submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
+    for id, submit in sorted(submits.iteritems()):
+    	print ' -> submit ', id
+    	user = users[submit['user']]
+#        token_container.set_token(Security.login(options.name + '_' + user['login'], user['password']))
+    	submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
     token_container.set_token(mytoken)
 
     print submits

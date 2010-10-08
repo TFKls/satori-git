@@ -97,10 +97,10 @@ def login_free(login, nspace=''):
 def register(token, login, password, fullname):
     user = User(login=login, fullname=fullname)
     user.save()
+    Privilege.grant(user, user, 'MANAGE')
     auth = Login(login=login, user=user)
     auth.set_password(password)
     auth.save()
-    Privilege.grant(user, user, 'MANAGE')
 
 @security.method
 @Argument('login', type=str)
@@ -114,6 +114,8 @@ def login(login, password, nspace=''):
         if nspace != '':
             auth = auth + '.' + nspace
         return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
+    else:
+        raise Exception('Invalid username or password.')
 
 @security.method
 @Argument('login', type=str)
@@ -128,6 +130,8 @@ def passwd(login, old_passwd, new_passwd, nspace=''):
         if nspace != '':
             auth = auth + '.' + nspace
         return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
+    else:
+        raise Exception('Password change failed.')
 
 def openid_realm(url):
     callback = urlparse.urlparse(url)
@@ -246,9 +250,10 @@ def openid_login_finish(token, arg_map, return_to):
 @Argument('return_to', type=str)
 @ReturnValue(type=OpenIdRedirect)
 def openid_register_start(login, openid, return_to):
-    return openid_generic_start(openid=openid, return_to=return_to, user_id='', ax=True)
+    res = openid_generic_start(openid=openid, return_to=return_to, user_id='', ax=True)
     user = User(login=login, fullname='')
     user.save()
+    Privilege.grant(user, user, 'MANAGE')
     session = res['token'].data
     session['satori.openid.user'] = user.id
     res['token'].data = session

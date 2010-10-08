@@ -64,7 +64,7 @@ def server_get(request, token, model, id, name, group):
 
     res = HttpResponse(reader())
     res['content-length'] = str(blob.length)
-    res['Filename'] = str(oa.filename)
+    res['Filename'] = urllib.quote(str(oa.filename))
     return res
 
 def server_put(request, token, model, id, name, group):

@@ -98,8 +98,14 @@ class ThriftWriter(object):
 
     @DispatchOn(item=ArsConstant)
     def _write(self, item, target): # pylint: disable-msg=E0102
-        #TODO
-        pass
+        if item.type == ArsInteger:
+            target.write('const ')
+            self._reference(item.type, target)
+            target.write(' ')
+            self._reference(item, target)
+            target.write(' ' + str(item.value))
+        else:
+            raise ValueError('Constant type is not supported: {0}'.format(item.type))
 
     @DispatchOn(item=ArsService)
     def _write(self, item, target): # pylint: disable-msg=E0102
