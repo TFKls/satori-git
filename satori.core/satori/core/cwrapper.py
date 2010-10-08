@@ -320,7 +320,10 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=(Attribute, NoneType))
         def get(token, self, name):
-            return oats(get_group(self).oa_get(name))
+            oa = get_group(self).oa_get(name)
+            if oa is None:
+                return None
+            return oats(oa)
 
         @oaw_self.method
         @Argument('token', type=Token)
