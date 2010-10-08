@@ -15,10 +15,7 @@ class LoginRequest(Request):
         lw_path = vars['lw_path']
         login = vars['username']
         password = vars['password']
-        try:
-            token_container.set_token(Security.login(login=login, password=password))
-        except:
-            print d
-            print lw_path
-            follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+        t = Security.login(login=login, password=password)
+        if t:
+            token_container.set_token(t)
         return GetLink(d,path)

@@ -5,7 +5,7 @@ EXAMPLERSTTXT = """
 Nazwa problemu
 ==============
 
-Przy Okraglym Stole zasiada :math:`n` rycerzy, numerowanych od :math:`0` do :math:`n-1`. Kazdy z nich jest charakteryzowany przez swoja **walecznosc**, bedaca liczba calkowita, niekoniecznie dodatnia (niestety...). 
+Przy Okrąglym Stole zasiada :math:`n` rycerzy, numerowanych od :math:`0` do :math:`n-1`. Kazdy z nich jest charakteryzowany przez swoja **walecznosc**, bedaca liczba calkowita, niekoniecznie dodatnia (niestety...). 
 Tradycja nakazuje, aby na trudne i niebezpieczne misje wysylac pewien spojny fragment Okraglego Stolu -- innymi slowy, wybiera sie pewien luk Stolu i wszystkich rycerzy siedzacych na tym luku. 
 Krol Artur oczywiscie chcialby wiedziec, jaka jest najwieksza sumaryczna walecznosc druzyny, ktora moze zgromadzic. Czasami druzyna moze skladac sie ze wszystkich rycerzy Okraglego Stolu, moze tak sie tez zdarzyc, ze oplaca sie nie wysylac zupelnie nikogo (jak juz maja cos popsuc, lepiej niech siedza w domu).
 
@@ -76,5 +76,5 @@ class AboutWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/about.html'
         import os
-        self.task = rendertask( EXAMPLERSTTXT, os.path.join(PROJECT_PATH, 'files'), 'files')
+        self.task = rendertask(EXAMPLERSTTXT, os.path.join(PROJECT_PATH, 'files'), 'files')
 
