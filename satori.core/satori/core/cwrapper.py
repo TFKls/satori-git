@@ -451,7 +451,7 @@ class OpenAttributeWrapper(Wrapper):
         @Argument('name', type=str)
         @ReturnValue(type=NoneType)
         def delete(token, self, name):
-            get_group(self).delete(name)
+            get_group(self).oa_delete(name)
 
         @oaw_self.get.can
         @oaw_self.get_str.can
