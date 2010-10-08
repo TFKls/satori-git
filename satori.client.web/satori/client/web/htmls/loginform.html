@@ -1,4 +1,8 @@
-<p>Please fill in the form to login.</p>
+{% if widget.status == "failed" %}
+    <p>Please try again.</p>
+{% else %}
+    <p>Please fill in the form to login.</p>
+{% endif %}
 
 <form method="post" action="process.login">
     <table style="margin: auto; text-align: center">
@@ -37,4 +41,4 @@
     </p>
 </form>
 <h3>New to Satori?</h3> 
-<p>Please go to this site and then return here.</p>
+<p>Please go first to the registration site and then come back here.</p>

@@ -3,9 +3,10 @@
 {% for msg in widget.messages %}
 <div class = "newsmsg bDots">
     <span class = "{{ msg.type }}">
-        <h4>{{ msg.topic }}</h4>
-        {{msg.time}}<br/>
-        {{ msg.content|safe }} 
+        <table style="width: 100%">
+            <tr><td><h4>{{ msg.topic }}</h4></td><td style="text-align: right">{{msg.time}}</td></tr>
+            <tr><td colspan="2">{{ msg.content|safe }}</td></tr>
+        </table>
     </span>
 </div>
 {% endfor %}

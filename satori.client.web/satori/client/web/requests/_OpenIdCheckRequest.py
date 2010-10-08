@@ -16,7 +16,7 @@ class OpenIdCheckRequest(Request):
         d = ParseURL(back_to)
         print dict(request.REQUEST.items())
         try:
-            token_container.set_token(Security.openid_login_finish(args=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
+            token_container.set_token(Security.openid_login_finish(arg_map=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
         except:
-            follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
+            follow(d,lw_path)['status'] = ['failed']
         return GetLink(d,path)

@@ -15,3 +15,6 @@ class LoginWidget(Widget):
             self.htmlFile = 'htmls/loginform.html'
             self.back_to = ToString(params)
             self.lw_path = path
+            self.status = follow(params, path).get('status')
+            if self.status:
+                self.status = self.status[0]
