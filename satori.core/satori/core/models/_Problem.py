@@ -13,6 +13,7 @@ class Problem(Entity):
 
     name        = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, default="")
+    statement = models.TextField(blank=True, default="")
     default_test_data = models.OneToOneField('AttributeGroup', related_name='group_problem_defaulttestdata')
 
     def save(self):
