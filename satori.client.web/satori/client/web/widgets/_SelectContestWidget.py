@@ -8,9 +8,7 @@ class SelectContestWidget(Widget):
     pathName = 'selectcontest'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/selectcontest.html'
-        self.participating = []
-        self.mayjoin = []
-        self.other = []
+        self.contests = []
         self.user = CurrentUser()
         self.back_to = ToString(params)
         self.path = path
@@ -19,8 +17,16 @@ class SelectContestWidget(Widget):
             cu = MyContestant(c)
             d = DefaultLayout()
             d['contestid'] = [str(c.id)]
-            if cu:
-                self.participating.append([c,cu,GetLink(d,'')])
+            con = { 'obj' : c,
+                    'status' : 0,
+                    'link' : GetLink(d,'')}
+
+            if not cu:
+                if Allowed(c,"APPLY"):
+                    con['status'] = 2
+                else:
+                    con['status'] = 3
             else:
-                mayjoin = Allowed(c,"APPLY")
-                self.other.append([c,mayjoin,GetLink(d,'')])
+                if not cu.accepted:
+                    con['status'] = 1
+            self.contests.append(con)
