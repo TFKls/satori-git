@@ -1,43 +1,53 @@
 <h3>{{ widget.p.name }}</h3>
 
 <form action="process.set_default_td" method="POST" enctype="multipart/form-data">
-    Select default judge:
-    <select name="default_judge" onChange="submit();">
+    <p>Select default judge:
+    <select name="default_judge" onChange="submit();" style="margin-left: 2em">
         <option value="">None</option>
         {% for c in widget.judges %}
         <option value="{{c.value}}" {% if c.value == widget.judgehash %} selected="selected" {% endif %}>{{c.name}}</option>
         {% endfor %}
-    </select>
-    <br/>
+    </select> <br/>
+    This settings will be the default values for all mappings of this problem. You can always overwrite them in a given mapping.
+    </p>
     {% if widget.judge %}
     <h4>Default test data</h4>
+        <p>Provide default settings for this problem on <strong>{% for c in widget.judges %}{% if c.value == widget.judgehash%}{{c.name}}{%endif%}{%endfor%}</strong></p>
+        <table style="width: 100%">
         {% for field in widget.judge %}
-            {{ field.description }}:
-            {% if field.type == "value" %}
-                <input type="text" name="value_{{field.name}}" value="{{field.cv}}"/>
-            {% else %}
-                <input type="file" name="file_{{field.name}}"/>                
-                {% if field.cv %}
-                    <a href="getfile.defaulttestdata.{{widget.p.id}}.{{field.name}}">(file uploaded)</a>
-                    <input type="checkbox" name="file_{{field.name}}_clear"/> Clear
-                {% endif %}
-            {% endif %}
-            <br/>
+            <tr><td>{{ field.description }}:</td>
+                <td>{% if field.type == "value" %}
+                        <input type="text" name="value_{{field.name}}" value="{{field.cv}}"/>
+                    {% else %}
+                        <input type="file" name="file_{{field.name}}"/>                
+                        {% if field.cv %}
+                            <a href="getfile.defaulttestdata.{{widget.p.id}}.{{field.name}}">(file uploaded)</a>
+                            <input type="checkbox" name="file_{{field.name}}_clear"/> Clear
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
         {% endfor%}
+        <tr>
+            <td></td>
+            <td><input type="submit" name="valchange" value="Change"/></td>
+        </tr>
+    </table>
     {% endif %}
     <input type="hidden" name="id" value="{{widget.p.id}}"/>
     <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
     <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
-    <input type="submit" name="valchange" value="Change"/>
 </form>
 
 <h4>Tests</h4>
-<table>
+<p>Below there are given all tests that are connected to this problem. For given problem instance you can always
+pick any subset of this tests as your test suite.</p>
+<table style="width: 100%">
 {% for t,link in widget.tests %}
     <tr>
-    <td>
+    <th>
         {{t.name}}
-    </td>
+    </th>
     <td>
         {{t.description}}
     </td>
@@ -47,4 +57,4 @@
     </tr>
 {% endfor %}
 </table>
-<a href={{widget.addlink}}>Add new test</a>
+<p>If you would like to add new test please go here: <a href={{widget.addlink}}>Add new test</a>.</p>
