@@ -1,18 +1,14 @@
-﻿<form method="post" action="process.login">
+<p>Please fill in the form to login.</p>
 
-<div class="messagecenter">
-<span class="message">Login:</span><input type="text" class="smallinputbox" name="username"/>
-</div>
-<div class="messagecenter">
-<span class="message">Pass:</span> <input type="password" class="smallinputbox" name="password"/>
-</div>
-<div class="messagecenter">
-    <input type="submit" value="Sign in" class="button"/>
-</div>
-
-<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
-<input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
-<input type="hidden" name="path" value="{{widget.path}}"/>
+<form method="post" action="process.login">
+    <table style="margin: auto; text-align: center">
+        <tr><td><span class="message">Login:</span><input type="text" class="smallinputbox" name="username"/></td></tr>
+        <tr><td><span class="message">Pass:</span> <input type="password" class="smallinputbox" name="password"/></td></tr>
+        <tr><td><input type="submit" value="Sign in" class="button"/></td></tr>
+    </table>
+    <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+    <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
+    <input type="hidden" name="path" value="{{widget.path}}"/>
 </form>
 
 <!--
@@ -30,13 +26,15 @@
 </form>
 -->
 
-<form method="post" action="process.openid_start">
-<div class="messagecenter">
-    <input type="submit" value="Sign in with Google" class="button"/>
-</div>
+<form method="post" action="process.openid_start" >
+    <p>You can also use <strong>Google Account</strong> as an alternative way to enter.
+    <input type="submit" value="Sign in with Google" class="button" style="margin-left: 2em"/>
 
-<input type="hidden" name="openid" value="https://www.google.com/accounts/o8/id"/>
-<input type="hidden" name="back_to" value="{{widget.back_to}}"/>
-<input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
-<input type="hidden" name="path" value="{{widget.path}}"/>
+    <input type="hidden" name="openid" value="https://www.google.com/accounts/o8/id"/>
+    <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+    <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
+    <input type="hidden" name="path" value="{{widget.path}}"/>
+    </p>
 </form>
+<h3>New to Satori?</h3> 
+<p>Please go to this site and then return here.</p>
