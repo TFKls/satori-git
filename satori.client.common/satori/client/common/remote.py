@@ -14,9 +14,9 @@ from token_container import token_container
 #TODO: blobs
 
 if getpass.getuser() == 'gutowski':
-    client_host = 'localhost'
-    client_port = 39889
-    blob_port = 39887
+    client_host = 'satori.tcs.uj.edu.pl'
+    client_port = 38889
+    blob_port = 38887
 elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     client_host = 'localhost'
     client_port = 37889
@@ -38,13 +38,13 @@ print 'Bootstrapping client...'
 class BlobWriter(object):
     def __init__(self, length, model=None, id=None, name=None, group=None, filename=''):
         if model:
-            url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, urllib.quote(name))
+            url = '/blob/{0}/{1}/{2}/{3}'.format(urllib.quote(model), str(id), urllib.quote(group), urllib.quote(name))
         else:
             url = '/blob/upload'
 
         headers = {}
-        headers['Host'] = client_host
-        headers['Cookie'] = 'satori_token=' + token_container.get_token()
+        headers['Host'] = urllib.quote(client_host)
+        headers['Cookie'] = 'satori_token=' + urllib.quote(token_container.get_token())
         headers['Content-length'] = str(length)
         headers['Filename'] = urllib.quote(filename)
 
@@ -77,13 +77,13 @@ class BlobWriter(object):
 class BlobReader(object):
     def __init__(self, model=None, id=None, name=None, group=None, hash=None):
         if model:
-            url = '/blob/{0}/{1}/{2}/{3}'.format(model, str(id), group, urllib.quote(name))
+            url = '/blob/{0}/{1}/{2}/{3}'.format(urllib.quote(model), str(id), urllib.quote(group), urllib.quote(name))
         else:
-            url = '/blob/download/{0}'.format(hash)
+            url = '/blob/download/{0}'.format(urllib.quote(hash))
 
         headers = {}
-        headers['Host'] = client_host
-        headers['Cookie'] = 'satori_token=' + token_container.get_token()
+        headers['Host'] = urllib.quote(client_host)
+        headers['Cookie'] = 'satori_token=' + urllib.quote(token_container.get_token())
         headers['Content-length'] = '0'
 
         try:
@@ -94,7 +94,7 @@ class BlobReader(object):
             if self.res.status != 200:
                 raise Exception("Server returned %d (%s) answer." % (self.res.status, self.res.reason))
             self.length = int(self.res.getheader('Content-length'))
-            self.filename = self.res.getheader('Filename', '')
+            self.filename = urllib.unquote(self.res.getheader('Filename', ''))
         except:
             self.con.close()
             raise
