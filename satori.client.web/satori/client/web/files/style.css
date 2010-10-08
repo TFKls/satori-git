@@ -13,6 +13,10 @@ body {
     border-right: 1px dotted #DDDDDD;
 }
 
+.col1 {
+    font-size: 90%;
+}
+
 #footer{
    position: relative;
    float: left;
@@ -137,7 +141,6 @@ body {
 .newsmsg {
     padding-bottom: 1em;
     margin-top: 1em;
-    font-size: 90%;
 }
 
 .bDots {
