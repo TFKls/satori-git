@@ -63,7 +63,7 @@ def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
 	d = {'name' : ['cover'], 
          'cover' :[{'name' : ['main'], 
                     'content' : [params], 
-                    'loginspace' : [{'name' : ['loginform']}],
+                    #'loginspace' : [{'name' : ['loginform']}],
                     'headerspace' : [{'name': ['header']}]
                   }]
         }

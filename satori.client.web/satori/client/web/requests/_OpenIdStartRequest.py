@@ -19,7 +19,6 @@ class OpenIdStartRequest(Request):
         lw_path = vars['lw_path']
         openid = vars['openid']
         finisher = request.build_absolute_uri()
-        print finisher
         callback = urlparse.urlparse(finisher)
         qs = urlparse.parse_qs(callback.query)
         qs['back_to'] = (vars['back_to'],)
@@ -34,7 +33,6 @@ class OpenIdStartRequest(Request):
         path[-1] = 'openid_check'
         path = '.'.join(path)
         finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
-        print finisher
         try:
             res = Security.openid_login_start(openid=openid, return_to=finisher)
             token_container.set_token(res['token'])
@@ -45,5 +43,5 @@ class OpenIdStartRequest(Request):
             else:
                 return HttpResponseRedirect(res['redirect'])
         except:
-            #follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
-            pass
+            follow(d,lw_path)['status'] = ['failed']
+        return GetLink(d, path)

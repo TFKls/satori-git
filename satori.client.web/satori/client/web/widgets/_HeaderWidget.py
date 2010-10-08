@@ -26,8 +26,8 @@ class HeaderWidget(Widget):
 
         addwidget(True, 'News', 'news', True)
         addwidget(True, 'Contests', 'selectcontest', True)
-        addwidget(user, 'Virtual Contests', 'selectvcontests', True)
-        addwidget(user, 'Profile', 'profile', False)
+        #addwidget(user, 'Virtual Contests', 'selectvcontests', True)
+        #addwidget(user, 'Profile', 'profile', False)
         addwidget(not user, 'Sign In', 'loginform', False)
         addwidget(not user, 'Register', 'registerform', False)
         if user:

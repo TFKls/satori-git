@@ -44,5 +44,5 @@ class OpenIdRegisterRequest(Request):
             else:
                 return HttpResponseRedirect(res['redirect'])
         except:
-            #follow(d,lw_path)['loginspace'][0]['status'] = ['failed']
-            pass
+            follow(d,lw_path)['status'] = ['failed']
+        return GetLink(d, path)
