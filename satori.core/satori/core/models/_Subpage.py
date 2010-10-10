@@ -14,7 +14,7 @@ class Subpage(Entity):
     public = models.BooleanField(default=True)
     name = models.TextField(blank=False)
     content = models.TextField()
-    order = models.IntegerField()
+    order = models.IntegerField(null=True)
 
     def inherit_right(self, right):
         right = str(right)
