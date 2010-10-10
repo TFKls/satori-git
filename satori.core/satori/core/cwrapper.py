@@ -732,7 +732,6 @@ class CheckRightsMiddleware(object):
             raise Exception('You don\'t have rights to view the returned element.')
 
     def process_request(self, proc, args, kwargs):
-        return
         if proc.parameters and (proc.parameters[0].name == 'token'):
             if args:
                 token = args[0]
@@ -760,5 +759,4 @@ class CheckRightsMiddleware(object):
             token = Token('')
         if ret is None:
             return ret
-        return ret
         return self.filter(token, proc.return_type, ret)
