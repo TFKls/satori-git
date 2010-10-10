@@ -242,7 +242,7 @@ class ThriftProcessor(TProcessor):
             (ftype, fargs) = self.typeargs(field.type)
             fields.append((i + type_.base_index, ftype, field.name, fargs, None))
 
-        return (TType.STRUCT, (Namespace, tuple(fields)))
+        return (TType.STRUCT, (type_.get_class(), tuple(fields)))
 
     def typeargs(self, type_):
         if type_ not in self._typeargs_map:

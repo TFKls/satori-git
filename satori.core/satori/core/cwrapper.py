@@ -3,7 +3,7 @@
 from types import NoneType
 from datetime import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
-from satori.ars.wrapper import StructType, Struct, TypedList, TypedMap, Wrapper, ProcedureWrapper, StaticWrapper
+from satori.ars.wrapper import Struct, TypedList, TypedMap, Wrapper, ProcedureWrapper, StaticWrapper
 from satori.ars.model import *
 from django.db import models, transaction, connection
 from django.db.models.fields.related import add_lazy_relation
@@ -62,9 +62,29 @@ def DjangoModel(model, rel_model=None):
     return DjangoModelType('', (), {'model': model, 'rel_model': rel_model})
 
 
-class DjangoStructType(StructType):
-    def __new__(mcs, name, bases, dict_):
-        model = dict_['model']
+#class DjangoStructType(StructType):
+#    def __new__(mcs, name, bases, dict_):
+#        model = dict_['model']
+#        name = model._meta.object_name + 'Struct'
+#
+#        fields = []
+#
+#        for field in model._meta.fields:
+#            field_type = django_field_to_python_type(model, field)
+#            if (field.name != 'model') and (not field.name.startswith('parent_')) and (field_type is not None):
+#                fields.append((field.name, field_type, True))
+#
+#        fields.sort()
+#
+#        dict_['fields'] = fields
+#
+#        return StructType.__new__(mcs, name, bases, dict_)
+
+
+model_struct_map = {}
+
+def DjangoStruct(model):
+    if not model in model_struct_map:
         name = model._meta.object_name + 'Struct'
 
         fields = []
@@ -76,17 +96,7 @@ class DjangoStructType(StructType):
 
         fields.sort()
 
-        dict_['fields'] = fields
-
-        return StructType.__new__(mcs, name, bases, dict_)
-
-
-model_struct_map = {}
-
-def DjangoStruct(model):
-    if not model in model_struct_map:
-        model_struct_map[model] = DjangoStructType('', (), {'model': model})
-
+        model_struct_map[model] = Struct(name, fields)
     return model_struct_map[model]
 
 
@@ -188,10 +198,15 @@ class FilterWrapper(ProcedureWrapper):
         model = parent._model
 
         @Argument('token', type=Token)
-        @Argument('values', type=DjangoStruct(model))
+        @Argument('values', type=(DjangoStruct(model), NoneType))
         @ReturnValue(type=TypedList(model))
-        def filter(token, values={}):
-            return model.objects.filter(**values)
+        def filter(token, values=None):
+            kwargs = {}
+            if values:
+                for field_name in values._field_names:
+                    if hasattr(values, field_name):
+                        kwargs[field_name] = getattr(values, field_name)
+            return model.objects.filter(**kwargs)
 
         super(FilterWrapper, self).__init__(filter, parent)
 
@@ -206,10 +221,10 @@ class GetStructWrapper(ProcedureWrapper):
         @Argument('self', type=model)
         @ReturnValue(type=struct)
         def get_struct(token, self):
-            ret = {}
+            ret = struct()
 
-            for (name, type, optional) in struct.fields:
-                ret[name] = getattr(self, name)
+            for field_name in ret._field_names:
+                setattr(ret, field_name, getattr(self, field_name))
 
             return ret
 
@@ -227,9 +242,9 @@ class SetStructWrapper(ProcedureWrapper):
         @Argument('value', type=struct)
         @ReturnValue(type=NoneType)
         def set_struct(token, self, value):
-            for (name, type, optional) in struct.fields:
-                if (name in value) and (name != 'id'):
-                    setattr(self, name, value[name])
+            for field_name in ret._field_names:
+                if (field_name != 'id') and hasattr(value, field_name):
+                    setattr(self, field_name, getattr(value, field_name))
             self.save()
 
         super(SetStructWrapper, self).__init__(set_struct, parent)
@@ -243,10 +258,13 @@ class CreateWrapper(ProcedureWrapper):
         @Argument('values', type=DjangoStruct(model))
         @ReturnValue(type=model)
         def create(token, values):
-            if 'id' in values:
-                del values['id']
+            kwargs = {}
+            if values:
+                for field_name in values._field_names:
+                    if (field_name != 'id') and hasattr(values, field_name):
+                        kwargs[field_name] = getattr(values, field_name)
 
-            ret = model(**values)
+            ret = model(**kwargs)
             ret.save()
 
             if token.user:
@@ -714,6 +732,7 @@ class CheckRightsMiddleware(object):
             raise Exception('You don\'t have rights to view the returned element.')
 
     def process_request(self, proc, args, kwargs):
+        return
         if proc.parameters and (proc.parameters[0].name == 'token'):
             if args:
                 token = args[0]
@@ -741,4 +760,5 @@ class CheckRightsMiddleware(object):
             token = Token('')
         if ret is None:
             return ret
+        return ret
         return self.filter(token, proc.return_type, ret)

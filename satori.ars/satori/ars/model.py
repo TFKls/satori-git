@@ -320,26 +320,50 @@ class ArsStructure(ArsNamedType):
 #        return any(field.type.needs_conversion() for field in self.fields.items)
 
     def do_convert_to_ars(self, value):
-        new_value = {}
-        for field in self.fields.items:
-            if field.name in value:
-                if field.type.needs_conversion():
-                    new_value[field.name] = field.type.convert_to_ars(value[field.name])
-                else:
-                    new_value[field.name] = value[field.name]
+        if isinstance(value, dict):
+            value = self.get_class()(value)
 
-        return NoneObj(Namespace(new_value))
+        for field in self.fields.items:
+            if hasattr(value, field.name) and field.type.needs_conversion():
+                setattr(value, field.name, field.type.convert_to_ars(getattr(value, field.name)))
+
+        return value
 
     def do_convert_from_ars(self, value):
-        new_value = Namespace()
         for field in self.fields.items:
-            if field.name in value:
-                if field.type.needs_conversion():
-                    new_value[field.name] = field.type.convert_from_ars(value[field.name])
-                else:
-                    new_value[field.name] = value[field.name]
+            if hasattr(value, field.name) and field.type.needs_conversion():
+                setattr(value, field.name, field.type.convert_from_ars(getattr(value, field.name)))
 
-        return new_value
+        return value
+
+    def get_class(self):
+        if not hasattr(self, '_class'):
+            def __init__(self, dict_=None, **kwargs):
+                super(_class, self).__init__()
+                if dict_:
+                    kwargs.update(dict_)
+                for field_name in self._field_names:
+                    if field_name in kwargs:
+                        setattr(self, field_name, kwargs.pop(field_name))
+                    else:
+                        setattr(self, field_name, None)
+                if kwargs:
+                    raise TypeError('__init__() got an unexpected keyword argument \'{0}\''.format(kwargs.keys()[0]))
+            
+            @classmethod
+            def ars_type(cls):
+                return cls._ars_type
+
+            field_names = [field.name for field in self.fields]
+
+            _class = type(self.name, (object,), {'__init__': __init__, 'ars_type': ars_type, '_ars_type': self, '_field_names': field_names,
+                            '__setitem__': lambda x, y, z: setattr(x, y, z),
+                            '__getitem__': lambda x, y: getattr(x, y),
+                            '__delitem__': lambda x, y: delattr(x, y),
+                            '__contains__': lambda x, y: hasattr(x, y)
+                    })
+            self._class = _class
+        return self._class
 
 
 class ArsParameter(ArsField):
@@ -380,7 +404,35 @@ class ArsProcedure(ArsNamedElement):
 
 
 class ArsException(ArsStructure):
-    pass
+    def get_class(self):
+        if not hasattr(self, '_class'):
+
+            def __init__(self, dict_=None, **kwargs):
+                super(_class, self).__init__()
+                if dict_:
+                    kwargs.update(dict_)
+                for field_name in self._field_names:
+                    if field_name in kwargs:
+                        setattr(self, field_name, kwargs.pop(field_name))
+                    else:
+                        setattr(self, field_name, None)
+                if kwargs:
+                    raise TypeError('__init__() got an unexpected keyword argument \'{0}\''.format(kwargs.keys()[0]))
+
+            @classmethod
+            def ars_type(cls):
+                return cls._ars_type
+
+            field_names = [field.name for field in self.fields]
+
+            _class = type(self.name, (Exception,), {'__init__': __init__, 'ars_type': ars_type, '_ars_type': self, '_field_names': field_names,
+                            '__setitem__': lambda x, y, z: setattr(x, y, z),
+                            '__getitem__': lambda x, y: getattr(x, y),
+                            '__delitem__': lambda x, y: delattr(x, y),
+                            '__contains__': lambda x, y: hasattr(x, y)
+                    })
+            self._class = _class
+        return self._class
 
 
 class ArsService(ArsNamedElement):
