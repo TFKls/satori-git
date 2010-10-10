@@ -5,29 +5,37 @@
 
 {% endif %}
 <h4>Problems</h4>
-<table class="list_table">
-<tr class="header">
-    <td>Code</td>
-    <td>Title</td>
-    <td>PDF</td>
+
+<table class="tlist">
+<tr>
+    {% if widget.manage %}
+    <th>
+    </th>
+    {% endif %}
+    <th>Code</th>
+    <th>Title</th>
+    <th>PDF</th>
 {% if widget.manage %}
-    <td>
+    <th>
         Visible
-    </td>
-    <td>
+    </th>
+    <th>
         Start
-    </td>
-    <td>
+    </th>
+    <th>
         Finish
-    </td>
-    <td>
-    </td>
-    <td>
-    </td>
+    </th>
+    <th>
+    </th>
 {% endif %}
 </tr>
 {% for entry in widget.problems %}
 <tr>
+    {% if widget.manage %}
+    <td>
+        <input type="checkbox" name="pr{{entry.p.id}}"/>
+    </td>
+    {% endif %}
     <td>{{entry.p.code}} </td>
     <td>
         {% if entry.showlink %}
@@ -54,9 +62,6 @@
         {{entry.until}}
     </td>
     <td>
-        <input type="checkbox" name="pr{{entry.p.id}}"/>
-    </td>
-    <td>
         <a href="{{ entry.editlink }}">Edit</a> 
     </td>
 {% endif %}
@@ -66,16 +71,25 @@
 {% if widget.manage %}
 
 <h4>Change selected:</h4>
-Set submit times: <br/>
-from <input type="text" name="pub_time"/> (leave blank to publish now)<br/>
-until <input type="text" name="hide_time"/> (leave blank to publish indefinitely)<br/>
-<input type="submit" name="confirm" value="Set dates"/><br/>
-<br/>
-<input type="submit" name="stop" value="Immediately stop submissions"/>
-<input type="submit" name="hide" value="Immediately hide selected problems"/>
+<p>Mark problems that you want to modify.</p>
+<p>Set submit times:</p>
+<table>
+    <tr>
+        <td>from</td><td><input type="text" name="pub_time"/></td><td>(leave blank to publish now)</td>
+    </tr>
+    <tr>
+        <td>until</td><td><input type="text" name="hide_time"/></td><td>(leave blank to publish indefinitely)</td>
+    </tr>
+    <tr>
+        <td></td><td></td><td><input type="submit" name="confirm" value="Set dates"/></td>
+    </tr>
+</table>
+<table>
+    <tr><td>To stop submissions for selected problems press:</td><td><input type="submit" name="stop" value="Immediately stop submissions"/></td></tr>
+    <tr><td>To hide selected problems press:</td><td> <input type="submit" name="hide" value="Immediately hide selected problems"/></td></tr>
+</table>
 </form>
 {% endif %}
-
 
 {% if widget.manage %}
 <h4>Add problem from repository</h4>
@@ -83,17 +97,17 @@ until <input type="text" name="hide_time"/> (leave blank to publish indefinitely
 <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
 <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
 <input type="hidden" name="contest" value="{{widget.contest.id}}"/>
-Code:
-<input type="text" name="code"/><br/>
-Title: 
-<input type="text" name="title"/><br/>
-Problem:
-<select name="problem">
-{% for p in widget.potential %}
-    <option value="{{ p.id }}"/> {{ p.name }} ({{p.description}})</option>
-{% endfor %}
-</select>
-<br/>
-<input type="submit" value="Use problem"/>
+<p>To add new problem for this contest please fill the information below:</p>
+<table>
+    <tr><td>Code:</td><td><input type="text" name="code"/></td></tr>
+    <tr><td>Title:</td><td><input type="text" name="title"/></td></tr>
+    <tr><td>Problem:</td><td><select name="problem">
+        {% for p in widget.potential %}
+        <option value="{{ p.id }}"/> {{ p.name }} ({{p.description}})</option>
+        {% endfor %}
+        </select>
+        </td></tr>
+    <tr><td></td><td><input type="submit" value="Use problem"/></td></tr>
+</table>
 </form>
 {% endif %}
