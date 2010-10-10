@@ -1,3 +1,4 @@
+{% load switch %}
 <h2>Results</h2>
 
 {% if widget.isadmin %}
@@ -25,7 +26,17 @@
     <th></th>
 </tr>
 {% for s in widget.submits %}
-<tr>
+<tr class={% switch s.status %}
+                {% case "QUE" %} "staQUE"
+                {% case "ACC" %} "staACC"
+                {% case "OK" %} "staOK"
+                {% case "TLE" %} "staTLE"
+                {% case "RTE" %} "staRTE"
+                {% case "MEM" %} "staMEM"
+                {% case "REJ" %} "staREJ"
+                {% case "CMP" %} "staCMP"
+                {% else %} ""
+           {% endswitch %}>
     <td>{{s.id}}</td>
     <td>{{s.user}}</td>
     <td>{{s.problem}}</td>
