@@ -141,7 +141,7 @@ def unwrap_blob_set(class_dict, class_name, meth_name, BlobWriter):
 
     class_dict[meth_name + '_path'] = blob_set_path
 
-def unwrap_service(service, base, fields, BlobReader, BlobWriter):
+def unwrap_service(service, base, struct, BlobReader, BlobWriter):
     class_name = service.name
     class_dict = {}
 
@@ -158,7 +158,7 @@ def unwrap_service(service, base, fields, BlobReader, BlobWriter):
         else:
             class_dict[meth_name] = unwrap_procedure(proc)
 
-    if fields is not None:
+    if struct is not None:
         def __init__(self, id, first=True):
             super(new_class, self).__init__(id, False)
             if first:
@@ -166,14 +166,10 @@ def unwrap_service(service, base, fields, BlobReader, BlobWriter):
                 self._struct = None
 
         def __getattr__(self, name):
-            if name in fields:
+            if name in struct._field_names:
                 if self._struct is None:
                     self._struct = self.get_struct()
-                if name in self._struct:
-                    return self._struct[name]
-                else:
-                    # or raise error?
-                    return None
+                return getattr(self._struct, name)
             else:
                 raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
 
@@ -181,10 +177,10 @@ def unwrap_service(service, base, fields, BlobReader, BlobWriter):
             if name == 'id':
                 raise Exception('Object id cannot be changed')
 
-            if name in fields:
-                self.set_struct({name: value})
+            if name in struct._field_names:
+                self.set_struct(struct(**{name: value}))
                 if self._struct is not None:
-                    self._struct[name] = value
+                    setattr(self._struct, name, value)
             else:
                 return super(new_class, self).__setattr__(name, value)
 
@@ -216,15 +212,11 @@ def unwrap_interface(interface, BlobReader, BlobWriter):
             base = UnwrapBase
 
         if service.name + 'Struct' in interface.types:
-            struct = interface.types[service.name + 'Struct']
-            if isinstance(struct.converter, ArsNullableStructure):
-                fields = [field.name for field in struct.fields][1:]
-            else:
-                fields = [field.name for field in struct.fields]
+            struct = interface.types[service.name + 'Struct'].get_class()
         else:
-            fields = None
+            struct = None
 
-        newcls = unwrap_service(service, base, fields, BlobReader, BlobWriter)
+        newcls = unwrap_service(service, base, struct, BlobReader, BlobWriter)
         classes[service.name] = newcls
 
         if (service.name + 'Id') in interface.types:

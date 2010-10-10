@@ -10,6 +10,7 @@ import copy
 from satori.objects import Signature, Argument, ArgumentMode, ReturnValue, ConstraintDisjunction, TypeConstraint
 from satori.ars.model import ArsInterface, ArsTypeAlias, ArsList, ArsMap, ArsStructure, ArsProcedure, ArsService
 from satori.ars.model import ArsVoid, ArsInt32, ArsInt64, ArsString, ArsBoolean
+from satori.ars import perf
 
 class ArsNullableStructure(ArsStructure):
     def __init__(self, name):
@@ -20,28 +21,62 @@ class ArsNullableStructure(ArsStructure):
         return True
 
     def do_convert_to_ars(self, value):
-        value['null_fields'] = 0L
+        if isinstance(value, dict):
+            value = self.get_class()(value)
+
+        value.null_fields = 0L
 
         for (ind, field) in enumerate(self.fields):
-            if (field.name in value) and (value[field.name] is None):
-                value['null_fields'] = value['null_fields'] | (1 << (ind + self.base_index))
-                del value[field.name]
+            if hasattr(value, field.name):
+                if getattr(value, field.name) is None:
+                    value.null_fields = value.null_fields | (1L << (ind + self.base_index))
+            else:
+                setattr(value, field.name, None)
 
         return super(ArsNullableStructure, self).do_convert_to_ars(value)
 
     def do_convert_from_ars(self, value):
         value = super(ArsNullableStructure, self).do_convert_from_ars(value)
 
-        if not 'null_fields' in value:
-            return value
+        null_fields = getattr(value, 'null_fields', 0L)
 
         for (ind, field) in enumerate(self.fields):
-            if value['null_fields'] & (1 << (ind + self.base_index)):
-                value[field.name] = None
+            if null_fields & (1L << (ind + self.base_index)):
+                setattr(value, field.name, None)
+            elif hasattr(value, field.name) and (getattr(value, field.name) is None):
+                delattr(value, field.name)
 
-        del value['null_fields']
+        if hasattr(value, 'null_fields'):
+            delattr(value, 'null_fields')
 
         return value
+
+    def get_class(self):
+        if not hasattr(self, '_class'):
+            def __init__(self, dict_=None, **kwargs):
+                super(_class, self).__init__()
+                if dict_:
+                    kwargs.update(dict_)
+                for field_name in self._field_names:
+                    if field_name in kwargs:
+                        setattr(self, field_name, kwargs.pop(field_name))
+                if kwargs:
+                    raise TypeError('__init__() got an unexpected keyword argument \'{0}\''.format(kwargs.keys()[0]))
+
+            @classmethod
+            def ars_type(cls):
+                return cls._ars_type
+
+            field_names = [field.name for field in self.fields][1:]
+
+            _class = type(self.name, (object,), {'__init__': __init__, 'ars_type': ars_type, '_ars_type': self, '_field_names': field_names,
+                            '__setitem__': lambda x, y, z: setattr(x, y, z),
+                            '__getitem__': lambda x, y: getattr(x, y),
+                            '__delitem__': lambda x, y: delattr(x, y),
+                            '__contains__': lambda x, y: hasattr(x, y)
+                    })
+            self._class = _class
+        return self._class
 
 
 class TypedListType(type):
@@ -103,32 +138,35 @@ def TypedMap(key_type, value_type):
     return TypedMapType('', (), {'key_type': key_type, 'value_type': value_type})
 
 
-class StructType(type):
-    def __new__(mcs, name, bases, dict_):
-        assert 'fields' in dict_
-        dict_['name'] = name
-        return type.__new__(mcs, name, bases, dict_)
-
-    def __instancecheck__(cls, obj):
-        for (name, type_, optional) in cls.fields:
-            if not ((name in obj) or optional):
-                return False
-            if name in obj:
-                if not isinstance(obj[name], type_):
-                    return False
-        return True
-
-    def ars_type(cls):
-        if not hasattr(cls, '_ars_type'):
-            cls._ars_type = ArsNullableStructure(name=cls.name)
-            for (field_name, field_type, field_optional) in cls.fields:
-                cls._ars_type.add_field(name=field_name, type=python_to_ars_type(field_type), optional=field_optional)
-
-        return cls._ars_type
+#class StructType(type):
+#    def __new__(mcs, name, bases, dict_):
+#        assert 'fields' in dict_
+#        dict_['name'] = name
+#        return type.__new__(mcs, name, bases, dict_)
+#
+#    def __instancecheck__(cls, obj):
+#        for (name, type_, optional) in cls.fields:
+#            if not ((name in obj) or optional):
+#                return False
+#            if name in obj:
+#                if not isinstance(obj[name], type_):
+#                    return False
+#        return True
+#
+#    def ars_type(cls):
+#        if not hasattr(cls, '_ars_type'):
+#            cls._ars_type = ArsNullableStructure(name=cls.name)
+#            for (field_name, field_type, field_optional) in cls.fields:
+#                cls._ars_type.add_field(name=field_name, type=python_to_ars_type(field_type), optional=field_optional)
+#
+#        return cls._ars_type
 
 
 def Struct(name, fields):
-    return StructType(name, (), {'fields': fields})
+    ars_type = ArsNullableStructure(name=name)
+    for (field_name, field_type, field_optional) in fields:
+        ars_type.add_field(name=field_name, type=python_to_ars_type(field_type), optional=field_optional)
+    return ars_type.get_class()
 
 
 class ArsDateTime(ArsTypeAlias):
@@ -167,6 +205,7 @@ def python_to_ars_type(type_):
 
 
 wrapper_list = []
+constants = {}
 middleware = []
 
 class Wrapper(object):
@@ -323,13 +362,19 @@ def generate_procedure(name, proc):
         args = list(args)
 
         try:
+            perf.begin('mid req')
             for i in middleware:
                 i.process_request(ars_proc, args, kwargs)
+            perf.end('mid req')
 
+            perf.begin('proc')
             ret = proc(*args, **kwargs)
+            perf.end('proc')
 
+            perf.begin('mid resp')
             for i in reversed(middleware):
                 ret = i.process_response(ars_proc, args, kwargs, ret)
+            perf.end('mid resp')
         except Exception as exception:
             for i in reversed(middleware):
                 i.process_exception(ars_proc, args, kwargs, exception)
@@ -351,6 +396,9 @@ def generate_procedure(name, proc):
 
     return ars_proc
 
+def constant(name, value):
+    constants[name] = value
+
 def generate_service(wrapper, base):
     service = ArsService(name=wrapper._name, base=base)
 
@@ -369,6 +417,10 @@ def generate_interface():
         else:
             base = None
         interface.add_service(generate_service(wrapper, base))
+
+    for (name, value) in constants.items():
+        ars_type = python_to_ars_type(type(value))
+        interface.add_constant(name=name, value=ars_type.convert_to_ars(value), type=ars_type)
 
     return interface
 
