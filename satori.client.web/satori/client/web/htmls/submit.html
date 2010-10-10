@@ -1,14 +1,18 @@
 <h2>Submit</h2>
 <form action="process.submit" method="post" enctype="multipart/form-data">
-    <select name="problem">
+    <p>Please select problem:
+    <select name="problem" style="margin-left: 2em">
         {% for p in widget.problems %}
             <option value="{{p.id}}">{{p.code}}: {{p.title}}</option>
         {% endfor %}
     </select>
-    <br/>
-    <input type="file" name="content"/>
-    <br/>
-    <input type="submit" class="button" value="Submit"/>
+    </p>
+    <textarea rows="15" style="width: 100%"></textarea>
+    <table class="tlist">
+        <tr><td>You can also submit solution from your local files: <input type="file" name="content" style="margin-left: 2em"/></td>
+        <td style="text-align: right"><input type="submit" class="button" value="Submit"/></td></tr>
+    </table>
+
     <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
     <input type="hidden" name="back_path" value="{{ widget.back_path }}"/>
 </form>
