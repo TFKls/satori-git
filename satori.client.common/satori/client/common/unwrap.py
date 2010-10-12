@@ -28,8 +28,11 @@ class UnwrapBase(object):
 
 
 class StubCodeLoader(object):
+    def __init__(self, method_name):
+        self.method_name = method_name
+
     def get_source(self, module_name):
-        return '\n\n\n'
+        return 'thrift code\nraise {0} error\ncall {0}\n'.format(self.method_name)
 
 def unwrap_procedure(_proc):
     _procname = _proc.name
@@ -72,7 +75,7 @@ def unwrap_procedure(_proc):
         except ArsExceptionBase as ex:
             ex = ex.ars_type().convert_from_ars(ex)
             reraise = compile('def ' + _procname + '():\n raise ex\n' + _procname + '()\n', '<thrift>', 'exec')
-            exception = {'ex': ex, '__loader__': StubCodeLoader()}
+            exception = {'ex': ex, '__loader__': StubCodeLoader(_procname)}
             exec reraise in exception
             
         ret = _rettype.convert_from_ars(ret)
