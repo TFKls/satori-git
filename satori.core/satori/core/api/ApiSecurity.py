@@ -18,9 +18,9 @@ from openid.extensions import ax as oidax
 from satori.core.sec.tools import RightCheck, RoleSet, Token
 from satori.core.sec.store import Store
 
-from satori.objects import DispatchOn, Argument, ReturnValue
+from satori.objects import DispatchOn, Argument, ReturnValue, Throws
 from satori.core.models import Entity, User, Login, OpenIdentity, Global, Role, Machine, Privilege
-from satori.ars.wrapper import Struct, StaticWrapper, TypedMap
+from satori.ars.wrapper import Struct, StaticWrapper, TypedMap, DefineException
 from satori.ars.server import server_info
 
 def openid_salt():
@@ -35,6 +35,8 @@ OpenIdRedirect = Struct('OpenIdRedirect', (
     ('redirect', str, True),
     ('html', str, True)
 ))
+
+LoginFailed = DefineException('LoginFailed', 'Invalid username or password')
 
 security = StaticWrapper('Security')
 
@@ -107,15 +109,19 @@ def register(token, login, password, fullname):
 @Argument('password', type=str)
 @Argument('nspace', type=str) # Nie moze byc namespace - slowo kluczowe w Thrifcie
 @ReturnValue(type=Token)
+@Throws(LoginFailed)
 def login(login, password, nspace=''):
-    login = Login.objects.get(nspace=nspace, login=login)
+    try:
+        login = Login.objects.get(nspace=nspace, login=login)
+    except Login.DoesNotExist:
+        raise LoginFailed()
     if login.check_password(password):
         auth = 'login'
         if nspace != '':
             auth = auth + '.' + nspace
         return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
     else:
-        raise Exception('Invalid username or password.')
+        raise LoginFailed()
 
 @security.method
 @Argument('login', type=str)
@@ -208,8 +214,6 @@ def openid_generic_start(openid, return_to, user_id ='', valid =1, ax =False):
     }
 
 def openid_generic_finish(token, args, return_to, user =None):
-    if not token.valid:
-        raise Exception("Provided token is invalid.")
     if token.auth != 'openid':
         return token
     session = token.data
