@@ -5,13 +5,15 @@ import os
 import shutil
 import getpass
 import urllib
+from types import FunctionType
+from StringIO import StringIO
 from httplib import HTTPConnection
 from thrift.transport.TSocket import TSocket
-from satori.ars.thrift import bootstrap_thrift_client
+from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
+from satori.ars.thrift import ThriftClient, ThriftReader
+from satori.objects import Argument, Signature, ArgumentMode
 from unwrap import unwrap_interface
 from token_container import token_container
-
-#TODO: blobs
 
 if getpass.getuser() == 'gutowski':
     client_host = 'satori.tcs.uj.edu.pl'
@@ -33,7 +35,26 @@ else:
 def transport_factory():
     return TSocket(host=client_host, port=client_port)
 
-print 'Bootstrapping client...'
+@Argument('transport_factory', type=FunctionType)
+def bootstrap_thrift_client(transport_factory):
+    interface = ArsInterface()
+    idl_proc = ArsProcedure(return_type=ArsString, name='Server_getIDL')
+    idl_serv = ArsService(name='Server')
+    idl_serv.add_procedure(idl_proc)
+    interface.add_service(idl_serv)
+
+    bootstrap_client = ThriftClient(interface, transport_factory)
+    bootstrap_client.wrap_all()
+    idl = idl_proc.implementation()
+    bootstrap_client.stop()
+
+    idl_reader = ThriftReader()
+    interface = idl_reader.read_from_string(idl)
+
+    client = ThriftClient(interface, transport_factory)
+    client.wrap_all()
+
+    return (interface, client)
 
 class BlobWriter(object):
     def __init__(self, length, model=None, id=None, name=None, group=None, filename=''):
@@ -118,6 +139,8 @@ def anonymous_blob_path(path):
         blob = anonymous_blob(ln)
         shutil.copyfileobj(src, blob, ln)
     return blob.close()
+
+print 'Bootstrapping client...'
 
 (_interface, _client) = bootstrap_thrift_client(transport_factory)
 _classes = unwrap_interface(_interface, BlobReader, BlobWriter)
