@@ -1,5 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from satori.ars import wrapper
+from satori.core import cwrapper
+
 import ApiBlob
 import ApiContestant
 import ApiContest
@@ -28,4 +31,16 @@ import ApiTestResult
 import ApiTestSuite
 import ApiTestSuiteResult
 import ApiUser
+
+wrapper.register_middleware(cwrapper.TransactionMiddleware())
+
+wrapper.register_middleware(cwrapper.TokenVerifyMiddleware())
+wrapper.global_throws(cwrapper.TokenInvalid)
+wrapper.global_throws(cwrapper.TokenExpired)
+
+wrapper.register_middleware(wrapper.TypeConversionMiddleware())
+
+wrapper.register_middleware(cwrapper.CheckRightsMiddleware())
+
+ars_interface = wrapper.generate_interface()
 

@@ -6,6 +6,7 @@ exposed over Thrift.
 import sys
 import os
 import traceback
+from time import sleep
 from datetime import datetime
 from multiprocessing import Process 
 from multiprocessing.connection import Client
@@ -15,19 +16,6 @@ from signal import signal, getsignal, SIGINT, SIGTERM, pause
 from satori.events import Slave2, Client2
 
 signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG'))
-
-def get_ars_interface():
-    from satori.ars import wrapper
-    from satori.core import cwrapper
-    import satori.core.api
-    if not wrapper.middleware:
-        wrapper.global_throws(cwrapper.TokenInvalid)
-        wrapper.global_throws(cwrapper.TokenExpired)
-        wrapper.register_middleware(cwrapper.TransactionMiddleware())
-        wrapper.register_middleware(cwrapper.TokenVerifyMiddleware())
-        wrapper.register_middleware(wrapper.TypeConversionMiddleware())
-        wrapper.register_middleware(cwrapper.CheckRightsMiddleware())
-    return wrapper.generate_interface()
 
 class SatoriProcess(Process):
     def __init__(self, name):
@@ -105,7 +93,8 @@ class ThriftServerProcess(SatoriProcess):
         from thrift.transport.TSocket import TServerSocket
         from thrift.server.TServer import TThreadedServer
         from satori.ars.thrift import ThriftServer
-        server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), get_ars_interface())
+        from satori.core.api import ars_interface
+        server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), ars_interface)
         server.run()
 
 class BlobServerProcess(SatoriProcess):
@@ -133,14 +122,17 @@ class DbevNotifierProcess(SatoriProcess):
         run_notifier(Slave2(connection))
 
 def export_thrift():
-    """Entry Point. Writes the Thrift contract of the server to standard output.
+    """Entry Point. Writes the Thrift interface of the server to standard output.
     """
     import os
     os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.core.settings'
+
     from sys import stdout
     from satori.ars.thrift import ThriftWriter
+    from satori.core.api import ars_interface
+
     writer = ThriftWriter()
-    writer.write_to(get_ars_interface(), stdout)
+    writer.write_to(ars_interface, stdout)
 
 def start_server():
     import os
@@ -149,9 +141,11 @@ def start_server():
     from setproctitle import setproctitle
     setproctitle('satori: master')
 
+    print 'Loading ARS interface...'
+    import satori.core.api
+    print 'ARS interface loaded.'
+
     processes = []
-    from multiprocessing import Process
-    from time import sleep
 
     event_master = EventMasterProcess()
     event_master.start()

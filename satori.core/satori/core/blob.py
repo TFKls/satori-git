@@ -1,12 +1,10 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound, HttpResponseServerError, HttpResponseNotAllowed
 import urllib
-from satori.core import get_ars_interface
+from satori.core.api import ars_interface
 from satori.core import models
 from satori.core.models import OpenAttribute
 import traceback
-
-interface = get_ars_interface()
 
 def server(request, model, id, name, group):
     if request.method not in ['GET', 'PUT']:
@@ -34,7 +32,7 @@ def server(request, model, id, name, group):
 
 def server_get(request, token, model, id, name, group):
     try:
-        can_proc = interface.services[model].procedures[model + '_' + group + '_get_blob_can'].implementation
+        can_proc = ars_interface.services[model].procedures[model + '_' + group + '_get_blob_can'].implementation
     except:
         traceback.print_exc()
         return HttpResponseNotFound()
@@ -69,7 +67,7 @@ def server_get(request, token, model, id, name, group):
 
 def server_put(request, token, model, id, name, group):
     try:
-        can_proc = interface.services[model].procedures[model + '_' + group + '_set_blob_can'].implementation
+        can_proc = ars_interface.services[model].procedures[model + '_' + group + '_set_blob_can'].implementation
     except:
         return HttpResponseNotFound()
 
@@ -111,7 +109,7 @@ def download(request, hash):
         token = request.COOKIES.get('satori_token', '')
 
         try:
-            can_proc = interface.services['Blob'].procedures['Blob_open_can'].implementation
+            can_proc = ars_interface.services['Blob'].procedures['Blob_open_can'].implementation
         except:
             return HttpResponseNotFound()
 
@@ -143,7 +141,7 @@ def upload(request):
         token = request.COOKIES.get('satori_token', '')
 
         try:
-            can_proc = interface.services['Blob'].procedures['Blob_create_can'].implementation
+            can_proc = ars_interface.services['Blob'].procedures['Blob_create_can'].implementation
         except:
             return HttpResponseNotFound()
 
