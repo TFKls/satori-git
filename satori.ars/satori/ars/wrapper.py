@@ -417,6 +417,9 @@ def generate_procedure(name, proc):
     for exception in global_throwss:
         ars_proc.add_exception(python_to_ars_type(exception))
 
+    for exception in signature.exceptions:
+        ars_proc.add_exception(python_to_ars_type(exception))
+
     return ars_proc
 
 def constant(name, value):
