@@ -18,6 +18,6 @@ class LoginRequest(Request):
         try:
             t = Security.login(login=login, password=password)
             token_container.set_token(t)
-        except:
+        except LoginFailed:
             follow(d,lw_path)['status'] = ['failed']
         return GetLink(d,path)
