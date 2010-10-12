@@ -20,5 +20,4 @@ class LoginRequest(Request):
             token_container.set_token(t)
         except LoginFailed:
             follow(d,lw_path)['status'] = ['failed']
-            raise
         return GetLink(d,path)
