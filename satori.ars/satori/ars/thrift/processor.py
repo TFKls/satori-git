@@ -257,7 +257,7 @@ class ThriftProcessor(TProcessor):
 
     def recv_struct(self, struct, iproto):
         if fastbinary is not None:
-            ret = Namespace()
+            ret = struct.get_class()()
             fastbinary.decode_binary(ret, iproto.trans, self.typeargs(struct)[1])
             return ret
         else:
@@ -302,13 +302,24 @@ class ThriftProcessor(TProcessor):
             # call the registered implementation
 #            perf.begin('call')
 
-            result = Namespace()
+            result = procedure.results_struct.get_class()()
             try:
-                result['result'] = procedure.implementation(**arguments)
+                args = {}
+                for parameter in procedure.parameters:
+                    if getattr(arguments, parameter.name) is not None:
+                        args[parameter.name] = getattr(arguments, parameter.name)
+                result.result = procedure.implementation(**args)
             except Exception as ex:
                 traceback.print_exc()
-                raise TApplicationException(TApplicationException.UNKNOWN,
-                    "Exception: " + ex.message)
+                handled = False
+                for field in procedure.results_struct.fields:
+                    if (field.name != 'result') and isinstance(ex, field.type.get_class()):
+                        setattr(result, field.name, ex)
+                        handled = True
+                        break
+                if not handled:
+                    raise TApplicationException(TApplicationException.UNKNOWN,
+                            ex.__class__.__name__ + ': ' + str(ex))
 #            perf.end('call')
 
             # send the reply
@@ -363,10 +374,13 @@ class ThriftProcessor(TProcessor):
 #        perf.end('recv')
 #        perf.end('call')
 
-        if 'result' in result:
-            return result['result']
-        if 'error' in result:
-            raise result['error']
+        if result.result is not None:
+            return result.result
+
+        for field in procedure.results_struct.fields:
+            if getattr(result, field.name) is not None:
+                raise getattr(result, field.name)
+
         return None
 #       previous line not compatible with Thrift, should be:
 #        raise TApplicationException(TApplicationException.MISSING_RESULT, "Static_call_me failed: unknown result");

@@ -6,16 +6,6 @@ from types import NoneType, FunctionType
 from satori.objects import Object, Argument, DispatchOn, Namespace, NoneObj
 
 
-__all__ = (
-    'ArsElement', 'ArsNamedElement', 'ArsType', 'ArsNamedType', 'ArsAtomicType',
-    'ArsTypeAlias', 'ArsVoid', 'ArsBoolean', 'ArsFloat', 'ArsInt8', 'ArsInt16',
-    'ArsInt32', 'ArsInt64', 'ArsString', 'ArsList', 'ArsMap', 'ArsSet',
-    'ArsField', 'ArsStructure', 'ArsException', 'ArsConstant',
-    'ArsParameter', 'ArsProcedure', 'ArsService',
-    'ArsNamedTuple', 'ArsInterface'
-)
-
-
 class ArsElement(object):
     """Abstract. A base class for ARS model elements.
     """
@@ -299,6 +289,36 @@ class ArsField(ArsNamedElement):
         self.optional = optional
 
 
+class ArsStructureBase(object):
+    def __init__(self, dict_=None, **kwargs):
+        super(ArsStructureBase, self).__init__()
+        if dict_:
+            kwargs.update(dict_)
+        for field_name in self._field_names:
+            if field_name in kwargs:
+                setattr(self, field_name, kwargs.pop(field_name))
+            else:
+                setattr(self, field_name, None)
+        if kwargs:
+            raise TypeError('__init__() got an unexpected keyword argument \'{0}\''.format(kwargs.keys()[0]))
+    
+    @classmethod
+    def ars_type(cls):
+        return cls._ars_type
+
+    def __setitem__(self, key, value):
+        return setattr(self, key, value)
+
+    def __getitem__(self, key):
+        return getattr(self, key)
+
+    def __delitem__(self, key):
+        return delattr(self, key)
+
+    def __contains__(self, key):
+        return hasattr(self, key)
+
+
 class ArsStructure(ArsNamedType):
     """An ArsType that represents a named structure.
     """
@@ -338,31 +358,8 @@ class ArsStructure(ArsNamedType):
 
     def get_class(self):
         if not hasattr(self, '_class'):
-            def __init__(self, dict_=None, **kwargs):
-                super(_class, self).__init__()
-                if dict_:
-                    kwargs.update(dict_)
-                for field_name in self._field_names:
-                    if field_name in kwargs:
-                        setattr(self, field_name, kwargs.pop(field_name))
-                    else:
-                        setattr(self, field_name, None)
-                if kwargs:
-                    raise TypeError('__init__() got an unexpected keyword argument \'{0}\''.format(kwargs.keys()[0]))
-            
-            @classmethod
-            def ars_type(cls):
-                return cls._ars_type
-
             field_names = [field.name for field in self.fields]
-
-            _class = type(self.name, (object,), {'__init__': __init__, 'ars_type': ars_type, '_ars_type': self, '_field_names': field_names,
-                            '__setitem__': lambda x, y, z: setattr(x, y, z),
-                            '__getitem__': lambda x, y: getattr(x, y),
-                            '__delitem__': lambda x, y: delattr(x, y),
-                            '__contains__': lambda x, y: hasattr(x, y)
-                    })
-            self._class = _class
+            self._class = type(self.name, (ArsStructureBase,), {'_ars_type': self, '_field_names': field_names})
         return self._class
 
 
@@ -403,35 +400,35 @@ class ArsProcedure(ArsNamedElement):
         self.results_struct.add_field(name='error'+str(len(self.exception_types)), type=exception_type, optional=True)
 
 
+class ArsExceptionBase(Exception):
+    def __init__(self, dict_=None, **kwargs):
+        super(ArsExceptionBase, self).__init__()
+        if dict_:
+            kwargs.update(dict_)
+        for field_name in self._field_names:
+            if field_name in kwargs:
+                setattr(self, field_name, kwargs.pop(field_name))
+            else:
+                setattr(self, field_name, None)
+        if kwargs:
+            raise TypeError('__init__() got an unexpected keyword argument \'{0}\''.format(kwargs.keys()[0]))
+
+    def __str__(self):
+        if ('message' in self._field_names) and (self.message is not None):
+            return self.message
+        else:
+            return ', '.join(getattr(self, field_name) for field_name in self._field_names if getattr(self, field_name) is not None)
+
+    @classmethod
+    def ars_type(cls):
+        return cls._ars_type
+
+
 class ArsException(ArsStructure):
     def get_class(self):
         if not hasattr(self, '_class'):
-
-            def __init__(self, dict_=None, **kwargs):
-                super(_class, self).__init__()
-                if dict_:
-                    kwargs.update(dict_)
-                for field_name in self._field_names:
-                    if field_name in kwargs:
-                        setattr(self, field_name, kwargs.pop(field_name))
-                    else:
-                        setattr(self, field_name, None)
-                if kwargs:
-                    raise TypeError('__init__() got an unexpected keyword argument \'{0}\''.format(kwargs.keys()[0]))
-
-            @classmethod
-            def ars_type(cls):
-                return cls._ars_type
-
             field_names = [field.name for field in self.fields]
-
-            _class = type(self.name, (Exception,), {'__init__': __init__, 'ars_type': ars_type, '_ars_type': self, '_field_names': field_names,
-                            '__setitem__': lambda x, y, z: setattr(x, y, z),
-                            '__getitem__': lambda x, y: getattr(x, y),
-                            '__delitem__': lambda x, y: delattr(x, y),
-                            '__contains__': lambda x, y: hasattr(x, y)
-                    })
-            self._class = _class
+            self._class = type(self.name, (ArsExceptionBase,), {'_ars_type': self, '_field_names': field_names})
         return self._class
 
 

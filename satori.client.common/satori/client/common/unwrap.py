@@ -2,7 +2,7 @@
 
 import os
 import shutil
-from satori.ars.model import ArsTypeAlias, ArsInt64, ArsStructure
+from satori.ars.model import ArsTypeAlias, ArsInt64, ArsStructure, ArsExceptionBase
 from satori.ars.wrapper import ArsDateTime, ArsNullableStructure
 from satori.ars import perf
 from token_container import token_container
@@ -63,7 +63,14 @@ def unwrap_procedure(_proc):
             argtype = _args[_arg_numbers[name]][1]
             newkwargs[name] = argtype.convert_to_ars(value)
 
-        ret = _implementation(*newargs, **newkwargs)
+        try:
+            ret = _implementation(*newargs, **newkwargs)
+        except ArsExceptionBase as ex:
+            ex = ex.ars_type().convert_from_ars(ex)
+            reraise = compile('def ' + _procname + '():\n raise ex\n' + _procname + '()\n', '<thrift>', 'exec')
+            exception = {'ex': ex}
+            exec reraise in exception
+            
         ret = _rettype.convert_from_ars(ret)
         perf.end('wrap')
         return ret
@@ -193,6 +200,8 @@ def unwrap_service(service, base, struct, BlobReader, BlobWriter):
 
 
 def unwrap_interface(interface, BlobReader, BlobWriter):
+    classes = {}
+
     for type in interface.types:
         if type.name == 'DateTime':
             type.converter = ArsDateTime()
@@ -203,8 +212,8 @@ def unwrap_interface(interface, BlobReader, BlobWriter):
                     if field.name != 'null_fields':
                         newtype.add_field(field)
                 type.converter = newtype
+            classes[type.name] = type.get_class()
 
-    classes = {}
     for service in interface.services:
         if service.base:
             base = classes[service.base.name]

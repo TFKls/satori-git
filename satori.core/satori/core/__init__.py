@@ -21,6 +21,8 @@ def get_ars_interface():
     from satori.core import cwrapper
     import satori.core.api
     if not wrapper.middleware:
+        wrapper.global_throws(cwrapper.TokenInvalid)
+        wrapper.global_throws(cwrapper.TokenExpired)
         wrapper.register_middleware(cwrapper.TransactionMiddleware())
         wrapper.register_middleware(cwrapper.TokenVerifyMiddleware())
         wrapper.register_middleware(wrapper.TypeConversionMiddleware())

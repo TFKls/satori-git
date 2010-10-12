@@ -3,7 +3,7 @@
 from types import NoneType
 from datetime import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
-from satori.ars.wrapper import Struct, TypedList, TypedMap, Wrapper, ProcedureWrapper, StaticWrapper
+from satori.ars.wrapper import Struct, TypedList, TypedMap, Wrapper, ProcedureWrapper, StaticWrapper, DefineException
 from satori.ars.model import *
 from django.db import models, transaction, connection
 from django.db.models.fields.related import add_lazy_relation
@@ -584,6 +584,7 @@ class TransactionMiddleware(object):
         """Rolls back the database and leaves transaction management"""
         transaction.rollback()
         transaction.leave_transaction_management()
+        return exception
 
     def process_response(self, proc, args, kwargs, ret):
         """Commits and leaves transaction management."""
@@ -591,6 +592,8 @@ class TransactionMiddleware(object):
         transaction.leave_transaction_management()
         return ret
 
+TokenInvalid = DefineException('TokenInvalid', 'The provided token is invalid')
+TokenExpired = DefineException('TokenExpired', 'The provided token has expired')
 
 class TokenVerifyMiddleware(object):
     def process_request(self, proc, args, kwargs):
@@ -599,11 +602,13 @@ class TokenVerifyMiddleware(object):
                 token = args[0]
             else:
                 token = kwargs['token']
-
-            token = Token(token)
+            try:
+                token = Token(token)
+            except:
+                raise TokenInvalid()
 
             if not token.valid:
-                raise Exception('TokenError: The provided token has expired')
+                raise TokenExpired()
 
             if token.user_id:
                 userid = int(token.user_id)
@@ -618,7 +623,7 @@ class TokenVerifyMiddleware(object):
 
 
     def process_exception(self, proc, args, kwargs, exception):
-        pass
+        return exception
 
     def process_response(self, proc, args, kwargs, ret):
         return ret
@@ -747,7 +752,7 @@ class CheckRightsMiddleware(object):
             self.check(token, proc.parameters[arg_name].type, kwargs[arg_name])
 
     def process_exception(self, proc, args, kwargs, exception):
-        pass
+        return exception
 
     def process_response(self, proc, args, kwargs, ret):
         if proc.parameters and (proc.parameters[0].name == 'token'):
