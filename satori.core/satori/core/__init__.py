@@ -6,26 +6,18 @@ exposed over Thrift.
 import sys
 import os
 import traceback
+from time import sleep
 from datetime import datetime
 from multiprocessing import Process 
-from multiprocessing.connection import Client
+from multiprocessing.connection import Client, Listener
 from setproctitle import setproctitle
 import signal as signal_module
 from signal import signal, getsignal, SIGINT, SIGTERM, pause
 from satori.events import Slave2, Client2
 
-signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG'))
+import satori.core.entities
 
-def get_ars_interface():
-    from satori.ars import wrapper
-    from satori.core import cwrapper
-    import satori.core.api
-    if not wrapper.middleware:
-        wrapper.register_middleware(cwrapper.TransactionMiddleware())
-        wrapper.register_middleware(cwrapper.TokenVerifyMiddleware())
-        wrapper.register_middleware(wrapper.TypeConversionMiddleware())
-        wrapper.register_middleware(cwrapper.CheckRightsMiddleware())
-    return wrapper.generate_interface()
+signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG'))
 
 class SatoriProcess(Process):
     def __init__(self, name):
@@ -79,7 +71,6 @@ class EventMasterProcess(SatoriProcess):
         from django.conf import settings
         from satori.events import Master
         from satori.events.mapper import TrivialMapper
-        from multiprocessing.connection import Listener
         listener = Listener(address=(settings.EVENT_HOST, settings.EVENT_PORT))
         master = Master(mapper=TrivialMapper())
         master.listen(listener)
@@ -103,7 +94,9 @@ class ThriftServerProcess(SatoriProcess):
         from thrift.transport.TSocket import TServerSocket
         from thrift.server.TServer import TThreadedServer
         from satori.ars.thrift import ThriftServer
-        server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), get_ars_interface())
+        from satori.core.api import ars_interface
+
+        server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), ars_interface)
         server.run()
 
 class BlobServerProcess(SatoriProcess):
@@ -131,70 +124,57 @@ class DbevNotifierProcess(SatoriProcess):
         run_notifier(Slave2(connection))
 
 def export_thrift():
-    """Entry Point. Writes the Thrift contract of the server to standard output.
+    """Entry Point. Writes the Thrift interface of the server to standard output.
     """
-    import os
     os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.core.settings'
-    from sys import stdout
+
     from satori.ars.thrift import ThriftWriter
+    from satori.core.api import ars_interface
+
     writer = ThriftWriter()
-    writer.write_to(get_ars_interface(), stdout)
+    writer.write_to(ars_interface, sys.stdout)
 
 def start_server():
-    import os
     os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.core.settings'
 
-    from setproctitle import setproctitle
     setproctitle('satori: master')
 
-    processes = []
-    from multiprocessing import Process
-    from time import sleep
-
-    event_master = EventMasterProcess()
-    event_master.start()
-    processes.append(event_master)
-
-    sleep(1)
-
-    debug_queue = EventSlaveProcess('debug queue', [DebugQueue()])
-    debug_queue.start()
-    processes.append(debug_queue)
-
-    dbev_notifier = DbevNotifierProcess()
-    dbev_notifier.start()
-    processes.append(dbev_notifier)
+    print 'Loading ARS interface...'
+    import satori.core.api
+    print 'ARS interface loaded.'
 
     from satori.core.checking.check_queue import CheckQueue
-    check_queue = EventSlaveProcess('check queue', [CheckQueue()])
-    check_queue.start()
-    processes.append(check_queue)
-    
     from satori.core.checking.dispatcher_runner import DispatcherRunner
-    dispatcher_runner = EventSlaveProcess('dispatcher runner', [DispatcherRunner()])
-    dispatcher_runner.start()
-    processes.append(dispatcher_runner)
 
-    thrift_server = ThriftServerProcess()
-    thrift_server.start()
-    processes.append(thrift_server)
+    to_start = [
+            EventMasterProcess(), 
+            EventSlaveProcess('debug queue', [DebugQueue()]), 
+            DbevNotifierProcess(), 
+            EventSlaveProcess('check queue', [CheckQueue()]),
+            EventSlaveProcess('dispatcher runner', [DispatcherRunner()]),
+            ThriftServerProcess(),
+            BlobServerProcess(),
+    ]
 
-    blob_server = BlobServerProcess()
-    blob_server.start()
-    processes.append(blob_server)
+    started = []
 
     def handle_signal(signum, frame):
-        for process in reversed(processes):
+        for process in reversed(started):
             process.terminate()
             process.join()
-#            sleep(1)
         exit(0)
 
     signal(SIGINT, handle_signal)
     signal(SIGTERM, handle_signal)
 
+    for process in to_start:
+        process.start()
+        started.append(process)
+        if isinstance(process, EventMasterProcess):
+            sleep(1)
+
     while True:
-        pause()
+        sleep(1)
 
 def manage():
     from django.core.management import execute_manager

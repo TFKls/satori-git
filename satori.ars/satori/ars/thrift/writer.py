@@ -140,9 +140,8 @@ class ThriftWriter(object):
                 ind = 1
                 for exception_type in procedure.exception_types:
                     target.write('{0}{1}:'.format(sep2, ind))
-                    self._reference(exception_type.type, target)
-                    target.write(' ')
                     self._reference(exception_type, target)
+                    target.write(' error{0}'.format(ind))
                     sep2 = ', '
                     ind += 1
                 target.write(')')

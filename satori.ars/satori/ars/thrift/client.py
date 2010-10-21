@@ -2,7 +2,6 @@
 """Client for the Thrift protocol.
 """
 
-from StringIO import StringIO
 import threading
 import socket
 from types import FunctionType
@@ -10,11 +9,10 @@ from types import FunctionType
 from thrift.transport.TTransport import TFramedTransport, TTransportException
 from thrift.protocol.TBinaryProtocol import TBinaryProtocol
 
+from satori.ars.model import ArsInterface
 from satori.objects import Argument, Signature, ArgumentMode
-from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 
 from processor import ThriftProcessor
-from reader import ThriftReader
 
 class ThriftClient(threading.local):
     @Argument('interface', type=ArsInterface)
@@ -80,25 +78,4 @@ class ThriftClient(threading.local):
             self._transport.close()
             self._started = False
 
-
-@Argument('transport_factory', type=FunctionType)
-def bootstrap_thrift_client(transport_factory):
-    interface = ArsInterface()
-    idl_proc = ArsProcedure(return_type=ArsString, name='Server_getIDL')
-    idl_serv = ArsService(name='Server')
-    idl_serv.add_procedure(idl_proc)
-    interface.add_service(idl_serv)
-
-    bootstrap_client = ThriftClient(interface, transport_factory)
-    bootstrap_client.wrap_all()
-    idl = idl_proc.implementation()
-    bootstrap_client.stop()
-
-    idl_reader = ThriftReader()
-    interface = idl_reader.read_from_string(idl)
-
-    client = ThriftClient(interface, transport_factory)
-    client.wrap_all()
-
-    return (interface, client)
 

@@ -365,6 +365,19 @@ class ReturnValue(object):
             raise TypeError("Bad return value type: " + error)
 
 
+class Throws(object):
+    """A thrown exception specification.
+    """
+
+    def __init__(self, exception):
+        self.exception = exception
+
+    def __call__(self, func):
+        signature = Signature.of(func)
+        signature.exceptions.append(self.exception)
+        return func
+
+
 def _original(callable_):
     while hasattr(callable_, 'func_dict') and MAGIC_ORG in callable_.func_dict:
         callable_ = callable_.func_dict[MAGIC_ORG]
@@ -401,6 +414,7 @@ class Signature(object):
         self.extra_positional = positional
         self.extra_keyword = keyword
         self.return_value = ReturnValue()
+        self.exceptions = []
         if defaults is None:
             defaults = []
         required = len(self.positional) - len(defaults)

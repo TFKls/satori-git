@@ -4,6 +4,6 @@
 
 from reader import ThriftReader
 from writer import ThriftWriter
-from client import ThriftClient, bootstrap_thrift_client
+from client import ThriftClient
 from server import ThriftServer
 

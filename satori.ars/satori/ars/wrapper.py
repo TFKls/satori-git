@@ -8,8 +8,7 @@ from types import NoneType, FunctionType
 import sys
 import copy
 from satori.objects import Signature, Argument, ArgumentMode, ReturnValue, ConstraintDisjunction, TypeConstraint
-from satori.ars.model import ArsInterface, ArsTypeAlias, ArsList, ArsMap, ArsStructure, ArsProcedure, ArsService
-from satori.ars.model import ArsVoid, ArsInt32, ArsInt64, ArsString, ArsBoolean
+from satori.ars.model import *
 from satori.ars import perf
 
 class ArsNullableStructure(ArsStructure):
@@ -183,6 +182,23 @@ class ArsDateTime(ArsTypeAlias):
         return datetime.fromtimestamp(value)
 
 
+def DefineException(name, message, fields=[]):
+    ars_exception = ArsException(name=name)
+    ars_exception.add_field(name='message', type=ArsString, optional=False)
+    for (field_name, field_type, field_optional) in fields:
+        ars_exception.add_field(name=field_name, type=python_to_ars_type(field_type), optional=field_optional)
+
+    exception_class = ars_exception.get_class()
+
+    def __init__(self, **kwargs):
+        kwargs['message'] = message.format(**kwargs)
+        super(exception_subclass, self).__init__(**kwargs)
+
+    exception_subclass = type(name, (exception_class,), {'__init__': __init__})
+
+    return exception_subclass
+
+
 python_basic_types = {
     NoneType: ArsVoid,
     int: ArsInt32,
@@ -206,6 +222,7 @@ def python_to_ars_type(type_):
 
 wrapper_list = []
 constants = {}
+global_throwss = []
 middleware = []
 
 class Wrapper(object):
@@ -322,6 +339,19 @@ class StaticWrapper(Wrapper):
     def method(self, proc):
         self._add_child(ProcedureWrapper(proc, self))
 
+class WrapperBase(type):
+    def __new__(mcs, name, bases, dict_):
+        newdict = {}
+
+        for elem in dict_.itervalues():
+            if isinstance(elem, Wrapper):
+                for (name, proc) in elem._generate_procedures().iteritems():
+                    newdict[name] = staticmethod(proc)
+                   
+        return type.__new__(mcs, name, bases, newdict)
+
+class WrapperClass(object):
+    __metaclass__ = WrapperBase
 
 class TypeConversionMiddleware(object):
     def process_request(self, proc, args, kwargs):
@@ -332,7 +362,10 @@ class TypeConversionMiddleware(object):
             kwargs[arg_name] = proc.parameters[arg_name].type.convert_from_ars(kwargs[arg_name])
 
     def process_exception(self, proc, args, kwargs, exception):
-        pass
+        if isinstance(exception, ArsExceptionBase):
+            return exception.ars_type().convert_to_ars(exception)
+        else:
+            return exception
 
     def process_response(self, proc, args, kwargs, ret):
         return proc.return_type.convert_to_ars(ret)
@@ -362,23 +395,23 @@ def generate_procedure(name, proc):
         args = list(args)
 
         try:
-            perf.begin('mid req')
             for i in middleware:
+                perf.begin('mid req ' + i.__class__.__name__)
                 i.process_request(ars_proc, args, kwargs)
-            perf.end('mid req')
+                perf.end('mid req ' + i.__class__.__name__)
 
             perf.begin('proc')
             ret = proc(*args, **kwargs)
             perf.end('proc')
 
-            perf.begin('mid resp')
             for i in reversed(middleware):
+                perf.begin('mid resp ' + i.__class__.__name__)
                 ret = i.process_response(ars_proc, args, kwargs, ret)
-            perf.end('mid resp')
+                perf.end('mid resp ' + i.__class__.__name__)
         except Exception as exception:
             for i in reversed(middleware):
-                i.process_exception(ars_proc, args, kwargs, exception)
-            raise
+                exception = i.process_exception(ars_proc, args, kwargs, exception)
+            raise exception, None, sys.exc_info()[2]
         else:
             return ret
 
@@ -394,10 +427,19 @@ def generate_procedure(name, proc):
 
         ars_proc.add_parameter(name=arg_name, type=arg_type, optional=arg_optional)
 
+    for exception in global_throwss:
+        ars_proc.add_exception(python_to_ars_type(exception))
+
+    for exception in signature.exceptions:
+        ars_proc.add_exception(python_to_ars_type(exception))
+
     return ars_proc
 
 def constant(name, value):
     constants[name] = value
+
+def global_throws(exception):
+    global_throwss.append(exception)
 
 def generate_service(wrapper, base):
     service = ArsService(name=wrapper._name, base=base)

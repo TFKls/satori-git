@@ -3,12 +3,12 @@
 from types import NoneType
 from datetime import datetime
 from satori.objects import Signature, Argument, ReturnValue, DispatchOn
-from satori.ars.wrapper import Struct, TypedList, TypedMap, Wrapper, ProcedureWrapper, StaticWrapper
+from satori.ars.wrapper import Struct, TypedList, TypedMap, Wrapper, ProcedureWrapper, StaticWrapper, DefineException
 from satori.ars.model import *
 from django.db import models, transaction, connection
 from django.db.models.fields.related import add_lazy_relation
 from satori.core.sec.tools import Token
-from satori.core.models import OpenAttribute, Blob, Privilege, Global
+from satori.core.models import OpenAttribute, Privilege, Global
 
 def resolve_model(self, model, rel_model):
     self.model = model
@@ -99,6 +99,34 @@ def DjangoStruct(model):
         model_struct_map[model] = Struct(name, fields)
     return model_struct_map[model]
 
+def RichDjangoStructCreate(name, model, read_write_fields=[], read_only_fields=[], extra_fields=[]):
+    model_fields = {}
+    for field in model._meta.fields:
+        model_fields[field.name] = field
+
+    fields = []
+    field_read_permission = {}
+    field_write_permission = {}
+
+    for (field_name, read_permission) in read_only_fields:
+        read_write_fields.append((field_name, read_permission, None))
+
+    for (i, (field_name, read_permission, write_permission)) in enumerate(read_write_fields):
+        read_write_fields[i] = (field_name, read_permission, write_permission, django_field_to_python_type(model, model_fields[field_name]))
+
+    for (field_name, read_permission, field_type) in extra_fields:
+        read_write_fields.append((field_name, read_permission, None, field_type))
+
+    for (field_name, read_permission, write_permission, field_type) in read_write_fields:
+        fields.append((field.name, field_type, True))
+        field_read_permission[field_name] = read_permission
+        field_write_permission[field_name] = write_permission
+
+    struct = Struct(name, fields)
+    struct.field_read_permission = field_read_permission
+    struct.field_write_permission = field_write_permission
+
+    return struct
 
 field_basic_types = {
     models.AutoField: long,
@@ -584,6 +612,7 @@ class TransactionMiddleware(object):
         """Rolls back the database and leaves transaction management"""
         transaction.rollback()
         transaction.leave_transaction_management()
+        return exception
 
     def process_response(self, proc, args, kwargs, ret):
         """Commits and leaves transaction management."""
@@ -591,6 +620,8 @@ class TransactionMiddleware(object):
         transaction.leave_transaction_management()
         return ret
 
+TokenInvalid = DefineException('TokenInvalid', 'The provided token is invalid')
+TokenExpired = DefineException('TokenExpired', 'The provided token has expired')
 
 class TokenVerifyMiddleware(object):
     def process_request(self, proc, args, kwargs):
@@ -599,11 +630,13 @@ class TokenVerifyMiddleware(object):
                 token = args[0]
             else:
                 token = kwargs['token']
-
-            token = Token(token)
+            try:
+                token = Token(token)
+            except:
+                raise TokenInvalid()
 
             if not token.valid:
-                raise Exception('TokenError: The provided token has expired')
+                raise TokenExpired()
 
             if token.user_id:
                 userid = int(token.user_id)
@@ -618,7 +651,7 @@ class TokenVerifyMiddleware(object):
 
 
     def process_exception(self, proc, args, kwargs, exception):
-        pass
+        return exception
 
     def process_response(self, proc, args, kwargs, ret):
         return ret
@@ -747,7 +780,7 @@ class CheckRightsMiddleware(object):
             self.check(token, proc.parameters[arg_name].type, kwargs[arg_name])
 
     def process_exception(self, proc, args, kwargs, exception):
-        pass
+        return exception
 
     def process_response(self, proc, args, kwargs, ret):
         if proc.parameters and (proc.parameters[0].name == 'token'):
