@@ -7,6 +7,7 @@ class X(threading.local):
     def __init__(self):
         self._total = {}
         self._begin = {}
+        self._count = {}
 
 x = X()
 
@@ -21,9 +22,11 @@ def end(name):
     del x._begin[name]
 
     x._total[name] = x._total.get(name, 0) + diff
+    x._count[name] = x._count.get(name, 0) + 1
 
-    print 'End:\t{0}\t{1}\t{2}'.format(name, diff, x._total[name])
+    print 'End:\t{0}\t{1}\t{2}\t{3}'.format(name, diff, x._total[name], x._count[name])
 
 def clear(name):
     x._total = {}
+    self._count = {}
 
