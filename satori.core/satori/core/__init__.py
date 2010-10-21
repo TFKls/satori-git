@@ -15,6 +15,8 @@ import signal as signal_module
 from signal import signal, getsignal, SIGINT, SIGTERM, pause
 from satori.events import Slave2, Client2
 
+import satori.core.entities
+
 signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG'))
 
 class SatoriProcess(Process):

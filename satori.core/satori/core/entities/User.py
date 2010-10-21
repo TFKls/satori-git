@@ -1,0 +1,34 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+#! module models
+
+from django.db import models
+from satori.dbev import Events
+from satori.core.models import Role
+
+class User(Role):
+    """Model. A Role which can be logged onto.
+    """
+    __module__ = "satori.core.models"
+    parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_user')
+
+    login      = models.CharField(max_length = 64, unique=True)
+    fullname   = models.CharField(max_length = 64)
+    def __str__(self):
+        return self.fullname
+
+    # add validation
+
+class UserEvents(Events):
+    model = User
+    on_insert = on_update = ['name']
+    on_delete = []
+
+#! module api
+
+from satori.ars.wrapper import WrapperClass
+from satori.core.cwrapper import ModelWrapper
+from satori.core.models import User
+
+class ApiUser(WrapperClass):
+    user = ModelWrapper(User)
+
