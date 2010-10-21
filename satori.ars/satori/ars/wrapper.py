@@ -339,6 +339,19 @@ class StaticWrapper(Wrapper):
     def method(self, proc):
         self._add_child(ProcedureWrapper(proc, self))
 
+class WrapperBase(type):
+    def __new__(mcs, name, bases, dict_):
+        newdict = {}
+
+        for elem in dict_.itervalues():
+            if isinstance(elem, Wrapper):
+                for (name, proc) in elem._generate_procedures().iteritems():
+                    newdict[name] = staticmethod(proc)
+                   
+        return type.__new__(mcs, name, bases, newdict)
+
+class WrapperClass(object):
+    __metaclass__ = WrapperBase
 
 class TypeConversionMiddleware(object):
     def process_request(self, proc, args, kwargs):
@@ -382,19 +395,19 @@ def generate_procedure(name, proc):
         args = list(args)
 
         try:
-            perf.begin('mid req')
             for i in middleware:
+                perf.begin('mid req ' + i.__class__.__name__)
                 i.process_request(ars_proc, args, kwargs)
-            perf.end('mid req')
+                perf.end('mid req ' + i.__class__.__name__)
 
             perf.begin('proc')
             ret = proc(*args, **kwargs)
             perf.end('proc')
 
-            perf.begin('mid resp')
             for i in reversed(middleware):
+                perf.begin('mid resp ' + i.__class__.__name__)
                 ret = i.process_response(ars_proc, args, kwargs, ret)
-            perf.end('mid resp')
+                perf.end('mid resp ' + i.__class__.__name__)
         except Exception as exception:
             for i in reversed(middleware):
                 exception = i.process_exception(ars_proc, args, kwargs, exception)
