@@ -16,7 +16,7 @@ class LoginRequest(Request):
         login = vars['username']
         password = vars['password']
         try:
-            t = Security.login(login=login, password=password)
+            t = User.authenticate(login=login, password=password)
             token_container.set_token(t)
         except LoginFailed:
             follow(d,lw_path)['status'] = ['failed']

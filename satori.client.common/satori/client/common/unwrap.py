@@ -2,14 +2,14 @@
 
 import os
 import shutil
-from satori.ars.model import ArsTypeAlias, ArsInt64, ArsStructure, ArsExceptionBase
-from satori.ars.wrapper import ArsDateTime, ArsNullableStructure
+from satori.ars.model import ArsType, ArsTypeAlias, ArsInt64, ArsStructure, ArsExceptionBase
+from satori.core.export import ArsDateTime
 from satori.ars import perf
 from token_container import token_container
 
-class ArsUnwrapClass(ArsTypeAlias):
+class ArsUnwrapId(ArsTypeAlias):
     def __init__(self, cls):
-        super(ArsUnwrapClass, self).__init__(name=cls.__name__, target_type=ArsInt64)
+        super(ArsUnwrapId, self).__init__(name=cls.__name__, target_type=ArsInt64)
         self.cls = cls
 
     def do_needs_conversion(self):
@@ -19,12 +19,32 @@ class ArsUnwrapClass(ArsTypeAlias):
         return value._id
 
     def do_convert_from_ars(self, value):
-        return self.cls(value)
+        return self.cls(_id=value)
+
+
+class ArsUnwrapStruct(ArsStructure):
+    def __init__(self, cls, original_struct):
+        super(ArsUnwrapStruct, self).__init__(original_struct.name)
+        self.cls = cls
+        for field in original_struct.fields:
+            self.add_field(field)
+
+    def do_needs_conversion(self):
+        return True
+
+    def do_convert_to_ars(self, value):
+        return super(ArsUnwrapStruct, self).do_convert_to_ars(value)
+
+    def do_convert_from_ars(self, value):
+        struct = super(ArsUnwrapStruct, self).do_convert_from_ars(value)
+        return self.cls(_id=value.id, _struct=value)
 
 
 class UnwrapBase(object):
-    def __init__(self, id, first=True):
+    def __init__(self, _id, _struct=None):
         super(UnwrapBase, self).__init__()
+        self._id = _id
+        self._struct = _struct
 
 
 class StubCodeLoader(object):
@@ -32,7 +52,7 @@ class StubCodeLoader(object):
         self.method_name = method_name
 
     def get_source(self, module_name):
-        return 'thrift code\nraise {0} error\ncall {0}\n'.format(self.method_name)
+        return 'thrift code\nraise {0} error\n'.format(self.method_name)
 
 def unwrap_procedure(_proc):
     _procname = _proc.name
@@ -74,9 +94,10 @@ def unwrap_procedure(_proc):
             ret = _implementation(*newargs, **newkwargs)
         except ArsExceptionBase as ex:
             ex = ex.ars_type().convert_from_ars(ex)
-            reraise = compile('def ' + _procname + '():\n raise ex\n' + _procname + '()\n', '<thrift>', 'exec')
+            reraise = compile('def ' + _procname + '():\n raise ex\n', '<thrift>', 'exec')
             exception = {'ex': ex, '__loader__': StubCodeLoader(_procname)}
             exec reraise in exception
+            exception[_procname]()
             
         ret = _rettype.convert_from_ars(ret)
         print _procname
@@ -174,34 +195,19 @@ def unwrap_service(service, base, struct, BlobReader, BlobWriter):
             class_dict[meth_name] = unwrap_procedure(proc)
 
     if struct is not None:
-        def __init__(self, id, first=True):
-            super(new_class, self).__init__(id, False)
-            if first:
-                self._id = id
-                self._struct = None
+        def __init__(self, _id, _struct=None):
+            super(new_class, self).__init__(_id, _struct)
 
         def __getattr__(self, name):
             if name in struct._field_names:
                 if self._struct is None:
-                    self._struct = self.get_struct()
+                    self._struct = self.get_struct()._struct
                 return getattr(self._struct, name)
             else:
                 raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
 
-        def __setattr__(self, name, value):
-            if name == 'id':
-                raise Exception('Object id cannot be changed')
-
-            if name in struct._field_names:
-                self.set_struct(struct(**{name: value}))
-                if self._struct is not None:
-                    setattr(self._struct, name, value)
-            else:
-                return super(new_class, self).__setattr__(name, value)
-
         class_dict['__init__'] = __init__
         class_dict['__getattr__'] = __getattr__
-        class_dict['__setattr__'] = __setattr__
 
     new_class = type(class_name, (base,), class_dict)
     return new_class
@@ -214,12 +220,6 @@ def unwrap_interface(interface, BlobReader, BlobWriter):
         if type.name == 'DateTime':
             type.converter = ArsDateTime()
         elif isinstance(type, ArsStructure):
-            if type.fields and (type.fields[0].name == 'null_fields'):
-                newtype = ArsNullableStructure(name=type.name)
-                for field in type.fields:
-                    if field.name != 'null_fields':
-                        newtype.add_field(field)
-                type.converter = newtype
             classes[type.name] = type.get_class()
 
     for service in interface.services:
@@ -237,7 +237,9 @@ def unwrap_interface(interface, BlobReader, BlobWriter):
         classes[service.name] = newcls
 
         if (service.name + 'Id') in interface.types:
-            interface.types[service.name + 'Id'].converter = ArsUnwrapClass(newcls)
+            interface.types[service.name + 'Id'].converter = ArsUnwrapId(newcls)
+        if (service.name + 'Struct') in interface.types:
+            interface.types[service.name + 'Struct'].converter = ArsUnwrapStruct(newcls, interface.types[service.name + 'Struct'])
 
     for constant in interface.constants:
         classes[constant.name] = constant.type.convert_from_ars(constant.value)

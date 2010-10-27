@@ -2,32 +2,34 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
-from satori.core.models import Entity
-from satori.core.models import AttributeGroup
 
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel, generate_attribute_group
+from satori.dbev               import Events
+
+from satori.core.models import Entity
+
+@ExportModel
 class ProblemMapping(Entity):
     """Model. Intermediary for many-to-many relationship between Contests and
-    ProblemIncarnations.
+    Problems.
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_problemmapping')
+
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_problemmapping')
 
     contest     = models.ForeignKey('Contest')
     problem     = models.ForeignKey('Problem')
     code        = models.CharField(max_length=10)
     title       = models.CharField(max_length=64)
-    statement   = models.OneToOneField('AttributeGroup', related_name='group_problemmapping_statement')
     default_test_suite = models.ForeignKey('TestSuite')
 
-    def save(self):
-        try:
-            x = self.statement
-        except AttributeGroup.DoesNotExist:
-            statement = AttributeGroup()
-            statement.save()
-            self.statement = statement
+    generate_attribute_group('ProblemMapping', 'statement', 'VIEW', 'EDIT', globals(), locals())
 
+    class ExportMeta(object):
+        fields = [('contest', 'VIEW'), ('problem', 'VIEW'), ('code', 'VIEW'), ('title', 'VIEW'), ('default_test_suite', 'VIEW')]
+
+    def save(self):
+        self.fixup_statement()
         super(ProblemMapping, self).save()
 
     def __str__(self):
@@ -52,15 +54,4 @@ class ProblemMappingEvents(Events):
     model = ProblemMapping
     on_insert = on_update = ['contest', 'problem']
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import ProblemMapping
-
-class ApiProblemMapping(WrapperClass):
-    problem_mapping = ModelWrapper(ProblemMapping)
-
-    problem_mapping.attributes('statement')
 

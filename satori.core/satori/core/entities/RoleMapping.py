@@ -26,12 +26,4 @@ class RoleMappingEvents(Events):
     on_insert = on_update = ['parent', 'child']
     on_delete = []
 
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import RoleMapping
-
-class ApiRoleMapping(WrapperClass):
-    role_mapping = ModelWrapper(RoleMapping)
 

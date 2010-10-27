@@ -6,10 +6,11 @@ import imp
 import os
 import re
 import sys
+import traceback
 from StringIO import StringIO
 from _topsort import topsort, CycleError
 
-names = ['models', 'api']
+names = ['models']
 
 class SatoriLoader(object):
     def load_file(self, filename, fullname):
@@ -28,10 +29,11 @@ class SatoriLoader(object):
 
                     if m:
                         uses.update([x.strip() for x in m.group(1).split(',')])
+                        modulecode.write('\n')
                     else:
                         modulecode.write(line)
-
-                modulecode.write('\n')
+                else:
+                    modulecode.write('\n')
 
             code = compile(modulecode.getvalue(), filename, 'exec')
 
@@ -53,17 +55,16 @@ class SatoriLoader(object):
         for filename in os.listdir(__path__[0]):
             if re.match(r'^[a-zA-Z][_a-zA-Z]*\.py$', filename):
                 modules.append(self.load_file(os.path.join(__path__[0], filename), fullname))
-
-        pairs = []
-
         
+        pairs = []
 
         for (code, uses, provides) in modules:
             for (code2, uses2, provides2) in modules:
                 if code != code2:
                     if provides & provides2:
+                        print 'Two modules provide {0}'.format(str(provides & provides2))
                         raise ImportError('Two modules provide {0}'.format(str(provides & provides2)))
-
+        
         for (code, uses, provides) in modules:
             for use in uses:
                 if use == '*':
@@ -79,6 +80,7 @@ class SatoriLoader(object):
                         second = code2
 
                 if second is None:
+                    print 'No module provides {0}'.format(use)
                     raise ImportError('No module provides {0}'.format(use))
 
                 pairs.append((second, code))
@@ -90,6 +92,7 @@ class SatoriLoader(object):
                 if code is not None:
                     exec code in module.__dict__
         except CycleError:
+            print 'There is a cycle in module dependencies'
             raise ImportError('There is a cycle in module dependencies')
 
         return module

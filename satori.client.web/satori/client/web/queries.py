@@ -18,7 +18,7 @@ def ContestById(cid):
 	return Contest.filter({'id' : int(cid)})[0]
 
 def CurrentUser():
-    return Security.whoami()
+    return Security.whoami_user()
 
 def ActiveContest(d):
 	if not 'contestid' in d.keys():
@@ -44,8 +44,8 @@ def CurrentContestant(d):
 
 def Allowed(o, str):
     if o=='global':
-        return Security.global_right_have(str)
-    return o.demand_right(str)
+        return Privilege.global_demand(str)
+    return Privilege.demand(o, str)
 
 #def explicit_right(object,role,right,moment=datetime.now()):
 #    for p in Privilege.filter({'role':role, 'object':object, 'right':right}):

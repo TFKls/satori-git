@@ -58,7 +58,7 @@ class Token(object):
 
     @Argument('token', type=(str, None))
     @Argument('key', type=(str, None))
-    @Argument('user', type=(User, None))
+    @Argument('user', type=(Role, None))
     @Argument('user_id', type=(str, None))
     @Argument('auth', type=(str, None))
     @Argument('data')
@@ -131,7 +131,7 @@ class Token(object):
     @property
     def user(self):
         try:
-            return User.objects.get(id=self.user_id)
+            return Role.objects.get(id=self.user_id)
         except:
             pass
         return None
@@ -233,8 +233,6 @@ class RoleSet(object):
                             "Multiple absorbing roles."
                         )
                     abs = a
-            if role.absorbing and abs is None:
-                abs = role
             self._absorb[role] = abs
         return self._absorb[role]
 
@@ -288,7 +286,7 @@ class RightCheck(object):
         if res is not None:
             return res
         res = False
-        for priv in Privilege.objects.filter(role = role, object = object, right = right):
+        for priv in Privilege.objects.filter(role = role, entity = object, right = right):
             if priv.start_on is not None and priv.start_on > self._ts or priv.finish_on is not None and priv.finish_on < self._ts:
                 continue
             res = True

@@ -1,9 +1,11 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+from django.db import models
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound, HttpResponseServerError, HttpResponseNotAllowed
 import urllib
-from satori.core.api import ars_interface
-from satori.core import models
-from satori.core.models import OpenAttribute
+from satori.core.sec import Token
+import satori.core.models
+from satori.core.models import AttributeGroup, OpenAttribute, Privilege
+from satori.core.export import token_container
 import traceback
 
 def server(request, model, id, name, group):
@@ -19,38 +21,54 @@ def server(request, model, id, name, group):
     if isinstance(group, unicode):
         group = group.encode('utf-8')
 
-    token = request.COOKIES.get('satori_token', '')
-
     try:
+        token_container.token = Token(request.COOKIES.get('satori_token', ''))
+
+        model = getattr(satori.core.models, model, None)
+        if model is None:
+            return HttpResponseNotFound()
+
+        if group != 'oa':
+            oa_field = None
+            for field in model._meta.fields:
+                if field.name == group:
+                    oa_field = field
+            if oa_field is None:
+                return HttpResponseNotFound()
+            if not isinstance(oa_field, models.ForeignKey):
+                return HttpResponseNotFound()
+            if oa_field.rel.to != AttributeGroup:
+                return HttpResponseNotFound()
+
+        try:
+            entity = model.objects.get(id=id)
+        except model.DoesNotExist:
+            return HttpResponseNotFound()
+
+        if not Privilege.demand(entity, 'VIEW'):
+            return HttpResponseNotFound()
+
         if request.method == 'GET':
-            return server_get(request, token, model, id, name, group)
+            return server_get(request, entity, name, group)
         elif request.method == 'PUT':
-            return server_put(request, token, model, id, name, group)
+            return server_put(request, entity, name, group)
     except:
         traceback.print_exc()
         return HttpResponseServerError()
 
-def server_get(request, token, model, id, name, group):
-    try:
-        can_proc = ars_interface.services[model].procedures[model + '_' + group + '_get_blob_can'].implementation
-    except:
-        traceback.print_exc()
-        return HttpResponseNotFound()
+def server_get(request, entity, name, group):
+    func = getattr(entity, group + '_get_blob')
 
-    if not can_proc(token, id, name):
+    if not func._export_method.pc(self=entity, name=name):
         return HttpResponseForbidden()
 
-    obj = getattr(models, model).objects.get(id=id)
-    
-    if group != 'oa':
-        obj = getattr(obj, group)
-
-    oa = obj.attributes.oa_get(name)
-    
-    if (oa is None) or (not oa.is_blob):
+    try:
+        blob = func(name)
+    except BadAttributeType:
         return HttpResponseNotFound()
 
-    blob = OpenAttribute.open_blob(oa.value)
+    if blob is None:
+        return HttpResponseNotFound()
 
     def reader():
         while True:
@@ -62,22 +80,19 @@ def server_get(request, token, model, id, name, group):
 
     res = HttpResponse(reader())
     res['content-length'] = str(blob.length)
-    res['Filename'] = urllib.quote(str(oa.filename))
+    res['Filename'] = urllib.quote(str(blob.filename))
     return res
 
-def server_put(request, token, model, id, name, group):
-    try:
-        can_proc = ars_interface.services[model].procedures[model + '_' + group + '_set_blob_can'].implementation
-    except:
-        return HttpResponseNotFound()
+def server_put(request, entity, name, group):
+    func = getattr(entity, group + '_set_blob')
 
-    if not can_proc(token, id, name):
+    if not func._export_method.pc(self=entity, name=name):
         return HttpResponseForbidden()
 
     length = int(request.environ.get('CONTENT_LENGTH', 0))
     filename = urllib.unquote(request.environ.get('HTTP_FILENAME', ''))
 
-    blob = OpenAttribute.create_blob()
+    blob = func(name, filename=filename)
 
     while(length > 0):
         r = min(length, 1024)
@@ -86,13 +101,6 @@ def server_put(request, token, model, id, name, group):
         length = length - r
 
     hash = blob.close()
-
-    obj = getattr(models, model).objects.get(id=id)
-    
-    if group != 'oa':
-        obj = getattr(obj, group)
-
-    obj.attributes.oa_set(name, OpenAttribute(is_blob=True, value=hash, filename=filename))
 
     res = HttpResponse(hash)
     res['content-length'] = str(len(hash))
@@ -106,17 +114,15 @@ def download(request, hash):
         hash = hash.encode('utf-8')
 
     try:
-        token = request.COOKIES.get('satori_token', '')
+        token_container.token = Token(request.COOKIES.get('satori_token', ''))
 
-        try:
-            can_proc = ars_interface.services['Blob'].procedures['Blob_open_can'].implementation
-        except:
-            return HttpResponseNotFound()
-
-        if not can_proc(token, hash):
+        if not Privilege.global_demand('RAW_BLOB'):
             return HttpResponseForbidden()
 
-        blob = OpenAttribute.open_blob(hash)
+        if not Blob.exists(hash):
+            return HttpResponseNotFound()
+
+        blob = Blob.open(hash)
 
         def reader():
             while True:
@@ -138,19 +144,14 @@ def upload(request):
         return HttpResponseNotAllowed(['PUT'])
 
     try:
-        token = request.COOKIES.get('satori_token', '')
+        token_container.token = Token(request.COOKIES.get('satori_token', ''))
 
-        try:
-            can_proc = ars_interface.services['Blob'].procedures['Blob_create_can'].implementation
-        except:
-            return HttpResponseNotFound()
-
-        if not can_proc(token):
+        if not Privilege.global_demand('RAW_BLOB'):
             return HttpResponseForbidden()
 
         length = int(request.environ.get('CONTENT_LENGTH', 0))
 
-        blob = OpenAttribute.create_blob()
+        blob = Blob.create()
 
         while(length > 0):
             r = min(length, 1024)

@@ -195,7 +195,7 @@ def p_toplevel(p):
     p[0] = None
 
 def p_error(p):
-    raise RuntimeError('Syntax error')
+    raise RuntimeError('Syntax error: ' + str(p))
 
 
 start = 'toplevel'

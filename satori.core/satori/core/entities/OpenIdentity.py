@@ -2,9 +2,14 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
+
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel
+from satori.dbev               import Events
+
 from satori.core.models import Entity
 
+@ExportModel
 class OpenIdentity(Entity):
 
     __module__ = "satori.core.models"
@@ -22,13 +27,4 @@ class OpenIdentityEvents(Events):
     model = OpenIdentity
     on_insert = on_update = ['identity', 'user']
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import OpenIdentity
-
-class ApiOpenIdentity(WrapperClass):
-    open_identity = ModelWrapper(OpenIdentity)
 

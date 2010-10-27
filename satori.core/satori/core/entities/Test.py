@@ -2,10 +2,14 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
-from satori.core.models import Entity
-from satori.core.models import AttributeGroup
 
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel, generate_attribute_group
+from satori.dbev               import Events
+
+from satori.core.models import Entity
+
+@ExportModel
 class Test(Entity):
     """Model. Single test.
     """
@@ -14,18 +18,17 @@ class Test(Entity):
 
     problem     = models.ForeignKey('Problem')
     name        = models.CharField(max_length=50)
-    description = models.TextField(blank=True, default="")
+    description = models.TextField(blank=True, default='')
     environment = models.CharField(max_length=50)
-    data    = models.OneToOneField('AttributeGroup', related_name='group_test_data')
-    obsolete = models.BooleanField(default=False)
+    obsolete    = models.BooleanField(default=False)
+
+    generate_attribute_group('Test', 'data', 'VIEW', 'EDIT', globals(), locals())
+
+    class ExportMeta(object):
+        fields = [('problem', 'VIEW'), ('name', 'VIEW'), ('description', 'VIEW'), ('environment', 'VIEW'), ('obsolete', 'VIEW')]
 
     def save(self):
-        try:
-            x = self.data
-        except AttributeGroup.DoesNotExist:
-            data = AttributeGroup()
-            data.save()
-            self.data = data
+        self.fixup_data()
 
         super(Test, self).save()
 
@@ -36,7 +39,6 @@ class Test(Entity):
             ret.append((self.problem,'EDIT'))
         return ret
 
-
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
 
@@ -44,15 +46,4 @@ class TestEvents(Events):
     model = Test
     on_insert = on_update = ['owner', 'problem', 'name']
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import Test
-
-class ApiTest(WrapperClass):
-    test = ModelWrapper(Test)
-
-    test.attributes('data')
 

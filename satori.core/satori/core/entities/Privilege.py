@@ -1,159 +1,93 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 #! module models
 
+from datetime  import datetime
 from django.db import models
-from satori.dbev import Events
-from satori.core.models import Entity
-from satori.core.models import Global
+from types     import NoneType
 
-class Privilege(Entity):
-    """Model. Represents single right on object granted to the role.
-    """
-    __module__    = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_privilege')
+from satori.dbev               import Events
+from satori.core.export        import ExportClass, ExportMethod, Struct, PCGlobal, PCArg, token_container
+from satori.core.export_django import DjangoId
 
-    role     = models.ForeignKey('Role', related_name='privileges')
-    object   = models.ForeignKey('Entity', related_name='privileged')
-    right    = models.CharField(max_length=64)
-    start_on  = models.DateTimeField(null=True)
-    finish_on = models.DateTimeField(null=True)
+from satori.core.models import Entity, Global
 
-    #class Meta:                                                # pylint: disable-msg=C0111
-    #    unique_together = (('role', 'object', 'right'),)
-
-    @staticmethod
-    def grant(role, object, right, start_on=None, finish_on=None):
-        (priv, created) = Privilege.objects.get_or_create(role=role, object=object, right=right)
-        priv.start_on = start_on
-        priv.finish_on = finish_on
-        priv.save()
-
-    @staticmethod
-    def revoke(role, object, right):
-        try:
-            priv = Privilege.objects.get(role=role, object=object, right=right)
-            priv.delete()
-        except:
-            pass
-
-    @staticmethod
-    def global_grant(role, right, start_on=None, finish_on=None):
-        Privilege.grant(role, Global.get_instance(), right, start_on, finish_on)
-
-    @staticmethod
-    def global_revoke(role, right):
-        Privilege.global_revoke(role, Global.get_instance(), right)
-
-
-class PrivilegeEvents(Events):
-    model = Privilege
-    on_insert = on_update = ['role', 'object', 'right']
-    on_delete = []
-
-#! module api
-
-from datetime import datetime
-from types import NoneType
-
-from satori.ars.wrapper import WrapperClass
-from satori.objects import Argument, ReturnValue, Namespace
-from satori.core.cwrapper import ModelWrapper, Struct
-from satori.core.models import Privilege, Role, Global, Entity
-from satori.core.sec import Token
 
 PrivilegeTimes = Struct('PrivilegeTimes', (
     ('start_on', datetime, True),
     ('finish_on', datetime, True),
 ))
 
-class ApiPrivilege(WrapperClass):
-    privilege = ModelWrapper(Privilege)
 
-    @privilege.method
-    @Argument('token', type=Token)
-    @Argument('role', type=Role)
-    @Argument('object', type=Entity)
-    @Argument('right', type=basestring)
-    @Argument('start_on', type=(datetime, NoneType))
-    @Argument('finish_on', type=(datetime, NoneType))
-    @ReturnValue(type=NoneType)
-    def grant(token, role, object, right, start_on=None, finish_on=None):
-        Privilege.grant(role, object, right, start_on, finish_on)
+@ExportClass
+class Privilege(Entity):
+    """Model. Represents a single right on an object granted to a role.
+    """
+    
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_privilege')
 
-    @privilege.grant.can
-    def grant_can(token, role, object, right, start_on=None, finish_on=None):
-        return object.demand_right(token, 'MANAGE_PRIVILEGES')
+    role     = models.ForeignKey('Role', related_name='privileges')
+    entity   = models.ForeignKey('Entity', related_name='privileged')
+    right    = models.CharField(max_length=64)
+    start_on  = models.DateTimeField(null=True)
+    finish_on = models.DateTimeField(null=True)
 
-    @privilege.method
-    @Argument('token', type=Token)
-    @Argument('role', type=Role)
-    @Argument('object', type=Entity)
-    @Argument('right', type=basestring)
-    @ReturnValue(type=NoneType)
-    def revoke(token, role, object, right):
-        Privilege.revoke(role, object, right)
+    class Meta:                                                # pylint: disable-msg=C0111
+        unique_together = (('role', 'entity', 'right'),)
 
-    @privilege.revoke.can
-    def revoke_can(token, role, object, right):
-        return object.demand_right(token, 'MANAGE_PRIVILEGES')
+    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode, PrivilegeTimes], PCArg('entity', 'MANAGE_PRIVILEGES'))
+    @staticmethod
+    def grant(role, entity, right, times=PrivilegeTimes()):
+        (priv, created) = Privilege.objects.get_or_create(role=role, entity=entity, right=right)
+        priv.start_on = times.start_on
+        priv.finish_on = times.finish_on
+        priv.save()
 
-    @privilege.method
-    @Argument('token', type=Token)
-    @Argument('role', type=Role)
-    @Argument('object', type=Entity)
-    @Argument('right', type=basestring)
-    @ReturnValue(type=PrivilegeTimes)
-    def get(token, role, object, right):
+    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE_PRIVILEGES'))
+    @staticmethod
+    def revoke(role, entity, right):
         try:
-            priv = Privilege.objects.get(role=role, object=object, right=right)
-            return Namespace(start_on=priv.start_on, finish_on=priv.finish_on)
+            priv = Privilege.objects.get(role=role, entity=entity, right=right)
+            priv.delete()
+        except Privilege.DoesNotExist:
+            pass
+
+    @ExportMethod(PrivilegeTimes, [DjangoId('Role'), DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE_PRIVILEGES'))
+    @staticmethod
+    def get(role, entity, right):
+        try:
+            return Privilege.objects.get(role=role, entity=entity, right=right)
         except Privilege.DoesNotExist:
             return None
 
-    @privilege.get.can
-    def get_can(token, role, object, right):
-        return object.demand_right(token, 'MANAGE_PRIVILEGES')
+    @ExportMethod(bool, [DjangoId('Entity'), unicode], PCPermit())
+    @staticmethod
+    def demand(entity, right):
+        from satori.core.sec import RoleSet, RightCheck
+        checker = RightCheck()
+        roleset = RoleSet(token=token_container.token)
+        return checker(roleset, entity, str(right))
 
-    @privilege.method
-    @Argument('token', type=Token)
-    @Argument('role', type=Role)
-    @Argument('right', type=basestring)
-    @Argument('start_on', type=(datetime, NoneType))
-    @Argument('finish_on', type=(datetime, NoneType))
-    @ReturnValue(type=NoneType)
-    def global_grant(token, role, right, start_on=None, finish_on=None):
-        Privilege.global_grant(role, right, start_on, finish_on)
+    @ExportMethod(NoneType, [DjangoId('Role'), unicode, PrivilegeTimes], PCGlobal('MANAGE_PRIVILEGES'))
+    @staticmethod
+    def global_grant(role, right, times=PrivilegeTimes()):
+        Privilege.grant(role, Global.get_instance(), right, times)
 
-    @privilege.global_grant.can
-    def global_grant_can(token, role, right, start_on=None, finish_on=None):
-        return Global.get_instance().demand_right(token, 'MANAGE_PRIVILEGES')
+    @ExportMethod(NoneType, [DjangoId('Role'), unicode], PCGlobal('MANAGE_PRIVILEGES'))
+    @staticmethod
+    def global_revoke(role, right):
+        Privilege.revoke(role, Global.get_instance(), right)
 
-    @privilege.method
-    @Argument('token', type=Token)
-    @Argument('role', type=Role)
-    @Argument('right', type=basestring)
-    @ReturnValue(type=NoneType)
-    def global_revoke(token, role, right):
-        Privilege.global_revoke(role, right)
+    @ExportMethod(PrivilegeTimes, [DjangoId('Role'), unicode], PCGlobal('MANAGE_PRIVILEGES'))
+    @staticmethod
+    def global_get(role, right):
+        return Privilege.get(role, Global.get_instance(), right)
 
-    @privilege.global_revoke.can
-    def global_revoke_can(token, role, right):
-        return Global.get_instance().demand_right(token, 'MANAGE_PRIVILEGES')
+    @ExportMethod(bool, [unicode], PCPermit())
+    @staticmethod
+    def global_demand(right):
+        return Privilege.demand(Global.get_instance(), right)
 
-    @privilege.method
-    @Argument('token', type=Token)
-    @Argument('role', type=Role)
-    @Argument('right', type=basestring)
-    @ReturnValue(type=PrivilegeTimes)
-    def global_get(token, role, right):
-        try:
-            priv = Privilege.objects.get(role=role, object=Global.get_instance(), right=right)
-            return Namespace(start_on=priv.start_on, finish_on=priv.finish_on)
-        except Privilege.DoesNotExist:
-            return None
-
-    @privilege.global_get.can
-    def global_get_can(token, role, right):
-        return Global.get_instance().demand_right(token, 'MANAGE_PRIVILEGES')
-
-
+class PrivilegeEvents(Events):
+    model = Privilege
+    on_insert = on_update = on_delete = []
+    

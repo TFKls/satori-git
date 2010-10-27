@@ -2,9 +2,14 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
+
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel
+from satori.dbev               import Events
+
 from satori.core.models import Message
 
+@ExportModel
 class MessageContest(Message):
     """Model. Description of a text message - contest msg.
     """
@@ -12,6 +17,9 @@ class MessageContest(Message):
     parent_message = models.OneToOneField(Message, parent_link=True, related_name='cast_messagecontest')
 
     contest = models.ForeignKey('Contest')
+
+    class ExportMeta(object):
+        fields = [('contest', 'VIEW')]
 
     def inherit_right(self, right):
         right = str(right)
@@ -23,14 +31,4 @@ class MessageContestEvents(Events):
     model = MessageContest
     on_insert = on_update = ['topic', 'time']
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import MessageContest
-
-class ApiMessageContest(WrapperClass):
-    message_contest = ModelWrapper(MessageContest)
-
 

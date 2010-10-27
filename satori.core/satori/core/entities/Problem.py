@@ -2,10 +2,14 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
-from satori.core.models import Entity
-from satori.core.models import AttributeGroup
 
+from satori.core.export        import ExportMethod, PCGlobal, token_container
+from satori.core.export_django import ExportModel, generate_attribute_group, DjangoId
+from satori.dbev               import Events
+
+from satori.core.models import Entity
+
+@ExportModel
 class Problem(Entity):
     """Model. Description of an (abstract) problems.
     """
@@ -15,16 +19,14 @@ class Problem(Entity):
     name        = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, default="")
     statement = models.TextField(blank=True, default="")
-    default_test_data = models.OneToOneField('AttributeGroup', related_name='group_problem_defaulttestdata')
+
+    generate_attribute_group('Problem', 'default_test_data', 'VIEW', 'EDIT', globals(), locals())
+
+    class ExportMeta(object):
+        fields = [('name', 'VIEW'), ('description', 'VIEW'), ('statement', 'VIEW')]
 
     def save(self):
-        try:
-            x = self.default_test_data
-        except AttributeGroup.DoesNotExist:
-            default_test_data = AttributeGroup()
-            default_test_data.save()
-            self.default_test_data = default_test_data
-
+        self.fixup_default_test_data()
         super(Problem, self).save()
 
     def __str__(self):
@@ -37,38 +39,16 @@ class Problem(Entity):
             pass
         return ret
 
+    @ExportMethod(DjangoId('Problem'), [unicode], PCGlobal('MANAGE_PROBLEMS'))
+    def create_problem(name):
+        o = Problem()
+        o.name = name
+        o.save()
+        Privilege.grant(token_container.token.user, o, 'MANAGE')
+        return o
 
 class ProblemEvents(Events):
     model = Problem
     on_insert = on_update = ['name']
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.objects import Argument, ReturnValue
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import Problem, Global, Privilege
-from satori.core.sec import Token
-
-class ApiProblem(WrapperClass):
-    problem = ModelWrapper(Problem)
-
-    problem.attributes('default_test_data')
-
-    @problem.method
-    @Argument('token', type=Token)
-    @Argument('name', type=str)
-    @ReturnValue(type=Problem)
-    def create_problem(token, name):
-        o = Problem()
-        o.name = name
-        o.save()
-        Privilege.grant(token.user, o, 'MANAGE')
-        return o
-
-    @problem.create_problem.can
-    def create_problem_check(token, name):
-        return Global.get_instance().demand_right(token, 'MANAGE_PROBLEMS')
-
-
+    

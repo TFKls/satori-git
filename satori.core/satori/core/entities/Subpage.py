@@ -2,15 +2,20 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
-from satori.core.models import Entity
-from satori.core.models import Global
 
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel
+from satori.dbev               import Events
+
+from satori.core.models import Entity
+
+@ExportModel
 class Subpage(Entity):
     """Model. Subpage of a contest.
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_subpage')
+    
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_subpage')
+    
     contest = models.ForeignKey('Contest')
     public = models.BooleanField(default=True)
     name = models.TextField(blank=False)
@@ -31,18 +36,12 @@ class Subpage(Entity):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)
 
+    class ExportMeta(object):
+        fields = [('contest', 'VIEW'), ('public', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]
+
 
 class SubpageEvents(Events):
     model = Subpage
     on_insert = on_update = []
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import Subpage
-
-class ApiSubpage(WrapperClass):
-    subpage = ModelWrapper(Subpage)
 

@@ -10,7 +10,7 @@ class RegisterWidget(Widget):
         el = CurrentUser()
         if el:
             self.htmlFile = 'htmls/logged.html'
-            self.name = el.fullname
+            self.name = el.name
         else:
             self.htmlFile = 'htmls/registerform.html'
             self.back_to = ToString(params)

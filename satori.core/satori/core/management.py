@@ -10,13 +10,14 @@ def create_admin(app, created_models, verbosity, **kwargs):
         return
 
     from django.conf import settings
-    from satori.core.api import ApiSecurity, ApiPrivilege
+    from satori.core.export import token_container
+    from satori.core.models import Security, Privilege
     from satori.core.sec import Token
 
     print 'Creating superuser'
 
-    token = Token('')
-    ApiSecurity.Security_register.implementation(token, login=settings.ADMIN_NAME, fullname='Super Admin', password=settings.ADMIN_PASSWORD)
+    token_container.token = Token('')
+    User.register(login=settings.ADMIN_NAME, name='Super Admin', password=settings.ADMIN_PASSWORD)
     admin = User.objects.get(login='admin')
     Privilege.global_grant(admin, 'ADMIN')
 

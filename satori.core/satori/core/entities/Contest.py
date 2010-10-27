@@ -2,29 +2,31 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
-from satori.core.models import Entity
-from satori.core.models import AttributeGroup
 
+from satori.core.export        import ExportMethod, PCOr, PCGlobal, PCTokenUser, PCArg, token_container
+from satori.core.export_django import ExportModel, DjangoId, DjangoStruct, DjangoIdList, generate_attribute_group
+from satori.dbev               import Events
+
+from satori.core.models import Entity
+
+@ExportModel
 class Contest(Entity):
     """Model. Description of a contest.
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_contest')
+    
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_contest')
 
     name        = models.CharField(max_length=50, unique=True)
     problems    = models.ManyToManyField('Problem', through='ProblemMapping')
-    files       = models.OneToOneField('AttributeGroup', related_name='group_contest_files')
     contestant_role = models.ForeignKey('Role')
 
-    def save(self):
-        try:
-            x = self.files
-        except AttributeGroup.DoesNotExist:
-            files = AttributeGroup()
-            files.save()
-            self.files = files
+    generate_attribute_group('Contest', 'files', 'VIEW', 'EDIT', globals(), locals())
 
+    class ExportMeta(object):
+        fields = [('name', 'VIEW'), ('contestant_role', 'VIEW')]
+
+    def save(self):
+        self.fixup_files()
         super(Contest, self).save()
 
     def __str__(self):
@@ -40,115 +42,61 @@ class Contest(Entity):
             ret.append((self,'JOIN'))
         return ret
 
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('User')], PCOr(PCTokenUser('user'), PCArg('self', 'MANAGE')))
+    def find_contestant(self, user):
+        try:
+            return Contestant.objects.get(contest=self, children__id=user.id)
+        except Contestant.DoesNotExist:
+            return None
 
-
-class ContestEvents(Events):
-    model = Contest
-    on_insert = on_update = ['name']
-    on_delete = []
-
-#! module api
-
-from satori.objects import Argument, ReturnValue
-from satori.ars.wrapper import TypedList, WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import *
-from satori.core.sec import Token
-
-class ApiContest(WrapperClass):
-    contest = ModelWrapper(Contest)
-
-    contest.attributes('files')
-
-    @contest.method
-    @Argument('token', type=Token)
-    @Argument('self', type=Contest)
-    @Argument('user', type=User)
-    @ReturnValue(type=Contestant)
-    def find_contestant(token, self, user):
-        return Contestant.objects.filter(contest=self, children__id=user.id)[0]
-    @contest.find_contestant.can
-    def find_contestant_check(token, self, user):
-        return token.user == user or self.demand_right(token, 'MANAGE')
-
-    @contest.method
-    @Argument('token', type=Token)
-    @Argument('self', type=Contest)
-    @Argument('user_list', type=TypedList(User))
-    @ReturnValue(type=Contestant)
-    def create_contestant(token, self, user_list):
+    # TODO: check if exists
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoIdList('User')], PCArg('self', 'MANAGE'))
+    def create_contestant(self, user_list):
         c = Contestant()
         c.accepted = True
         c.contest = self
         c.save()
-        RoleMapping(parent = self.contestant_role, child = c).save()
+        self.contestant_role.add_member(c)
         for user in user_list:
-            RoleMapping(parent = c, child = user).save()
-    @contest.create_contestant.can
-    def create_contestant_check(token, self, user_list):
-        return self.demand_right(token, 'MANAGE')
+            c.add_member(user)
 
-    @contest.method
-    @Argument('token', type=Token)
-    @Argument('name', type=str)
-    @ReturnValue(type=Contest)
-    def create_contest(token, name):
+    @ExportMethod(DjangoStruct('Contest'), [unicode], PCGlobal('MANAGE_CONTESTS'))
+    @staticmethod
+    def create_contest(name):
         c = Contest()
         c.name = name
         r = Role(name=name+'_contestant', )
         r.save()
         c.contestant_role = r
         c.save()
-        Privilege.grant(token.user, c, 'MANAGE')
+        Privilege.grant(token_container.token.user, c, 'MANAGE')
         Privilege.grant(r, c, 'VIEW')
         return c
-    @contest.create_contest.can
-    def create_contest_check(token, name):
-        return Global.get_instance().demand_right(token, 'MANAGE_CONTESTS')
 
-    @contest.method
-    @Argument('token', type=Token)
-    @Argument('self', type=Contest)
-    @ReturnValue(type=Contestant)
-    def join_contest(token, self):
+    # TODO: check if exists
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCArg('self', 'APPLY'))
+    def join_contest(self):
         c = Contestant()
         c.contest = self
-        c.accepted = bool(self.demand_right(token, 'JOIN'))
+        c.accepted = bool(Privilege.demand(self, 'JOIN'))
         c.save()
         if c.accepted:
-            RoleMapping(parent = self.contestant_role, child = c).save()
-        RoleMapping(child = token.user, parent = c).save()
+            self.contestant_role.add_member(c)
+        c.add_member(token_container.token.user)
         return c
-    @contest.join_contest.can
-    def join_contest_check(token, self):
-        return self.demand_right(token, 'APPLY')
 
-    @contest.method
-    @Argument('token', type=Token)
-    @Argument('self', type=Contest)
-    @Argument('contestant', type=Contestant)
-    @ReturnValue(type=Contestant)
-    def accept_contestant(token, self, contestant):
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('Contestant')], PCArg('self', 'MANAGE'))
+    def accept_contestant(self, contestant):
         if contestant.contest != self:
             raise "Go away"
         contestant.accepted = True
-        RoleMapping(parent = self.contestant_role, child = contestant).save()
-    #TODO: RoleMapping may exist!
         contestant.save()
+        self.contestant_role.add_member(contestant)
         return contestant
-    @contest.accept_contestant.can
-    def accept_contestant_check(token, self, contestant):
-        return self.demand_right(token, 'MANAGE')
 
-    @contest.method
-    @Argument('token', type=Token)
-    @Argument('self', type=Contest)
-    @Argument('problem_mapping', type=ProblemMapping)
-    @Argument('content', type=str)
-    @Argument('filename', type=str)
-    @ReturnValue(type=Submit)
-    def submit(token, self, problem_mapping, content, filename):
-        contestant = Contestant.objects.get(contest=self, children__id=token.user.id)
+    @ExportMethod(DjangoStruct('Submit'), [DjangoId('Contest'), DjangoId('ProblemMapping'), unicode, unicode], PCArg('problem_mapping', 'SUBMIT'))
+    def submit(self, problem_mapping, content, filename):
+        contestant = self.find_contestant(token_container.token.user)
         if problem_mapping.contest != self:
             raise "Go away"
         submit = Submit()
@@ -159,10 +107,13 @@ class ApiContest(WrapperClass):
         blob = OpenAttribute.create_blob()
         blob.write(content)
         hash = blob.close()
-        submit.data.attributes.oa_set_blob_hash(name='content', hash=hash, filename=filename)
+        submit.data_set_blob_hash(name='content', hash=hash, filename=filename)
         TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
         return submit
-    @contest.submit.can
-    def submit_check(token, self, problem_mapping, content, filename):
-        return problem_mapping.demand_right(token, 'SUBMIT')
+
+
+class ContestEvents(Events):
+    model = Contest
+    on_insert = on_update = ['name']
+    on_delete = []
 

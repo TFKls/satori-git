@@ -2,13 +2,18 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
+
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel
+from satori.dbev               import Events
+
 from satori.core.models import Entity
 
+@ExportModel
 class TestResult(Entity):
     """Model. Result of a single Test for a single Submit.
     """
-    __module__ = "satori.core.models"
+
     parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_testresult')
 
     submit      = models.ForeignKey('Submit')
@@ -19,16 +24,11 @@ class TestResult(Entity):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('submit', 'test'),)
 
+    class ExportMeta(object):
+        fields = [('submit', 'VIEW'), ('test', 'VIEW'), ('pending', 'VIEW'), ('tester', 'VIEW')]
+
+
 class TestResultEvents(Events):
     model = TestResult
     on_insert = on_update = ['submit', 'test', 'tester', 'pending']
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import TestResult
-
-class ApiTestResult(WrapperClass):
-    test_result = ModelWrapper(TestResult)

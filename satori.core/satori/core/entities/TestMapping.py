@@ -2,15 +2,20 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
+
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel
+from satori.dbev               import Events
+
 from satori.core.models import Entity
 
+@ExportModel
 class TestMapping(Entity):
     """Model. Intermediary for many-to-many relationship between TestSuites and
     Tests.
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_testmapping')
+
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testmapping')
 
     suite       = models.ForeignKey('TestSuite')
     test        = models.ForeignKey('Test')
@@ -23,17 +28,11 @@ class TestMapping(Entity):
         unique_together = (('suite', 'test'), ('suite', 'order'))
         ordering = ('order',)
 
+    class ExportMeta(object):
+        fields = [('suite', 'VIEW'), ('test', 'VIEW'), ('order', 'VIEW')]
+
 class TestMappingEvents(Events):
     model = TestMapping
     on_insert = on_update = ['suite', 'test']
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import TestMapping
-
-class ApiTestMapping(WrapperClass):
-    test_mapping = ModelWrapper(TestMapping)
 

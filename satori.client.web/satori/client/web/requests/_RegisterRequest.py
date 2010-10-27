@@ -15,5 +15,5 @@ class RegisterRequest(Request):
         login = vars['username']
         password = vars['password']
         fullname = vars['fullname']
-        Security.register(login=login, password=password, fullname=fullname)
+        User.register(login=login, password=password, name=fullname)
         return GetLink(d, path)

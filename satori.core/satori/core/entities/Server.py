@@ -1,16 +1,11 @@
-#! module api
-"""
-A service that is used to bootstrap the client.
-"""
+#! module models
 
-from satori.objects import DispatchOn, Argument, ReturnValue, Throws
-from satori.ars.wrapper import StaticWrapper, WrapperClass
+from satori.core.export import ExportClass, ExportMethod, PCPermit
 
-class ApiServer(WrapperClass):
-    server = StaticWrapper('Server')
-
-    @server.method
-    @ReturnValue(type=str)
+@ExportClass
+class Server(object):
+    
+    @ExportMethod(unicode, [], PCPermit())
     def getIDL():
         from satori.core.api import thrift_idl
         return thrift_idl

@@ -1,3 +1,51 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
+#! module models
+
+from datetime import datetime, timedelta
+from types import NoneType
+import string
+import random
+import urlparse
+import urllib
+
+from satori.core.export import ExportClass, ExportMethod, PCPermit, PCGlobal, DefineException, token_container
+from satori.core.export_django import DjangoStruct
+
+@ExportClass
+class Security(object):
+
+    @ExportMethod(DjangoStruct('Role'), [], PCPermit())
+    @staticmethod
+    def anonymous():
+        return Global.get_instance().anonymous
+
+    @ExportMethod(DjangoStruct('Role'), [], PCPermit())
+    @staticmethod
+    def authenticated():
+        return Global.get_instance().authenticated
+
+    @ExportMethod(DjangoStruct('Role'), [], PCPermit())
+    @staticmethod
+    def whoami():
+        if not token_container.token.user_id:
+            return None
+        try:
+            return Role.objects.get(id=token_container.token.user_id)
+        except Role.DoesNotExist:
+            return None
+
+    @ExportMethod(DjangoStruct('User'), [], PCPermit())
+    @staticmethod
+    def whoami_user():
+        if not token_container.token.user_id:
+            return None
+        try:
+            return User.objects.get(id=token_container.token.user_id)
+        except User.DoesNotExist:
+            return None
+
+
 #! module api
 """
 Security and authorization procedures.
@@ -23,6 +71,8 @@ from satori.core.models import Entity, User, Login, OpenIdentity, Global, Role, 
 from satori.ars.wrapper import Struct, StaticWrapper, TypedMap, DefineException, WrapperClass
 from satori.ars.server import server_info
 
+LoginFailed = DefineException('LoginFailed', 'Invalid username or password')
+
 def openid_salt():
     chars = string.letters + string.digits
     salt = ''
@@ -36,53 +86,8 @@ OpenIdRedirect = Struct('OpenIdRedirect', (
     ('html', str, True)
 ))
 
-LoginFailed = DefineException('LoginFailed', 'Invalid username or password')
-
 class ApiSecurity(WrapperClass):
     security = StaticWrapper('Security')
-
-    @security.method
-    @Argument('s', type=str)
-    @ReturnValue(type=str)
-    def id(s):
-        return s
-
-    @security.method
-    @Argument('token', type=Token)
-    @ReturnValue(type=Role)
-    def anonymous(token):
-        globe = Global.get_instance()
-        return globe.anonymous
-
-    @security.method
-    @Argument('token', type=Token)
-    @ReturnValue(type=Role)
-    def authenticated(token):
-        globe = Global.get_instance()
-        return globe.authenticated
-
-    @security.method
-    @Argument('token', type=Token)
-    @ReturnValue(type=(User, NoneType))
-    def whoami(token):
-        if not token.valid:
-            raise Exception("Provided token is expired.")
-        return token.user
-
-    @security.method
-    @Argument('token', type=Token)
-    @Argument('object', type=Entity)
-    @Argument('right', type=str)
-    @ReturnValue(type=bool)
-    def right_have(token, object, right):
-        return object.demand_right(token, right)
-
-    @security.method
-    @Argument('token', type=Token)
-    @Argument('right', type=str)
-    @ReturnValue(type=bool)
-    def global_right_have(token, right):
-        return Global.get_instance().demand_right(token, right)
 
     @security.method
     @Argument('login', type=str)
@@ -90,55 +95,6 @@ class ApiSecurity(WrapperClass):
     @ReturnValue(type=bool)
     def login_free(login, nspace=''):
         return len(Login.objects.filter(nspace=nspace, login=login)) == 0
-
-    @security.method
-    @Argument('token', type=Token)
-    @Argument('login', type=str)
-    @Argument('password', type=str)
-    @Argument('fullname', type=str)
-    @ReturnValue(type=NoneType)
-    def register(token, login, password, fullname):
-        user = User(login=login, fullname=fullname)
-        user.save()
-        Privilege.grant(user, user, 'MANAGE')
-        auth = Login(login=login, user=user)
-        auth.set_password(password)
-        auth.save()
-
-    @security.method
-    @Argument('login', type=str)
-    @Argument('password', type=str)
-    @Argument('nspace', type=str) # Nie moze byc namespace - slowo kluczowe w Thrifcie
-    @ReturnValue(type=Token)
-    @Throws(LoginFailed)
-    def login(login, password, nspace=''):
-        try:
-            login = Login.objects.get(nspace=nspace, login=login)
-        except Login.DoesNotExist:
-            raise LoginFailed()
-        if login.check_password(password):
-            auth = 'login'
-            if nspace != '':
-                auth = auth + '.' + nspace
-            return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
-        else:
-            raise LoginFailed()
-
-    @security.method
-    @Argument('login', type=str)
-    @Argument('old_passwd', type=str)
-    @Argument('new_passwd', type=str) # Nie moze byc new - slowo kluczowe w Thrifcie
-    @Argument('nspace', type=str) # Nie moze byc namespace - slowo kluczowe w Thrifcie
-    @ReturnValue(type=Token)
-    def passwd(login, old_passwd, new_passwd, nspace=''):
-        login = Login.objects.get(nspace=nspace, login=login)
-        if login.change_password(old_passwd, new_passwd):
-            auth = 'login'
-            if nspace != '':
-                auth = auth + '.' + nspace
-            return Token(user=login.user, auth=auth, validity=timedelta(hours=6))
-        else:
-            raise Exception('Password change failed.')
 
     def openid_realm(url):
         callback = urlparse.urlparse(url)
@@ -302,25 +258,3 @@ class ApiSecurity(WrapperClass):
         user = User.objects.get(id=session['satori.openid.user'])
         res = openid_generic_finish(token, arg_map, return_to, user)
         return res
-
-    @security.method
-    @Argument('token', type=Token)
-    @Argument('name', type=str)
-    @Argument('secret', type=str)
-    @Argument('address', type=str)
-    @Argument('netmask', type=str)
-    @ReturnValue(type=Machine)
-    def machine_register(token, name, secret, address, netmask):
-        machine = Machine(login=name, fullname=name, address=address, netmask=netmask)
-        machine.set_secret(secret)
-        machine.save()
-        return machine
-
-    @security.method
-    @Argument('secret', type=str)
-    @ReturnValue(type=Token)
-    def machine_login(secret):
-        for machine in Machine.objects.all():
-            if machine.check_ip(server_info.client_ip) and machine.check_secret(secret):
-                return Token(user=machine, auth='machine', validity=timedelta(hours=24))
-

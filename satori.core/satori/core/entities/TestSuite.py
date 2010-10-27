@@ -2,15 +2,20 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
-from satori.core.models import Entity
 from datetime import datetime
 
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel
+from satori.dbev               import Events
+
+from satori.core.models import Entity
+
+@ExportModel
 class TestSuite(Entity):
     """Model. A group of tests, with dispatch and aggregation algorithm.
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_testsuite')
+
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testsuite')
 
     problem      = models.ForeignKey('Problem')
     name         = models.CharField(max_length=50)
@@ -41,17 +46,11 @@ class TestSuite(Entity):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
 
+    class ExportMeta(object):
+        fields = [('problem', 'VIEW'), ('name', 'VIEW'), ('description', 'VIEW'), ('dispatcher', 'VIEW'), ('accumulators', 'VIEW')]
+
 class TestSuiteEvents(Events):
     model = TestSuite
     on_insert = on_update = ['owner', 'problem', 'name']
     on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import TestSuite
-
-class ApiTestSuite(WrapperClass):
-    test_suite = ModelWrapper(TestSuite)
 

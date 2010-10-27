@@ -2,9 +2,14 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
+
+from satori.core.export        import ExportMethod
+from satori.core.export_django import ExportModel
+from satori.dbev               import Events
+
 from satori.core.models import Entity
 
+@ExportModel
 class ContestRanking(Entity):
     """Model. Ranking in a Contest.
     """
@@ -31,14 +36,3 @@ class ContestRanking(Entity):
 class ContestRankingEvents(Events):
     model = ContestRanking
     on_insert = on_update = ['contest', 'name']
-    on_delete = []
-
-#! module api
-
-from satori.ars.wrapper import WrapperClass
-from satori.core.cwrapper import ModelWrapper
-from satori.core.models import ContestRanking
-
-class ApiContestRanking(WrapperClass):
-    contest_ranking = ModelWrapper(ContestRanking)
-
