@@ -1,51 +1,44 @@
-{% if widget.user %}
-<h2 class="subtitle">Registered:</h2>
+<h3>Contests:</h3>
 
-<table class="contest_table">
-{% for c, conuser, link in widget.participating %}
+<table class="tlist">
     <tr>
-    <td class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
+        <th>No.</th><th>Name</th>
+        {% if widget.user %}<th>Status</th>{%endif%}
+        <th>Other</th>
+    </tr>
+{% for contest in widget.contests|dictsort:"status" %}
+    <tr>
+    <td>{{forloop.counter}}.</td>
+    <td><a href="{{ contest.link }}"> {{ contest.obj.name }}</a></td>
     {% if widget.user %}
-        <td class="buttoncell">
-        {% if not conuser.accepted %}
-            <div class="noclickbutton">Pending</div>
+        <td style="text-align: center">
+        {% if contest.status == 0 %}
+            Participant
+        {% else %}{%if contest.status == 1 %}    
+            Pending...
+        {% else %}{%if contest.status == 2 %}
+            <form action="process.join" method="post">
+                <input type="hidden" name="contest_id" value="{{ contest.obj.id }}"/>
+                <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
+                <input type="hidden" name="back_path" value="{{ widget.path }}"/>
+                <input type="submit" class="applybutton" value="Join"/>
+            </form>
+        {% endif %}
+        {% endif %}
         {% endif %}
         </td>
     {% endif %}
+    <td></td>
     </tr>
 {% endfor %}
 </table>
-{% endif %}
-
-<h2 class="subtitle">Other contests:</h2>
-<table class="contest_table">
-{% for c, mayjoin, link in widget.other %}
-    <tr>
-    <td class="linkcell"><a class="contestlink" href="{{ link }}"> {{ c.name }}</a></td>
-    {% if widget.user %}
-        <td class="buttoncell">
-        {% if mayjoin %}
-        <form action="process.join" method="post">
-            <input type="hidden" name="contest_id" value="{{ c.id }}"/>
-            <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>            
-            <input type="hidden" name="back_path" value="{{ widget.path }}"/>
-            <input type="submit" class="applybutton" value="Join"/>
-        </form>
-        {% endif %}
-        </td>
-    {% endif %}
-    </tr>
-{% endfor %}
-</table>
-
-
 
 {% if widget.cancreate %}
-<h2 class="subtitle">Create new contest</h2>
+<h3>Create new contest</h3>
 <form action="process.createcontest" method="post">
 
 Name: <input type="text" name="contestname"/>
-<input type="hidden" name="back_to" value="{{ widget.back_to }}"/>            
+<input type="hidden" name="back_to" value="{{ widget.back_to }}"/>  
 <input type="hidden" name="back_path" value="{{ widget.path }}"/>
 <input type="submit" value="Create"/>
 </form>

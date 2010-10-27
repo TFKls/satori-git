@@ -159,3 +159,37 @@ body {
 table.tlist {
     width: 100%;
 }
+
+.staOK {
+    background-color: #00CC00;
+}
+
+.staACC {
+    background-color: #00AA00;
+}
+
+.staRTE {
+    background-color: #EE0000;
+}
+
+.staTLE {
+    background-color: #EE0000;
+}
+
+.staMEM {
+    background-color: #EE0000;
+}
+
+.staREJ {
+    background-color: #BB0000;
+}
+
+.staCMP {
+    background-color: #FF9933;
+}
+
+.staQUE {
+    background-color :#FFFF00;
+}
+
+

@@ -1,20 +1,21 @@
+<h3>Problem {{ widget.pm.code }}: {{widget.pm.title}}</h3>
 
-<h2>Problem {{ widget.pm.code }}: {{widget.pm.title}}</h2>
-
-Based on problem {{ widget.problem.name }}.
+<p>Based on problem {{ widget.problem.name }}.</p>
 
 <form action="process.alterpm" method="POST" enctype="multipart/form-data">
-<h4>Settings</h4>
-Code:<input type="text" name="code" value="{{ widget.pm.code }}"/><br/>
-Title:<input type="text" name="title" value="{{ widget.pm.title }}"/><br/>
+    <h4>Settings</h4>
+    <p>Please fill information bellow and then confirm changes.</p>
+    <table>
+        <tr><td>Code:</td><td><input type="text" name="code" value="{{ widget.pm.code }}"/></td></tr>
+        <tr><td>Title:</td><td><input type="text" name="title" value="{{ widget.pm.title }}"/></td></tr>
+    </table>
 
-<h4>Statement</h4>
-<textarea name="statement" rows="15" cols="50">{{widget.statement}}</textarea>
-<br/>
-
-PDF statement:<input type="file" name="pdfstatement"/>
-<br/>
-<input type="submit" value="Confirm changes"/>
+    <h4>Statement</h4>
+    <textarea name="statement" rows="15" style="width: 100%">{{widget.statement}}</textarea>
+    <table class="tlist">
+        <tr><td>PDF statement:<input type="file" name="pdfstatement" style="margin-left: 2em"/></td>
+        <td style="text-align:right"><input type="submit" value="Confirm changes"/></td></tr>
+    </table>
 <input type="hidden" name="pm_id" value="{{widget.pm.id}}"/>
 <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
 <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
@@ -22,19 +23,23 @@ PDF statement:<input type="file" name="pdfstatement"/>
 
 
 <h4>Tests</h4>
-
+<p>Here you can change the test suite for this problem. If you want to add new test please go to problem
+repository, select problem {{ widget.problem.name }}, add your test there, and then come back here to join 
+your test to this test suite.</p>
 <form action="process.altersuite" method="POST">
-<table>
+<table class="tlist">
 <input type="hidden" name="pm_id" value="{{widget.pm.id}}"/>
-{% for t,checked in widget.tests %}
+    <tr><th>Name</th><th>Description</th><th>Assigned to problem</th></tr>
+    {% for t,checked in widget.tests %}
 <tr>
-    <td>{{t.name}}</td>
+    <th>{{t.name}}</th>
     <td>{{t.description}}</td>
     <td><input type="checkbox" name="test{{t.id}}" {% if checked %}checked{% endif %}/></td>
 </tr>
 {% endfor %}
-</table>
 <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
 <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
-<input type="submit" value="Alter test suite"/>
+<tr>
+    <td></td><td></td><td><input type="submit" value="Alter test suite"/></td></tr>
+</table>
 </form>
