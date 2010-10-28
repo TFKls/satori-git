@@ -5,7 +5,7 @@ from django.db import models
 
 from satori.core.export        import ExportMethod, PCOr, PCGlobal, PCTokenUser, PCArg, token_container
 from satori.core.export_django import ExportModel, DjangoId, DjangoStruct, DjangoIdList, generate_attribute_group
-from satori.dbev               import Events
+from satori.core.dbev               import Events
 
 from satori.core.models import Entity
 

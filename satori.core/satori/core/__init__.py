@@ -119,7 +119,7 @@ class DbevNotifierProcess(SatoriProcess):
 
     def do_run(self):
         from django.conf import settings
-        from satori.dbev.notifier import run_notifier
+        from satori.core.dbev.notifier import run_notifier
         connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
         run_notifier(Slave2(connection))
 

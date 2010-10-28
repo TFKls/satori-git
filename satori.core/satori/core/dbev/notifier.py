@@ -4,7 +4,7 @@ import psycopg2.extensions
 import traceback
 from django.db import connection
 from django.db import models
-from satori.dbev.events import registry
+from satori.core.dbev.events import registry
 from satori.events import Event
 from satori.core.models import Entity
 

@@ -2,7 +2,7 @@
 #! module models
 
 from django.db import models
-from satori.dbev import Events
+from satori.core.dbev import Events
 from satori.core.export import ExportMethod, PCPermit
 from satori.core.export_django import ExportModel, DjangoId, generate_attribute_group
 

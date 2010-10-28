@@ -103,6 +103,5 @@ TEMPLATE_DIRS = (
 )
 
 INSTALLED_APPS = (
-    'satori.dbev',
     'satori.core',
 )

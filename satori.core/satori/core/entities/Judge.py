@@ -11,7 +11,7 @@ from types import NoneType
 from satori.core.checking.check_queue_client import CheckQueueClient
 from satori.core.export        import ExportMethod, TypedMap, PCGlobal
 from satori.core.export_django import ExportModel, AnonymousAttribute
-from satori.dbev               import Events
+from satori.core.dbev               import Events
 
 from satori.core.models import Role
 

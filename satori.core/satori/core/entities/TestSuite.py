@@ -6,7 +6,7 @@ from datetime import datetime
 
 from satori.core.export        import ExportMethod
 from satori.core.export_django import ExportModel
-from satori.dbev               import Events
+from satori.core.dbev               import Events
 
 from satori.core.models import Entity
 

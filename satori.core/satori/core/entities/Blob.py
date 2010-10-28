@@ -14,7 +14,7 @@ from hashlib import sha384
 import os
 from tempfile import NamedTemporaryFile
 
-from satori.dbev import Events
+from satori.core.dbev import Events
 
 def blob_filename(hash):
     return os.path.join(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash)

@@ -6,7 +6,7 @@ from django.db import models
 
 from satori.core.export        import ExportMethod, PCArg
 from satori.core.export_django import ExportModel, DjangoStructList, DjangoId
-from satori.dbev               import Events
+from satori.core.dbev               import Events
 
 from satori.core.models import Entity
 

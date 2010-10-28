@@ -5,7 +5,7 @@ from datetime  import datetime
 from django.db import models
 from types     import NoneType
 
-from satori.dbev               import Events
+from satori.core.dbev               import Events
 from satori.core.export        import ExportClass, ExportMethod, Struct, PCGlobal, PCArg, token_container
 from satori.core.export_django import DjangoId
 

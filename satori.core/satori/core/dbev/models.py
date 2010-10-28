@@ -1,6 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from django.db import models
-from satori.dbev.events import registry
+from satori.core.dbev.events import registry
 
 
 def install_versions_sql(model):

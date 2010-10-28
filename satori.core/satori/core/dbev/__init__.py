@@ -2,4 +2,4 @@
 """
 Database Events and Versions: Django Models Version Control and Change Notification in PostgreSQL
 """
-from satori.dbev.events import Events
+from satori.core.dbev.events import Events
