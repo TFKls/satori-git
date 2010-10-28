@@ -46,14 +46,18 @@ class Global(Entity):
 
         super(Global, self).save()
 
+    _instance = None;
     @ExportMethod(DjangoStruct('Global'), [], PCPermit())
     @staticmethod
     def get_instance():
+        if Global._instance:
+        	return Global._instance
         try:
             g = Global.objects.get(guardian=1)
         except:
             g = Global()
             g.save()
+        Global._instance = g
         return g
 
     @ExportMethod(TypedMap(unicode, unicode), [], PCPermit())

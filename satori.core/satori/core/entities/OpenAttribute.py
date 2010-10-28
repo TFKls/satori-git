@@ -2,6 +2,7 @@
 #! module models
 
 from django.db import models
+from satori.dbev               import Events
 
 class OpenAttribute(models.Model):
     """Model. Base for all kinds of open attributes.

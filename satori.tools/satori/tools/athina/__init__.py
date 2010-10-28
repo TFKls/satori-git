@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import os,sys,shutil
+import traceback
 
 def athina_import():
     import os,sys,getpass
@@ -144,6 +145,7 @@ def athina_import():
     try:
         Security.register(options.user, options.password, options.user)
     except:
+        traceback.print_exc()
         pass
 
     mytoken = Security.login(options.user, options.password)
@@ -152,17 +154,14 @@ def athina_import():
     try:
         contest = Contest.create_contest(name=options.name)
     except:
+        traceback.print_exc()
         contest = Contest.filter({'name':options.name})[0]
     try:
         Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'SUBMIT'})
         Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'VIEW'})
         Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'VIEWTASKS'})
     except:
-        pass
-
-    try:
-        contest.join_contest()
-    except:
+        traceback.print_exc()
         pass
 
     for login, user in sorted(users.iteritems()):
@@ -170,11 +169,15 @@ def athina_import():
         try:
             user['object'] = Security.register(login=options.name + '_' + user['login'], password=user['password'], fullname=user['fullname'])
         except:
-            user['object'] = User.filter({'login':options.name + '_' + user['login']})[0]
-#        try:
-#            user['contestant'] = contest.create_contestant([user['object']])
-#        except:
-#            user['contestant'] = contest.find_contestant(user['object'])
+            traceback.print_exc()
+            pass
+        user['object'] = User.filter({'login':options.name + '_' + user['login']})[0]
+
+        try:
+            user['contestant'] = contest.create_contestant([user['object']])
+        except:
+            traceback.print_exc()
+            user['contestant'] = contest.find_contestant(user['object'])
 
 
     print users
@@ -184,14 +187,15 @@ def athina_import():
         try:
         	problem['object'] = Problem.create_problem(name=options.name + '_' + problem['problem'])
         except:
+            traceback.print_exc()
             problem['object'] = Problem.filter({'name':options.name + '_' + problem['problem']})[0]
 
         try:
-            problem['testsuite'] = TestSuite.create({'name':options.name + '_' + problem['problem'] + '_default', 'owner':Security.whoami(), 'problem':problem['object'], 'dispatcher':'ParallelDispatcher', 'accumulators':'StatusAccumulator'})
+            problem['testsuite'] = TestSuite.create({'name':options.name + '_' + problem['problem'] + '_default', 'problem':problem['object'], 'dispatcher':'ParallelDispatcher', 'accumulators':'StatusAccumulator'})
             if problem['sizelimit'] != None:
                 problem['testsuite'].oa_set_str('sizelimit', str(problem['sizelimit']))
             for num, test in sorted(problem['tests'].iteritems()):
-            	test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'owner':Security.whoami(), 'problem':problem['object'], 'environment':options.environment})
+            	test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'problem':problem['object'], 'environment':options.environment})
 
                 if problem['checker'] != None:
                     test['object'].data_set_blob_path('checker', problem['checker'])
@@ -205,11 +209,13 @@ def athina_import():
                     test['object'].data_set_str('time', str(10*int(test['timelimit'])))
                 TestMapping.create({'test':test['object'], 'suite':problem['testsuite'], 'order':test['test']})
         except:
+            traceback.print_exc()
             problem['testsuite'] = TestSuite.filter({'name':options.name + '_' + problem['problem'] + '_default'})[0]
 
         try:
             problem['mapping'] = ProblemMapping.create({'contest':contest, 'problem':problem['object'], 'code':problem['problem'], 'title':problem['problem'], 'default_test_suite':problem['testsuite']})
         except:
+            traceback.print_exc()
             problem['mapping'] = ProblemMapping.filter({'contest':contest, 'problem':problem['object']})[0]
 
     print problems
@@ -217,7 +223,7 @@ def athina_import():
     for id, submit in sorted(submits.iteritems()):
     	print ' -> submit ', id
     	user = users[submit['user']]
-#        token_container.set_token(Security.login(options.name + '_' + user['login'], user['password']))
+        token_container.set_token(Security.login(options.name + '_' + user['login'], user['password']))
     	submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
     token_container.set_token(mytoken)
 

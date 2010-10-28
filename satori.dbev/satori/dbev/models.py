@@ -25,13 +25,8 @@ def install_versions_sql(model):
         'ARRAY[' + ','.join([qv(key) for key in keys]) + ']',
     )
 
-
-class UserField(models.IntegerField):
-    def __init__(self):
-        super(UserField, self).__init__(self, blank = True, null = True)
-
-    def post_create_sql(self, style, db_table):
-        set_user_id_function = """
+def install_dbev_sql():
+    set_user_id_function = """
 CREATE OR REPLACE FUNCTION set_user_id(arg INTEGER) RETURNS VOID AS $$
 BEGIN
     UPDATE user_id SET id=arg;
@@ -42,7 +37,7 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 """
-        get_user_id_function = """
+    get_user_id_function = """
 CREATE OR REPLACE FUNCTION get_user_id() RETURNS INTEGER AS $$
 BEGIN
     RETURN (SELECT id FROM user_id);
@@ -52,11 +47,11 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 """
-        transaction_id_seq = """
+    transaction_id_seq = """
 DROP SEQUENCE IF EXISTS transaction_id_seq;
 CREATE SEQUENCE transaction_id_seq;
 """
-        get_transaction_id_function = """
+    get_transaction_id_function = """
 CREATE OR REPLACE FUNCTION get_transaction_id() RETURNS INTEGER AS $$
 DECLARE
     _xid TEXT;
@@ -80,7 +75,7 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 """
-        create_version_table_function = """
+    create_version_table_function = """
 CREATE OR REPLACE FUNCTION create_version_table(_table TEXT, _key TEXT) RETURNS TEXT AS $$
 DECLARE
     _exec TEXT := '';
@@ -125,7 +120,7 @@ END;
 $$ LANGUAGE plpgsql;
 """
 
-        create_full_view_function = """
+    create_full_view_function = """
 CREATE OR REPLACE FUNCTION create_full_view(_tables TEXT[], _keys TEXT[]) RETURNS TEXT AS $$
 DECLARE
     _exec TEXT := '';
@@ -167,7 +162,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 """
-        create_version_function_function = """
+    create_version_function_function = """
 CREATE OR REPLACE FUNCTION create_version_function(_tables TEXT[], _keys TEXT[]) RETURNS TEXT AS $$
 DECLARE
     _exec TEXT := '';
@@ -252,7 +247,7 @@ END;
 $$ LANGUAGE plpgsql;
 """
 
-        create_triggers_function = """
+    create_triggers_function = """
 CREATE OR REPLACE FUNCTION create_triggers(_table TEXT, _key TEXT, _notify TEXT) RETURNS TEXT AS $$
 DECLARE
     _exec TEXT := '';
@@ -357,7 +352,76 @@ END;
 $$ LANGUAGE plpgsql;
 """
 
-        install_versions_function = """
+    install_rights_inheritance = """
+DROP TABLE IF EXISTS "right_dict";
+CREATE TABLE "right_dict" (
+    "id" serial NOT NULL PRIMARY KEY,
+    "name" VARCHAR(32),
+    UNIQUE("name")
+);
+CREATE OR REPLACE FUNCTION right_by_name(_right_name TEXT) RETURNS INT AS $$
+DECLARE
+    _ret INT := NULL;
+BEGIN
+    _ret := (SELECT "id" FROM "right_dict" WHERE "name" = _right_name);
+    IF _ret IS NULL THEN
+        INSERT INTO right_dict("name") VALUES(_right_name);
+        _ret := (SELECT "id" FROM "right_dict" WHERE "name" = _right_name);
+    END IF;
+    RETURN _ret;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TYPE "right_pair" AS (
+    "entity_id" INT,
+    "right_id"  INT
+);
+DROP TABLE IF EXISTS "right_inheritance";
+CREATE TABLE "right_inheritance" (
+    "parent" INT NOT NULL,
+    "child" INT NOT NULL,
+    "child_entity_id" INT NOT NULL
+);
+CREATE INDEX "right_inheritance_child_idx" ON "right_inheritance" ( "child" );
+CREATE INDEX "right_inheritance_child_entity_id_idx" ON "right_inheritance" ( "child_entity_id" );
+CREATE OR REPLACE FUNCTION right_inheritance_clear(_entity_id INT) RETURNS VOID AS $$
+BEGIN
+    DELETE FROM "right_inheritance" WHERE "child_entity_id" = _entity_id;
+END;
+$$ LANGUAGE plpgsql;
+CREATE OR REPLACE FUNCTION right_inheritance_add(_child_entity_id INT, _child_right_name TEXT, _parent_entity_id INT, _parent_right_name TEXT) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO "right_inheritance"("parent", "child", "child_entity_id") VALUES (
+        _parent_entity_id*256 + (SELECT right_by_name(_parent_right_name)),
+        _child_entity_id*256 + (SELECT right_by_name(_child_right_name)),
+        _child_entity_id);
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE OR REPLACE FUNCTION right_test(_role_id INT, _entity_id INT, _right_name TEXT) RETURNS BOOLEAN AS $$
+DECLARE result BOOLEAN;
+BEGIN
+   SELECT EXISTS
+       (SELECT * FROM
+           (SELECT DISTINCT keyid
+               FROM connectby('core_rolemapping', 'parent_id', 'child_id', _role_id::text, 0)
+                   as t(keyid int, parent_keyid int, level int)
+           ) AS roles
+           JOIN core_privilege ON roles.keyid = core_privilege.role_id
+           JOIN
+           (SELECT keyid/256 as entity, keyid%%256 as right 
+                FROM connectby('right_inheritance', 'parent', 'child', (_entity_id*256 + (SELECT right_by_name(_right_name)))::text, 0)
+                AS t(keyid int, parent_keyid int, level int)
+           ) AS inherited ON 1=1
+           JOIN right_dict ON inherited.right = right_dict.id AND core_privilege.object_id = inherited.entity AND core_privilege.right = right_dict.name
+           WHERE coalesce(core_privilege.start_on, NOW()) <= NOW() AND coalesce(core_privilege.finish_on, NOW()) >= NOW()
+       )
+       INTO result;
+   RETURN result;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
+    install_versions_function = """
 CREATE OR REPLACE FUNCTION install_versions(_table TEXT, _key TEXT, _tables TEXT[], _keys TEXT[], _notify TEXT) RETURNS TEXT AS $$
 DECLARE
     _texec TEXT := '';
@@ -375,11 +439,10 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 """
-        ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function]
-        for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
-            ret.append(install_versions_sql(model))
-        return tuple(ret);
-
+    ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function, install_rights_inheritance]
+    for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
+        ret.append(install_versions_sql(model))
+    return tuple(ret);
 
 class Notification(models.Model):
     notification = 'satori'
@@ -388,4 +451,4 @@ class Notification(models.Model):
     object      = models.IntegerField()
     transaction = models.IntegerField()
     previous    = models.IntegerField(null=True)
-    user        = UserField()
+    user        = models.IntegerField(null=True)

@@ -16,6 +16,7 @@ import time
 import string
 import urlparse
 import urllib
+from satori.ars import perf
 from django.core import cache
 from django.conf import settings
 from django.db import models
@@ -24,6 +25,26 @@ from satori.objects import Object, Argument
 from satori.core.sec.store import Store
 from satori.core.models import Session, Role, User, Privilege, Global, Entity
 from satori.ars.model import ArsTypeAlias, ArsString
+from psycopg2._psycopg import adapt
+from django.db import connection
+
+class permarg_list_adapter(object):
+ def __init__(self, c):
+   self.c = c
+ def prepare(self, conn):
+   self.a = adapt(self.c)
+   self.a.prepare(conn)
+ def getquoted(self):
+   res = self.a.getquoted() + '::permarg[]'
+   print res
+   return res
+
+class permarg_list(object):
+ def __init__(self, c):
+   self.c = c
+ def __conform__(self, proto):
+   return permarg_list_adapter(self.c)
+
 
 class TokenError(Exception):
     """Exception. Provided token is invalid.
@@ -265,21 +286,61 @@ class RightCheck(object):
     def __init__(self):
         super(RightCheck, self).__init__()
         self._ts = datetime.now()
-        RightCheck.cache = {}
+        self._cache_hit = 0
+        self._cache_miss = 0
+        self._cache_time = 0
+        self._cache_add = 0
         pass
 
     def _cache_key(self, role, object, right):
-        return 'check_rights_'+str(role.id)+'_'+str(object.id)+'_'+right
+        return str(role.id)+'_'+str(object.id)+'_'+str(right)
     def _cache_set(self, role, object, right, value):
-        #cache.set(self._cache_key(role, object, right), value)
         key = self._cache_key(role, object, right)
-        RightCheck.cache[key] = value
+        self._cache_add += 1
+        if value:
+            RightCheck.cache[key] = (True, self._ts + timedelta(seconds=120))
+        else:
+        	RightCheck.cache[key] = (False, self._ts + timedelta(seconds=30))
+
     def _cache_get(self, role, object, right):
-        #return cache.get(self._cache_key(role, object, right), None)
         key = self._cache_key(role, object, right)
-        if key in RightCheck.cache:
-            return RightCheck.cache[key]
-        return None
+        val = RightCheck.cache.get(key, None)
+        if val is None:
+            self._cache_miss += 1
+        	return val
+        if val[1] < self._ts:
+            del RightCheck.cache[key]
+            self._cache_time += 1
+        	return None;
+        self._cache_hit += 1
+        return val[0]
+
+    def _upgrade_model(self, object):
+        model = models.get_model(*object.model.split('.'))
+        if not isinstance(object, model):
+            object = model.objects.get(id=object.id)
+        return object
+
+    def _inherit_all(self, object, right):
+        perf.begin('inherit')
+        object = self._upgrade_model(object)
+        all = { object.id: { right: [] } }
+        ret = [(object, right)]
+        i = 0
+        while i < len(ret):
+        	object, right = ret[i]
+        	i = i + 1
+            for (obj, rig) in object.inherit_right(right):
+                if obj.id not in all:
+                	all[obj.id] = {}
+                if rig not in all[obj.id]:
+                	all[obj.id][rig] = []
+                    obj = self._upgrade_model(obj)
+                	ret.append((obj, rig))
+                all[obj.id][rig].append((object, right))
+        ret.reverse()
+        perf.end('inherit')
+        return ret,all
 
     def _single_check(self, role, object, right):
         res = self._cache_get(role, object, right)
@@ -291,23 +352,54 @@ class RightCheck(object):
                 continue
             res = True
             break
-        if not res:
-            self._cache_set(role, object, right, False)
-            model = models.get_model(*object.model.split('.'))
-            if not isinstance(object, model):
-                object = model.objects.get(id=object.id)
-            for (obj,rig) in object.inherit_right(right):
-                if self._single_check(role, obj, rig):
-                    res = True
-                    break
-        self._cache_set(role, object, right, res)
         return res
 
-    @Argument('roleset', type=RoleSet)
+    def _rec_cache_true(self, role, object, right, all, start =True):
+        if start:
+        	self._vis = set()
+        if (object.id, right) in self._vis:
+        	return
+        self._vis.add((object.id, right))
+        self._cache_set(role, object, right, True)
+        for obj, rig in all[object.id][right]:
+        	self._rec_cache_true(role, obj, rig, all, False)
+
+    def _role_check(self, role, list, all):
+        for object, right in list:
+            if self._cache_get(role, object, right):
+            	return True
+        for object, right in list:
+            si = self._single_check(role, object, right)
+            if si:
+            	self._rec_cache_true(role, object, right, all)
+            	return True
+            else:
+                self._cache_set(role, object, right, False)
+
+    #@Argument('roleset', type=RoleSet)
+    @Argument('role', type=Role)
     @Argument('object', type=Entity)
     @Argument('right', type=str)
-    def __call__(self, roleset, object, right):
-        ret = False
+    def __call__(self, role, object, right):
+        perf.begin('check')
+        list, all = self._inherit_all(object, right)
+        c = connection.cursor()
+        c.callproc('test_perms', [str(role.id), permarg_list([(str(obj.id), right) for obj, right in list])])
+        perf.end('check')
+        return bool(c.fetchall()[0][0])
+
         for role in roleset.roles:
-            ret = ret or self._single_check(role, object, right)
+            rr = self._cache_get(role, object, right)
+            if rr:
+                perf.end('check')
+            	return True
+            if rr is None:
+            	ret = None
+        if ret is None:
+        	ret = False
+            list, all = self._inherit_all(object, right)
+            for role in roleset.roles:
+                if self._role_check(role, list, all):
+                	ret = True
+        perf.end('check')
         return ret
