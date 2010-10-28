@@ -17,14 +17,14 @@ def row_to_dict(cursor, row):
 
 def handle_notifications(cursor, slave):
     while True:
-        cursor.execute('SELECT min(transaction) AS transaction FROM dbev_notification')
+        cursor.execute('SELECT min(transaction) AS transaction FROM core_notification')
         res = row_to_dict(cursor, cursor.fetchone())
         if 'transaction' not in res:
             break
         if res['transaction'] == None:
             break
         transaction = int(res['transaction'])
-        cursor.execute('SELECT * FROM dbev_notification WHERE transaction=%s', [transaction])
+        cursor.execute('SELECT * FROM core_notification WHERE transaction=%s', [transaction])
         events = {}
         for row in cursor:
             res = row_to_dict(cursor, row)
@@ -95,7 +95,7 @@ def handle_notifications(cursor, slave):
                     model = model._meta.parents.items()[0][0]
                 else:
                     break
-        cursor.execute('DELETE FROM dbev_notification WHERE transaction=%s', [int(transaction)])
+        cursor.execute('DELETE FROM core_notification WHERE transaction=%s', [int(transaction)])
 
 
 def run_notifier(slave):
@@ -107,7 +107,7 @@ def run_notifier(slave):
             con.commit()
             cursor = con.cursor()
             cursor.execute('LISTEN satori;')
-            cursor.execute('DELETE FROM dbev_notification;')
+            cursor.execute('DELETE FROM core_notification;')
 
             while True:
                 if select.select([con], [], [], 5) == ([], [], []):

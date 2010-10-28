@@ -273,7 +273,7 @@ BEGIN
         END IF;
     END LOOP;
     _exec := _exec || 'get_transaction_id(), get_transaction_id(), get_user_id());';
-    _exec := _exec || 'INSERT INTO dbev_notification(action, "table", object, transaction, previous, "user") VALUES(''I'', ''' || _table || ''', new.' || quote_ident(_key);
+    _exec := _exec || 'INSERT INTO core_notification(action, "table", object, transaction, previous, "user") VALUES(''I'', ''' || _table || ''', new.' || quote_ident(_key);
     _exec := _exec || ', get_transaction_id(), NULL, get_user_id());';
     _exec := _exec || 'NOTIFY ' || quote_ident(_notify) || ';';
     _exec := _exec || 'RETURN new; END; $' || '$ LANGUAGE plpgsql;';
@@ -317,9 +317,9 @@ BEGIN
         END IF;
     END LOOP;
     _exec := _exec || 'get_transaction_id(), old._version_transaction, get_user_id());';
-    _exec := _exec || 'UPDATE dbev_notification SET "user"=get_user_id() WHERE "table"=''' || _table || ''' AND object=new.' || quote_ident(_key);
+    _exec := _exec || 'UPDATE core_notification SET "user"=get_user_id() WHERE "table"=''' || _table || ''' AND object=new.' || quote_ident(_key);
     _exec := _exec || ' AND transaction=get_transaction_id(); IF NOT found THEN ';
-    _exec := _exec || 'INSERT INTO dbev_notification(action, "table", object, transaction, previous, "user") VALUES(''U'', ''' || _table || ''', new.' || quote_ident(_key);
+    _exec := _exec || 'INSERT INTO core_notification(action, "table", object, transaction, previous, "user") VALUES(''U'', ''' || _table || ''', new.' || quote_ident(_key);
     _exec := _exec || ', get_transaction_id(), old._version_transaction, get_user_id()); END IF;';
     _exec := _exec || 'NOTIFY ' || quote_ident(_notify) || ';';
     _exec := _exec || 'RETURN new; END; $' || '$ LANGUAGE plpgsql;';
@@ -335,9 +335,9 @@ BEGIN
     _exec := _exec || quote_ident(_key) || ' = old.' || quote_ident(_key) || ' AND _version_next IS NULL;';
     _exec := _exec || 'DELETE FROM ' || quote_ident(_table || '__versions') || ' WHERE _version_transaction = get_transaction_id() AND ';
     _exec := _exec || quote_ident(_key) || ' = old.' || quote_ident(_key) || ';';
-    _exec := _exec || 'UPDATE dbev_notification SET action=''D'', "user"=get_user_id() WHERE "table"=''' || _table || ''' AND object=old.' || quote_ident(_key);
+    _exec := _exec || 'UPDATE core_notification SET action=''D'', "user"=get_user_id() WHERE "table"=''' || _table || ''' AND object=old.' || quote_ident(_key);
     _exec := _exec || ' AND transaction=get_transaction_id(); IF NOT found THEN ';
-    _exec := _exec || 'INSERT INTO dbev_notification(action, "table", object, transaction, previous, "user") VALUES(''D'', ''' || _table || ''', old.' || quote_ident(_key);
+    _exec := _exec || 'INSERT INTO core_notification(action, "table", object, transaction, previous, "user") VALUES(''D'', ''' || _table || ''', old.' || quote_ident(_key);
     _exec := _exec || ', get_transaction_id(), old._version_transaction, get_user_id()); END IF;';
     _exec := _exec || 'NOTIFY ' || quote_ident(_notify) || ';';
     _exec := _exec || 'RETURN old; END; $' || '$ LANGUAGE plpgsql;';
@@ -443,12 +443,3 @@ $$ LANGUAGE plpgsql;
     for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
         ret.append(install_versions_sql(model))
     return tuple(ret);
-
-class Notification(models.Model):
-    notification = 'satori'
-    action      = models.CharField(max_length=1)
-    table       = models.CharField(max_length=50)
-    object      = models.IntegerField()
-    transaction = models.IntegerField()
-    previous    = models.IntegerField(null=True)
-    user        = models.IntegerField(null=True)

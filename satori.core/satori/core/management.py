@@ -11,7 +11,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
         return
 
     from django.conf import settings
-    from satori.core.dbev.models import install_dbev_sql
+    from satori.core.dbev.install import install_dbev_sql
     from satori.core.export import token_container
     from satori.core.models import Security, Privilege
     from satori.core.sec import Token
