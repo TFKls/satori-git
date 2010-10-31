@@ -9,7 +9,7 @@ Judge helper procedures.
 from types import NoneType
 
 from satori.core.checking.check_queue_client import CheckQueueClient
-from satori.core.export        import ExportMethod, TypedMap, PCGlobal
+from satori.core.export        import ExportMethod, Struct, TypedMap, PCGlobal
 from satori.core.export_django import ExportModel, AnonymousAttribute
 from satori.core.dbev               import Events
 
