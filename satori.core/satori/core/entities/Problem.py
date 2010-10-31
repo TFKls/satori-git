@@ -32,12 +32,11 @@ class Problem(Entity):
     def __str__(self):
         return self.name+" ("+self.description+")"
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(Problem, self).inherit_right(right)
-        if right == 'EDIT':
-            pass
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Problem, cls).inherit_rights()
+        del inherits['EDIT']
+        return inherits
 
     @ExportMethod(DjangoId('Problem'), [unicode], PCGlobal('MANAGE_PROBLEMS'))
     def create_problem(name):

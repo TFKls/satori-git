@@ -21,11 +21,13 @@ class Contestant(Role):
     accepted   = models.BooleanField(default=False)
     invisible  = models.BooleanField(default=False)
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(Contestant,self).inherit_right(right)
-        ret.append((self.contest,right))
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Contestant, cls).inherit_rights()
+        for key in inherits.keys():
+            cls._inherit_add(inherits, key, 'contest', key)
+        cls._inherit_add(inherits, 'OBSERVE', 'contest', 'OBSERVE')
+        return inherits
 
     @ExportMethod(unicode, [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def name_auto(self):

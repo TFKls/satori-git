@@ -35,17 +35,13 @@ class ProblemMapping(Entity):
     def __str__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(ProblemMapping, self).inherit_right(right)
-        if right == 'VIEW':
-            ret.append((self.contest,'VIEWTASKS'))
-        if right == 'EDIT':
-            ret.append((self.contest,'MANAGE'))
-        if right == 'SUBMIT':
-            ret.append((self.contest,'SUBMIT'))
-        return ret
-
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(ProblemMapping, cls).inherit_rights()
+        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEWTASKS')
+        cls._inherit_add(inherits, 'EDIT', 'contest', 'MANAGE')
+        cls._inherit_add(inherits, 'SUBMIT', 'contest', 'SUBMIT')
+        return inherits
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'code'), ('contest', 'problem'))

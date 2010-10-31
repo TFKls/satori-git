@@ -32,12 +32,11 @@ class Test(Entity):
 
         super(Test, self).save()
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(Test, self).inherit_right(right)
-        if right == 'EDIT':
-            ret.append((self.problem,'EDIT'))
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Test, cls).inherit_rights()
+        cls._inherit_add(inherits, 'EDIT', 'problem', 'EDIT')
+        return inherits
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)

@@ -21,11 +21,12 @@ class MessageContest(Message):
     class ExportMeta(object):
         fields = [('contest', 'VIEW')]
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(MessageContest,self).inherit_right(right)
-        ret.append((self.contest,right))
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(MessageContest, cls).inherit_rights()
+        for key in inherits.keys():
+            cls._inherit_add(inherits, key, 'contest', key)
+        return inherits
 
 class MessageContestEvents(Events):
     model = MessageContest

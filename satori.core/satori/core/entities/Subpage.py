@@ -22,16 +22,12 @@ class Subpage(Entity):
     content = models.TextField()
     order = models.IntegerField(null=True)
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(Subpage, self).inherit_right(right)
-        if right=='VIEW':
-            ret.append((self.contest,'VIEW'))
-            if self.public:
-                ret.append((Global.get_instance().authenticated,'VIEW_BASICS'))
-        if right=='EDIT':
-            ret.append((self.contest,'MANAGE'))
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Subpage, cls).inherit_rights()
+        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW')
+        cls._inherit_add(inherits, 'EDIT', 'contest', 'MANAGE')
+        return inherits
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)

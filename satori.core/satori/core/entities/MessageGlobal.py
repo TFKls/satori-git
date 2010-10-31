@@ -24,12 +24,13 @@ class MessageGlobal(Message):
     def __str__(self):
         return self.topic+" (Global)"
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(MessageGlobal,self).inherit_right(right)
-        if right=='VIEW':
-            ret.append((Global.get_instance(),'VIEW_BASICS'))
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(MessageGlobal, cls).inherit_rights()
+        for key in inherits.keys():
+            cls._inherit_add(inherits, key, 'contest', key)
+        cls._inherit_add(inherits, 'VIEW', '', 'VIEW_BASICS')
+        return inherits
 
 class MessageGlobalEvents(Events):
     model = MessageGlobal

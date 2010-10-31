@@ -29,14 +29,12 @@ class Submit(Entity):
         self.fixup_data()
         super(Submit, self).save()
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(Submit, self).inherit_right(right)
-        if right == 'VIEW':
-            ret.append((self.contestant.contest,'OBSERVE'))
-        if right == 'OVERRIDE':
-            ret.append((self.contestant.contest,'MANAGE'))
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Submit, cls).inherit_rights()
+        cls._inherit_add(inherits, 'VIEW', 'contestant', 'OBSERVE')
+        cls._inherit_add(inherits, 'OVERRIDE', 'contestant', 'MANAGE')
+        return inherits
 
     @ExportMethod(DjangoStructList('TestResult'), [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
     def get_test_suite_results(self, test_suite=None):

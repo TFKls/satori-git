@@ -63,7 +63,7 @@ from openid.extensions import sreg as oidsreg
 from openid.extensions import pape as oidpape
 from openid.extensions import ax as oidax
 
-from satori.core.sec.tools import RightCheck, RoleSet, Token
+from satori.core.sec.tools import Token
 from satori.core.sec.store import Store
 
 from satori.objects import DispatchOn, Argument, ReturnValue, Throws

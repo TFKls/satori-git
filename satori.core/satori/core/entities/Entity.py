@@ -21,29 +21,25 @@ class Entity(models.Model):
               self.model = self._meta.app_label + '.' + self._meta.module_name
         super(Entity, self).save(*args, **kwargs)
 
-    def inherit_right(self, right):
-        from satori.core.models import Global
-        right = str(right)
-        ret = list()
-        if right == 'VIEW':
-            ret.append((self, 'MODERATE'))
-        if right == 'ATTRIBUTE_READ':
-            ret.append((self, 'VIEW'))
-        if right == 'ATTRIBUTE_WRITE':
-            ret.append((self, 'EDIT'))
-        if right == 'MODERATE':
-            ret.append((self, 'EDIT'))
-        if right == 'EDIT':
-            ret.append((self, 'MANAGE'))
-        if right == 'MANAGE_PRIVILEGES':
-            ret.append((Global.get_instance(), 'MANAGE_PRIVILEGES'))
-            ret.append((self, 'MANAGE'))
-        if right != 'ADMIN':
-            ret.append((self, 'ADMIN'))
-        if right == 'ADMIN':
-            ret.append((Global.get_instance(), 'ADMIN'))
+    @classmethod
+    def _inherit_add(cls, inherits, get, id, need):
+        if get not in inherits:
+        	inherits[get] = []
+        inherits[get].append((id, need))
 
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = dict()
+        cls._inherit_add(inherits, 'ATTRIBUTE_READ', 'id', 'VIEW')
+        cls._inherit_add(inherits, 'VIEW', 'id', 'MODERATE')
+        cls._inherit_add(inherits, 'ATTRIBUTE_WRITE', 'id', 'EDIT')
+        cls._inherit_add(inherits, 'MODERATE', 'id', 'EDIT')
+        cls._inherit_add(inherits, 'EDIT', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'MANAGE_PRIVILEGES', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'MANAGE_PRIVILEGES', '', 'MANAGE_PRIVILEGES')
+        cls._inherit_add(inherits, 'MANAGE', 'id', 'ADMIN')
+        cls._inherit_add(inherits, 'ADMIN', '', 'ADMIN')
+        return inherits
 
     class ExportMeta(object):
         fields = [('id', 'VIEW')]

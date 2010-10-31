@@ -11,7 +11,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
         return
 
     from django.conf import settings
-    from satori.core.dbev.install import install_dbev_sql
+    from satori.core.dbev.install import install_dbev_sql, install_rights_sql
     from satori.core.export import token_container
     from satori.core.models import Security, Privilege
     from satori.core.sec import Token
@@ -30,5 +30,14 @@ def create_admin(app, created_models, verbosity, **kwargs):
     User.register(login=settings.ADMIN_NAME, name='Super Admin', password=settings.ADMIN_PASSWORD)
     admin = User.objects.get(login='admin')
     Privilege.global_grant(admin, 'ADMIN')
+
+    print 'Installing DBEV rights'
+
+    sql = install_rights_sql()
+    from django.db import connection, transaction
+    cursor = connection.cursor()
+    for query in sql:
+    	cursor.execute(query)
+
 
 post_syncdb.connect(create_admin)

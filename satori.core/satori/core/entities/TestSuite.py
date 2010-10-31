@@ -24,12 +24,11 @@ class TestSuite(Entity):
     dispatcher   = models.CharField(max_length=128)
     accumulators = models.CharField(max_length=1024)
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(TestSuite, self).inherit_right(right)
-        if right=='EDIT':
-            ret.append((self.problem,'EDIT'))
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(TestSuite, cls).inherit_rights()
+        cls._inherit_add(inherits, 'EDIT', 'problem', 'EDIT')
+        return inherits
 
     def save(self, *args, **kwargs):
         from satori.core.checking.dispatchers import dispatchers

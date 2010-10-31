@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from django.db import models
+from satori.core.models import Entity
 from satori.core.dbev.events import registry
 
 
@@ -24,6 +25,50 @@ def install_versions_sql(model):
         'ARRAY[' + ','.join([qv(tab) for tab in tabs]) + ']',
         'ARRAY[' + ','.join([qv(key) for key in keys]) + ']',
     )
+
+def install_rights_sql():
+    qv = lambda x : '\''+str(x)+'\''
+    sql = """
+CREATE OR REPLACE FUNCTION right_inheritance_update(_id INTEGER) RETURNS VOID AS $$
+BEGIN
+    PERFORM right_inheritance_clear(_id);
+    CASE (SELECT model FROM core_entity WHERE id=_id)"""
+
+    for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
+        if issubclass(model, Entity):
+            model_name = model._meta.app_label + '.' + model._meta.module_name
+            sql += """
+            WHEN {0} THEN """.format(qv(model_name))
+            for right, list in model.inherit_rights().items():
+                for pent, pright in list:
+                    if pent:
+                        sql += """
+                PERFORM right_inheritance_add(_id, {0}, (SELECT {1} FROM {2} WHERE id=_id), {3});""".format(
+                            qv(right),
+                            pent,
+                            model._meta.db_table + '__view',
+                            qv(pright))
+                    else:
+                        sql += """
+                PERFORM right_inheritance_add(_id, {0}, (SELECT id FROM core_global__view), {1});""".format(
+                            qv(right),
+                            qv(pright))
+    sql += """
+    END CASE;
+END;
+$$ LANGUAGE plpgsql;
+"""
+    ret = []
+    ret.append(sql)
+
+    for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
+        if issubclass(model, Entity):
+            trig = 'CREATE OR REPLACE FUNCTION ' + model._meta.db_table + '__trigger_rights() RETURNS TRIGGER AS $$ BEGIN PERFORM right_inheritance_update(new.' + model._meta.pk.column + '); RETURN new; END; $$ LANGUAGE plpgsql;'
+            trig += 'CREATE CONSTRAINT TRIGGER ' + model._meta.db_table + '__after_insert_rights  AFTER INSERT OR UPDATE ON ' + model._meta.db_table + ' DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE ' + model._meta.db_table + '__trigger_rights();'
+#            trig += 'CREATE TRIGGER ' + model._meta.db_table + '__after_update_rights  AFTER UPDATE ON ' + model._meta.db_table + ' FOR EACH ROW EXECUTE PROCEDURE ' + model._meta.db_table + '__trigger_rights();'
+            ret.append(trig)
+    ret.append('SELECT right_inheritance_update(id) FROM core_entity;')
+    return ret
 
 def install_dbev_sql():
     set_user_id_function = """
@@ -359,7 +404,7 @@ CREATE TABLE "right_dict" (
     "name" VARCHAR(32),
     UNIQUE("name")
 );
-CREATE OR REPLACE FUNCTION right_by_name(_right_name TEXT) RETURNS INT AS $$
+CREATE OR REPLACE FUNCTION get_right_by_name(_right_name TEXT) RETURNS INT AS $$
 DECLARE
     _ret INT := NULL;
 BEGIN
@@ -391,13 +436,13 @@ $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION right_inheritance_add(_child_entity_id INT, _child_right_name TEXT, _parent_entity_id INT, _parent_right_name TEXT) RETURNS VOID AS $$
 BEGIN
     INSERT INTO "right_inheritance"("parent", "child", "child_entity_id") VALUES (
-        _parent_entity_id*256 + (SELECT right_by_name(_parent_right_name)),
-        _child_entity_id*256 + (SELECT right_by_name(_child_right_name)),
+        _parent_entity_id*256 + (SELECT get_right_by_name(_parent_right_name)),
+        _child_entity_id*256 + (SELECT get_right_by_name(_child_right_name)),
         _child_entity_id);
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION right_test(_role_id INT, _entity_id INT, _right_name TEXT) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION right_check(_role_id INT, _entity_id INT, _right_name TEXT) RETURNS BOOLEAN AS $$
 DECLARE result BOOLEAN;
 BEGIN
    SELECT EXISTS
@@ -409,10 +454,10 @@ BEGIN
            JOIN core_privilege ON roles.keyid = core_privilege.role_id
            JOIN
            (SELECT keyid/256 as entity, keyid%%256 as right 
-                FROM connectby('right_inheritance', 'parent', 'child', (_entity_id*256 + (SELECT right_by_name(_right_name)))::text, 0)
+                FROM connectby('right_inheritance', 'parent', 'child', (_entity_id*256 + (SELECT get_right_by_name(_right_name)))::text, 0)
                 AS t(keyid int, parent_keyid int, level int)
            ) AS inherited ON 1=1
-           JOIN right_dict ON inherited.right = right_dict.id AND core_privilege.object_id = inherited.entity AND core_privilege.right = right_dict.name
+           JOIN right_dict ON inherited.right = right_dict.id AND core_privilege.entity_id = inherited.entity AND core_privilege.right = right_dict.name
            WHERE coalesce(core_privilege.start_on, NOW()) <= NOW() AND coalesce(core_privilege.finish_on, NOW()) >= NOW()
        )
        INTO result;

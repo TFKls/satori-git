@@ -33,14 +33,14 @@ class Contest(Entity):
         return self.name
     # TODO: add presentation options
 
-    def inherit_right(self, right):
-        right = str(right)
-        ret = super(Contest, self).inherit_right(right)
-        if right == 'VIEW' or right == 'OBSERVE' or right == 'VIEWTASKS':
-            ret.append((self,'MANAGE'))
-        if right == 'APPLY':
-            ret.append((self,'JOIN'))
-        return ret
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Contest, cls).inherit_rights()
+        cls._inherit_add(inherits, 'OBSERVE', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEWTASKS', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'APPLY', 'id', 'JOIN')
+        cls._inherit_add(inherits, 'JOIN', 'id', 'MANAGE')
+        return inherits
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('User')], PCOr(PCTokenUser('user'), PCArg('self', 'MANAGE')))
     def find_contestant(self, user):
