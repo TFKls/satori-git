@@ -1,7 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from   datetime  import datetime
-from   django.db import connection, transaction
 import inspect
 from   time      import mktime
 import threading
@@ -225,6 +224,7 @@ class ExportMethod(object):
         pc = self.pc
 
         def reimplementation(**kwargs):
+            from   django.db import connection, transaction
             transaction.enter_transaction_management()
             transaction.managed(True)
 
