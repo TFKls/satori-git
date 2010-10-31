@@ -8,9 +8,9 @@
 #
 
 aptitude install python-virtualenv python-dev libpq-dev libyaml-dev libcap-dev
-virtualenv --no-site-packages . &&
-ln -s python bin/python2.6 &&
+virtualenv --no-site-packages .
+ln -s python bin/python2.6
 source bin/activate
-easy_install zc.buildout &&
-mkdir -p src/python var/{buildout,cache} &&
+easy_install zc.buildout
+mkdir -p src/python var/{buildout,cache}
 buildout
