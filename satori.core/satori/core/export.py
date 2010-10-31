@@ -97,6 +97,9 @@ class PCPermit(object):
     def __call__(__pc__self, **kwargs):
         return True
 
+    def  __str__(__pc__self):
+        return 'none'
+
 class PCArg(object):
     def __init__(__pc__self, name, perm):
         super(PCArg, __pc__self).__init__()
@@ -105,6 +108,9 @@ class PCArg(object):
 
     def __call__(__pc__self, **kwargs):
         return Privilege.demand(kwargs[__pc__self.name], __pc__self.perm)
+
+    def __str__(__pc__self):
+        return '{0} on {1}'.format(__pc__self.perm, __pc__self.name)
 
 
 class PCGlobal(object):
@@ -115,6 +121,9 @@ class PCGlobal(object):
     def __call__(__pc__self, **kwargs):
         return Privilege.global_demand(__pc__self.perm)
 
+    def __str__(__pc__self):
+        return 'global {0}'.format(__pc__self.perm)
+
 
 class PCAnd(object):
     def __init__(__pc__self, *subs):
@@ -124,6 +133,8 @@ class PCAnd(object):
     def __call__(__pc__self, **kwargs):
         return all(x(**kwargs) for x in __pc__self.subs)
 
+    def __str__(__pc__self):
+        return '(' + ') and ('.join(str(p) for p in __pc__self.subs) + ')'
 
 class PCOr(object):
     def __init__(__pc__self, *subs):
@@ -132,6 +143,9 @@ class PCOr(object):
 
     def __call__(__pc__self, **kwargs):
         return any(x(**kwargs) for x in __pc__self.subs)
+    
+    def __str__(__pc__self):
+        return '(' + ') or ('.join(str(p) for p in __pc__self.subs) + ')'
 
 
 class PCEach(object):
@@ -143,6 +157,9 @@ class PCEach(object):
     def __call__(__pc__self, **kwargs):
         return all(__pc__self.sub(item=x) for x in kwargs[__pc__self.name])
 
+    def __str__(__pc__self):
+        return 'for every item in {0}: {1}'.format(__pc__self.name, str(__pc__self.sub))
+
 
 class PCEachKey(object):
     def __init__(__pc__self, name, sub):
@@ -152,6 +169,9 @@ class PCEachKey(object):
 
     def __call__(__pc__self, **kwargs):
         return all(__pc__self.sub(item=x) for x in kwargs[__pc__self.name].keys())
+
+    def __str__(__pc__self):
+        return 'for every item in {0}.keys(): {1}'.format(__pc__self.name, str(__pc__self.sub))
 
 
 class PCEachValue(object):
@@ -163,6 +183,9 @@ class PCEachValue(object):
     def __call__(__pc__self, **kwargs):
         return all(__pc__self.sub(item=x) for x in kwargs[__pc__self.name].values())
 
+    def __str__(__pc__self):
+        return 'for every item in {0}.values(): {1}'.format(__pc__self.name, str(__pc__self.sub))
+
 
 class PCTokenUser(object):
     def __init__(__pc__self, name):
@@ -171,6 +194,9 @@ class PCTokenUser(object):
 
     def __call__(__pc__self, **kwargs):
         return token_container.token.user_id == kwargs[__pc__self.name].id
+
+    def __str__(__pc__self):
+        return '{0} equals to calling user'.format(__pc__self.name)
 
 
 python_basic_types = {
@@ -293,11 +319,21 @@ class ExportMethod(object):
         for exception in self.exception_types:
             ars_proc.add_exception(python_to_ars_type(exception))
 
+        doc = self.func.__doc__
+        if doc is None:
+            doc = ''
+
+        doc = doc + '\nRequired permissions: ' + str(self.pc)
+
+        ars_proc.__doc__ = doc
+
         return ars_proc
 
 
 def generate_service(cls, base):
     service = ArsService(name=cls.__name__, base=base)
+
+    service.__doc__ = cls.__doc__
 
     for (name, function) in sorted(cls.__dict__.items()):
         if function.__class__ == staticmethod(0).__class__:

@@ -252,7 +252,7 @@ class ArsNamedTuple(object):
             self.append(item)
 
     def __contains__(self, elem):
-        if isinstance(elem, str):
+        if isinstance(elem, (str, unicode)):
             return elem in self.names
         elif isinstance(elem, ArsNamedObject):
             return (elem.name in self.names) and (self.names[elem.name] == elem)
@@ -266,7 +266,7 @@ class ArsNamedTuple(object):
         return self.items.__len__()
 
     def __getitem__(self, index):
-        if isinstance(index, str):
+        if isinstance(index, (str, unicode)):
             return self.names[index]
         elif isinstance(index, int):
             return self.items[index]

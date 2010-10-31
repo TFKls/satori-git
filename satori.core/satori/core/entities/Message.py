@@ -9,6 +9,7 @@ from satori.core.dbev               import Events
 
 from satori.core.models import Entity
 
+@ExportModel
 class Message(Entity):
     """Model. Description of a text message.
     """

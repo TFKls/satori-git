@@ -287,6 +287,9 @@ class PCRawBlob(object):
         else:
             return True
 
+    def __str__(__pc__self):
+        return 'global RAW_BLOB if {0}.is_blob = True'.format(__pc__self.name)
+
 
 code_attributegroup_imports = """
 from types import NoneType
@@ -401,7 +404,7 @@ def {1}_set_map(self, attributes):
     self{2}.attributes.all().delete()
     self.{1}_add_map(attributes)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCArg('self', '{4}'))
+@ExportMethod(NoneType, [DjangoId('{0}'), unicode], PCArg('self', '{4}'))
 def {1}_delete(self, name):
     oa = self.{1}_get(name)
     if oa is not None:
