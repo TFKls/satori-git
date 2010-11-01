@@ -20,7 +20,7 @@ class ResultsWidget(Widget):
             curuser = d['user'][0]
         else:
             curuser = None
-        self.isadmin = c.demand_right('MANAGE')
+        self.isadmin = Privilege.demand(c,"MANAGE")
         self.back_to = ToString(params)
         self.back_path = path
         

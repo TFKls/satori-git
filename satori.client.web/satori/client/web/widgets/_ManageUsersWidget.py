@@ -26,8 +26,8 @@ class ManageUsersWidget(Widget):
             q = {}
             q['c'] = t
             q['name'] = t.name_auto()
-            q['members'] = t.members()
-            for member in t.members():
+            q['members'] = t.get_members()
+            for member in q['members']:
                 if Privilege.get(member,c,'MANAGE'):
                     q['admin'] = 'Admin'
             if t.accepted:

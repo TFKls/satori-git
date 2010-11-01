@@ -12,7 +12,7 @@ class ProblemsWidget(Widget):
         c = ActiveContest(params)
         r = c.contestant_role
         self.contest = c
-        self.manage = c.demand_right("MANAGE")
+        self.manage = Privilege.demand(c,"MANAGE")
         self.problems = list()
         for p in ProblemMapping.filter({'contest':c}):
             statement = p.statement_get_str('text')
