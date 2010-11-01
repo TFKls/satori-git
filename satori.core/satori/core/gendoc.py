@@ -72,9 +72,9 @@ def reference_type(type):
             ArsVoid:    ':py:class:`void`',
         }[type]
     elif isinstance(type, ArsList):
-        return ':py:class:`list`<{0}>'.format(reference_type(type.element_type))
+        return ':py:class:`list<{0}>`'.format(reference_type(type.element_type))
     elif isinstance(type, ArsMap):
-        return ':py:class:`map`<{0}:{1}>'.format(reference_type(type.key_type), reference_type(type.value_type))
+        return ':py:class:`map<{0}:{1}>`'.format(reference_type(type.key_type), reference_type(type.value_type))
     elif isinstance(type, ArsNamedType):
         return ':py:class:`{0}`'.format(type.name)
     else:
