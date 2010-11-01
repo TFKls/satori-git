@@ -27,8 +27,6 @@ class MessageGlobal(Message):
     @classmethod
     def inherit_rights(cls):
         inherits = super(MessageGlobal, cls).inherit_rights()
-        for key in inherits.keys():
-            cls._inherit_add(inherits, key, 'contest', key)
         cls._inherit_add(inherits, 'VIEW', '', 'VIEW_BASICS')
         return inherits
 

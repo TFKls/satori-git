@@ -67,7 +67,7 @@ class TestLogin(unittest.TestCase):
     def setUp(self):
         u = User.objects.filter(login='mammoth')
         if len(u) == 0:
-            u = User(login='mammoth', fullname='Grzegorz Gutowski')
+            u = User(login='mammoth', name='Grzegorz Gutowski')
             u.save()
         u = User.objects.get(login='mammoth')
         l = Login.objects.filter(login='mammoth')

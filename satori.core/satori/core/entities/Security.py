@@ -142,7 +142,7 @@ class ApiSecurity(WrapperClass):
             identity.save()
             if update:
                 user = identity.user
-                user.fullname = identity.name
+                user.name = identity.name
                 user.save()
         except:
             pass
@@ -212,7 +212,7 @@ class ApiSecurity(WrapperClass):
     @ReturnValue(type=OpenIdRedirect)
     def openid_register_start(login, openid, return_to):
         res = openid_generic_start(openid=openid, return_to=return_to, user_id='', ax=True)
-        user = User(login=login, fullname='')
+        user = User(login=login, name='')
         user.save()
         Privilege.grant(user, user, 'MANAGE')
         session = res['token'].data

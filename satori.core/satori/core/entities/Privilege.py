@@ -64,7 +64,10 @@ class Privilege(Entity):
     def demand(entity, right):
         from django.db import connection
         c = connection.cursor()
-        c.callproc('right_check', [token_container.token.user_id, entity.id, str(right)])
+        u = token_container.token.user_id;
+        if (u is None) or u == '':
+            u = Global.get_instance().anonymous.id
+        c.callproc('right_check', [int(u), int(entity.id), str(right)])
         return bool(c.fetchall()[0][0])
 
     @ExportMethod(NoneType, [DjangoId('Role'), unicode, PrivilegeTimes], PCGlobal('MANAGE_PRIVILEGES'))

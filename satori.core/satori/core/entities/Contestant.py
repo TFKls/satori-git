@@ -31,7 +31,7 @@ class Contestant(Role):
 
     @ExportMethod(unicode, [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def name_auto(self):
-        return ','.join(x.fullname for x in self.get_members())
+        return ','.join(x.name for x in self.get_members())
 
     @ExportMethod(DjangoStructList('User'), [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def get_member_users(self):

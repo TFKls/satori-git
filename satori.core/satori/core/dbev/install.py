@@ -45,7 +45,7 @@ BEGIN
                         sql += """
                 PERFORM right_inheritance_add(_id, {0}, (SELECT {1} FROM {2} WHERE id=_id), {3});""".format(
                             qv(right),
-                            pent,
+                            model._meta.get_field(pent).column,
                             model._meta.db_table + '__view',
                             qv(pright))
                     else:
@@ -448,13 +448,13 @@ BEGIN
    SELECT EXISTS
        (SELECT * FROM
            (SELECT DISTINCT keyid
-               FROM connectby('core_rolemapping', 'parent_id', 'child_id', _role_id::text, 0)
+               FROM connectby('core_rolemapping'::text, 'parent_id'::text, 'child_id'::text, _role_id::text, 0)
                    as t(keyid int, parent_keyid int, level int)
            ) AS roles
            JOIN core_privilege ON roles.keyid = core_privilege.role_id
            JOIN
            (SELECT keyid/256 as entity, keyid%%256 as right 
-                FROM connectby('right_inheritance', 'parent', 'child', (_entity_id*256 + (SELECT get_right_by_name(_right_name)))::text, 0)
+                FROM connectby('right_inheritance'::text, 'parent'::text, 'child'::text, (_entity_id*256 + (SELECT get_right_by_name(_right_name)))::text, 0)
                 AS t(keyid int, parent_keyid int, level int)
            ) AS inherited ON 1=1
            JOIN right_dict ON inherited.right = right_dict.id AND core_privilege.entity_id = inherited.entity AND core_privilege.right = right_dict.name
