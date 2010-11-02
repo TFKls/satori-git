@@ -45,7 +45,7 @@ def gen_type_node(node, type):
         node += nodes.Text('>')
     elif isinstance(type, ArsNamedType):
         refnode = addnodes.pending_xref('', refdomain='ars', reftype='type', reftarget=type.name, modname=None, classname=None)
-        refnode += addnodes.desc_type(type.name, type.name)
+        refnode += nodes.literal(type.name, type.name)
         node += refnode
     else:
         raise RuntimeError('Cannot reference type: {0}'.format(str(type)))
@@ -61,9 +61,22 @@ class ArsTypeDirective(ObjectDescription):
     def handle_signature(self, sig, signode):
         self.type = ars_interface.types[sig.strip()]
 
-        signode += nodes.literal('type', 'type')
-        signode += nodes.Text(' ')
-        signode += addnodes.desc_name(self.type.name, self.type.name)
+        if isinstance(self.type, ArsException):
+            signode += nodes.literal('exception', 'exception')
+            signode += nodes.Text(' ')
+            signode += addnodes.desc_name(self.type.name, self.type.name)
+        elif isinstance(self.type, ArsStructure):
+            signode += nodes.literal('structure', 'structure')
+            signode += nodes.Text(' ')
+            signode += addnodes.desc_name(self.type.name, self.type.name)
+        elif isinstance(self.type, ArsTypeAlias):
+            signode += nodes.literal('typedef', 'typedef')
+            signode += nodes.Text(' ')
+            signode += addnodes.desc_name(self.type.name, self.type.name)
+            signode += nodes.Text(' ')
+            gen_type_node(signode, self.type.target_type)
+        else:
+            raise RuntimeError('Cannot generate type definition: {0}'.format(str(self.type)))
 
         return self.type.name
 
@@ -159,10 +172,12 @@ class ArsProcedureDirective(ObjectDescription):
         
         gen_type_node(signode, self.procedure.return_type)
         signode += nodes.Text(' ')
+
         if not in_parent:
             signode += addnodes.desc_addname(self.service.name, self.service.name)
             signode += nodes.Text('.')
         signode += addnodes.desc_name(name, name)
+
         paramlist_node = addnodes.desc_parameterlist()
         for param in list(self.procedure.parameters)[skipargs:]:
             param_node = addnodes.desc_parameter('', '', noemph=True)
@@ -171,6 +186,19 @@ class ArsProcedureDirective(ObjectDescription):
             param_node += nodes.emphasis(param.name, param.name)
             paramlist_node += param_node
         signode += paramlist_node
+
+        if self.procedure.exception_types:
+            signode += nodes.Text(' ')
+            signode += nodes.literal('throws', 'throws')
+            signode += nodes.Text(' (')
+            first = True
+            for exception in self.procedure.exception_types:
+                if first:
+                    first = False
+                else:
+                    signode += nodes.Text(', ')
+                gen_type_node(signode, exception)
+            signode += nodes.Text(')')
 
         return self.service.name + '.' + self.procedure.name
 
@@ -330,6 +358,7 @@ def generate_oa(f):
             f.write(T("""
                 .
                   .. ars:procedure:: Entity.{0}
+                    :skipargs: 2
 
                 {1}
                 """).format(procedure_name, prepare_doc(procedure, 4)))
@@ -418,10 +447,10 @@ def generate_service(f, service_name):
                         f.write(T("""
                             .
                                 {2}.. ars:procedure:: {0}
-                                {2}  :skipargs: 1
+                                {2}  :skipargs: {3}
 
                             {1}
-                            """).format(method_name, prepare_doc(method, 6 + add), ' ' * add))
+                            """).format(method_name, prepare_doc(method, 6 + add), ' ' * add, 1 + method_type))
 
                 base = base.base
 
