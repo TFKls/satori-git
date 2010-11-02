@@ -52,6 +52,14 @@ def gen_type_node(node, type):
 
 
 class ArsTypeDirective(ObjectDescription):
+    def add_target_and_index(self, sigobj, sig, signode):
+        name = self.type.name
+
+        signode['names'].append(name)
+        signode['ids'].append(name)
+        self.state.document.note_explicit_target(signode)
+        self.env.domaindata['ars']['types'].setdefault(name, self.env.docname)
+
     def before_content(self):
         self.env.temp_data['ars:typename'] = self.type.name
     
@@ -82,6 +90,14 @@ class ArsTypeDirective(ObjectDescription):
 
 
 class ArsFieldDirective(ObjectDescription):
+    def add_target_and_index(self, sigobj, sig, signode):
+        name = self.type.name + '.' + self.field.name
+
+        signode['names'].append(name)
+        signode['ids'].append(name)
+        self.state.document.note_explicit_target(signode)
+        self.env.domaindata['ars']['fields'].setdefault(name, self.env.docname)
+
     def handle_signature(self, sig, signode):
         sig = sig.strip()
 
@@ -115,6 +131,14 @@ class ArsFieldDirective(ObjectDescription):
 
 
 class ArsServiceDirective(ObjectDescription):
+    def add_target_and_index(self, sigobj, sig, signode):
+        name = self.service.name
+
+        signode['names'].append(name)
+        signode['ids'].append(name)
+        self.state.document.note_explicit_target(signode)
+        self.env.domaindata['ars']['services'].setdefault(name, self.env.docname)
+
     def before_content(self):
         self.env.temp_data['ars:servicename'] = self.service.name
     
@@ -136,6 +160,14 @@ class ArsProcedureDirective(ObjectDescription):
         'skipargs': int,
     }
     
+    def add_target_and_index(self, sigobj, sig, signode):
+        name = self.service.name + '.' + self.procedure_name
+
+        signode['names'].append(name)
+        signode['ids'].append(name)
+        self.state.document.note_explicit_target(signode)
+        self.env.domaindata['ars']['procedures'].setdefault(name, self.env.docname)
+
     def handle_signature(self, sig, signode):
         sig = sig.strip()
 
@@ -156,6 +188,7 @@ class ArsProcedureDirective(ObjectDescription):
             name = sig
 
         self.service = ars_interface.services[parent]
+        self.procedure_name = name
 
         base = self.service
         self.procedure = None
@@ -176,7 +209,7 @@ class ArsProcedureDirective(ObjectDescription):
         if not in_parent:
             signode += addnodes.desc_addname(self.service.name, self.service.name)
             signode += nodes.Text('.')
-        signode += addnodes.desc_name(name, name)
+        signode += addnodes.desc_name(self.procedure_name, self.procedure_name)
 
         paramlist_node = addnodes.desc_parameterlist()
         for param in list(self.procedure.parameters)[skipargs:]:
@@ -187,12 +220,12 @@ class ArsProcedureDirective(ObjectDescription):
             paramlist_node += param_node
         signode += paramlist_node
 
-        if self.procedure.exception_types:
+        if len(self.procedure.exception_types) > len(global_exception_types):
             signode += nodes.Text(' ')
             signode += nodes.literal('throws', 'throws')
             signode += nodes.Text(' (')
             first = True
-            for exception in self.procedure.exception_types:
+            for exception in list(self.procedure.exception_types)[len(global_exception_types):]:
                 if first:
                     first = False
                 else:
@@ -200,7 +233,7 @@ class ArsProcedureDirective(ObjectDescription):
                 gen_type_node(signode, exception)
             signode += nodes.Text(')')
 
-        return self.service.name + '.' + self.procedure.name
+        return self.service.name + '.' + self.procedure_name
 
 
 class ArsDomain(Domain):
@@ -224,6 +257,20 @@ class ArsDomain(Domain):
         'service': XRefRole(),
         'procedure': XRefRole(),
     }
+    initial_data = {
+        'types': {},
+        'fields': {},
+        'services': {},
+        'procedures': {},
+    }
+
+    def resolve_xref(self, env, fromdocname, builder, typ, target, node, contnode):
+        try:
+            docname = self.data[typ + 's'][target]
+        except KeyError:
+            return
+
+        return make_refnode(builder, fromdocname, docname, target, contnode, target)
 
 
 BUILTIN_DOMAINS['ars'] = ArsDomain
@@ -438,12 +485,6 @@ def generate_service(f, service_name):
                         add = 0
 
                     for (method_name, method) in sorted(methods[method_type][base].items()):
-
-                        if base == service:
-                            inherited = ''
-                        else:
-                            inherited = 'Inherited from :ars:service:`{0}`'.format(base.name)
-
                         f.write(T("""
                             .
                                 {2}.. ars:procedure:: {0}
@@ -462,6 +503,8 @@ def generate_api_doc():
     
     global ars_interface
     from satori.core.api import ars_interface
+    global global_exception_types
+    from satori.core.export import global_exception_types
 
     if len(sys.argv) != 2:
         print >>sys.stderr, 'Usage: {0} <target directory>'.format(sys.argv[0])
