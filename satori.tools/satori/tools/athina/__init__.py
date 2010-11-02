@@ -56,7 +56,7 @@ def athina_import():
                 password = f.readline().strip(" \n\t\x00")
             users[login] = {
                 'login'    : login,
-                'fullname' : fullname,
+                'name'     : fullname,
                 'password' : password,
             }
 
@@ -143,12 +143,12 @@ def athina_import():
 
     from satori.client.common.remote import Security, Privilege, token_container, User, Contest, Problem, TestSuite, Test, Submit, ProblemMapping, TestMapping
     try:
-        Security.register(options.user, options.password, options.user)
+        User.register(options.user, options.password, options.user)
     except:
         traceback.print_exc()
         pass
 
-    mytoken = Security.login(options.user, options.password)
+    mytoken = User.authenticate(options.user, options.password)
     token_container.set_token(mytoken)
 
     try:
@@ -167,7 +167,7 @@ def athina_import():
     for login, user in sorted(users.iteritems()):
     	print ' -> user ', login
         try:
-            user['object'] = Security.register(login=options.name + '_' + user['login'], password=user['password'], fullname=user['fullname'])
+            user['object'] = User.register(login=options.name + '_' + user['login'], password=user['password'], name=user['name'])
         except:
             traceback.print_exc()
             pass
@@ -223,7 +223,7 @@ def athina_import():
     for id, submit in sorted(submits.iteritems()):
     	print ' -> submit ', id
     	user = users[submit['user']]
-        token_container.set_token(Security.login(options.name + '_' + user['login'], user['password']))
+        token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
     	submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
     token_container.set_token(mytoken)
 
