@@ -20,14 +20,14 @@ class PyRichMethod(PyClassmember):
             t = child[0]
             del child[0]
             l = ViewList()
-            l.append(t.astext(), '<AA>')
+            l.append(t.astext(), '<pyrichmethod>')
             self.state.nested_parse(l, 0, child)
             DocFieldTransformer(self).transform_all(child)
         for child in signode.traverse(desc_returns):
             t = child[0]
             del child[0]
             l = ViewList()
-            l.append(t.astext(), '<AA>')
+            l.append(t.astext(), '<pyrichmethod>')
             self.state.nested_parse(l, 0, child)
             DocFieldTransformer(self).transform_all(child)
         return ret
@@ -72,9 +72,9 @@ def reference_type(type):
             ArsVoid:    ':py:class:`void`',
         }[type]
     elif isinstance(type, ArsList):
-        return 'list<{0}>'.format(reference_type(type.element_type))
+        return ':py:class:`list`<{0}>'.format(reference_type(type.element_type))
     elif isinstance(type, ArsMap):
-        return 'map<{0}, {1}>'.format(reference_type(type.key_type), reference_type(type.value_type))
+        return ':py:class:`map`<{0}:{1}>'.format(reference_type(type.key_type), reference_type(type.value_type))
     elif isinstance(type, ArsNamedType):
         return ':py:class:`{0}`'.format(type.name)
     else:
