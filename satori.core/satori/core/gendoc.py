@@ -8,31 +8,197 @@ import sys
 
 from satori.ars.model import *
 
-from sphinx.addnodes import desc_parameter, desc_returns
-from sphinx.domains.python import PythonDomain, PyClassmember
-from docutils.statemachine import ViewList
-from sphinx.util.docfields import DocFieldTransformer
+from docutils import nodes
+from sphinx import addnodes
+from sphinx.domains import Domain, ObjType, BUILTIN_DOMAINS 
+from sphinx.directives import ObjectDescription
+from sphinx.roles import XRefRole
+from sphinx.util.nodes import make_refnode
 
-class PyRichMethod(PyClassmember):
+
+atomic_type_names = {
+    ArsBoolean: 'bool',
+    ArsInt8:    'byte',
+    ArsInt16:   'i16',
+    ArsInt32:   'i32',
+    ArsInt64:   'i64',
+    ArsFloat:   'double',
+    ArsString:  'string',
+    ArsVoid:    'void',
+}
+
+
+def gen_type_node(node, type):
+    if isinstance(type, ArsAtomicType):
+        node += nodes.literal(atomic_type_names[type], atomic_type_names[type])
+    elif isinstance(type, ArsList):
+        node += nodes.literal('list', 'list')
+        node += nodes.Text('<')
+        gen_type_node(node, type.element_type)
+        node += nodes.Text('>')
+    elif isinstance(type, ArsMap):
+        node += nodes.literal('map', 'map')
+        node += nodes.Text('<')
+        gen_type_node(node, type.key_type)
+        node += nodes.Text(',')
+        gen_type_node(node, type.value_type)
+        node += nodes.Text('>')
+    elif isinstance(type, ArsNamedType):
+        refnode = addnodes.pending_xref('', refdomain='ars', reftype='type', reftarget=type.name, modname=None, classname=None)
+        refnode += addnodes.desc_type(type.name, type.name)
+        node += refnode
+    else:
+        raise RuntimeError('Cannot reference type: {0}'.format(str(type)))
+
+
+class ArsTypeDirective(ObjectDescription):
+    def before_content(self):
+        self.env.temp_data['ars:typename'] = self.type.name
+    
+    def after_content(self):
+        del self.env.temp_data['ars:typename']
+
     def handle_signature(self, sig, signode):
-        ret = super(PyRichMethod, self).handle_signature(sig, signode)
-        for child in signode.traverse(desc_parameter):
-            t = child[0]
-            del child[0]
-            l = ViewList()
-            l.append(t.astext(), '<pyrichmethod>')
-            self.state.nested_parse(l, 0, child)
-            DocFieldTransformer(self).transform_all(child)
-        for child in signode.traverse(desc_returns):
-            t = child[0]
-            del child[0]
-            l = ViewList()
-            l.append(t.astext(), '<pyrichmethod>')
-            self.state.nested_parse(l, 0, child)
-            DocFieldTransformer(self).transform_all(child)
-        return ret
+        self.type = ars_interface.types[sig.strip()]
 
-PythonDomain.directives['richmethod'] = PyRichMethod
+        signode += nodes.literal('type', 'type')
+        signode += nodes.Text(' ')
+        signode += addnodes.desc_name(self.type.name, self.type.name)
+
+        return self.type.name
+
+
+class ArsFieldDirective(ObjectDescription):
+    def handle_signature(self, sig, signode):
+        sig = sig.strip()
+
+        parent = self.env.temp_data.get('ars:typename', None)
+
+        if not parent:
+            in_parent = False
+
+            split = sig.split('.', 1)
+
+            if len(split) == 2:
+                parent = split[0]
+                name = split[1]
+            else:
+                raise RuntimeError('Parent not found')
+        else:
+            in_parent = True
+            name = sig
+
+        self.type = ars_interface.types[parent]
+        self.field = self.type.fields[name]
+        
+        gen_type_node(signode, self.field.type)
+        signode += nodes.Text(' ')
+        if not in_parent:
+            signode += addnodes.addname(self.type.name, self.type.name)
+            signode += nodes.Text('.')
+        signode += addnodes.desc_name(self.field.name, self.field.name)
+        
+        return self.type.name + '.' + self.field.name
+
+
+class ArsServiceDirective(ObjectDescription):
+    def before_content(self):
+        self.env.temp_data['ars:servicename'] = self.service.name
+    
+    def after_content(self):
+        del self.env.temp_data['ars:servicename']
+
+    def handle_signature(self, sig, signode):
+        self.service = ars_interface.services[sig.strip()]
+
+        signode += nodes.literal('service', 'service')
+        signode += nodes.Text(' ')
+        signode += addnodes.desc_name(self.service.name, self.service.name)
+
+        return self.service.name
+
+
+class ArsProcedureDirective(ObjectDescription):
+    option_spec = {
+        'skipargs': int,
+    }
+    
+    def handle_signature(self, sig, signode):
+        sig = sig.strip()
+
+        parent = self.env.temp_data.get('ars:servicename', None)
+
+        if not parent:
+            in_parent = False
+
+            split = sig.split('.', 1)
+
+            if len(split) == 2:
+                parent = split[0]
+                name = split[1]
+            else:
+                raise RuntimeError('Parent not found')
+        else:
+            in_parent = True
+            name = sig
+
+        self.service = ars_interface.services[parent]
+
+        base = self.service
+        self.procedure = None
+        while base is not None:
+            if base.name + '_' + name in base.procedures:
+                self.procedure = base.procedures[base.name + '_' + name]
+                break
+            base = base.base
+
+        if not self.procedure:
+            raise RuntimeError('Procedure {0} not found in {1} or base services'.format(name, parent))
+
+        skipargs = self.options.get('skipargs', 0)
+        
+        gen_type_node(signode, self.procedure.return_type)
+        signode += nodes.Text(' ')
+        if not in_parent:
+            signode += addnodes.desc_addname(self.service.name, self.service.name)
+            signode += nodes.Text('.')
+        signode += addnodes.desc_name(name, name)
+        paramlist_node = addnodes.desc_parameterlist()
+        for param in list(self.procedure.parameters)[skipargs:]:
+            param_node = addnodes.desc_parameter('', '', noemph=True)
+            gen_type_node(param_node, param.type)
+            param_node += nodes.Text(' ')
+            param_node += nodes.emphasis(param.name, param.name)
+            paramlist_node += param_node
+        signode += paramlist_node
+
+        return self.service.name + '.' + self.procedure.name
+
+
+class ArsDomain(Domain):
+    name = 'ars'
+    label = 'ARS'
+    object_types = {
+        'type': ObjType('type', 'type'),
+        'field': ObjType('field', 'field'),
+        'service': ObjType('service', 'service'),
+        'procedure': ObjType('procedure', 'procedure'),
+    }
+    directives = {
+        'type': ArsTypeDirective,
+        'field': ArsFieldDirective,
+        'service': ArsServiceDirective,
+        'procedure': ArsProcedureDirective,
+    }
+    roles = {
+        'type': XRefRole(),
+        'field': XRefRole(),
+        'service': XRefRole(),
+        'procedure': XRefRole(),
+    }
+
+
+BUILTIN_DOMAINS['ars'] = ArsDomain
 
 
 def prepare_doc(obj, indent):
@@ -59,27 +225,6 @@ def T(text):
 
     return '\n'.join(line[counter:] for line in lines[1:]) + '\n'
 
-def reference_type(type):
-    if isinstance(type, ArsAtomicType):
-        return {
-            ArsBoolean: ':py:class:`bool`',
-            ArsInt8:    ':py:class:`byte`',
-            ArsInt16:   ':py:class:`i16`',
-            ArsInt32:   ':py:class:`i32`',
-            ArsInt64:   ':py:class:`i64`',
-            ArsFloat:   ':py:class:`double`',
-            ArsString:  ':py:class:`string`',
-            ArsVoid:    ':py:class:`void`',
-        }[type]
-    elif isinstance(type, ArsList):
-        return ':py:class:`list<{0}>`'.format(reference_type(type.element_type))
-    elif isinstance(type, ArsMap):
-        return ':py:class:`map<{0}:{1}>`'.format(reference_type(type.key_type), reference_type(type.value_type))
-    elif isinstance(type, ArsNamedType):
-        return ':py:class:`{0}`'.format(type.name)
-    else:
-        raise RuntimeError('Cannot reference type: {0}'.format(str(type)))
-
 
 def generate_type(f, type_name):
     type = ars_interface.types[type_name]
@@ -88,7 +233,7 @@ def generate_type(f, type_name):
         .
         {0}
         {1}
-        .. py:class:: {0}
+        .. ars:type:: {0}
         
         {2}
         """).format(type_name, '-' * len(type_name), prepare_doc(type, 2)))
@@ -104,12 +249,10 @@ def generate_type(f, type_name):
     for field in type.fields:
         f.write(T("""
             .
-                .. py:attribute:: {0}
-
-                  Type: {2}
+                .. ars:field:: {0}
             
             {1}
-            """).format(field.name, prepare_doc(field, 6), reference_type(field.type)))
+            """).format(field.name, prepare_doc(field, 6)))
 
 
 def generate_index(f, service_names):
@@ -175,7 +318,7 @@ def generate_oa(f):
         Thrift API
         ----------
         Every attribute group defines a set of instance methods for class instances.
-        Below are functions defined by attribute group ``oa`` for the :py:class:`Entity` class.
+        Below are functions defined by attribute group ``oa`` for the :cpp:class:`Entity` class.
         Other attribute groups define similar functions, with ``oa`` changed to the group name
         and they may require different permissions instead of ATTRIBUTE_READ and ATTRIBUTE_WRITE.
         """))
@@ -183,14 +326,13 @@ def generate_oa(f):
     for procedure in ars_interface.services['Entity'].procedures:
         if procedure.name.startswith('Entity_oa_'):
             procedure_name = procedure.name.split('_', 1)[1]
-            signature = ','.join('{1} {0}'.format(param.name, reference_type(param.type)) for param in list(procedure.parameters)[2:])
 
             f.write(T("""
                 .
-                  .. py:richmethod:: {0}({2}) -> {3}
+                  .. ars:procedure:: Entity.{0}
 
                 {1}
-                """).format(procedure_name, prepare_doc(procedure, 4), signature, reference_type(procedure.return_type)))
+                """).format(procedure_name, prepare_doc(procedure, 4)))
 
     f.write(T("""
         .
@@ -241,7 +383,7 @@ def generate_service(f, service_name):
         .
         {0}
         {1}
-        .. py:class:: {0}
+        .. ars:service:: {0}
         
         {2}
         """).format(service_name, '-' * len(service_name), prepare_doc(service, 2)))
@@ -260,26 +402,26 @@ def generate_service(f, service_name):
                     if base != service:
                         f.write(T("""
                             .
-                                Inherited from :py:class:`{0}`:
+                                Inherited from :ars:service:`{0}`:
                             """).format(base.name))
                         add = 2
                     else:
                         add = 0
 
                     for (method_name, method) in sorted(methods[method_type][base].items()):
-                        signature = ','.join('{1} {0}'.format(param.name, reference_type(param.type)) for param in list(method.parameters)[method_type + 1:])
 
                         if base == service:
                             inherited = ''
                         else:
-                            inherited = 'Inherited from :py:class:`{0}`'.format(base.name)
+                            inherited = 'Inherited from :ars:service:`{0}`'.format(base.name)
 
                         f.write(T("""
                             .
-                                {2}.. py:richmethod:: {0}({3}) -> {4}
+                                {2}.. ars:procedure:: {0}
+                                {2}  :skipargs: 1
 
                             {1}
-                            """).format(method_name, prepare_doc(method, 6 + add), ' ' * add, signature, reference_type(method.return_type)))
+                            """).format(method_name, prepare_doc(method, 6 + add), ' ' * add))
 
                 base = base.base
 
