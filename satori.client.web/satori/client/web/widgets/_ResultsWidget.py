@@ -36,7 +36,7 @@ class ResultsWidget(Widget):
             submits = c.get_results(CurrentContestant(d))
 
         self.submits = [] 
-        for submit in submits:
+        for submit in submits.results:
             s = {}
             id = str(submit.submit.id)
             s["id"] = id

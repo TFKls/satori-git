@@ -7,7 +7,7 @@ from satori.core.export        import ExportMethod, PCOr, PCGlobal, PCTokenUser,
 from satori.core.export_django import ExportModel, DjangoId, DjangoStruct, DjangoIdList, generate_attribute_group
 from satori.core.dbev               import Events
 
-from satori.core.models import Entity, Submit
+from satori.core.models import Entity, Submit, Contestant, User
 
 
 
@@ -114,11 +114,15 @@ class Contest(Entity):
         return submit
 
     ResultToRender = Struct('ResultToRender', (
-        ('submit', DjangoId('Submit'), True),
+        ('submit', DjangoStruct('Submit'), True),
         ('problem', unicode, True),
         ('contestant', unicode, True),
         ('status', unicode, True),
         ('details', unicode, True),
+    ))
+    ResultsToRender = Struct('ResultsToRender', (
+        ('count', int, True),
+        ('results', TypedList(ResultToRender), True),
     ))
     @staticmethod
     def submit_to_result_to_render(submit):
@@ -130,7 +134,7 @@ class Contest(Entity):
             'details' : submit.get_test_suite_report()
             }
 
-    @ExportMethod(TypedList(ResultToRender), [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCArg('self', 'OBSERVE'))
+    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCArg('self', 'OBSERVE'))
     def get_all_results(self, problem=None, limit=20, offset=0):
         res = []
         q = Submit.objects.filter(contestant__contest=self)
@@ -138,9 +142,12 @@ class Contest(Entity):
         	q = q.filter(problem=problem)
         for submit in q.order_by('-id')[offset:offset+limit]:
         	res.append(Contest.submit_to_result_to_render(submit))
-        return res
+        return {
+            'count' : len(q),
+            'results'  : res,
+        }
 
-    @ExportMethod(TypedList(ResultToRender), [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCArg('contestant', 'OBSERVE'))
+    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCArg('contestant', 'OBSERVE'))
     def get_results(self, contestant, problem=None, limit=20, offset=0):
         res = []
         q = Submit.objects.filter(contestant=contestant)
@@ -148,8 +155,51 @@ class Contest(Entity):
         	q = q.filter(problem=problem)
         for submit in q.order_by('-id')[offset:offset+limit]:
         	res.append(Contest.submit_to_result_to_render(submit))
-        return res
+        return {
+            'count' : len(q),
+            'results'  : res,
+        }
 
+    ContestantToRender = Struct('ContestantToRender', (
+        ('contestant', DjangoStruct('Contestant'), True),
+        ('name', unicode, True),
+        ('members', TypedList(DjangoStruct('User')), True),
+        ('admin', bool, True),
+    ))
+    ContestantsToRender = Struct('ContestantsToRender', (
+        ('count', int, True),
+        ('contestants', TypedList(ContestantToRender), True),
+    ))
+    @staticmethod
+    def contestant_to_contestant_to_render(contestant):
+        return {
+        	'contestant' : contestant,
+            'name' : contestant.name_auto(),
+            'members' : contestant.get_member_users(),
+            'admin' : any([Privilege.get(member, contestant.contest, 'MANAGE') for member in contestant.get_member_users()])
+            }
+
+    @ExportMethod(ContestantsToRender, [DjangoId('Contest'), int, int], PCArg('self', 'VIEW'))
+    def get_contestants(self, limit=20, offset=0):
+        res = []
+        q = Contestant.objects.filter(contest=self, accepted=True)
+        for contestant in q.order_by('name')[offset:offset+limit]:
+        	res.append(Contest.contestant_to_contestant_to_render(contestant))
+        return {
+            'count' : len(q),
+            'contestants'  : res,
+        }
+
+    @ExportMethod(ContestantsToRender, [DjangoId('Contest'), int, int], PCArg('self', 'MANAGE'))
+    def get_pending_contestants(self, limit=20, offset=0):
+        res = []
+        q = Contestant.objects.filter(contest=self, accepted=False)
+        for contestant in q.order_by('name')[offset:offset+limit]:
+        	res.append(Contest.contestant_to_contestant_to_render(contestant))
+        return {
+            'count' : len(q),
+            'contestants'  : res,
+        }
 
 class ContestEvents(Events):
     model = Contest
