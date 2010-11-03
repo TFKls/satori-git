@@ -134,8 +134,6 @@ class DjangoStruct(object):
         if not self.model in ars_django_structure:
             raise RuntimeError('Model not exported: {0}'.format(self.model))
 
-        ars_django_structure[self.model]._generate_fields()
-
         return ars_django_structure[self.model]
 
 
@@ -172,9 +170,6 @@ class ArsDjangoStructureList(ArsList):
         super(ArsDjangoStructureList, self).__init__(element_type=ars_django_structure[model])
         self.model = model
 
-    def _generate_fields(self):
-        self.element_type._generate_fields()
-
     def do_needs_conversion(self):
         return True
 
@@ -195,10 +190,11 @@ class DjangoStructList(object):
         if not self.model in ars_django_structure_list:
             raise RuntimeError('Model not exported: {0}'.format(self.model))
 
-        ars_django_structure_list[self.model]._generate_fields()
-
         return ars_django_structure_list[self.model]
 
+def generate_all_fields():
+    for (name, struct) in ars_django_structure.items():
+        struct._generate_fields()
 
 def ExportModel(cls):
     ars_django_id[cls] = ArsDjangoId(cls)

@@ -294,7 +294,7 @@ class ArsStructureBase(object):
         super(ArsStructureBase, self).__init__()
         if dict_:
             kwargs.update(dict_)
-        for field_name in self._field_names:
+        for field_name in self._ars_type.fields.names:
             if field_name in kwargs:
                 setattr(self, field_name, kwargs.pop(field_name))
             else:
@@ -358,8 +358,7 @@ class ArsStructure(ArsNamedType):
 
     def get_class(self):
         if not hasattr(self, '_class'):
-            field_names = [field.name for field in self.fields]
-            self._class = type(self.name, (ArsStructureBase,), {'_ars_type': self, '_field_names': field_names})
+            self._class = type(self.name, (ArsStructureBase,), {'_ars_type': self})
         return self._class
 
 
@@ -405,7 +404,7 @@ class ArsExceptionBase(Exception):
         super(ArsExceptionBase, self).__init__()
         if dict_:
             kwargs.update(dict_)
-        for field_name in self._field_names:
+        for field_name in self._ars_type.fields.names:
             if field_name in kwargs:
                 setattr(self, field_name, kwargs.pop(field_name))
             else:
@@ -414,10 +413,10 @@ class ArsExceptionBase(Exception):
             raise TypeError('__init__() got an unexpected keyword argument \'{0}\''.format(kwargs.keys()[0]))
 
     def __str__(self):
-        if ('message' in self._field_names) and (self.message is not None):
+        if ('message' in self._ars_type.fields) and (self.message is not None):
             return self.message
         else:
-            return ', '.join(getattr(self, field_name) for field_name in self._field_names if getattr(self, field_name) is not None)
+            return ', '.join(getattr(self, field_name) for field_name in self._ars_type.fields.names if getattr(self, field_name) is not None)
 
     @classmethod
     def ars_type(cls):
@@ -427,8 +426,7 @@ class ArsExceptionBase(Exception):
 class ArsException(ArsStructure):
     def get_class(self):
         if not hasattr(self, '_class'):
-            field_names = [field.name for field in self.fields]
-            self._class = type(self.name, (ArsExceptionBase,), {'_ars_type': self, '_field_names': field_names})
+            self._class = type(self.name, (ArsExceptionBase,), {'_ars_type': self})
         return self._class
 
 
