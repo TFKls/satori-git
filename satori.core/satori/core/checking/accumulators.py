@@ -54,6 +54,7 @@ class StatusAccumulator(AccumulatorBase):
     def init(self):
         self._status = 'OK'
         self.test_suite_result.oa_set_str('status', 'QUE')
+        self.test_suite_result.status = 'QUE'
 
     def accumulate(self, test_result):
         status = test_result.oa_get_str('status')
@@ -69,6 +70,7 @@ class StatusAccumulator(AccumulatorBase):
     def deinit(self):
         print 'Default Status Accumulator', self.test_suite_result.id, ':', self._status, '?'
         self.test_suite_result.oa_set_str('status', self._status)
+        self.test_suite_result.status = self._status
 
 accumulators = {}
 for item in globals().values():

@@ -68,7 +68,7 @@ class DispatcherBase(Client2):
                 transaction.rollback()
         if self.error:
             try:
-                self.test_suite_result.attributes.oa_set_str('status', 'INT')
+                self.test_suite_result.oa_set_str('status', 'INT')
                 self.test_suite_result.status = 'INT'
                 self.test_suite_result.report = 'Internal error'
                 self.test_suite_result.pending = False
