@@ -9,7 +9,7 @@ class AttributeGroup(Entity):
     """
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_attribute_group')
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_attribute_group')
 
 
 class AttributeGroupEvents(Events):

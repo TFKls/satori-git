@@ -14,7 +14,7 @@ class TestResult(Entity):
     """Model. Result of a single Test for a single Submit.
     """
 
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_testresult')
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testresult')
 
     submit      = models.ForeignKey('Submit')
     test        = models.ForeignKey('Test')

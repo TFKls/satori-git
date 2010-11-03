@@ -14,7 +14,7 @@ class ContestRanking(Entity):
     """Model. Ranking in a Contest.
     """
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_contestranking')
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_contestranking')
 
     contest     = models.ForeignKey('Contest')
     name        = models.CharField(max_length=50)

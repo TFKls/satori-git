@@ -13,8 +13,8 @@ from satori.core.models import Entity
 class Test(Entity):
     """Model. Single test.
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_test')
+
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_test')
 
     problem     = models.ForeignKey('Problem')
     name        = models.CharField(max_length=50)

@@ -13,7 +13,7 @@ from satori.core.models import Entity
 class OpenIdentity(Entity):
 
     __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_openidentity')
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_openidentity')
 
     identity = models.CharField(max_length=512, unique=True)
     user     = models.ForeignKey('User', related_name='authorized_openids')

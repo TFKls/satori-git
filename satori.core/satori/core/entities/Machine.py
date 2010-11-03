@@ -6,7 +6,7 @@ import random
 import string
 import ipaddr
 
-from satori.core.export        import ExportMethod
+from satori.core.export        import ExportMethod, token_container
 from satori.core.export_django import ExportModel
 from satori.core.dbev               import Events
 
@@ -32,6 +32,8 @@ class Machine(Role):
         machine = Machine(name=name, address=address, netmask=netmask)
         machine.set_secret(secret)
         machine.save()
+        if token_container.token.user:
+            Privilege.grant(token_container.token.user, machine, 'MANAGE')
         return machine
 
     @ExportMethod(unicode, [unicode], PCPermit())

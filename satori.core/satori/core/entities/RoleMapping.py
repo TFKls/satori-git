@@ -8,8 +8,8 @@ from satori.core.models import Entity
 class RoleMapping(Entity):
     """Model. Intermediary for many-to-many relationship between Roles.
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_rolemapping')
+    
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_rolemapping')
 
     parent     = models.ForeignKey('Role', related_name='childmap')
     child      = models.ForeignKey('Role', related_name='parentmap')
