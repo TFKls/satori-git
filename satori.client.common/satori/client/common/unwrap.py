@@ -199,7 +199,7 @@ def unwrap_service(service, base, struct, BlobReader, BlobWriter):
             super(new_class, self).__init__(_id, _struct)
 
         def __getattr__(self, name):
-            if name in struct._field_names:
+            if name in struct.ars_type().fields:
                 if self._struct is None:
                     self._struct = self.get_struct()._struct
                 return getattr(self._struct, name)
