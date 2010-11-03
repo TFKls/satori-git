@@ -142,11 +142,6 @@ def athina_import():
 
 
     from satori.client.common.remote import Security, Privilege, token_container, User, Contest, Problem, TestSuite, Test, Submit, ProblemMapping, TestMapping
-    try:
-        User.register(options.user, options.password, options.user)
-    except:
-        traceback.print_exc()
-        pass
 
     mytoken = User.authenticate(options.user, options.password)
     token_container.set_token(mytoken)
@@ -157,9 +152,9 @@ def athina_import():
         traceback.print_exc()
         contest = Contest.filter({'name':options.name})[0]
     try:
-        Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'SUBMIT'})
-        Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'VIEW'})
-        Privilege.create({'object':contest, 'role':contest.contestant_role, 'right':'VIEWTASKS'})
+        Privilege.grant(contest.contestant_role, contest, 'SUBMIT')
+        Privilege.grant(contest.contestant_role, contest, 'VIEW')
+        Privilege.grant(contest.contestant_role, contest, 'VIEWTASKS')
     except:
         traceback.print_exc()
         pass
