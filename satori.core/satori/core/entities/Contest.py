@@ -104,10 +104,9 @@ class Contest(Entity):
         submit.problem = problem_mapping
         submit.save()
         Privilege.grant(contestant, submit, 'VIEW')
-        blob = OpenAttribute.create_blob()
+        blob = submit.oa_set_blob('content', filename=filename)
         blob.write(content)
-        hash = blob.close()
-        submit.data_set_blob_hash(name='content', hash=hash, filename=filename)
+        blob.close()
         TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
         return submit
 

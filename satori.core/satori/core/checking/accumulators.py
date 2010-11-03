@@ -23,7 +23,7 @@ class StatusReporter(AccumulatorBase):
         super(StatusReporter, self).__init__(test_suite_result)
 
     def init(self):
-        status = self.test_suite_result.attributes.oa_get_str('status')
+        status = self.test_suite_result.oa_get_str('status')
         if status is None:
             status = ''
         self.test_suite_result.status = status
@@ -31,7 +31,7 @@ class StatusReporter(AccumulatorBase):
         self.test_suite_result.save()
 
     def accumulate(self, test_result):
-        status = self.test_suite_result.attributes.oa_get_str('status')
+        status = self.test_suite_result.oa_get_str('status')
         if status is None:
             status = ''
         self.test_suite_result.status = status
@@ -39,7 +39,7 @@ class StatusReporter(AccumulatorBase):
         self.test_suite_result.save()
 
     def deinit(self):
-        status = self.test_suite_result.attributes.oa_get_str('status')
+        status = self.test_suite_result.oa_get_str('status')
         if status is None:
             status = ''
         self.test_suite_result.status = status
@@ -53,10 +53,10 @@ class StatusAccumulator(AccumulatorBase):
 
     def init(self):
         self._status = 'OK'
-        self.test_suite_result.attributes.oa_set_str('status', 'QUE')
+        self.test_suite_result.oa_set_str('status', 'QUE')
 
     def accumulate(self, test_result):
-        status = test_result.attributes.oa_get_str('status')
+        status = test_result.oa_get_str('status')
         print 'Default Status Accumulator', self.test_suite_result.id, ':', self._status, '+=', status
         if status is None:
             status = 'INT'
@@ -68,7 +68,7 @@ class StatusAccumulator(AccumulatorBase):
 
     def deinit(self):
         print 'Default Status Accumulator', self.test_suite_result.id, ':', self._status, '?'
-        self.test_suite_result.attributes.oa_set_str('status', self._status)
+        self.test_suite_result.oa_set_str('status', self._status)
 
 accumulators = {}
 for item in globals().values():

@@ -58,14 +58,38 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 """
+    sql += """
+CREATE OR REPLACE FUNCTION right_inheritance_update_schedule(_id INTEGER) RETURNS VOID AS $$
+BEGIN
+    INSERT INTO right_inheritance_schedule(id) VALUES (_id);
+EXCEPTION
+    WHEN undefined_table THEN
+        CREATE TEMPORARY TABLE right_inheritance_schedule(id INTEGER);
+        INSERT INTO right_inheritance_schedule(id) VALUES (_id);
+END;
+$$ LANGUAGE plpgsql;
+"""
+    sql += """
+CREATE OR REPLACE FUNCTION right_inheritance_update_perform_trigger() RETURNS TRIGGER AS $$
+BEGIN
+    PERFORM right_inheritance_update(id.id) FROM (SELECT DISTINCT e.id AS id FROM right_inheritance_schedule s JOIN core_entity e on s.id = e.id WHERE e.id IS NOT NULL) AS id;
+    DELETE FROM right_inheritance_schedule;
+    RETURN new;
+EXCEPTION
+    WHEN undefined_table THEN
+        RETURN new;
+END;
+$$ LANGUAGE plpgsql;
+"""
+
     ret = []
     ret.append(sql)
 
     for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
         if issubclass(model, Entity):
-            trig = 'CREATE OR REPLACE FUNCTION ' + model._meta.db_table + '__trigger_rights() RETURNS TRIGGER AS $$ BEGIN PERFORM right_inheritance_update(new.' + model._meta.pk.column + '); RETURN new; END; $$ LANGUAGE plpgsql;'
-            trig += 'CREATE CONSTRAINT TRIGGER ' + model._meta.db_table + '__after_insert_rights  AFTER INSERT OR UPDATE ON ' + model._meta.db_table + ' DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE ' + model._meta.db_table + '__trigger_rights();'
-#            trig += 'CREATE TRIGGER ' + model._meta.db_table + '__after_update_rights  AFTER UPDATE ON ' + model._meta.db_table + ' FOR EACH ROW EXECUTE PROCEDURE ' + model._meta.db_table + '__trigger_rights();'
+            trig  = 'CREATE OR REPLACE FUNCTION ' + model._meta.db_table + '__update_rights_schedule_trigger() RETURNS TRIGGER AS $$ BEGIN PERFORM right_inheritance_update_schedule(new.' + model._meta.pk.column + '); RETURN new; END; $$ LANGUAGE plpgsql;'
+            trig += 'CREATE TRIGGER ' + model._meta.db_table + '__update_rights_schedule  AFTER INSERT OR UPDATE ON ' + model._meta.db_table + ' FOR EACH ROW EXECUTE PROCEDURE ' + model._meta.db_table + '__update_rights_schedule_trigger();'
+            trig += 'CREATE CONSTRAINT TRIGGER ' + model._meta.db_table + '__update_rights_perform  AFTER INSERT OR UPDATE ON ' + model._meta.db_table + ' DEFERRABLE INITIALLY DEFERRED FOR EACH ROW EXECUTE PROCEDURE right_inheritance_update_perform_trigger();'
             ret.append(trig)
     ret.append('SELECT right_inheritance_update(id) FROM core_entity;')
     return ret
@@ -435,6 +459,9 @@ END;
 $$ LANGUAGE plpgsql;
 CREATE OR REPLACE FUNCTION right_inheritance_add(_child_entity_id INT, _child_right_name TEXT, _parent_entity_id INT, _parent_right_name TEXT) RETURNS VOID AS $$
 BEGIN
+    IF _child_entity_id IS NULL OR _child_right_name IS NULL OR _parent_entity_id IS NULL OR _parent_right_name IS NULL THEN
+        RETURN;
+    END IF;
     INSERT INTO "right_inheritance"("parent", "child", "child_entity_id") VALUES (
         _parent_entity_id*256 + (SELECT get_right_by_name(_parent_right_name)),
         _child_entity_id*256 + (SELECT get_right_by_name(_child_right_name)),
