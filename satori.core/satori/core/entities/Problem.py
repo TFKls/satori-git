@@ -35,7 +35,7 @@ class Problem(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Problem, cls).inherit_rights()
-        del inherits['EDIT']
+        cls._inherit_add(inherits, 'MANAGE', '', 'MANAGE_PROBLEMS')
         return inherits
 
     @ExportMethod(DjangoId('Problem'), [unicode], PCGlobal('MANAGE_PROBLEMS'))
