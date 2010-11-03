@@ -3,11 +3,21 @@
 
 from django.db import models
 
-from satori.core.export        import ExportMethod, PCOr, PCGlobal, PCTokenUser, PCArg, token_container
+from satori.core.export        import ExportMethod, PCOr, PCGlobal, PCTokenUser, PCArg, token_container, Struct, TypedList
 from satori.core.export_django import ExportModel, DjangoId, DjangoStruct, DjangoIdList, generate_attribute_group
 from satori.core.dbev               import Events
 
 from satori.core.models import Entity
+
+
+ResultToRender = Struct('ResultToRender', (
+    ('submit', DjangoId('Submit'), True),
+    ('problem', unicode, True),
+    ('contestant', unicode, True),
+    ('status', unicode, True),
+    ('details', unicode, True),
+))
+
 
 @ExportModel
 class Contest(Entity):
@@ -57,6 +67,7 @@ class Contest(Entity):
         c.contest = self
         c.save()
         self.contestant_role.add_member(c)
+        Privilege.grant(c, c, 'OBSERVE')
         for user in user_list:
             c.add_member(user)
 
@@ -109,6 +120,36 @@ class Contest(Entity):
         blob.close()
         TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
         return submit
+
+    @staticmethod
+    def submit_to_result_to_render(submit):
+        return {
+        	'submit' : submit,
+            'problem' : submit.problem.code,
+            'contestant' : submit.contestant.name_auto(),
+            'status' : submit.get_test_suite_status(),
+            'details' : submit.get_test_suite_report()
+            }
+
+    @ExportMethod(TypedList(ResultToRender), [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCArg('self', 'OBSERVE'))
+    def get_all_results(self, problem=None, limit=20, offset=0):
+        res = []
+        q = Submit.objects.filter(contestant__contest=self)
+        if problem:
+        	q = q.filter(problem=problem)
+        for submit in q.order_by('-id')[offset:offset+limit]:
+        	res.append(Contest.submit_to_result_to_render(submit))
+        return res
+
+    @ExportMethod(TypedList(ResultToRender), [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCArg('contestant', 'OBSERVE'))
+    def get_results(self, contestant, problem=None, limit=20, offset=0):
+        res = []
+        q = Submit.objects.filter(contestant=contestant)
+        if problem:
+        	q = q.filter(problem=problem)
+        for submit in q.order_by('-id')[offset:offset+limit]:
+        	res.append(Contest.submit_to_result_to_render(submit))
+        return res
 
 
 class ContestEvents(Events):
