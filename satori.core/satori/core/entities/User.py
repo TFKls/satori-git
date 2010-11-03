@@ -29,14 +29,35 @@ class User(Role):
     class ExportMeta(object):
         fields = [('login', 'VIEW')]
 
+    @staticmethod
+    def login_ok(login):
+        if len(login) < 4:
+            raise InvalidLogin(login=login, reason='is too short')
+        if len(login) > 24:
+            raise InvalidLogin(login=login, reason='is too long')
+        try:
+            login.decode('ascii')
+        except:
+            raise InvalidLogin(login=login, reason='contains invalid characters')
+        count = 0
+        for l in login:
+            if not (l.isalpha() or l.isdigit() or l == '_'):
+                raise InvalidLogin(login=login, reason='contains invalid characters')
+            if l.isalpha() and l.islower():
+            	count += 1
+        if not login[0].isalpha():
+            raise InvalidLogin(login=login, reason='does not start with a letter')
+        if count == 0:
+            raise InvalidLogin(login=login, reason='does not contain a lowercase letter')
+        return True
+
     @ExportMethod(NoneType, [unicode, unicode, unicode], PCPermit(), [InvalidLogin])
     @staticmethod
     def register(login, password, name):
         if not login:
             raise InvalidLogin(login=login, reason='is empty')
-
-        if not login.isalnum():
-            raise InvalidLogin(login=login, reason='contains invalid characters')
+        
+        User.login_ok(login)
 
         try:
             User.objects.get(login=login)
