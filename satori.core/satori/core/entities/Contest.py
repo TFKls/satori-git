@@ -10,14 +10,6 @@ from satori.core.dbev               import Events
 from satori.core.models import Entity
 
 
-ResultToRender = Struct('ResultToRender', (
-    ('submit', DjangoId('Submit'), True),
-    ('problem', unicode, True),
-    ('contestant', unicode, True),
-    ('status', unicode, True),
-    ('details', unicode, True),
-))
-
 
 @ExportModel
 class Contest(Entity):
@@ -121,6 +113,13 @@ class Contest(Entity):
         TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
         return submit
 
+    ResultToRender = Struct('ResultToRender', (
+        ('submit', DjangoId('Submit'), True),
+        ('problem', unicode, True),
+        ('contestant', unicode, True),
+        ('status', unicode, True),
+        ('details', unicode, True),
+    ))
     @staticmethod
     def submit_to_result_to_render(submit):
         return {
