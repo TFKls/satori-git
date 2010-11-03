@@ -13,8 +13,8 @@ from satori.core.models import Entity
 class Submit(Entity):
     """Model. Single problem solution (within or outside of a Contest).
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_submit')
+
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_submit')
 
     contestant  = models.ForeignKey('Contestant')
     problem     = models.ForeignKey('ProblemMapping')

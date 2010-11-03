@@ -13,8 +13,8 @@ from satori.core.models import Entity
 class Problem(Entity):
     """Model. Description of an (abstract) problems.
     """
-    __module__ = "satori.core.models"
-    parent_object = models.OneToOneField(Entity, parent_link=True, related_name='cast_problem')
+    
+    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_problem')
 
     name        = models.CharField(max_length=50, unique=True)
     description = models.TextField(blank=True, default="")
