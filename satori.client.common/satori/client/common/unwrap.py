@@ -106,7 +106,7 @@ def unwrap_procedure(_proc):
 
     func.func_name = _procname
 
-    if not (_args and (_args[0][0] == 'self')):
+    if not (_args and ((_args[0][0] == 'self') or (_args[0][0] == '_self'))):
         func = staticmethod(func)
 
     return func
