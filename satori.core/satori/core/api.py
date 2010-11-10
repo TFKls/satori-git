@@ -11,6 +11,8 @@ import satori.core.sec
 satori.core.export.Token = satori.core.sec.Token
 satori.core.models.Token = satori.core.sec.Token
 satori.core.export.Privilege = satori.core.models.Privilege
+satori.core.export_django.Privilege = satori.core.models.Privilege
+
 satori.core.export_django.generate_all_fields()
 
 ars_interface = generate_interface()

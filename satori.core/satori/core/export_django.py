@@ -3,15 +3,20 @@
 from datetime import datetime
 from django.db import models
 import inspect
+from types import NoneType
 
 from satori.ars.model import *
-from satori.core.export import ExportClass, ExportMethod, global_exception_types, Struct, DefineException, PCPermit, python_to_ars_type
+from satori.core.export import ExportClass, ExportMethod, global_exception_types, Struct, DefineException, PCPermit, PCArg,  python_to_ars_type, token_container
 
 
 ArgumentNotFound = DefineException('ArgumentNotFound', 'The specified argument cannot be found: model={model}, id={id}',
     [('model', unicode, False), ('id', long, False)])
 
 global_exception_types.append(ArgumentNotFound)
+
+CannotReturnObject = DefineException('CannotReturnObject', 'You don\'t have rights to view the returned object')
+
+global_exception_types.append(CannotReturnObject)
 
 field_basic_types = {
     models.AutoField: long,
@@ -55,13 +60,18 @@ class ArsDjangoId(ArsTypeAlias):
         return True
 
     def do_convert_to_ars(self, value):
-        # TODO: permissions
+        if not Privilege.demand(value, 'VIEW'):
+            raise CannotReturnObject()
+
         return value.id
 
     def do_convert_from_ars(self, value):
-        # TODO: permissions
+        u = token_container.token.user_id;
+        if (u is None) or u == '':
+            u = Global.get_instance().anonymous.id
+
         try:
-            return self.model.objects.get(id=value)
+            return self.model.objects.extra(where=['right_check(%s, id, %s)'], params=[u, 'VIEW']).get(id=value)
         except model.DoesNotExist:
             raise ArgumentNotFound(model=self.model.__name__, id=value)
 
@@ -105,15 +115,17 @@ class ArsDjangoStructure(ArsStructure):
         return True
 
     def do_convert_to_ars(self, value):
-        # TODO: permissions
+        if not Privilege.demand(value, 'VIEW'):
+            raise CannotReturnObject()
+
         ret = self.get_class()()
 
         for (field_name, field_permission) in self.django_fields:
-            if hasattr(value, field_name):
+            if Privilege.demand(value, field_permission):
                 setattr(ret, field_name, getattr(value, field_name))
 
         for (field_name, field_type, field_permission) in self.django_extra_fields:
-            if hasattr(value, field_name):
+            if Privilege.demand(value, field_permission):
                 setattr(ret, field_name, getattr(value, field_name))
 
         return super(ArsDjangoStructure, self).do_convert_to_ars(ret)
@@ -146,8 +158,11 @@ class ArsDjangoIdList(ArsList):
         return True
 
     def do_convert_to_ars(self, value):
-        # TODO: filter by permissions
-        return super(ArsDjangoIdList, self).do_convert_to_ars(value)
+        u = token_container.token.user_id;
+        if (u is None) or u == '':
+            u = Global.get_instance().anonymous.id
+
+        return super(ArsDjangoIdList, self).do_convert_to_ars(value.extra(where=['right_check(%s, id, %s)'], params=[u, 'VIEW']))
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoIdList, self).do_convert_from_ars(value)
@@ -174,8 +189,11 @@ class ArsDjangoStructureList(ArsList):
         return True
 
     def do_convert_to_ars(self, value):
-        # TODO: filter by permissions
-        return super(ArsDjangoStructureList, self).do_convert_to_ars(value)
+        u = token_container.token.user_id;
+        if (u is None) or u == '':
+            u = Global.get_instance().anonymous.id
+
+        return super(ArsDjangoStructureList, self).do_convert_to_ars(value.extra(where=['right_check(%s, id, %s)'], params=[u, 'VIEW']))
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoStructureList, self).do_convert_from_ars(value)
@@ -225,13 +243,24 @@ def ExportModel(cls):
 
     cls.get_struct = get_struct
 
+    @ExportMethod(DjangoStruct(cls), [DjangoId(cls), DjangoStruct(cls)], PCArg('self', 'MANAGE'))
+    def set_struct(self, arg_struct):
+        for (field_name, field_permission) in ars_django_structure[cls].django_fields:
+            if field_name != 'id':
+                if hasattr(arg_struct, field_name) and (getattr(arg_struct, field_name) is not None):
+                    setattr(self, getattr(arg_struct, field_name))
+        self.save()
+        return self
+
+    cls.set_struct = set_struct
+
     @ExportMethod(DjangoStructList(cls), [DjangoStruct(cls)], PCPermit())
     @staticmethod
-    def filter(args=None):
+    def filter(arg_struct=None):
         kwargs = {}
         for (field_name, field_permission) in ars_django_structure[cls].django_fields:
-            if hasattr(args, field_name) and (getattr(args, field_name) is not None):
-                kwargs[field_name] = getattr(args, field_name)
+            if hasattr(arg_struct, field_name) and (getattr(arg_struct, field_name) is not None):
+                kwargs[field_name] = getattr(arg_struct, field_name)
         return cls.objects.filter(**kwargs)
 
     cls.filter = filter
@@ -239,16 +268,25 @@ def ExportModel(cls):
     if not 'create' in cls.__dict__:
         @ExportMethod(DjangoStruct(cls), [DjangoStruct(cls)], PCPermit())
         @staticmethod
-        def create(args):
+        def create(arg_struct):
             kwargs = {}
             for (field_name, field_permission) in ars_django_structure[cls].django_fields:
-                if hasattr(args, field_name) and (getattr(args, field_name) is not None):
-                    kwargs[field_name] = getattr(args, field_name)
+                if hasattr(arg_struct, field_name) and (getattr(arg_struct, field_name) is not None):
+                    kwargs[field_name] = getattr(arg_struct, field_name)
             obj = cls(**kwargs)
             obj.save()
+            if token_container.token.user:
+                Privilege.grant(token_container.token.user, obj, 'MANAGE')
             return obj
 
         cls.create = create
+
+    if not 'delete' in cls.__dict__:
+        @ExportMethod(NoneType, [DjangoId(cls)], PCArg('self', 'MANAGE'))
+        def delete(self):
+            super(cls, self).delete()
+
+        cls.delete = delete
 
     return ExportClass(cls)
 
