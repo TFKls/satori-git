@@ -22,7 +22,7 @@ class Test(Entity):
     environment = models.CharField(max_length=50)
     obsolete    = models.BooleanField(default=False)
 
-    generate_attribute_group('Test', 'data', 'VIEW', 'EDIT', globals(), locals())
+    generate_attribute_group('Test', 'data', 'VIEW', 'MANAGE', globals(), locals())
 
     class ExportMeta(object):
         fields = [('problem', 'VIEW'), ('name', 'VIEW'), ('description', 'VIEW'), ('environment', 'VIEW'), ('obsolete', 'VIEW')]
@@ -35,7 +35,7 @@ class Test(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Test, cls).inherit_rights()
-        cls._inherit_add(inherits, 'EDIT', 'problem', 'EDIT')
+        cls._inherit_add(inherits, 'MANAGE', 'problem', 'EDIT')
         return inherits
 
     class Meta:                                                # pylint: disable-msg=C0111

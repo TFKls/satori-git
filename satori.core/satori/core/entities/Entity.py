@@ -9,12 +9,17 @@ from satori.core.export_django import ExportModel, DjangoId, generate_attribute_
 @ExportModel
 class Entity(models.Model):
     """Model. Base for all database objects. Provides common GUID space.
+
+    rights:
+        VIEW
+        MANAGE
+        MANAGE_PRIVILEGES - do wywalenie, rownowazne z MANAGE
     """
     __module__ = "satori.core.models"
 
     model = models.CharField(max_length=64, editable=False)
 
-    generate_attribute_group('Entity', None, 'ATTRIBUTE_READ', 'ATTRIBUTE_WRITE', globals(), locals())
+    generate_attribute_group('Entity', None, 'MANAGE', 'MANAGE', globals(), locals())
 
     def save(self, *args, **kwargs):
         if not self.model:
@@ -30,15 +35,11 @@ class Entity(models.Model):
     @classmethod
     def inherit_rights(cls):
         inherits = dict()
-        cls._inherit_add(inherits, 'ATTRIBUTE_READ', 'id', 'VIEW')
-        cls._inherit_add(inherits, 'VIEW', 'id', 'MODERATE')
-        cls._inherit_add(inherits, 'ATTRIBUTE_WRITE', 'id', 'EDIT')
-        cls._inherit_add(inherits, 'MODERATE', 'id', 'EDIT')
-        cls._inherit_add(inherits, 'EDIT', 'id', 'MANAGE')
+
+        cls._inherit_add(inherits, 'VIEW', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'MANAGE', '', 'ADMIN')
         cls._inherit_add(inherits, 'MANAGE_PRIVILEGES', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'MANAGE_PRIVILEGES', '', 'MANAGE_PRIVILEGES')
-        cls._inherit_add(inherits, 'MANAGE', 'id', 'ADMIN')
-        cls._inherit_add(inherits, 'ADMIN', '', 'ADMIN')
         return inherits
 
     class ExportMeta(object):

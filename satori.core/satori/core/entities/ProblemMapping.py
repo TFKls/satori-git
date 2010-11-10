@@ -23,7 +23,7 @@ class ProblemMapping(Entity):
     title       = models.CharField(max_length=64)
     default_test_suite = models.ForeignKey('TestSuite')
 
-    generate_attribute_group('ProblemMapping', 'statement', 'VIEW', 'EDIT', globals(), locals())
+    generate_attribute_group('ProblemMapping', 'statement', 'VIEW', 'MANAGE', globals(), locals())
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('problem', 'VIEW'), ('code', 'VIEW'), ('title', 'VIEW'), ('default_test_suite', 'VIEW')]
@@ -39,7 +39,7 @@ class ProblemMapping(Entity):
     def inherit_rights(cls):
         inherits = super(ProblemMapping, cls).inherit_rights()
         cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEWTASKS')
-        cls._inherit_add(inherits, 'EDIT', 'contest', 'MANAGE')
+        cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         cls._inherit_add(inherits, 'SUBMIT', 'contest', 'SUBMIT')
         return inherits
 

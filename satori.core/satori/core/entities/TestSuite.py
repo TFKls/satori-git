@@ -27,7 +27,7 @@ class TestSuite(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(TestSuite, cls).inherit_rights()
-        cls._inherit_add(inherits, 'EDIT', 'problem', 'EDIT')
+        cls._inherit_add(inherits, 'MANAGE', 'problem', 'EDIT')
         return inherits
 
     def save(self, *args, **kwargs):

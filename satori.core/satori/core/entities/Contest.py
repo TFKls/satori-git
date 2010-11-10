@@ -14,6 +14,13 @@ from satori.core.models import Entity, Submit, Contestant, User
 @ExportModel
 class Contest(Entity):
     """Model. Description of a contest.
+
+    rights:
+        VIEW_INTRA_FILES
+        VIEW_TASKS
+        APPLY
+        JOIN
+        OBSERVE
     """
     
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_contest')
@@ -22,13 +29,15 @@ class Contest(Entity):
     problems    = models.ManyToManyField('Problem', through='ProblemMapping')
     contestant_role = models.ForeignKey('Role')
 
-    generate_attribute_group('Contest', 'files', 'VIEW', 'EDIT', globals(), locals())
+    generate_attribute_group('Contest', 'public_files', 'VIEW', 'MANAGE', globals(), locals())
+    generate_attribute_group('Contest', 'intra_files', 'VIEW_INTRA_FILES', 'MANAGE', globals(), locals())
 
     class ExportMeta(object):
-        fields = [('name', 'VIEW'), ('contestant_role', 'VIEW')]
+        fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE')]
 
     def save(self):
-        self.fixup_files()
+        self.fixup_public_files()
+        self.fixup_intra_files()
         super(Contest, self).save()
 
     def __str__(self):
@@ -39,7 +48,8 @@ class Contest(Entity):
     def inherit_rights(cls):
         inherits = super(Contest, cls).inherit_rights()
         cls._inherit_add(inherits, 'OBSERVE', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'VIEWTASKS', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEW_TASKS', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEW_INTRA_FILES', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'APPLY', 'id', 'JOIN')
         cls._inherit_add(inherits, 'JOIN', 'id', 'MANAGE')
         return inherits
@@ -126,14 +136,15 @@ class Contest(Entity):
     ))
     @staticmethod
     def submit_to_result_to_render(submit):
-        return {
-        	'submit' : submit,
-            'problem' : submit.problem.code,
-            'contestant' : submit.contestant.name_auto(),
-            'status' : submit.get_test_suite_status(),
-            'details' : submit.get_test_suite_report()
-            }
+        return ResultToRender(
+        	submit=submit,
+            problem=submit.problem.code,
+            contestant=submit.contestant.name_auto(),
+            status=submit.get_test_suite_status(),
+            details=submit.get_test_suite_report()
+            )
 
+    #TODO: OBSERVE on submits
     @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCArg('self', 'OBSERVE'))
     def get_all_results(self, problem=None, limit=20, offset=0):
         res = []
@@ -147,6 +158,7 @@ class Contest(Entity):
             'results'  : res,
         }
 
+    #TODO: OBSERVE on submits
     @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCArg('contestant', 'OBSERVE'))
     def get_results(self, contestant, problem=None, limit=20, offset=0):
         res = []

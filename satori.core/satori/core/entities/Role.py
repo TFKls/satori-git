@@ -27,11 +27,11 @@ class Role(Entity):
     def get_members(self):
         return self.children.all()
 
-    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Role')], PCArg('self', 'EDIT'))
+    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Role')], PCArg('self', 'MANAGE'))
     def add_member(self, member):
         RoleMapping.objects.get_or_create(parent=self, child=member)[0].save()
 
-    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Role')], PCArg('self', 'EDIT'))
+    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Role')], PCArg('self', 'MANAGE'))
     def delete_member(self, member):
         try:
             RoleMapping.objects.get(parent=self, child=member).delete()

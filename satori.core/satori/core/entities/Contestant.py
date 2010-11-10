@@ -42,6 +42,18 @@ class Contestant(Role):
     def get_member_users(self):
         return User.objects.filter(parents=self)
 
+    # MANAGE on self
+    def set_accepted():
+        # set accepted
+        # add to contestant role
+        pass
+
+    # MANAGE on self
+    def set_invisible():
+        # update ranking
+        # set invisible
+        pass
+
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW')]
 
