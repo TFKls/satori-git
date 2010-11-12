@@ -11,7 +11,7 @@ class RegisterRequest(Request):
     def process(cls, request):
         vars = request.REQUEST
         d = ParseURL(vars.get('back_to', ''))
-        path = vars['path']
+        path = vars.get('path', '')
         login = vars['username']
         password = vars['password']
         fullname = vars['fullname']

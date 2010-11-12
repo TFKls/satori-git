@@ -51,6 +51,10 @@ class User(Role):
             raise InvalidLogin(login=login, reason='does not contain a lowercase letter')
         return True
 
+    @staticmethod
+    def password_ok(password): #TODO: python-crack?
+        return True
+
     @ExportMethod(NoneType, [unicode, unicode, unicode], PCPermit(), [InvalidLogin])
     @staticmethod
     def register(login, password, name):
