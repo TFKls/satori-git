@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from   datetime  import datetime
+from   django.db import connection, transaction
 import inspect
 from   time      import mktime
 import threading
@@ -89,6 +90,22 @@ global_exception_types.append(AccessDenied)
 class TokenContainer(threading.local):
     def __init__(self):
         self.token = None
+
+    def set_token(self, token):
+        if isinstance(token, (str, unicode)):
+            token = Token(token)
+
+        self.token = token
+
+        if token.user_id:
+            userid = int(token.user_id)
+        else:
+            userid = Global.get_instance().anonymous.id
+
+        cursor = connection.cursor()
+        cursor.callproc('set_user_id', [userid])
+        cursor.close()
+
 
 token_container = TokenContainer()
 
@@ -250,28 +267,19 @@ class ExportMethod(object):
         pc = self.pc
 
         def reimplementation(**kwargs):
-            from   django.db import connection, transaction
             transaction.enter_transaction_management()
             transaction.managed(True)
 
             try:
                 try:
-                    token_container.token = Token(kwargs.pop('token', ''))
+                    token = Token(kwargs.pop('token', ''))
                 except:
                     raise TokenInvalid()
 
-                if not token_container.token.valid:
+                if not token.valid:
                     raise TokenExpired()
 
-                if token_container.token.user_id:
-                    userid = int(token_container.token.user_id)
-                else:
-                    userid = -2
-
-                cursor = connection.cursor()
-                cursor.callproc('set_user_id', [userid])
-                cursor.close()
-
+                token_container.set_token(token)
                 
                 for arg_name in kwargs:
                     kwargs[arg_name] = ars_proc.parameters[arg_name].type.convert_from_ars(kwargs[arg_name])

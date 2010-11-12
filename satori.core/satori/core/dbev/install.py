@@ -95,11 +95,14 @@ def install_dbev_sql():
     set_user_id_function = """
 CREATE OR REPLACE FUNCTION set_user_id(arg INTEGER) RETURNS VOID AS $$
 BEGIN
-    UPDATE user_id SET id=arg;
-EXCEPTION
-    WHEN undefined_table THEN
-        CREATE TEMPORARY TABLE user_id (id INTEGER);
-    INSERT INTO user_id VALUES (arg);
+    DROP TABLE IF EXISTS user_id;
+    CREATE TEMPORARY TABLE user_id (id) AS VALUES (arg);
+
+    DROP TABLE IF EXISTS user_roles;
+    CREATE TEMPORARY TABLE user_roles (role_id) 
+        AS SELECT keyid AS role_id
+            FROM connectby('core_rolemapping'::text, 'parent_id'::text, 'child_id'::text, arg::text, 0)
+                AS t(keyid INT, parent_keyid INT, level INT);
 END;
 $$ LANGUAGE plpgsql;
 """
@@ -466,26 +469,26 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-CREATE OR REPLACE FUNCTION right_check(_role_id INT, _entity_id INT, _right_name TEXT) RETURNS BOOLEAN AS $$
+CREATE OR REPLACE FUNCTION right_check(_entity_id INT, _right_name TEXT) RETURNS BOOLEAN AS $$
 DECLARE result BOOLEAN;
 BEGIN
    SELECT EXISTS
        (SELECT * FROM
-           (SELECT DISTINCT keyid
-               FROM connectby('core_rolemapping'::text, 'parent_id'::text, 'child_id'::text, _role_id::text, 0)
-                   as t(keyid int, parent_keyid int, level int)
-           ) AS roles
-           JOIN core_privilege ON roles.keyid = core_privilege.role_id
+           user_roles
+           JOIN core_privilege ON user_roles.role_id = core_privilege.role_id
+           JOIN right_dict ON core_privilege.right = right_dict.name
            JOIN
            (SELECT keyid/256 as entity, keyid%%256 as right 
                 FROM connectby('right_inheritance'::text, 'parent'::text, 'child'::text, (_entity_id*256 + (SELECT get_right_by_name(_right_name)))::text, 0)
                 AS t(keyid int, parent_keyid int, level int)
-           ) AS inherited ON 1=1
-           JOIN right_dict ON inherited.right = right_dict.id AND core_privilege.entity_id = inherited.entity AND core_privilege.right = right_dict.name
+           ) AS inherited ON inherited.right = right_dict.id AND core_privilege.entity_id = inherited.entity
            WHERE coalesce(core_privilege.start_on, NOW()) <= NOW() AND coalesce(core_privilege.finish_on, NOW()) >= NOW()
        )
        INTO result;
    RETURN result;
+EXCEPTION
+    WHEN undefined_table THEN
+        RETURN FALSE;
 END;
 $$ LANGUAGE plpgsql;
 """

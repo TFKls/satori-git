@@ -66,12 +66,8 @@ class ArsDjangoId(ArsTypeAlias):
         return value.id
 
     def do_convert_from_ars(self, value):
-        u = token_container.token.user_id;
-        if (u is None) or u == '':
-            u = Global.get_instance().anonymous.id
-
         try:
-            return self.model.objects.extra(where=['right_check(%s, id, %s)'], params=[u, 'VIEW']).get(id=value)
+            return self.model.objects.extra(where=['right_check(id, %s)'], params=['VIEW']).get(id=value)
         except model.DoesNotExist:
             raise ArgumentNotFound(model=self.model.__name__, id=value)
 
@@ -158,11 +154,7 @@ class ArsDjangoIdList(ArsList):
         return True
 
     def do_convert_to_ars(self, value):
-        u = token_container.token.user_id;
-        if (u is None) or u == '':
-            u = Global.get_instance().anonymous.id
-
-        return super(ArsDjangoIdList, self).do_convert_to_ars(value.extra(where=['right_check(%s, id, %s)'], params=[u, 'VIEW']))
+        return super(ArsDjangoIdList, self).do_convert_to_ars(value.extra(where=['right_check(id, %s)'], params=['VIEW']))
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoIdList, self).do_convert_from_ars(value)
@@ -189,11 +181,7 @@ class ArsDjangoStructureList(ArsList):
         return True
 
     def do_convert_to_ars(self, value):
-        u = token_container.token.user_id;
-        if (u is None) or u == '':
-            u = Global.get_instance().anonymous.id
-
-        return super(ArsDjangoStructureList, self).do_convert_to_ars(value.extra(where=['right_check(%s, id, %s)'], params=[u, 'VIEW']))
+        return super(ArsDjangoStructureList, self).do_convert_to_ars(value.extra(where=['right_check(id, %s)'], params=['VIEW']))
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoStructureList, self).do_convert_from_ars(value)
