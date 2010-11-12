@@ -15,7 +15,7 @@ class OpenIdConfirmRequest(Request):
         lw_path = vars.get('lw_path', '')
         d = ParseURL(back_to)
         try:
-            token_container.set_token(Security.openid_register_finish(arg_map=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
+            token_container.set_token(OpenIdentity.register_finish(arg_map=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
         except:
             follow(d,lw_path)['status'] = ['failed']
         return GetLink(d,path)

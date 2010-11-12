@@ -10,12 +10,12 @@ from datetime import datetime, timedelta
 import base64
 import crypt
 import hashlib
-import pickle
 import random
 import time
 import string
 import urlparse
 import urllib
+import traceback
 from satori.ars import perf
 from django.core import cache
 from django.conf import settings
@@ -36,7 +36,6 @@ class permarg_list_adapter(object):
    self.a.prepare(conn)
  def getquoted(self):
    res = self.a.getquoted() + '::permarg[]'
-   print res
    return res
 
 class permarg_list(object):
@@ -134,10 +133,7 @@ class Token(object):
         if auth is not None:
             self.auth = auth
         if data is not None:
-            ses = Session()
-            ses.data = pickle.dumps(data)
-            ses.save()
-            self.data_id = ses.id
+        	self._set_data(data)
         if deadline is not None:
             self.deadline = deadline
         if validity is not None:
@@ -156,21 +152,27 @@ class Token(object):
         except:
             pass
         return None
+
     def _get_data(self):
         try:
-            return pickle.loads(Session.objects.get(id=self.data_id).data)
+            return Session.objects.get(id=self.data_id).data_pickle
         except:
+            traceback.print_exc()
             pass
         return None
     def _set_data(self, data):
-        ses = None
-        try:
-            ses = Session.objects.get(id=self.data_id)
-        except:
-            ses = Session()
-        ses.data = pickle.dumps(data)
-        ses.save()
-        self.data_id = ses.id
+        if data is None:
+            if self.data_id != '':
+                Session.objects.filter(id=self.data_id).delete()
+                self.data_id = ''
+        else:
+            try:
+                ses = Session.objects.get(id=self.data_id)
+            except:
+                ses = Session()
+            ses.data_pickle = data
+            ses.save()
+            self.data_id = ses.id
     data = property(_get_data, _set_data)
 
 

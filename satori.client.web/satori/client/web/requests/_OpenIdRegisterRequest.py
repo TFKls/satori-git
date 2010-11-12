@@ -14,7 +14,7 @@ class OpenIdRegisterRequest(Request):
     @classmethod
     def process(cls, request):
         vars = request.REQUEST
-        d = ParseURL(vars['back_to'])
+        d = ParseURL(vars.get('back_to', ''))
         path = vars.get('path', '')
         lw_path = vars['lw_path']
         openid = vars['openid']
@@ -30,12 +30,10 @@ class OpenIdRegisterRequest(Request):
             for value in vlist:
                 query.append((key,value))
         query = urllib.urlencode(query)
-        path = callback.path.split('.')
-        path[-1] = 'openid_confirm'
-        path = '.'.join(path)
+        path = '/process.openid_confirm'
         finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
         try:
-            res = Security.openid_register_start(openid=openid, return_to=finisher, login=login)
+            res = OpenIdentity.register_start(openid=openid, return_to=finisher, login=login)
             token_container.set_token(res['token'])
             if res['html']:
                 ret = HttpResponse()

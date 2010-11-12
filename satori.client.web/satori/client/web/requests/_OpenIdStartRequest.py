@@ -14,7 +14,7 @@ class OpenIdStartRequest(Request):
     @classmethod
     def process(cls, request):
         vars = request.REQUEST
-        d = ParseURL(vars['back_to'])
+        d = ParseURL(vars.get('back_to', ''))
         path = vars.get('path', '')
         lw_path = vars['lw_path']
         openid = vars['openid']
@@ -29,17 +29,15 @@ class OpenIdStartRequest(Request):
             for value in vlist:
                 query.append((key,value))
         query = urllib.urlencode(query)
-        path = callback.path.split('.')
-        path[-1] = 'openid_check'
-        path = '.'.join(path)
+        path = '/process.openid_check'
         finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
         try:
-            res = Security.openid_login_start(openid=openid, return_to=finisher)
+            res = OpenIdentity.authenticate_start(openid=openid, return_to=finisher)
             token_container.set_token(res['token'])
             if res['html']:
                 ret = HttpResponse()
                 ret.write(res['html'])
-                return ret;
+                return ret
             else:
                 return HttpResponseRedirect(res['redirect'])
         except:
