@@ -3,7 +3,6 @@
 from   datetime  import datetime
 from   django.db import connection, transaction
 import inspect
-from   time      import mktime
 import threading
 from   types     import NoneType
 import sys
@@ -62,20 +61,6 @@ def DefineException(name, message, fields=[]):
     exception_subclass = type(name, (exception_class,), {'__init__': __init__})
 
     return exception_subclass
-
-
-class ArsDateTime(ArsTypeAlias):
-    def __init__(self, ):
-        super(ArsDateTime, self).__init__(name='DateTime', target_type=ArsInt64)
-
-    def do_needs_conversion(self):
-        return True
-
-    def do_convert_to_ars(self, value):
-        return long(mktime(value.timetuple()))
-
-    def do_convert_from_ars(self, value):
-        return datetime.fromtimestamp(value)
 
 
 TokenInvalid = DefineException('TokenInvalid', 'The provided token is invalid')

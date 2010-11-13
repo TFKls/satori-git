@@ -2,8 +2,10 @@
 """An in-memory model for an exported service.
 """
 
-from types import NoneType, FunctionType
-from satori.objects import Object, Argument, DispatchOn, Namespace, NoneObj
+from datetime       import datetime
+from time           import mktime
+from types          import NoneType, FunctionType
+from satori.objects import Argument, DispatchOn
 
 
 class ArsElement(object):
@@ -254,7 +256,7 @@ class ArsNamedTuple(object):
     def __contains__(self, elem):
         if isinstance(elem, (str, unicode)):
             return elem in self.names
-        elif isinstance(elem, ArsNamedObject):
+        elif isinstance(elem, ArsNamedElement):
             return (elem.name in self.names) and (self.names[elem.name] == elem)
         else:
             return False
@@ -579,5 +581,22 @@ class ArsInterface(ArsElement):
             ret.services.append(ret_service)
 
         return ret
+
+
+# additional type specialization
+
+class ArsDateTime(ArsTypeAlias):
+    def __init__(self, ):
+        super(ArsDateTime, self).__init__(name='DateTime', target_type=ArsInt64)
+
+    def do_needs_conversion(self):
+        return True
+
+    def do_convert_to_ars(self, value):
+        return long(mktime(value.timetuple()))
+
+    def do_convert_from_ars(self, value):
+        return datetime.fromtimestamp(value)
+
 
 __all__ = [name for name in globals().keys() if name.startswith('Ars')]
