@@ -3,6 +3,7 @@
 
 from datetime  import datetime
 from django.db import models
+from django.db import connection
 from types     import NoneType
 
 from satori.core.dbev               import Events
@@ -34,6 +35,20 @@ class Privilege(Entity):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('role', 'entity', 'right'),)
 
+    @staticmethod
+    def where_can(queryset, right):
+        return queryset.extra(where=['right_check(id, %s)'], params=[right])
+
+    @staticmethod
+    def select_can(queryset, right):
+        return queryset.extra(select={'_can_' + right: 'right_check(id, %s)'}, select_params=[right])
+
+    @staticmethod
+    def select_struct_can(queryset):
+        for right in queryset.model._struct_rights:
+            queryset = Privilege.select_can(queryset, right)
+        return queryset
+
     @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode, PrivilegeTimes], PCArg('entity', 'MANAGE_PRIVILEGES'))
     @staticmethod
     def grant(role, entity, right, times=PrivilegeTimes()):
@@ -62,10 +77,15 @@ class Privilege(Entity):
     @ExportMethod(bool, [DjangoId('Entity'), unicode], PCPermit())
     @staticmethod
     def demand(entity, right):
-        from django.db import connection
+        if hasattr(entity, '_can_' + right):
+            return getattr(entity, '_can_' + right)
+
         c = connection.cursor()
         c.callproc('right_check', [int(entity.id), str(right)])
-        return bool(c.fetchall()[0][0])
+        res = bool(c.fetchall()[0][0])
+        c.close()
+
+        return res
 
     @ExportMethod(NoneType, [DjangoId('Role'), unicode, PrivilegeTimes], PCGlobal('MANAGE_PRIVILEGES'))
     @staticmethod

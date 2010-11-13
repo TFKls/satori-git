@@ -67,7 +67,7 @@ class ArsDjangoId(ArsTypeAlias):
 
     def do_convert_from_ars(self, value):
         try:
-            return self.model.objects.extra(where=['right_check(id, %s)'], params=['VIEW']).get(id=value)
+            return Privilege.where_can(self.model.objects.all(), 'VIEW').get(id=value)
         except model.DoesNotExist:
             raise ArgumentNotFound(model=self.model.__name__, id=value)
 
@@ -154,7 +154,7 @@ class ArsDjangoIdList(ArsList):
         return True
 
     def do_convert_to_ars(self, value):
-        return super(ArsDjangoIdList, self).do_convert_to_ars(value.extra(where=['right_check(id, %s)'], params=['VIEW']))
+        return super(ArsDjangoIdList, self).do_convert_to_ars(Privilege.select_can(Privilege.where_can(value ,'VIEW'), 'VIEW'))
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoIdList, self).do_convert_from_ars(value)
@@ -181,7 +181,7 @@ class ArsDjangoStructureList(ArsList):
         return True
 
     def do_convert_to_ars(self, value):
-        return super(ArsDjangoStructureList, self).do_convert_to_ars(value.extra(where=['right_check(id, %s)'], params=['VIEW']))
+        return super(ArsDjangoStructureList, self).do_convert_to_ars(Privilege.select_struct_can(Privilege.where_can(value ,'VIEW')))
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoStructureList, self).do_convert_from_ars(value)
@@ -214,7 +214,7 @@ def ExportModel(cls):
             if hasattr(parent_cls.ExportMeta, 'fields'):
                 fields.extend(parent_cls.ExportMeta.fields)
             if hasattr(parent_cls.ExportMeta, 'extra_fields'):
-                fields.extend(parent_cls.ExportMeta.extra_fields)
+                extra_fields.extend(parent_cls.ExportMeta.extra_fields)
 
     ars_django_structure[cls] = ArsDjangoStructure(cls, fields, extra_fields)
     ars_django_structure[cls.__name__] = ars_django_structure[cls]
@@ -224,6 +224,10 @@ def ExportModel(cls):
 
     ars_django_structure_list[cls] = ArsDjangoStructureList(cls)
     ars_django_structure_list[cls.__name__] = ars_django_structure_list[cls]
+
+    cls._struct_rights = set([field_permission for (field_name, field_permission) in fields]
+            + [field_permission for (field_name, field_type, field_permission) in extra_fields]
+            + ['VIEW'])
 
     @ExportMethod(DjangoStruct(cls), [DjangoId(cls)], PCPermit())
     def get_struct(self):
