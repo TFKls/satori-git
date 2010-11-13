@@ -19,14 +19,11 @@ def load(request,argstr,path = ""):
 	try:
             w = Widget.FromDictionary(params,path)
             res = render_to_response(w.htmlFile, {'widget' : w} )
-        except Exception as s:
-            if s.message[0:21] == "Exception: TokenError":
-                link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
-                res = HttpResponseRedirect(link)
-                res.set_cookie('satori_token', '')
-                return res
-            else:
-                raise
+        except (TokenInvalid, TokenExpired):
+	    link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
+	    res = HttpResponseRedirect(link)
+	    res.set_cookie('satori_token', '')
+	    return res
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
@@ -39,14 +36,11 @@ def loadPOST(request,argstr=""):
             token_container.set_token('')
         try:
             res = process(argstr,request)
-        except Exception as s:
-            if s.message[0:21] == "Exception: TokenError":
-                link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
-                res = HttpResponseRedirect(link)
-                res.set_cookie('satori_token', '')
-                return res
-            else:
-                raise
+        except (TokenInvalid, TokenExpired):
+            link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
+            res = HttpResponseRedirect(link)
+            res.set_cookie('satori_token', '')
+            return res
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
@@ -59,14 +53,11 @@ def loadfile(request,argstr=""):
             token_container.set_token('')
         try:
             res = getfile(argstr,request)
-        except Exception as s:
-            if s.message[0:21] == "Exception: TokenError":
-                link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
-                res = HttpResponseRedirect(link)
-                res.set_cookie('satori_token', '')
-                return res
-            else:
-                raise
+        except (TokenInvalid, TokenExpired):
+            link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
+            res = HttpResponseRedirect(link)
+            res.set_cookie('satori_token', '')
+            return res
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
