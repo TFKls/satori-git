@@ -1,13 +1,10 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-#! module models
 
 import crypt
 import random
 import string
 import ipaddr
 
-from satori.core.export        import ExportMethod, token_container
-from satori.core.export_django import ExportModel
 from satori.core.dbev               import Events
 
 from satori.core.models import Role

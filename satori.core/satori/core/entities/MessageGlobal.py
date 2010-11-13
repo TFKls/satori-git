@@ -1,10 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-#! module models
 
 from django.db import models
 
-from satori.core.export        import ExportMethod
-from satori.core.export_django import ExportModel
 from satori.core.dbev               import Events
 
 from satori.core.models import Message
@@ -13,7 +10,6 @@ from satori.core.models import Message
 class MessageGlobal(Message):
     """Model. Description of a text message - main screen msg.
     """
-    __module__ = "satori.core.models"
     parent_message = models.OneToOneField(Message, parent_link=True, related_name='cast_messageglobal')
 
     mainscreenonly = models.BooleanField()

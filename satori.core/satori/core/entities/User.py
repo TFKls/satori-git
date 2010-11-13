@@ -1,13 +1,10 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-#! module models
 
 import crypt
 from   django.db import models
 import random
 import string
 
-from satori.core.export        import ExportMethod, PCArg, PCOr, PCTokenUser
-from satori.core.export_django import ExportModel, DjangoStructList
 from satori.core.dbev               import Events
 
 from satori.core.models import Role

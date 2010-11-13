@@ -1,6 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#! module models
 
 from datetime import datetime, timedelta
 from types import NoneType
@@ -9,8 +8,6 @@ import random
 import urlparse
 import urllib
 
-from satori.core.export import ExportClass, ExportMethod, PCPermit, PCGlobal, DefineException, token_container
-from satori.core.export_django import DjangoStruct
 
 @ExportClass
 class Security(object):

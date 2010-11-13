@@ -1,6 +1,4 @@
-#! module models
 
-from satori.core.export import ExportClass, ExportMethod, PCPermit
 
 @ExportClass
 class Server(object):

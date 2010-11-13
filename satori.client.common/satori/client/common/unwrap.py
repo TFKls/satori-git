@@ -217,7 +217,7 @@ def unwrap_interface(interface, BlobReader, BlobWriter):
 
     for type in interface.types:
         if type.name == 'DateTime':
-            type.converter = ArsDateTime()
+            type.converter = ArsDateTime
         elif isinstance(type, ArsStructure):
             classes[type.name] = type.get_class()
 

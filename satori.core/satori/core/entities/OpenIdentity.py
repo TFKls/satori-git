@@ -1,10 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-#! module models
 
 from django.db import models
 
-from satori.core.export        import ExportMethod
-from satori.core.export_django import ExportModel
 from satori.core.dbev               import Events
 
 from satori.core.models import Entity, User
@@ -28,7 +25,6 @@ OpenIdentityFailed = DefineException('OpenIdentityFailed', 'Invalid open identit
 @ExportModel
 class OpenIdentity(Entity):
 
-    __module__ = "satori.core.models"
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_openidentity')
 
     identity = models.CharField(max_length=512, unique=True)

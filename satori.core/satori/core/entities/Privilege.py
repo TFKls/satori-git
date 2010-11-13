@@ -1,5 +1,4 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-#! module models
 
 from datetime  import datetime
 from django.db import models
@@ -7,8 +6,6 @@ from django.db import connection
 from types     import NoneType
 
 from satori.core.dbev               import Events
-from satori.core.export        import ExportClass, ExportMethod, Struct, PCGlobal, PCArg, token_container
-from satori.core.export_django import DjangoId
 
 from satori.core.models import Entity, Global
 
@@ -51,7 +48,10 @@ class Privilege(Entity):
 
     @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode, PrivilegeTimes], PCArg('entity', 'MANAGE_PRIVILEGES'))
     @staticmethod
-    def grant(role, entity, right, times=PrivilegeTimes()):
+    def grant(role, entity, right, times=None):
+        if not times:
+            times = PrivilegeTimes()
+
         (priv, created) = Privilege.objects.get_or_create(role=role, entity=entity, right=right)
         priv.start_on = times.start_on
         priv.finish_on = times.finish_on
@@ -89,7 +89,7 @@ class Privilege(Entity):
 
     @ExportMethod(NoneType, [DjangoId('Role'), unicode, PrivilegeTimes], PCGlobal('MANAGE_PRIVILEGES'))
     @staticmethod
-    def global_grant(role, right, times=PrivilegeTimes()):
+    def global_grant(role, right, times=None):
         Privilege.grant(role, Global.get_instance(), right, times)
 
     @ExportMethod(NoneType, [DjangoId('Role'), unicode], PCGlobal('MANAGE_PRIVILEGES'))

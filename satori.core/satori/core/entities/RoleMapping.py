@@ -1,5 +1,4 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-#! module models
 
 from django.db import models
 from satori.core.dbev import Events

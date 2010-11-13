@@ -1,10 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#! module models
 
 from types import NoneType
 
-from satori.core.export import ExportClass, ExportMethod, PCGlobal
 from satori.core.models import OpenAttribute
 
 from base64 import urlsafe_b64encode

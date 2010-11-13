@@ -1,6 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#! module models
 
 """
 Judge helper procedures.
@@ -9,8 +8,6 @@ Judge helper procedures.
 from types import NoneType
 
 from satori.core.checking.check_queue_client import CheckQueueClient
-from satori.core.export        import ExportMethod, Struct, TypedMap, PCGlobal
-from satori.core.export_django import ExportModel, AnonymousAttribute
 from satori.core.dbev               import Events
 
 from satori.core.models import Role

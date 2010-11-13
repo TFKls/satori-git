@@ -1,10 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-#! module models
 
 from django.db import models
 from satori.core.dbev import Events
-from satori.core.export import ExportMethod, PCPermit
-from satori.core.export_django import ExportModel, DjangoId, generate_attribute_group
 
 @ExportModel
 class Entity(models.Model):
@@ -15,7 +12,6 @@ class Entity(models.Model):
         MANAGE
         MANAGE_PRIVILEGES - do wywalenie, rownowazne z MANAGE
     """
-    __module__ = "satori.core.models"
 
     model = models.CharField(max_length=64, editable=False)
 

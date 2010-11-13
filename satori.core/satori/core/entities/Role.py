@@ -1,11 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#! module models
 
 from django.db import models
 
-from satori.core.export        import ExportMethod, PCArg
-from satori.core.export_django import ExportModel, DjangoStructList, DjangoId
 from satori.core.dbev               import Events
 
 from satori.core.models import Entity

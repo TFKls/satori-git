@@ -599,4 +599,8 @@ class ArsDateTime(ArsTypeAlias):
         return datetime.fromtimestamp(value)
 
 
+ArsDateTime = ArsDateTime()
+
+
 __all__ = [name for name in globals().keys() if name.startswith('Ars')]
+

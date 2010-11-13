@@ -1,5 +1,4 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-#! module models
 
 import base64
 import pickle
@@ -8,7 +7,6 @@ from django.db import models
 
 class Session(models.Model):
 
-    __module__ = "satori.core.models"
 
     data     = models.TextField()
     deleteOn = models.DateTimeField()
