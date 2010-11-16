@@ -61,6 +61,7 @@ Runner::Initializer::Initializer()
     sigalarm = false;
     signals.push_back(SIGALRM);
     signals.push_back(SIGTERM);
+    signals.push_back(SIGCHLD);
     handlers.resize(signals.size());
     struct sigaction action;
     memset(&action, 0, sizeof(action));
@@ -156,8 +157,10 @@ void Runner::ProcessLoop(long ms)
             break;
         ms_timespec(rem, ts);
         int res = ppoll(NULL, 0, &ts, &orig_mask);
-        if (res < 0 && errno == EINTR)
+        if (res < 0 && errno == EINTR) {
+            Debug("ppoll interrupted");	
             continue;
+        }
         if (res < 0)
             Fail("ppoll failed");
         if (res == 0)
