@@ -17,33 +17,6 @@ class Runner
     private:
         static std::map<int, Runner*> runners;
 
-        class ChildNode
-        {
-            public:
-                int pid;
-                bool signaled;
-                volatile ChildNode* prev;
-                volatile ChildNode* next;
-                ChildNode(int i=0, ChildNode* p=NULL, ChildNode* n=NULL)
-                    : pid(i)
-                    , prev(p)
-                    , next(n)
-                {
-                    if(n)
-                        n->prev = this;
-                    if(p)
-                        p->next = this;
-                }
-                ~ChildNode()
-                {
-                    if(prev)
-                        prev->next = next;
-                    if(next)
-                        next->prev = prev;
-                }
-        };
-        static sem_t sigsemaphore;
-        static ChildNode sigchild;
         static bool sigterm;
         static bool sigalarm;
 

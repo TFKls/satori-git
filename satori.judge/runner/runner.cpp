@@ -21,6 +21,7 @@
 #include <pwd.h>
 #include <sched.h>
 #include <unistd.h>
+#include <poll.h>
 
 #include <sys/capability.h>
 #include <sys/mman.h>
@@ -46,8 +47,6 @@
 using namespace std;
 
 map<int, Runner*> Runner::runners;
-sem_t Runner::sigsemaphore;
-Runner::ChildNode Runner::sigchild;
 bool Runner::sigterm;
 bool Runner::sigalarm;
 vector<int> Runner::Initializer::signals;
@@ -58,11 +57,8 @@ Runner::Initializer Runner::initializer;
 Runner::Initializer::Initializer()
 {
     debug_fds.insert(2);
-    sem_init(&sigsemaphore, 0, 0);
-    sigchild.prev = sigchild.next = &sigchild;
     sigterm = false;
     sigalarm = false;
-    signals.push_back(SIGCHLD);
     signals.push_back(SIGALRM);
     signals.push_back(SIGTERM);
     handlers.resize(signals.size());
@@ -81,47 +77,22 @@ void Runner::Initializer::Stop()
 }
 void Runner::Initializer::SignalHandler(int sig, siginfo_t* info, void* data)
 {
-    if (sig == SIGCHLD)
-    {
-        for(volatile ChildNode* node=sigchild.next; node!=&sigchild; node=node->next)
-            if(node->pid == info->si_pid)
-            {
-                node->signaled = true;
-                sem_post(&sigsemaphore);
-                break;
-            }
-    }
-    else if (sig == SIGALRM)
-    {
+    if (sig == SIGALRM)
         sigalarm = true;
-        sem_post(&sigsemaphore);
-    }
     else if (sig == SIGTERM)
-    {
         sigterm = true;
-        sem_post(&sigsemaphore);
-    }
 }
 void Runner::Register(int pid, Runner* runner)
 {
     if(runners.find(pid) == runners.end())
     {
         runners[pid] = runner;
-        new ChildNode(pid, &sigchild, (ChildNode*)sigchild.next);
     }
     else
         Fail("Process %d was registered twice.\n", pid);
 }
 void Runner::Unregister(int pid)
 {
-    for (volatile ChildNode* node = sigchild.next; node != &sigchild; node = node->next)
-    {
-        if (node->pid == pid)
-        {
-            delete node;
-            break;
-        }
-    }
     runners.erase(pid);
 }
 void Runner::Process()
@@ -132,47 +103,69 @@ void Runner::Process()
         for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
             i->second->Stop();
     }
-    else if (sigalarm)
+    if (sigalarm)
     {
         sigalarm = false;
         for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
             i->second->Check();
     }
-    else
-    {
-        for (volatile ChildNode* node = sigchild.next; node != &sigchild; node = node->next)
-            if (node->signaled)
+    siginfo_t info;
+    while (1) {
+        info.si_pid = 0;
+        if (waitid(P_ALL, 0, &info, WEXITED | WSTOPPED | WNOHANG | WNOWAIT) < 0 && errno != ECHILD)
+            Fail("waitid failed");
+        if (info.si_pid == 0)
+            break;
+        int pid = info.si_pid;
+        map<int, Runner*>::const_iterator i = runners.find(pid);
+        if (i != runners.end())
+            i->second->process_child(pid);
+        else
+        {
+            ProcStats P(pid);
+            i = runners.find(P.ppid);
+            if (i != runners.end())
+                i->second->process_child(pid);
+            else
             {
-                node->signaled = false;
-                int pid = (int)node->pid;
-                map<int, Runner*>::const_iterator i = runners.find(pid);
+                i = runners.find(P.pgrp);
                 if (i != runners.end())
                     i->second->process_child(pid);
-                else
-                {
-                    ProcStats P(pid);
-                    i = runners.find(P.ppid);
-                    if (i != runners.end())
-                        i->second->process_child(pid);
-                    else
-                    {
-                        i = runners.find(P.pgrp);
-                        if (i != runners.end())
-                            i->second->process_child(pid);
-                    }
-                }
             }
+        }
     }
 }
+
+
 void Runner::ProcessLoop(long ms)
 {
     timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
     long to = miliseconds(ts)+ms;
-    ms_timespec(to, ts);
-    while(sem_timedwait(&sigsemaphore, &ts) == 0)
+    sigset_t orig_mask, blocked_mask;
+    sigemptyset(&blocked_mask);
+    sigaddset(&blocked_mask, SIGTERM);
+    sigaddset(&blocked_mask, SIGCHLD);
+    sigaddset(&blocked_mask, SIGALRM);
+    while (1) {
+        sigprocmask(SIG_BLOCK, &blocked_mask, &orig_mask);
         Process();
-}
+        clock_gettime(CLOCK_REALTIME, &ts);
+        long rem = to - miliseconds(ts);
+        if (rem <= 0)
+            break;
+        ms_timespec(rem, ts);
+        int res = ppoll(NULL, 0, &ts, &orig_mask);
+        if (res < 0 && errno == EINTR)
+            continue;
+        if (res < 0)
+            Fail("ppoll failed");
+        if (res == 0)
+            break;
+    }
+}       
+
+
 void Runner::Initializer::Debug(const char* format, va_list args)
 {
     for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
