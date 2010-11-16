@@ -1259,7 +1259,14 @@ void Runner::process_child(long epid)
             {
                 user_regs_struct regs;
                 ::ptrace(PTRACE_GETREGS, p, NULL, &regs);
-                switch (regs.orig_rax)
+#ifdef __x86_64__
+#define orig_xax orig_rax
+#define xbx rbx
+#else
+#define orig_xax orig_eax
+#define xbx ebx
+#endif
+                switch (regs.orig_xax)
                 {
                     case __NR_execve:
                         if(!after_exec)
@@ -1294,9 +1301,9 @@ void Runner::process_child(long epid)
                         Debug("Clone");
                         unsigned long mod;
                         mod = CLONE_UNTRACED;
-                        regs.rbx &= ~mod;
+                        regs.xbx &= ~mod;
                         mod = CLONE_PTRACE;
-                        regs.rbx |= mod;
+                        regs.xbx |= mod;
                     default:
                         if (ptrace_safe)
                         {
@@ -1305,9 +1312,11 @@ void Runner::process_child(long epid)
                         }
                     //TODO: Handle syscalls!
                 }
-                Debug("Syscall %d %d", (int)p, (int)regs.orig_rax);
+                Debug("Syscall %d %d", (int)p, (int)regs.orig_xax);
                 ::ptrace(PTRACE_SETREGS, p, NULL, &regs);
                 ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
+#undef xbx
+#undef orig_xbx
             }
             else
             {
