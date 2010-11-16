@@ -157,6 +157,7 @@ void Runner::ProcessLoop(long ms)
             break;
         ms_timespec(rem, ts);
         int res = ppoll(NULL, 0, &ts, &orig_mask);
+        sigprocmask(SIG_SETMASK, &orig_mask, NULL);
         if (res < 0 && errno == EINTR) {
             Debug("ppoll interrupted");	
             continue;
