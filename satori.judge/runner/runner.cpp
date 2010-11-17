@@ -132,6 +132,8 @@ void Runner::Process()
                 i = runners.find(P.pgrp);
                 if (i != runners.end())
                     i->second->process_child(pid);
+                else
+                    waitpid(pid, NULL, 0);
             }
         }
     }
