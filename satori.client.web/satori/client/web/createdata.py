@@ -144,5 +144,5 @@ def create(request):
     MessageGlobal.create(MessageGlobalStruct(topic="Wiadomosc systemowa", content="Oglaszamy, ze za 5 minuBZZZZZ!", mainscreenonly=False))
     MessageContest.create(MessageContestStruct(topic="Wiadomosc powitalna", content="Publiczne BZZZZZ!", contest=c4))
     
-    Subpage.create(SubpageStruct(contest=c2,name='Info',content='Info about the contest',public=True, order=1))
+    Subpage.create(SubpageStruct(contest=c2,name='Info',content='Info about the contest',pub=True, order=1))
     return HttpResponse('OK!')

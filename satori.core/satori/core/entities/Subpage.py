@@ -14,7 +14,7 @@ class Subpage(Entity):
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_subpage')
     
     contest = models.ForeignKey('Contest')
-    public = models.BooleanField(default=True)
+    pub = models.BooleanField(default=True)
     name = models.TextField(blank=False)
     content = models.TextField()
     order = models.IntegerField(null=True)
@@ -30,7 +30,7 @@ class Subpage(Entity):
         unique_together = (('contest', 'name'),)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('public', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('pub', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]
 
 
 class SubpageEvents(Events):
