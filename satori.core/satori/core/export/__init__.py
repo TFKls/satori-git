@@ -46,7 +46,7 @@ def ExportModel(cls):
         for (field_name, field_permission) in ars_django_structure[cls].django_fields:
             if field_name != 'id':
                 if hasattr(arg_struct, field_name) and (getattr(arg_struct, field_name) is not None):
-                    setattr(self, getattr(arg_struct, field_name))
+                    setattr(self, field_name, getattr(arg_struct, field_name))
         self.save()
         return self
 
