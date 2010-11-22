@@ -47,10 +47,11 @@ class OpenIdentity(Entity):
         callback = urlparse.urlparse(url)
         return urlparse.urlunparse((callback.scheme, callback.netloc, '', '', '', ''))
     @staticmethod
-    def modify_callback(url, salt):
+    def modify_callback(url, mods):
         callback = urlparse.urlparse(url)
         qs = urlparse.parse_qs(callback.query)
-        qs['satori.openid.salt'] = (salt,)
+        for key, val in mods.items():
+            qs[key] = (val,)
         query = []
         for key, vlist in qs.items():
             for value in vlist:
@@ -58,14 +59,17 @@ class OpenIdentity(Entity):
         query = urllib.urlencode(query)
         return urlparse.urlunparse((callback.scheme, callback.netloc, callback.path, callback.params, query, callback.fragment))
     @staticmethod
-    def check_callback(url, salt):
+    def check_callback(url, mods):
         callback = urlparse.urlparse(url)
         qs = urlparse.parse_qs(callback.query)
-        if 'satori.openid.salt' not in qs:
-            return False
-        if len(qs['satori.openid.salt']) != 1:
-            return False
-        return qs['satori.openid.salt'][0] == salt
+        for key,val in mods.items():
+            if key not in qs:
+                return False
+            if len(qs[key]) != 1:
+                return False
+            if qs[key][0] != val:
+                return False
+        return True
     @staticmethod
     def add_ax(request):
         axr = oidax.FetchRequest()
@@ -103,7 +107,7 @@ class OpenIdentity(Entity):
         redirect = ''
         html = ''
         realm = OpenIdentity.realm(return_to)
-        callback = OpenIdentity.modify_callback(return_to, salt)
+        callback = OpenIdentity.modify_callback(return_to, { 'satori.openid.salt' : salt })
         if request.shouldSendRedirect():
             redirect = request.redirectURL(realm, callback)
         else:
@@ -118,14 +122,14 @@ class OpenIdentity(Entity):
     @staticmethod
     def generic_finish(token, args, return_to, user=None, update=False):
         if token.auth != 'openid':
-            return token
+            return str(token)
         session = token.data
         store = Store()
         response = consumer.Consumer(session, store).complete(args, return_to)
         if response.status != consumer.SUCCESS:
             raise Exception("OpenID failed.")
         callback = response.getReturnTo()
-        if not OpenIdentity.check_callback(callback, session['satori.openid.salt']):
+        if not OpenIdentity.check_callback(callback, { 'satori.openid.salt' : session['satori.openid.salt'] }):
             raise Exception("OpenID failed.")
         if user:
             identity = OpenIdentity(identity=response.identity_url, user=user)
