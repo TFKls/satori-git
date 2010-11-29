@@ -1,5 +1,4 @@
 from django.conf.urls.defaults import *
-from satori.core.models import *
 
 import os
 
