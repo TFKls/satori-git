@@ -16,4 +16,9 @@ class RegisterRequest(Request):
         password = vars['password']
         fullname = vars['fullname']
         User.register(login=login, password=password, name=fullname)
+        try:
+            t = User.authenticate(login=login, password=password)
+            token_container.set_token(t)
+        except:
+            pass
         return GetLink(d, path)

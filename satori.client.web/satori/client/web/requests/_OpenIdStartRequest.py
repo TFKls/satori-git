@@ -29,10 +29,10 @@ class OpenIdStartRequest(Request):
             for value in vlist:
                 query.append((key,value))
         query = urllib.urlencode(query)
-        path = '/process.openid_check'
+        path = '/process.openid_finish'
         finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
         try:
-            res = OpenIdentity.authenticate_start(openid=openid, return_to=finisher)
+            res = OpenIdentity.start(openid=openid, return_to=finisher)
             token_container.set_token(res['token'])
             if res['html']:
                 ret = HttpResponse()
