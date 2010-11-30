@@ -26,10 +26,7 @@ class ThriftWriter(object):
 
     @DispatchOn(item=ArsNamedElement)
     def _reference(self, item, target): # pylint: disable-msg=E0102
-        if isinstance(item, ArsParameter) and (item.name == 'self'):
-            target.write('_self')
-        else:
-            target.write(item.name)
+        target.write(item.name)
 
     @DispatchOn(item=ArsAtomicType)
     def _reference(self, item, target): # pylint: disable-msg=E0102

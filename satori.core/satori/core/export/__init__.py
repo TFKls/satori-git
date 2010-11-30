@@ -143,6 +143,9 @@ class ExportMethod(object):
                 
                 for arg_name in kwargs:
                     kwargs[arg_name] = ars_proc.parameters[arg_name].type.convert_from_ars(kwargs[arg_name])
+                    
+                if '_self' in kwargs:
+                    kwargs['self'] = kwargs.pop('_self')
 
                 if not pc(**kwargs):
                     raise AccessDenied()
@@ -179,6 +182,8 @@ class ExportMethod(object):
         ars_proc.add_parameter(name='token', type=ArsString, optional=False)
 
         for (i, arg_name) in enumerate(args):
+            if (arg_name == 'self'):
+                arg_name = '_self'
             ars_proc.add_parameter(name=arg_name, type=python_to_ars_type(self.argument_types[i]), optional=(i >= nondef_count))
 
         for exception in global_exception_types:
