@@ -56,7 +56,10 @@ class Contest(Entity):
         try:
             return Contestant.objects.get(contest=self, children__id=user.id)
         except Contestant.DoesNotExist:
-            return None
+            try:
+                return Contestant.objects.get(contest=self, id=user.id)
+            except Contestant.DoesNotExist:
+               return None
 
     # TODO: check if exists
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoIdList('User')], PCArg('self', 'MANAGE'))
@@ -70,7 +73,7 @@ class Contest(Entity):
         for user in user_list:
             c.add_member(user)
 
-    @ExportMethod(DjangoStruct('Contest'), [unicode], PCGlobal('MANAGE_CONTESTS'))
+    @ExportMethod(DjangoStruct('Contest'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_CONTESTS')))
     @staticmethod
     def create_contest(name):
         c = Contest()
@@ -84,7 +87,7 @@ class Contest(Entity):
         return c
 
     # TODO: check if exists
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCArg('self', 'APPLY'))
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')))
     def join_contest(self):
         c = Contestant()
         c.contest = self
@@ -106,7 +109,7 @@ class Contest(Entity):
 
     @ExportMethod(DjangoStruct('Submit'), [DjangoId('Contest'), DjangoId('ProblemMapping'), unicode, unicode], PCArg('problem_mapping', 'SUBMIT'))
     def submit(self, problem_mapping, content, filename):
-        contestant = self.find_contestant(token_container.token.user)
+        contestant = self.find_contestant(token_container.token.role)
         if problem_mapping.contest != self:
             raise "Go away"
         submit = Submit()

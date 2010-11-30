@@ -22,12 +22,12 @@ SubmitToCheck = Struct('SubmitToCheck', (
 @ExportClass
 class Judge(object):
 
-    @ExportMethod(SubmitToCheck, [], PCGlobal('JUDGE'))
+    @ExportMethod(SubmitToCheck, [], PCAnd(PCTokenIsMachine(), PCGlobal('JUDGE')))
     @staticmethod
     def get_next():
-        u = token_container.token.user
+        m = token_container.token.machine
 
-        next = CheckQueueClient.get_instance().get_next(u)
+        next = CheckQueueClient.get_instance().get_next(m)
 
         if next.test_result_id is None:
             return None

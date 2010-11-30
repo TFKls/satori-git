@@ -35,7 +35,7 @@ class Problem(Entity):
         cls._inherit_add(inherits, 'MANAGE', '', 'MANAGE_PROBLEMS')
         return inherits
 
-    @ExportMethod(DjangoId('Problem'), [unicode], PCGlobal('MANAGE_PROBLEMS'))
+    @ExportMethod(DjangoId('Problem'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_PROBLEMS')))
     def create_problem(name):
         o = Problem()
         o.name = name

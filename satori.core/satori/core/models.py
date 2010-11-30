@@ -6,6 +6,7 @@ from types import NoneType
 from satori.core.export import ExportClass, ExportModel, ExportMethod
 from satori.core.export import BadAttributeType, Attribute, AnonymousAttribute, generate_attribute_group
 from satori.core.export import PCPermit, PCArg, PCGlobal, PCAnd, PCOr, PCEach, PCEachKey, PCEachValue, PCTokenUser, PCRawBlob
+from satori.core.export import PCTokenIsUser, PCTokenIsMachine
 from satori.core.export import token_container
 from satori.core.export import Struct, DefineException, TypedList, TypedMap
 from satori.core.export import DjangoId, DjangoStruct, DjangoIdList, DjangoStructList

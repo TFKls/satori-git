@@ -7,17 +7,85 @@ from django.db import models
 
 class Session(models.Model):
 
+    data            = models.TextField(null=True)
+    deadline        = models.DateTimeField()
+    first_activity  = models.DateTimeField()
+    last_activity   = models.DateTimeField()
+    role            = models.ForeignKey('Role', related_name='sessions', null=True)
+    auth            = models.CharField(max_length=16, null=True)
 
-    data     = models.TextField()
-    deleteOn = models.DateTimeField()
+    cas_ticket = models.CharField(max_length=64, null=True)
 
-    HOURS = 6
+    TIMEOUT = timedelta(minutes = 50)
+
+    @property
+    def user(self):
+        role = self.role
+        if role is None:
+            return role
+        try:
+            from satori.core.models import User
+            return User.objects.get(id=role.id)
+        except User.DoesNotExist:
+            return None
+    @property
+    def machine(self):
+        role = self.role
+        if role is None:
+            return role
+        try:
+            from satori.core.models import Machine
+            return Machine.objects.get(id=role.id)
+        except Machine.DoesNotExist:
+            return None
+
+    @staticmethod
+    def cleanup():
+        Session.objects.filter(deadline_lt=datetime.now())
+
+    @staticmethod
+    def start():
+        if token_container.token.session is None:
+            token_container.token.session = Session()
+            token_container.token.session.save()
+        return token_container.token.session
 
     def save(self):
-        self.deleteOn = datetime.now() + timedelta(hours = Session.HOURS)
+        if self.deadline is None:
+            self.deadline = datetime.now() + self.TIMEOUT
+        if self.first_activity is None:
+            self.first_activity = datetime.now()
+        self.last_activity = datetime.now()
         return super(Session, self).save()
 
+    def renew(self):
+        if datetime.now() + self.TIMEOUT > self.deadline:
+            self.deadline = datetime.now() + self.TIMEOUT
+
+    def login(self, role, auth):
+        self.role = role
+        self.auth = auth
+        self.renew()
+        self.save()
+        from satori.core.models import OpenIdentity
+        OpenIdentity.handle_login(self)
+#TODO: do some openid/cas post-login
+
+    def logout(self):
+        self.role = None
+        self.auth = None
+        self.save()
+        ret = []
+        from satori.core.models import OpenIdentity
+        r = OpenIdentity.handle_logout(self)
+        if r:
+            ret.append(r)
+#TODO: do some openid/cas post-logout
+        return ret
+
     def _get_data_pickle(self):
+        if not self.data:
+            return None
         return pickle.loads(base64.urlsafe_b64decode(str(self.data)))
     def _set_data_pickle(self, data):
         self.data = str(base64.urlsafe_b64encode(str(pickle.dumps(data))))

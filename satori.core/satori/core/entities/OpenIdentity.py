@@ -22,6 +22,12 @@ from openid.extensions import ax as oidax
 
 OpenIdentityFailed = DefineException('OpenIdentityFailed', 'Invalid open identity')
 
+OpenIdRedirect = Struct('OpenIdRedirect', (
+    ('token', unicode, False),
+    ('redirect', unicode, True),
+    ('html', unicode, True)
+))
+
 @ExportModel
 class OpenIdentity(Entity):
 
@@ -79,126 +85,114 @@ class OpenIdentity(Entity):
         axr.add(oidax.AttrInfo('http://axschema.org/namePerson/last', 1, True, 'lastname'))
         axr.add(oidax.AttrInfo('http://axschema.org/pref/language', 1, True, 'language'))
         request.addExtension(axr)
-    def get_ax(self, response, update =False):
-        try:
-            axr = oidax.FetchResponse.fromSuccessResponse(response)
-            self.country = axr.getSingle('http://axschema.org/contact/country/home', self.country)
-            self.email = axr.getSingle('http://axschema.org/contact/email', self.email)
-            self.language = axr.getSingle('http://axschema.org/pref/language', self.language)
-            firstname = axr.getSingle('http://axschema.org/namePerson/first', None)
-            lastname = axr.getSingle('http://axschema.org/namePerson/last', None)
-            if firstname != None and lastname != None:
-                self.name = firstname + ' ' + lastname
-            self.save()
-            if update:
-                self.user.name = self.name
-                self.user.save()
-        except:
-            traceback.print_exc()
-            pass
+    def get_ax(self, response):
+	    axr = oidax.FetchResponse.fromSuccessResponse(response)
+        if axr is None:
+            return
+        self.country = axr.getSingle('http://axschema.org/contact/country/home', self.country)
+        self.email = axr.getSingle('http://axschema.org/contact/email', self.email)
+        self.language = axr.getSingle('http://axschema.org/pref/language', self.language)
+        firstname = axr.getSingle('http://axschema.org/namePerson/first', None)
+        lastname = axr.getSingle('http://axschema.org/namePerson/last', None)
+        if firstname is not None and lastname is not None:
+            self.name = firstname + ' ' + lastname
+    @ExportMethod(OpenIdRedirect, [unicode, unicode], PCPermit(), [OpenIdentityFailed])
     @staticmethod
-    def generic_start(openid, return_to, user_id ='', valid =1, update =False):
+    def start(openid, return_to):
         salt = OpenIdentity.salt()
-        session = { 'satori.openid.salt' : salt }
-        store = Store()
-        request = consumer.Consumer(session, store).begin(openid)
-        if update:
-            OpenIdentity.add_ax(request)
-        redirect = ''
-        html = ''
+        oid_session = { 'satori.openid.salt' : salt }
         realm = OpenIdentity.realm(return_to)
         callback = OpenIdentity.modify_callback(return_to, { 'satori.openid.salt' : salt })
+        store = Store()
+        request = consumer.Consumer(oid_session, store).begin(openid)
+        OpenIdentity.add_ax(request)
+        redirect = ''
+        html = ''
         if request.shouldSendRedirect():
             redirect = request.redirectURL(realm, callback)
         else:
             form = request.formMarkup(realm, callback, False, {'id': 'satori_openid_form'})
             html = '<html><body onload="document.getElementById(\'satori_openid_form\').submit()">' + form + '</body></html>'
-        token = Token(user_id=user_id, auth='openid', validity=timedelta(hours=valid), data=session)
+
+        session = Session.start()
+        data = session.data_pickle
+        if data is None:
+            data = {}
+        data['openid'] = oid_session
+        session.data_pickle = data
+        session.save()
+
         return {
-            'token' : str(token),
+            'token' : str(token_container.token),
             'redirect' : redirect,
             'html' : html
         }
+    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [OpenIdentityFailed])
     @staticmethod
-    def generic_finish(token, args, return_to, user=None, update=False):
-        if token.auth != 'openid':
-            return str(token)
-        session = token.data
+    def finish(return_to, arg_map):
+        session = Session.start()
+        data = session.data_pickle
+        if data is None or 'openid' not in data:
+            raise OpenIdentityFailed("Authorization failed.")
+        oid_session = data['openid']
         store = Store()
-        response = consumer.Consumer(session, store).complete(args, return_to)
+        response = consumer.Consumer(oid_session, store).complete(arg_map, return_to)
         if response.status != consumer.SUCCESS:
-            raise Exception("OpenID failed.")
+            raise OpenIdentityFailed("Authorization failed.")
         callback = response.getReturnTo()
-        if not OpenIdentity.check_callback(callback, { 'satori.openid.salt' : session['satori.openid.salt'] }):
-            raise Exception("OpenID failed.")
-        if user:
-            identity = OpenIdentity(identity=response.identity_url, user=user)
-            identity.save()
-        else:
+        if not OpenIdentity.check_callback(callback, { 'satori.openid.salt' : oid_session['satori.openid.salt'] }):
+            raise OpenIdentityFailed("Authorization failed.")
+        try:
             identity = OpenIdentity.objects.get(identity=response.identity_url)
-        identity.get_ax(response, update=update)
-        token = Token(user=identity.user, auth='openid', validity=timedelta(hours=6))
-        return str(token)
-
-    OpenIdRedirect = Struct('OpenIdRedirect', (
-        ('token', unicode, False),
-        ('redirect', unicode, True),
-        ('html', unicode, True)
-    ))
-
-    @ExportMethod(OpenIdRedirect, [unicode, unicode], PCPermit(), [OpenIdentityFailed])
+            identity.get_ax(response)
+            identity.save()
+            session.login(identity.user, 'openid')
+            del data['openid']
+            session.data_pickle = data
+            session.save()
+            return str(token_container.token)
+        except OpenIdentity.DoesNotExist:
+            if session.role is not None:
+                try:
+                    user = User.objects.get(id=session.role.id)
+                    identity = OpenIdentity(identity=response.identity_url, user=user)
+                    identity.get_ax(response)
+                    identity.save()
+                    return str(token_container.token)
+                except User.DoesNotExist:
+                    raise OpenIdentityFailed("Authorization failed.")
+            else:
+                identity = OpenIdentity(identity=response.identity_url)
+                identity.get_ax(response)
+                oid_session = {
+                        'identity' : identity.identity,
+                        'country' : identity.country,
+                        'email' : identity.email,
+                        'name' : identity.name,
+                        'language' : identity.language,
+                }
+                data['openid'] = oid_session;
+                session.data_pickle = data
+                session.save()
+                return str(token_container.token)
     @staticmethod
-    def authenticate_start(openid, return_to):
-        return OpenIdentity.generic_start(openid=openid, return_to=return_to, user_id='')
-
-    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def authenticate_finish(return_to, arg_map):
-        return OpenIdentity.generic_finish(token_container.token, arg_map, return_to)
-
-    @ExportMethod(OpenIdRedirect, [unicode, unicode, unicode], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def register_start(login, openid, return_to):
-        res = OpenIdentity.generic_start(openid=openid, return_to=return_to, user_id='', update=True)
-        User.register(login=login, password=OpenIdentity.salt(), name='Unknown')
-        user = User.objects.get(login=login)
-        token = Token(res['token'])
-        session = token.data
-        session['satori.openid.user'] = user.id
-        token.data = session
-        res['token'] = str(token)
-        return res
-
-    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def register_finish(return_to, arg_map):
-        session = token_container.token.data
-        user = User.objects.get(id=session['satori.openid.user'])
-        return OpenIdentity.generic_finish(token_container.token, arg_map, return_to, user, update=True)
-
-    @ExportMethod(OpenIdRedirect, [unicode, unicode, unicode], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def add_start(password, openid, return_to):
-        user = Security.whoami_user()
-        if user.check_password(password):
-            res = OpenIdentity.generic_start(openid=openid, return_to=return_to, user_id=str(user.id))
-            token = Token(res['token'])
-            session = token.data
-            session['satori.openid.user'] = user.id
-            token.data = session
-            res['token'] = str(token)
-            return res
-        raise OpenIdentityFailed("Authorization failed.")
-
-    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def add_finish(return_to, arg_map):
-        session = token_container.token.data
-        user = User.objects.get(id=session['satori.openid.user'])
-        return OpenIdentity.generic_finish(token_container.token, arg_map, return_to, user)
+    def handle_login(session):
+        if session.auth == 'openid':
+            return
+        data = session.data_pickle
+        if data and 'openid' in data:
+            oid = data['openid']
+            if 'identity' in oid and 'country' in oid and 'email' in oid and 'name' in oid and 'language' in oid:
+                try:
+                    identity = OpenIdentity(user=session.user, identity=oid['identity'], country=oid['country'], email=oid['email'], name=oid['name'], language=oid['language'])
+                    identity.save()
+                except:
+                    pass
+    
+    def handle_logut(session):
+        return None
 
 class OpenIdentityEvents(Events):
     model = OpenIdentity
     on_insert = on_update = ['identity', 'user']
     on_delete = []
-

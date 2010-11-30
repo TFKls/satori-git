@@ -14,8 +14,8 @@ class TokenContainer(threading.local):
 
         self.token = token
 
-        if token.user_id:
-            userid = int(token.user_id)
+        if token.role:
+            userid = int(token.role.id)
         else:
             userid = Global.get_instance().anonymous.id
 

@@ -1,4 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+from token import token_container
 
 class PCPermit(object):
     def __call__(__pc__self, **kwargs):
@@ -101,11 +102,30 @@ class PCTokenUser(object):
         __pc__self.name = name
 
     def __call__(__pc__self, **kwargs):
-        return token_container.token.user_id == kwargs[__pc__self.name].id
+        return token_container.token.role and token_container.token.role.id == kwargs[__pc__self.name].id
 
     def __str__(__pc__self):
         return '{0} equals to calling user'.format(__pc__self.name)
 
+class PCTokenIsUser(object):
+    def __init__(__pc__self):
+        super(PCTokenIsUser, __pc__self).__init__()
+
+    def __call__(__pc__self, **kwargs):
+        return token_container.token.user
+
+    def __str__(__pc__self):
+        return 'user calling'
+
+class PCTokenIsMachine(object):
+    def __init__(__pc__self):
+        super(PCTokenIsMachine, __pc__self).__init__()
+
+    def __call__(__pc__self, **kwargs):
+        return token_container.token.machine
+
+    def __str__(__pc__self):
+        return 'machine calling'
 
 class PCRawBlob(object):
     def __init__(__pc__self, name):

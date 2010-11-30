@@ -25,19 +25,9 @@ class Security(object):
     @ExportMethod(DjangoStruct('Role'), [], PCPermit())
     @staticmethod
     def whoami():
-        if not token_container.token.user_id:
-            return None
-        try:
-            return Role.objects.get(id=token_container.token.user_id)
-        except Role.DoesNotExist:
-            return None
+        return token_container.token.role
 
     @ExportMethod(DjangoStruct('User'), [], PCPermit())
     @staticmethod
     def whoami_user():
-        if not token_container.token.user_id:
-            return None
-        try:
-            return User.objects.get(id=token_container.token.user_id)
-        except User.DoesNotExist:
-            return None
+        return token_container.token.user

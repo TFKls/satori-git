@@ -23,14 +23,13 @@ class Machine(Role):
     class ExportMeta(object):
         fields = [('address', 'VIEW'), ('netmask', 'VIEW'), ('secret', 'MANAGE')]
 
-    @ExportMethod(DjangoStruct('Machine'), [unicode, unicode, unicode, unicode], PCGlobal('ADMIN'))
+    @ExportMethod(DjangoStruct('Machine'), [unicode, unicode, unicode, unicode], PCAnd(PCTokenIsUser(), PCGlobal('ADMIN')))
     @staticmethod
     def register(name, secret, address, netmask):
         machine = Machine(name=name, address=address, netmask=netmask)
         machine.set_secret(secret)
         machine.save()
-        if token_container.token.user:
-            Privilege.grant(token_container.token.user, machine, 'MANAGE')
+        Privilege.grant(token_container.token.user, machine, 'MANAGE')
         return machine
 
     @ExportMethod(unicode, [unicode], PCPermit())
@@ -38,7 +37,8 @@ class Machine(Role):
     def authenticate(secret):
         for machine in Machine.objects.all():
             if machine.check_ip(server_info.client_ip) and machine.check_secret(secret):
-                return str(Token(user=machine, auth='machine', validity=timedelta(hours=24)))
+                session = Session(role=machine, auth='machine', deadline=datetime.now() + timedelta(hours=24)).save()
+                return str(Token(session=session, deadline=session.deadline))
 
     @ExportMethod(NoneType, [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))
     def set_secret(self, secret):
