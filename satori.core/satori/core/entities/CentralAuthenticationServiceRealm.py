@@ -14,7 +14,6 @@ from xml.dom import minidom
 @ExportModel
 class CentralAuthenticationServiceRealm(Entity):
 
-    __module__ = "satori.core.models"
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_centralauthenticationservicerealm')
 
     name          = models.CharField(max_length=64, unique=True)

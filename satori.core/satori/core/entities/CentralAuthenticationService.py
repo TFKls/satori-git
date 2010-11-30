@@ -17,116 +17,123 @@ import traceback
 
 CentralAuthenticationServiceFailed = DefineException('CentralAuthenticationServiceFailed', 'Authorization failed')
 
+CASRedirect = Struct('CASRedirect', (
+    ('token', unicode, False),
+    ('redirect', unicode, True),
+))
+
 @ExportModel
 class CentralAuthenticationService(Entity):
 
-    __module__ = "satori.core.models"
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_centralauthenticationservice')
 
     realm    = models.ForeignKey('CentralAuthenticationServiceRealm', related_name='centralauthenticationservices')
-    identity = models.CharField(max_length=512, unique=True)
+    identity = models.CharField(max_length=512)
     user     = models.ForeignKey('User', related_name='authorized_cass')
 
     email    = models.CharField(max_length=64, null=True)
     name     = models.CharField(max_length=64, null=True)
-    
-    def get_ax(self, response, update =False):
-        print response
 
+    def get_info(self, cas_info):
+        print cas_info
+        if cas_info is None:
+            return
+        self.email = cas_info.get('email', self.email)
+        firstname = cas_info.get('first', None)
+        lastname = cas_info.get('last', None)
+        if firstname is not None and lastname is not None:
+            self.name = firstname + ' ' + lastname
+    
+    @ExportMethod(CASRedirect, [unicode, unicode], PCPermit(), [CentralAuthenticationServiceFailed])
     @staticmethod
-    def generic_start(realm_name, return_to, user_id ='', valid =1):
-        realm = CentralAuthenticationServiceRealm.objects.get(name=realm_name)
+    def start(realm_name, return_to):
         salt = OpenIdentity.salt()
-        session = { 'satori.cas.salt' : salt, 'satori.cas.realm' : realm.id }
+        try:
+            realm = CentralAuthenticationServiceRealm.objects.get(name=realm_name)
+        except CentralAuthenticationServiceRealm.DoesNotExist:
+            raise CentralAuthenticationServiceFailed("Authorization failed.")
+        cas_session = { 'satori.cas.salt' : salt, 'satori.cas.realm' : realm.id }
         callback = OpenIdentity.modify_callback(return_to, { 'satori.cas.salt' : salt })
         redirect = realm.login_url(callback)
-        token = Token(user_id=user_id, auth='cas', validity=timedelta(hours=valid), data=session)
+
+        session = Session.start()
+        data = session.data_pickle
+        if data is None:
+            data = {}
+        data['cas'] = cas_session
+        session.data_pickle = data
+        session.save()
+
         return {
-            'token' : str(token),
+            'token' : str(token_container.token),
             'redirect' : redirect,
         }
+    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [CentralAuthenticationServiceFailed])
     @staticmethod
-    def generic_finish(token, args, return_to, user=None, update=False):
-        if token.auth != 'cas':
-            return str(token)
-        session = token.data
-        realm = CentralAuthenticationServiceRealm.objects.get(id=session['satori.cas.realm'])
-        ticket = args['ticket']
-        if not OpenIdentity.check_callback(callback, { 'satori.cas.salt' : session['satori.cas.salt'] }):
-            raise Exception("CAS failed.")
-        response_raw = realm.validate_ticket(return_to, ticket)
-        response = StringIO(response_raw)
-        valid = response.readline()
-        identity = response.readline()
-        if valid != 'yes':
+    def finish(return_to, arg_map):
+        session = Session.start()
+        data = session.data_pickle
+        if data is None or 'cas' not in data:
             raise CentralAuthenticationServiceFailed("Authorization failed.")
-        if user:
-            cas = CentralAuthenticationService(realm=realm, identity=identity, user=user)
-            cas.save()
-        else:
-            cas = CentralAuthenticationService.objects.get(realm=realm, identity=identity)
-        cas.handle_response(response_raw, update=update)
-        token = Token(user=identity.user, auth='cas', validity=timedelta(hours=6))
-        return str(token)
-
-    CASRedirect = Struct('CASRedirect', (
-        ('token', unicode, False),
-        ('redirect', unicode, True),
-    ))
-
-    @ExportMethod(CASRedirect, [unicode, unicode], PCPermit(), [OpenIdentityFailed])
+        cas_session = data['cas']
+        realm = CentralAuthenticationServiceRealm.objects.get(id=cas_session['satori.cas.realm'])
+        ticket = arg_map['ticket']
+        if not OpenIdentity.check_callback(return_to, { 'satori.cas.salt' : cas_session['satori.cas.salt'] }):
+            raise CentralAuthenticationServiceFailed("CAS failed.")
+        cas_user, cas_info = realm.validate(return_to, ticket)
+        try:
+            identity = CentralAuthenticationService.objects.get(realm=realm, identity=cas_user)
+            identity.get_info(cas_info)
+            identity.save()
+            session.login(identity.user, 'cas')
+            del data['cas']
+            session.data_pickle = data
+            session.save()
+            return str(token_container.token)
+        except CentralAuthenticationService.DoesNotExist:
+            if session.role is not None:
+                try:
+                    user = User.objects.get(id=session.role.id)
+                    identity = CentralAuthenticationService(realm=realm, identity=cas_user, user=user)
+                    identity.get_info(cas_info)
+                    identity.save()
+                    del data['cas']
+                    session.data_pickle = data
+                    session.save()
+                    return str(token_container.token)
+                except User.DoesNotExist:
+                    raise CentralAuthenticationServiceFailed("Authorization failed.")
+            else:
+                identity = CentralAuthenticationService(realm=realm, identity=cas_user)
+                identity.get_info(cas_info)
+                oid_session = {
+                        'realm' : identity.realm.id,
+                        'identity' : identity.identity,
+                        'email' : identity.email,
+                        'name' : identity.name,
+                }
+                data['cas'] = oid_session;
+                session.data_pickle = data
+                session.save()
+                return str(token_container.token)
     @staticmethod
-    def authenticate_start(realm_name, return_to):
-        return CentralAuthenticationService.generic_start(realm_name=realm_name, return_to=return_to, user_id='')
-
-    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def authenticate_finish(return_to, arg_map):
-        return CentralAuthenticationService.generic_finish(token_container.token, arg_map, return_to)
-
-    @ExportMethod(CASRedirect, [unicode, unicode, unicode], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def register_start(login, openid, return_to):
-        res = OpenIdentity.generic_start(openid=openid, return_to=return_to, user_id='', update=True)
-        User.register(login=login, password=OpenIdentity.salt(), name='Unknown')
-        user = User.objects.get(login=login)
-        token = Token(res['token'])
-        session = token.data
-        session['satori.openid.user'] = user.id
-        token.data = session
-        res['token'] = str(token)
-        return res
-
-    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def register_finish(return_to, arg_map):
-        session = token_container.token.data
-        user = User.objects.get(id=session['satori.openid.user'])
-        return OpenIdentity.generic_finish(token_container.token, arg_map, return_to, user, update=True)
-
-    @ExportMethod(CASRedirect, [unicode, unicode, unicode], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def add_start(password, openid, return_to):
-        user = Security.whoami_user()
-        if user.check_password(password):
-            res = OpenIdentity.generic_start(openid=openid, return_to=return_to, user_id=str(user.id))
-            token = Token(res['token'])
-            session = token.data
-            session['satori.openid.user'] = user.id
-            token.data = session
-            res['token'] = str(token)
-            return res
-        raise OpenIdentityFailed("Authorization failed.")
-
-    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [OpenIdentityFailed])
-    @staticmethod
-    def add_finish(return_to, arg_map):
-        session = token_container.token.data
-        user = User.objects.get(id=session['satori.openid.user'])
-        return OpenIdentity.generic_finish(token_container.token, arg_map, return_to, user)
+    def handle_login(session):
+        if session.auth == 'cas':
+            return
+        data = session.data_pickle
+        if data and 'cas' in data:
+            cas = data['cas']
+            if 'realm' in cas and 'identity' in cas and 'email' in cas and 'name' in cas:
+                try:
+                    identity = CentralAuthenticationService(user=session.user, realm=CentralAuthenticationServiceRealm.get(id=cas['realm']), identity=cas['identity'], email=cas['email'], name=cas['name'])
+                    identity.save()
+                except:
+                    pass
+    
+    def handle_logut(session):
+        return None
 
 class CentralAuthenticationServiceEvents(Events):
     model = CentralAuthenticationService
-    on_insert = on_update = ['identity', 'user']
+    on_insert = on_update = ['realm', 'identity', 'user']
     on_delete = []
-

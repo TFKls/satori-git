@@ -100,8 +100,8 @@ class OpenIdentity(Entity):
     @staticmethod
     def start(openid, return_to):
         salt = OpenIdentity.salt()
-        oid_session = { 'satori.openid.salt' : salt }
         realm = OpenIdentity.realm(return_to)
+        oid_session = { 'satori.openid.salt' : salt }
         callback = OpenIdentity.modify_callback(return_to, { 'satori.openid.salt' : salt })
         store = Store()
         request = consumer.Consumer(oid_session, store).begin(openid)
@@ -158,6 +158,9 @@ class OpenIdentity(Entity):
                     identity = OpenIdentity(identity=response.identity_url, user=user)
                     identity.get_ax(response)
                     identity.save()
+                    del data['openid']
+                    session.data_pickle = data
+                    session.save()
                     return str(token_container.token)
                 except User.DoesNotExist:
                     raise OpenIdentityFailed("Authorization failed.")
