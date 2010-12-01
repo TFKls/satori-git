@@ -35,12 +35,14 @@ class CentralAuthenticationService(Entity):
     name     = models.CharField(max_length=64, null=True)
 
     def get_info(self, cas_info):
-        print cas_info
         if cas_info is None:
             return
+        self.email = cas_info.get('mail', self.email)
         self.email = cas_info.get('email', self.email)
-        firstname = cas_info.get('first', None)
-        lastname = cas_info.get('last', None)
+        firstname = cas_info.get('imie', None)
+        firstname = cas_info.get('first', firstname)
+        lastname = cas_info.get('nazwisko', None)
+        lastname = cas_info.get('last', lastname)
         if firstname is not None and lastname is not None:
             self.name = firstname + ' ' + lastname
     
@@ -88,6 +90,7 @@ class CentralAuthenticationService(Entity):
             session.login(identity.user, 'cas')
             del data['cas']
             session.data_pickle = data
+            session.cas_ticket = ticket
             session.save()
             return str(token_container.token)
         except CentralAuthenticationService.DoesNotExist:

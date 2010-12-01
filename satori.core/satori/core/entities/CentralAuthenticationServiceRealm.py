@@ -66,7 +66,7 @@ class CentralAuthenticationServiceRealm(Entity):
         if len(tags) > 0:
             ret = []
             for node in xml_node.getElementsByTagNameNS('*', tags[0]):
-                ret += Client._xml_find(node, tags[1:])
+                ret += CentralAuthenticationServiceRealm._xml_find(node, tags[1:])
             return ret
         else:
             return [xml_node]
@@ -74,7 +74,7 @@ class CentralAuthenticationServiceRealm(Entity):
     def validate(self, service, ticket):
         ticket = str(ticket)
         if ticket[0:3] != 'ST-':
-            raise ClientException("Ticket '%s' is ill-formed" % (ticket,))
+            return (None, {})
         if self.version == self.CAS_VERSION_1_0:
             url = self.validate_url(service=service, ticket=ticket)
             resp = urllib2.urlopen(url).readlines()
