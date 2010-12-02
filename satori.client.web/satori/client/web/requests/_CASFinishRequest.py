@@ -15,7 +15,8 @@ class CASFinishRequest(Request):
         lw_path = vars.get('lw_path', '')
         d = ParseURL(back_to)
         try:
-            token_container.set_token(CentralAuthenticationService.finish(arg_map=dict(request.REQUEST.items()), return_to=request.build_absolute_uri()))
+            res = CentralAuthenticationService.finish(arg_map=dict(request.REQUEST.items()), callback=request.build_absolute_uri())
+            token_container.set_token(res['token'])
         except:
             follow(d,lw_path)['status'] = ['failed']
         return GetLink(d,path)

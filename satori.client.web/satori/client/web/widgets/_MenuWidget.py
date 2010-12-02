@@ -32,6 +32,7 @@ class MenuWidget(Widget):
 
         addwidget(True, 'News', 'news')
         addwidget(True, 'About', 'about')
+        addwidget(CurrentUser(), 'Identities', 'identities')
         addwidget(not contest,'Select contest','selectcontest')
         addwidget(contest,'Problems','problems',contest,'VIEW')
         addwidget(cuser,'Submit','submit',contest,'VIEW')
