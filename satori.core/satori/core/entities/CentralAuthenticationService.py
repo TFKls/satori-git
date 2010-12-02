@@ -4,7 +4,7 @@ from django.db import models
 
 from satori.core.dbev          import Events
 
-from satori.core.models import Entity, User, CentralAuthenticationServiceRealm, OpenIdentity
+from satori.core.models import Entity, User, OpenIdentity
 from satori.core.sec import Token, Store
 
 from datetime import datetime, timedelta
@@ -100,7 +100,7 @@ class CentralAuthenticationService(Entity):
             if len(tags) > 0:
                 ret = []
                 for node in xml_node.getElementsByTagNameNS('*', tags[0]):
-                    ret += CentralAuthenticationServiceRealm._xml_find(node, tags[1:])
+                    ret += CentralAuthenticationService.Realm._xml_find(node, tags[1:])
                 return ret
             else:
                 return [xml_node]
