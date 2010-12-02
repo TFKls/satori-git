@@ -13,7 +13,9 @@ import string
 import random
 import urlparse
 import urllib
+import urllib2
 import traceback
+from xml.dom import minidom
 
 CentralAuthenticationServiceFailed = DefineException('CentralAuthenticationServiceFailed', 'Authorization failed')
 CASFailed = DefineException('CASFailed', 'CAS Authorization failed: {reason}',
