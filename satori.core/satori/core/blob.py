@@ -22,7 +22,7 @@ def server(request, model, id, name, group):
         group = group.encode('utf-8')
 
     try:
-        token_container.set_token(Token(request.COOKIES.get('satori_token', '')))
+        token_container.check_set_token_str(request.COOKIES.get('satori_token', ''))
 
         model = getattr(satori.core.models, model, None)
         if model is None:
@@ -114,7 +114,7 @@ def download(request, hash):
         hash = hash.encode('utf-8')
 
     try:
-        token_container.set_token(Token(request.COOKIES.get('satori_token', '')))
+        token_container.check_set_token_str(request.COOKIES.get('satori_token', ''))
 
         if not Privilege.global_demand('RAW_BLOB'):
             return HttpResponseForbidden()
@@ -144,7 +144,7 @@ def upload(request):
         return HttpResponseNotAllowed(['PUT'])
 
     try:
-        token_container.set_token(Token(request.COOKIES.get('satori_token', '')))
+        token_container.check_set_token_str(request.COOKIES.get('satori_token', ''))
 
         if not Privilege.global_demand('RAW_BLOB'):
             return HttpResponseForbidden()

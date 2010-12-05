@@ -10,14 +10,12 @@ from satori.ars.model import *
 
 from satori.core.export.oa           import BadAttributeType, Attribute, AnonymousAttribute, generate_attribute_group
 from satori.core.export.pc           import PCPermit, PCArg, PCGlobal, PCAnd, PCOr, PCEach, PCEachKey, PCEachValue, PCTokenUser, PCRawBlob, PCTokenIsUser, PCTokenIsMachine
-from satori.core.export.token        import token_container
+from satori.core.export.token        import token_container, TokenInvalid, TokenExpired
 from satori.core.export.type_helpers import Struct, DefineException, TypedList, TypedMap, python_to_ars_type
 from satori.core.export.types_django import ArgumentNotFound, CannotReturnObject, generate_django_types, ars_django_structure
 from satori.core.export.types_django import DjangoId, DjangoStruct, DjangoIdList, DjangoStructList
 
 
-TokenInvalid = DefineException('TokenInvalid', 'The provided token is invalid')
-TokenExpired = DefineException('TokenExpired', 'The provided token has expired')
 AccessDenied = DefineException('AccessDenied', 'You don\'t have rights to call this procedure')
 
 
@@ -131,15 +129,7 @@ class ExportMethod(object):
             transaction.managed(True)
 
             try:
-                try:
-                    token = Token(kwargs.pop('token', ''))
-                except:
-                    raise TokenInvalid()
-
-                if not token.valid:
-                    raise TokenExpired()
-
-                token_container.set_token(token)
+                token_container.check_set_token_str(kwargs.pop('token', ''))
                 
                 for arg_name in kwargs:
                     kwargs[arg_name] = ars_proc.parameters[arg_name].type.convert_from_ars(kwargs[arg_name])
