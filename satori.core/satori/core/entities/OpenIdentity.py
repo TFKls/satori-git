@@ -20,27 +20,44 @@ from openid.extensions import sreg as oidsreg
 from openid.extensions import pape as oidpape
 from openid.extensions import ax as oidax
 
-OpenIdentityFailed = DefineException('OpenIdentityFailed', 'Invalid open identity')
+OpenIdFailed = DefineException('OpenIdFailed', 'Open Identity Authorization failed: {reason}',
+    [('reason', unicode, False)])
+InvalidOpenIdProvider = DefineException('InvalidOpenIdProvider', 'The specified provider \'{provider}\' is invalid: {reason}',
+    [('provider', unicode, False), ('reason', unicode, False)])
+InvalidOpenIdCallback = DefineException('InvalidOpenIdCallback', 'The specified callback parameters are invalid: {reason}',
+    [('reason', unicode, False)])
 
 OpenIdRedirect = Struct('OpenIdRedirect', (
     ('token', unicode, False),
     ('redirect', unicode, True),
     ('html', unicode, True)
 ))
+OpenIdResult = Struct('OpenIdResult', (
+    ('token', unicode, False),
+    ('linked', bool, False),
+    ('salt', unicode, True)
+))
 
 @ExportModel
 class OpenIdentity(Entity):
 
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_openidentity')
-
+    
+    provider = models.CharField(max_length=512)
     identity = models.CharField(max_length=512, unique=True)
+
     user     = models.ForeignKey('User', related_name='authorized_openids')
 
     country  = models.CharField(max_length=64, null=True)
     email    = models.CharField(max_length=64, null=True)
     name     = models.CharField(max_length=64, null=True)
     language = models.CharField(max_length=64, null=True)
+
+    class ExportMeta(object):
+        fields = [('provider', 'VIEW'), ('user', 'VIEW'), ('country', 'VIEW'), ('email', 'VIEW'), ('name', 'VIEW'), ('language', 'VIEW')]
     
+    salt_param = 'satori.openid.salt'
+
     @staticmethod
     def salt():
         chars = string.letters + string.digits
@@ -96,15 +113,22 @@ class OpenIdentity(Entity):
         lastname = axr.getSingle('http://axschema.org/namePerson/last', None)
         if firstname is not None and lastname is not None:
             self.name = firstname + ' ' + lastname
-    @ExportMethod(OpenIdRedirect, [unicode, unicode], PCPermit(), [OpenIdentityFailed])
+    @ExportMethod(OpenIdRedirect, [unicode, unicode], PCPermit(), [InvalidOpenIdProvider])
     @staticmethod
     def start(openid, return_to):
         salt = OpenIdentity.salt()
         realm = OpenIdentity.realm(return_to)
-        oid_session = { 'satori.openid.salt' : salt }
-        callback = OpenIdentity.modify_callback(return_to, { 'satori.openid.salt' : salt })
+        oid_session = {
+            '_type' : 'openid',
+            '_provider' : openid,
+        }
+        callback = OpenIdentity.modify_callback(return_to, { OpenIdentity.salt_param : salt })
         store = Store()
-        request = consumer.Consumer(oid_session, store).begin(openid)
+        try:
+            request = consumer.Consumer(oid_session, store).begin(openid)
+        except DiscoveryFailure as df:
+            raise InvalidOpenIdProvider(provider=openid, reason='discovery failed')
+
         OpenIdentity.add_ax(request)
         redirect = ''
         html = ''
@@ -112,13 +136,13 @@ class OpenIdentity(Entity):
             redirect = request.redirectURL(realm, callback)
         else:
             form = request.formMarkup(realm, callback, False, {'id': 'satori_openid_form'})
-            html = '<html><body onload="document.getElementById(\'satori_openid_form\').submit()">' + form + '</body></html>'
+            html = '<html><body onload="f=document.getElementById(\'satori_openid_form\'); if (f) { f.style.visibility = \'hidden\'; f.submit() }">' + form + '</body></html>'
 
         session = Session.start()
         data = session.data_pickle
         if data is None:
             data = {}
-        data['openid'] = oid_session
+        data[salt] = oid_session
         session.data_pickle = data
         session.save()
 
@@ -127,75 +151,116 @@ class OpenIdentity(Entity):
             'redirect' : redirect,
             'html' : html
         }
-    @ExportMethod(unicode, [unicode, TypedMap(unicode, unicode)], PCPermit(), [OpenIdentityFailed])
+    @ExportMethod(OpenIdResult, [unicode, TypedMap(unicode, unicode)], PCPermit(), [InvalidOpenIdCallback, OpenIdFailed])
     @staticmethod
-    def finish(return_to, arg_map):
+    def finish(callback, arg_map):
         session = Session.start()
+        if OpenIdentity.salt_param not in arg_map:
+            raise InvalidOpenIdCallback(reason="'" + OpenIdentity.salt_param + "' not specified")
+        salt = arg_map[OpenIdentity.salt_param]
         data = session.data_pickle
-        if data is None or 'openid' not in data:
-            raise OpenIdentityFailed("Authorization failed.")
-        oid_session = data['openid']
+        if data is None or salt not in data:
+            raise InvalidOpenIdCallback(reason="'" + OpenIdentity.salt_param + "'  has wrong value")
+        oid_session = data[salt]
+        if '_type' not in oid_session or oid_session['_type'] != 'openid':
+            raise InvalidOpenIdCallback(reason="'" + OpenIdentity.salt_param + "'  has wrong value")
         store = Store()
-        response = consumer.Consumer(oid_session, store).complete(arg_map, return_to)
+        response = consumer.Consumer(oid_session, store).complete(arg_map, callback)
+        if response.status == consumer.CANCEL:
+            raise OpenIdFailed(reason='request was cancelled')
+        if response.status == consumer.CANCEL:
+            raise OpenIdFailed(reason=response.message)
         if response.status != consumer.SUCCESS:
-            raise OpenIdentityFailed("Authorization failed.")
+            raise OpenIdFailed("authorization failed")
         callback = response.getReturnTo()
-        if not OpenIdentity.check_callback(callback, { 'satori.openid.salt' : oid_session['satori.openid.salt'] }):
-            raise OpenIdentityFailed("Authorization failed.")
+        if not OpenIdentity.check_callback(callback, { OpenIdentity.salt_param : salt }):
+            raise InvalidOpenIdCallback(reason="'" + OpenIdentity.salt_param + "'  has wrong value")
         try:
-            identity = OpenIdentity.objects.get(identity=response.identity_url)
+            identity = OpenIdentity.objects.get(provider=oid_session['_provider'], identity=response.identity_url)
             identity.get_ax(response)
             identity.save()
             session.login(identity.user, 'openid')
-            del data['openid']
+            del data[salt]
             session.data_pickle = data
             session.save()
-            return str(token_container.token)
+            return {
+                'token' : str(token_container.token),
+                'linked' : True,
+            }
         except OpenIdentity.DoesNotExist:
-            if session.role is not None:
-                try:
-                    user = User.objects.get(id=session.role.id)
-                    identity = OpenIdentity(identity=response.identity_url, user=user)
-                    identity.get_ax(response)
-                    identity.save()
-                    del data['openid']
-                    session.data_pickle = data
-                    session.save()
-                    return str(token_container.token)
-                except User.DoesNotExist:
-                    raise OpenIdentityFailed("Authorization failed.")
-            else:
-                identity = OpenIdentity(identity=response.identity_url)
-                identity.get_ax(response)
-                oid_session = {
-                        'identity' : identity.identity,
-                        'country' : identity.country,
-                        'email' : identity.email,
-                        'name' : identity.name,
-                        'language' : identity.language,
+            identity = OpenIdentity(provider=oid_session['_provider'], identity=response.identity_url)
+            identity.get_ax(response)
+            oid_session = {
+                '_type' : 'openid',
+                '_success' : {
+                    'provider' : identity.provider,
+                    'identity' : identity.identity,
+                    'country' : identity.country,
+                    'email' : identity.email,
+                    'name' : identity.name,
+                    'language' : identity.language,
                 }
-                data['openid'] = oid_session;
-                session.data_pickle = data
-                session.save()
-                return str(token_container.token)
+            }
+            data[salt] = oid_session;
+            session.data_pickle = data
+            session.save()
+            return {
+                'token' : str(token_container.token),
+                'linked' : False,
+                'salt' : salt,
+            }
+
+    @ExportMethod(TypedList(DjangoStruct('OpenIdentity')), [], PCTokenIsUser(), [])
+    @staticmethod
+    def get_linked():
+        session = Session.start()
+        data = session.data_pickle
+        ret = []
+        return OpenIdentity.objects.filter(user=token_container.token.user)
+
+    @ExportMethod(TypedMap(unicode, DjangoStruct('OpenIdentity')), [], PCTokenIsUser(), [])
+    @staticmethod
+    def get_ready():
+        session = Session.start()
+        data = session.data_pickle
+        ret = {}
+        if type(data) == type({}):
+            for key, value in data.items():
+                if type(value) == type({}) and '_type' in value and value['_type'] == 'openid' and '_success' in value:
+                    oid = OpenIdentity(**value['_success'])
+                    oid.user = token_container.token.user
+                    oid.id = token_container.token.user.id
+                    ret[str(key)] = oid
+        return ret
+
+    @ExportMethod(NoneType, [unicode], PCTokenIsUser(), [OpenIdFailed])
+    @staticmethod
+    def add(salt):
+        session = Session.start()
+        data = session.data_pickle
+        if data is None or salt not in data:
+            raise OpenIdFailed(reason="'salt' has wrong value")
+        oid_session = data[salt]
+        if '_type' not in oid_session or oid_session['_type'] != 'openid' or '_success' not in oid_session:
+            raise OpenIdFailed(reason="'salt' has wrong value")
+        identity = OpenIdentity(**oid_session['_success'])
+        identity.user = token_container.token.user
+        identity.save()
+        Privilege.grant(identity.user, identity, 'MANAGE')
+        del data[salt]
+        session.data_pickle = data
+        session.save()
+
+
     @staticmethod
     def handle_login(session):
-        if session.auth == 'openid':
-            return
-        data = session.data_pickle
-        if data and 'openid' in data:
-            oid = data['openid']
-            if 'identity' in oid and 'country' in oid and 'email' in oid and 'name' in oid and 'language' in oid:
-                try:
-                    identity = OpenIdentity(user=session.user, identity=oid['identity'], country=oid['country'], email=oid['email'], name=oid['name'], language=oid['language'])
-                    identity.save()
-                except:
-                    pass
+        return None
     
+    @staticmethod
     def handle_logut(session):
         return None
 
 class OpenIdentityEvents(Events):
     model = OpenIdentity
-    on_insert = on_update = ['identity', 'user']
+    on_insert = on_update = ['provider', 'identity', 'user']
     on_delete = []

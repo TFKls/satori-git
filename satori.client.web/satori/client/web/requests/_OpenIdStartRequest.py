@@ -14,16 +14,17 @@ class OpenIdStartRequest(Request):
     @classmethod
     def process(cls, request):
         vars = request.REQUEST
-        d = ParseURL(vars.get('back_to', ''))
+        back_to = vars.get('back_to', '')
         path = vars.get('path', '')
-        lw_path = vars['lw_path']
+        lw_path = vars.get('lw_path', '')
         openid = vars['openid']
+        d = ParseURL(back_to)
         finisher = request.build_absolute_uri()
         callback = urlparse.urlparse(finisher)
         qs = urlparse.parse_qs(callback.query)
-        qs['back_to'] = (vars['back_to'],)
-        qs['path'] = (vars['path'],)
-        qs['lw_path'] = (vars['lw_path'],)
+        qs['back_to'] = (back_to,)
+        qs['path'] = (path,)
+        qs['lw_path'] = (lw_path,)
         query = []
         for key, vlist in qs.items():
             for value in vlist:

@@ -14,16 +14,17 @@ class CASStartRequest(Request):
     @classmethod
     def process(cls, request):
         vars = request.REQUEST
-        d = ParseURL(vars.get('back_to', ''))
+        back_to = vars.get('back_to', '')
         path = vars.get('path', '')
-        lw_path = vars['lw_path']
+        lw_path = vars.get('lw_path', '')
         cas = vars['cas']
+        d = ParseURL(back_to)
         finisher = request.build_absolute_uri()
         callback = urlparse.urlparse(finisher)
         qs = urlparse.parse_qs(callback.query)
-        qs['back_to'] = (vars['back_to'],)
-        qs['path'] = (vars['path'],)
-        qs['lw_path'] = (vars['lw_path'],)
+        qs['back_to'] = (back_to,)
+        qs['path'] = (path,)
+        qs['lw_path'] = (lw_path,)
         query = []
         for key, vlist in qs.items():
             for value in vlist:
@@ -32,7 +33,7 @@ class CASStartRequest(Request):
         path = '/process.cas_finish'
         finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
         try:
-            res = CentralAuthenticationService.start(realm_name=cas, return_to=finisher)
+            res = CentralAuthenticationService.start(realm=cas, return_to=finisher)
             token_container.set_token(res['token'])
             return HttpResponseRedirect(res['redirect'])
         except:

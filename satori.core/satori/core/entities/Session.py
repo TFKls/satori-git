@@ -88,9 +88,12 @@ class Session(models.Model):
         return ret
 
     def _get_data_pickle(self):
-        if not self.data:
+        if self.data is None:
             return None
         return pickle.loads(base64.urlsafe_b64decode(str(self.data)))
     def _set_data_pickle(self, data):
-        self.data = str(base64.urlsafe_b64encode(str(pickle.dumps(data))))
+        if data is None:
+            self.data = None
+        else:
+            self.data = str(base64.urlsafe_b64encode(str(pickle.dumps(data))))
     data_pickle = property(_get_data_pickle, _set_data_pickle)

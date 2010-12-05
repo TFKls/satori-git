@@ -1,0 +1,43 @@
+<!--<h3>Identities</h3> -->
+
+<div class = "">
+    <span class = "">
+        <table class="tlist">
+{% for o in widget.openid_linked %}
+            <tr><td><h4>{{ o.provider }}</h4></td><td><form method="post" action="process.openid_del"><input type="hidden" name="id" value="{{o.id}}"/><input type="submit" value="REMOVE" class="button"/></form></td></tr>
+{% endfor %}
+{% for o in widget.cas_linked %}
+            <tr><td><h4>{{ o.provider }}</h4></td><td><form method="post" action="process.cas_del"><input type="hidden" name="id" value="{{o.id}}"/><input type="submit" value="REMOVE" class="button"/></form></td></tr>
+{% endfor %}
+{% for o in widget.openid_ready %}
+            <tr><td><h4>{{ o.provider }}</h4></td><td><form method="post" action="process.openid_add"><input type="hidden" name="salt" value="{{o.salt}}"/><input type="submit" value="ADD" class="button"/></form></td></tr>
+{% endfor %}
+{% for o in widget.cas_ready %}
+            <tr><td><h4>{{ o.provider }}</h4></td><td><form method="post" action="process.cas_add"><input type="hidden" name="salt" value="{{o.salt}}"/><input type="submit" value="ADD" class="button"/></form></td></tr>
+{% endfor %}
+
+        </table>
+    </span>
+</div>
+<form method="post" action="process.openid_start" >
+    <p>You can also add <strong>Google Account</strong> as an alternative way to enter.
+    <input type="submit" value="Sign in with Google" class="button" style="margin-left: 2em"/>
+
+    <input type="hidden" name="openid" value="https://www.google.com/accounts/o8/id"/>
+    <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+    <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
+    <input type="hidden" name="path" value="{{widget.path}}"/>
+    </p>
+</form>
+
+<form method="post" action="process.cas_start" >
+    <p>You can also add <strong>UJ Account</strong> as an alternative way to enter.
+    <input type="submit" value="Sign in with UJ" class="button" style="margin-left: 2em"/>
+
+    <input type="hidden" name="cas" value="https://login.uj.edu.pl/"/>
+    <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+    <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
+    <input type="hidden" name="path" value="{{widget.path}}"/>
+    </p>
+</form>
+
