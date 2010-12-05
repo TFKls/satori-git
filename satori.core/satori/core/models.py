@@ -30,7 +30,7 @@ def _load_models():
             filename = os.path.join(entities_dir, filename)
 
             with open(filename, 'r') as f:
-                moduleast = ast.parse(f.read())
+                moduleast = ast.parse(f.read(), filename)
                 modulecode = compile(moduleast, filename, 'exec')
 
             provides = set()
