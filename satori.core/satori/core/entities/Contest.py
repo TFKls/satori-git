@@ -2,9 +2,9 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
+from satori.core.dbev import Events
 
-from satori.core.models import Entity, Submit, Contestant, User
+from satori.core.models import Entity
 
 
 
@@ -26,11 +26,16 @@ class Contest(Entity):
     problems    = models.ManyToManyField('Problem', through='ProblemMapping')
     contestant_role = models.ForeignKey('Role')
 
+    lock_start  = models.DateTimeField(null=True)
+    lock_finish = models.DateTimeField(null=True)
+    lock_address = models.IPAddressField(default='0.0.0.0')
+    lock_netmask = models.IPAddressField(default='255.255.255.255')
+
     generate_attribute_group('Contest', 'public_files', 'VIEW', 'MANAGE', globals(), locals())
     generate_attribute_group('Contest', 'intra_files', 'VIEW_INTRA_FILES', 'MANAGE', globals(), locals())
 
     class ExportMeta(object):
-        fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE')]
+        fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
     def save(self):
         self.fixup_public_files()
@@ -41,6 +46,20 @@ class Contest(Entity):
         return self.name
     # TODO: add presentation options
 
+    @ExportMethod(DjangoStruct('Contest'), [], PCPermit())
+    @staticmethod
+    def get_current_lock():
+        contests = Contest.objects.filter(lock_start__gte=datetime.now(), lock_finish__lte=datetime.now())
+        contests = [contest for contests in contests
+                if (ipaddr.IPv4Address(server_info.client_ip) in ipaddr.IPv4Network(contest.lock_address + '/' + contest.lock_netmask))]
+        
+        if len(contests) == 0:
+            return None
+        if len(contests) > 1:
+            raise Contest.MultipleObjectsReturned()
+        else:
+            return contests[0]
+        
     @classmethod
     def inherit_rights(cls):
         inherits = super(Contest, cls).inherit_rights()
@@ -51,7 +70,7 @@ class Contest(Entity):
         cls._inherit_add(inherits, 'JOIN', 'id', 'MANAGE')
         return inherits
 
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('User')], PCOr(PCTokenUser('user'), PCArg('self', 'MANAGE')))
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('Role')], PCOr(PCTokenUser('user'), PCArg('self', 'MANAGE')))
     def find_contestant(self, user):
         try:
             return Contestant.objects.get(contest=self, children__id=user.id)
