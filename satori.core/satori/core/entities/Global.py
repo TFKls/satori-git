@@ -16,6 +16,7 @@ class Global(Entity):
 
     anonymous = models.ForeignKey('Role', related_name='global_anonymous+')
     authenticated = models.ForeignKey('Role', related_name='global_authenticated+')
+    zero = models.ForeignKey('Role', related_name='global_zero+')
 
     generate_attribute_group('Global', 'checkers', 'ADMIN', 'ADMIN', globals(), locals())
     generate_attribute_group('Global', 'generators', 'ADMIN', 'ADMIN', globals(), locals())
@@ -25,6 +26,13 @@ class Global(Entity):
 
         self.fixup_checkers()
         self.fixup_generators()
+
+        try:
+            x = self.zero
+        except Role.DoesNotExist:
+            zero = Role(name='ZERO')
+            zero.save()
+            self.zero = zero
 
         try:
             x = self.authenticated
