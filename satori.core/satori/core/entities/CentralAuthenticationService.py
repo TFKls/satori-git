@@ -144,14 +144,14 @@ class CentralAuthenticationService(Entity):
                 artifact = post.createElement('samlp:AssertionArtifact')
                 request.appendChild(artifact)
                 artifact.appendChild(post.createTextNode(ticket))
-                print url, post.toprettyxml()
+                print url, post.toprettyxml(encoding='utf-8')
                 resp = minidom.parse(urllib2.urlopen(urllib2.Request(url=url, data=post.toxml(), headers = {
                     'cache-control': 'no-cache',
                     'pragma': 'no-cache',
                     'accept': 'text/xml',
                     'content-type': 'text/xml',
                     })))
-                print resp.toprettyxml()
+                print resp.toprettyxml(encoding='utf-8')
                 user = self._xml_find(resp, [ 'Envelope', 'Body', 'Response', 'Assertion', 'AuthenticationStatement', 'NameIdentifier' ])
                 if len(user) < 1:
                     return (None, {})
