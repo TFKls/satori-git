@@ -2,11 +2,10 @@
 
 from django.db import models
 
-from satori.core.dbev import Events
+from satori.ars.server import server_info
+from satori.core.dbev  import Events
 
 from satori.core.models import Entity
-
-
 
 @ExportModel
 class Contest(Entity):
@@ -49,8 +48,8 @@ class Contest(Entity):
     @ExportMethod(DjangoStruct('Contest'), [], PCPermit())
     @staticmethod
     def get_current_lock():
-        contests = Contest.objects.filter(lock_start__gte=datetime.now(), lock_finish__lte=datetime.now())
-        contests = [contest for contests in contests
+        contests = Contest.objects.filter(lock_start__lte=datetime.now(), lock_finish__gte=datetime.now())
+        contests = [contest for contest in contests
                 if (ipaddr.IPv4Address(server_info.client_ip) in ipaddr.IPv4Network(contest.lock_address + '/' + contest.lock_netmask))]
         
         if len(contests) == 0:
@@ -69,6 +68,53 @@ class Contest(Entity):
         cls._inherit_add(inherits, 'APPLY', 'id', 'JOIN')
         cls._inherit_add(inherits, 'JOIN', 'id', 'MANAGE')
         return inherits
+
+    @ExportMethod(DjangoStruct('Contest'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_CONTESTS')))
+    @staticmethod
+    def create_contest(name):
+        r = Role()
+        r.name = 'Contestant of ' + name
+        r.save()
+        
+        c = Contest()
+        c.name = name
+        c.contestant_role = r
+        c.save()
+
+        Privilege.grant(token_container.token.role, c, 'MANAGE')
+        Privilege.grant(r, c, 'VIEW')
+
+        return c
+    
+    @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), unicode], PCArg('self', 'MANAGE'))
+    def set_name(self, name):
+        self.name = name
+        self.save()
+
+        self.contestant_role.name = 'Contestant of ' + name
+        self.contestant_role.save()
+
+        return self
+
+    @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), datetime, datetime, unicode, unicode], PCArg('self', 'MANAGE'))
+    def set_lock(self, start, finish, address, netmask):
+        self.lock_start = start
+        self.lock_finish = finish
+        self.lock_address = address
+        self.lock_netmask = netmask
+        self.save()
+
+        return self
+
+    @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest')], PCArg('self', 'MANAGE'))
+    def set_no_lock(self):
+        self.lock_start = None
+        self.lock_finish = None
+        self.lock_address = '0.0.0.0'
+        self.lock_netmask = '255.255.255.255'
+        self.save()
+
+        return self
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('Role')], PCOr(PCTokenUser('user'), PCArg('self', 'MANAGE')))
     def find_contestant(self, user):
@@ -91,19 +137,6 @@ class Contest(Entity):
         Privilege.grant(c, c, 'OBSERVE')
         for user in user_list:
             c.add_member(user)
-
-    @ExportMethod(DjangoStruct('Contest'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_CONTESTS')))
-    @staticmethod
-    def create_contest(name):
-        c = Contest()
-        c.name = name
-        r = Role(name=name+'_contestant', )
-        r.save()
-        c.contestant_role = r
-        c.save()
-        Privilege.grant(token_container.token.user, c, 'MANAGE')
-        Privilege.grant(r, c, 'VIEW')
-        return c
 
     # TODO: check if exists
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')))
