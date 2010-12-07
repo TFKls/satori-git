@@ -112,20 +112,20 @@ class PCTokenIsUser(object):
         super(PCTokenIsUser, __pc__self).__init__()
 
     def __call__(__pc__self, **kwargs):
-        return token_container.token.user
+        return token_container.token.user is not None
 
     def __str__(__pc__self):
-        return 'user calling'
+        return 'calling role is user'
 
 class PCTokenIsMachine(object):
     def __init__(__pc__self):
         super(PCTokenIsMachine, __pc__self).__init__()
 
     def __call__(__pc__self, **kwargs):
-        return token_container.token.machine
+        return token_container.token.machine is not None
 
     def __str__(__pc__self):
-        return 'machine calling'
+        return 'calling role is machine'
 
 class PCRawBlob(object):
     def __init__(__pc__self, name):
