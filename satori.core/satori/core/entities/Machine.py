@@ -5,7 +5,8 @@ import random
 import string
 import ipaddr
 
-from satori.core.dbev               import Events
+from satori.ars.server import server_info
+from satori.core.dbev  import Events
 
 from satori.core.models import Role
 
@@ -29,7 +30,7 @@ class Machine(Role):
         machine = Machine(name=name, address=address, netmask=netmask)
         machine.set_secret(secret)
         machine.save()
-        Privilege.grant(token_container.token.user, machine, 'MANAGE')
+        Privilege.grant(token_container.token.role, machine, 'MANAGE')
         return machine
 
     @ExportMethod(unicode, [unicode], PCPermit())
