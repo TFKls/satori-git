@@ -26,7 +26,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     cursor.close()
 
     print 'Creating Global object'
-    Global().save()
+    Global.objects.create()
 
     print 'Installing DBEV rights'
 
@@ -41,7 +41,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
 
     token_container.set_token(Token(''))
     User.register(login=settings.ADMIN_NAME, name='Super Admin', password=settings.ADMIN_PASSWORD)
-    admin = User.objects.get(login='admin')
+    admin = User.objects.get(login=settings.ADMIN_NAME)
     Privilege.global_grant(admin, 'ADMIN')
 
 post_syncdb.connect(create_admin)
