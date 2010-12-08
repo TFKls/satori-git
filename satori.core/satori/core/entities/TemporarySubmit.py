@@ -40,3 +40,7 @@ class TemporarySubmit(Entity):
 
         return ts
 
+class TemporarySubmitEvents(Events):
+    model = TemporarySubmit
+    on_insert = on_update = on_delete = []
+
