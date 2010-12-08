@@ -36,10 +36,10 @@ class Contest(Entity):
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.fixup_public_files()
         self.fixup_intra_files()
-        super(Contest, self).save()
+        super(Contest, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name

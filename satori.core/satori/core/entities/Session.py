@@ -50,13 +50,13 @@ class Session(models.Model):
             token_container.token.session.save()
         return token_container.token.session
 
-    def save(self):
+    def save(self, *args, **kwargs):
         if self.deadline is None:
             self.deadline = datetime.now() + self.TIMEOUT
         if self.first_activity is None:
             self.first_activity = datetime.now()
         self.last_activity = datetime.now()
-        return super(Session, self).save()
+        return super(Session, self).save(*args, **kwargs)
 
     def renew(self):
         if datetime.now() + self.TIMEOUT > self.deadline:

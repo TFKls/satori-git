@@ -25,9 +25,9 @@ class ProblemMapping(Entity):
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('problem', 'VIEW'), ('code', 'VIEW'), ('title', 'VIEW'), ('default_test_suite', 'VIEW')]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.fixup_statement()
-        super(ProblemMapping, self).save()
+        super(ProblemMapping, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"

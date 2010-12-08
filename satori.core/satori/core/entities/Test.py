@@ -24,10 +24,9 @@ class Test(Entity):
     class ExportMeta(object):
         fields = [('problem', 'VIEW'), ('name', 'VIEW'), ('description', 'VIEW'), ('environment', 'VIEW'), ('obsolete', 'VIEW')]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.fixup_data()
-
-        super(Test, self).save()
+        super(Test, self).save(*args, **kwargs)
 
     @classmethod
     def inherit_rights(cls):

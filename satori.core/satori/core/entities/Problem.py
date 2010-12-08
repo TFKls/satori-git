@@ -22,9 +22,9 @@ class Problem(Entity):
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('description', 'VIEW'), ('statement', 'VIEW')]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.fixup_default_test_data()
-        super(Problem, self).save()
+        super(Problem, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name+" ("+self.description+")"
@@ -40,7 +40,7 @@ class Problem(Entity):
         o = Problem()
         o.name = name
         o.save()
-        Privilege.grant(token_container.token.user, o, 'MANAGE')
+        Privilege.grant(token_container.token.role, o, 'MANAGE')
         return o
 
 class ProblemEvents(Events):

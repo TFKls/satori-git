@@ -22,9 +22,9 @@ class Submit(Entity):
     class ExportMeta(object):
         fields = [('contestant', 'VIEW'), ('problem', 'VIEW'), ('time', 'VIEW')]
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.fixup_data()
-        super(Submit, self).save()
+        super(Submit, self).save(*args, **kwargs)
 
     @classmethod
     def inherit_rights(cls):

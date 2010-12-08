@@ -21,7 +21,7 @@ class Global(Entity):
     generate_attribute_group('Global', 'checkers', 'ADMIN', 'ADMIN', globals(), locals())
     generate_attribute_group('Global', 'generators', 'ADMIN', 'ADMIN', globals(), locals())
 
-    def save(self):
+    def save(self, *args, **kwargs):
         self.guardian = 1
 
         self.fixup_checkers()
@@ -48,7 +48,7 @@ class Global(Entity):
             anonymous.save()
             self.anonymous = anonymous
 
-        super(Global, self).save()
+        super(Global, self).save(*args, **kwargs)
 
     _instance = None
 
