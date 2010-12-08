@@ -29,6 +29,33 @@ global_exception_types.append(AccessDenied)
 global_exception_types.append(ArgumentNotFound)
 global_exception_types.append(CannotReturnObject)
 
+# from PEP 257
+def trim_docstring(docstring):
+    if not docstring:
+        return ''
+    # Convert tabs to spaces (following the normal Python rules)
+    # and split into a list of lines:
+    lines = docstring.expandtabs().splitlines()
+    # Determine minimum indentation (first line doesn't count):
+    indent = sys.maxint
+    for line in lines[1:]:
+        stripped = line.lstrip()
+        if stripped:
+            indent = min(indent, len(line) - len(stripped))
+    # Remove indentation (first line is special):
+    trimmed = [lines[0].strip()]
+    if indent < sys.maxint:
+        for line in lines[1:]:
+            trimmed.append(line[indent:].rstrip())
+    # Strip off trailing and leading blank lines:
+    while trimmed and not trimmed[-1]:
+        trimmed.pop()
+    while trimmed and not trimmed[0]:
+        trimmed.pop(0)
+    # Return a single string:
+    return '\n'.join(trimmed)
+
+
 
 def ExportModel(cls):
     generate_django_types(cls)
@@ -95,7 +122,13 @@ def ExportModel(cls):
     return ExportClass(cls)
 
 
-def ExportClass(cls):
+def ExportClass(cls=None, no_inherit=False):
+    if cls is None:
+        return lambda x: ExportClass(x, no_inherit)
+
+    if no_inherit:
+        cls._export_no_inherit = True
+        
     exported_classes.append(cls)
     return cls
 
@@ -182,11 +215,11 @@ class ExportMethod(object):
         for exception in self.exception_types:
             ars_proc.add_exception(python_to_ars_type(exception))
 
-        doc = self.func.__doc__
-        if doc is None:
-            doc = ''
+        doc = trim_docstring(self.func.__doc__)
+        if doc:
+            doc = doc + '\n\n'
 
-        doc = doc + '\nRequired permissions: ' + str(self.pc)
+        doc = doc + 'Required permissions: ' + str(self.pc)
 
         ars_proc.__doc__ = doc
 
@@ -213,7 +246,7 @@ def generate_interface():
 
     for cls in exported_classes:
         parent = inspect.getmro(cls)[1]
-        if parent in exported_classes:
+        if (parent in exported_classes) and (not cls.__dict__.get('_export_no_inherit', False)):
             base = interface.services[parent.__name__]
         else:
             base = None
