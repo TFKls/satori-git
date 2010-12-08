@@ -279,7 +279,7 @@ BUILTIN_DOMAINS['ars'] = ArsDomain
 def prepare_doc(obj, indent):
     doc = obj.__dict__.get('__doc__', None)
 
-    if doc is None:
+    if not doc:
         return ''
 
     return '\n'.join(' ' * indent + docline for docline in doc.split('\n'))
@@ -444,7 +444,10 @@ def generate_service(f, service_name):
         for method in base.procedures:
             method_name = method.name.split('_', 1)[1]
 
-            if (len(method.parameters) >= 2) and (method.parameters[1].name == 'self'):
+            if method.__dict__.get('__doc__', '').startswith('Attribute group:'):
+                continue
+
+            if (len(method.parameters) >= 2) and (method.parameters[1].name == '_self'):
                 method_type = 1
             else:
                 method_type = 0
@@ -470,7 +473,7 @@ def generate_service(f, service_name):
                 .
                   {0} methods:
 
-                """).format('Static' if method_type == 0 else 'Instance'))
+                """).format(['Static', 'Instance'][method_type]))
 
             base = service
             while base is not None:
