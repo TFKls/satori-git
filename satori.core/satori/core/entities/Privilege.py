@@ -16,7 +16,7 @@ PrivilegeTimes = Struct('PrivilegeTimes', (
 ))
 
 
-@ExportClass
+@ExportClass(no_inherit=True)
 class Privilege(Entity):
     """Model. Represents a single right on an object granted to a role.
     """
