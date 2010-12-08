@@ -17,7 +17,7 @@ class Submit(Entity):
     problem     = models.ForeignKey('ProblemMapping')
     time        = models.DateTimeField(auto_now_add=True)
 
-    generate_attribute_group('Submit', 'data', 'VIEW', 'MANAGE', globals(), locals())
+    data = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('contestant', 'VIEW'), ('problem', 'VIEW'), ('time', 'VIEW')]

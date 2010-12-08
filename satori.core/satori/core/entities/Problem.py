@@ -17,7 +17,7 @@ class Problem(Entity):
     description = models.TextField(blank=True, default="")
     statement = models.TextField(blank=True, default="")
 
-    generate_attribute_group('Problem', 'default_test_data', 'VIEW', 'MANAGE', globals(), locals())
+    default_test_data = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('description', 'VIEW'), ('statement', 'VIEW')]

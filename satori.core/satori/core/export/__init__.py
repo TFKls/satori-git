@@ -8,7 +8,7 @@ from   types     import NoneType
 from satori.ars       import perf
 from satori.ars.model import *
 
-from satori.core.export.oa           import BadAttributeType, Attribute, AnonymousAttribute, generate_attribute_group
+from satori.core.export.oa           import BadAttributeType, Attribute, AnonymousAttribute, AttributeGroupField, DefaultAttributeGroupField
 from satori.core.export.pc           import PCPermit, PCArg, PCGlobal, PCAnd, PCOr, PCEach, PCEachKey, PCEachValue, PCTokenUser, PCRawBlob, PCTokenIsUser, PCTokenIsMachine
 from satori.core.export.token        import token_container, TokenInvalid, TokenExpired
 from satori.core.export.type_helpers import Struct, DefineException, TypedList, TypedMap, python_to_ars_type

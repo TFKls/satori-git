@@ -1,5 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from django.db import models
+import sys
+
 from satori.core.export.type_helpers import Struct, DefineException
 
 BadAttributeType = DefineException('BadAttributeType', 'The requested attribute "{name}" is not a {requested_type} attribute',
@@ -22,8 +25,7 @@ AnonymousAttribute = Struct('AnonymousAttribute', (
 ))
 
 
-code_attributegroup_field = """
-{1} = models.OneToOneField('AttributeGroup', related_name='group_{0}_{1}')
+code_attributegroup_fixup = """
 def fixup_{1}(self):
     try:
         x = self.{1}
@@ -35,7 +37,7 @@ def fixup_{1}(self):
 
 
 code_attributegroup_methods = """
-@ExportMethod(Attribute, [DjangoId('{0}'), unicode], PCArg('self', '{3}'))
+@ExportMethod(Attribute, [DjangoId('{0}'), unicode], pc_read)
 def {1}_get(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     self = self{2}
@@ -44,7 +46,7 @@ def {1}_get(self, name):
     except OpenAttribute.DoesNotExist:
         return None
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], PCArg('self', '{3}'))
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
 def {1}_get_str(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
@@ -55,7 +57,7 @@ def {1}_get_str(self, name):
     else:
         return oa.value
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], PCArg('self', '{3}'))
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
 def {1}_get_blob(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
@@ -65,7 +67,7 @@ def {1}_get_blob(self, name):
         raise BadAttributeType(name=name, required_type='blob')
     return Blob.open(oa.value, oa.filename)
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], PCArg('self', '{3}'))
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
 def {1}_get_blob_hash(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
@@ -76,17 +78,17 @@ def {1}_get_blob_hash(self, name):
     else:
         return oa.value
 
-@ExportMethod(TypedList(Attribute), [DjangoId('{0}')], PCArg('self', '{3}'))
+@ExportMethod(TypedList(Attribute), [DjangoId('{0}')], pc_read)
 def {1}_get_list(self):
     \"\"\"Attribute group: {1}\"\"\"
     return self{2}.attributes.all()
 
-@ExportMethod(TypedMap(unicode, AnonymousAttribute), [DjangoId('{0}')], PCArg('self', '{3}'))
+@ExportMethod(TypedMap(unicode, AnonymousAttribute), [DjangoId('{0}')], pc_read)
 def {1}_get_map(self):
     \"\"\"Attribute group: {1}\"\"\"
     return dict((oa.name, oa) for oa in self{2}.attributes.all())
 
-@ExportMethod(NoneType, [DjangoId('{0}'), Attribute], PCAnd(PCArg('self', '{4}'), PCRawBlob('value')))
+@ExportMethod(NoneType, [DjangoId('{0}'), Attribute], PCAnd(pc_write, PCRawBlob('value')))
 def {1}_set(self, value):
     \"\"\"Attribute group: {1}\"\"\"
     self = self{2}
@@ -99,49 +101,49 @@ def {1}_set(self, value):
         newoa.filename = ''
     newoa.save()
 
-@ExportMethod(NoneType, [DjangoId('{0}'), unicode, unicode], PCArg('self', '{4}'))
+@ExportMethod(NoneType, [DjangoId('{0}'), unicode, unicode], pc_write)
 def {1}_set_str(self, name, value):
     \"\"\"Attribute group: {1}\"\"\"
     self.{1}_set(Attribute(name=name, value=value, is_blob=False))
 
-@ExportMethod(NoneType, [DjangoId('{0}'), unicode, int, unicode], PCArg('self', '{4}'))
+@ExportMethod(NoneType, [DjangoId('{0}'), unicode, int, unicode], pc_write)
 def {1}_set_blob(self, name, length=-1, filename=''):
     \"\"\"Attribute group: {1}\"\"\"
     def set_hash(hash):
         self.{1}_set(OpenAttribute(name=name, value=hash, filename=filename, is_blob=True))
     return Blob.create(length, set_hash)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), unicode, unicode, unicode], PCAnd(PCArg('self', '{4}'), PCGlobal('RAW_BLOB')))
+@ExportMethod(NoneType, [DjangoId('{0}'), unicode, unicode, unicode], PCAnd(pc_write, PCGlobal('RAW_BLOB')))
 def {1}_set_blob_hash(self, name, value, filename=''):
     \"\"\"Attribute group: {1}\"\"\"
     self.{1}_set(Attribute(name=name, value=value, filename=filename, is_blob=True))
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedList(Attribute)], PCAnd(PCArg('self', '{4}'), PCEach('attributes', PCRawBlob('item'))))
+@ExportMethod(NoneType, [DjangoId('{0}'), TypedList(Attribute)], PCAnd(pc_write, PCEach('attributes', PCRawBlob('item'))))
 def {1}_add_list(self, attributes):
     \"\"\"Attribute group: {1}\"\"\"
     for struct in attributes:
         self.{1}_set(struct)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedList(Attribute)], PCAnd(PCArg('self', '{4}'), PCEach('attributes', PCRawBlob('item'))))
+@ExportMethod(NoneType, [DjangoId('{0}'), TypedList(Attribute)], PCAnd(pc_write, PCEach('attributes', PCRawBlob('item'))))
 def {1}_set_list(self, attributes):
     \"\"\"Attribute group: {1}\"\"\"
     self{2}.attributes.all().delete()
     self.{1}_add_list(attributes)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArg('self', '{4}'), PCEachValue('attributes', PCRawBlob('item'))))
+@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCAnd(pc_write, PCEachValue('attributes', PCRawBlob('item'))))
 def {1}_add_map(self, attributes):
     \"\"\"Attribute group: {1}\"\"\"
     for name, struct in attributes.items():
         struct.name = name
         self.{1}_set(struct)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArg('self', '{4}'), PCEachValue('attributes', PCRawBlob('item'))))
+@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCAnd(pc_write, PCEachValue('attributes', PCRawBlob('item'))))
 def {1}_set_map(self, attributes):
     \"\"\"Attribute group: {1}\"\"\"
     self{2}.attributes.all().delete()
     self.{1}_add_map(attributes)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), unicode], PCArg('self', '{4}'))
+@ExportMethod(NoneType, [DjangoId('{0}'), unicode], pc_write)
 def {1}_delete(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
@@ -149,19 +151,43 @@ def {1}_delete(self, name):
         oa.delete()
 """
 
+class DefaultAttributeGroupField(object):
+    def __init__(self, pc_read, pc_write, doc):
+        self.doc = doc
+        self.pc_read = pc_read
+        self.pc_write = pc_write
 
-def generate_attribute_group(model_name, name, read_permission, write_permission, global_context, local_context):
-    if name is None:
-        name_prefix = 'oa'
-        group_code = ''
-    else:
-        name_prefix = name
-        group_code = '.' + name
+    def contribute_to_class(self, cls, name):
+        global_dict = sys.modules['satori.core.models'].__dict__
+        local_dict = {'pc_read': self.pc_read, 'pc_write': self.pc_write}
 
-    format_args = (model_name, name_prefix, group_code, read_permission, write_permission)
+        exec compile(code_attributegroup_methods.format(cls.__name__, name, ''), '<oa methods code>', 'exec') in global_dict, local_dict
 
-    if name is not None:
-        exec compile(code_attributegroup_field.format(*format_args), '<oa field code>', 'exec') in global_context, local_context
-    
-    exec compile(code_attributegroup_methods.format(*format_args), '<oa methods code>', 'exec') in global_context, local_context
+        del local_dict['pc_read']
+        del local_dict['pc_write']
+       
+        for (name, value) in local_dict.items():
+            setattr(cls, name, value)
+
+
+class AttributeGroupField(object):
+    def __init__(self, pc_read, pc_write, doc):
+        self.doc = doc
+        self.pc_read = pc_read
+        self.pc_write = pc_write
+
+    def contribute_to_class(self, cls, name):
+        global_dict = sys.modules['satori.core.models'].__dict__
+        local_dict = {'pc_read': self.pc_read, 'pc_write': self.pc_write}
+
+        exec compile(code_attributegroup_methods.format(cls.__name__, name, '.' + name), '<oa methods code>', 'exec') in global_dict, local_dict
+        exec compile(code_attributegroup_fixup.format(cls.__name__, name, '.' + name), '<oa methods code>', 'exec') in global_dict, local_dict
+
+        del local_dict['pc_read']
+        del local_dict['pc_write']
+        
+        models.OneToOneField('AttributeGroup', related_name='group_{0}_{1}'.format(cls.__name__, name)).contribute_to_class(cls, name)
+        
+        for (name, value) in local_dict.items():
+            setattr(cls, name, value)
 

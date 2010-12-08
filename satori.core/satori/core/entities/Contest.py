@@ -30,8 +30,8 @@ class Contest(Entity):
     lock_address = models.IPAddressField(default='0.0.0.0')
     lock_netmask = models.IPAddressField(default='255.255.255.255')
 
-    generate_attribute_group('Contest', 'public_files', 'VIEW', 'MANAGE', globals(), locals())
-    generate_attribute_group('Contest', 'intra_files', 'VIEW_INTRA_FILES', 'MANAGE', globals(), locals())
+    public_files = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
+    intra_files = AttributeGroupField(PCArg('self', 'VIEW_INTRA_FILES'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]

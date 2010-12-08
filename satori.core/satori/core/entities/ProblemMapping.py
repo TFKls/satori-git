@@ -20,7 +20,7 @@ class ProblemMapping(Entity):
     title       = models.CharField(max_length=64)
     default_test_suite = models.ForeignKey('TestSuite')
 
-    generate_attribute_group('ProblemMapping', 'statement', 'VIEW', 'MANAGE', globals(), locals())
+    statement = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('problem', 'VIEW'), ('code', 'VIEW'), ('title', 'VIEW'), ('default_test_suite', 'VIEW')]

@@ -19,7 +19,7 @@ class Test(Entity):
     environment = models.CharField(max_length=50)
     obsolete    = models.BooleanField(default=False)
 
-    generate_attribute_group('Test', 'data', 'VIEW', 'MANAGE', globals(), locals())
+    data = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('problem', 'VIEW'), ('name', 'VIEW'), ('description', 'VIEW'), ('environment', 'VIEW'), ('obsolete', 'VIEW')]

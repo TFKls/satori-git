@@ -14,9 +14,9 @@ class TemporarySubmit(Entity):
     pending      = models.BooleanField(default=True)
     date_created = models.DateTimeField(auto_now_add=True)
 
-    generate_attribute_group('TemporarySubmit', 'test_data', 'MANAGE', 'MANAGE', globals(), locals())
-    generate_attribute_group('TemporarySubmit', 'submit_data', 'MANAGE', 'MANAGE', globals(), locals())
-    generate_attribute_group('TemporarySubmit', 'result', 'MANAGE', 'MANAGE', globals(), locals())
+    test_data = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
+    submit_data = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
+    result = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('pending', 'MANAGE'), ('date_created', 'MANAGE')]

@@ -18,8 +18,8 @@ class Global(Entity):
     authenticated = models.ForeignKey('Role', related_name='global_authenticated+')
     zero = models.ForeignKey('Role', related_name='global_zero+')
 
-    generate_attribute_group('Global', 'checkers', 'ADMIN', 'ADMIN', globals(), locals())
-    generate_attribute_group('Global', 'generators', 'ADMIN', 'ADMIN', globals(), locals())
+    checkers = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+    generators = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
 
     def save(self, *args, **kwargs):
         self.guardian = 1
