@@ -10,7 +10,6 @@ class AcceptUserRequest(Request):
     @classmethod
     def process(cls, request):
         cu = Contestant.filter({'id':int(request.POST['conuser_id'])})[0]
-        contest = cu.contest
-        contest.accept_contestant(cu)
+        cu.set_accepted(True)
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')

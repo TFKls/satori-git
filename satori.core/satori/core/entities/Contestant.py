@@ -24,6 +24,18 @@ class Contestant(Role):
             cls._inherit_add(inherits, key, 'contest', key)
         cls._inherit_add(inherits, 'OBSERVE', 'contest', 'OBSERVE')
         return inherits
+    
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), bool], PCArg('self', 'MANAGE'))
+    def set_accepted(self, accepted):
+        self.accepted = accepted
+        self.save()
+
+        if accepted:
+            self.contest.contestant_role.add_member(self)
+        else:
+            self.contest.contestant_role.delete_member(self)
+
+        return self
 
     @ExportMethod(unicode, [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def name_auto(self):
@@ -37,12 +49,6 @@ class Contestant(Role):
     @ExportMethod(DjangoStructList('User'), [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def get_member_users(self):
         return User.objects.filter(parents=self)
-
-    # MANAGE on self
-    def set_accepted():
-        # set accepted
-        # add to contestant role
-        pass
 
     # MANAGE on self
     def set_invisible():

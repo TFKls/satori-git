@@ -130,34 +130,30 @@ class Contest(Entity):
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoIdList('User')], PCArg('self', 'MANAGE'))
     def create_contestant(self, user_list):
         c = Contestant()
-        c.accepted = True
         c.contest = self
         c.save()
-        self.contestant_role.add_member(c)
-        Privilege.grant(c, c, 'OBSERVE')
+
+        c.set_accepted(True)
         for user in user_list:
             c.add_member(user)
+            
+        Privilege.grant(c, c, 'OBSERVE')
+
+        return c
 
     # TODO: check if exists
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')))
     def join_contest(self):
         c = Contestant()
         c.contest = self
-        c.accepted = bool(Privilege.demand(self, 'JOIN'))
         c.save()
-        if c.accepted:
-            self.contestant_role.add_member(c)
-        c.add_member(token_container.token.user)
-        return c
 
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('Contestant')], PCArg('self', 'MANAGE'))
-    def accept_contestant(self, contestant):
-        if contestant.contest != self:
-            raise "Go away"
-        contestant.accepted = True
-        contestant.save()
-        self.contestant_role.add_member(contestant)
-        return contestant
+        c.set_accepted(bool(Privilege.demand(self, 'JOIN')))
+        c.add_member(token_container.token.user)
+
+        Privilege.grant(c, c, 'OBSERVE')
+
+        return c
 
     @ExportMethod(DjangoStruct('Submit'), [DjangoId('Contest'), DjangoId('ProblemMapping'), unicode, unicode], PCArg('problem_mapping', 'SUBMIT'))
     def submit(self, problem_mapping, content, filename):
