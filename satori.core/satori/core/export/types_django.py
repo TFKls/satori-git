@@ -5,6 +5,7 @@ from   django.db import models
 import inspect
 
 from satori.ars.model import *
+
 from satori.core.export.type_helpers import DefineException, ArsDeferredStructure, python_to_ars_type
 
 ArgumentNotFound = DefineException('ArgumentNotFound', 'The specified argument cannot be found: model={model}, id={id}',

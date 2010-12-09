@@ -8,6 +8,7 @@ from   types     import NoneType
 from satori.ars       import perf
 from satori.ars.model import *
 
+from satori.core.export.docstring    import trim_docstring
 from satori.core.export.oa           import BadAttributeType, Attribute, AnonymousAttribute, AttributeGroupField, DefaultAttributeGroupField
 from satori.core.export.pc           import PCPermit, PCArg, PCGlobal, PCAnd, PCOr, PCEach, PCEachKey, PCEachValue, PCTokenUser, PCRawBlob, PCTokenIsUser, PCTokenIsMachine
 from satori.core.export.token        import token_container, TokenInvalid, TokenExpired
@@ -28,33 +29,6 @@ global_exception_types.append(TokenExpired)
 global_exception_types.append(AccessDenied)
 global_exception_types.append(ArgumentNotFound)
 global_exception_types.append(CannotReturnObject)
-
-# from PEP 257
-def trim_docstring(docstring):
-    if not docstring:
-        return ''
-    # Convert tabs to spaces (following the normal Python rules)
-    # and split into a list of lines:
-    lines = docstring.expandtabs().splitlines()
-    # Determine minimum indentation (first line doesn't count):
-    indent = sys.maxint
-    for line in lines[1:]:
-        stripped = line.lstrip()
-        if stripped:
-            indent = min(indent, len(line) - len(stripped))
-    # Remove indentation (first line is special):
-    trimmed = [lines[0].strip()]
-    if indent < sys.maxint:
-        for line in lines[1:]:
-            trimmed.append(line[indent:].rstrip())
-    # Strip off trailing and leading blank lines:
-    while trimmed and not trimmed[-1]:
-        trimmed.pop()
-    while trimmed and not trimmed[0]:
-        trimmed.pop(0)
-    # Return a single string:
-    return '\n'.join(trimmed)
-
 
 
 def ExportModel(cls):
@@ -229,7 +203,7 @@ class ExportMethod(object):
 def generate_service(cls, base):
     service = ArsService(name=cls.__name__, base=base)
 
-    service.__doc__ = cls.__doc__
+    service.__doc__ = trim_docstring(cls.__doc__)
 
     for (name, function) in sorted(cls.__dict__.items()):
         if function.__class__ == staticmethod(0).__class__:
@@ -254,9 +228,8 @@ def generate_interface():
 
     return interface
 
+
 def init():
     global Privilege
-    global Token
     from satori.core.models import Privilege
-    from satori.core.sec import Token
 

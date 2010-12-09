@@ -3,6 +3,7 @@
 from django.db import models
 import sys
 
+from satori.core.export.docstring    import trim_docstring
 from satori.core.export.type_helpers import Struct, DefineException
 
 BadAttributeType = DefineException('BadAttributeType', 'The requested attribute "{name}" is not a {requested_type} attribute',
@@ -151,6 +152,8 @@ def {1}_delete(self, name):
         oa.delete()
 """
 
+docstrings_to_append = []
+
 class DefaultAttributeGroupField(object):
     def __init__(self, pc_read, pc_write, doc):
         self.doc = doc
@@ -166,8 +169,10 @@ class DefaultAttributeGroupField(object):
         del local_dict['pc_read']
         del local_dict['pc_write']
        
-        for (name, value) in local_dict.items():
-            setattr(cls, name, value)
+        for (meth_name, meth) in local_dict.items():
+            setattr(cls, meth_name, meth)
+
+        docstrings_to_append.append((cls, name, self.doc))
 
 
 class AttributeGroupField(object):
@@ -185,9 +190,24 @@ class AttributeGroupField(object):
 
         del local_dict['pc_read']
         del local_dict['pc_write']
+
+        for (meth_name, meth) in local_dict.items():
+            setattr(cls, meth_name, meth)
         
         models.OneToOneField('AttributeGroup', related_name='group_{0}_{1}'.format(cls.__name__, name)).contribute_to_class(cls, name)
         
-        for (name, value) in local_dict.items():
-            setattr(cls, name, value)
+        docstrings_to_append.append((cls, name, self.doc))
+
+
+def init():
+    for (cls, name, docstring) in docstrings_to_append:
+        doc = trim_docstring(cls.__doc__)
+        if doc:
+            doc = doc + '\n\n'
+        
+        if doc.find('Attribute groups:') == -1:
+            doc = doc + 'Attribute groups:\n\n'
+
+        doc = doc + '  .. ars:attributegroup:: {0}\n\n    {1}'.format(name, docstring)
+        cls.__doc__ = doc
 

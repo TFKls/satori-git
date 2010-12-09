@@ -15,7 +15,7 @@ class Entity(models.Model):
 
     model = models.CharField(max_length=64, editable=False)
 
-    oa = DefaultAttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
+    oa = DefaultAttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), 'An attribute group to be used for general-purpose data.')
 
     def save(self, *args, **kwargs):
         if not self.model:

@@ -82,12 +82,14 @@ def _load_models():
         exec code in module.__dict__
 
     import satori.core.export
+    import satori.core.export.oa
     import satori.core.export.pc
     import satori.core.export.type_helpers
     import satori.core.export.types_django
     import satori.core.export.token
 
     satori.core.export.init()
+    satori.core.export.oa.init()
     satori.core.export.pc.init()
     satori.core.export.type_helpers.init()
     satori.core.export.types_django.init()

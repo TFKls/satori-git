@@ -155,6 +155,42 @@ class ArsServiceDirective(ObjectDescription):
         return self.service.name
 
 
+class ArsAttributeGroupDirective(ObjectDescription):
+    def add_target_and_index(self, sigobj, sig, signode):
+        name = self.service.name + '.' + self.name
+
+        signode['names'].append(name)
+        signode['ids'].append(name)
+        self.state.document.note_explicit_target(signode)
+        self.env.domaindata['ars']['attributegroups'].setdefault(name, self.env.docname)
+
+    def handle_signature(self, sig, signode):
+        sig = sig.strip()
+
+        parent = self.env.temp_data.get('ars:servicename', None)
+
+        if not parent:
+            in_parent = False
+
+            split = sig.split('.', 1)
+
+            if len(split) == 2:
+                parent = split[0]
+                name = split[1]
+            else:
+                raise RuntimeError('Parent not found')
+        else:
+            in_parent = True
+            name = sig
+
+        self.service = ars_interface.services[parent]
+        self.name = name
+        
+        signode += addnodes.desc_name(self.name, self.name)
+        
+        return self.service.name + '.' + self.name
+
+
 class ArsProcedureDirective(ObjectDescription):
     option_spec = {
         'skipargs': int,
@@ -243,24 +279,28 @@ class ArsDomain(Domain):
         'type': ObjType('type', 'type'),
         'field': ObjType('field', 'field'),
         'service': ObjType('service', 'service'),
+        'attributegroup': ObjType('attributegroup', 'attributegroup'),
         'procedure': ObjType('procedure', 'procedure'),
     }
     directives = {
         'type': ArsTypeDirective,
         'field': ArsFieldDirective,
         'service': ArsServiceDirective,
+        'attributegroup': ArsAttributeGroupDirective,
         'procedure': ArsProcedureDirective,
     }
     roles = {
         'type': XRefRole(),
         'field': XRefRole(),
         'service': XRefRole(),
+        'attributegroup': XRefRole(),
         'procedure': XRefRole(),
     }
     initial_data = {
         'types': {},
         'fields': {},
         'services': {},
+        'attributegroups': {},
         'procedures': {},
     }
 
@@ -342,6 +382,8 @@ def generate_index(f, service_names):
           types
           exceptions
           oa
+
+          ------ <self>
         """))
 
     for service_name in service_names:
@@ -395,7 +437,7 @@ def generate_oa(f):
         Every attribute group defines a set of instance methods for class instances.
         Below are functions defined by attribute group ``oa`` for the :cpp:class:`Entity` class.
         Other attribute groups define similar functions, with ``oa`` changed to the group name
-        and they may require different permissions instead of ATTRIBUTE_READ and ATTRIBUTE_WRITE.
+        and they may require different permissions instead of MANAGE.
         """))
 
     for procedure in ars_interface.services['Entity'].procedures:
