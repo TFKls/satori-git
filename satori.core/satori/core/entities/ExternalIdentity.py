@@ -4,16 +4,16 @@ from django.db import models
 
 from satori.core.dbev import Events
 
-from satori.core.models import Entity, User
+from satori.core.models import Entity, User, Association, Nonce
 
-#from satori.core.sec.openid import OpenIdentity
-#from satori.core.sec.cas import CentralAuthenticationService
+from satori.core.sec.identity import identity_handlers
 
 from types import NoneType
 import string
 import random
 import urlparse
 import urllib
+import traceback
 
 ExternalIdentityFailed = DefineException('ExternalIdentityFailed', 'External Identity Authorization failed: {reason}',
     [('reason', unicode, False)])
@@ -93,7 +93,7 @@ class ExternalIdentity(Entity):
     def search_sessions(session, search):
         res = []
         if type(session) == type({}):
-            for key, value in data.items():
+            for key, value in session.items():
                 if type(value) == type({}):
                     ok=True
                     for sk, sv in search.items():
@@ -119,20 +119,19 @@ class ExternalIdentity(Entity):
             '_result' : None,
         }
 
-        Handler = None
-        if handler == 'openid':
-            Handler = OpenIdentity
-        elif handler == 'cas' or handler == 'cas1' or handler == 'cas2' or handler == 'cas3':
-            Handler = CentralAuthenticationService
-        else:
+        Handler = identity_handlers.get(handler, None)
+        if Handler is None:
             raise InvalidExternalIdentityHandler(handler=handler, reason='handler is not recognized')
-        result = Handler.start(eid_session)
+        try:
+            result = Handler.start(eid_session)
+        except:
+            raise InvalidExternalIdentityProvider(provider=provider, reason='failed to initialize authorization sequence')
 
         session = Session.start()
         data = session.data_pickle
         if data is None:
             data = {}
-        data[salt] = oid_session
+        data[salt] = eid_session
         session.data_pickle = data
         session.save()
 
@@ -168,14 +167,16 @@ class ExternalIdentity(Entity):
         if not ExternalIdentity.check_callback(callback, { ExternalIdentity.salt_param : salt }):
             raise InvalidExternalIdentityCallback(reason="'" + ExternalIdentity.salt_param + "'  has wrong value")
 
-        Handler = None
-        if handler == 'openid':
-            Handler = OpenIdentity
-        elif handler == 'cas' or handler == 'cas1' or handler == 'cas2' or handler == 'cas3':
-            Handler = CentralAuthenticationService
-        else:
+        Handler = identity_handlers.get(handler, None)
+        if Handler is None:
             raise InvalidExternalIdentityHandler(handler=handler, reason='handler is not recognized')
-        result = Handler.finish(eid_session, callback, arg_map)
+        try:
+            result = Handler.finish(eid_session, callback, arg_map)
+        except:
+            traceback.print_exc()
+            raise InvalidExternalIdentityProvider(provider=provider, reason='failed to finalize authorization sequence')
+        if result.identity is None:
+            raise ExternalIdentityFailed(reason='authorization failed')
 
         for key in ExternalIdentity.search_sessions(data, {
                 '_type' : 'external_identity',
@@ -198,7 +199,7 @@ class ExternalIdentity(Entity):
                 'linked' : True,
             }
         except ExternalIdentity.DoesNotExist:
-            identity = ExternalIdentity(handler=handler, provider=provider, identity=response.identity)
+            identity = ExternalIdentity(handler=handler, provider=provider, identity=result.identity)
             if result.email:
                 identity.email = result.email
             if result.name:
@@ -244,7 +245,7 @@ class ExternalIdentity(Entity):
         for key in ExternalIdentity.search_sessions(data, {
                 '_type' : 'external_identity',
             }):
-            if '_result' in data[key]:
+            if '_result' in data[key] and data[key]['_result'] is not None:
                 identity = ExternalIdentity(**data[key]['_result'])
                 identity.user = token_container.token.user
                 identity.id = token_container.token.user.id
@@ -259,7 +260,7 @@ class ExternalIdentity(Entity):
         if data is None or salt not in data:
             raise ExternalIdentityFailed(reason="'salt' has wrong value")
         eid_session = data[salt]
-        if '_type' not in oid_session or oid_session['_type'] != 'external_identity' or '_result' not in eid_session:
+        if '_type' not in eid_session or eid_session['_type'] != 'external_identity' or '_result' not in eid_session:
             raise ExternalIdentityFailed(reason="'salt' has wrong value")
         del data[salt]
         identity = ExternalIdentity(**eid_session['_result'])
