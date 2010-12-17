@@ -11,7 +11,6 @@ from satori.core.export import token_container
 from satori.core.export import Struct, DefineException, TypedList, TypedMap
 from satori.core.export import DjangoId, DjangoStruct, DjangoIdList, DjangoStructList
 
-
 def _load_models():
     import _ast
     import ast
@@ -96,4 +95,3 @@ def _load_models():
     satori.core.export.token.init()
 
 _load_models()
-

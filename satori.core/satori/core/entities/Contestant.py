@@ -1,6 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-
 from django.db import models
 
 from satori.core.dbev               import Events
@@ -63,4 +62,3 @@ class ContestantEvents(Events):
     model = Contestant
     on_insert = on_update = ['name', 'contest']
     on_delete = []
-

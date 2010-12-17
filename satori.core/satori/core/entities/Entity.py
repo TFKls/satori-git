@@ -44,4 +44,3 @@ class Entity(models.Model):
 class EntityEvents(Events):
     model = Entity
     on_insert = on_update = on_delete = []
-
