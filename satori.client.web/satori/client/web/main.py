@@ -20,6 +20,7 @@ def load(request,argstr,path = ""):
             w = Widget.FromDictionary(params,path)
             res = render_to_response(w.htmlFile, {'widget' : w} )
         except (TokenInvalid, TokenExpired):
+            token_container.set_token('')
 	    link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
 	    res = HttpResponseRedirect(link)
 	    res.set_cookie('satori_token', '')
