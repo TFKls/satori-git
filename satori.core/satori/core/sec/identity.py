@@ -4,6 +4,7 @@ from django.db.models import F
 
 from satori.core.models import Nonce, Association
 
+import logging
 import urlparse
 import urllib
 import urllib2
@@ -207,7 +208,7 @@ class OpenIdentity(IdentityHandlerBase):
     class Store(OpenIDStore):
 
         def storeAssociation(self, server_url, association):
-            print 'store: add', server_url, association
+            logging.debug('store: add %s %s', server_url, association)
             try:
                 assoc = Association.objects.get(
                     server_url = server_url,
@@ -225,7 +226,7 @@ class OpenIdentity(IdentityHandlerBase):
             assoc.save()
 
         def getAssociation(self, server_url, handle=None):
-            print 'store: get', server_url
+            logging.debug('store: get %s', server_url)
             try:
                 assoc = Association.objects.filter(
                     issued__gt = (int(time.time()) - F('lifetime')),

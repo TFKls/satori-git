@@ -17,7 +17,7 @@ import traceback
 
 ExternalIdentityFailed = DefineException('ExternalIdentityFailed', 'External Identity Authorization failed: {reason}',
     [('reason', unicode, False)])
-InvalidExternalIdentityHandler = DefineException('InvalidExternalIdentityHandler', 'The specified hendler \'{handler}\' is invalid: {reason}',
+InvalidExternalIdentityHandler = DefineException('InvalidExternalIdentityHandler', 'The specified handler \'{handler}\' is invalid: {reason}',
     [('handler', unicode, False), ('reason', unicode, False)])
 InvalidExternalIdentityProvider = DefineException('InvalidExternalIdentityProvider', 'The specified provider \'{provider}\' is invalid: {reason}',
     [('provider', unicode, False), ('reason', unicode, False)])
@@ -173,7 +173,7 @@ class ExternalIdentity(Entity):
         try:
             result = Handler.finish(eid_session, callback, arg_map)
         except:
-            traceback.print_exc()
+            logging.exception('Handler.finish failed')
             raise InvalidExternalIdentityProvider(provider=provider, reason='failed to finalize authorization sequence')
         if result.identity is None:
             raise ExternalIdentityFailed(reason='authorization failed')
