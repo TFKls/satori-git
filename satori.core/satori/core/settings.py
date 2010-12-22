@@ -29,7 +29,19 @@ THRIFT_PORT = 38889
 BLOB_HOST = '0.0.0.0'
 BLOB_PORT = 38887
 
-BLOB_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__)))), 'tmp', 'blob')
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
+
+BLOB_DIR = os.path.join(BASE_DIR, 'tmp', 'blob')
+
+if os.getenv('SATORI_SERVER_LOG'):
+    LOG_FILE = os.getenv('SATORI_SERVER_LOG')
+else:    
+    LOG_FILE = os.path.join(BASE_DIR, 'tmp', 'server.log')
+
+if os.getenv('SATORI_SERVER_PID'):
+    PID_FILE = os.getenv('SATORI_SERVER_PID')
+else:    
+    PID_FILE = os.path.join(BASE_DIR, 'tmp', 'server.pid')
 
 if getpass.getuser() == 'gutowski':
     EVENT_PORT = 39888

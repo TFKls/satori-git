@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import select
 import psycopg2.extensions
-import traceback
+import logging
 from django.db import connection
 from django.db import models
 from satori.core.dbev.events import registry
@@ -123,6 +123,6 @@ def run_notifier(slave):
         except SystemExit:
             break
         except:
-            traceback.print_exc()
+            logger.exception('DBEV notifier error')
     slave.disconnect()
 

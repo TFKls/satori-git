@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import errno
 from collections import deque
 from _multiprocessing import Connection
 from satori.objects import Argument
@@ -83,7 +84,7 @@ class Slave2(object):
                 try:
                     (queue, event) = self.connection.recv()
                 except IOError as e:
-                    if e[0] == 4:
+                    if e[0] == errno.EINTR:
                         break
                     else:
                         raise

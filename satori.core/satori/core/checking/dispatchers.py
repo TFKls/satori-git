@@ -1,7 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+import logging
 from django.db import transaction
 from collections import deque
-import traceback
 
 from satori.core.checking.accumulators import accumulators
 from satori.core.checking.utils import wrap_transaction_management
@@ -49,8 +49,7 @@ class DispatcherBase(Client2):
             self.do_init()
             transaction.commit()
         except:
-            print 'Dispatcher failed'
-            traceback.print_exc()
+            logging.exception('Dispatcher error')
             self.error = True
             self.finish()
             transaction.rollback()
@@ -62,8 +61,7 @@ class DispatcherBase(Client2):
                 self.do_deinit()
                 transaction.commit()
             except:
-                print 'Dispatcher failed'
-                traceback.print_exc()
+                logging.exception('Dispatcher error')
                 self.error = True
                 transaction.rollback()
         if self.error:
@@ -75,8 +73,7 @@ class DispatcherBase(Client2):
                 self.test_suite_result.save()
                 transaction.commit()
             except:
-                print 'Dispatcher error handler failed'
-                traceback.print_exc()
+                logging.exception('Dispatcher error handler error')
                 transaction.rollback()
         self.runner.dispatcher_stopped(self.test_suite_result)
 
@@ -86,8 +83,7 @@ class DispatcherBase(Client2):
             self.do_handle_event(queue, event)
             transaction.commit()
         except:
-            print 'Dispatcher failed'
-            traceback.print_exc()
+            logging.exception('Dispatcher error')
             self.error = True
             self.finish()
             transaction.rollback()

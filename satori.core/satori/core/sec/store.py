@@ -17,7 +17,7 @@ import time
 class Store(OpenIDStore):
 
     def storeAssociation(self, server_url, association):
-        print 'store: add', server_url, association
+        logging.debug('OpenIDStore: add: url: %s association: %s', server_url, association)
         try:
             assoc = Association.objects.get(
                 server_url = server_url,
@@ -35,7 +35,7 @@ class Store(OpenIDStore):
         assoc.save()
 
     def getAssociation(self, server_url, handle=None):
-        print 'store: get', server_url
+        logging.debug('OpenIDStore: get: url: %s', server_url)
         try:
             assoc = Association.objects.filter(
                 issued__gt = (int(time.time()) - F('lifetime')),

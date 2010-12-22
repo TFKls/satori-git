@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from   django.core.management.base import BaseCommand, CommandError
 import os
 from   sphinx.application import Sphinx
 import sphinx.ext.autodoc
@@ -543,62 +544,61 @@ def generate_service(f, service_name):
     f.close()
 
 
-def generate_api_doc():
-    os.environ['DJANGO_SETTINGS_MODULE'] = 'satori.core.settings'
-    
-    global ars_interface
-    from satori.core.api import ars_interface
-    global global_exception_types
-    from satori.core.export import global_exception_types
+class Command(BaseCommand):
+    help = 'Generates Thrift API documentation.'
+    args = 'destdir'
 
-    if len(sys.argv) != 2:
-        print >>sys.stderr, 'Usage: {0} <target directory>'.format(sys.argv[0])
-        exit(1)
+    def handle(self, *args, **options):
+        if len(args) != 1:
+            raise CommandError('Command accepts exactly one argument')
 
-    destdir = sys.argv[1]
-    srcdir = os.path.join(destdir, '_input')
+        destdir = args[0]
+        srcdir = os.path.join(destdir, '_input')
 
-    if os.path.exists(destdir):
-        shutil.rmtree(destdir)
+        global ars_interface
+        from satori.core.api import ars_interface
+        global global_exception_types
+        from satori.core.export import global_exception_types
 
-    os.makedirs(os.path.join(srcdir))
+        if os.path.exists(destdir):
+            shutil.rmtree(destdir)
 
-    service_names = sorted(ars_interface.services.names)
-    type_names = []
-    exception_names = []
+        os.makedirs(os.path.join(srcdir))
 
-    for type_name in sorted(ars_interface.types.names):
-        if type_name.endswith('Id') and (type_name[:-2] in service_names):
-            continue
-        if type_name.endswith('Struct') and (type_name[:-6] in service_names):
-            continue
-        if isinstance(ars_interface.types[type_name], ArsException):
-            exception_names.append(type_name)
-        else:
-            type_names.append(type_name)
+        service_names = sorted(ars_interface.services.names)
+        type_names = []
+        exception_names = []
 
-    generate_index(open(os.path.join(srcdir, 'index.rst'), 'w'), service_names)
-    generate_types(open(os.path.join(srcdir, 'types.rst'), 'w'), type_names)
-    generate_exceptions(open(os.path.join(srcdir, 'exceptions.rst'), 'w'), exception_names)
-    generate_oa(open(os.path.join(srcdir, 'oa.rst'), 'w'))
+        for type_name in sorted(ars_interface.types.names):
+            if type_name.endswith('Id') and (type_name[:-2] in service_names):
+                continue
+            if type_name.endswith('Struct') and (type_name[:-6] in service_names):
+                continue
+            if isinstance(ars_interface.types[type_name], ArsException):
+                exception_names.append(type_name)
+            else:
+                type_names.append(type_name)
 
-    for service_name in service_names:
-        generate_service(open(os.path.join(srcdir, 'service_{0}.rst'.format(service_name)), 'w'), service_name)
-    
-    conf = {
-        'project': 'Satori API',
-        'version': '1',
-        'release': '1',
-        'master_doc': 'index',
-        'html_sidebars': {
-            '**': ['globaltoc.html', 'searchbox.html'],
-        },
-    }
+        generate_index(open(os.path.join(srcdir, 'index.rst'), 'w'), service_names)
+        generate_types(open(os.path.join(srcdir, 'types.rst'), 'w'), type_names)
+        generate_exceptions(open(os.path.join(srcdir, 'exceptions.rst'), 'w'), exception_names)
+        generate_oa(open(os.path.join(srcdir, 'oa.rst'), 'w'))
 
-    app = Sphinx(srcdir, None, destdir, os.path.join(destdir, '.doctrees'), 'html',
-                 conf, sys.stdout, sys.stderr, True, False, [])
+        for service_name in service_names:
+            generate_service(open(os.path.join(srcdir, 'service_{0}.rst'.format(service_name)), 'w'), service_name)
+        
+        conf = {
+            'project': 'Satori API',
+            'version': '1',
+            'release': '1',
+            'master_doc': 'index',
+            'html_sidebars': {
+                '**': ['globaltoc.html', 'searchbox.html'],
+            },
+        }
 
-    app.build(True, [])
+        app = Sphinx(srcdir, None, destdir, os.path.join(destdir, '.doctrees'), 'html',
+                     conf, sys.stdout, sys.stderr, True, False, [])
 
-    return app.statuscode
+        app.build(True, [])
 

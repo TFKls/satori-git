@@ -1,6 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from collections import deque
-import traceback
+import logging
 from satori.core.models import TestResult, User
 from satori.core.checking.utils import wrap_transaction
 from satori.events import Event, Client2
@@ -39,10 +39,10 @@ class CheckQueue(Client2):
     def handle_event(self, queue, event):
         if event.type == 'db':
             self.append(event.object_id)
-            print 'Check queue: enqueue:', event
+            logging.debug('Check queue: enqueue: %s', event)
         elif event.type == 'testresult_reschedule':
             self.append(event.test_result_id)
-            print 'Check queue: reschedule:', event
+            logging.debug('Check queue: reschedule: %s', event)
         elif event.type == 'check_queue_dequeue':
             e = Event(type='check_queue_dequeue_result')
             e.tag = event.tag
@@ -51,5 +51,5 @@ class CheckQueue(Client2):
                 tr = TestResult.objects.get(id=e.test_result_id)
                 tr.tester = User.objects.get(id=event.tester_id)
                 tr.save()
-            print 'Check queue: dequeue by', event.tester_id, ':', e
+            logging.debug('Check queue: dequeue by %s: %s', event.tester_id, e)
             self.send(e)

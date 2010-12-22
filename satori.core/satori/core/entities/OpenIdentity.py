@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import logging
 from django.db import models
 
 from satori.core.dbev               import Events
@@ -13,7 +14,6 @@ import string
 import random
 import urlparse
 import urllib
-import traceback
 
 from openid.consumer import consumer
 from openid.extensions import sreg as oidsreg

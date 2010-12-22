@@ -24,9 +24,6 @@ setup(name='satori.core',
     ],
     entry_points='''
         [console_scripts]
-        satori.idl = satori.core:export_thrift
-        satori.server = satori.core:start_server
-        satori.server.manage = satori.core:manage
-        satori.server.gendoc = satori.core.gendoc:generate_api_doc
+        satori.core = satori.core:manage
     ''',
 )

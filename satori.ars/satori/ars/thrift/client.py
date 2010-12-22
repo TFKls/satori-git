@@ -2,6 +2,7 @@
 """Client for the Thrift protocol.
 """
 
+import errno
 import threading
 import socket
 from types import FunctionType
@@ -43,7 +44,7 @@ class ThriftClient(threading.local):
                 self.start()
                 return self._processor.call(procedure, values.named, self._protocol, self._protocol)
             except IOError as e:
-                if e[0] == 32:
+                if e[0] == errno.EPIPE:
                     self.stop()
                     self.start()
                     return self._processor.call(procedure, values.named, self._protocol, self._protocol)

@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import logging
 from django.db import models
 
 from satori.core.dbev          import Events
@@ -14,7 +15,6 @@ import random
 import urlparse
 import urllib
 import urllib2
-import traceback
 from xml.dom import minidom
 
 CentralAuthenticationServiceFailed = DefineException('CentralAuthenticationServiceFailed', 'Authorization failed')
@@ -98,7 +98,7 @@ class CentralAuthenticationService(Entity):
 
         @staticmethod
         def _xml_find(xml_node, tags):
-            print 'xml', xml_node, tags
+            logger.debug('xml %s %s', xml_node, tags)
             if len(tags) > 0:
                 ret = []
                 for node in xml_node.getElementsByTagNameNS('*', tags[0]):
@@ -114,14 +114,14 @@ class CentralAuthenticationService(Entity):
             if self.version == self.CAS_VERSION_1_0:
                 url = self.validate_url(service=service, ticket=ticket)
                 resp = urllib2.urlopen(url).readlines()
-                print resp
+                logging.debug('CAS 1.0 response: %s', resp)
                 if resp[0].strip() != 'yes':
                     return (None, {})
                 return (resp[1].strip(), {})
             elif self.version == self.CAS_VERSION_2_0:
                 url = self.validate_url(service=service, ticket=ticket)
                 resp = minidom.parse(urllib2.urlopen(url))
-                print resp.toxml()
+                logging.debug('CAS 2.0 response: %s', resp.toxml())
                 user = self._xml_find(resp, [ 'serviceResponse', 'authenticationSuccess', 'user' ])
                 if len(user) < 1:
                     return (None, {})
@@ -144,14 +144,14 @@ class CentralAuthenticationService(Entity):
                 artifact = post.createElement('samlp:AssertionArtifact')
                 request.appendChild(artifact)
                 artifact.appendChild(post.createTextNode(ticket))
-                print url, post.toprettyxml(encoding='utf-8')
+                logging.debug('SAML 1.1 url: %s post: %s', url, post.toprettyxml(encoding='utf-8'))
                 resp = minidom.parse(urllib2.urlopen(urllib2.Request(url=url, data=post.toxml(), headers = {
                     'cache-control': 'no-cache',
                     'pragma': 'no-cache',
                     'accept': 'text/xml',
                     'content-type': 'text/xml',
                     })))
-                print resp.toprettyxml(encoding='utf-8')
+                logging.debug('SAML 1.1 response: %s', resp.toprettyxml(encoding='utf-8'))
                 user = self._xml_find(resp, [ 'Envelope', 'Body', 'Response', 'Assertion', 'AuthenticationStatement', 'NameIdentifier' ])
                 if len(user) < 1:
                     return (None, {})

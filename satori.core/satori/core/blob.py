@@ -1,4 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+import logging
 from django.db import models
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound, HttpResponseServerError, HttpResponseNotAllowed
 import urllib
@@ -6,7 +7,6 @@ from satori.core.sec import Token
 import satori.core.models
 from satori.core.models import AttributeGroup, OpenAttribute, Privilege
 from satori.core.export import token_container
-import traceback
 
 def server(request, model, id, name, group):
     if request.method not in ['GET', 'PUT']:
@@ -53,7 +53,7 @@ def server(request, model, id, name, group):
         elif request.method == 'PUT':
             return server_put(request, entity, name, group)
     except:
-        traceback.print_exc()
+        logging.exception('BLOB server: error in handler')
         return HttpResponseServerError()
 
 def server_get(request, entity, name, group):
@@ -136,7 +136,7 @@ def download(request, hash):
         res['content-length'] = str(blob.length)
         return res
     except:
-        traceback.print_exc()
+        logging.exception('BLOB server: error in download')
         return HttpResponseServerError()
 
 def upload(request):
@@ -165,6 +165,6 @@ def upload(request):
         res['content-length'] = str(len(hash))
         return res
     except:
-        traceback.print_exc()
+        logging.exception('BLOB server: error in upload')
         return HttpResponseServerError()
 
