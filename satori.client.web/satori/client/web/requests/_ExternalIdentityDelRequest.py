@@ -5,18 +5,19 @@ from django.db import models
 from satori.client.common.remote import *
 from _Request import Request
 
-class OpenIdAddRequest(Request):
-    pathName = 'openid_add'
+class ExternalIdentityDelRequest(Request):
+    pathName = 'exid_del'
     @classmethod
     def process(cls, request):
         vars = request.REQUEST
         back_to = vars.get('back_to', '')
         path = vars.get('path', '')
         lw_path = vars.get('lw_path', '')
-        salt = vars.get('salt', '')
+        id = vars.get('id', '')
         d = ParseURL(back_to)
         try:
-            OpenIdentity.add(salt=salt)
+            o = ExternalIdentity.filter({'id': int(id)})[0]
+            o.delete()
         except:
             follow(d,lw_path)['status'] = ['failed']
         return GetLink(d,path)

@@ -9,15 +9,9 @@ class IdentitiesWidget(Widget):
     pathName = 'identities'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/identities.html'
-        self.openid_linked = []
-        self.openid_ready = []
-        self.cas_linked = []
-        self.cas_ready = []
-        self.openid_linked = OpenIdentity.get_linked()
-        for s,o in OpenIdentity.get_ready().items():
+        self.exid_linked = []
+        self.exid_ready = []
+        self.exid_linked = ExternalIdentity.get_linked()
+        for s,o in ExternalIdentity.get_ready().items():
             o.salt = s;
-            self.openid_ready.append(o)
-        self.cas_linked = CentralAuthenticationService.get_linked()
-        for s,o in CentralAuthenticationService.get_ready().items():
-            o.salt = s;
-            self.cas_ready.append(o)
+            self.exid_ready.append(o)

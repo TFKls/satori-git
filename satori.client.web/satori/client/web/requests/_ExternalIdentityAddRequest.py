@@ -5,19 +5,18 @@ from django.db import models
 from satori.client.common.remote import *
 from _Request import Request
 
-class CASDelRequest(Request):
-    pathName = 'cas_del'
+class ExternalIdentityAddRequest(Request):
+    pathName = 'exid_add'
     @classmethod
     def process(cls, request):
         vars = request.REQUEST
         back_to = vars.get('back_to', '')
         path = vars.get('path', '')
         lw_path = vars.get('lw_path', '')
-        id = vars.get('id', '')
+        salt = vars.get('salt', '')
         d = ParseURL(back_to)
         try:
-            o = CentralAuthenticationService.filter({'id': int(id)})[0]
-            o.delete()
+            ExternalIdentity.add(salt=salt)
         except:
             follow(d,lw_path)['status'] = ['failed']
         return GetLink(d,path)

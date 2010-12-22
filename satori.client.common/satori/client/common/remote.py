@@ -17,8 +17,8 @@ from token_container import token_container
 
 if getpass.getuser() == 'gutowski':
     client_host = 'satori.tcs.uj.edu.pl'
-    client_port = 38889
-    blob_port = 38887
+    client_port = 39889
+    blob_port = 39887
 elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     client_host = 'localhost'
     client_port = 37889

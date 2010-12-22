@@ -16,9 +16,10 @@
 </form>
 
 <!--
-<form method="post" action="process.openid_start">
+<form method="post" action="process.exid_start">
+<input type="hidden" name="handler" value="openid"/>
 <div class="messagecenter">
-<span class="message">OpenId:</span><input type="text" class="smallinputbox" name="openid"/>
+<span class="message">OpenId:</span><input type="text" class="smallinputbox" name="provider"/>
 </div>
 <div class="messagecenter">
     <input type="submit" value="Sign in" class="button"/>
@@ -30,22 +31,24 @@
 </form>
 -->
 
-<form method="post" action="process.openid_start" >
+<form method="post" action="process.exid_start" >
     <p>You can also use <strong>Google Account</strong> as an alternative way to enter.
     <input type="submit" value="Sign in with Google" class="button" style="margin-left: 2em"/>
 
-    <input type="hidden" name="openid" value="https://www.google.com/accounts/o8/id"/>
+    <input type="hidden" name="handler" value="openid"/>
+    <input type="hidden" name="provider" value="https://www.google.com/accounts/o8/id"/>
     <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
     <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
     <input type="hidden" name="path" value="{{widget.path}}"/>
     </p>
 </form>
 
-<form method="post" action="process.cas_start" >
+<form method="post" action="process.exid_start" >
     <p>You can also use <strong>UJ Account</strong> as an alternative way to enter.
     <input type="submit" value="Sign in with UJ" class="button" style="margin-left: 2em"/>
 
-    <input type="hidden" name="cas" value="https://login.uj.edu.pl/"/>
+    <input type="hidden" name="handler" value="cas"/>
+    <input type="hidden" name="provider" value="https://login.uj.edu.pl/"/>
     <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
     <input type="hidden" name="lw_path" value="{{widget.lw_path}}"/>
     <input type="hidden" name="path" value="{{widget.path}}"/>

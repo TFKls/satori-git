@@ -9,15 +9,16 @@ from django.http import HttpResponse, HttpResponseRedirect
 import urlparse
 import urllib
 
-class CASStartRequest(Request):
-    pathName = 'cas_start'
+class ExternalIdentityStartRequest(Request):
+    pathName = 'exid_start'
     @classmethod
     def process(cls, request):
         vars = request.REQUEST
         back_to = vars.get('back_to', '')
         path = vars.get('path', '')
         lw_path = vars.get('lw_path', '')
-        cas = vars['cas']
+        handler = vars['handler']
+        provider = vars['provider']
         d = ParseURL(back_to)
         finisher = request.build_absolute_uri()
         callback = urlparse.urlparse(finisher)
@@ -30,12 +31,17 @@ class CASStartRequest(Request):
             for value in vlist:
                 query.append((key,value))
         query = urllib.urlencode(query)
-        path = '/process.cas_finish'
+        path = '/process.exid_finish'
         finisher = urlparse.urlunparse((callback.scheme, callback.netloc, path, callback.params, query, callback.fragment))
         try:
-            res = CentralAuthenticationService.start(realm=cas, return_to=finisher)
+            res = ExternalIdentity.start(handler=handler, provider=provider, return_to=finisher)
             token_container.set_token(res['token'])
-            return HttpResponseRedirect(res['redirect'])
+            if res['html']:
+                ret = HttpResponse()
+                ret.write(res['html'])
+                return ret
+            else:
+                return HttpResponseRedirect(res['redirect'])
         except:
             follow(d,lw_path)['status'] = ['failed']
         return GetLink(d, path)

@@ -67,24 +67,14 @@ class Session(models.Model):
         self.auth = auth
         self.renew()
         self.save()
-        from satori.core.models import OpenIdentity
-        from satori.core.models import CentralAuthenticationService
-        OpenIdentity.handle_login(self)
-        CentralAuthenticationService.handle_login(self)
 
     def logout(self):
         self.role = None
         self.auth = None
         self.save()
         ret = []
-        from satori.core.models import OpenIdentity
-        from satori.core.models import CentralAuthenticationService
-        r = OpenIdentity.handle_logout(self)
-        if r:
-            ret.append(r)
-        r = CentralAuthenticationService.handle_logout(self)
-        if r:
-            ret.append(r)
+        from satori.core.models import ExternalIdentity
+        ret += ExternalIdentity.handle_logout(self)
         return ret
 
     def _get_data_pickle(self):
