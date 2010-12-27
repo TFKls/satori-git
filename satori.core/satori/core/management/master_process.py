@@ -76,6 +76,9 @@ class SatoriMasterProcess(SatoriProcess):
 
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
 
+        if not os.path.exists(os.path.dirname(settings.LOG_FILE)):
+            os.makedirs(os.path.dirname(settings.LOG_FILE))
+
         file_handler = logging.FileHandler(settings.LOG_FILE)
         file_handler.setFormatter(formatter)
         logger.addHandler(file_handler)
@@ -83,6 +86,9 @@ class SatoriMasterProcess(SatoriProcess):
         console_handler = logging.StreamHandler()
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
+
+        if not os.path.exists(os.path.dirname(settings.PID_FILE)):
+            os.makedirs(os.path.dirname(settings.PID_FILE))
 
         fp = open(settings.PID_FILE, 'a+')
 
