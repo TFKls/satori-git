@@ -19,6 +19,7 @@ DATABASE_USER = ''
 DATABASE_PASSWORD = ''
 DATABASE_HOST = ''
 DATABASE_PORT = ''
+DATABASE_OPTIONS = {'autocommit': True}
 
 CACHE_BACKEND = 'memcached://localhost:11211'
 
