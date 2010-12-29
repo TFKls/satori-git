@@ -6,10 +6,11 @@ from satori.core.checking.accumulators import accumulators
 from satori.core.models import Test
 
 class DispatcherBase(object):
-    def __init__(self, supervisor, test_suite_result, accumulator_list = []):
+    def __init__(self, supervisor, test_suite_result):
         super(DispatcherBase, self).__init__()
         self.supervisor = supervisor
         self.test_suite_result = test_suite_result
+        accumulator_list = test_suite_result.test_suite.accumulators.split(',')
         self.accumulators = [
             accumulators[accumulator](test_suite_result) for accumulator in accumulator_list
         ]
@@ -37,8 +38,8 @@ class DispatcherBase(object):
 class SerialDispatcher(DispatcherBase):
     """Serial dispatcher"""
 
-    def __init__(self, supervisor, test_suite_result, accumulator_list = []):
-        super(SerialDispatcher, self).__init__(supervisor, test_suite_result, accumulator_list)
+    def __init__(self, supervisor, test_suite_result):
+        super(SerialDispatcher, self).__init__(supervisor, test_suite_result)
         self.to_check = deque()
         for test in self.test_suite_result.test_suite.tests.all():
             self.to_check.append(test.id)
@@ -64,8 +65,8 @@ class SerialDispatcher(DispatcherBase):
 class ParallelDispatcher(DispatcherBase):
     """Parallel dispatcher"""
 
-    def __init__(self, supervisor, test_suite_result, accumulator_list = []):
-        super(ParallelDispatcher, self).__init__(supervisor, test_suite_result, accumulator_list)
+    def __init__(self, supervisor, test_suite_result):
+        super(ParallelDispatcher, self).__init__(supervisor, test_suite_result)
         submit = test_suite_result.submit
         self.to_check = set()
         for test in self.test_suite_result.test_suite.tests.all():
