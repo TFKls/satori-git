@@ -55,6 +55,7 @@ class CheckingMaster(Client2):
                 self.call_test_suite_result(test_suite_result, 'checked_test_results', [[test_result]])
         elif event.type == 'checking_rejudge_test_result':
             test_result = TestResult.objects.get(id=event.id)
+            was_pending = test_result.pending
             if test_result not in self.test_result_set:
                 if test_result in self.test_result_judged_set:
                     self.test_result_judged_set.remove(test_result)
@@ -65,21 +66,24 @@ class CheckingMaster(Client2):
                 # end transaction
                 self.test_result_queue.append(test_result)
                 self.test_result_set.add(test_result)
-            for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
-                self.call_test_suite_result(test_suite_result, 'rejudged_test_results', [[test_result]])
+            if not was_pending:
+                for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
+                    self.call_test_suite_result(test_suite_result, 'rejudged_test_results', [[test_result]])
             # find finished and start
         elif event.type == 'checking_rejudge_test_suite_result':
             test_suite_result = TestSuiteResult.objects.get(id=event.id)
+            was_pending = test_suite_result.pending
             if test_suite_result.submit.problem.contest.archived:
                 return
             if test_suite_result in self.test_suite_result_map:
                 self.stop_test_suite_result(test_suite_result)
+            if was_pending:
+                for ranking in self.scheduled_test_suite_results_map.get(test_suite_result, []):
+                    self.call_ranking(ranking, 'rejudged_test_suite_results', [[test_suite_result]])
             # transaction (?)
             test_suite_result.pending = True
             test_suite_result.save()
             # end transaction
-            for ranking in self.scheduled_test_suite_results_map.get(test_suite_result, []):
-                self.call_ranking(ranking, 'rejudged_test_suite_results', [[test_suite_result]])
             self.start_test_suite_result(test_suite_result)
         elif event.type == 'checking_rejudge_ranking':
             ranking = Ranking.objects.get(id=event.id)
@@ -121,9 +125,9 @@ class CheckingMaster(Client2):
             logging.debug('checking master: work item %s', event.type)
 
             if event.type == 'checked_test_result':
-                self.call_test_suite_result(event.test_suite_result, 'checked_test_result', [[event.test_result]])
+                self.call_test_suite_result(event.test_suite_result, 'checked_test_results', [[event.test_result]])
             elif event.type == 'checked_test_suite_result':
-                self.call_ranking(event.ranking, 'checked_test_suite_result', [[event.test_suite_result]])
+                self.call_ranking(event.ranking, 'checked_test_suite_results', [[event.test_suite_result]])
             elif event.type == 'start_test_suite_result':
                 self.start_test_suite_result(event.test_suite_result)
 
@@ -149,7 +153,7 @@ class CheckingMaster(Client2):
             transaction.enter_transaction_management(True)
             transaction.managed(True)
             getattr(self.test_suite_result_map[test_suite_result], name)(*args)
-        except NotImplemented:
+        except NotImplementedError:
             transaction.rollback()
             transaction.managed(False)
             transaction.leave_transaction_management()
@@ -218,7 +222,7 @@ class CheckingMaster(Client2):
             transaction.enter_transaction_management(True)
             transaction.managed(True)
             getattr(self.ranking_map[ranking], name)(*args)
-        except NotImplemented:
+        except NotImplementedError:
             transaction.rollback()
             transaction.managed(False)
             transaction.leave_transaction_management()

@@ -19,13 +19,17 @@ def row_to_dict(cursor, row):
 
 def handle_notifications(cursor, slave):
     while True:
+        transaction = None
         cursor.execute('SELECT min(transaction) AS transaction FROM core_notification')
         res = row_to_dict(cursor, cursor.fetchone())
-        if 'transaction' not in res:
-            break
-        if res['transaction'] == None:
-            break
-        transaction = int(res['transaction'])
+        if 'transaction' in res and res['transaction'] is not None:
+            transaction = int(res['transaction'])
+        cursor.execute('SELECT min(transaction) AS transaction FROM core_rawevent')
+        res = row_to_dict(cursor, cursor.fetchone())
+        if 'transaction' in res and res['transaction'] is not None:
+            t = int(res['transaction'])
+            if transaction is None or transaction > t:
+                transaction = t
         cursor.execute('SELECT * FROM core_notification WHERE transaction=%s', [transaction])
         events = {}
         for row in cursor:

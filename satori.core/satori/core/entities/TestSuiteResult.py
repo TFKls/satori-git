@@ -25,6 +25,10 @@ class TestSuiteResult(Entity):
     class ExportMeta(object):
         fields = [('submit', 'VIEW'), ('test_suite', 'VIEW'), ('pending', 'VIEW'), ('status', 'VIEW'), ('report', 'VIEW')]
 
+    @ExportMethod(NoneType, [DjangoId('TestSuiteResult')], PCArg('self', 'MANAGE'))
+    def rejudge(self):
+        RawEvent().send(Event(type='checking_rejudge_test_suite_result', id=self.id))
+
 class TestSuiteResultEvents(Events):
     model = TestSuiteResult
     on_insert = on_update = ['submit', 'test_suite', 'pending']
