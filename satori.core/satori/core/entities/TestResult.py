@@ -13,9 +13,9 @@ class TestResult(Entity):
 
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testresult')
 
-    submit      = models.ForeignKey('Submit')
-    test        = models.ForeignKey('Test')
-    tester      = models.ForeignKey('User', null=True)
+    submit      = models.ForeignKey('Submit', related_name='test_results')
+    test        = models.ForeignKey('Test', related_name='+')
+    tester      = models.ForeignKey('User', related_name='+', null=True)
     pending     = models.BooleanField(default=True)
 
     class Meta:                                                # pylint: disable-msg=C0111

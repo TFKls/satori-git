@@ -46,7 +46,7 @@ class Privilege(Entity):
             queryset = Privilege.select_can(queryset, right)
         return queryset
 
-    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode, PrivilegeTimes], PCArg('entity', 'MANAGE_PRIVILEGES'))
+    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode, PrivilegeTimes], PCArg('entity', 'MANAGE'))
     @staticmethod
     def grant(role, entity, right, times=None):
         if not times:
@@ -57,7 +57,7 @@ class Privilege(Entity):
         priv.finish_on = times.finish_on
         priv.save()
 
-    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE_PRIVILEGES'))
+    @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE'))
     @staticmethod
     def revoke(role, entity, right):
         try:
@@ -66,7 +66,7 @@ class Privilege(Entity):
         except Privilege.DoesNotExist:
             pass
 
-    @ExportMethod(PrivilegeTimes, [DjangoId('Role'), DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE_PRIVILEGES'))
+    @ExportMethod(PrivilegeTimes, [DjangoId('Role'), DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE'))
     @staticmethod
     def get(role, entity, right):
         try:

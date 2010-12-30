@@ -1,14 +1,15 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import crypt
-from   django.db import models
-from   django.core.validators import email_re
 import random
 import string
 
-from satori.core.dbev               import Events
+from   django.core.exceptions import ValidationError
+from   django.core.validators import validate_email
+from   django.db              import models
 
-from satori.core.models import Role, Session
+from   satori.core.dbev   import Events
+from   satori.core.models import Role, Session
 
 LoginFailed = DefineException('LoginFailed', 'Invalid username or password')
 InvalidLogin = DefineException('InvalidLogin', 'The specified login \'{login}\' is invalid: {reason}',
@@ -44,48 +45,37 @@ class User(Role):
             login.decode('ascii')
         except:
             raise InvalidLogin(login=login, reason='contains invalid characters')
-        count = 0
         for l in login:
-            if not (l.isalpha() or l.isdigit() or l == '_'):
+            if not (l.islower() or l.isdigit() or l == '_'):
                 raise InvalidLogin(login=login, reason='contains invalid characters')
-            if l.isalpha() and l.islower():
-            	count += 1
         if not login[0].isalpha():
             raise InvalidLogin(login=login, reason='does not start with a letter')
-        if count == 0:
-            raise InvalidLogin(login=login, reason='does not contain a lowercase letter')
-        return True
 
     def password_ok(self, password):
         if password is None:
-            return True
+            return
         #TODO: python-crack?
         if len(password) < 4:
             raise InvalidPassword(reason='is too short')
-        return True
 
     @staticmethod
     def email_ok(email):
         if email is None:
-            return True
-        if not email_re.search(email):
+            return
+        try:
+            validate_email(email)
+        except ValidationError:
             raise InvalidEmail(email=email, reason='is not RFC3696 compliant')
-        return True
 
     @ExportMethod(NoneType, [unicode, unicode, unicode], PCPermit(), [InvalidLogin, InvalidPassword])
     @staticmethod
     def register(login, password, name):
-        User.login_ok(login)
-        try:
-            User.objects.get(login=login)
-            raise InvalidLogin(login=login, reason='is already used')
-        except User.DoesNotExist:
-            pass
-
-        user = User(login=login, name=name)
+        user = User()
+        user.set_name(name)
+        user.set_login(login)
         user.set_password(password)
         user.save()
-        Privilege.grant(user, user, 'MANAGE')
+        Privilege.grant(user, user, 'EDIT')
 
     @ExportMethod(unicode, [unicode, unicode], PCPermit(), [LoginFailed])
     @staticmethod
@@ -96,26 +86,39 @@ class User(Role):
             raise LoginFailed()
         if user.check_password(password):
             session = Session.start()
-            session.login(user, 'login')
+            session.login(user, 'user')
             return str(token_container.token)
         else:
             raise LoginFailed()
 
-    @ExportMethod(bool, [DjangoId('User'), unicode], PCOr(PCTokenUser('self'), PCArg('self', 'MANAGE')))
+    @ExportMethod(bool, [DjangoId('User'), unicode], PCArg('self', 'EDIT'))
     def check_password(self, password):
         if self.password is None:
             return True
         return crypt.crypt(password, self.password) == self.password
 
-    @ExportMethod(NoneType, [DjangoId('User'), unicode], PCArg('self', 'MANAGE'), [InvalidPassword])
+    @ExportMethod(DjangoStruct('User'), [DjangoId('User'), unicode], PCArg('self', 'MANAGE'), [InvalidPassword])
     def set_password(self, password):
         self.password_ok(password)
         chars = string.letters + string.digits
         salt = random.choice(chars) + random.choice(chars)
         self.password = crypt.crypt(password, salt)
         self.save()
+        return self
 
-    @ExportMethod(NoneType, [DjangoId('User'), unicode, unicode], PCOr(PCTokenUser('self'), PCArg('self', 'MANAGE')), [LoginFailed, InvalidPassword])
+    @ExportMethod(DjangoStruct('User'), [DjangoId('User'), unicode], PCArg('self', 'MANAGE'), [InvalidLogin])
+    def set_login(self, login):
+        User.login_ok(login)
+        try:
+            User.objects.get(login=login)
+            raise InvalidLogin(login=login, reason='is already used')
+        except User.DoesNotExist:
+            pass
+        self.login = login
+        self.save()
+        return self
+
+    @ExportMethod(NoneType, [DjangoId('User'), unicode, unicode], PCArg('self', 'EDIT'), [LoginFailed, InvalidPassword])
     def change_password(self, old_password, new_password):
         if not self.check_password(old_password):
             raise LoginFailed()

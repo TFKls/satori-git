@@ -1,7 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import logging
 
-from django.db import models
+from django.db import models, DatabaseError
 
 from satori.core.dbev               import Events
 
@@ -20,6 +21,39 @@ class Role(Entity):
     class ExportMeta(object):
         fields = [('name', 'VIEW')]
 
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(User, cls).inherit_rights()
+        cls._inherit_add(inherits, 'EDIT', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEW', 'id', 'EDIT')
+        return inherits
+
+    @ExportMethod(DjangoStruct('Role'), [unicode, DjangoIdList('Role')], PCGlobal('MANAGE_PRIVILEGES'))
+    @staticmethod
+    def create(name, children=[]):
+        res = Role(name=name)
+        res.save()
+        for child in children:
+            res.add_member(child)
+        Privilege.grant(token_container.token.role, res, 'MANAGE')
+        return res
+
+    #@ExportMethod(NoneType, [DjangoId('Role')], PCArg('self', 'MANAGE'))
+    def delete(self):
+        logging.error('role deleted') #TODO: Waiting for non-cascading deletes in django
+        self.privileges.all().delete()
+        self.children.all().delete()
+        try:
+            super(Role, self).delete()
+        except DatabaseError:
+            raise CannotDeleteObject()
+
+    @ExportMethod(DjangoStruct('Role'), [DjangoId('Role'), unicode], PCArg('self', 'EDIT'))
+    def set_name(self, name):
+        self.name = name
+        self.save()
+        return self #TODO: poinformowac o zmianie nazwy kontestanta
+
     @ExportMethod(DjangoStructList('Role'), [DjangoId('Role')], PCArg('self', 'VIEW'))
     def get_members(self):
         return self.children.all()
@@ -35,11 +69,10 @@ class Role(Entity):
         except RoleMapping.DoesNotExist:
             pass
 
-    def __str__(self):
+    def __str__(self): #TODO
         return self.name
 
 class RoleEvents(Events):
     model = Role
     on_insert = on_update = ['name']
     on_delete = []
-

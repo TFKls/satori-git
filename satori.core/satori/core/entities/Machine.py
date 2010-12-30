@@ -7,8 +7,8 @@ import ipaddr
 
 from satori.ars.server import server_info
 from satori.core.dbev  import Events
-
 from satori.core.models import Role
+from satori.core.models import LoginFailed
 
 @ExportModel
 class Machine(Role):
@@ -17,35 +17,44 @@ class Machine(Role):
 
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_machine')
 
-    secret  = models.CharField(max_length=128)
-    address = models.IPAddressField()
-    netmask = models.IPAddressField(default='255.255.255.255')
+    login       = models.CharField(max_length=64, unique=True)
+    secret      = models.CharField(max_length=128)
+    address     = models.IPAddressField()
+    netmask     = models.IPAddressField(default='255.255.255.255')
 
     class ExportMeta(object):
-        fields = [('address', 'VIEW'), ('netmask', 'VIEW'), ('secret', 'MANAGE')]
+        fields = [('login', 'VIEW'), ('address', 'VIEW'), ('netmask', 'VIEW')]
 
-    @ExportMethod(DjangoStruct('Machine'), [unicode, unicode, unicode, unicode], PCAnd(PCTokenIsUser(), PCGlobal('ADMIN')))
+    @ExportMethod(DjangoStruct('Machine'), [unicode, unicode, unicode, unicode, unicode], PCGlobal('ADMIN'))
     @staticmethod
-    def register(name, secret, address, netmask):
-        machine = Machine(name=name, address=address, netmask=netmask)
+    def register(login, name, secret, address, netmask):
+        machine = Machine(login=login, name=name, address=address, netmask=netmask)
         machine.set_secret(secret)
         machine.save()
         Privilege.grant(token_container.token.role, machine, 'MANAGE')
         return machine
 
-    @ExportMethod(unicode, [unicode], PCPermit())
+    @ExportMethod(unicode, unicode, [unicode], PCPermit())
     @staticmethod
-    def authenticate(secret):
-        for machine in Machine.objects.all():
-            if machine.check_ip(server_info.client_ip) and machine.check_secret(secret):
-                session = Session(role=machine, auth='machine', deadline=datetime.now() + timedelta(hours=24)).save()
-                return str(Token(session=session, deadline=session.deadline))
+    def authenticate(login, secret):
+        try:
+            machine = Machine.objects.get(login=login)
+        except Machine.DoesNotExist:
+            raise LoginFailed()
+        if not machine.check_ip(server_info.client_ip):
+            raise LoginFailed()
+        if not machine.check_secret(secret):
+            raise LoginFailed()
+        session = Session.start()
+        session.login(user, 'machine')
+        return str(token_container.token)
 
-    @ExportMethod(NoneType, [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))
+    @ExportMethod(DjangoStruct('Machine'), [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))
     def set_secret(self, secret):
         chars = string.letters + string.digits
         salt = random.choice(chars) + random.choice(chars)
         self.secret = crypt.crypt(secret, salt)
+        return self
 
     @ExportMethod(bool, [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))
     def check_secret(self, secret):
@@ -60,4 +69,3 @@ class Machine(Role):
 class MachineEvents(Events):
     model = Machine
     on_insert = on_update = on_delete = []
-    

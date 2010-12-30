@@ -14,11 +14,11 @@ class ProblemMapping(Entity):
 
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_problemmapping')
 
-    contest     = models.ForeignKey('Contest')
-    problem     = models.ForeignKey('Problem')
+    contest     = models.ForeignKey('Contest', related_name='+')
+    problem     = models.ForeignKey('Problem', related_name='+')
     code        = models.CharField(max_length=10)
     title       = models.CharField(max_length=64)
-    default_test_suite = models.ForeignKey('TestSuite')
+    default_test_suite = models.ForeignKey('TestSuite', related_name='+')
 
     statement = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 

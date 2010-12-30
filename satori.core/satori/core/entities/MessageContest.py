@@ -12,7 +12,7 @@ class MessageContest(Message):
     """
     parent_message = models.OneToOneField(Message, parent_link=True, related_name='cast_messagecontest')
 
-    contest = models.ForeignKey('Contest')
+    contest = models.ForeignKey('Contest', related_name='messages')
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW')]

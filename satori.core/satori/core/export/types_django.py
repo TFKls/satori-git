@@ -14,6 +14,8 @@ ArgumentNotFound = DefineException('ArgumentNotFound', 'The specified argument c
 
 CannotReturnObject = DefineException('CannotReturnObject', 'You don\'t have rights to view the returned object')
 
+CannotDeleteObject = DefineException('CannotDeleteObject', 'You can\'t delete this object')
+
 
 field_basic_types = {
     models.AutoField: long,

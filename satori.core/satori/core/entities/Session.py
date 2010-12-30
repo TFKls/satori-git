@@ -14,8 +14,6 @@ class Session(models.Model):
     role            = models.ForeignKey('Role', related_name='sessions', null=True)
     auth            = models.CharField(max_length=16, null=True)
 
-    cas_ticket = models.CharField(max_length=64, null=True)
-
     TIMEOUT = timedelta(minutes = 50)
 
     @property

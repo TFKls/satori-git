@@ -14,9 +14,9 @@ class RankingParams(Entity):
 
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_rankingparams')
 
-    ranking     = models.ForeignKey('Ranking')
-    problem     = models.ForeignKey('ProblemMapping')
-    test_suite  = models.ForeignKey('TestSuite', null=True)
+    ranking     = models.ForeignKey('Ranking', related_name='+')
+    problem     = models.ForeignKey('ProblemMapping', related_name='+')
+    test_suite  = models.ForeignKey('TestSuite', related_name='+', null=True)
 
     class ExportMeta(object):
         fields = [('ranking', 'VIEW'), ('problem', 'VIEW'), ('test_suite', 'VIEW')]

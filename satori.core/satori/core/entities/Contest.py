@@ -22,8 +22,8 @@ class Contest(Entity):
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_contest')
 
     name        = models.CharField(max_length=50, unique=True)
-    problems    = models.ManyToManyField('Problem', through='ProblemMapping')
-    contestant_role = models.ForeignKey('Role')
+    problems    = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
+    contestant_role = models.ForeignKey('Role', related_name='+')
     archived    = models.BooleanField(default=False)
 
     lock_start  = models.DateTimeField(null=True)

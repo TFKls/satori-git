@@ -12,7 +12,7 @@ class RankingEntry(Entity):
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_rankingentry')
 
     ranking     = models.ForeignKey('Ranking', related_name='entries')
-    contestant  = models.ForeignKey('Contestant')
+    contestant  = models.ForeignKey('Contestant', related_name='+')
     row         = models.TextField()
     individual  = models.TextField()
     position    = models.IntegerField()

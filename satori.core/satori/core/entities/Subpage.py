@@ -13,7 +13,7 @@ class Subpage(Entity):
     
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_subpage')
     
-    contest = models.ForeignKey('Contest')
+    contest = models.ForeignKey('Contest', related_name='subpages', null=True)
     pub = models.BooleanField(default=True)
     name = models.TextField(blank=False)
     content = models.TextField()
@@ -28,6 +28,7 @@ class Subpage(Entity):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)
+        ordering = ('order',)
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('pub', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]

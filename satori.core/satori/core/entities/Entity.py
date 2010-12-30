@@ -10,7 +10,6 @@ class Entity(models.Model):
     rights:
         VIEW
         MANAGE
-        MANAGE_PRIVILEGES - do wywalenie, rownowazne z MANAGE
     """
 
     model = models.CharField(max_length=64, editable=False)
@@ -34,8 +33,6 @@ class Entity(models.Model):
 
         cls._inherit_add(inherits, 'VIEW', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'MANAGE', '', 'ADMIN')
-        cls._inherit_add(inherits, 'MANAGE_PRIVILEGES', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'MANAGE_PRIVILEGES', '', 'MANAGE_PRIVILEGES')
         return inherits
 
     class ExportMeta(object):

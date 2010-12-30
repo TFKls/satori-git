@@ -12,15 +12,19 @@ class Contestant(Role):
     """
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_contestant')
 
-    contest    = models.ForeignKey('Contest')
+    usernames  = models.CharField(max_length=200)
+    contest    = models.ForeignKey('Contest', related_name='contestants')
     accepted   = models.BooleanField(default=False)
     invisible  = models.BooleanField(default=False)
+
+    class ExportMeta(object):
+        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
         inherits = super(Contestant, cls).inherit_rights()
-        for key in inherits.keys():
-            cls._inherit_add(inherits, key, 'contest', key)
+        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW')
+        cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         cls._inherit_add(inherits, 'OBSERVE', 'contest', 'OBSERVE')
         return inherits
     
@@ -28,35 +32,29 @@ class Contestant(Role):
     def set_accepted(self, accepted):
         self.accepted = accepted
         self.save()
-
         if accepted:
             self.contest.contestant_role.add_member(self)
         else:
             self.contest.contestant_role.delete_member(self)
-
         return self
 
-    @ExportMethod(unicode, [DjangoId('Contestant')], PCArg('self', 'VIEW'))
-    def name_auto(self):
-        name = ','.join(x.name for x in self.get_member_users())
-        cname = self.contest.name + ': ' + name;
-        if cname != self.name:
-            self.name = cname;
-            self.save()
-        return name
+    def update_usernames(self):
+        name = ', '.join(x.name for x in self.get_member_users())
+        if len(name) > 200)
+            name = name[0:197] + '...'
+        self.usernames = name;
+        self.save()
+        return self #TODO: Poinformowac przeliczanie rankingow
 
     @ExportMethod(DjangoStructList('User'), [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def get_member_users(self):
         return User.objects.filter(parents=self)
 
-    # MANAGE on self
-    def set_invisible():
-        # update ranking
-        # set invisible
-        pass
-
-    class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW')]
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), bool], PCArg('self', 'MANAGE'))
+    def set_invisible(self, invisible):
+        self.invisible = invisible
+        self.save()
+        return self #TODO: Poinformowac przeliczanie rankingow
 
 class ContestantEvents(Events):
     model = Contestant

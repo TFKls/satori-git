@@ -14,10 +14,10 @@ class TestSuite(Entity):
 
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testsuite')
 
-    problem      = models.ForeignKey('Problem')
+    problem      = models.ForeignKey('Problem', related_name='test_suites')
     name         = models.CharField(max_length=50)
     description  = models.TextField(blank=True, default="")
-    tests        = models.ManyToManyField('Test', through='TestMapping')
+    tests        = models.ManyToManyField('Test', through='TestMapping', related_name='test_suites')
     dispatcher   = models.CharField(max_length=128)
     accumulators = models.CharField(max_length=1024)
 

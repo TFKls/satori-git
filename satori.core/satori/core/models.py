@@ -10,6 +10,8 @@ from satori.core.export import PCTokenIsUser, PCTokenIsMachine
 from satori.core.export import token_container
 from satori.core.export import Struct, DefineException, TypedList, TypedMap
 from satori.core.export import DjangoId, DjangoStruct, DjangoIdList, DjangoStructList
+from satori.core.export import CannotDeleteObject
+
 
 def _load_models():
     import _ast

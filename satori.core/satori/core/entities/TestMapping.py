@@ -14,8 +14,8 @@ class TestMapping(Entity):
 
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testmapping')
 
-    suite       = models.ForeignKey('TestSuite')
-    test        = models.ForeignKey('Test')
+    suite       = models.ForeignKey('TestSuite', related_name='+')
+    test        = models.ForeignKey('Test', related_name='+')
     order       = models.IntegerField()
 
     def __str__(self):

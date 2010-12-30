@@ -13,8 +13,8 @@ class Submit(Entity):
 
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_submit')
 
-    contestant  = models.ForeignKey('Contestant')
-    problem     = models.ForeignKey('ProblemMapping')
+    contestant  = models.ForeignKey('Contestant', related_name='submits')
+    problem     = models.ForeignKey('ProblemMapping', related_name='submits')
     time        = models.DateTimeField(auto_now_add=True)
 
     data = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
