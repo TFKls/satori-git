@@ -24,6 +24,7 @@ class Contest(Entity):
     name        = models.CharField(max_length=50, unique=True)
     problems    = models.ManyToManyField('Problem', through='ProblemMapping')
     contestant_role = models.ForeignKey('Role')
+    archived    = models.BooleanField(default=False)
 
     lock_start  = models.DateTimeField(null=True)
     lock_finish = models.DateTimeField(null=True)
@@ -67,6 +68,7 @@ class Contest(Entity):
         cls._inherit_add(inherits, 'VIEW_INTRA_FILES', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'APPLY', 'id', 'JOIN')
         cls._inherit_add(inherits, 'JOIN', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'SUBMIT', 'id', 'MANAGE')
         return inherits
 
     @ExportMethod(DjangoStruct('Contest'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_CONTESTS')))
@@ -168,7 +170,8 @@ class Contest(Entity):
         blob = submit.oa_set_blob('content', filename=filename)
         blob.write(content)
         blob.close()
-        TestSuiteResult(submit=submit, test_suite=problem_mapping.default_test_suite).save()
+
+        RawEvent().send(Event(type='checking_new_submit', id=submit.id))
         return submit
 
     ResultToRender = Struct('ResultToRender', (

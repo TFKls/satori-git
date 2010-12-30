@@ -101,11 +101,9 @@ def handle_notifications(cursor, slave):
         cursor.execute('SELECT * FROM core_rawevent WHERE transaction=%s', [transaction])
         for row in cursor:
             res = row_to_dict(cursor, row)
-            event = pickle.loads(base64.urlsafe_b64decode(str(res['event'])))
+            event = pickle.loads(base64.urlsafe_b64decode(str(res['data'])))
             slave.send(event)
         cursor.execute('DELETE FROM core_rawevent WHERE transaction=%s', [transaction])
-
-        self.data = str(base64.urlsafe_b64encode(str(pickle.dumps(data))))
 
 def run_notifier(slave):
     while True:
@@ -132,6 +130,6 @@ def run_notifier(slave):
         except SystemExit:
             break
         except:
-            logger.exception('DBEV notifier error')
+            logging.exception('DBEV notifier error')
     slave.disconnect()
 

@@ -9,6 +9,7 @@ from types import NoneType
 
 from satori.core.checking.check_queue_client import CheckQueueClient
 from satori.core.dbev               import Events
+from satori.events import Event
 
 from satori.core.models import Role
 
@@ -22,12 +23,12 @@ SubmitToCheck = Struct('SubmitToCheck', (
 @ExportClass
 class Judge(object):
 
-    @ExportMethod(SubmitToCheck, [], PCAnd(PCTokenIsMachine(), PCGlobal('JUDGE')))
+    @ExportMethod(SubmitToCheck, [], PCGlobal('JUDGE'))
     @staticmethod
     def get_next():
-        m = token_container.token.machine
+        r = token_container.token.role
 
-        next = CheckQueueClient.get_instance().get_next(m)
+        next = CheckQueueClient.get_instance().get_next(r)
 
         if next.test_result_id is None:
             return None
@@ -45,4 +46,6 @@ class Judge(object):
         test_result.oa_set_map(result)
         test_result.pending = False
         test_result.save()
+        
+        RawEvent().send(Event(type='checking_checked_test_result', id=test_result.id))
 

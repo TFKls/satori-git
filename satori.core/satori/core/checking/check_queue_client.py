@@ -23,15 +23,27 @@ class CheckQueueClient(object):
         queue = 'check_queue_client_' + str(pid)
         self.connection.send(Attach(queue))
         self.connection.recv()
-        self.connection.send(Map({'type': 'check_queue_dequeue_result', 'tag': str(pid)}, queue))
+        self.connection.send(Map({'type': 'checking_test_result_dequeue_result', 'tag': str(pid)}, queue))
         self.connection.recv()
         self.lock.release()
 
     def get_next(self, user):
         self.lock.acquire()
-        self.connection.send(Send(Event(type='check_queue_dequeue', tag=str(self._pid), tester_id=user.id)))
+        self.connection.send(Send(Event(type='checking_test_result_dequeue', tag=str(self._pid), tester_id=user.id)))
         self.connection.recv()
         self.connection.send(Receive())
         result = self.connection.recv()
         self.lock.release()
         return result[1]
+
+    def checking_checked_test_result(self, test_result):
+        self.lock.acquire()
+        self.connection.send(Send(Event(type='checking_checked_test_result', id=test_result.id)))
+        self.connection.recv()
+        self.lock.release()
+
+    def checking_new_submit(self, submit):
+        self.lock.acquire()
+        self.connection.send(Send(Event(type='checking_new_submit', id=submit.id)))
+        self.connection.recv()
+        self.lock.release()

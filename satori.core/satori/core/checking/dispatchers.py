@@ -14,11 +14,13 @@ class DispatcherBase(object):
         self.accumulators = [
             accumulators[accumulator](test_suite_result) for accumulator in accumulator_list
         ]
+
+    def init(self):
         for accumulator in self.accumulators:
             accumulator.init()
-    def checked_test_result(self, test_results):
+    def checked_test_results(self, test_results):
         raise NotImplementedError
-    def rejudge_test_result(self, test_results):
+    def rejudged_test_results(self, test_results):
         raise NotImplementedError
     def changed_overrides(self):
         raise NotImplementedError
@@ -33,7 +35,7 @@ class DispatcherBase(object):
     def finish(self):
         for accumulator in self.accumulators:
             accumulator.deinit()
-        self.supervisor.finished_test_suite_result()
+        self.supervisor.finished_test_suite_result(self.test_suite_result)
 
 class SerialDispatcher(DispatcherBase):
     """Serial dispatcher"""
@@ -41,13 +43,16 @@ class SerialDispatcher(DispatcherBase):
     def __init__(self, supervisor, test_suite_result):
         super(SerialDispatcher, self).__init__(supervisor, test_suite_result)
         self.to_check = deque()
+
+    def init(self):
+        super(SerialDispatcher, self).init()
         for test in self.test_suite_result.test_suite.tests.all():
             self.to_check.append(test.id)
         self.send_test()
 
-    def checked_test_result(self, test_results):
+    def checked_test_results(self, test_results):
         for result in test_results:
-            assert result.id == self.to_check[0]
+            assert result.test.id == self.to_check[0]
             self.to_check.popleft()
             self.accumulate(result)
             if not self.status():
@@ -56,7 +61,7 @@ class SerialDispatcher(DispatcherBase):
 
     def send_test(self):
         if self.to_check:
-            submit = test_suite_result.submit
+            submit = self.test_suite_result.submit
             test = Test.objects.get(id=self.to_check[0])
             self.supervisor.schedule_test_result(test_suite_result=self.test_suite_result, submit=submit, test=test)
         else:
@@ -67,16 +72,19 @@ class ParallelDispatcher(DispatcherBase):
 
     def __init__(self, supervisor, test_suite_result):
         super(ParallelDispatcher, self).__init__(supervisor, test_suite_result)
-        submit = test_suite_result.submit
         self.to_check = set()
+
+    def init(self):
+        super(ParallelDispatcher, self).init()
+        submit = self.test_suite_result.submit
         for test in self.test_suite_result.test_suite.tests.all():
             self.to_check.add(test.id)
             self.supervisor.schedule_test_result(test_suite_result=self.test_suite_result, submit=submit, test=test)
 
-    def checked_test_result(self, test_results):
+    def checked_test_results(self, test_results):
         for result in test_results:
-            assert result.id in self.to_check
-            self.to_check.remove(result.id)
+            assert result.test.id in self.to_check
+            self.to_check.remove(result.test.id)
             self.accumulate(result)
             if not self.status():
                 self.finish()
