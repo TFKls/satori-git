@@ -67,7 +67,7 @@ class ArsDjangoId(ArsTypeAlias):
     def do_convert_from_ars(self, value):
         try:
             return Privilege.where_can(self.model.objects.all(), 'VIEW').get(id=value)
-        except model.DoesNotExist:
+        except self.model.DoesNotExist:
             raise ArgumentNotFound(model=self.model.__name__, id=value)
 
 

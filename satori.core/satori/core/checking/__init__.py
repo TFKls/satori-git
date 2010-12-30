@@ -8,6 +8,7 @@ from satori.core.models import *
 from satori.events import Event, Client2
 
 from dispatchers import dispatchers
+from aggregators import aggregators
 
 class CheckingMaster(Client2):
     queue = 'checking_master_queue'
@@ -36,6 +37,7 @@ class CheckingMaster(Client2):
         self.map({'type': 'checking_new_submit'}, self.queue)
         self.map({'type': 'checking_new_contestant'}, self.queue)
         self.map({'type': 'checking_test_result_dequeue'}, self.queue)
+        self.map({'type': 'db', 'model': 'core.ranking', 'action': 'I'}, self.queue)
 
         for test_result in TestResult.objects.filter(pending=True, submit__problem__contest__archived=False):
             self.test_result_queue.append(test_result)
@@ -44,6 +46,9 @@ class CheckingMaster(Client2):
             self.start_test_suite_result(test_suite_result)
         for ranking in Ranking.objects.filter(contest__archived=False):
             self.start_ranking(ranking)
+
+        # do work queue
+        self.handle_event(None, Event(type='dummy_event'))
 
     def handle_event(self, queue, event):
         logging.debug('checking master: event %s', event.type)
@@ -97,13 +102,13 @@ class CheckingMaster(Client2):
                 return
             self.schedule_test_suite_result(None, submit, submit.problem.default_test_suite)
             for ranking in Ranking.objects.filter(contest=submit.problem.contest, contest__archived=False):
-                self.call_ranking(ranking, 'new_submit', [[submit]])
+                self.call_ranking(ranking, 'created_submits', [[submit]])
         elif event.type == 'checking_new_contestant':
             contestant = Contestant.objects.get(id=event.id)
             if contetstant.contest.archived:
                 return
             for ranking in Ranking.objects.get(contest=contestant.contest):
-                self.call_ranking(ranking, 'new_contestant', [[contestant]])
+                self.call_ranking(ranking, 'created_contestants', [[contestant]])
         elif event.type == 'checking_test_result_dequeue':
             e = Event(type='checking_test_result_dequeue_result')
             e.tag = event.tag
@@ -118,6 +123,8 @@ class CheckingMaster(Client2):
                 e.test_result_id = None
             logging.debug('Check queue: dequeue by %s: %s', event.tester_id, e)
             self.send(e)
+        elif event.type == 'db' and event.model == 'core.ranking' and event.action == 'I':
+            self.start_ranking(Ranking.objects.get(id=event.object_id))
 
         while self.work_queue:
             event = self.work_queue.pop()
@@ -205,11 +212,11 @@ class CheckingMaster(Client2):
 
         logging.debug('Starting ranking: %s', ranking.id)
 
-        aggregator = aggregator[ranking.aggregator]
+        aggregator = aggregators[ranking.aggregator]
         self.ranking_map[ranking] = aggregator(self, ranking)
         self.call_ranking(ranking, 'init', [])
-        self.call_ranking(ranking, 'created_contestants', [Contestant.objects.get(contest=ranking.contest)])
-        self.call_ranking(ranking, 'created_submits', [Submit.objects.get(problem__contest=ranking.contest)])
+        self.call_ranking(ranking, 'created_contestants', [Contestant.objects.filter(contest=ranking.contest)])
+        self.call_ranking(ranking, 'created_submits', [Submit.objects.filter(problem__contest=ranking.contest)])
 
     def call_ranking(self, ranking, name, args):
         if ranking not in self.ranking_map:

@@ -7,7 +7,6 @@ Judge helper procedures.
 
 from types import NoneType
 
-from satori.core.checking.check_queue_client import CheckQueueClient
 from satori.core.dbev               import Events
 from satori.events import Event
 
@@ -26,6 +25,7 @@ class Judge(object):
     @ExportMethod(SubmitToCheck, [], PCGlobal('JUDGE'))
     @staticmethod
     def get_next():
+        from satori.core.checking.check_queue_client import CheckQueueClient
         r = token_container.token.role
 
         next = CheckQueueClient.get_instance().get_next(r)

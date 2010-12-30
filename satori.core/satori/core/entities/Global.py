@@ -81,6 +81,17 @@ class Global(Entity):
                 ret[name] = ''
         return ret
 
+    @ExportMethod(TypedMap(unicode, unicode), [], PCPermit())
+    @staticmethod
+    def get_aggregators():
+        from satori.core.checking.aggregators import aggregators
+        ret = {}
+        for name in aggregators:
+            ret[name] = aggregators[name].__doc__
+            if ret[name] is None:
+                ret[name] = ''
+        return ret
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(Global, cls).inherit_rights()

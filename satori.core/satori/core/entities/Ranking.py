@@ -21,6 +21,21 @@ class Ranking(Entity):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)
 
+    class ExportMeta(object):
+        fields = [('contest', 'VIEW'), ('name', 'VIEW'), ('aggregator', 'MANAGE'), ('header', 'VIEW'), ('footer', 'VIEW')]
+
+    def save(self, *args, **kwargs):
+        from satori.core.checking.aggregators import aggregators
+        if not self.aggregator in aggregators:
+            raise ValueError('Aggregator '+self.aggregator+' is not allowed')
+        super(Ranking,self).save(*args,**kwargs)
+
+    @ExportMethod(unicode, [DjangoId('Ranking')], PCArg('self', 'VIEW'))
+    def full_ranking(self):
+        res = self.header
+        res += ''.join([ entry.row for entry in self.entries.all() ])
+        res += self.footer
+        return res
 
 class RankingEvents(Events):
     model = Ranking
