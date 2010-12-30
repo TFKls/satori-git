@@ -144,6 +144,17 @@ EXCEPTION
 END;
 $$ LANGUAGE plpgsql;
 """
+    insert_rawevent_trigger = """
+CREATE OR REPLACE FUNCTION core_rawevent__before_insert_trigger() RETURNS TRIGGER AS $$
+BEGIN
+  new.transaction := get_transaction_id();
+  NOTIFY satori;
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql;
+CREATE TRIGGER core_rawevent__before_insert BEFORE INSERT ON core_rawevent FOR EACH ROW EXECUTE PROCEDURE core_rawevent__before_insert_trigger();
+"""
+
     create_version_table_function = """
 CREATE OR REPLACE FUNCTION create_version_table(_table TEXT, _key TEXT) RETURNS TEXT AS $$
 DECLARE
@@ -511,7 +522,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 """
-    ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function, install_rights_inheritance]
+    ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, insert_rawevent_trigger, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function, install_rights_inheritance]
     for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
         ret.append(install_versions_sql(model))
     return tuple(ret);

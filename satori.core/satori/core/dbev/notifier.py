@@ -2,6 +2,8 @@
 import select
 import psycopg2.extensions
 import logging
+import base64
+import pickle
 from django.db import connection
 from django.db import models
 from satori.core.dbev.events import registry
@@ -95,8 +97,15 @@ def handle_notifications(cursor, slave):
                     model = model._meta.parents.items()[0][0]
                 else:
                     break
-        cursor.execute('DELETE FROM core_notification WHERE transaction=%s', [int(transaction)])
+        cursor.execute('DELETE FROM core_notification WHERE transaction=%s', [transaction])
+        cursor.execute('SELECT * FROM core_rawevent WHERE transaction=%s', [transaction])
+        for row in cursor:
+            res = row_to_dict(cursor, row)
+            event = pickle.loads(base64.urlsafe_b64decode(str(res['event'])))
+            slave.send(event)
+        cursor.execute('DELETE FROM core_rawevent WHERE transaction=%s', [transaction])
 
+        self.data = str(base64.urlsafe_b64encode(str(pickle.dumps(data))))
 
 def run_notifier(slave):
     while True:
