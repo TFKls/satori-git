@@ -1,17 +1,11 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-
-from datetime import datetime, timedelta
-from types import NoneType
-import string
-import random
-import urlparse
-import urllib
-
+from satori.core.models import Global, Role, User
 
 @ExportClass
 class Security(object):
-
+    """
+    """
     @ExportMethod(DjangoStruct('Role'), [], PCPermit())
     @staticmethod
     def anonymous():

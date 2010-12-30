@@ -5,8 +5,8 @@ import random
 import string
 import ipaddr
 
-from satori.ars.server import server_info
-from satori.core.dbev  import Events
+from satori.ars.server  import server_info
+from satori.core.dbev   import Events
 from satori.core.models import Role
 from satori.core.models import LoginFailed
 
@@ -14,7 +14,6 @@ from satori.core.models import LoginFailed
 class Machine(Role):
     """Model. A Machine.
     """
-
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_machine')
 
     login       = models.CharField(max_length=64, unique=True)
@@ -34,7 +33,7 @@ class Machine(Role):
         Privilege.grant(token_container.token.role, machine, 'MANAGE')
         return machine
 
-    @ExportMethod(unicode, unicode, [unicode], PCPermit())
+    @ExportMethod(unicode, [unicode, unicode], PCPermit())
     @staticmethod
     def authenticate(login, secret):
         try:

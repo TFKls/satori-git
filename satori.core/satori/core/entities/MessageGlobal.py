@@ -2,8 +2,7 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Message
 
 @ExportModel
@@ -17,17 +16,16 @@ class MessageGlobal(Message):
     class ExportMeta(object):
         fields = [('mainscreenonly', 'VIEW')]
 
-    def __str__(self):
-        return self.topic+" (Global)"
-
     @classmethod
     def inherit_rights(cls):
         inherits = super(MessageGlobal, cls).inherit_rights()
         cls._inherit_add(inherits, 'VIEW', '', 'VIEW_BASICS')
         return inherits
 
+    def __str__(self):
+        return self.topic+" (Global)"
+
 class MessageGlobalEvents(Events):
     model = MessageGlobal
     on_insert = on_update = ['topic', 'time']
     on_delete = []
-

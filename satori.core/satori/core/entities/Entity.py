@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
+
 from satori.core.dbev import Events
 
 @ExportModel
@@ -11,10 +12,18 @@ class Entity(models.Model):
         VIEW
         MANAGE
     """
-
     model = models.CharField(max_length=64, editable=False)
+    oa    = DefaultAttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), 'An attribute group to be used for general-purpose data.')
 
-    oa = DefaultAttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), 'An attribute group to be used for general-purpose data.')
+    class ExportMeta(object):
+        fields = [('id', 'VIEW')]
+
+    @classmethod
+    def inherit_rights(cls):
+        inherits = dict()
+        cls._inherit_add(inherits, 'VIEW', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'MANAGE', '', 'ADMIN')
+        return inherits
 
     def save(self, *args, **kwargs):
         if not self.model:
@@ -26,17 +35,6 @@ class Entity(models.Model):
         if get not in inherits:
         	inherits[get] = []
         inherits[get].append((id, need))
-
-    @classmethod
-    def inherit_rights(cls):
-        inherits = dict()
-
-        cls._inherit_add(inherits, 'VIEW', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'MANAGE', '', 'ADMIN')
-        return inherits
-
-    class ExportMeta(object):
-        fields = [('id', 'VIEW')]
 
 class EntityEvents(Events):
     model = Entity

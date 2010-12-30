@@ -2,8 +2,7 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Role
 
 @ExportModel
@@ -40,7 +39,7 @@ class Contestant(Role):
 
     def update_usernames(self):
         name = ', '.join(x.name for x in self.get_member_users())
-        if len(name) > 200)
+        if len(name) > 200:
             name = name[0:197] + '...'
         self.usernames = name;
         self.save()

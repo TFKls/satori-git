@@ -3,15 +3,16 @@
 import base64
 import pickle
 from datetime import datetime, timedelta
-from django.db import models
 
+from django.db import models
 
 ExternalSessionFailed = DefineException('ExternalSessionFailed', 'External session failed', [])
 
 class ExternalSession(models.Model):
-
-    session         = models.ForeignKey('Session', related_name='external_sessions')
-    external_id     = models.CharField(max_length=64)
+    """
+    """
+    session     = models.ForeignKey('Session', related_name='external_sessions')
+    external_id = models.CharField(max_length=64)
 
     @ExportMethod(datetime, [unicode], PCPermit(), [ExternalSessionFailed])
     @staticmethod

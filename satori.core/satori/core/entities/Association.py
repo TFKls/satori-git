@@ -3,8 +3,8 @@
 from django.db import models
 
 class Association(models.Model):
-
-
+    """Model. OpenId Association
+    """
     server_url = models.CharField(max_length=2048)
     handle     = models.CharField(max_length=256)
     secret     = models.CharField(max_length=512)

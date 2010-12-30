@@ -2,8 +2,7 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Entity
 
 @ExportModel
@@ -12,12 +11,12 @@ class Ranking(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_ranking')
 
-    contest     = models.ForeignKey('Contest', related_name='rankings')
-    name        = models.CharField(max_length=50)
-    aggregator  = models.CharField(max_length=128)
-    header      = models.TextField()
-    footer      = models.TextField()
-    problems    = models.ManyToManyField('ProblemMapping', related_name='+', through='RankingParams')
+    contest       = models.ForeignKey('Contest', related_name='rankings')
+    name          = models.CharField(max_length=50)
+    aggregator    = models.CharField(max_length=128)
+    header        = models.TextField()
+    footer        = models.TextField()
+    problems      = models.ManyToManyField('ProblemMapping', related_name='rankings+', through='RankingParams')
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)

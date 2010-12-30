@@ -2,21 +2,19 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Entity
 
 @ExportModel
 class TestResult(Entity):
     """Model. Result of a single Test for a single Submit.
     """
-
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testresult')
 
-    submit      = models.ForeignKey('Submit', related_name='test_results')
-    test        = models.ForeignKey('Test', related_name='+')
-    tester      = models.ForeignKey('User', related_name='+', null=True)
-    pending     = models.BooleanField(default=True)
+    submit        = models.ForeignKey('Submit', related_name='test_results')
+    test          = models.ForeignKey('Test', related_name='test_results+')
+    tester        = models.ForeignKey('User', related_name='test_results+', null=True)
+    pending       = models.BooleanField(default=True)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('submit', 'test'),)
@@ -27,7 +25,6 @@ class TestResult(Entity):
     @ExportMethod(NoneType, [DjangoId('TestResult')], PCArg('self', 'MANAGE'))
     def rejudge(self):
         RawEvent().send(Event(type='checking_rejudge_test_result', id=self.id))
-
 
 class TestResultEvents(Events):
     model = TestResult

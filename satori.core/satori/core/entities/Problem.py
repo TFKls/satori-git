@@ -2,25 +2,29 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Entity
 
 @ExportModel
 class Problem(Entity):
     """Model. Description of an (abstract) problems.
     """
-    
-    parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_problem')
+    parent_entity     = models.OneToOneField(Entity, parent_link=True, related_name='cast_problem')
 
-    name        = models.CharField(max_length=50, unique=True)
-    description = models.TextField(blank=True, default="")
-    statement = models.TextField(blank=True, default="")
+    name              = models.CharField(max_length=50, unique=True)
+    description       = models.TextField(blank=True, default="")
+    statement         = models.TextField(blank=True, default="")
 
     default_test_data = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('description', 'VIEW'), ('statement', 'VIEW')]
+
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Problem, cls).inherit_rights()
+        cls._inherit_add(inherits, 'MANAGE', '', 'MANAGE_PROBLEMS')
+        return inherits
 
     def save(self, *args, **kwargs):
         self.fixup_default_test_data()
@@ -28,12 +32,6 @@ class Problem(Entity):
 
     def __str__(self):
         return self.name+" ("+self.description+")"
-
-    @classmethod
-    def inherit_rights(cls):
-        inherits = super(Problem, cls).inherit_rights()
-        cls._inherit_add(inherits, 'MANAGE', '', 'MANAGE_PROBLEMS')
-        return inherits
 
     @ExportMethod(DjangoId('Problem'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_PROBLEMS')))
     def create_problem(name):
@@ -47,4 +45,3 @@ class ProblemEvents(Events):
     model = Problem
     on_insert = on_update = ['name']
     on_delete = []
-    

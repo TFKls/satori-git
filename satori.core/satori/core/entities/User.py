@@ -4,12 +4,12 @@ import crypt
 import random
 import string
 
-from   django.core.exceptions import ValidationError
-from   django.core.validators import validate_email
-from   django.db              import models
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
+from django.db              import models
 
-from   satori.core.dbev   import Events
-from   satori.core.models import Role, Session
+from satori.core.dbev   import Events
+from satori.core.models import Role, Session
 
 LoginFailed = DefineException('LoginFailed', 'Invalid username or password')
 InvalidLogin = DefineException('InvalidLogin', 'The specified login \'{login}\' is invalid: {reason}',
@@ -23,15 +23,14 @@ InvalidPassword = DefineException('InvalidPassword', 'The specified password is 
 class User(Role):
     """Model. A Role which can be logged onto.
     """
-
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_user')
 
-    login     = models.CharField(max_length=64, unique=True)
-    password  = models.CharField(max_length=128, null=True)
-    email     = models.CharField(max_length=128, null=True)
+    login       = models.CharField(max_length=64, unique=True)
+    password    = models.CharField(max_length=128, null=True)
+    email       = models.CharField(max_length=128, null=True)
 
     class ExportMeta(object):
-        fields = [('login', 'VIEW')]
+        fields = [('login', 'VIEW'), ('email', 'EDIT')]
 
     @staticmethod
     def login_ok(login):
@@ -128,4 +127,3 @@ class UserEvents(Events):
     model = User
     on_insert = on_update = ['name']
     on_delete = []
-

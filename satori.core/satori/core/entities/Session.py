@@ -3,10 +3,12 @@
 import base64
 import pickle
 from datetime import datetime, timedelta
+
 from django.db import models
 
 class Session(models.Model):
-
+    """
+    """
     data            = models.TextField(null=True)
     deadline        = models.DateTimeField()
     first_activity  = models.DateTimeField()
@@ -14,7 +16,7 @@ class Session(models.Model):
     role            = models.ForeignKey('Role', related_name='sessions', null=True)
     auth            = models.CharField(max_length=16, null=True)
 
-    TIMEOUT = timedelta(minutes = 50)
+    TIMEOUT         = timedelta(minutes = 50)
 
     @property
     def user(self):
@@ -79,9 +81,11 @@ class Session(models.Model):
         if self.data is None:
             return None
         return pickle.loads(base64.urlsafe_b64decode(str(self.data)))
+
     def _set_data_pickle(self, data):
         if data is None:
             self.data = None
         else:
             self.data = str(base64.urlsafe_b64encode(str(pickle.dumps(data))))
+
     data_pickle = property(_get_data_pickle, _set_data_pickle)

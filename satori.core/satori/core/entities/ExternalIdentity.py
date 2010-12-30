@@ -1,19 +1,16 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-from django.db import models
-
-from satori.core.dbev import Events
-
-from satori.core.models import Entity, User, Association, Nonce
-
-from satori.core.sec.identity import identity_handlers
-
-from types import NoneType
 import string
 import random
 import urlparse
 import urllib
 import traceback
+from types import NoneType
+
+from django.db import models
+
+from satori.core.dbev   import Events
+from satori.core.models import Association, Entity, Nonce, User
 
 ExternalIdentityFailed = DefineException('ExternalIdentityFailed', 'External Identity Authorization failed: {reason}',
     [('reason', unicode, False)])
@@ -37,7 +34,8 @@ ExternalIdentityResult = Struct('ExternalIdentityResult', (
 
 @ExportModel
 class ExternalIdentity(Entity):
-
+    """
+    """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_externalidentity')
 
     handler  = models.CharField(max_length=16)
@@ -106,6 +104,7 @@ class ExternalIdentity(Entity):
     @ExportMethod(ExternalIdentityRedirect, [unicode, unicode, unicode], PCPermit(), [InvalidExternalIdentityProvider])
     @staticmethod
     def start(handler, provider, return_to):
+        from satori.core.sec.identity import identity_handlers
         salt = ExternalIdentity.salt()
         realm = ExternalIdentity.realm(return_to)
         callback = ExternalIdentity.modify_callback(return_to, { ExternalIdentity.salt_param : salt })
@@ -143,6 +142,7 @@ class ExternalIdentity(Entity):
     @ExportMethod(ExternalIdentityResult, [unicode, TypedMap(unicode, unicode)], PCPermit(), [InvalidExternalIdentityCallback, ExternalIdentityFailed])
     @staticmethod
     def finish(callback, arg_map):
+        from satori.core.sec.identity import identity_handlers
         session = Session.start()
         if ExternalIdentity.salt_param not in arg_map:
             raise InvalidExternalIdentityCallback(reason="'" + ExternalIdentity.salt_param + "' not specified")

@@ -2,8 +2,7 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Message
 
 @ExportModel
@@ -12,7 +11,7 @@ class MessageContest(Message):
     """
     parent_message = models.OneToOneField(Message, parent_link=True, related_name='cast_messagecontest')
 
-    contest = models.ForeignKey('Contest', related_name='messages')
+    contest        = models.ForeignKey('Contest', related_name='messages')
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW')]
@@ -28,4 +27,3 @@ class MessageContestEvents(Events):
     model = MessageContest
     on_insert = on_update = ['topic', 'time']
     on_delete = []
-

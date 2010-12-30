@@ -2,8 +2,7 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Entity
 
 @ExportModel
@@ -11,12 +10,14 @@ class RankingParams(Entity):
     """Model. Intermediary for many-to-many relationship between Rankings and
     ProblemMappings.
     """
-
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_rankingparams')
 
-    ranking     = models.ForeignKey('Ranking', related_name='+')
-    problem     = models.ForeignKey('ProblemMapping', related_name='+')
-    test_suite  = models.ForeignKey('TestSuite', related_name='+', null=True)
+    ranking       = models.ForeignKey('Ranking', related_name='ranking_params+')
+    problem       = models.ForeignKey('ProblemMapping', related_name='ranking_params+')
+    test_suite    = models.ForeignKey('TestSuite', related_name='ranking_params+', null=True)
+
+    class Meta:                                                # pylint: disable-msg=C0111
+        unique_together = (('ranking', 'problem'),)
 
     class ExportMeta(object):
         fields = [('ranking', 'VIEW'), ('problem', 'VIEW'), ('test_suite', 'VIEW')]
@@ -27,11 +28,7 @@ class RankingParams(Entity):
         cls._inherit_add(inherits, 'MANAGE', 'ranking', 'MANAGE')
         return inherits
 
-    class Meta:                                                # pylint: disable-msg=C0111
-        unique_together = (('ranking', 'problem'),)
-
 class RankingParamsEvents(Events):
     model = RankingParams
     on_insert = on_update = ['ranking', 'problem', 'test_suite']
     on_delete = []
-

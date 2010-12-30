@@ -1,33 +1,30 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from datetime  import datetime
-from django.db import models
-from django.db import connection
 from types     import NoneType
 
-from satori.core.dbev               import Events
+from django.db import models
+from django.db import connection
 
+from satori.core.dbev   import Events
 from satori.core.models import Entity, Global
-
 
 PrivilegeTimes = Struct('PrivilegeTimes', (
     ('start_on', datetime, True),
     ('finish_on', datetime, True),
 ))
 
-
 @ExportClass(no_inherit=True)
 class Privilege(Entity):
     """Model. Represents a single right on an object granted to a role.
     """
-    
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_privilege')
 
-    role     = models.ForeignKey('Role', related_name='privileges')
-    entity   = models.ForeignKey('Entity', related_name='privileged')
-    right    = models.CharField(max_length=64)
-    start_on  = models.DateTimeField(null=True)
-    finish_on = models.DateTimeField(null=True)
+    role          = models.ForeignKey('Role', related_name='privileges')
+    entity        = models.ForeignKey('Entity', related_name='privileged')
+    right         = models.CharField(max_length=64)
+    start_on      = models.DateTimeField(null=True)
+    finish_on     = models.DateTimeField(null=True)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('role', 'entity', 'right'),)
@@ -84,7 +81,6 @@ class Privilege(Entity):
         c.callproc('right_check', [int(entity.id), str(right)])
         res = bool(c.fetchall()[0][0])
         c.close()
-
         return res
 
     @ExportMethod(NoneType, [DjangoId('Role'), unicode, PrivilegeTimes], PCGlobal('MANAGE_PRIVILEGES'))
@@ -110,4 +106,3 @@ class Privilege(Entity):
 class PrivilegeEvents(Events):
     model = Privilege
     on_insert = on_update = on_delete = []
-    

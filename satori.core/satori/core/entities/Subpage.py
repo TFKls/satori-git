@@ -2,22 +2,27 @@
 
 from django.db import models
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Entity
 
 @ExportModel
 class Subpage(Entity):
     """Model. Subpage of a contest.
     """
-    
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_subpage')
     
-    contest = models.ForeignKey('Contest', related_name='subpages', null=True)
-    pub = models.BooleanField(default=True)
-    name = models.TextField(blank=False)
-    content = models.TextField()
-    order = models.IntegerField(null=True)
+    contest       = models.ForeignKey('Contest', related_name='subpages', null=True)
+    pub           = models.BooleanField(default=True)
+    name          = models.TextField(blank=False)
+    content       = models.TextField()
+    order         = models.IntegerField(null=True)
+
+    class Meta:                                                # pylint: disable-msg=C0111
+        unique_together = (('contest', 'name'),)
+        ordering        = ('order',)
+
+    class ExportMeta(object):
+        fields = [('contest', 'VIEW'), ('pub', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -26,16 +31,7 @@ class Subpage(Entity):
         cls._inherit_add(inherits, 'EDIT', 'contest', 'MANAGE')
         return inherits
 
-    class Meta:                                                # pylint: disable-msg=C0111
-        unique_together = (('contest', 'name'),)
-        ordering = ('order',)
-
-    class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('pub', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]
-
-
 class SubpageEvents(Events):
     model = Subpage
     on_insert = on_update = []
     on_delete = []
-

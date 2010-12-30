@@ -18,24 +18,34 @@ class Contest(Entity):
         JOIN
         OBSERVE
     """
-    
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_contest')
 
-    name        = models.CharField(max_length=50, unique=True)
-    problems    = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
-    contestant_role = models.ForeignKey('Role', related_name='+')
-    archived    = models.BooleanField(default=False)
+    name            = models.CharField(max_length=50, unique=True)
+    problems        = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
+    contestant_role = models.ForeignKey('Role', related_name='contests+')
+    archived        = models.BooleanField(default=False)
 
-    lock_start  = models.DateTimeField(null=True)
-    lock_finish = models.DateTimeField(null=True)
+    lock_start   = models.DateTimeField(null=True)
+    lock_finish  = models.DateTimeField(null=True)
     lock_address = models.IPAddressField(default='0.0.0.0')
     lock_netmask = models.IPAddressField(default='255.255.255.255')
 
     public_files = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
-    intra_files = AttributeGroupField(PCArg('self', 'VIEW_INTRA_FILES'), PCArg('self', 'MANAGE'), '')
+    intra_files  = AttributeGroupField(PCArg('self', 'VIEW_INTRA_FILES'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
+
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Contest, cls).inherit_rights()
+        cls._inherit_add(inherits, 'OBSERVE', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEW_TASKS', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEW_INTRA_FILES', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'APPLY', 'id', 'JOIN')
+        cls._inherit_add(inherits, 'JOIN', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'SUBMIT', 'id', 'MANAGE')
+        return inherits
 
     def save(self, *args, **kwargs):
         self.fixup_public_files()
@@ -51,7 +61,8 @@ class Contest(Entity):
     def get_current_lock():
         contests = Contest.objects.filter(lock_start__lte=datetime.now(), lock_finish__gte=datetime.now())
         contests = [contest for contest in contests
-                if (ipaddr.IPv4Address(server_info.client_ip) in ipaddr.IPv4Network(contest.lock_address + '/' + contest.lock_netmask))]
+            if (ipaddr.IPv4Address(server_info.client_ip) in ipaddr.IPv4Network(contest.lock_address + '/' + contest.lock_netmask))
+        ]
         
         if len(contests) == 0:
             return None
@@ -60,17 +71,6 @@ class Contest(Entity):
         else:
             return contests[0]
         
-    @classmethod
-    def inherit_rights(cls):
-        inherits = super(Contest, cls).inherit_rights()
-        cls._inherit_add(inherits, 'OBSERVE', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'VIEW_TASKS', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'VIEW_INTRA_FILES', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'APPLY', 'id', 'JOIN')
-        cls._inherit_add(inherits, 'JOIN', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'SUBMIT', 'id', 'MANAGE')
-        return inherits
-
     @ExportMethod(DjangoStruct('Contest'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_CONTESTS')))
     @staticmethod
     def create_contest(name):
@@ -268,4 +268,3 @@ class ContestEvents(Events):
     model = Contest
     on_insert = on_update = ['name']
     on_delete = []
-

@@ -3,8 +3,8 @@
 from django.db import models
 
 class Notification(models.Model):
-
-
+    """
+    """
     action      = models.CharField(max_length=1)
     table       = models.CharField(max_length=50)
     object      = models.IntegerField()

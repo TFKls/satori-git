@@ -4,15 +4,13 @@ import logging
 
 from django.db import models, DatabaseError
 
-from satori.core.dbev               import Events
-
+from satori.core.dbev   import Events
 from satori.core.models import Entity
 
 @ExportModel
 class Role(Entity):
     """Model. Base for authorization "levels".
     """
-    
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_role')
 
     name          = models.CharField(max_length=50)
@@ -23,10 +21,13 @@ class Role(Entity):
 
     @classmethod
     def inherit_rights(cls):
-        inherits = super(User, cls).inherit_rights()
+        inherits = super(Role, cls).inherit_rights()
         cls._inherit_add(inherits, 'EDIT', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'VIEW', 'id', 'EDIT')
         return inherits
+
+    def __str__(self): #TODO
+        return self.name
 
     @ExportMethod(DjangoStruct('Role'), [unicode, DjangoIdList('Role')], PCGlobal('MANAGE_PRIVILEGES'))
     @staticmethod
@@ -68,9 +69,6 @@ class Role(Entity):
             RoleMapping.objects.get(parent=self, child=member).delete()
         except RoleMapping.DoesNotExist:
             pass
-
-    def __str__(self): #TODO
-        return self.name
 
 class RoleEvents(Events):
     model = Role

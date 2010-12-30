@@ -1,18 +1,16 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-
-from types import NoneType
-
-from satori.core.models import OpenAttribute
-
-from base64 import urlsafe_b64encode
-from django.conf import settings
-from django.db import models
-from hashlib import sha384
 import os
+from base64   import urlsafe_b64encode
+from hashlib  import sha384
 from tempfile import NamedTemporaryFile
+from types    import NoneType
 
-from satori.core.dbev import Events
+from django.conf import settings
+from django.db   import models
+
+from satori.core.dbev   import Events
+from satori.core.models import OpenAttribute
 
 def blob_filename(hash):
     return os.path.join(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash)
@@ -31,7 +29,6 @@ class BlobReader(object):
         self.file.close()
         if self.on_close:
             self.on_close()
-
 
 class BlobWriter(object):
     def __init__(self, length=-1, on_close=None):
@@ -73,10 +70,10 @@ class BlobWriter(object):
             self.on_close(hash)
         return hash
 
-
 @ExportClass
 class Blob(object):
-
+    """
+    """
     @ExportMethod(NoneType, [int, int], PCGlobal('RAW_BLOB'))
     @staticmethod
     def create(length=-1, on_close=None):
@@ -91,4 +88,3 @@ class Blob(object):
     @staticmethod
     def exists(hash):
         return os.path.exists(blob_filename(hash))
-

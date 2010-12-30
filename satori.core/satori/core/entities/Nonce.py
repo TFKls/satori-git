@@ -3,8 +3,8 @@
 from django.db import models
 
 class Nonce(models.Model):
-
-
+    """
+    """
     server_url = models.CharField(max_length=2048)
     timestamp  = models.IntegerField()
     salt       = models.CharField(max_length=64)

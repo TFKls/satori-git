@@ -1,16 +1,14 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-
 """
 Judge helper procedures.
 """
 
 from types import NoneType
 
-from satori.core.dbev               import Events
-from satori.events import Event
-
+from satori.core.dbev   import Events
 from satori.core.models import Role
+from satori.events      import Event
 
 SubmitToCheck = Struct('SubmitToCheck', (
     ('test_result', DjangoId(TestResult), True),
@@ -18,10 +16,10 @@ SubmitToCheck = Struct('SubmitToCheck', (
     ('submit_data', TypedMap(unicode, AnonymousAttribute), False),
 ))
 
-
 @ExportClass
 class Judge(object):
-
+    """
+    """
     @ExportMethod(SubmitToCheck, [], PCGlobal('JUDGE'))
     @staticmethod
     def get_next():
@@ -48,4 +46,3 @@ class Judge(object):
         test_result.save()
         
         RawEvent().send(Event(type='checking_checked_test_result', id=test_result.id))
-
