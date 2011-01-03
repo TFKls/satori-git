@@ -5,7 +5,7 @@ from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFoun
 import urllib
 from satori.core.sec import Token
 import satori.core.models
-from satori.core.models import AttributeGroup, OpenAttribute, Privilege
+from satori.core.models import AttributeGroup, Blob, OpenAttribute, Privilege
 from satori.core.export import token_container
 
 def server(request, model, id, name, group):

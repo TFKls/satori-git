@@ -7,6 +7,30 @@ from satori.core.dbev  import Events
 
 from satori.core.models import Entity
 
+ResultToRender = Struct('ResultToRender', (
+    ('submit', DjangoStruct('Submit'), True),
+    ('problem', unicode, True),
+    ('contestant', unicode, True),
+    ('status', unicode, True),
+    ('details', unicode, True),
+))
+ResultsToRender = Struct('ResultsToRender', (
+    ('count', int, True),
+    ('results', TypedList(ResultToRender), True),
+))
+ContestantToRender = Struct('ContestantToRender', (
+    ('contestant', DjangoStruct('Contestant'), True),
+    ('name', unicode, True),
+    ('members', TypedList(DjangoStruct('User')), True),
+    ('admin', bool, True),
+))
+ContestantsToRender = Struct('ContestantsToRender', (
+    ('count', int, True),
+    ('contestants', TypedList(ContestantToRender), True),
+))
+AlreadyRegistered = DefineException('AlreadyRegisteres', 'The specified user \'{login}\' is already registered',
+    [('login', unicode, False)])
+
 @ExportModel
 class Contest(Entity):
     """Model. Description of a contest.
@@ -128,7 +152,6 @@ class Contest(Entity):
             except Contestant.DoesNotExist:
                return None
 
-    # TODO: check if exists
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoIdList('User')], PCArg('self', 'MANAGE'))
     def create_contestant(self, user_list):
         c = Contestant()
@@ -137,13 +160,14 @@ class Contest(Entity):
 
         c.set_accepted(True)
         for user in user_list:
+            if self.find_contestant(user):
+                raise AlreadyRegistered(login=user.login)
             c.add_member(user)
             
         Privilege.grant(c, c, 'OBSERVE')
 
         return c
 
-    # TODO: check if exists
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')))
     def join_contest(self):
         c = Contestant()
@@ -151,6 +175,8 @@ class Contest(Entity):
         c.save()
 
         c.set_accepted(bool(Privilege.demand(self, 'JOIN')))
+        if self.find_contestant(token_container.token.user):
+            raise AlreadyRegistered(login=user.login)
         c.add_member(token_container.token.user)
 
         Privilege.grant(c, c, 'OBSERVE')
@@ -167,30 +193,19 @@ class Contest(Entity):
         submit.problem = problem_mapping
         submit.save()
         Privilege.grant(contestant, submit, 'VIEW')
-        blob = submit.oa_set_blob('content', filename=filename)
+        blob = submit.data_set_blob('content', filename=filename)
         blob.write(content)
         blob.close()
 
         RawEvent().send(Event(type='checking_new_submit', id=submit.id))
         return submit
 
-    ResultToRender = Struct('ResultToRender', (
-        ('submit', DjangoStruct('Submit'), True),
-        ('problem', unicode, True),
-        ('contestant', unicode, True),
-        ('status', unicode, True),
-        ('details', unicode, True),
-    ))
-    ResultsToRender = Struct('ResultsToRender', (
-        ('count', int, True),
-        ('results', TypedList(ResultToRender), True),
-    ))
     @staticmethod
     def submit_to_result_to_render(submit):
         return ResultToRender(
         	submit=submit,
             problem=submit.problem.code,
-            contestant=submit.contestant.name_auto(),
+            contestant=submit.contestant.usernames,
             status=submit.get_test_suite_status(),
             details=submit.get_test_suite_report()
             )
@@ -223,24 +238,14 @@ class Contest(Entity):
             'results'  : res,
         }
 
-    ContestantToRender = Struct('ContestantToRender', (
-        ('contestant', DjangoStruct('Contestant'), True),
-        ('name', unicode, True),
-        ('members', TypedList(DjangoStruct('User')), True),
-        ('admin', bool, True),
-    ))
-    ContestantsToRender = Struct('ContestantsToRender', (
-        ('count', int, True),
-        ('contestants', TypedList(ContestantToRender), True),
-    ))
     @staticmethod
     def contestant_to_contestant_to_render(contestant):
-        return {
-        	'contestant' : contestant,
-            'name' : contestant.name_auto(),
-            'members' : contestant.get_member_users(),
-            'admin' : any([Privilege.get(member, contestant.contest, 'MANAGE') for member in contestant.get_member_users()])
-            }
+        return ContestantToRender(
+        	contestant=contestant,
+            name=contestant.usernames,
+            members=contestant.get_member_users(),
+            admin=any([Privilege.get(member, contestant.contest, 'MANAGE') for member in contestant.get_member_users()]),
+            )
 
     @ExportMethod(ContestantsToRender, [DjangoId('Contest'), int, int], PCArg('self', 'VIEW'))
     def get_contestants(self, limit=20, offset=0):

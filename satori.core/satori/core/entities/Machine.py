@@ -45,7 +45,7 @@ class Machine(Role):
         if not machine.check_secret(secret):
             raise LoginFailed()
         session = Session.start()
-        session.login(user, 'machine')
+        session.login(machine, 'machine')
         return str(token_container.token)
 
     @ExportMethod(DjangoStruct('Machine'), [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))

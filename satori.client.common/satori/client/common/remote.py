@@ -1,14 +1,16 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-import sys
+import getpass
 import os
 import shutil
-import getpass
+import sys
 import urllib
-from types import FunctionType
-from StringIO import StringIO
 from httplib import HTTPConnection
+from StringIO import StringIO
+from types import FunctionType
+
 from thrift.transport.TSocket import TSocket
+
 from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 from satori.ars.thrift import ThriftClient, ThriftReader
 from satori.objects import Argument, Signature, ArgumentMode
@@ -149,8 +151,6 @@ _module = sys.modules[__name__]
 for name, value in _classes.iteritems():
     setattr(_module, name, value)
 
-setattr(_module, '__all__', _classes.keys() + ['token_container', 'anonymous_blob'])
+setattr(_module, '__all__', _classes.keys() + ['token_container', 'anonymous_blob', 'anonymous_blob_path'])
 
 print 'Client bootstrapped.'
-
-

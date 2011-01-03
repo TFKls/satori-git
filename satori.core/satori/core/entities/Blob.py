@@ -35,11 +35,13 @@ class BlobWriter(object):
         dirname = os.path.join(settings.BLOB_DIR, 'temp')
         if not os.path.exists(dirname):
             os.makedirs(dirname, 0700)
-        self.file = NamedTemporaryFile(dir=dirname, delete=False)
+        self.file = NamedTemporaryFile(mode='wb', dir=dirname, delete=False)
         self.hash = sha384()
         self.on_close = on_close
 
     def write(self, data):
+        if isinstance(data, unicode):
+            data = data.encode('utf-8')
         self.file.write(data)
         self.hash.update(data)
 

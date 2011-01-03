@@ -116,7 +116,7 @@ class CheckingMaster(Client2):
                 test_result = self.test_result_queue.popleft()
                 self.test_result_set.remove(test_result)
                 self.test_result_judged_set.add(test_result)
-                test_result.tester = User.objects.get(id=event.tester_id)
+                test_result.tester = Role.objects.get(id=event.tester_id)
                 test_result.save()
                 e.test_result_id = test_result.id
             else:

@@ -13,7 +13,7 @@ class TestResult(Entity):
 
     submit        = models.ForeignKey('Submit', related_name='test_results')
     test          = models.ForeignKey('Test', related_name='test_results+')
-    tester        = models.ForeignKey('User', related_name='test_results+', null=True)
+    tester        = models.ForeignKey('Role', related_name='test_results+', null=True)
     pending       = models.BooleanField(default=True)
 
     class Meta:                                                # pylint: disable-msg=C0111

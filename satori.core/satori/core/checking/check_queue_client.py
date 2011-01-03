@@ -27,9 +27,9 @@ class CheckQueueClient(object):
         self.connection.recv()
         self.lock.release()
 
-    def get_next(self, user):
+    def get_next(self, role):
         self.lock.acquire()
-        self.connection.send(Send(Event(type='checking_test_result_dequeue', tag=str(self._pid), tester_id=user.id)))
+        self.connection.send(Send(Event(type='checking_test_result_dequeue', tag=str(self._pid), tester_id=role.id)))
         self.connection.recv()
         self.connection.send(Receive())
         result = self.connection.recv()
