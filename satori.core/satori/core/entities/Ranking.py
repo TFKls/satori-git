@@ -16,14 +16,14 @@ class Ranking(Entity):
     aggregator    = models.CharField(max_length=128)
     header        = models.TextField()
     footer        = models.TextField()
-    public        = models.BooleanField()
+    is_public     = models.BooleanField()
     problems      = models.ManyToManyField('ProblemMapping', related_name='rankings+', through='RankingParams')
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('name', 'VIEW'), ('aggregator', 'MANAGE'), ('header', 'VIEW'), ('footer', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('name', 'VIEW'), ('aggregator', 'MANAGE'), ('header', 'MANAGE'), ('footer', 'MANAGE'), ('is_public', 'MANAGE')]
 
     # TODO: conditional inherit
 
