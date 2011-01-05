@@ -12,5 +12,6 @@ virtualenv --no-site-packages .
 ln -s python bin/python2.6
 source bin/activate
 easy_install zc.buildout
+easy_install -U distribute
 mkdir -p src/python var/{buildout,cache}
 buildout
