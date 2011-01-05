@@ -489,7 +489,7 @@ BEGIN
            JOIN core_privilege ON user_roles.role_id = core_privilege.role_id
            JOIN right_dict ON core_privilege.right = right_dict.name
            JOIN
-           (SELECT keyid/256 as entity, keyid%%256 as right 
+           (SELECT keyid/256 as entity, keyid%256 as right 
                 FROM connectby('right_inheritance'::text, 'parent'::text, 'child'::text, (_entity_id*256 + (SELECT get_right_by_name(_right_name)))::text, 0)
                 AS t(keyid int, parent_keyid int, level int)
            ) AS inherited ON inherited.right = right_dict.id AND core_privilege.entity_id = inherited.entity
