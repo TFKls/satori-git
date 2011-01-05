@@ -16,6 +16,7 @@ class Ranking(Entity):
     aggregator    = models.CharField(max_length=128)
     header        = models.TextField()
     footer        = models.TextField()
+    public        = models.BooleanField()
     problems      = models.ManyToManyField('ProblemMapping', related_name='rankings+', through='RankingParams')
 
     class Meta:                                                # pylint: disable-msg=C0111
@@ -23,6 +24,8 @@ class Ranking(Entity):
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('name', 'VIEW'), ('aggregator', 'MANAGE'), ('header', 'VIEW'), ('footer', 'VIEW')]
+
+    # TODO: conditional inherit
 
     def save(self, *args, **kwargs):
         from satori.core.checking.aggregators import aggregators
