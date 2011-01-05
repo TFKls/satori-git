@@ -2,7 +2,7 @@
 """Processor for the thrift protocol.
 """
 
-import traceback
+import logging
 
 from thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
 from thrift.transport.TTransport import TFramedTransport
@@ -290,8 +290,8 @@ class ThriftProcessor(TProcessor):
                 server_info.client_port = int(info[1])
             except:
                 pass
-            print 'Server serving client: ', server_info.client_ip, ':', server_info.client_port, ',', pname
 
+            logging.debug('Server serving client: %s:%s, %s', server_info.client_ip, server_info.client_port, pname)
 
             # parse arguments
 #            perf.begin('recv')
@@ -310,7 +310,7 @@ class ThriftProcessor(TProcessor):
                         args[parameter.name] = getattr(arguments, parameter.name)
                 result.result = procedure.implementation(**args)
             except Exception as ex:
-                traceback.print_exc()
+                logging.exception('Exception in procedure: %s:%s, %s', server_info.client_ip, server_info.client_port, pname)
                 handled = False
                 for field in procedure.results_struct.fields:
                     if (field.name != 'result') and isinstance(ex, field.type.get_class()):
@@ -318,8 +318,7 @@ class ThriftProcessor(TProcessor):
                         handled = True
                         break
                 if not handled:
-                    raise TApplicationException(TApplicationException.UNKNOWN,
-                            ex.__class__.__name__ + ': ' + str(ex))
+                    raise TApplicationException(TApplicationException.UNKNOWN, 'Unknown exception in procedure')
 #            perf.end('call')
 
             # send the reply
