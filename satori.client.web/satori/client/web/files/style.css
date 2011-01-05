@@ -160,6 +160,10 @@ table.tlist {
     width: 100%;
 }
 
+table.tlist th{
+    background-color: #BBBBBB;
+}
+
 .staOK {
     background-color: #00CC00;
 }
