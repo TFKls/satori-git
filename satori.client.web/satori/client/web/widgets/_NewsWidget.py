@@ -10,11 +10,11 @@ class NewsWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/news.html'
         self.messages = []
-        for m in MessageGlobal.filter():
-            if not ActiveContest(params) or not m.mainscreenonly:
-                self.messages.append({'time' : m.time, 'type' : 'global', 'topic' : m.topic, 'content' : publish_parts(m.content, writer_name='html')['fragment']})
-        if (ActiveContest(params)):
-            for m in MessageContest.filter({'contest':ActiveContest(params)}):
-                self.messages.append({'time' : m.time, 'type' : 'contest', 'topic' : m.topic, 'content' : publish_parts(m.content, writer_name='html')['fragment']})
+#        for m in MessageGlobal.filter():
+#            if not ActiveContest(params) or not m.mainscreenonly:
+#                self.messages.append({'time' : m.time, 'type' : 'global', 'topic' : m.topic, 'content' : publish_parts(m.content, writer_name='html')['fragment']})
+#        if (ActiveContest(params)):
+#            for m in MessageContest.filter({'contest':ActiveContest(params)}):
+#                self.messages.append({'time' : m.time, 'type' : 'contest', 'topic' : m.topic, 'content' : publish_parts(m.content, writer_name='html')['fragment']})
         self.messages.sort(key=lambda msg: msg['time'], reverse=True)
 

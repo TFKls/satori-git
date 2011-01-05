@@ -7,12 +7,14 @@ from satori.core.models import Entity
 
 @ExportModel
 class Subpage(Entity):
-    """Model. Subpage of a contest.
+    """Model. Subpage or announcement. Can be tied to a contest.
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_subpage')
     
     contest       = models.ForeignKey('Contest', related_name='subpages', null=True)
-    pub           = models.BooleanField(default=True)
+    is_public     = models.BooleanField(default=True)
+    is_everywhere = models.BooleanField(default=False)
+    is_announcement = models.BooleanField(default=False)
     name          = models.TextField(blank=False)
     content       = models.TextField()
     order         = models.IntegerField(null=True)
@@ -22,13 +24,14 @@ class Subpage(Entity):
         ordering        = ('order',)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('pub', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('is_public', 'VIEW'), ('is_everywhere', 'VIEW'), ('is_announcement', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
         inherits = super(Subpage, cls).inherit_rights()
         cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW')
         cls._inherit_add(inherits, 'EDIT', 'contest', 'MANAGE')
+        # TODO: conditional inherit: if contest is set and is_public, inherit VIEW from contest
         return inherits
 
 class SubpageEvents(Events):
