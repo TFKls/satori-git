@@ -13,6 +13,7 @@ cgroup_dir = '/cgroup'
 templates_dir = '/templates'
 templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
 #templates_src = None
+login = 'checker'
 secret = 'sekret'
 sleep_time = 5
 cgroup = 'runner'
@@ -46,9 +47,8 @@ def judge_bash():
         jb.destroy()
 
 def judge_loop():
-    from satori.client.common.remote import token_container, Security, Judge, anonymous_blob_path
-    #token_container.set_token(Security.machine_login(secret))
-
+    from satori.client.common.remote import *
+    token_container.set_token(Machine.authenticate(login=login, secret=secret))
 
     while True:
         submit = Judge.get_next()
@@ -57,9 +57,12 @@ def judge_loop():
             tr = submit['test_result']
             td = submit['test_data']
             sd = submit['submit_data']
+            print td
+            print sd
 
             submit['test_data'] = {}
             for n,f in td.items():
+            	print n, f
                 submit['test_data'][unicode(n)] = {
                     'is_blob'  : bool(f.is_blob),
                     'value'    : unicode(f.value),
@@ -67,6 +70,7 @@ def judge_loop():
                 }
             submit['submit_data'] = {}
             for n,f in sd.items():
+            	print n, f
                 submit['submit_data'][unicode(n)] = {
                     'is_blob'  : bool(f.is_blob),
                     'value'    : unicode(f.value),
@@ -104,11 +108,12 @@ def judge_loop():
 
 def judge_initialize():
     try:
-        from satori.client.common.remote import token_container, Security, Machine, Privilege
-        token_container.set_token(Security.login('admin', 'admin'))
+        from satori.client.common.remote import *
+        token_container.set_token(User.authenticate('admin', 'admin'))
         try:
-            machine = Security.machine_register(name='checker', secret=secret, address='0.0.0.0', netmask='0.0.0.0')
+            machine = Machine.register(login=login, name=login, secret=secret, address='0.0.0.0', netmask='0.0.0.0')
         except:
+            traceback.print_exc()
             machine = Machine.filter({'login':'checker'})[0]
         Privilege.global_grant(role=machine, right='ADMIN')
     except:

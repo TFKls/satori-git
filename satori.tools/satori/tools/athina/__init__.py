@@ -1,5 +1,9 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-import os,sys,shutil
+
+import os
+import shutil
+import string
+import sys
 import traceback
 
 def athina_import():
@@ -29,7 +33,7 @@ def athina_import():
     (options, args) = parser.parse_args()
     if len(args) != 1:
 	    parser.error('incorrect number of arguments')
-    base_dir = args[0]
+    base_dir = unicode(args[0])
     if not os.path.exists(os.path.join(base_dir, 'server', 'contest', 'users')):
     	raise parser.error('provided path is invalid')
 
@@ -55,7 +59,7 @@ def athina_import():
             with open(get_path('users', login, 'password'), 'r') as f:
                 password = f.readline().strip(" \n\t\x00")
             users[login] = {
-                'login'    : login,
+                'login'    : string.lower(login),
                 'name'     : fullname,
                 'password' : password,
             }
