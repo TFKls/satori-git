@@ -26,7 +26,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     cursor.close()
 
     print 'Creating Global object'
-    Global.objects.create()
+    Global.create()
 
     print 'Installing DBEV rights'
 

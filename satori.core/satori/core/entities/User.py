@@ -74,6 +74,7 @@ class User(Role):
         user.set_login(login)
         user.set_password(password)
         user.save()
+        Global.get_instance().authenticated.add_member(user)
         Privilege.grant(user, user, 'EDIT')
 
     @ExportMethod(unicode, [unicode, unicode], PCPermit(), [LoginFailed])

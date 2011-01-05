@@ -11,9 +11,9 @@ class Global(Entity):
     """
     guardian      = models.IntegerField(unique=True)
 
-    anonymous     = models.ForeignKey('Role', related_name='global_anonymous+')
-    authenticated = models.ForeignKey('Role', related_name='global_authenticated+')
-    zero          = models.ForeignKey('Role', related_name='global_zero+')
+    anonymous     = models.ForeignKey('Role', related_name='+')
+    authenticated = models.ForeignKey('Role', related_name='+')
+    zero          = models.ForeignKey('Role', related_name='+')
 
     checkers      = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
     generators    = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
@@ -34,28 +34,28 @@ class Global(Entity):
         self.fixup_checkers()
         self.fixup_generators()
 
-        try:
-            x = self.zero
-        except Role.DoesNotExist:
-            zero = Role(name='ZERO')
-            zero.save()
-            self.zero = zero
-
-        try:
-            x = self.authenticated
-        except Role.DoesNotExist:
-            authenticated = Role(name='AUTHENTICATED')
-            authenticated.save()
-            self.authenticated = authenticated
-
-        try:
-            x = self.anonymous
-        except Role.DoesNotExist:
-            anonymous = Role(name='ANONYMOUS')
-            anonymous.save()
-            self.anonymous = anonymous
-
         super(Global, self).save(*args, **kwargs)
+
+    @staticmethod
+    def create():
+        zero = Role(name='ZERO')
+        zero.save()
+
+        authenticated = Role(name='AUTHENTICATED')
+        authenticated.save()
+
+        anonymous = Role(name='ANONYMOUS')
+        anonymous.save()
+
+        anonymous.add_member(authenticated)
+
+        g = Global()
+        g.zero = zero
+        g.authenticated = authenticated
+        g.anonymous = anonymous
+        g.save()
+
+        return g        
 
     _instance = None
 
