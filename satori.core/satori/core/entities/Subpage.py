@@ -59,12 +59,12 @@ class Subpage(Entity):
         subpage.save()
         return subpage
 
-    @ExportMethod(DjangoStructList('Subpage'), [boolean], PCPermit())
+    @ExportMethod(DjangoStructList('Subpage'), [bool], PCPermit())
     @staticmethod
     def get_global_subpages(announcements):
         return Subpage.objects.filter(is_announcement=announcements, contest=None)
 
-    @ExportMethod(DjangoStructList('Subpage'), [DjangoId('Contest'), boolean], PCPermit())
+    @ExportMethod(DjangoStructList('Subpage'), [DjangoId('Contest'), bool], PCPermit())
     @staticmethod
     def get_contest_subpages(contest, announcements):
         return Subpage.objects.filter(is_announcement=announcements, contest=contest) | Subpage.objects.filter(is_announcement=announcements, contest=None, is_everywhere=True)
