@@ -93,7 +93,7 @@ def create(request):
 
     token = User.authenticate(login='paladin', password='paladin')
 
-    checker = Machine.register(secret='sekret', name='checker_one', address='0.0.0.0', netmask='0.0.0.0')
+    checker = Machine.register(login='a', secret='sekret', name='checker_one', address='0.0.0.0', netmask='0.0.0.0')
 
 
     
@@ -140,9 +140,9 @@ def create(request):
     ProblemMapping.create(ProblemMappingStruct(problem=p1, contest=c2, code="X", title="Bez bajki", default_test_suite=ts1))
     ProblemMapping.create(ProblemMappingStruct(problem=p2, contest=c4, code="B", title="Harry Potter i krowa z Albanii", default_test_suite=ts2))
     ProblemMapping.create(ProblemMappingStruct(problem=p3, contest=c4, code="C", title="Harry Potter i wuwuzele", default_test_suite=ts3))
-    MessageGlobal.create(MessageGlobalStruct(topic="Wiadomosc pierwsza", content="BZZZZZ!", mainscreenonly=True))
-    MessageGlobal.create(MessageGlobalStruct(topic="Wiadomosc systemowa", content="Oglaszamy, ze za 5 minuBZZZZZ!", mainscreenonly=False))
-    MessageContest.create(MessageContestStruct(topic="Wiadomosc powitalna", content="Publiczne BZZZZZ!", contest=c4))
+#    MessageGlobal.create(MessageGlobalStruct(topic="Wiadomosc pierwsza", content="BZZZZZ!", mainscreenonly=True))
+#    MessageGlobal.create(MessageGlobalStruct(topic="Wiadomosc systemowa", content="Oglaszamy, ze za 5 minuBZZZZZ!", mainscreenonly=False))
+#    MessageContest.create(MessageContestStruct(topic="Wiadomosc powitalna", content="Publiczne BZZZZZ!", contest=c4))
     
-    Subpage.create(SubpageStruct(contest=c2,name='Info',content='Info about the contest',pub=True, order=1))
+    Subpage.create(SubpageStruct(contest=c2,name='Info',content='Info about the contest',is_public=True, order=1))
     return HttpResponse('OK!')
