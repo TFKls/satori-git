@@ -152,12 +152,13 @@ class Contest(Entity):
             except Contestant.DoesNotExist:
                return None
 
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoIdList('User')], PCArg('self', 'MANAGE'))
-    def create_contestant(self, user_list):
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), unicode, DjangoIdList('User')], PCArg('self', 'MANAGE'))
+    def create_contestant(self, name, user_list):
         c = Contestant()
         c.contest = self
         c.save()
 
+        c.set_name(name)
         c.set_accepted(True)
         for user in user_list:
             if self.find_contestant(user):
@@ -168,22 +169,24 @@ class Contest(Entity):
 
         return c
 
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')))
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
     def join_contest(self):
+        if self.find_contestant(token_container.token.user):
+            raise AlreadyRegistered(login=token_container.token.user.login)
+
         c = Contestant()
         c.contest = self
         c.save()
 
+        c.set_name(token_container.token.user.name)
         c.set_accepted(bool(Privilege.demand(self, 'JOIN')))
-        if self.find_contestant(token_container.token.user):
-            raise AlreadyRegistered(login=user.login)
         c.add_member(token_container.token.user)
 
         Privilege.grant(c, c, 'OBSERVE')
 
         return c
 
-    @ExportMethod(DjangoStruct('Submit'), [DjangoId('Contest'), DjangoId('ProblemMapping'), unicode, unicode], PCArg('problem_mapping', 'SUBMIT'))
+    @ExportMethod(DjangoStruct('Submit'), [DjangoId('Contest'), DjangoId('ProblemMapping'), unicode, unicode], PCArg('problem_mapping', 'SUBMIT'), [AlreadyRegistered])
     def submit(self, problem_mapping, content, filename):
         contestant = self.find_contestant(token_container.token.role)
         if problem_mapping.contest != self:
