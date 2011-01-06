@@ -34,6 +34,41 @@ class Subpage(Entity):
         # TODO: conditional inherit: if contest is set and is_public, inherit VIEW from contest
         return inherits
 
+    @ExportMethod(DjangoStruct('Subpage'), [unicode, unicode, bool, bool, int], PCGlobal('ADMIN'))
+    @staticmethod
+    def create_global_subpage(name, content, is_announcement, is_everywhere, order=0):
+        subpage = Subpage()
+        subpage.name = name
+        subpage.content = content
+        subpage.is_announcement = is_announcement
+        subpage.is_everywhere = is_everywhere
+        subpage.order = order
+        subpage.save()
+        return subpage
+
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Contest'), unicode, unicode, bool, bool, int], PCArg('contest', 'MANAGE'))
+    @staticmethod
+    def create_contest_subpage(contest, name, content, is_announcement, is_public, order=0):
+        subpage = Subpage()
+        subpage.contest = contest
+        subpage.name = name
+        subpage.content = content
+        subpage.is_announcement = is_announcement
+        subpage.is_public = is_public
+        subpage.order = order
+        subpage.save()
+        return subpage
+
+    @ExportMethod(DjangoStructList('Subpage'), [boolean], PCPermit())
+    @staticmethod
+    def get_global_subpages(announcements):
+        return Subpage.objects.filter(is_announcement=announcements, contest=None)
+
+    @ExportMethod(DjangoStructList('Subpage'), [DjangoId('Contest'), boolean], PCPermit())
+    @staticmethod
+    def get_contest_subpages(contest, announcements):
+        return Subpage.objects.filter(is_announcement=announcements, contest=contest) | Subpage.objects.filter(is_announcement=announcements, contest=None, is_everywhere=True)
+
 class SubpageEvents(Events):
     model = Subpage
     on_insert = on_update = []
