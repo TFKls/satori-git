@@ -53,7 +53,9 @@ class Role(Entity):
     def set_name(self, name):
         self.name = name
         self.save()
-        return self #TODO: poinformowac o zmianie nazwy kontestanta
+        for c in Contestant.objects.filter(children=self):
+            c.update_usernames()
+        return self
 
     @ExportMethod(DjangoStructList('Role'), [DjangoId('Role')], PCArg('self', 'VIEW'))
     def get_members(self):
@@ -62,6 +64,8 @@ class Role(Entity):
     @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Role')], PCArg('self', 'MANAGE'))
     def add_member(self, member):
         RoleMapping.objects.get_or_create(parent=self, child=member)[0].save()
+        for c in Contestant.objects.filter(id=self.id):
+            c.update_usernames()
 
     @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Role')], PCArg('self', 'MANAGE'))
     def delete_member(self, member):
@@ -69,6 +73,10 @@ class Role(Entity):
             RoleMapping.objects.get(parent=self, child=member).delete()
         except RoleMapping.DoesNotExist:
             pass
+        else:
+            for c in Contestant.objects.filter(id=self.id):
+                c.update_usernames()
+
 
 class RoleEvents(Events):
     model = Role
