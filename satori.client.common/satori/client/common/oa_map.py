@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from copy import deepcopy
+import os
 
 def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
     class OaMap(object):
@@ -39,6 +40,12 @@ def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
             else:
                 return oa.value
 
+        def get_blob_path(self, name, path):
+            with open(path, 'w') as dst:
+                blob = self.get_blob(name)
+                shutil.copyfileobj(blob, dst, blob.length)
+            return blob.close()
+
         def get_list(self):
             return [Attribute(name=name, is_blob=attr.is_blob, value=attr.value, filename=attr.filename) for (name, attr) in self.dct.items()]
 
@@ -64,6 +71,13 @@ def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
 
         def set_blob_hash(self, name, value, filename=''):
             self.set(Attribute(name=name, value=value, filename=filename, is_blob=True))
+
+        def set_blob_path(self, name, path):
+            with open(path, 'r') as src:
+                ln = os.fstat(src.fileno()).st_size
+                blob = self.set_blob(name, ln, os.path.basename(path))
+                shutil.copyfileobj(src, blob, ln)
+            return blob.close()
 
         def add_list(self, attributes):
             for struct in attributes:
