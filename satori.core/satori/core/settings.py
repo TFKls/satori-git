@@ -13,7 +13,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-ACTIVATION_REQUIRED = True
+ACTIVATION_REQUIRED = False
 ACTIVATION_EMAIL_FROM = 'satori@tcs.uj.edu.pl'
 ACTIVATION_EMAIL_SUBJECT = 'Your Satori account activation'
 ACTIVATION_EMAIL_BODY = """
@@ -65,6 +65,8 @@ if getpass.getuser() == 'duraj':
     EVENT_PORT = 36888
     THRIFT_PORT = 36889
     BLOB_PORT = 36887
+    DATABASE_HOST = 'satori.tcs.uj.edu.pl'
+    DATABASE_PASSWORD = 'DurajD12'
 
 ADMIN_NAME = 'admin'
 ADMIN_PASSWORD = 'admin'
