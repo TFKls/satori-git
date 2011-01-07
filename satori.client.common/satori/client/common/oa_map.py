@@ -41,10 +41,7 @@ def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
                 return oa.value
 
         def get_blob_path(self, name, path):
-            with open(path, 'w') as dst:
-                blob = self.get_blob(name)
-                shutil.copyfileobj(blob, dst, blob.length)
-            return blob.close()
+            return Blob.open_path(self.get_blob_hash(name), path)
 
         def get_list(self):
             return [Attribute(name=name, is_blob=attr.is_blob, value=attr.value, filename=attr.filename) for (name, attr) in self.dct.items()]
@@ -73,11 +70,9 @@ def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
             self.set(Attribute(name=name, value=value, filename=filename, is_blob=True))
 
         def set_blob_path(self, name, path):
-            with open(path, 'r') as src:
-                ln = os.fstat(src.fileno()).st_size
-                blob = self.set_blob(name, ln, os.path.basename(path))
-                shutil.copyfileobj(src, blob, ln)
-            return blob.close()
+            hash = Blob.create_path(path)
+            self.set_blob_hash(name, hash)
+            return hash
 
         def add_list(self, attributes):
             for struct in attributes:
