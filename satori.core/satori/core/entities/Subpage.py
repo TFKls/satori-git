@@ -17,7 +17,7 @@ class Subpage(Entity):
     is_announcement = models.BooleanField(default=False)
     name          = models.TextField(blank=False)
     content       = models.TextField()
-    order         = models.IntegerField(null=True)
+    order         = models.IntegerField(default=0)
     date_created  = models.DateTimeField(auto_now_add=True)
 
     class Meta:                                                # pylint: disable-msg=C0111
@@ -39,7 +39,7 @@ class Subpage(Entity):
     @staticmethod
     def create_global(fields):
         subpage = Subpage()
-        subpage.forbid_fields(fields, ['contest', 'is_public'])
+        subpage.forbid_fields(fields, ['id', 'contest', 'is_public'])
         subpage.update_fields(fields, ['name', 'content', 'is_announcement', 'is_everywhere', 'order'])
         subpage.save()
         return subpage
@@ -48,19 +48,19 @@ class Subpage(Entity):
     @staticmethod
     def create_for_contest(fields):
         subpage = Subpage()
-        subpage.forbid_fields(fields, ['is_everywhere'])
+        subpage.forbid_fields(fields, ['id', 'is_everywhere'])
         subpage.update_fields(fields, ['name', 'contest', 'content', 'is_announcement', 'is_public', 'order'])
         subpage.save()
         return subpage
 
     @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        self.forbid_fields(fields, ['contest'])
         if self.contest is None:
-            self.forbid_fields(fields, ['is_public'])
+            self.forbid_fields(fields, ['id', 'contest', 'is_public'])
+            self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_everywhere', 'order'])
         else:
-            self.forbid_fields(fields, ['is_everywhere'])
-        self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_public', 'is_everywhere', 'order'])
+            self.forbid_fields(fields, ['id', 'contest', 'is_everywhere'])
+            self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_public', 'order'])
         self.save()
         return self
 

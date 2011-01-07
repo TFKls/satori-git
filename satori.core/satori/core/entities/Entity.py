@@ -41,10 +41,13 @@ class Entity(models.Model):
 
     @staticmethod
     def static_update_fields(dest, source, fields):
+        changed = []
         for field in fields:
             val = getattr(source, field, None)
-            if val is not None:
+            if (val is not None) and (val != getattr(dest, field, None)):
+                changed.append(field)
                 setattr(dest, field, val)
+        return changed
 
     @staticmethod
     def static_forbid_fields(dest, source, fields):
@@ -56,10 +59,10 @@ class Entity(models.Model):
                     raise CannotSetField(field=field) 
 
     def update_fields(self, source, fields):
-        self.static_update_fields(self, source, fields)
+        return self.static_update_fields(self, source, fields)
 
     def forbid_fields(self, source, fields):
-        self.static_forbid_fields(self, source, fields)
+        return self.static_forbid_fields(self, source, fields)
 
 class EntityEvents(Events):
     model = Entity

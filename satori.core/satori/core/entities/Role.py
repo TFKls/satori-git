@@ -29,15 +29,27 @@ class Role(Entity):
     def __str__(self): #TODO
         return self.name
 
-    @ExportMethod(DjangoStruct('Role'), [unicode, DjangoIdList('Role')], PCGlobal('MANAGE_PRIVILEGES'))
+    @ExportMethod(DjangoStruct('Role'), [DjangoStruct('Role'), DjangoIdList('Role')], PCGlobal('MANAGE_PRIVILEGES'), [CannotSetField])
     @staticmethod
-    def create(name, children=[]):
-        res = Role(name=name)
-        res.save()
+    def create(fields, children=[]):
+        role = Role()
+        role.forbid_fields(fields, ['id'])
+        role.update_fields(fields, ['name'])
+        role.save()
         for child in children:
-            res.add_member(child)
-        Privilege.grant(token_container.token.role, res, 'MANAGE')
+            role.add_member(child)
+        Privilege.grant(token_container.token.role, role, 'MANAGE')
         return res
+
+    @ExportMethod(DjangoStruct('Role'), [DjangoId('Role'), DjangoStruct('Role')], PCArg('self', 'EDIT'), [CannotSetField])
+    def modify(self, fields):
+        if self.model == 'core.role':
+            self.forbid_fields(fields, ['id'])
+            self.update_fields(fields, ['name'])
+        else:
+            self.forbid_fields(fields, ['id', 'name'])
+        self.save()
+        return self
 
     #@ExportMethod(NoneType, [DjangoId('Role')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):
@@ -48,14 +60,6 @@ class Role(Entity):
             super(Role, self).delete()
         except DatabaseError:
             raise CannotDeleteObject()
-
-    @ExportMethod(DjangoStruct('Role'), [DjangoId('Role'), unicode], PCArg('self', 'EDIT'))
-    def set_name(self, name):
-        self.name = name
-        self.save()
-        for c in Contestant.objects.filter(children=self):
-            c.update_usernames()
-        return self
 
     @ExportMethod(DjangoStructList('Role'), [DjangoId('Role')], PCArg('self', 'VIEW'))
     def get_members(self):
