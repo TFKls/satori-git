@@ -6,6 +6,8 @@ import string
 import sys
 import traceback
 
+from satori.client.common.remote import *
+
 def athina_import():
     import os,sys,getpass
     from optparse import OptionParser
@@ -145,7 +147,6 @@ def athina_import():
 #    print 'submits:  ', submits
 
 
-    from satori.client.common.remote import Security, Privilege, token_container, User, Contest, Problem, TestSuite, Test, Submit, ProblemMapping, TestMapping
 
     mytoken = User.authenticate(options.user, options.password)
     token_container.set_token(mytoken)
@@ -158,13 +159,12 @@ def athina_import():
     try:
         Privilege.grant(contest.contestant_role, contest, 'SUBMIT')
         Privilege.grant(contest.contestant_role, contest, 'VIEW')
-        Privilege.grant(contest.contestant_role, contest, 'VIEWTASKS')
+        Privilege.grant(contest.contestant_role, contest, 'VIEW_TASKS')
     except:
         traceback.print_exc()
         pass
 
     for login, user in sorted(users.iteritems()):
-    	print ' -> user ', login
         try:
             user['object'] = User.register(login=options.name + '_' + user['login'], password=user['password'], name=user['name'])
         except:
@@ -173,16 +173,13 @@ def athina_import():
         user['object'] = User.filter({'login':options.name + '_' + user['login']})[0]
 
         try:
-            user['contestant'] = contest.create_contestant([user['object']])
+            user['contestant'] = contest.create_contestant(name=user['object'].login, user_list=[user['object']])
         except:
             traceback.print_exc()
             user['contestant'] = contest.find_contestant(user['object'])
 
 
-    print users
-
     for name, problem in sorted(problems.iteritems()):
-    	print ' -> problem ', name
         try:
         	problem['object'] = Problem.create_problem(name=options.name + '_' + problem['problem'])
         except:
@@ -217,14 +214,9 @@ def athina_import():
             traceback.print_exc()
             problem['mapping'] = ProblemMapping.filter({'contest':contest, 'problem':problem['object']})[0]
 
-    print problems
 
     for id, submit in sorted(submits.iteritems()):
-    	print ' -> submit ', id
     	user = users[submit['user']]
         token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
     	submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
     token_container.set_token(mytoken)
-
-    print submits
-
