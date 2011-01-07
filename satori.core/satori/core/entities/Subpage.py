@@ -55,12 +55,12 @@ class Subpage(Entity):
 
     @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        subpage.forbid_fields(fields, ['contest'])
+        self.forbid_fields(fields, ['contest'])
         if self.contest is None:
-            subpage.forbid_fields(fields, ['is_public'])
+            self.forbid_fields(fields, ['is_public'])
         else:
-            subpage.forbid_fields(fields, ['is_everywhere'])
-        subpage.update_fields(fields, ['name', 'content', 'is_announcement', 'is_public', 'is_everywhere', 'order'])
+            self.forbid_fields(fields, ['is_everywhere'])
+        self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_public', 'is_everywhere', 'order'])
         self.save()
         return self
 
