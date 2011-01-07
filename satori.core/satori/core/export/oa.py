@@ -54,7 +54,7 @@ def {1}_get_str(self, name):
     if oa is None:
         return None
     elif oa.is_blob:
-        raise BadAttributeType(name=name, required_type='string')
+        raise BadAttributeType(name=name, requested_type='string')
     else:
         return oa.value
 
@@ -65,7 +65,7 @@ def {1}_get_blob(self, name):
     if oa is None:
         return None
     elif not oa.is_blob:
-        raise BadAttributeType(name=name, required_type='blob')
+        raise BadAttributeType(name=name, requested_type='blob')
     return Blob.open(oa.value, oa.filename)
 
 @ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read, [BadAttributeType])
@@ -75,7 +75,7 @@ def {1}_get_blob_hash(self, name):
     if oa is None:
         return None
     elif not oa.is_blob:
-        raise BadAttributeType(name=name, required_type='blob')
+        raise BadAttributeType(name=name, requested_type='blob')
     else:
         return oa.value
 
