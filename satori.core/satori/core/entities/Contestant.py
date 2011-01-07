@@ -13,7 +13,7 @@ class Contestant(Role):
 
     usernames   = models.CharField(max_length=200)
     contest     = models.ForeignKey('Contest', related_name='contestants')
-    accepted    = models.BooleanField(default=False)
+    accepted    = models.BooleanField(default=True)
     invisible   = models.BooleanField(default=False)
     login       = models.CharField(max_length=64, null=True)
     password    = models.CharField(max_length=128, null=True)
@@ -22,7 +22,7 @@ class Contestant(Role):
         unique_together = (('contest', 'login'),)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('password', 'VIEW_PASSWORD')]
 
     @classmethod
     def inherit_rights(cls):
@@ -32,6 +32,48 @@ class Contestant(Role):
         cls._inherit_add(inherits, 'OBSERVE', 'contest', 'OBSERVE')
         return inherits
 
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoStruct('Contestant'), DjangoIdList('User')], PCArgField('fields', 'contest', 'MANAGE'), [AlreadyRegistered, InvalidLogin, InvalidPassword, CannotSetField])
+    @staticmethod
+    def create(fields, user_list):
+        contestant = Contestant()
+        contestant.forbid_fields(fields, ['usernames'])
+        modified = contestant.update_fields(fields, ['contest', 'accepted', 'invisible', 'login', 'password'])
+        if 'login' in modified:
+            login_ok(contestant.login)
+            if Contestant.objects.filter(login=contestant.login, contest=contestant.contest):
+                raise InvalidLogin(login=login, reason='is already used')
+        if 'password' in modified:
+            password_ok(contestant.password)
+            contestant.password = password_crypt(contestant.password)
+        contestant.save()
+        Privilege.grant(contestant, contestant, 'OBSERVE')
+        for user in user_list:
+            if contestant.contest.find_contestant(user):
+                raise AlreadyRegistered(login=user.login)
+            contestant.add_member(user)
+        if contestant.accepted:
+            contestant.contest.contestant_role.add_member(contestant)
+        return contestant
+
+    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), DjangoStruct('Contestant')], PCArg('self', 'MANAGE'), [InvalidLogin, InvalidPassword, CannotSetField])
+    def modify(self, fields):
+        self.forbid_fields(fields, ['id', 'usernames', 'contest'])
+        modified = self.update_fields(fields, ['accepted', 'invisible', 'login', 'password'])
+        if 'login' in modified:
+            login_ok(self.login)
+            if Contestant.objects.filter(login=self.login, contest=self.contest):
+                raise InvalidLogin(login=login, reason='is already used')
+        if 'password' in modified:
+            password_ok(self.password)
+            self.password = password_crypt(self.password)
+        if 'accepted' in modified:
+            if self.accepted:
+                self.contest.contestant_role.add_member(self)
+            else:
+                self.contest.contestant_role.delete_member(self)
+        self.save()
+        return self
+
     def update_usernames(self):
         name = ', '.join(x.name for x in self.get_member_users())
         if len(name) > 200:
@@ -40,26 +82,10 @@ class Contestant(Role):
         self.save()
         return self #TODO: Poinformowac przeliczanie rankingow
 
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), bool], PCArg('self', 'MANAGE'))
-    def set_accepted(self, accepted):
-        self.accepted = accepted
-        self.save()
-        if accepted:
-            self.contest.contestant_role.add_member(self)
-        else:
-            self.contest.contestant_role.delete_member(self)
-        return self
-
     @ExportMethod(DjangoStructList('User'), [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def get_member_users(self):
         return User.objects.filter(parents=self)
 
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), bool], PCArg('self', 'MANAGE'))
-    def set_invisible(self, invisible):
-        self.invisible = invisible
-        self.save()
-        return self #TODO: Poinformowac przeliczanie rankingow
-    
     @ExportMethod(unicode, [unicode, unicode], PCPermit(), [LoginFailed])
     @staticmethod
     def authenticate(login, password):
@@ -70,39 +96,18 @@ class Contestant(Role):
             contestant = Contestant.objects.get(login=login, contest=contest)
         except Contestant.DoesNotExist:
             raise LoginFailed()
-        if contestant.check_password(password):
+        if password_check(contestant.password, password):
             session = Session.start()
             session.login(contestant, 'contestant')
             return str(token_container.token)
         else:
             raise LoginFailed()
 
-    @ExportMethod(bool, [DjangoId('Contestant'), unicode], PCArg('self', 'EDIT'))
-    def check_password(self, password):
-        return password_check(self.password, password)
-
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), unicode], PCArg('self', 'MANAGE'), [InvalidPassword])
-    def set_password(self, password):
-        password_ok(password)
-        self.password = password_crypt(password)
-        self.save()
-        return self
-
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), unicode], PCArg('self', 'MANAGE'), [InvalidLogin])
-    def set_login(self, login):
-        login_ok(login)
-        if Contestant.objects.filter(login=login, contest=self.contest):
-            raise InvalidLogin(login=login, reason='is already used')
-        self.login = login
-        self.save()
-        return self
-
     @ExportMethod(NoneType, [DjangoId('Contestant'), unicode, unicode], PCArg('self', 'EDIT'), [LoginFailed, InvalidPassword])
     def change_password(self, old_password, new_password):
-        if not self.check_password(old_password):
+        if not password_check(self.password, old_password):
             raise LoginFailed()
-        self.set_password(new_password)
-
+        self.modify(DjangoStruct('Contestant')(password=new_password))
 
 class ContestantEvents(Events):
     model = Contestant
