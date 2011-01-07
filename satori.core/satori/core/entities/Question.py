@@ -40,8 +40,8 @@ class Question(Entity):
 
     @ExportMethod(DjangoStruct('Question'), [DjangoId('Question'), DjangoStruct('Question')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        self.forbid_fields(fields, ['id'])
-        self.update_fields(fields, ['answer', 'date_created', 'problem', 'contest', 'content'])
+        self.forbid_fields(fields, ['id', 'contest', 'problem'])
+        self.update_fields(fields, ['answer', 'date_created', 'content'])
         self.save()
         return self
 

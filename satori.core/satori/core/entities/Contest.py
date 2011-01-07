@@ -152,23 +152,6 @@ class Contest(Entity):
             except Contestant.DoesNotExist:
                return None
 
-    @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), unicode, DjangoIdList('User')], PCArg('self', 'MANAGE'))
-    def create_contestant(self, name, user_list):
-        c = Contestant()
-        c.contest = self
-        c.save()
-
-        c.set_name(name)
-        c.set_accepted(True)
-        for user in user_list:
-            if self.find_contestant(user):
-                raise AlreadyRegistered(login=user.login)
-            c.add_member(user)
-            
-        Privilege.grant(c, c, 'OBSERVE')
-
-        return c
-
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
     def join_contest(self):
         if self.find_contestant(token_container.token.user):

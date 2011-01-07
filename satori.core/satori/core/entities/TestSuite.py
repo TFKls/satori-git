@@ -42,7 +42,39 @@ class TestSuite(Entity):
         for accumulator in self.accumulators.split(','):
             if not accumulator in accumulators:
                 raise ValueError('Accumulator '+accumulator+' is not allowed')
-        super(TestSuite,self).save(*args,**kwargs)
+        super(TestSuite,self).save(*args, **kwargs)
+
+    @ExportMethod(DjangoStruct('TestSuite'), [DjangoStruct('TestSuite'), DjangoIdList('Test')], PCArgField('fields', 'problem', 'MANAGE'), [CannotSetField])
+    @staticmethod
+    def create(fields, test_list):
+        test_suite = TestSuite()
+        test_suite.forbid_fields(fields, ['id'])
+        test_suite.update_fields(fields, ['problem', 'name', 'description', 'dispatcher', 'accumulators'])
+        test_suite.save()
+        count = 0
+        for test in test_list:
+            count += 1
+            TestMapping(suite=test_suite, test=test, order=count).save()
+        return test_suite
+
+    @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite')], PCArg('self', 'MANAGE'), [CannotSetField])
+    def modify(self, fields):
+        self.forbid_fields(fields, ['id', 'problem', 'dispatcher', 'accumulators'])
+        modified = test_suite.update_fields(fields, ['name', 'description'])
+        return self
+
+    @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite')], PCArg('self', 'MANAGE'), [CannotSetField])
+    def modify_full(self, fields, test_list):
+        self.forbid_fields(fields, ['id', 'problem'])
+        modified = test_suite.update_fields(fields, ['name', 'description', 'dispatcher', 'accumulators'])
+        self.save()
+        TestMapping.objects.filter(suite=self).delete()
+        count = 0
+        for test in test_list:
+            count += 1
+            TestMapping(suite=test_suite, test=test, order=count).save()
+        #TODO: REJUDGE!
+        return self
 
 class TestSuiteEvents(Events):
     model = TestSuite
