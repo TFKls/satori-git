@@ -29,7 +29,7 @@ class ProblemMapping(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(ProblemMapping, cls).inherit_rights()
-        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEWTASKS')
+        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW_TASKS')
         cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         cls._inherit_add(inherits, 'SUBMIT', 'contest', 'SUBMIT')
         return inherits
