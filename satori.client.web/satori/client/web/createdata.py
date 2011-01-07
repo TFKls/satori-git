@@ -82,6 +82,7 @@ def create(request):
 #        except:
 #            pass
 
+    token_container.set_token('')
     token_container.set_token(User.authenticate(login='admin', password='admin'))
         
     paladin = User.create(UserStruct(login='paladin', name='Lech Duraj', email='lech.duraj@tcs.uj.edu.pl'))
@@ -89,7 +90,7 @@ def create(request):
     dijkstra = User.create(UserStruct(name='Edgsger W. Dijkstra', login = 'dijkstra', email='edgsger.dijkstra@tcs.uj.edu.pl'))
     dijkstra.set_password('dijkstra')
 
-    checker = Machine.create(MachineStruct(login='a', name='checker_one', address='0.0.0.0', netmask='0.0.0.0'))
+    checker = Machine.create(MachineStruct(login='aaaa', name='checker_one', address='0.0.0.0', netmask='0.0.0.0'))
     checker.set_password('sekret')
 
     Privilege.global_grant(paladin, 'ADMIN')

@@ -35,8 +35,9 @@ class Machine(Role):
     def create(fields):
         machine = Machine()
         machine.forbid_fields(fields, ['id'])
+        machine.update_fields(fields, ['name', 'login', 'address', 'netmask'])
         machine.save()
-        return user
+        return machine
 
     @ExportMethod(DjangoStruct('Machine'), [DjangoId('Machine'), DjangoStruct('Machine')], PCArg('self', 'MANAGE'), [CannotSetField, InvalidLogin])
     def modify(self, fields):
