@@ -84,30 +84,29 @@ def create(request):
 
     token_container.set_token(User.authenticate(login='admin', password='admin'))
         
-    User.register(login='paladin', name='Lech Duraj', password='paladin')
-    User.register(name='Edgsger W. Dijkstra', login = 'dijkstra', password='dijkstra')
-    paladin = User.filter(UserStruct(login='paladin'))[0]
-    dijkstra = User.filter(UserStruct(login='dijkstra'))[0]
+    paladin = User.create(UserStruct(login='paladin', name='Lech Duraj', email='lech.duraj@tcs.uj.edu.pl'))
+    paladin.set_password('paladin')
+    dijkstra = User.create(UserStruct(name='Edgsger W. Dijkstra', login = 'dijkstra', email='edgsger.dijkstra@tcs.uj.edu.pl'))
+    dijkstra.set_password('dijkstra')
+
+    checker = Machine.create(MachinStruct(login='a', name='checker_one', address='0.0.0.0', netmask='0.0.0.0'))
+    checker.set_password('sekret')
 
     Privilege.global_grant(paladin, 'ADMIN')
 
     token = User.authenticate(login='paladin', password='paladin')
-
-    checker = Machine.register(login='a', secret='sekret', name='checker_one', address='0.0.0.0', netmask='0.0.0.0')
-
-
     
     token_container.set_token(token)
 
     Privilege.global_grant(Security.anonymous(), 'VIEW_BASICS')
-    c2 = Contest.create_contest(name = 'Kontest prywatny')
-    c3 = Contest.create_contest(name = 'Kontest moderowany')
-    c4 = Contest.create_contest(name = 'Kontest publiczny')
+    c2 = Contest.create(ContestStruct(name = 'Kontest prywatny'))
+    c3 = Contest.create(ContestStruct(name = 'Kontest moderowany'))
+    c4 = Contest.create(ContestStruct(name = 'Kontest publiczny'))
     Privilege.grant(paladin, c2, 'JOIN')
     Privilege.grant(paladin, c3, 'APPLY')
     Privilege.grant(paladin, c4, 'JOIN')
     Privilege.grant(paladin, c2, 'MANAGE')
-    cc2 = c2.join_contest()
+    cc2 = c2.join()
     
     g = Global.get_instance()
     print dirname(__file__)+'/default_judge.py'
