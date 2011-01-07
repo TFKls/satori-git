@@ -35,30 +35,53 @@ class Subpage(Entity):
         # TODO: conditional inherit: if contest is set and is_public, inherit VIEW from contest
         return inherits
 
-    @ExportMethod(DjangoStruct('Subpage'), [unicode, unicode, bool, bool, int], PCGlobal('ADMIN'))
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Test')], PCGlobal('ADMIN'))
     @staticmethod
-    def create_global(name, content, is_announcement, is_everywhere, order=0):
+    def create_global(fields)
         subpage = Subpage()
-        subpage.name = name
-        subpage.content = content
-        subpage.is_announcement = is_announcement
-        subpage.is_everywhere = is_everywhere
-        subpage.order = order
+        subpage.name = fields.name
+        subpage.content = fields.content
+        subpage.is_announcement = fields.is_announcement
+        subpage.is_everywhere = fields.is_everywhere
+        subpage.order = fields.order
         subpage.save()
         return subpage
 
     @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Contest'), unicode, unicode, bool, bool, int], PCArg('contest', 'MANAGE'))
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Test')], PCArgField('fields', 'contest', 'MANAGE'))
     @staticmethod
-    def create_for_contest(contest, name, content, is_announcement, is_public, order=0):
+    def create_for_contest(fields):
         subpage = Subpage()
-        subpage.contest = contest
-        subpage.name = name
-        subpage.content = content
-        subpage.is_announcement = is_announcement
-        subpage.is_public = is_public
-        subpage.order = order
+        subpage.contest = fields.contest
+        subpage.name = fields.name
+        subpage.content = fields.content
+        subpage.is_announcement = fields.is_announcement
+        subpage.is_public = fields.is_public
+        subpage.order = fields.order
         subpage.save()
         return subpage
+
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'))
+    def modify(self, fields):
+        self.name = fields.name
+        self.content = fields.content
+        self.is_announcement = fields.is_announcement
+        if self.contest is None:
+            self.is_everywhere = fields.is_everywhere
+        else:
+            self.is_public = fields.is_public
+        self.order = fields.order
+        self.save()
+        return self
+
+    #@ExportMethod(NoneType, [DjangoId('Subpage')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        logging.error('subpage deleted') #TODO: Waiting for non-cascading deletes in django
+        self.privileges.all().delete()
+        try:
+            super(Subpage, self).delete()
+        except DatabaseError:
+            raise CannotDeleteObject()
 
     @ExportMethod(DjangoStructList('Subpage'), [bool], PCPermit())
     @staticmethod
