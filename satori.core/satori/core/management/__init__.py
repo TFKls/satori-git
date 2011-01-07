@@ -13,7 +13,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     from django.db   import connection, transaction
 
     from satori.core.dbev.install import install_dbev_sql, install_rights_sql
-    from satori.core.export       import token_container
+    from satori.core.export       import token_container, DjangoStruct
     from satori.core.models       import Security, Privilege, Global, User
     from satori.core.sec          import Token
 
@@ -40,8 +40,8 @@ def create_admin(app, created_models, verbosity, **kwargs):
     print 'Creating superuser'
 
     token_container.set_token(Token(''))
-    User.register(login=settings.ADMIN_NAME, name='Super Admin', password=settings.ADMIN_PASSWORD)
-    admin = User.objects.get(login=settings.ADMIN_NAME)
+    admin = User.create(DjangoStruct('User')(login=settings.ADMIN_NAME, name='Super Admin', activated=True))
+    admin.set_password(settings.ADMIN_PASSWORD)
     Privilege.global_grant(admin, 'ADMIN')
 
 post_syncdb.connect(create_admin)

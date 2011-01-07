@@ -28,7 +28,7 @@ class User(Role):
     def save(self, *args, **kwargs):
         login_ok(self.login)
         email_ok(self.email)
-        if User.objects.filter(id_ne=self.id, login=self.login):
+        if User.objects.filter(login=self.login).exclude(id=self.id):
             raise InvalidLogin(login=login, reason='is already used')
         super(User, self).save(*args, **kwargs)
 

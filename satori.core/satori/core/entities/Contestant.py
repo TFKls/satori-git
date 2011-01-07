@@ -34,7 +34,7 @@ class Contestant(Role):
 
     def save(self, *args, **kwargs):
         login_ok(self.login)
-        if Contestant.objects.filter(id_ne=self.id, login=self.login, contest=self.contest):
+        if Contestant.objects.filter(login=self.login, contest=self.contest).exclude(id=self.id):
             raise InvalidLogin(login=login, reason='is already used')
         super(Contestant, self).save(*args, **kwargs)
 
