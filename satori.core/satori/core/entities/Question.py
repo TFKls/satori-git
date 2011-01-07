@@ -14,10 +14,11 @@ class Question(Entity):
     problem       = models.ForeignKey('ProblemMapping', null=True)
     contest       = models.ForeignKey('Contest')
     content       = models.TextField(blank=True)
-    time          = models.DateTimeField(auto_now_add=True)
+    answer        = models.TextField(blank=True, null=True)
+    date_created  = models.DateTimeField(auto_now_add=True)
 
     class ExportMeta(object):
-        fields = [('problem', 'VIEW'), ('contest', 'VIEW'), ('content', 'VIEW'), ('time', 'VIEW')]
+        fields = [('problem', 'VIEW'), ('contest', 'VIEW'), ('content', 'VIEW'), ('answer', 'VIEW'), ('date_created', 'VIEW')]
 
 class QuestionEvents(Events):
     model = Question

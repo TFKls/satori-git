@@ -18,13 +18,14 @@ class Subpage(Entity):
     name          = models.TextField(blank=False)
     content       = models.TextField()
     order         = models.IntegerField(null=True)
+    date_created  = models.DateTimeField(auto_now_add=True)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)
         ordering        = ('order',)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('is_public', 'VIEW'), ('is_everywhere', 'VIEW'), ('is_announcement', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('is_public', 'VIEW'), ('is_everywhere', 'VIEW'), ('is_announcement', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW'), ('date_created', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -36,7 +37,7 @@ class Subpage(Entity):
 
     @ExportMethod(DjangoStruct('Subpage'), [unicode, unicode, bool, bool, int], PCGlobal('ADMIN'))
     @staticmethod
-    def create_global_subpage(name, content, is_announcement, is_everywhere, order=0):
+    def create_global(name, content, is_announcement, is_everywhere, order=0):
         subpage = Subpage()
         subpage.name = name
         subpage.content = content
@@ -48,7 +49,7 @@ class Subpage(Entity):
 
     @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Contest'), unicode, unicode, bool, bool, int], PCArg('contest', 'MANAGE'))
     @staticmethod
-    def create_contest_subpage(contest, name, content, is_announcement, is_public, order=0):
+    def create_for_contest(contest, name, content, is_announcement, is_public, order=0):
         subpage = Subpage()
         subpage.contest = contest
         subpage.name = name
@@ -61,12 +62,12 @@ class Subpage(Entity):
 
     @ExportMethod(DjangoStructList('Subpage'), [bool], PCPermit())
     @staticmethod
-    def get_global_subpages(announcements):
+    def get_global(announcements):
         return Subpage.objects.filter(is_announcement=announcements, contest=None)
 
     @ExportMethod(DjangoStructList('Subpage'), [DjangoId('Contest'), bool], PCPermit())
     @staticmethod
-    def get_contest_subpages(contest, announcements):
+    def get_for_contest(contest, announcements):
         return Subpage.objects.filter(is_announcement=announcements, contest=contest) | Subpage.objects.filter(is_announcement=announcements, contest=None, is_everywhere=True)
 
 class SubpageEvents(Events):
