@@ -95,52 +95,35 @@ class Contest(Entity):
         else:
             return contests[0]
         
-    @ExportMethod(DjangoStruct('Contest'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_CONTESTS')))
+    @ExportMethod(DjangoStruct('Contest'), [DjangoStruct('Contest')], PCGlobal('MANAGE_CONTESTS'), [CannotSetField])
     @staticmethod
-    def create_contest(name):
-        r = Role()
-        r.name = 'Contestant of ' + name
-        r.save()
-        
-        c = Contest()
-        c.name = name
-        c.contestant_role = r
-        c.save()
-
-        Privilege.grant(token_container.token.role, c, 'MANAGE')
-        Privilege.grant(r, c, 'VIEW')
-
-        return c
-    
-    @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), unicode], PCArg('self', 'MANAGE'))
-    def set_name(self, name):
-        self.name = name
-        self.save()
-
-        self.contestant_role.name = 'Contestant of ' + name
-        self.contestant_role.save()
-
+    def create(fields):
+        contest = Contest()
+        contest.forbid_fields(fields, ['id', 'contestant_role'])
+        contest.update_fields(fields, ['name', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
+        contest.contestant_role = Role(name='Contestant of ' + contest.name).save()
+        contest.save()
+        Privilege.grant(token_container.token.role, contest, 'MANAGE')
+        Privilege.grant(contest.contestant_role, contest, 'VIEW')
+        return content
+   
+    @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), DjangoStruct('Contest')], PCArg('self', 'MANAGE'), [CannotSetField])
+    def modify(self, fields):
+        contest.forbid_fields(fields, ['id', 'contestant_role'])
+        modified = contest.update_fields(fields, ['name', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
+        if 'name' in modified:
+            role = contest.contestant_role
+            role.name='Contestant of ' + contest.name
+            role.save()
         return self
 
-    @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), datetime, datetime, unicode, unicode], PCArg('self', 'MANAGE'))
-    def set_lock(self, start, finish, address, netmask):
-        self.lock_start = start
-        self.lock_finish = finish
-        self.lock_address = address
-        self.lock_netmask = netmask
-        self.save()
-
-        return self
-
-    @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest')], PCArg('self', 'MANAGE'))
-    def set_no_lock(self):
+    @ExportMethod(NoneType, [DjangoId('Contest')], PCArg('self', 'MANAGE'))
+    def disable_lock(self):
         self.lock_start = None
         self.lock_finish = None
         self.lock_address = '0.0.0.0'
         self.lock_netmask = '255.255.255.255'
         self.save()
-
-        return self
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('Role')], PCOr(PCTokenUser('user'), PCArg('self', 'MANAGE')))
     def find_contestant(self, user):
@@ -153,21 +136,8 @@ class Contest(Entity):
                return None
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
-    def join_contest(self):
-        if self.find_contestant(token_container.token.user):
-            raise AlreadyRegistered(login=token_container.token.user.login)
-
-        c = Contestant()
-        c.contest = self
-        c.save()
-
-        c.set_name(token_container.token.user.name)
-        c.set_accepted(bool(Privilege.demand(self, 'JOIN')))
-        c.add_member(token_container.token.user)
-
-        Privilege.grant(c, c, 'OBSERVE')
-
-        return c
+    def join(self):
+        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN')), name=token_container.token.user.name), user_list=[token_container.token.user])
 
     @staticmethod
     def submit_to_result_to_render(submit):
@@ -179,7 +149,6 @@ class Contest(Entity):
             details=submit.get_test_suite_report()
             )
 
-    #TODO: OBSERVE on submits
     @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCPermit())
     def get_all_results(self, problem=None, limit=20, offset=0):
         res = []
@@ -188,12 +157,11 @@ class Contest(Entity):
         	q = q.filter(problem=problem)
         for submit in q.order_by('-id')[offset:offset+limit]:
         	res.append(Contest.submit_to_result_to_render(submit))
-        return {
-            'count' : len(q),
-            'results'  : res,
-        }
+        return ResultsToRender(
+            count=len(q),
+            results=res
+            )
 
-    #TODO: OBSERVE on submits
     @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
     def get_results(self, contestant, problem=None, limit=20, offset=0):
         res = []
@@ -202,10 +170,10 @@ class Contest(Entity):
         	q = q.filter(problem=problem)
         for submit in q.order_by('-id')[offset:offset+limit]:
         	res.append(Contest.submit_to_result_to_render(submit))
-        return {
-            'count' : len(q),
-            'results'  : res,
-        }
+        return ResultsToRender(
+            count=len(q),
+            results=res
+            )
 
     @staticmethod
     def contestant_to_contestant_to_render(contestant):
@@ -222,10 +190,10 @@ class Contest(Entity):
         q = Contestant.objects.filter(contest=self, accepted=True)
         for contestant in q.order_by('name')[offset:offset+limit]:
         	res.append(Contest.contestant_to_contestant_to_render(contestant))
-        return {
-            'count' : len(q),
-            'contestants'  : res,
-        }
+        return ContestantsToRender(
+            count=len(q),
+            contestants=res
+            )
 
     @ExportMethod(ContestantsToRender, [DjangoId('Contest'), int, int], PCArg('self', 'MANAGE'))
     def get_pending_contestants(self, limit=20, offset=0):
@@ -233,10 +201,10 @@ class Contest(Entity):
         q = Contestant.objects.filter(contest=self, accepted=False)
         for contestant in q.order_by('name')[offset:offset+limit]:
         	res.append(Contest.contestant_to_contestant_to_render(contestant))
-        return {
-            'count' : len(q),
-            'contestants'  : res,
-        }
+        return ContestantsToRender(
+            count=len(q),
+            contestants=res
+            )
 
 class ContestEvents(Events):
     model = Contest
