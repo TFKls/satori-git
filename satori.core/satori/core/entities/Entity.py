@@ -3,6 +3,7 @@
 from django.db import models
 
 from satori.core.dbev import Events
+from django.core.exceptions import ObjectDoesNotExist
 
 CannotSetField = DefineException('CannotSetField', 'You can\'t set the field: {field}',
     [('field', unicode, False)])
@@ -44,9 +45,14 @@ class Entity(models.Model):
         changed = []
         for field in fields:
             val = getattr(source, field, None)
-            if (val is not None) and (val != getattr(dest, field, None)):
-                changed.append(field)
-                setattr(dest, field, val)
+            if val is not None:
+                try:
+                    act = getattr(dest, field, None)
+                except ObjectDoesNotExist:
+                    act = None
+                if val != act:
+                    changed.append(field)
+                    setattr(dest, field, val)
         return changed
 
     @staticmethod

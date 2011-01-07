@@ -33,9 +33,10 @@ class Contestant(Role):
         return inherits
 
     def save(self, *args, **kwargs):
-        login_ok(self.login)
-        if Contestant.objects.filter(login=self.login, contest=self.contest).exclude(id=self.id):
-            raise InvalidLogin(login=login, reason='is already used')
+        if self.login is not None:
+            login_ok(self.login)
+            if Contestant.objects.filter(login=self.login, contest=self.contest).exclude(id=self.id):
+                raise InvalidLogin(login=login, reason='is already used')
         super(Contestant, self).save(*args, **kwargs)
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoStruct('Contestant'), DjangoIdList('User')], PCArgField('fields', 'contest', 'MANAGE'), [AlreadyRegistered, InvalidLogin, InvalidPassword, CannotSetField])
