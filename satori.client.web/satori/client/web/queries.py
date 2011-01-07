@@ -23,8 +23,10 @@ def CurrentUser():
 def ActiveContest(d):
 	if not 'contestid' in d.keys():
 		return None
-	return ContestById(int(d['contestid'][0]))
-
+	try:
+        	return ContestById(int(d['contestid'][0]))
+        except:
+                return None
 
 def MyContestant(c):
     u = CurrentUser()

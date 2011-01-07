@@ -2,6 +2,8 @@
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from django.db import models
+from django.conf import settings
+from satori.client.web.librecaptcha import *
 from satori.client.common.remote import *
 from _Request import Request
 
@@ -16,15 +18,29 @@ class RegisterRequest(Request):
         password = vars['password']
         confirm = vars['confirm']
         fullname = vars['fullname']
+        email = vars['email']
         lw_path = vars['lw_path']
+        remote_ip = request.META['REMOTE_ADDR']
+        challenge = request.POST['recaptcha_challenge_field']
+        response = request.POST['recaptcha_response_field']
+        recaptcha_response = submit(challenge, response, settings.RECAPTCHA_PRIV_KEY, remote_ip)        
+        error = False
         if password!=confirm:
-            follow(d,lw_path)['status'] = ['nomatch']
-            return GetLink(d, path)            
-        User.register(login=login, password=password, name=fullname)
-        try:
-            t = User.authenticate(login=login, password=password)
-            token_container.set_token(t)
-            follow(d,lw_path)['status'] = ['ok']
-        except:
-            follow(d,lw_path)['status'] = ['failed']
-        return GetLink(d, path)
+            error = 'nomatch'
+        elif not recaptcha_response.is_valid:
+            error = 'captchafail'
+        else:
+            try:
+                User.register(UserStruct(login=login, email=email, name=fullname), password=password)
+            except InvalidLogin:
+                error = 'badlogin'
+            except InvalidPassword:
+                error = 'badpass'
+            except InvalidEmail:
+                error = 'bademail'
+            except:
+                error = 'regfail'
+        if error:
+            return GetLink(DefaultLayout(maincontent='registerform',status=[error]),'')
+        else:
+            return GetLink(DefaultLayout(maincontent='loginform',status=['waiting']),'')

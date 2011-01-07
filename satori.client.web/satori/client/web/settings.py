@@ -85,3 +85,6 @@ INSTALLED_APPS = (
     'satori.client.web',
     'django.contrib.webdesign',
 )
+
+RECAPTCHA_PUB_KEY = '6LdTPsASAAAAACfINb4O2NltX7I8IeGkBhk8tXJa'
+RECAPTCHA_PRIV_KEY = '6LdTPsASAAAAAD0AVU5Jo148Mve24lr6swKPpPwA'
