@@ -47,7 +47,7 @@ def {1}_get(self, name):
     except OpenAttribute.DoesNotExist:
         return None
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read, [BadAttributeType])
 def {1}_get_str(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
@@ -58,7 +58,7 @@ def {1}_get_str(self, name):
     else:
         return oa.value
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read, [BadAttributeType])
 def {1}_get_blob(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
@@ -68,7 +68,7 @@ def {1}_get_blob(self, name):
         raise BadAttributeType(name=name, required_type='blob')
     return Blob.open(oa.value, oa.filename)
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read, [BadAttributeType])
 def {1}_get_blob_hash(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
