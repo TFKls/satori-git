@@ -35,41 +35,32 @@ class Subpage(Entity):
         # TODO: conditional inherit: if contest is set and is_public, inherit VIEW from contest
         return inherits
 
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCGlobal('ADMIN'))
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCGlobal('ADMIN'), [CannotSetField])
     @staticmethod
     def create_global(fields):
         subpage = Subpage()
-        subpage.name = fields.name
-        subpage.content = fields.content
-        subpage.is_announcement = fields.is_announcement
-        subpage.is_everywhere = fields.is_everywhere
-        subpage.order = fields.order
+        subpage.forbid_fields(fields, ['contest', 'is_public'])
+        subpage.update_fields(fields, ['name', 'content', 'is_announcement', 'is_everywhere', 'order'])
         subpage.save()
         return subpage
 
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCArgField('fields', 'contest', 'MANAGE'))
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
     @staticmethod
     def create_for_contest(fields):
         subpage = Subpage()
-        subpage.contest = fields.contest
-        subpage.name = fields.name
-        subpage.content = fields.content
-        subpage.is_announcement = fields.is_announcement
-        subpage.is_public = fields.is_public
-        subpage.order = fields.order
+        subpage.forbid_fields(fields, ['is_everywhere'])
+        subpage.update_fields(fields, ['name', 'contest', 'content', 'is_announcement', 'is_public', 'order'])
         subpage.save()
         return subpage
 
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'))
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        self.name = fields.name
-        self.content = fields.content
-        self.is_announcement = fields.is_announcement
+        subpage.forbid_fields(fields, ['contest'])
         if self.contest is None:
-            self.is_everywhere = fields.is_everywhere
+            subpage.forbid_fields(fields, ['is_public'])
         else:
-            self.is_public = fields.is_public
-        self.order = fields.order
+            subpage.forbid_fields(fields, ['is_everywhere'])
+        subpage.update_fields(fields, ['name', 'content', 'is_announcement', 'is_public', 'is_everywhere', 'order'])
         self.save()
         return self
 
