@@ -75,7 +75,6 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 """
-    print sql
 
     ret = []
     ret.append(sql)
