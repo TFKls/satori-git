@@ -15,8 +15,11 @@ class Contestant(Role):
     contest     = models.ForeignKey('Contest', related_name='contestants')
     accepted    = models.BooleanField(default=False)
     invisible   = models.BooleanField(default=False)
-    login       = models.CharField(max_length=64, unique=True)
+    login       = models.CharField(max_length=64, null=True)
     password    = models.CharField(max_length=128, null=True)
+    
+    class Meta:                                                # pylint: disable-msg=C0111
+        unique_together = (('contest', 'login'),)
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW')]
