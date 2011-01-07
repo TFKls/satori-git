@@ -157,16 +157,7 @@ class Contest(Entity):
         if self.find_contestant(token_container.token.user):
             raise AlreadyRegistered(login=token_container.token.user.login)
 
-        c = Contestant()
-        c.contest = self
-        c.save()
-
-        c.set_name(token_container.token.user.name)
-        c.set_accepted(bool(Privilege.demand(self, 'JOIN')))
-        c.add_member(token_container.token.user)
-
-        Privilege.grant(c, c, 'OBSERVE')
-
+        c = Contestant.create(DjangoStruct('Contestant')(contest=self, name=token_container.token.user.name, accepted=bool(Privilege.demand(self, 'JOIN'))), [token_container.token.user])
         return c
 
     @staticmethod
