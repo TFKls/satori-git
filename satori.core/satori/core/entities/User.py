@@ -29,7 +29,7 @@ class User(Role):
         login_ok(self.login)
         email_ok(self.email)
         if User.objects.filter(login=self.login).exclude(id=self.id):
-            raise InvalidLogin(login=login, reason='is already used')
+            raise InvalidLogin(login=self.login, reason='is already used')
         super(User, self).save(*args, **kwargs)
 
     @ExportMethod(DjangoStruct('User'), [DjangoStruct('User')], PCGlobal('MANAGE'), [InvalidLogin, InvalidEmail, CannotSetField])

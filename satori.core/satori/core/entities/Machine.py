@@ -27,7 +27,7 @@ class Machine(Role):
     def save(self, *args, **kwargs):
         login_ok(self.login)
         if Machine.objects.filter(login=self.login).exclude(id=self.id):
-            raise InvalidLogin(login=login, reason='is already used')
+            raise InvalidLogin(login=self.login, reason='is already used')
         super(Machine, self).save(*args, **kwargs)
     
     @ExportMethod(DjangoStruct('Machine'), [DjangoStruct('Machine')], PCGlobal('MANAGE'), [InvalidLogin, CannotSetField])
