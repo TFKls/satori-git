@@ -28,8 +28,8 @@ class Contestant(Role):
     def inherit_rights(cls):
         inherits = super(Contestant, cls).inherit_rights()
         cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW')
-        cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         cls._inherit_add(inherits, 'OBSERVE', 'contest', 'OBSERVE')
+        cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         return inherits
 
     def save(self, *args, **kwargs):

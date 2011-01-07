@@ -17,7 +17,7 @@ class Test(Entity):
     environment   = models.CharField(max_length=50)
     obsolete      = models.BooleanField(default=False)
 
-    data          = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
+    data          = AttributeGroupField(PCArg('self', 'VIEW'), PCDeny(), '')
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
@@ -35,7 +35,7 @@ class Test(Entity):
         self.fixup_data()
         super(Test, self).save(*args, **kwargs)
 
-    @ExportMethod(DjangoStruct('Test'), [DjangoStruct('Test'), TypedMap(unicode, AnonymousAttribute)], PCArgField('fields', 'problem', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Test'), [DjangoStruct('Test'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArgField('fields', 'problem', 'MANAGE'), PCEachValue('data', PCRawBlob('item'))), [CannotSetField])
     @staticmethod
     def create(fields, data):
         test = Test()
@@ -52,7 +52,7 @@ class Test(Entity):
         self.save()
         return self
 
-    @ExportMethod(DjangoStruct('Test'), [DjangoId('Test'), DjangoStruct('Test'), TypedMap(unicode, AnonymousAttribute)], PCArg('self', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Test'), [DjangoId('Test'), DjangoStruct('Test'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('data', PCRawBlob('item'))), [CannotSetField])
     def modify_full(self, fields, data):
         self.forbid_fields(fields, ['id', 'problem'])
         self.update_fields(fields, ['name', 'description', 'environment', 'obsolete'])
