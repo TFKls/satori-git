@@ -150,8 +150,8 @@ class Contest(Entity):
             contestant.invisible = True
             contestant.save()
 #TODO: REJUDGE!
-        Privilege.grant(user, contest, 'MANAGE')
-        Privilege.grant(user, contest.contestant_role, 'MANAGE')
+        Privilege.grant(user, self, 'MANAGE')
+        Privilege.grant(user, self.contestant_role, 'MANAGE')
 
     @staticmethod
     def submit_to_result_to_render(submit):
