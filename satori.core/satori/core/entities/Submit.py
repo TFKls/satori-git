@@ -15,7 +15,8 @@ class Submit(Entity):
     problem       = models.ForeignKey('ProblemMapping', related_name='submits')
     time          = models.DateTimeField(auto_now_add=True)
 
-    data          = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
+    data          = AttributeGroupField(PCArg('self', 'VIEW'), PCDeny(), '')
+    overrides     = AttributeGroupField(PCArg('self', 'MANAGE'), PCDeny(), '')
 
     class ExportMeta(object):
         fields = [('contestant', 'VIEW'), ('problem', 'VIEW'), ('time', 'VIEW')]
@@ -23,13 +24,32 @@ class Submit(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Submit, cls).inherit_rights()
-        cls._inherit_add(inherits, 'VIEW', 'contestant', 'OBSERVE')
-        cls._inherit_add(inherits, 'OVERRIDE', 'contestant', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEW', 'id', 'OBSERVE')
+        cls._inherit_add(inherits, 'OBSERVE', 'contestant', 'OBSERVE')
         return inherits
 
     def save(self, *args, **kwargs):
         self.fixup_data()
         super(Submit, self).save(*args, **kwargs)
+
+    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), unicode, unicode], PCArgField('fields', 'problem', 'SUBMIT'), [CannotSetField])
+    @staticmethod
+    def create(fields, content, filename):
+        submit = Submit()
+        submit.contestant = fields.problem.contest.find_contestant(token_container.token.role)
+        submit.forbid_fields(fields, ['id', 'contestant', 'time'])
+        submit.update_fields(fields, ['problem'])
+        submit.save()
+        Privilege.grant(submit.contestant, submit, 'VIEW')
+        blob = submit.data_set_blob('content', filename=filename)
+        blob.write(content)
+        blob.close()
+        RawEvent().send(Event(type='checking_new_submit', id=submit.id))
+        return submit
+
+    @ExportMethod(NoneType, [DjangoId('Submit'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('overrides', PCRawBlob('item'))))
+    def override(self, overrides):
+        self.overrides_set_map(overrides)
 
     @ExportMethod(DjangoStructList('TestResult'), [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
     def get_test_suite_results(self, test_suite=None):

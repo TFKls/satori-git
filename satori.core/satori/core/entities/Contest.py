@@ -169,23 +169,6 @@ class Contest(Entity):
 
         return c
 
-    @ExportMethod(DjangoStruct('Submit'), [DjangoId('Contest'), DjangoId('ProblemMapping'), unicode, unicode], PCArg('problem_mapping', 'SUBMIT'), [AlreadyRegistered])
-    def submit(self, problem_mapping, content, filename):
-        contestant = self.find_contestant(token_container.token.role)
-        if problem_mapping.contest != self:
-            raise "Go away"
-        submit = Submit()
-        submit.contestant = contestant
-        submit.problem = problem_mapping
-        submit.save()
-        Privilege.grant(contestant, submit, 'VIEW')
-        blob = submit.data_set_blob('content', filename=filename)
-        blob.write(content)
-        blob.close()
-
-        RawEvent().send(Event(type='checking_new_submit', id=submit.id))
-        return submit
-
     @staticmethod
     def submit_to_result_to_render(submit):
         return ResultToRender(
@@ -197,7 +180,7 @@ class Contest(Entity):
             )
 
     #TODO: OBSERVE on submits
-    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCArg('self', 'OBSERVE'))
+    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int])
     def get_all_results(self, problem=None, limit=20, offset=0):
         res = []
         q = Submit.objects.filter(contestant__contest=self)
@@ -211,7 +194,7 @@ class Contest(Entity):
         }
 
     #TODO: OBSERVE on submits
-    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCArg('contestant', 'OBSERVE'))
+    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int])
     def get_results(self, contestant, problem=None, limit=20, offset=0):
         res = []
         q = Submit.objects.filter(contestant=contestant)
