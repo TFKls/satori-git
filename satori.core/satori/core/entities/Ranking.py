@@ -54,9 +54,12 @@ class Ranking(Entity):
         modified = self.update_fields(fields, ['name', 'aggregator', 'is_public'])
         self.save()
         if 'aggregator' in modified:
-            pass
-        #TODO: REJUDGE!
+            self.rejudge()
         return self
+
+    @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
+    def rejudge(self):
+        RawEvent().send(Event(type='checking_rejudge_ranking', id=self.id))
 
     @ExportMethod(unicode, [DjangoId('Ranking')], PCArg('self', 'VIEW'))
     def full_ranking(self):
