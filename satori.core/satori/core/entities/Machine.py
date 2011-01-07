@@ -7,7 +7,7 @@ import ipaddr
 
 from satori.ars.server  import server_info
 from satori.core.dbev   import Events
-from satori.core.models import Role
+from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check
 from satori.core.models import LoginFailed
 
 @ExportModel
@@ -17,47 +17,54 @@ class Machine(Role):
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_machine')
 
     login       = models.CharField(max_length=64, unique=True)
-    secret      = models.CharField(max_length=128)
+    password    = models.CharField(max_length=128, null=True)
     address     = models.IPAddressField()
     netmask     = models.IPAddressField(default='255.255.255.255')
 
     class ExportMeta(object):
         fields = [('login', 'VIEW'), ('address', 'VIEW'), ('netmask', 'VIEW')]
 
-    @ExportMethod(DjangoStruct('Machine'), [unicode, unicode, unicode, unicode, unicode], PCGlobal('ADMIN'))
+    def save(self, *args, **kwargs):
+        login_ok(self.login)
+        if Machine.objects.filter(login=self.login).exclude(id=self.id):
+            raise InvalidLogin(login=login, reason='is already used')
+        super(Machine, self).save(*args, **kwargs)
+    
+    @ExportMethod(DjangoStruct('Machine'), [DjangoStruct('Machine')], PCGlobal('MANAGE'), [InvalidLogin, CannotSetField])
     @staticmethod
-    def register(login, name, secret, address, netmask):
-        machine = Machine(login=login, name=name, address=address, netmask=netmask)
-        machine.set_secret(secret)
+    def create(fields):
+        machine = Machine()
+        machine.forbid_fields(fields, ['id'])
         machine.save()
-        Privilege.grant(token_container.token.role, machine, 'MANAGE')
-        return machine
+        return user
+
+    @ExportMethod(DjangoStruct('Machine'), [DjangoId('Machine'), DjangoStruct('Machine')], PCArg('self', 'MANAGE'), [CannotSetField, InvalidLogin])
+    def modify(self, fields):
+        self.forbid_fields(fields, ['id'])
+        self.update_fields(fields, ['name', 'login', 'address', 'netmask'])
+        self.save()
+        return self
 
     @ExportMethod(unicode, [unicode, unicode], PCPermit())
     @staticmethod
-    def authenticate(login, secret):
+    def authenticate(login, password):
         try:
             machine = Machine.objects.get(login=login)
         except Machine.DoesNotExist:
             raise LoginFailed()
         if not machine.check_ip(server_info.client_ip):
             raise LoginFailed()
-        if not machine.check_secret(secret):
+        if not check_password(machine.password, password):
             raise LoginFailed()
         session = Session.start()
         session.login(machine, 'machine')
         return str(token_container.token)
 
-    @ExportMethod(DjangoStruct('Machine'), [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))
-    def set_secret(self, secret):
-        chars = string.letters + string.digits
-        salt = random.choice(chars) + random.choice(chars)
-        self.secret = crypt.crypt(secret, salt)
-        return self
-
-    @ExportMethod(bool, [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))
-    def check_secret(self, secret):
-        return crypt.crypt(secret, self.secret) == self.secret
+    @ExportMethod(NoneType, [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))
+    def set_password(self, new_password):
+        password_ok(new_password)
+        self.password = password_crypt(new_password)
+        self.save()
 
     @ExportMethod(NoneType, [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))
     def check_ip(self, ip):
