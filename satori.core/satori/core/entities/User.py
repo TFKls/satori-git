@@ -81,7 +81,7 @@ class User(Role):
             raise LoginFailed()
         if not user.activated:
             raise LoginFailed()
-        if password_check(self.password, password):
+        if password_check(user.password, password):
             session = Session.start()
             session.login(user, 'user')
             return str(token_container.token)
