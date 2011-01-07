@@ -51,7 +51,7 @@ class User(Role):
         fields.activated = False
         user = User.create(fields)
         user.set_password(password)
-        send_mail(settings.ACTIVATION_EMAIL_SUBJECT, settings.ACTIVATION_EMAIL_SUBJECT.format(user.activation_code), settings.ACTIVATION_EMAIL_FROM, [user.email])
+        send_mail(settings.ACTIVATION_EMAIL_SUBJECT, settings.ACTIVATION_EMAIL_BODY.format(user.activation_code), settings.ACTIVATION_EMAIL_FROM, [user.email])
 
     @ExportMethod(DjangoStruct('User'), [DjangoId('User'), DjangoStruct('User')], PCArg('self', 'EDIT'), [CannotSetField, InvalidLogin, InvalidPassword, InvalidEmail])
     def modify(self, fields):
