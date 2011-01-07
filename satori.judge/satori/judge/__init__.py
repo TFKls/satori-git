@@ -1,5 +1,9 @@
+# -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
+
 from satori.judge.judge import JailBuilder, JailRun
+from satori.client.common.remote import *
+
 import os
 import stat
 import sys
@@ -11,7 +15,7 @@ import traceback
 jail_dir = '/jail'
 cgroup_dir = '/cgroup'
 templates_dir = '/templates'
-templates_src = 'student.tcs.uj.edu.pl:/exports/judge/templates'
+templates_src = 'student.tcs.uj.edu.pl:/exports/judge'
 #templates_src = None
 login = 'checker'
 secret = 'sekret'
@@ -47,22 +51,21 @@ def judge_bash():
         jb.destroy()
 
 def judge_loop():
-    from satori.client.common.remote import *
     token_container.set_token(Machine.authenticate(login=login, secret=secret))
+    count=0
 
     while True:
+    	count += 1
+        if count > 100:
+            token_container.set_token(Machine.authenticate(login=login, secret=secret))
         submit = Judge.get_next()
         if submit != None:
-            print 'Got something to judge:', submit
             tr = submit['test_result']
             td = submit['test_data']
             sd = submit['submit_data']
-            print td
-            print sd
 
             submit['test_data'] = {}
             for n,f in td.items():
-            	print n, f
                 submit['test_data'][unicode(n)] = {
                     'is_blob'  : bool(f.is_blob),
                     'value'    : unicode(f.value),
@@ -70,7 +73,6 @@ def judge_loop():
                 }
             submit['submit_data'] = {}
             for n,f in sd.items():
-            	print n, f
                 submit['submit_data'][unicode(n)] = {
                     'is_blob'  : bool(f.is_blob),
                     'value'    : unicode(f.value),
@@ -97,7 +99,6 @@ def judge_loop():
                 if debug:
                     dh = anonymous_blob_path(debug)
                     res['judge.log'] = {'is_blob':True, 'value':dh, 'filename': 'judge.log'}
-                print 'judge result', res
                 Judge.set_result(tr, res)
             except:
                 traceback.print_exc()
@@ -108,7 +109,6 @@ def judge_loop():
 
 def judge_initialize():
     try:
-        from satori.client.common.remote import *
         token_container.set_token(User.authenticate('admin', 'admin'))
         try:
             machine = Machine.register(login=login, name=login, secret=secret, address='0.0.0.0', netmask='0.0.0.0')
@@ -169,7 +169,12 @@ def judge_finalize():
 def judge_init():
     try:
         judge_initialize()
-        judge_loop()
+        while True:
+            try:
+                judge_loop()
+            except:
+                traceback.print_exc()
+            time.sleep(10)
     except:
         traceback.print_exc()
     finally:

@@ -1,8 +1,10 @@
+# -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 """Satori judge implementation.
 """
 
 from satori.objects import Object, Argument
+from satori.client.common.remote import *
 from types import NoneType
 import BaseHTTPServer
 import cgi
@@ -20,22 +22,15 @@ import traceback
 
 
 def loopUnmount(root):
-    while True:
-        paths = []
-        with open('/proc/mounts', 'r') as mounts:
-            for mount in mounts:
-                path = mount.split(' ')[1]
-                if checkSubPath(os.path.join('/', root), path):
-                    paths.append(path)
-            count = 0
-            paths.sort()
-            paths.reverse()
-            for path in paths:
-                if os.path.isdir(path):
-                    subprocess.call(['umount', '-l', path])
-                    count += 1
-            if count == 0:
-                break
+    paths = []
+    with open('/proc/mounts', 'r') as mounts:
+        for mount in mounts:
+            path = mount.split(' ')[1]
+            if checkSubPath(os.path.join('/', root), path):
+                paths.append(path)
+        paths.reverse()
+        for path in paths:
+            subprocess.call(['umount', '-l', path])
 
 def checkSubPath(root, path):
     root = os.path.realpath(root).split('/')
@@ -288,7 +283,6 @@ class JailRun(Object):
             subprocess.check_call(['ip', 'link', 'set', self.guest_eth, 'netns', str(child.pid)])
             controller = Process(target = self.run_server, args=(self.host_ip, self.control_port, pipe, result, True))
             controller.start()
-#WAIT FOR CHILD CONFIGURE NETWORK AND PIVOT ROOT
         except:
             raise
         finally:
@@ -328,19 +322,19 @@ class JailRun(Object):
                     self.wfile.write(output)
                 except Exception as ex:
                     traceback.print_exc()
-                    print 'Sleep for 10 minutes.'
-                    time.sleep(600)
                     self.send_response(500)
                     self.end_headers()
                     self.wfile.write(str(ex))
                 etime = datetime.datetime.now()
                 if cmd != 'cmd_QUERYCG':
                     print 'served ', cmd, input, raw_output, stime, etime, etime - stime
+            
             def cmd_GETSUBMIT(self, input):
                 output = {}
                 for name, field in self.jail_run.submit['submit_data'].items():
                     output[name] = field
                 return output
+            
             def cmd_GETTEST(self, input):
                 output = {}
                 for name, field in self.jail_run.submit['test_data'].items():
@@ -351,34 +345,40 @@ class JailRun(Object):
                 fname = jailPath(self.jail_run.root, input['path'])
                 #TODO: Przeszukac cache
                 return { 'res' : 'OK' }
+            
             def cmd_PUTCACHE(self, input):
                 hash = gen_hash(input['what'])
                 fname = jailPath(self.jail_run.root, input['path'])
                 type = input['how']
                 #TODO: Handle cache
                 return { 'res' : 'OK' }
+            
             def cmd_GETBLOB(self, input):
                 hash = input['hash']
                 fname = jailPath(self.jail_run.root, input['path'])
                 #TODO: Thrift get blob
                 return { 'res' : 'OK' }
+            
             def cmd_GETTESTBLOB(self, input):
                 name = input['name']
                 fname = jailPath(self.jail_run.root, input['path'])
                 self.jail_run.submit['test_result'].test.data_get_blob_path(name, fname)
                 #TODO: Thrift get blob
                 return { 'res' : 'OK' }
+            
             def cmd_GETSUBMITBLOB(self, input):
                 name = input['name']
                 fname = jailPath(self.jail_run.root, input['path'])
                 self.jail_run.submit['test_result'].submit.data_get_blob_path(name, fname)
                 #TODO: Thrift get blob
                 return { 'res' : 'OK' }
+            
             def cgroup_path(self, path):
                 root = os.path.join(self.jail_run.cgroup_path, self.jail_run.cgroup)
                 if path:
                     root = jailPath(root, path)
                 return root
+            
             def cmd_CREATECG(self, input):
                 path = self.cgroup_path(input['group'])
                 if not os.path.isdir(path):
@@ -390,6 +390,7 @@ class JailRun(Object):
                                 for l in s:
                                     d.write(l)
                 return { 'res' : 'OK' }
+
             def cmd_LIMITCG(self, input):
                 path = self.cgroup_path(input['group'])
                 def set_limit(type, value):
@@ -399,6 +400,7 @@ class JailRun(Object):
                 if 'memory' in input:
                     set_limit('memory.limit_in_bytes', int(input['memory']))
                 return { 'res' : 'OK' }
+
             def fuser(self, name):
                 #return int((subprocess.Popen(["fuser", file], stdout=subprocess.PIPE).communicate()[0]).split(':')[-1])
                 name = os.path.basename(name)
@@ -423,6 +425,7 @@ class JailRun(Object):
                         f.write(str(pid))
                     return { 'res' : 'OK' }
                 return { 'res' : 'FAIL' }
+
             def cmd_DESTROYCG(self, input):
                 path = self.cgroup_path(input['group'])
                 killer = True
@@ -436,6 +439,7 @@ class JailRun(Object):
                     time.sleep(1)
                 os.rmdir(path)
                 return { 'res' : 'OK' }
+
             def cmd_QUERYCG(self, input):
                 path = self.cgroup_path(input['group'])
                 output = {}
@@ -465,10 +469,10 @@ class JailRun(Object):
                 return { 'res' : 'OK' }
 
             def cmd_SETBLOB(self, input):
-                from satori.client.common.remote import anonymous_blob_path
                 path = os.path.join(jailPath(self.jail_run.root, input['path']))
                 hash = anonymous_blob_path(path)
-                self.result[input['name']] = {'is_blob': True, 'value': hash, 'filename': os.path.basename(path)}
+                filename = input.get('filename', os.path.basename(path)) 
+                self.result[input['name']] = {'is_blob': True, 'value': hash, 'filename': filename}
                 return { 'res' : 'OK' }
 
             def cmd_PING(self, input):
