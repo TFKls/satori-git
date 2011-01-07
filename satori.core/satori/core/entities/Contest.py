@@ -137,7 +137,7 @@ class Contest(Entity):
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
     def join(self):
-        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN')), name=token_container.token.user.name), user_list=[token_container.token.user])
+        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN')), name=token_container.token.user.login), user_list=[token_container.token.user])
 
     @staticmethod
     def submit_to_result_to_render(submit):
