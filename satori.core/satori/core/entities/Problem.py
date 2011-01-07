@@ -38,8 +38,8 @@ class Problem(Entity):
         Privilege.grant(token_container.token.role, problem, 'MANAGE')
         return problem
 
-    @ExportMethod(DjangoStruct('Problem'), [DjangoID('Problem'), DjangoStruct('Problem')], PCArg('self', 'MANAGE'))
-    def modify(self, fields)
+    @ExportMethod(DjangoStruct('Problem'), [DjangoId('Problem'), DjangoStruct('Problem')], PCArg('self', 'MANAGE'))
+    def modify(self, fields):
         self.name = fields.name
         self.description = fields.description
         self.statement = fields.statement

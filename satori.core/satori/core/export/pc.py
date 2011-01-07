@@ -23,7 +23,7 @@ class PCArg(object):
 
 class PCArgField(object):
     def __init__(__pc__self, name, field_name, perm):
-        super(PCArg, __pc__self).__init__()
+        super(PCArgField, __pc__self).__init__()
         __pc__self.name = name
         __pc__self.field_name = field_name
         __pc__self.perm = perm
