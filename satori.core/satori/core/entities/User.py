@@ -71,7 +71,8 @@ class User(Role):
     @ExportMethod(NoneType, [unicode], PCPermit())
     def activate(activation_code):
         user = User.objects.get(activation_code=activation_code)
-        user.modify(DjangoStruct('User')(activated=True))
+        user.activated = True # TODO
+        user.save()
 
     @ExportMethod(unicode, [unicode, unicode], PCPermit(), [LoginFailed])
     @staticmethod
