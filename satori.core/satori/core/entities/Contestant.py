@@ -22,7 +22,7 @@ class Contestant(Role):
         unique_together = (('contest', 'login'),)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -44,7 +44,7 @@ class Contestant(Role):
     def create(fields, user_list):
         contestant = Contestant()
         contestant.forbid_fields(fields, ['usernames'])
-        modified = contestant.update_fields(fields, ['contest', 'accepted', 'invisible', 'login'])
+        modified = contestant.update_fields(fields, ['name', 'contest', 'accepted', 'invisible', 'login'])
         contestant.save()
         Privilege.grant(contestant, contestant, 'OBSERVE')
         for user in user_list:
@@ -58,7 +58,7 @@ class Contestant(Role):
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), DjangoStruct('Contestant')], PCArg('self', 'MANAGE'), [InvalidLogin, InvalidPassword, CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'usernames', 'contest'])
-        modified = self.update_fields(fields, ['accepted', 'invisible', 'login'])
+        modified = self.update_fields(fields, ['name', 'accepted', 'invisible', 'login'])
         self.save()
         if 'accepted' in modified:
             if self.accepted:
