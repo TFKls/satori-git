@@ -20,12 +20,6 @@ class Problem(Entity):
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('description', 'VIEW'), ('statement', 'VIEW')]
 
-    @classmethod
-    def inherit_rights(cls):
-        inherits = super(Problem, cls).inherit_rights()
-        cls._inherit_add(inherits, 'MANAGE', '', 'MANAGE_PROBLEMS')
-        return inherits
-
     def save(self, *args, **kwargs):
         self.fixup_default_test_data()
         super(Problem, self).save(*args, **kwargs)
@@ -33,13 +27,35 @@ class Problem(Entity):
     def __str__(self):
         return self.name+" ("+self.description+")"
 
-    @ExportMethod(DjangoId('Problem'), [unicode], PCAnd(PCTokenIsUser(), PCGlobal('MANAGE_PROBLEMS')))
-    def create_problem(name):
-        o = Problem()
-        o.name = name
-        o.save()
-        Privilege.grant(token_container.token.role, o, 'MANAGE')
-        return o
+    @ExportMethod(DjangoStruct('Problem'), [DjangoStruct('Problem')], PCGlobal('MANAGE_PROBLEMS'))
+    @staticmethod
+    def create(fields):
+        problem = Problem()
+        problem.name = fields.name
+        problem.description = fields.description
+        problem.statement = fields.statement
+        problem.save()
+        Privilege.grant(token_container.token.role, problem, 'MANAGE')
+        return problem
+
+    @ExportMethod(DjangoStruct('Problem'), [DjangoID('Problem'), DjangoStruct('Problem')], PCArg('self', 'MANAGE'))
+    def modify(self, fields)
+        self.name = fields.name
+        self.description = fields.description
+        self.statement = fields.statement
+        self.save()
+        return self
+
+    #@ExportMethod(NoneType, [DjangoId('Problem')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        logging.error('problem deleted') #TODO: Waiting for non-cascading deletes in django
+        for test in self.tests.all():
+            test.delete()
+        self.privileges.all().delete()
+        try:
+            super(Problem, self).delete()
+        except DatabaseError:
+            raise CannotDeleteObject()
 
 class ProblemEvents(Events):
     model = Problem

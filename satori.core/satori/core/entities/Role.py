@@ -39,7 +39,7 @@ class Role(Entity):
         Privilege.grant(token_container.token.role, res, 'MANAGE')
         return res
 
-    #@ExportMethod(NoneType, [DjangoId('Role')], PCArg('self', 'MANAGE'))
+    #@ExportMethod(NoneType, [DjangoId('Role')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):
         logging.error('role deleted') #TODO: Waiting for non-cascading deletes in django
         self.privileges.all().delete()

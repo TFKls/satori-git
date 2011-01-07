@@ -21,6 +21,21 @@ class PCArg(object):
     def __str__(__pc__self):
         return '{0} on {1}'.format(__pc__self.perm, __pc__self.name)
 
+class PCArgField(object):
+    def __init__(__pc__self, name, field_name, perm):
+        super(PCArg, __pc__self).__init__()
+        __pc__self.name = name
+        __pc__self.field_name = field_name
+        __pc__self.perm = perm
+
+    def __call__(__pc__self, **kwargs):
+        field = getattr(kwargs[__pc__self.name], __pc__self.field_name, None)
+        if field is None:
+            return False
+        return Privilege.demand(field, __pc__self.perm)
+
+    def __str__(__pc__self):
+        return '{0} on {1}.{2}'.format(__pc__self.perm, __pc__self.name, __pc__self.field_name)
 
 class PCGlobal(object):
     def __init__(__pc__self, perm):

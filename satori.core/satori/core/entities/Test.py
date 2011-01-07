@@ -28,12 +28,43 @@ class Test(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Test, cls).inherit_rights()
-        cls._inherit_add(inherits, 'MANAGE', 'problem', 'EDIT')
+        cls._inherit_add(inherits, 'MANAGE', 'problem', 'MANAGE')
         return inherits
 
     def save(self, *args, **kwargs):
         self.fixup_data()
         super(Test, self).save(*args, **kwargs)
+
+    @ExportMethod(DjangoStruct('Test'), [DjangoStruct('Test'), TypedMap(unicode, AnonymousAttribute)], PCArgField('fields', 'problem', 'MANAGE'))
+    @staticmethod
+    def create(fields, data):
+        test = Test()
+        test.problem = fields.problem
+        test.name = fields.name
+        test.description = fields.description
+        test.environment = fields.environment
+        test.save()
+        test.data_set_map(data)
+        return test
+
+    @ExportMethod(DjangoStruct('Test'), [DjangoId('Test'), DjangoStruct('Test'), TypedMap(unicode, AnonymousAttribute)], PCArg('self', 'MANAGE'))
+    def modify(self, fields, data):
+        self.name = fields.name
+        self.description = fields.description
+        self.environment = fields.environment
+        self.obsolete = fields.obsolete
+        self.save()
+        self.data_set_map(data)
+        return self
+
+    #@ExportMethod(NoneType, [DjangoId('Test')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        logging.error('test deleted') #TODO: Waiting for non-cascading deletes in django
+        self.privileges.all().delete()
+        try:
+            super(Test, self).delete()
+        except DatabaseError:
+            raise CannotDeleteObject()
 
 class TestEvents(Events):
     model = Test
