@@ -1,6 +1,14 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from token import token_container
 
+class PCDeny(object):
+    def __call__(__pc__self, **kwargs):
+        return False
+
+    def  __str__(__pc__self):
+        return 'imposible'
+
+
 class PCPermit(object):
     def __call__(__pc__self, **kwargs):
         return True

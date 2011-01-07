@@ -180,7 +180,7 @@ class Contest(Entity):
             )
 
     #TODO: OBSERVE on submits
-    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int])
+    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCPermit())
     def get_all_results(self, problem=None, limit=20, offset=0):
         res = []
         q = Submit.objects.filter(contestant__contest=self)
@@ -194,7 +194,7 @@ class Contest(Entity):
         }
 
     #TODO: OBSERVE on submits
-    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int])
+    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
     def get_results(self, contestant, problem=None, limit=20, offset=0):
         res = []
         q = Submit.objects.filter(contestant=contestant)
