@@ -13,11 +13,12 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+ACTIVATION_REQUIRED = True
 ACTIVATION_EMAIL_FROM = 'satori@tcs.uj.edu.pl'
 ACTIVATION_EMAIL_SUBJECT = 'Your Satori account activation'
 ACTIVATION_EMAIL_BODY = """
 Hello!<br>
-To activate your Satori account click <a href="http://satori.tcs.uj.edu.pl/activation.{0}">http://satori.tcs.uj.edu.pl/activation.{0}</a>.<br>
+To activate your Satori account visit http://satori.tcs.uj.edu.pl/activation.{0} .<br>
 Your activation token is: {0}.<br>
 """
 
