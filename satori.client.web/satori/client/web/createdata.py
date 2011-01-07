@@ -117,14 +117,13 @@ def create(request):
     p1 = Problem.create(ProblemStruct(name="TEST", description="Zadanie bez bajki"))
     p2 = Problem.create(ProblemStruct(name= "COW", description= "Zadanie o krowie"))
     p3 = Problem.create(ProblemStruct(name= "WUWU", description= "Zadanie o wuwuzeli"))
-    ts1 = TestSuite.create(TestSuiteStruct(problem= p1, name= "Testy do TEST :)", dispatcher = 'SerialDispatcher', accumulators = 'StatusAccumulator,StatusReporter'))
     t0 = Test.create(TestStruct(problem=p1, name = 'Test 0',description = 'Jedyny test do zadania bez bajki.'))
     t0.data_set_blob_hash('judge', dj)
     t0.data_set_blob_path('input', dirname(__file__)+'/testfiles/X0.in')
     t0.data_set_blob_path('hint', dirname(__file__)+'/testfiles/X0.out')
     t0.data_set_str('time','1000')
     t0.data_set_str('memory','8192')
-    TestMapping.create(TestMappingStruct(suite=ts1, test=t0, order=1))
+    ts1 = TestSuite.create(TestSuiteStruct(problem= p1, name= "Testy do TEST :)", dispatcher = 'SerialDispatcher', accumulators = 'StatusAccumulator,StatusReporter'), [t0])
     
     tp2 = []
     ts2 = TestSuite.create(TestSuiteStruct(problem= p2, name= "Testy do COW", dispatcher = 'SerialDispatcher', accumulators = 'StatusAccumulator,StatusReporter'))
