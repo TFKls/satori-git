@@ -205,8 +205,22 @@ def unwrap_service(service, base, struct, BlobReader, BlobWriter):
             else:
                 raise AttributeError('\'{0}\' object has no attribute \'{1}\''.format(class_name, name))
 
+        def __setattr__(self, name, value):
+            if name in struct.ars_type().fields:
+                if self._struct is None:
+                    self._struct = self.get_struct()._struct
+                setattr(self._struct, name, value)
+                self._struct = self.modify(self._struct)._struct
+            else:
+                super(new_class, self).__setattr__(name, value)
+
+        def refresh(self):
+            self._struct = self.get_struct()._struct
+
         class_dict['__init__'] = __init__
         class_dict['__getattr__'] = __getattr__
+        class_dict['__setattr__'] = __setattr__
+        class_dict['refresh'] = refresh
 
     new_class = type(class_name, (base,), class_dict)
     return new_class
