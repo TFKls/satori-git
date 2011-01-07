@@ -1,12 +1,19 @@
 ﻿# Module for conversions URL <-> dictionary
 
 import re
+from base64 import *
 
 # creates a dictionary from first half of URL
 
 class Session:
     user = None
     pass
+
+def mask(s):
+    return s
+    
+def unmask(s):
+    return s
 
 def ParseURL(argstr):
     res = {}
@@ -63,7 +70,7 @@ def ToString(dict):
 # just for concatenating two URL halves 
     
 def GetLink(dict, path):
-    return ToString(dict)+"."+path;
+    return mask(ToString(dict)+"."+path)
 
 # if path is nontrivial, returns a descendant dictionary        
         

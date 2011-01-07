@@ -1,8 +1,17 @@
 {% if widget.status == "failed" %}
     <p>Please try again.</p>
-{% else %}
-    <p>Please fill in the form to login.</p>
 {% endif %}
+{% if widget.status == "waiting" %}
+    <p>Activation email has been sent. Please follow the provided link to activate your account.</p>
+{% endif %}
+{% if widget.status == "activated" %}
+    <p>Account activated. You may now login.</p>
+{% endif %}
+{% if widget.status == "activation_failed" %}
+    <p>Activation key not accepted!</p>
+{% endif %}
+
+<p>Please fill in the form to login.</p>
 
 <form method="post" action="process.login">
     <table style="margin: auto; text-align: center">

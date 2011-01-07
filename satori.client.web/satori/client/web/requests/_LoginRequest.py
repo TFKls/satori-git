@@ -13,11 +13,14 @@ class LoginRequest(Request):
         d = ParseURL(vars.get('back_to', ''))
         path = vars['path']
         lw_path = vars['lw_path']
+        f = follow(d,lw_path)
+        if 'status' in f.keys():
+            del f['status']
         login = vars['username']
         password = vars['password']
         try:
             t = User.authenticate(login=login, password=password)
             token_container.set_token(t)
-        except LoginFailed:
-            follow(d,lw_path)['status'] = ['failed']
+        except:
+            f['status'] = ['failed']
         return GetLink(d,path)

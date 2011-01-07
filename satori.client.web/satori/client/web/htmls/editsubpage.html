@@ -1,0 +1,28 @@
+<h3>Manage subpages</h3>
+
+<p>Create new supbage of <strong>
+{% if widget.contest %} {{widget.contest.name}} {% else %} Global {% endif %}
+</strong>:</p>
+<div class="msgeditform">
+<form action = "process.editsubpage" method = "post">
+    <input type="hidden" name="id" value="{{widget.editing.id}}">
+    <input type="hidden" name="contest_id" value="{{widget.contest.id}}">
+    <input type="hidden" name="back_to" value="{{ widget.back_to }}">
+    <p>Name:</p>
+    <input type="text" name="name" value="{{ widget.editing.name }}" style="width: 100%">
+    <p>Order:</p>
+    <input type="text" name="order" value="{{ widget.editing.order }}" style="width: 100%">
+    <p>Content:</p>
+    <textarea name="content" rows="20" style="width: 100%">{{ widget.editing.content }}</textarea>
+    <input type="radio" name="msgtype" value="private">Private (for contestants only)</input>
+    <input type="radio" name="msgtype" value="public"{% if not widget.editing or widget.editing.is_public %} checked {% endif %}>Public</input>
+    {% if widget.editing %}
+    <input type="submit" class="button" name="edit" value="Save">
+    <input type="submit" class="button" name="delete" value="Delete">
+    <input type="submit" class="button" name="cancel" value="Cancel">
+    {% else %}
+    <input type="submit" class="button" name="add" value="Add subpage" style="float: right">
+    {% endif %}
+</form>
+</div>
+

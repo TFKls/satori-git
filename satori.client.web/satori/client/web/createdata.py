@@ -82,6 +82,7 @@ def create(request):
 #        except:
 #            pass
 
+    token_container.set_token('')
     token_container.set_token(User.authenticate(login='admin', password='admin'))
         
     paladin = User.create(UserStruct(login='paladin', name='Lech Duraj', email='lech.duraj@tcs.uj.edu.pl'))
@@ -89,7 +90,7 @@ def create(request):
     dijkstra = User.create(UserStruct(name='Edgsger W. Dijkstra', login = 'dijkstra', email='edgsger.dijkstra@tcs.uj.edu.pl'))
     dijkstra.set_password('dijkstra')
 
-    checker = Machine.create(MachinStruct(login='a', name='checker_one', address='0.0.0.0', netmask='0.0.0.0'))
+    checker = Machine.create(MachineStruct(login='aaaa', name='checker_one', address='0.0.0.0', netmask='0.0.0.0'))
     checker.set_password('sekret')
 
     Privilege.global_grant(paladin, 'ADMIN')
@@ -116,14 +117,13 @@ def create(request):
     p1 = Problem.create(ProblemStruct(name="TEST", description="Zadanie bez bajki"))
     p2 = Problem.create(ProblemStruct(name= "COW", description= "Zadanie o krowie"))
     p3 = Problem.create(ProblemStruct(name= "WUWU", description= "Zadanie o wuwuzeli"))
-    ts1 = TestSuite.create(TestSuiteStruct(problem= p1, name= "Testy do TEST :)", dispatcher = 'SerialDispatcher', accumulators = 'StatusAccumulator,StatusReporter'))
     t0 = Test.create(TestStruct(problem=p1, name = 'Test 0',description = 'Jedyny test do zadania bez bajki.'))
     t0.data_set_blob_hash('judge', dj)
     t0.data_set_blob_path('input', dirname(__file__)+'/testfiles/X0.in')
     t0.data_set_blob_path('hint', dirname(__file__)+'/testfiles/X0.out')
     t0.data_set_str('time','1000')
     t0.data_set_str('memory','8192')
-    TestMapping.create(TestMappingStruct(suite=ts1, test=t0, order=1))
+    ts1 = TestSuite.create(TestSuiteStruct(problem= p1, name= "Testy do TEST :)", dispatcher = 'SerialDispatcher', accumulators = 'StatusAccumulator,StatusReporter'), [t0])
     
     tp2 = []
     ts2 = TestSuite.create(TestSuiteStruct(problem= p2, name= "Testy do COW", dispatcher = 'SerialDispatcher', accumulators = 'StatusAccumulator,StatusReporter'))

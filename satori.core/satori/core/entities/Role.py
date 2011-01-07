@@ -39,7 +39,7 @@ class Role(Entity):
         for child in children:
             role.add_member(child)
         Privilege.grant(token_container.token.role, role, 'MANAGE')
-        return res
+        return role
 
     @ExportMethod(DjangoStruct('Role'), [DjangoId('Role'), DjangoStruct('Role')], PCArg('self', 'EDIT'), [CannotSetField])
     def modify(self, fields):

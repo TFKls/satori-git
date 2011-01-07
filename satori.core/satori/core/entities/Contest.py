@@ -101,11 +101,13 @@ class Contest(Entity):
         contest = Contest()
         contest.forbid_fields(fields, ['id', 'contestant_role'])
         contest.update_fields(fields, ['name', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
-        contest.contestant_role = Role(name='Contestant of ' + contest.name).save()
+        contestant_role = Role(name='Contestant of ' + contest.name)
+        contestant_role.save()
+        contest.contestant_role = contestant_role
         contest.save()
         Privilege.grant(token_container.token.role, contest, 'MANAGE')
         Privilege.grant(contest.contestant_role, contest, 'VIEW')
-        return content
+        return contest
    
     @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), DjangoStruct('Contest')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):

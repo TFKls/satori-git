@@ -10,6 +10,9 @@ class LoginWidget(Widget):
         el = CurrentUser()
         if el:
             self.htmlFile = 'htmls/logged.html'
+            self.status = follow(params, path).get('status')
+            if self.status:
+                self.status = self.status[0]
             self.name = el.name
         else:
             self.htmlFile = 'htmls/loginform.html'
