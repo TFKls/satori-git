@@ -14,11 +14,17 @@ class RegisterRequest(Request):
         path = vars.get('path', '')
         login = vars['username']
         password = vars['password']
+        confirm = vars['confirm']
         fullname = vars['fullname']
+        lw_path = vars['lw_path']
+        if password!=confirm:
+            follow(d,lw_path)['status'] = ['nomatch']
+            return GetLink(d, path)            
         User.register(login=login, password=password, name=fullname)
         try:
             t = User.authenticate(login=login, password=password)
             token_container.set_token(t)
+            follow(d,lw_path)['status'] = ['ok']
         except:
-            pass
+            follow(d,lw_path)['status'] = ['failed']
         return GetLink(d, path)

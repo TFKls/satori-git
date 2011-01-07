@@ -11,25 +11,31 @@ class EditMessageRequest(Request):
     def process(cls, request):
         d = ParseURL(request.POST['back_to'])
         pv = request.POST
+        c = None
         if 'cancel' in pv.keys():
             return GetLink(d,'');
         if 'add' in pv.keys():
+            s = SubpageStruct(name=pv['name'],content=pv['content'],is_announcement=True)
             if pv['msgtype']=='contest_only':
                 c = ContestById(pv['contest_id'])
-                MessageContest.create({'topic': pv['msgtopic'], 'contest': c, 'content' : pv['msgcontent']})
+                s.contest = c
+                glb = False
+            if pv['msgtype']=='mainscreen_only':
+                s.is_everywhere = False
+                glb = True
+            if pv['msgtype']=='global':
+                s.is_everywhere = True
+                glb = True
+            if glb:
+                Subpage.create_global(s)
             else:
-                mso = (pv['msgtype']=='mainscreen_only')
-                MessageGlobal.create({'topic' : pv['msgtopic'], 'content' : pv['msgcontent'], 'mainscreenonly' : mso})
+                Subpage.create_for_contest(s)
             return GetLink(d,'')
-        m = None
-        try:
-            m = MessageGlobal.filter({'id' : int(pv['msgid'])})[0]
-        except:
-            m = MessageContest.filter({'id' : int(pv['msgid'])})[0]
-        if 'edit' in pv.keys():
-            m.topic = pv['msgtopic']
-            m.content = pv['msgcontent']
+        m = Subpage.filter({'id' : int(pv['id'])})[0]
+        if m and m.is_announcement and 'edit' in pv.keys():
+            m.name = pv['name']
+            m.content = pv['content']
             return GetLink(d,'')
         if 'delete' in pv.keys():
             m.delete()
-            return GetLink(d,'')
+        return GetLink(d,'')

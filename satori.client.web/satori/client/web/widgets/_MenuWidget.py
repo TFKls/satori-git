@@ -37,16 +37,18 @@ class MenuWidget(Widget):
         addwidget(contest,'Problems','problems',contest,'VIEW')
         addwidget(cuser,'Submit','submit',contest,'VIEW')
         addwidget(contest,'Results','results',contest,'VIEW')
-        addwidget(contest,'Ranking','ranking',contest,'VIEW')
         if contest:
-            for s in Subpage.filter({'contest':contest}):
+            for r in Ranking.filter({'contest':contest}):
+                addlink(True,r.name,DefaultLayout(dict=params,maincontent='ranking',subid=[str(s.id)]),r,'VIEW')
+        if contest:
+            for s in Subpage.filter({'contest':contest,'is_announcement':False}):
                 addlink(True,s.name,DefaultLayout(dict=params,maincontent='subpage',subid=[str(s.id)]),s,'VIEW')
         
-        addwidget(contest,'Manage contest','mancontest',contest,'MANAGE')
+        addwidget(contest,'Manage subpages','mancontest',contest,'MANAGE')
         if cuser:
             addwidget(user,'Manage news','mannews',contest,'MANAGE')
         else:
             addwidget(user,'Manage news','mannews','global','ADMIN')
-        addwidget(contest,'Manage users','manusers',contest,'MANAGE')
+        addwidget(contest,'Manage users & rights','manusers',contest,'MANAGE')
         addwidget(user, 'Problem repository','repository','global','ADMIN')
-        addlink(contest,'Switch contest',DefaultLayout())
+        addlink(contest,'Return to main',DefaultLayout())

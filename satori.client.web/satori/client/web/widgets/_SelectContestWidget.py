@@ -29,4 +29,6 @@ class SelectContestWidget(Widget):
             else:
                 if not cu.accepted:
                     con['status'] = 1
+            if Allowed(c,"MANAGE"):
+                con['status'] = 4
             self.contests.append(con)

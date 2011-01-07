@@ -46,22 +46,18 @@
 <p>The list of pending accepted users of this contest:</p>
 <table class="tlist">
 <tr><th>No.</th><th>Login</th><th>Full name</th><th>&nbsp</th></tr>
-{% for cu, members in widget.pending %}
+{% for q in widget.pending %}
 <tr>
     <th>{{forloop.counter}}.</th>
     <td>
-    {% for u in members %}
-    {{u.login}} <br/>
-    {% endfor %}
+    {{ q.c.id }}
     </td>
     <td>
-    {% for u in members %}
-    {{u.name}} <br/>
-    {% endfor %}
+    (name)
     </td>
     <td>
         <form action="process.accept" method="post">
-            <input type="hidden" name="conuser_id" value="{{ cu.id }}"/>
+            <input type="hidden" name="conuser_id" value="{{ q.c.id }}"/>
             <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
             <input type="hidden" name="back_path" value="{{ widget.path }}"/>
             <input type="submit" value="Accept" class="button"/>

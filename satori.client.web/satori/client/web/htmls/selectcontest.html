@@ -14,6 +14,8 @@
         <td style="text-align: center">
         {% if contest.status == 0 %}
             Participant
+        {% else %}{%if contest.status == 4 %}    
+            Administrator
         {% else %}{%if contest.status == 1 %}    
             Pending...
         {% else %}{%if contest.status == 2 %}
@@ -23,6 +25,7 @@
                 <input type="hidden" name="back_path" value="{{ widget.path }}"/>
                 <input type="submit" class="applybutton" value="Join"/>
             </form>
+        {% endif %}
         {% endif %}
         {% endif %}
         {% endif %}

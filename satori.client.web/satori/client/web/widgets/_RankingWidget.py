@@ -9,7 +9,7 @@ class RankingWidget(Widget):
     pathName = 'ranking'
     def __init__(self, params, path):
         self.htmlFile = 'htmls/ranking.html'
-        self.rankings = []
-        if (ActiveContest(params)):
-            for r in Ranking.filter({'contest':ActiveContest(params)}):
-                self.rankings.append({'content' : publish_parts(r.full_ranking(), writer_name='html')['fragment']})
+        d = follow(params,path)
+        r = Ranking.filter({'id' : int(d['subid'][0])})[0]
+        self.name = r.name
+        self.content = text2html(r.full_ranking())

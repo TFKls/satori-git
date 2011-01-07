@@ -10,29 +10,32 @@ class ManageNewsWidget(Widget):
         self.htmlFile = 'htmls/mannews.html'
         self.contest = ActiveContest(params)
         self.canglobal = Allowed('global','ADMIN')
-        self.messages = []
         d = follow(params,path)
         _params = deepcopy(params)
         _d = follow(_params,path)
         if 'edit' in d.keys():
-            self.editing = True
-            try:
-                msg = MessageGlobal.filter({'id' : int(d['edit'][0])})[0]
-            except:
-                msg = MessageContest.filter({'id' : int(d['edit'][0])})[0]
-            self.msgtopic = msg.topic
-            self.msgcontent = msg.content
-            self.msgid = msg.id
-            del _d['edit'];
+            self.editing = Subpage.filter({'id' : int(d['edit'][0])})[0]
+            if not self.editing.is_announcement:
+                raise ''
+            del _d['edit']
         self.back_to = ToString(_params);
-        for m in MessageGlobal.filter():
-            if not ActiveContest(params) or not m.mainscreenonly:
-                self.messages.append({'id' : m.id, 'type' : 'global', 'topic' : m.topic, 'content' : m.content, 'time' : m.time, 'canedit' : Allowed(m,'edit')})
-        if ActiveContest(params):
-            for m in MessageContest.filter({'contest':ActiveContest(params)}):
-                    self.messages.append({'id' : m.id, 'type' : 'contest', 'topic' : m.topic, 'content' : m.content, 'time' : m.time, 'canedit' : Allowed(m,'edit')})
+        c = ActiveContest(params)
+        if c:
+            allmsg = Subpage.get_for_contest(c,True)
+        else:
+            allmsg = Subpage.get_global(True)
+        allmsg.sort(key=lambda msg : msg.date_created, reverse=True)
+        self.messages = []
+        for m in allmsg:
+            self.messages.append({'m' : m, 'canedit' : Allowed(m,'MANAGE'), 'content' : text2html(m.content)})
         for md in self.messages:
             if md['canedit']:
-                _d['edit'] = [str(md['id'])]
+                _d['edit'] = [str(md['m'].id)]
                 md['editlink'] = GetLink(_params,'')
-        self.messages.sort(key=lambda msg : msg['time'], reverse=True)
+#        for m in MessageGlobal.filter():
+#            if not ActiveContest(params) or not m.mainscreenonly:
+#                self.messages.append({'id' : m.id, 'type' : 'global', 'topic' : m.topic, 'content' : m.content, 'time' : m.time, 'canedit' : Allowed(m,'edit')})
+#        if ActiveContest(params):
+#            for m in MessageContest.filter({'contest':ActiveContest(params)}):
+#                    self.messages.append({'id' : m.id, 'type' : 'contest', 'topic' : m.topic, 'content' : m.content, 'time' : m.time, 'canedit' : Allowed(m,'edit')})
+        
