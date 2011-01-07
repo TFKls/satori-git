@@ -35,10 +35,10 @@ class Entity(models.Model):
         super(Entity, self).save(*args, **kwargs)
 
     @classmethod
-    def _inherit_add(cls, inherits, get, id, need):
+    def _inherit_add(cls, inherits, get, id, need, field=None, value=None):
         if get not in inherits:
         	inherits[get] = []
-        inherits[get].append((id, need))
+        inherits[get].append((id, need, field, value))
 
     @staticmethod
     def static_update_fields(dest, source, fields):

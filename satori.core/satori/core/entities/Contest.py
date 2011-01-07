@@ -139,7 +139,19 @@ class Contest(Entity):
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
     def join(self):
-        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN')), name=token_container.token.user.name), user_list=[token_container.token.user])
+        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN')), name=token_container.token.user.login), user_list=[token_container.token.user])
+
+    @ExportMethod(NoneType, [DjangoId('Contest'), DjangoId('User')], PCArg('self', 'MANAGE'))
+    def add_admin(self, user):
+        contestant = self.find_contestant(user)
+        if contestant is None:
+            Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=True, invisible=True, name=user.login), user_list=[user])
+        else:
+            contestant.invisible = True
+            contestant.save()
+#TODO: REJUDGE!
+        Privilege.grant(user, self, 'MANAGE')
+        Privilege.grant(user, self.contestant_role, 'MANAGE')
 
     @staticmethod
     def submit_to_result_to_render(submit):

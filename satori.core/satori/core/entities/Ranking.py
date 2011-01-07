@@ -25,13 +25,38 @@ class Ranking(Entity):
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('name', 'VIEW'), ('aggregator', 'MANAGE'), ('header', 'MANAGE'), ('footer', 'MANAGE'), ('is_public', 'MANAGE')]
 
-    # TODO: conditional inherit
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Ranking, cls).inherit_rights()
+        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW', 'is_public', '1')
+        cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
+        return inherits
 
     def save(self, *args, **kwargs):
         from satori.core.checking.aggregators import aggregators
         if not self.aggregator in aggregators:
             raise ValueError('Aggregator '+self.aggregator+' is not allowed')
         super(Ranking,self).save(*args,**kwargs)
+
+    
+    @ExportMethod(DjangoStruct('Ranking'), [DjangoStruct('Ranking')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
+    @staticmethod
+    def create(fields):
+        ranking = Ranking()
+        ranking.forbid_fields(fields, ['id', 'header', 'footer'])
+        ranking.update_fields(fields, ['contest', 'name', 'aggregator', 'is_public'])
+        ranking.save()
+        return ranking
+
+    @ExportMethod(DjangoStruct('Ranking'), [DjangoId('Ranking'), DjangoStruct('Ranking')], PCArg('self', 'MANAGE'), [CannotSetField])
+    def modify(self, fields):
+        self.forbid_fields(fields, ['id', 'header', 'footer', 'contest'])
+        modified = self.update_fields(fields, ['name', 'aggregator', 'is_public'])
+        self.save()
+        if 'aggregator' in modified:
+            pass
+        #TODO: REJUDGE!
+        return self
 
     @ExportMethod(unicode, [DjangoId('Ranking')], PCArg('self', 'VIEW'))
     def full_ranking(self):

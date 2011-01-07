@@ -41,7 +41,15 @@ BEGIN
             sql += """
             WHEN {0} THEN """.format(qv(model_name))
             for right, list in model.inherit_rights().items():
-                for pent, pright in list:
+                for pent, pright, cfield, cvalue  in list:
+                    and_statement = ''
+                    if cfield and cvalue:
+                        dirty_model = model._meta.get_field(cfield).model
+                        dirty_column = model._meta.get_field(cfield).column
+                        if dirty_model not in dirty:
+                        	dirty[dirty_model] = set()
+                        dirty[dirty_model].add(dirty_column)
+                        and_statement = """ AND v.{0}={1}""".format(dirty_column, qv(cvalue))
                     if pent:
                         dirty_model = model._meta.get_field(pent).model
                         dirty_column = model._meta.get_field(pent).column
@@ -49,21 +57,25 @@ BEGIN
                         	dirty[dirty_model] = set()
                         dirty[dirty_model].add(dirty_column)
                         sql += """
-                PERFORM right_inheritance_add(_id, {0}, (SELECT {1} FROM {2} WHERE id=_id), {3});""".format(
+                PERFORM right_inheritance_add(_id, {0}, (SELECT {1} FROM {2} v WHERE v.id=_id {3}), {4});""".format(
                             qv(right),
                             dirty_column,
                             model._meta.db_table + '__view',
+                            and_statement,
                             qv(pright))
                     else:
                         sql += """
-                PERFORM right_inheritance_add(_id, {0}, (SELECT id FROM core_global__view), {1});""".format(
+                PERFORM right_inheritance_add(_id, {0}, (SELECT g.id FROM core_global__view g, {1} v WHERE v.id=_id {2}), {3});""".format(
                             qv(right),
+                            model._meta.db_table + '__view',
+                            and_statement,
                             qv(pright))
     sql += """
     END CASE;
 END;
 $$ LANGUAGE plpgsql;
 """
+    print sql
 
     ret = []
     ret.append(sql)
