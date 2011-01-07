@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django.db import models
 
 from satori.core.dbev   import Events
-from satori.core.models import Role, Session, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check, email_ok
+from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check, email_ok
 
 @ExportModel
 class User(Role):
@@ -32,7 +32,7 @@ class User(Role):
             raise InvalidLogin(login=login, reason='is already used')
         super(User, self).save(*args, **kwargs)
 
-    @ExportMethod(DjangoStruct('User'), [DjangoStruct('User')], PCGlobal('MANAGE'), [InvalidLogin, InvalidPassword, InvalidEmail, CannotSetField])
+    @ExportMethod(DjangoStruct('User'), [DjangoStruct('User')], PCGlobal('MANAGE'), [InvalidLogin, InvalidEmail, CannotSetField])
     @staticmethod
     def create(fields):
         user = User()
@@ -54,7 +54,7 @@ class User(Role):
         if settings.ACTIVATION_REQUIRED:
             send_mail(settings.ACTIVATION_EMAIL_SUBJECT, settings.ACTIVATION_EMAIL_BODY.format(code=user.activation_code, name=user.name), settings.ACTIVATION_EMAIL_FROM, [user.email])
 
-    @ExportMethod(DjangoStruct('User'), [DjangoId('User'), DjangoStruct('User')], PCArg('self', 'EDIT'), [CannotSetField, InvalidLogin, InvalidPassword, InvalidEmail])
+    @ExportMethod(DjangoStruct('User'), [DjangoId('User'), DjangoStruct('User')], PCArg('self', 'EDIT'), [CannotSetField, InvalidLogin, InvalidEmail])
     def modify(self, fields):
         if Privilege.demand(self, 'MANAGE'):
             self.forbid_fields(fields, ['id'])
