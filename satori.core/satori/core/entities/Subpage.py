@@ -31,13 +31,13 @@ class Subpage(Entity):
     def inherit_rights(cls):
         inherits = super(Subpage, cls).inherit_rights()
         cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW')
-        cls._inherit_add(inherits, 'EDIT', 'contest', 'MANAGE')
+        cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         # TODO: conditional inherit: if contest is set and is_public, inherit VIEW from contest
         return inherits
 
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Test')], PCGlobal('ADMIN'))
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCGlobal('ADMIN'))
     @staticmethod
-    def create_global(fields)
+    def create_global(fields):
         subpage = Subpage()
         subpage.name = fields.name
         subpage.content = fields.content
@@ -47,8 +47,7 @@ class Subpage(Entity):
         subpage.save()
         return subpage
 
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Contest'), unicode, unicode, bool, bool, int], PCArg('contest', 'MANAGE'))
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Test')], PCArgField('fields', 'contest', 'MANAGE'))
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCArgField('fields', 'contest', 'MANAGE'))
     @staticmethod
     def create_for_contest(fields):
         subpage = Subpage()
