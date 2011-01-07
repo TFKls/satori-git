@@ -68,7 +68,7 @@ class Contestant(Role):
         return self
 
     def update_usernames(self):
-        name = ', '.join(x.name for x in self.get_member_users())
+        name = ', '.join(x.name for x in self.get_members())
         if len(name) > 200:
             name = name[0:197] + '...'
         self.usernames = name;

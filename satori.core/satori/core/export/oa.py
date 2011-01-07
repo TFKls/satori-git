@@ -47,35 +47,35 @@ def {1}_get(self, name):
     except OpenAttribute.DoesNotExist:
         return None
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read, [BadAttributeType])
 def {1}_get_str(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
     if oa is None:
         return None
     elif oa.is_blob:
-        raise BadAttributeType(name=name, required_type='string')
+        raise BadAttributeType(name=name, requested_type='string')
     else:
         return oa.value
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read, [BadAttributeType])
 def {1}_get_blob(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
     if oa is None:
         return None
     elif not oa.is_blob:
-        raise BadAttributeType(name=name, required_type='blob')
+        raise BadAttributeType(name=name, requested_type='blob')
     return Blob.open(oa.value, oa.filename)
 
-@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read)
+@ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read, [BadAttributeType])
 def {1}_get_blob_hash(self, name):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
     if oa is None:
         return None
     elif not oa.is_blob:
-        raise BadAttributeType(name=name, required_type='blob')
+        raise BadAttributeType(name=name, requested_type='blob')
     else:
         return oa.value
 

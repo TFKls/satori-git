@@ -48,6 +48,10 @@ class Global(Entity):
         anonymous.save()
 
         anonymous.add_member(authenticated)
+        
+        Privilege.grant(anonymous, authenticated, 'VIEW')
+        Privilege.grant(anonymous, anonymous, 'VIEW')
+        Privilege.grant(anonymous, zero, 'VIEW')
 
         g = Global()
         g.zero = zero

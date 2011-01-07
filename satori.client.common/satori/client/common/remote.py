@@ -15,6 +15,7 @@ from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 from satori.ars.thrift import ThriftClient, ThriftReader
 from satori.objects import Argument, Signature, ArgumentMode
 from unwrap import unwrap_interface
+from oa_map import get_oa_map
 from token_container import token_container
 
 if getpass.getuser() == 'gutowski':
@@ -151,6 +152,8 @@ _module = sys.modules[__name__]
 for name, value in _classes.iteritems():
     setattr(_module, name, value)
 
-setattr(_module, '__all__', _classes.keys() + ['token_container', 'anonymous_blob', 'anonymous_blob_path'])
+OaMap = get_oa_map(_classes['Attribute'], _classes['AnonymousAttribute'], _classes['BadAttributeType'], _classes['Blob'])
+
+setattr(_module, '__all__', _classes.keys() + ['token_container', 'anonymous_blob', 'anonymous_blob_path', 'OaMap'])
 
 print 'Client bootstrapped.'
