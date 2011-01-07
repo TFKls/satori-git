@@ -13,19 +13,26 @@ class ContestRightsRequest(Request):
         anonymous = Security.anonymous()
         authenticated = Security.authenticated()
         if 'anonymous_view' in request.POST.keys():
-        	Privilege.grant(anonymous, c, 'VIEW')
+            Privilege.grant(anonymous, c, 'VIEW')
         else:
             Privilege.revoke(anonymous, c, 'VIEW')
 
-        if request.POST['joining_by'] == 'moderated':
-        	Privilege.grant(authenticated, c, 'APPLY')
-        	Privilege.revoke(authenticated, c, 'JOIN')
-        elif request.POST['joining_by'] == 'public':
-        	Privilege.revoke(authenticated, c, 'APPLY')
-        	Privilege.grant(authenticated, c, 'JOIN')
+        if request.POST['joining_by'] == 'public':
+            Privilege.grant(authenticated, c, 'JOIN')
+            Privilege.revoke(authenticated, c, 'APPLY')
+            Privilege.grant(authenticated, c, 'VIEW')
+        elif request.POST['joining_by'] == 'moderated':
+            Privilege.revoke(authenticated, c, 'JOIN')
+            Privilege.grant(authenticated, c, 'APPLY')
+            Privilege.grant(authenticated, c, 'VIEW')
+        elif request.POST['joining_by'] == 'invitation':
+            Privilege.revoke(authenticated, c, 'APPLY')
+            Privilege.revoke(authenticated, c, 'JOIN')
+            Privilege.grant(authenticated, c, 'VIEW')
         else:
-        	Privilege.revoke(authenticated, c, 'APPLY')
-        	Privilege.revoke(authenticated, c, 'JOIN')
+            Privilege.revoke(authenticated, c, 'APPLY')
+            Privilege.revoke(authenticated, c, 'JOIN')
+            Privilege.revoke(authenticated, c, 'VIEW')
 
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')

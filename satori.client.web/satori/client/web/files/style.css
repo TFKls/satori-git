@@ -197,3 +197,10 @@ table.tlist th{
 }
 
 
+.okmsg {
+  color : green;
+}
+
+.errormsg {
+  color : red;
+}
