@@ -42,6 +42,7 @@ class User(Role):
             user.activation_code = ''.join([random.choice(string.letters + string.digits) for i in range(16)])
         user.save()
         Privilege.grant(user, user, 'EDIT')
+        Privilege.grant(Global.get_instance().authenticated, user, 'VIEW')
         Global.get_instance().authenticated.add_member(user)
         return user
         

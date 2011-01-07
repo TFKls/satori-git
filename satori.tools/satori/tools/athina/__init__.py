@@ -152,7 +152,7 @@ def athina_import():
     token_container.set_token(mytoken)
 
     try:
-        contest = Contest.create_contest(name=options.name)
+        contest = Contest.create(ContestStruct(name=options.name))
     except:
         traceback.print_exc()
         contest = Contest.filter({'name':options.name})[0]
@@ -173,7 +173,7 @@ def athina_import():
         user['object'] = User.filter({'login':options.name + '_' + user['login']})[0]
 
         try:
-            user['contestant'] = contest.create_contestant(name=user['object'].login, user_list=[user['object']])
+            user['contestant'] = Contestant.create(ContestantStruct(contest=contest, name=user['object'].login, user_list=[user['object']]))
         except:
             traceback.print_exc()
             user['contestant'] = contest.find_contestant(user['object'])
@@ -181,17 +181,17 @@ def athina_import():
 
     for name, problem in sorted(problems.iteritems()):
         try:
-        	problem['object'] = Problem.create_problem(name=options.name + '_' + problem['problem'])
+        	problem['object'] = Problem.create(ProblemStruct(name=options.name + '_' + problem['problem']))
         except:
             traceback.print_exc()
             problem['object'] = Problem.filter({'name':options.name + '_' + problem['problem']})[0]
 
         try:
-            problem['testsuite'] = TestSuite.create({'name':options.name + '_' + problem['problem'] + '_default', 'problem':problem['object'], 'dispatcher':'ParallelDispatcher', 'accumulators':'StatusAccumulator'})
+            problem['testsuite'] = TestSuite.create(TestSuiteStruct(name=options.name + '_' + problem['problem'] + '_default', problem=problem['object'], dispatcher='ParallelDispatcher', accumulators='StatusAccumulator'))
             if problem['sizelimit'] != None:
                 problem['testsuite'].oa_set_str('sizelimit', str(problem['sizelimit']))
             for num, test in sorted(problem['tests'].iteritems()):
-            	test['object'] = Test.create({'name':options.name + '_' + problem['problem'] + '_default_' + str(test['test']), 'problem':problem['object'], 'environment':options.environment})
+            	test['object'] = Test.create(TestStruct(name=options.name + '_' + problem['problem'] + '_default_' + str(test['test']), problem=problem['object'], environment=options.environment))
 
                 if problem['checker'] != None:
                     test['object'].data_set_blob_path('checker', problem['checker'])
@@ -209,7 +209,7 @@ def athina_import():
             problem['testsuite'] = TestSuite.filter({'name':options.name + '_' + problem['problem'] + '_default'})[0]
 
         try:
-            problem['mapping'] = ProblemMapping.create({'contest':contest, 'problem':problem['object'], 'code':problem['problem'], 'title':problem['problem'], 'default_test_suite':problem['testsuite']})
+            problem['mapping'] = ProblemMapping.create('contest':contest, 'problem':problem['object'], 'code':problem['problem'], 'title':problem['problem'], 'default_test_suite':problem['testsuite']})
         except:
             traceback.print_exc()
             problem['mapping'] = ProblemMapping.filter({'contest':contest, 'problem':problem['object']})[0]

@@ -123,7 +123,7 @@ def create(request):
     o.set_blob_path('hint', dirname(__file__)+'/testfiles/X0.out')
     o.set_str('time','1000')
     o.set_str('memory','8192')
-    t0 = Test.create(TestStruct(problem=p1, name = 'Test 0',description = 'Jedyny test do zadania bez bajki.'), o)
+    t0 = Test.create(TestStruct(problem=p1, name = 'Test 0',description = 'Jedyny test do zadania bez bajki.'), o.get_map())
     ts1 = TestSuite.create(TestSuiteStruct(problem= p1, name= "Testy do TEST :)", dispatcher = 'SerialDispatcher', accumulators = 'StatusAccumulator,StatusReporter'), [t0])
     
     tp2 = []
