@@ -143,8 +143,12 @@ class Contest(Entity):
 
     @ExportMethod(NoneType, [DjangoId('Contest'), DjangoId('User')], PCArg('self', 'MANAGE'))
     def add_admin(self, user):
-        if not self.find_contestant(user):
+        contestant = self.find_contestant(user):
+        if contestant is None:
             Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=True, invisible=True, name=user.login), user_list=[user])
+        else:
+            contestant.invisible = True
+            contestant.save()
         Privilege.grant(user, contest, 'MANAGE')
         Privilege.grant(user, contest.contestant_role, 'MANAGE')
 
