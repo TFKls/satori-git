@@ -57,6 +57,7 @@ def server(request, model, id, name, group):
         return HttpResponseServerError()
 
 def server_get(request, entity, name, group):
+    from satori.core.export import BadAttributeType
     func = getattr(entity, group + '_get_blob')
 
     if not func._export_method.pc(self=entity, name=name):
