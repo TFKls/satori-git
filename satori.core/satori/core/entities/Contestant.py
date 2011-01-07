@@ -97,6 +97,7 @@ class Contestant(Role):
 
     @ExportMethod(NoneType, [DjangoId('Contestant'), unicode], PCArg('self', 'MANAGE'), [InvalidPassword])
     def set_password(self, new_password):
+        password_ok(new_password)
         self.password = password_crypt(new_password)
         self.save()
 
@@ -104,6 +105,7 @@ class Contestant(Role):
     def change_password(self, old_password, new_password):
         if not password_check(self.password, old_password):
             raise LoginFailed()
+        password_ok(new_password)
         self.password = password_crypt(new_password)
         self.save()
 
