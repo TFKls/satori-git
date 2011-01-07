@@ -27,22 +27,20 @@ class Problem(Entity):
     def __str__(self):
         return self.name+" ("+self.description+")"
 
-    @ExportMethod(DjangoStruct('Problem'), [DjangoStruct('Problem')], PCGlobal('MANAGE_PROBLEMS'))
+    @ExportMethod(DjangoStruct('Problem'), [DjangoStruct('Problem')], PCGlobal('MANAGE_PROBLEMS'), [CannotSetField])
     @staticmethod
     def create(fields):
         problem = Problem()
-        problem.name = fields.name
-        problem.description = fields.description
-        problem.statement = fields.statement
+        problem.forbid_fields(fields, ['id'])
+        problem.update_fields(fields, ['name', 'description', 'statement'])
         problem.save()
         Privilege.grant(token_container.token.role, problem, 'MANAGE')
         return problem
 
-    @ExportMethod(DjangoStruct('Problem'), [DjangoId('Problem'), DjangoStruct('Problem')], PCArg('self', 'MANAGE'))
+    @ExportMethod(DjangoStruct('Problem'), [DjangoId('Problem'), DjangoStruct('Problem')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        self.name = fields.name
-        self.description = fields.description
-        self.statement = fields.statement
+        self.forbid_fields(fields, ['id'])
+        self.update_fields(fields, ['name', 'description', 'statement'])
         self.save()
         return self
 

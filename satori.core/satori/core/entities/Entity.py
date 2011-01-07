@@ -4,6 +4,9 @@ from django.db import models
 
 from satori.core.dbev import Events
 
+CannotSetField = DefineException('CannotSetField', 'You can\'t set the field: {field}',
+    [('field', unicode, False)])
+
 @ExportModel
 class Entity(models.Model):
     """Model. Base for all database objects. Provides common GUID space.
@@ -35,6 +38,28 @@ class Entity(models.Model):
         if get not in inherits:
         	inherits[get] = []
         inherits[get].append((id, need))
+
+    @staticmethod
+    def static_update_fields(dest, source, fields):
+        for field in fields:
+            val = getattr(source, field, None)
+            if val is not None:
+                setattr(dest, field, val)
+
+    @staticmethod
+    def static_forbid_fields(dest, source, fields):
+        for field in fields:
+            val = getattr(source, field, None)
+            if val is not None:
+                act = getattr(dest, field, None)
+                if val != act:
+                    raise CannotSetField(field=field) 
+
+    def update_fields(self, source, fields):
+        self.static_update_fields(self, source, fields)
+
+    def forbid_fields(self, source, fields):
+        self.static_forbid_fields(self, source, fields)
 
 class EntityEvents(Events):
     model = Entity
