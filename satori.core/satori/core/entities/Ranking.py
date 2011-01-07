@@ -25,7 +25,11 @@ class Ranking(Entity):
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('name', 'VIEW'), ('aggregator', 'MANAGE'), ('header', 'MANAGE'), ('footer', 'MANAGE'), ('is_public', 'MANAGE')]
 
-    # TODO: conditional inherit
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(Ranking, cls).inherit_rights()
+        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW', 'is_public', '1')
+        return inherits
 
     def save(self, *args, **kwargs):
         from satori.core.checking.aggregators import aggregators

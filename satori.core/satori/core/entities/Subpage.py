@@ -30,7 +30,7 @@ class Subpage(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Subpage, cls).inherit_rights()
-        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW')
+        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW', 'is_public', '1')
         cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         # TODO: conditional inherit: if contest is set and is_public, inherit VIEW from contest
         return inherits
