@@ -9,7 +9,7 @@ class CreateProblemRequest(Request):
     pathName = 'createproblem'
     @classmethod
     def process(cls, request):
-        p = Problem.create_problem(name=request.POST['name'])
+        p = Problem.create(ProblemStruct(name=request.POST['name']))
         p.description = request.POST['description']
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')
