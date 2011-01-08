@@ -191,10 +191,14 @@ class CountAggregator(AggregatorBase):
         self.rest.add_header(['Position', 'Name', 'Score', 'Tasks'])
         self.rest.add_footer(['Position', 'Name', 'Score', 'Tasks'])
         i = 0
-        for s, c in self.rank:
+        for s, c in reversed(self.rank):
             i += 1
             c = Contestant.objects.get(id=c)
-            row = [ str(i), c.name, str(s), '' ]
+            t = []
+            for p in self.contestant[c]:
+                pm = ProblemMapping.objects.get(id=p)
+                t.append(pm.code)
+            row = [ str(i), c.name, str(s), ' '.join(t) ]
             self.rest.add_row(row, '', c)
         self.rest.store()
 
