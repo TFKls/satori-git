@@ -32,7 +32,7 @@ class ResultsWidget(Widget):
                 submits = c.get_results(Contestant.filter({id:int(curuser)})[0])
             else:
                 submits = c.get_all_results()
-            self.users = [('', False, 'All'), ('mine', False, 'Your own')] + [(c.id, False, c.name) for c in Contestant.filter(ContestantStruct(contest=c))]
+            self.users = [('', 'All', False), ('mine', 'Your own', False)] + [(c.id, c.name, False) for c in Contestant.filter(ContestantStruct(contest=c))]
         else:
             submits = c.get_results(CurrentContestant(d))
 
