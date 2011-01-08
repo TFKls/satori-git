@@ -16,3 +16,6 @@ easy_install zc.buildout
 easy_install -U distribute
 mkdir -p src/python var/{buildout,cache}
 buildout -c buildout_judge.cfg
+cd satori.judge/runner
+make runner
+cp runner /usr/bin
