@@ -13,12 +13,13 @@ class Question(Entity):
 
     problem       = models.ForeignKey('ProblemMapping', null=True)
     contest       = models.ForeignKey('Contest')
+    inquirer      = models.ForeignKey('Role')
     content       = models.TextField(blank=True)
     answer        = models.TextField(blank=True, null=True)
     date_created  = models.DateTimeField(auto_now_add=True)
 
     class ExportMeta(object):
-        fields = [('problem', 'VIEW'), ('contest', 'VIEW'), ('content', 'VIEW'), ('answer', 'VIEW'), ('date_created', 'VIEW')]
+        fields = [('problem', 'VIEW'), ('contest', 'VIEW'), ('inquirer', 'VIEW'), ('content', 'VIEW'), ('answer', 'VIEW'), ('date_created', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -32,8 +33,12 @@ class Question(Entity):
         question = Question()
         if fields.problem is not None and fields.problem.contest != fields.contest:
             raise CannotSetField(field='problem')
-        question.forbid_fields(fields, ['answer', 'date_created'])
+        question.forbid_fields(fields, ['answer', 'date_created', 'inquirer'])
         question.update_fields(fields, ['problem', 'contest', 'content'])
+        role = question.contest.find_contestant(token_container.token.role)
+        if role is None:
+            role = token_container.token.role
+        question.inquirer = role
         question.save()
         Privilege.grant(token_container.token.role, question, 'VIEW')
         return question
