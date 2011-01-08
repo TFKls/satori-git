@@ -55,7 +55,7 @@ class Machine(Role):
             raise LoginFailed()
         if not machine.check_ip(server_info.client_ip):
             raise LoginFailed()
-        if not check_password(machine.password, password):
+        if not password_check(machine.password, password):
             raise LoginFailed()
         session = Session.start()
         session.login(machine, 'machine')
