@@ -195,7 +195,7 @@ class CountAggregator(AggregatorBase):
             i += 1
             c = Contestant.objects.get(id=c)
             t = []
-            for p in self.contestant[c]:
+            for p in self.contestant[c.id]:
                 pm = ProblemMapping.objects.get(id=p)
                 t.append(pm.code)
             row = [ str(i), c.name, str(s), ' '.join(t) ]
