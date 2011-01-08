@@ -60,7 +60,7 @@ class CheckingMaster(Client2):
             test_result = TestResult.objects.get(id=event.id)
             if test_result in self.test_result_judged_set:
                 self.test_result_judged_set.remove(test_result)
-            else if test_result in self.test_result_set:
+            elif test_result in self.test_result_set:
                 logging.error('checking master: checked test in queue')
                 return
             else:
