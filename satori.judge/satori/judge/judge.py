@@ -254,7 +254,7 @@ class JailRun(Object):
 
             pipe.close()
 
-            runargs = [ 'runner', '--root', self.root, '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
+            runargs = [ 'runner', '--root', self.root, '--env=simple', '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
             runargs += [ '--control-host', self.host_ip, '--control-port', str(self.control_port), '--cgroup',  '/', '--cgroup-memory', str(self.cgroup_memory), '--cgroup-cputime', str(self.cgroup_time) ]
             if self.search:
                 runargs += [ '--search' ]

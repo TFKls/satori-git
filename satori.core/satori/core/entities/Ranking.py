@@ -46,6 +46,7 @@ class Ranking(Entity):
         ranking.forbid_fields(fields, ['id', 'header', 'footer'])
         ranking.update_fields(fields, ['contest', 'name', 'aggregator', 'is_public'])
         ranking.save()
+        ranking.rejudge()
         return ranking
 
     @ExportMethod(DjangoStruct('Ranking'), [DjangoId('Ranking'), DjangoStruct('Ranking')], PCArg('self', 'MANAGE'), [CannotSetField])

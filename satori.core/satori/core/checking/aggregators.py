@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from blist import blist, sortedset
 
 from satori.core.checking.utils import wrap_transaction_management
-from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest
+from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping
 from satori.events import Event, Client2
 
 class ReSTTable(object):
@@ -191,10 +191,14 @@ class CountAggregator(AggregatorBase):
         self.rest.add_header(['Position', 'Name', 'Score', 'Tasks'])
         self.rest.add_footer(['Position', 'Name', 'Score', 'Tasks'])
         i = 0
-        for s, c in self.rank:
+        for s, c in reversed(self.rank):
             i += 1
             c = Contestant.objects.get(id=c)
-            row = [ str(i), c.name, str(s), '' ]
+            t = []
+            for p in self.contestant[c.id]:
+                pm = ProblemMapping.objects.get(id=p)
+                t.append(pm.code)
+            row = [ str(i), c.name, str(s), ' '.join(t) ]
             self.rest.add_row(row, '', c)
         self.rest.store()
 

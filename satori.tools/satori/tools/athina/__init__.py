@@ -8,6 +8,46 @@ import traceback
 
 from satori.client.common.remote import *
 
+class Creator(object):
+    def __init__(self, class_name, **kwargs):
+        self._name = class_name
+        self._class = globals()[self._name]
+        self._struct = globals()[self._name+'Struct']
+        self._search = kwargs
+        self._create = kwargs
+        self._additional = {}
+
+    def set_fields(self, **kwargs):
+        self._create = kwargs
+        return self
+
+    def fields(self, **kwargs):
+        self._create.update(kwargs)
+        return self
+
+    def set_additional(self, **kwargs):
+        self._additional = kwargs
+        return self
+
+    def additional(self, **kwargs):
+        self._additional.update(kwargs)
+        return self
+
+    def search(self):
+        a = self._class.filter(self._struct(**self._search))
+        if len(a):
+            return a[0]
+        return None
+    
+    def create(self):
+        return self._class.create(self._struct(**self._create), **self._additional)
+
+    def __call__(self):
+        a = self.search()
+        if a is None:
+            a = self.create()
+        return a
+
 def athina_import():
     import os,sys,getpass
     from optparse import OptionParser
@@ -151,75 +191,41 @@ def athina_import():
     mytoken = User.authenticate(options.user, options.password)
     token_container.set_token(mytoken)
 
-    try:
-        contest = Contest.create(ContestStruct(name=options.name))
-    except:
-        traceback.print_exc()
-        contest = Contest.filter({'name':options.name})[0]
-    try:
-        Privilege.grant(contest.contestant_role, contest, 'SUBMIT')
-        Privilege.grant(contest.contestant_role, contest, 'VIEW')
-        Privilege.grant(contest.contestant_role, contest, 'VIEW_TASKS')
-    except:
-        traceback.print_exc()
-        pass
+    contest = Creator('Contest', name=options.name)()
+    Privilege.grant(contest.contestant_role, contest, 'SUBMIT')
+    Privilege.grant(contest.contestant_role, contest, 'VIEW')
+    Privilege.grant(contest.contestant_role, contest, 'VIEW_TASKS')
 
     for login, user in sorted(users.iteritems()):
-        try:
-            user['object'] = User.create(UserStruct(login=options.name + '_' + user['login'], name=user['name']))
-            user['object'].set_password(user['password'])
-        except:
-            traceback.print_exc()
-            pass
-        user['object'] = User.filter(UserStruct(login=options.name + '_' + user['login']))[0]
-
-        try:
-            user['contestant'] = Contestant.create(ContestantStruct(contest=contest, name=user['object'].login), user_list=[user['object']])
-        except:
-            traceback.print_exc()
-            user['contestant'] = contest.find_contestant(user['object'])
-
+        user['object'] = Creator('User', login=options.name + '_' + user['login']).fields(name=user['name'])()
+        user['object'].set_password(user['password'])
+        user['contestant'] = Creator('Contestant', contest=contest, name=user['object'].login).additional(user_list=[user['object']])()
+        user['contestant'].set_password(user['password'])
 
     for name, problem in sorted(problems.iteritems()):
-        try:
-        	problem['object'] = Problem.create(ProblemStruct(name=options.name + '_' + problem['problem']))
-        except:
-            traceback.print_exc()
-            problem['object'] = Problem.filter(ProblemStruct(name=options.name + '_' + problem['problem']))[0]
-
-        try:
-            tests = []
-            for num, test in sorted(problem['tests'].iteritems()):
-                oa = OaMap()
-                if problem['checker'] != None:
-                    oa.set_blob_path('checker', problem['checker'])
-                if test['input'] != None:
-                    oa.set_blob_path('input', test['input'])
-                if test['output'] != None:
-                    oa.set_blob_path('hint', test['output'])
-                if test['memlimit'] != None:
-                    oa.set_str('memory', str(test['memlimit']))
-                if test['timelimit'] != None:
-                    oa.set_str('time', str(10*int(test['timelimit'])))
-                try:
-                	test['object'] = Test.create(fields=TestStruct(name=options.name + '_' + problem['problem'] + '_default_' + str(test['test']), problem=problem['object'], environment=options.environment), data=oa)
-                except:
-                    traceback.print_exc()
-                    test['object'] = Test.filter(TestStruct(name=options.name + '_' + problem['problem'] + '_default_' + str(test['test'])))[0]
-                tests.append(test['object'])
-            problem['testsuite'] = TestSuite.create(TestSuiteStruct(name=options.name + '_' + problem['problem'] + '_default', problem=problem['object'], dispatcher='ParallelDispatcher', accumulators='StatusAccumulator'), test_list=tests)
-        except:
-            traceback.print_exc()
-            problem['testsuite'] = TestSuite.filter(TestSuiteStruct(name=options.name + '_' + problem['problem'] + '_default'))[0]
-        try:
-            problem['mapping'] = ProblemMapping.create(ProblemMappingStruct(contest=contest, problem=problem['object'], code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite']))
-        except:
-            traceback.print_exc()
-            problem['mapping'] = ProblemMapping.filter(ProblemMappingStruct(contest=contest, problem=problem['object']))[0]
-
+        problem['object'] = Creator('Problem', name=options.name + '_' + problem['problem'])()
+        tests = []
+        for num, test in sorted(problem['tests'].iteritems()):
+            oa = OaMap()
+            if problem['checker'] != None:
+                oa.set_blob_path('checker', problem['checker'])
+            if test['input'] != None:
+                oa.set_blob_path('input', test['input'])
+            if test['output'] != None:
+                oa.set_blob_path('hint', test['output'])
+            if test['memlimit'] != None:
+                oa.set_str('memory', str(test['memlimit']))
+            if test['timelimit'] != None:
+                oa.set_str('time', str(10*int(test['timelimit'])))
+            test['object'] = Creator('Test', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default_' + str(test['test'])).fields(environment=options.environment).additional(data=oa.get_map())()
+            tests.append(test['object'])
+        problem['testsuite'] = Creator('TestSuite', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default').fields(dispatcher='SerialDispatcher', accumulators='StatusAccumulator').additional(test_list=tests)()
+        problem['mapping'] = Creator('ProblemMapping', contest=contest, problem=problem['object']).fields(code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite'])()
+        Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='CountAggregator')()
+        Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='CountAggregator')()
 
     for id, submit in sorted(submits.iteritems()):
     	user = users[submit['user']]
         token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
-    	submit['object'] = contest.submit(filename=submit['filename'], content=submit['data'], problem_mapping=problems[submit['problem']]['mapping'])
+        Creator('Submit', problem=problems[submit['problem']]['mapping']).additional(filename=submit['filename'], content=submit['data']).create()
     token_container.set_token(mytoken)
