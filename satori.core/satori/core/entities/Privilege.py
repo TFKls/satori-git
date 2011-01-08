@@ -31,11 +31,11 @@ class Privilege(Entity):
 
     @staticmethod
     def where_can(queryset, right):
-        return queryset.extra(where=['right_check({0}, %s)'.format(queryset.model._meta.pk.get_attname_column()[1])], params=[right])
+        return queryset.extra(where=['right_check({0}.{1}, %s)'.format(queryset.model._meta.db_table, queryset.model._meta.pk.get_attname_column()[1])], params=[right])
 
     @staticmethod
     def select_can(queryset, right):
-        return queryset.extra(select={'_can_' + right: 'right_check({0}, %s)'.format(queryset.model._meta.pk.get_attname_column()[1])}, select_params=[right])
+        return queryset.extra(select={'_can_' + right: 'right_check({0}.{1}, %s)'.format(queryset.model._meta.db_table, queryset.model._meta.pk.get_attname_column()[1])}, select_params=[right])
 
     @staticmethod
     def select_struct_can(queryset):
