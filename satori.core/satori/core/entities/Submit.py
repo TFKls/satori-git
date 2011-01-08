@@ -29,6 +29,7 @@ class Submit(Entity):
         return inherits
 
     def save(self, *args, **kwargs):
+        self.fixup_overrides()
         self.fixup_data()
         super(Submit, self).save(*args, **kwargs)
 

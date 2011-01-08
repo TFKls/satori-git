@@ -41,6 +41,22 @@ class ProblemMapping(Entity):
     def __str__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
 
+    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
+    @staticmethod
+    def create(fields):
+        problem_mapping = ProblemMapping()
+        problem_mapping.forbid_fields(fields, [ 'id' ])
+        problem_mapping.update_fields(fields, [ 'contest', 'problem', 'code', 'title', 'default_test_suite' ])
+        problem_mapping.save()
+        return problem_mapping
+
+    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
+    def modify(self, fields):
+        self.forbid_fields(fields, [ 'id', 'contest', 'problem' ])
+        self.update_fields(fields, [ 'code', 'title', 'default_test_suite' ])
+        self.save()
+        return self
+
 class ProblemMappingEvents(Events):
     model = ProblemMapping
     on_insert = on_update = ['contest', 'problem']
