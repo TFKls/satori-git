@@ -24,7 +24,7 @@ class ProblemMapping(Entity):
         unique_together = (('contest', 'code'), ('contest', 'problem'))
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('problem', 'VIEW'), ('code', 'VIEW'), ('title', 'VIEW'), ('default_test_suite', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('problem', 'MANAGE'), ('code', 'VIEW'), ('title', 'VIEW'), ('default_test_suite', 'MANAGE')]
 
     @classmethod
     def inherit_rights(cls):
