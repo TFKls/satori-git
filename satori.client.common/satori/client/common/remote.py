@@ -18,6 +18,10 @@ from unwrap import unwrap_interface
 from oa_map import get_oa_map
 from token_container import token_container
 
+client_host = 'satori.tcs.uj.edu.pl'
+client_port = 38889
+blob_port = 38887
+
 if getpass.getuser() == 'gutowski':
     client_host = 'satori.tcs.uj.edu.pl'
     client_port = 38889
@@ -30,10 +34,6 @@ elif getpass.getuser() == 'duraj':
     client_host = 'localhost'
     client_port = 36889
     blob_port = 36887
-else:
-    client_host = 'satori.tcs.uj.edu.pl'
-    client_port = 38889
-    blob_port = 38887
 
 def transport_factory():
     return TSocket(host=client_host, port=client_port)
