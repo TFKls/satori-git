@@ -138,6 +138,35 @@ body {
     text-align: center;
 }
 
+table.messagebox {
+    width : 100%;
+    border-collapse : collapse;
+    cellspacing : 0;
+    cellpadding : 0;
+    margin-top : 1em;
+}
+
+
+table.messagebox tr.privheader td
+{
+    background-color: #E0E0FF;
+    padding : 0.25em 0.5em;
+}
+
+
+table.messagebox tr.privcontent td
+{
+    padding : 0.5em 0.5em;
+    background-color: #F2F2FF;
+}
+
+
+table.messagebox tr.privanswer td
+{
+    padding : 0.5em 0.5em;
+    background-color: #E8E8FF;
+}
+
 .newsmsg {
     padding-bottom: 1em;
     margin-top: 1em;
@@ -155,6 +184,7 @@ body {
 .lDots { 
     border-left: 1px dotted #DDDDDD;
 }
+
 
 table.tlist {
     width: 100%;
