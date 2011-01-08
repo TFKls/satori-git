@@ -26,6 +26,9 @@ class CheckingMaster(Client2):
         self.ranking_map = dict()
         self.scheduled_test_suite_results_map = dict()
 
+        self.test_suite_results_to_start = queue()
+        self.test_suite_results_to_send = dict()
+        self.test_results_to_send = dict()
         self.work_queue = deque()
 
     def init(self):
@@ -85,7 +88,8 @@ class CheckingMaster(Client2):
             if not was_pending:
                 for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
                     self.call_test_suite_result(test_suite_result, 'rejudged_test_results', [[test_result]])
-            # find finished and start
+            for test_suite_result in TestSuiteResult.objects.filter(submit=test_result.submit, test_suite__tests=test_result.test):
+                self.start_test_suite_result(test_suite_result)
         elif event.type == 'checking_rejudge_test_suite_result':
             test_suite_result = TestSuiteResult.objects.get(id=event.id)
             was_pending = test_suite_result.pending
