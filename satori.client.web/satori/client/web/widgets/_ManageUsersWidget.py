@@ -12,19 +12,6 @@ class ManageUsersWidget(Widget):
         self.contest = c
         self.accepted = list()
         self.pending = list()
-        self.back_to = ToString(params)
-        self.path = path
-        authenticated = Security.authenticated()
-        if Privilege.get(authenticated, c, 'JOIN') is not None:
-            jo = 3
-        elif Privilege.get(authenticated, c, 'APPLY') is not None:
-            jo = 2
-        elif Privilege.get(authenticated, c, 'VIEW') is not None:
-            jo = 1
-        else:
-            jo = 0
-        self.joining_options=[["invisible","Contest invisible",jo==0],["invitation","Only when added",jo==1],["moderated","By acceptation",jo==2],["public","Freely",jo==3]]
-        self.anonymous_view = Privilege.get(Security.anonymous(), c, 'VIEW') is not None
         
         for contestant in c.get_contestants().contestants:
             q = {}
