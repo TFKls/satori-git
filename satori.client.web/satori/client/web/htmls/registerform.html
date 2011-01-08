@@ -21,11 +21,11 @@
 
 <form method="post" action="process.register">
     <table style="margin: auto">
-        <tr><td>Login:</td><td><input type="text" class="smallinputbox" name="username"/></td><td rowspan="5">{{ widget.captchahtml|safe }}</td></tr>
-        <tr><td>Full name:</td><td> <input type="text" class="smallinputbox" name="fullname"/></td></tr>        
-        <tr><td>E-mail:</td><td> <input type="text" class="smallinputbox" name="email"/></td></tr>        
-        <tr><td>Pass:</td><td><input type="password" class="smallinputbox" name="password"/></td></tr>
-        <tr><td>Confirm pass:</td><td><input type="password" class="smallinputbox" name="confirm"/></td></tr>
+        <tr><td>Login:</td><td><input tabindex="1" type="text" class="smallinputbox" name="username"/></td><td rowspan="5">{{ widget.captchahtml|safe }}</td></tr>
+        <tr><td>Full name:</td><td> <input type="text" tabindex="2" class="smallinputbox" name="fullname"/></td></tr>        
+        <tr><td>E-mail:</td><td> <input type="text" tabindex="3" class="smallinputbox" name="email"/></td></tr>        
+        <tr><td>Pass:</td><td><input type="password" tabindex="4" class="smallinputbox" name="password"/></td></tr>
+        <tr><td>Confirm pass:</td><td><input type="password" tabindex="5" class="smallinputbox" name="confirm"/></td></tr>
         <tr><td colspan="3" style="text-align: center"><input type="submit" value="Register" class="button"/></td></tr>
     </table>
 

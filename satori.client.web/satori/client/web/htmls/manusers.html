@@ -4,7 +4,7 @@
 <tr><th>No.</th><th>Login</th><th>Full name</th><th>&nbsp</th></tr>
 {% for q in widget.accepted %}
 <tr>
-    <th>{{forloop.counter}}.</th>
+    <th>{{q.number}}.</th>
     <td>
     {% for u in q.members %}
         {{u.login}} <br/>
@@ -21,6 +21,24 @@
 </tr>
 {% endfor %}
 </table>
+
+<div class="scrollbar">
+{% if widget.ablink %}
+<a href="{{ widget.ablink }}">&laquo;</a>
+{% endif %}
+
+{% for link in widget.alinks %}
+{% if forloop.counter == widget.apage %}
+{{ forloop.counter }}
+{% else %}
+<a href="{{ link }}">{{forloop.counter}}</a>
+{% endif %}
+{% endfor %}
+
+{% if widget.aflink %}
+<a href="{{ widget.aflink }}">&raquo;</a>
+{% endif %}
+</div>
 
 <h4>Pending users</h4>
 <p>The list of pending users of this contest:</p>
@@ -46,6 +64,25 @@
 </tr>
 {% endfor %}
 </table>
+
+<div class="scrollbar">
+{% if widget.pblink %}
+<a href="{{ widget.pblink }}">&laquo;</a>
+{% endif %}
+
+{% for link in widget.plinks %}
+{% if forloop.counter == widget.ppage %}
+{{ forloop.counter }}
+{% else %}
+<a href="{{ link }}">{{forloop.counter}}</a>
+{% endif %}
+{% endfor %}
+
+{% if widget.pflink %}
+<a href="{{ widget.pflink }}">&raquo;</a>
+{% endif %}
+</div>
+
 
 <h4>Add user</h4>
         <form action="process.addcontestant" method="post">
