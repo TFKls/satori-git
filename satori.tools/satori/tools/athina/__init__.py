@@ -166,14 +166,15 @@ def athina_import():
 
     for login, user in sorted(users.iteritems()):
         try:
-            user['object'] = User.register(login=options.name + '_' + user['login'], password=user['password'], name=user['name'])
+            user['object'] = User.create(UserStruct(login=options.name + '_' + user['login'], name=user['name']))
+            user['object'].set_password(user['password'])
         except:
             traceback.print_exc()
             pass
-        user['object'] = User.filter({'login':options.name + '_' + user['login']})[0]
+        user['object'] = User.filter(UserStruct(login=options.name + '_' + user['login']))[0]
 
         try:
-            user['contestant'] = Contestant.create(ContestantStruct(contest=contest, name=user['object'].login, user_list=[user['object']]))
+            user['contestant'] = Contestant.create(ContestantStruct(contest=contest, name=user['object'].login), user_list=[user['object']])
         except:
             traceback.print_exc()
             user['contestant'] = contest.find_contestant(user['object'])
@@ -184,35 +185,37 @@ def athina_import():
         	problem['object'] = Problem.create(ProblemStruct(name=options.name + '_' + problem['problem']))
         except:
             traceback.print_exc()
-            problem['object'] = Problem.filter({'name':options.name + '_' + problem['problem']})[0]
+            problem['object'] = Problem.filter(ProblemStruct(name=options.name + '_' + problem['problem']))[0]
 
         try:
-            problem['testsuite'] = TestSuite.create(TestSuiteStruct(name=options.name + '_' + problem['problem'] + '_default', problem=problem['object'], dispatcher='ParallelDispatcher', accumulators='StatusAccumulator'))
-            if problem['sizelimit'] != None:
-                problem['testsuite'].oa_set_str('sizelimit', str(problem['sizelimit']))
+            tests = []
             for num, test in sorted(problem['tests'].iteritems()):
-            	test['object'] = Test.create(TestStruct(name=options.name + '_' + problem['problem'] + '_default_' + str(test['test']), problem=problem['object'], environment=options.environment))
-
+                oa = OaMap()
                 if problem['checker'] != None:
-                    test['object'].data_set_blob_path('checker', problem['checker'])
+                    oa.set_blob_path('checker', problem['checker'])
                 if test['input'] != None:
-                    test['object'].data_set_blob_path('input', test['input'])
+                    oa.set_blob_path('input', test['input'])
                 if test['output'] != None:
-                    test['object'].data_set_blob_path('hint', test['output'])
+                    oa.set_blob_path('hint', test['output'])
                 if test['memlimit'] != None:
-                    test['object'].data_set_str('memory', str(test['memlimit']))
+                    oa.set_str('memory', str(test['memlimit']))
                 if test['timelimit'] != None:
-                    test['object'].data_set_str('time', str(10*int(test['timelimit'])))
-                TestMapping.create({'test':test['object'], 'suite':problem['testsuite'], 'order':test['test']})
+                    oa.set_str('time', str(10*int(test['timelimit'])))
+                try:
+                	test['object'] = Test.create(fields=TestStruct(name=options.name + '_' + problem['problem'] + '_default_' + str(test['test']), problem=problem['object'], environment=options.environment), data=oa)
+                except:
+                    traceback.print_exc()
+                    test['object'] = Test.filter(TestStruct(name=options.name + '_' + problem['problem'] + '_default_' + str(test['test'])))[0]
+                tests.append(test['object'])
+            problem['testsuite'] = TestSuite.create(TestSuiteStruct(name=options.name + '_' + problem['problem'] + '_default', problem=problem['object'], dispatcher='ParallelDispatcher', accumulators='StatusAccumulator'), test_list=tests)
         except:
             traceback.print_exc()
-            problem['testsuite'] = TestSuite.filter({'name':options.name + '_' + problem['problem'] + '_default'})[0]
-
+            problem['testsuite'] = TestSuite.filter(TestSuiteStruct(name=options.name + '_' + problem['problem'] + '_default'))[0]
         try:
-            problem['mapping'] = ProblemMapping.create('contest':contest, 'problem':problem['object'], 'code':problem['problem'], 'title':problem['problem'], 'default_test_suite':problem['testsuite']})
+            problem['mapping'] = ProblemMapping.create(ProblemMappingStruct(contest=contest, problem=problem['object'], code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite']))
         except:
             traceback.print_exc()
-            problem['mapping'] = ProblemMapping.filter({'contest':contest, 'problem':problem['object']})[0]
+            problem['mapping'] = ProblemMapping.filter(ProblemMappingStruct(contest=contest, problem=problem['object']))[0]
 
 
     for id, submit in sorted(submits.iteritems()):
