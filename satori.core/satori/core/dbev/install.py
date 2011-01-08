@@ -527,12 +527,12 @@ BEGIN
     _texec := _texec || _exec;
     SELECT INTO _exec create_version_function(_tables, _keys);
     _texec := _texec || _exec;
-    SELECT INTO _exec create_triggers(_table, _key, _notify);
-    _texec := _texec || _exec;
     RETURN _texec;
 END;
 $$ LANGUAGE plpgsql;
 """
+#    SELECT INTO _exec create_triggers(_table, _key, _notify);
+#    _texec := _texec || _exec;
     ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, insert_rawevent_trigger, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function, install_rights_inheritance]
     for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
         ret.append(install_versions_sql(model))
