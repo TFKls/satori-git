@@ -6,7 +6,7 @@ import os
 def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
     class OaMap(object):
         def __init__(self, dct={}):
-            self.dct = dct
+            self.dct = deepcopy(dct)
 
         def get(self, name):
             if not name in self.dct:

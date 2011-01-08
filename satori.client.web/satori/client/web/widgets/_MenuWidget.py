@@ -45,11 +45,11 @@ class MenuWidget(Widget):
             for s in Subpage.filter({'contest':contest,'is_announcement':False}):
                 addlink(True,s.name,DefaultLayout(dict=params,maincontent='subpage',subid=[str(s.id)]),s,'VIEW')
         
-        addwidget(contest,'Manage subpages','mancontest',contest,'MANAGE')
+        addwidget(contest,'Manage contest','mancontest',contest,'MANAGE')
         if cuser:
             addwidget(user,'Manage news','mannews',contest,'MANAGE')
         else:
             addwidget(user,'Manage news','mannews','global','ADMIN')
-        addwidget(contest,'Manage users & rights','manusers',contest,'MANAGE')
+        addwidget(contest,'Contestants','manusers',contest,'MANAGE')
         addwidget(user, 'Problem repository','repository','global','ADMIN')
         addlink(contest,'Return to main',DefaultLayout())
