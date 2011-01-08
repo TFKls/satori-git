@@ -7,14 +7,14 @@ from satori.core.dbev import Events
 class OpenAttribute(models.Model):
     """Model. Base for all kinds of open attributes.
     """
-    object   = models.ForeignKey('Entity', related_name='attributes')
+    entity   = models.ForeignKey('Entity', related_name='attributes')
     name     = models.CharField(max_length=50)
     is_blob  = models.BooleanField()
     value    = models.TextField()
     filename = models.CharField(max_length=50)
 
     class Meta:                                                # pylint: disable-msg=C0111
-        unique_together = (('object', 'name'),)
+        unique_together = (('entity', 'name'),)
 
     def save(self, *args, **kwargs):
         if not self.is_blob:
