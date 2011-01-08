@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import logging
 import threading
 import time
 
@@ -24,7 +25,7 @@ def end(name):
     x._total[name] = x._total.get(name, 0) + diff
     x._count[name] = x._count.get(name, 0) + 1
 
-    print 'End:\t{0}\t{1}\t{2}\t{3}'.format(name, diff, x._total[name], x._count[name])
+    logging.error('End:\t%s\t%s\t%s\t%s', name, diff, x._total[name], x._count[name])
 
 def clear(name):
     x._total = {}
