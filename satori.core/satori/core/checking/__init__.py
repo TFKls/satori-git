@@ -58,7 +58,15 @@ class CheckingMaster(Client2):
 
         if event.type == 'checking_checked_test_result':
             test_result = TestResult.objects.get(id=event.id)
-            self.test_result_judged_set.remove(test_result)
+            if test_result in self.test_result_judged_set:
+                self.test_result_judged_set.remove(test_result)
+            else if test_result in self.test_result_set:
+                logging.error('checking master: checked test in queue')
+                return
+            else:
+                logging.error('checking master: checked test not in queue')
+                return
+            
             for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
                 self.call_test_suite_result(test_suite_result, 'checked_test_results', [[test_result]])
         elif event.type == 'checking_rejudge_test_result':
