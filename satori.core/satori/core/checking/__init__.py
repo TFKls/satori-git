@@ -40,6 +40,9 @@ class CheckingMaster(Client2):
         self.map({'type': 'db', 'model': 'core.ranking', 'action': 'I'}, self.queue)
 
         for test_result in TestResult.objects.filter(pending=True, submit__problem__contest__archived=False):
+            if test_result.tester:
+                test_result.tester = None
+                test_result.save()
             self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
         for test_suite_result in TestSuiteResult.objects.filter(pending=True, submit__problem__contest__archived=False):

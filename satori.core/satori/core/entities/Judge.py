@@ -41,6 +41,9 @@ class Judge(object):
     @ExportMethod(NoneType, [DjangoId('TestResult'), TypedMap(unicode, AnonymousAttribute)], PCGlobal('JUDGE'))
     @staticmethod
     def set_result(test_result, result):
+        if test_result.tester != token_container.token.role:
+            return
+
         test_result.oa_set_map(result)
         test_result.pending = False
         test_result.save()

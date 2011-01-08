@@ -76,6 +76,10 @@ class TestSuite(Entity):
         #TODO: REJUDGE!
         return self
 
+#    @ExportMethod(DjangoStructList('Test'), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
+#    def get_tests(self):
+#        return self.tests.all().order_by('
+
 class TestSuiteEvents(Events):
     model = TestSuite
     on_insert = on_update = ['owner', 'problem', 'name']
