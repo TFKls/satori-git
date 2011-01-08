@@ -44,7 +44,7 @@ def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
             return Blob.open_path(self.get_blob_hash(name), path)
 
         def get_list(self):
-            return [Attribute(name=name, is_blob=attr.is_blob, value=attr.value, filename=attr.filename) for (name, attr) in self.dct.items()]
+            return [self.get(name) for name in self.dct]
 
         def get_map(self):
             return deepcopy(self.dct)
@@ -62,6 +62,7 @@ def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
             self.set(Attribute(name=name, value=value, is_blob=False))
 
         def set_blob(self, name, length=-1, filename=''):
+            # TODO
             def set_hash(hash):
                 self.set(Attribute(name=name, value=hash, filename=filename, is_blob=True))
             return Blob.create(length, set_hash)

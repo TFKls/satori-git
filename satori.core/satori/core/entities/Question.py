@@ -26,7 +26,7 @@ class Question(Entity):
         cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         return inherits
 
-    @ExportMethod(DjangoStruct('Question'), [DjangoStruct('Question')], PCArgField('fields', 'contest', 'VIEW'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Question'), [DjangoStruct('Question')], PCArgField('fields', 'contest', 'ASK_QUESTIONS'), [CannotSetField])
     @staticmethod
     def create(fields):
         question = Question()

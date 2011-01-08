@@ -63,12 +63,13 @@ class Contest(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Contest, cls).inherit_rights()
-        cls._inherit_add(inherits, 'OBSERVE', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'VIEW_TASKS', 'id', 'MANAGE')
-        cls._inherit_add(inherits, 'VIEW_INTRA_FILES', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'APPLY', 'id', 'JOIN')
         cls._inherit_add(inherits, 'JOIN', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'SUBMIT', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'OBSERVE', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEW_TASKS', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'ASK_QUESTIONS', 'id', 'MANAGE')
+        cls._inherit_add(inherits, 'VIEW_INTRA_FILES', 'id', 'MANAGE')
         return inherits
 
     def save(self, *args, **kwargs):
@@ -166,7 +167,7 @@ class Contest(Entity):
     @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCPermit())
     def get_all_results(self, problem=None, limit=20, offset=0):
         res = []
-        q = Submit.objects.filter(contestant__contest=self)
+        q = Privilege.where_can(Submit.objects.filter(contestant__contest=self), 'OBSERVE')
         if problem:
         	q = q.filter(problem=problem)
         for submit in q.order_by('-id')[offset:offset+limit]:
@@ -179,7 +180,7 @@ class Contest(Entity):
     @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
     def get_results(self, contestant, problem=None, limit=20, offset=0):
         res = []
-        q = Submit.objects.filter(contestant=contestant)
+        q = Privilege.where_can(Submit.objects.filter(contestant=contestant), 'OBSERVE')
         if problem:
         	q = q.filter(problem=problem)
         for submit in q.order_by('-id')[offset:offset+limit]:

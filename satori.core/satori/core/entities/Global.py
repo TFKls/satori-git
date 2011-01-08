@@ -21,6 +21,7 @@ class Global(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Global, cls).inherit_rights()
+        cls._inherit_add(inherits, 'TEMPORARY_SUBMIT', 'id', 'ADMIN')
         cls._inherit_add(inherits, 'MANAGE_PRIVILEGES', 'id', 'ADMIN')
         cls._inherit_add(inherits, 'MANAGE_CONTESTS', 'id', 'ADMIN')
         cls._inherit_add(inherits, 'MANAGE_PROBLEMS', 'id', 'ADMIN')
