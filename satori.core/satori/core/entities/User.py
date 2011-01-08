@@ -22,10 +22,13 @@ class User(Role):
     activated   = models.BooleanField(default=True)
     activation_code = models.CharField(max_length=128, null=True, unique=True)
 
+    profile     = AttributeGroupField(PCArg('self', 'EDIT'), PCArg('self', 'EDIT'), '')
+
     class ExportMeta(object):
         fields = [('login', 'VIEW'), ('email', 'EDIT'), ('activated', 'VIEW')]
     
     def save(self, *args, **kwargs):
+        self.fixup_profile()
         login_ok(self.login)
         email_ok(self.email)
         if User.objects.filter(login=self.login).exclude(id=self.id):

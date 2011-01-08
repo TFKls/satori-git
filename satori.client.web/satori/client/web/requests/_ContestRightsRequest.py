@@ -12,6 +12,7 @@ class ContestRightsRequest(Request):
         c = ContestById(request.POST['contest_id'])
         anonymous = Security.anonymous()
         authenticated = Security.authenticated()
+
         if 'anonymous_view' in request.POST.keys():
             Privilege.grant(anonymous, c, 'VIEW')
         else:
@@ -33,6 +34,16 @@ class ContestRightsRequest(Request):
             Privilege.revoke(authenticated, c, 'APPLY')
             Privilege.revoke(authenticated, c, 'JOIN')
             Privilege.revoke(authenticated, c, 'VIEW')
+
+        if request.POST['questions_for'] == 'everyone':
+            Privilege.revoke(c.contestant_role, c, 'ASK_QUESTIONS')
+            Privilege.grant(authenticated, c, 'ASK_QUESTIONS')
+        elif request.POST['questions_for'] == 'contestants':
+            Privilege.grant(c.contestant_role, c, 'ASK_QUESTIONS')
+            Privilege.revoke(authenticated, c, 'ASK_QUESTIONS')
+        else:
+            Privilege.revoke(c.contestant_role, c, 'ASK_QUESTIONS')
+            Privilege.revoke(authenticated, c, 'ASK_QUESTIONS')
 
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')
