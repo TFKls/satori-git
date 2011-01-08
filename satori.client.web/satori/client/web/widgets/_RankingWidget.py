@@ -10,6 +10,6 @@ class RankingWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/ranking.html'
         d = follow(params,path)
-        r = Ranking.filter({'id' : int(d['subid'][0])})[0]
+        r = Ranking.filter({'id' : int(d['id'][0])})[0]
         self.name = r.name
         self.content = text2html(r.full_ranking())

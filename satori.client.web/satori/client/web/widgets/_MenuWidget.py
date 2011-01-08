@@ -36,9 +36,11 @@ class MenuWidget(Widget):
         addwidget(contest,'Problems','problems',contest,'VIEW')
         addwidget(cuser,'Submit','submit',contest,'VIEW')
         addwidget(contest,'Results','results',contest,'VIEW')
+        addwidget(contest,'Question','questions',contest,'ASK_QUESTIONS')
+        addwidget(contest,'Answers','answers',contest,'MANAGE')
         if contest:
             for r in Ranking.filter({'contest':contest}):
-                addlink(True,r.name,DefaultLayout(dict=params,maincontent='ranking',subid=[str(s.id)]),r,'VIEW')
+                addlink(True,r.name,DefaultLayout(dict=params,maincontent='ranking',id=[str(r.id)]),r,'VIEW')
         if contest:
             for s in Subpage.filter({'contest':contest,'is_announcement':False}):
                 addlink(True,s.name,DefaultLayout(dict=params,maincontent='subpage',subid=[str(s.id)]),s,'VIEW')
