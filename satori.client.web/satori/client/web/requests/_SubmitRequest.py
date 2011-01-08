@@ -15,8 +15,9 @@ class SubmitRequest(Request):
         if not ('content' in request.FILES.keys()):
             raise "Empty submits not allowed!"
         submit = request.FILES['content']
-        c = p.contest;
+        c = p.contest
         cid = c.id
         pid = p.id
-        c.submit(problem_mapping=p, content=submit.read(), filename=submit.name)
+#        cct = CurrentContestant
+        Submit.create(SubmitStruct(problem_mapping=p), content=submit.read(), filename=submit.name)
         return GetLink(ret,'')

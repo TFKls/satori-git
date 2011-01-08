@@ -42,14 +42,14 @@ class ResultsWidget(Widget):
         
         if self.isadmin:
             if curuser == 'mine':
-                submits = c.get_results(cct,limit,self.offset)
+                submits = c.get_results(contestant=cct,limit=limit,offset=self.offset)
             elif curuser.isdigit():
-                submits = c.get_results(Contestant(int(curuser)),limit,self.offset)
+                submits = c.get_results(contestant=Contestant(int(curuser)),limit=limit,offset=self.offset)
             else:
                 submits = c.get_all_results(limit=limit,offset=self.offset)
             self.users = [('', 'All', False), ('mine', 'Your own', False)] + [(c.id, c.name, False) for c in Contestant.filter(ContestantStruct(contest=c))]
         else:
-            submits = c.get_results(cct,limit,self.offset)
+            submits = c.get_results(contestant=cct,limit=limit,offset=self.offset)
 
         self.pcount = (submits.count+limit-1)/limit
         
