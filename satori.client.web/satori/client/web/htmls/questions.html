@@ -1,0 +1,47 @@
+<h3>Ask a question</h3>
+
+<div class="msgeditform">
+<form action = "process.askquestion" method = "post">
+    <input type="hidden" name="contest_id" value="{{widget.contest.id}}">
+    <input type="hidden" name="back_to" value="{{ widget.back_to }}">
+    <p>Problem:</p>
+    <select name="problem" style="width: 100%">
+        <option value="">General/Technical</option>
+        {% for p in widget.problems %}
+        <option value="{{ p.id }}">Problem {{p.code}}</option>
+        {% endfor %}
+    </select>
+    <p>Content:</p>
+    <textarea name="content" rows="10" style="width: 100%"></textarea>
+    <input type="submit" class="button" name="add" value="Ask" style="float: right">
+</form>
+</div>
+
+<h3>Answers</h3>
+<p>Asked questions:</p>
+{% for question in widget.questions %}
+<div>
+    <table class="messagebox">
+        <tr class="privheader">
+            {% if question.q.problem.code %}
+            <td><strong>Problem {{ question.q.problem.code }} </strong></td>
+            {% else %}
+            <td><i>General</i></td>
+            {% endif %}
+        </tr>
+        <tr class="privcontent">
+            <td>{{ question.q.content }} </td>
+        </tr>
+{% if question.answer %}
+        <tr class="privheader">
+            <td><strong>Answer</strong></td>
+        </tr>
+        <tr class="privanswer">
+            <td>{{ question.answer|safe}} </td>
+        </tr>
+{% endif %}
+    </table>
+</div>
+
+{% endfor %}
+
