@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 from blist import blist, sortedset
 
 from satori.core.checking.utils import wrap_transaction_management
-from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest
+from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping
 from satori.events import Event, Client2
 
 class ReSTTable(object):
