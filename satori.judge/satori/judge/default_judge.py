@@ -171,7 +171,7 @@ if has_checker:
     os.chmod("/tmp/checker.x",0755)
     checker = ["/tmp/checker.x", "/tmp/data.in", "/tmp/data.hint", "/tmp/data.out"]
 else:
-	checker = ["diff", "-q", "-w", "/tmp/data.hint", "/tmp/data.out"]
+	checker = ["/usr/bin/diff", "-q", "-w", "/tmp/data.hint", "/tmp/data.out"]
 
 check_run = ["runner",
       "--quiet",

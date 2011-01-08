@@ -51,13 +51,8 @@ def judge_bash():
         jb.destroy()
 
 def judge_loop():
-    token_container.set_token(Machine.authenticate(login=login, secret=secret))
-    count=0
-
     while True:
-    	count += 1
-        if count > 100:
-            token_container.set_token(Machine.authenticate(login=login, secret=secret))
+        token_container.set_token(Machine.authenticate(login, secret))
         submit = Judge.get_next()
         if submit != None:
             tr = submit['test_result']
@@ -111,7 +106,8 @@ def judge_initialize():
     try:
         token_container.set_token(User.authenticate('admin', 'admin'))
         try:
-            machine = Machine.register(login=login, name=login, secret=secret, address='0.0.0.0', netmask='0.0.0.0')
+            machine = Machine.create(MachineStruct(login=login, name=login, address='0.0.0.0', netmask='0.0.0.0'))
+            machine.set_password(secret)
         except:
             traceback.print_exc()
             machine = Machine.filter({'login':'checker'})[0]
