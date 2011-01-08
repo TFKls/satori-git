@@ -234,3 +234,9 @@ table.tlist th{
 .errormsg {
   color : red;
 }
+
+div.scrollbar {
+    width : 100%;
+    text-align : center;
+    font-size : large;
+}

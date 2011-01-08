@@ -30,8 +30,8 @@ class PublishRequest(Request):
                 if request.POST['hide_time']!='':
                     ht = datetime(request.POST['hide_time'])
                 if confirm:
-                    Privilege.grant(c.contestant_role, pm, 'SUBMIT', pt, ht)
-                    Privilege.grant(c.contestant_role, pm, 'VIEW', pt)
+                    Privilege.grant(c.contestant_role, pm, 'SUBMIT', PrivilegeTimes(start_on=pt, finish_on=ht))
+                    Privilege.grant(c.contestant_role, pm, 'VIEW', PrivilegeTimes(start_on=pt))
                 if stop:
                     Privilege.revoke(c.contestant_role, pm, 'SUBMIT')
                 if hide:

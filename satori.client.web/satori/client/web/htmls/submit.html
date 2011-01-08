@@ -1,4 +1,8 @@
 <h2>Submit</h2>
+
+{%if widget.noproblem %}
+No problems to submit!
+{%else%}
 <form action="process.submit" method="post" enctype="multipart/form-data">
     <p>Please select problem:
     <select name="problem" style="margin-left: 2em">
@@ -16,3 +20,4 @@
     <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
     <input type="hidden" name="back_path" value="{{ widget.back_path }}"/>
 </form>
+{%endif%}

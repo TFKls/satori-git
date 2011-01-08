@@ -12,7 +12,10 @@ class ResultsWidget(Widget):
         self.htmlFile = 'htmls/results.html'
         c = ActiveContest(params)
         _params = deepcopy(params)
+        _params2 = deepcopy(params)
         d = follow(_params,path)
+        d2 = follow(_params2,path)
+        
         if not ('shown' in d.keys()):
             shown = []
         else:
@@ -25,19 +28,44 @@ class ResultsWidget(Widget):
         self.back_to = ToString(params)
         self.back_path = path
 
+        limit = 20
+
+        if 'page' in d.keys():
+            page = int(d['page'][0])-1
+        else:
+            page = 0
+            
+        self.page = page+1
+        self.offset = page*limit
+
         cct = CurrentContestant(params)
         
         if self.isadmin:
             if curuser == 'mine':
-                submits = c.get_results(cct)
+                submits = c.get_results(cct,limit,self.offset)
             elif curuser.isdigit():
-                submits = c.get_results(Contestant(int(curuser)))
+                submits = c.get_results(Contestant(int(curuser)),limit,self.offset)
             else:
-                submits = c.get_all_results()
+                submits = c.get_all_results(limit=limit,offset=self.offset)
             self.users = [('', 'All', False), ('mine', 'Your own', False)] + [(c.id, c.name, False) for c in Contestant.filter(ContestantStruct(contest=c))]
         else:
-            submits = c.get_results(cct)
+            submits = c.get_results(cct,limit,self.offset)
 
+        self.pcount = (submits.count+limit-1)/limit
+        
+        self.links = []
+        for i in range(1,self.pcount+1):
+            d2['page'] = [str(i)]
+            self.links.append(GetLink(_params2,''))
+            
+        if page>=1:
+            self.blink = self.links[page-1]
+        else:
+            self.blink = None
+        if page<self.pcount-1:
+            self.flink = self.links[page+1]
+        else:
+            self.flink = None
         self.submits = [] 
         for submit in submits.results:
             s = {}
