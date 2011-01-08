@@ -29,7 +29,7 @@ class ResultsWidget(Widget):
             if curuser == 'mine':
                 submits = c.get_results(CurrentContestant(d))
             elif curuser.isdigit():
-                submits = c.get_results(Contestant.filter({id:int(curuser)})[0])
+                submits = c.get_results(Contestant(int(curuser)))
             else:
                 submits = c.get_all_results()
             self.users = [('', 'All', False), ('mine', 'Your own', False)] + [(c.id, c.name, False) for c in Contestant.filter(ContestantStruct(contest=c))]
