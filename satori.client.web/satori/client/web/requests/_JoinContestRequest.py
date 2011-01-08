@@ -10,6 +10,6 @@ class JoinContestRequest(Request):
     @classmethod
     def process(cls, request):
         contest = ContestById(request.POST['contest_id'])
-        contest.join_contest()
+        contest.join()
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')

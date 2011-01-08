@@ -15,7 +15,7 @@ class EditSubpageRequest(Request):
         if 'cancel' in pv.keys():
             return GetLink(d,'');
         if 'add' in pv.keys():
-            if 'order' in pv.keys():
+            if pv['order']!='':
                 order = int(pv['order'])
             else:
                 order = None

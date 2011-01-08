@@ -10,16 +10,15 @@ class AddContestantRequest(Request):
     @classmethod
     def process(cls, request):
         d = ParseURL(request.POST['back_to'])
-        try:
-            c = Contest.filter({'id':int(request.POST['cid'])})[0]
-            u = User.filter({'login': request.POST['login']})[0]
-        except:
-            return GetLink(d,'')
-        try:
-            t =  c.find_contestant(u)
-        except:
-            t = c.create_contestant([u])
+#        try:
+        c = Contest.filter({'id':int(request.POST['cid'])})[0]
+        u = User.filter({'login': request.POST['login']})[0]
+#        except:
+#            return GetLink(d,'')
+        t = c.find_contestant(u)
+        if not t:
+            t = Contestant.create(fields=ContestantStruct(name=u.login,contest=c),user_list=[u])
         if request.POST['addrole']=='admin':
-            Privilege.grant(u,c,'MANAGE')
+            c.add_admin(u)
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')

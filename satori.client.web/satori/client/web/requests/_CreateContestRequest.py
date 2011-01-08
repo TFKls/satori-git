@@ -9,8 +9,8 @@ class CreateContestRequest(Request):
     pathName = 'createcontest'
     @classmethod
     def process(cls, request):
-        p = Contest.create_contest(name=request.POST['contestname'])
-        c = p.join_contest()
+        p = Contest.create(ContestStruct(name=request.POST['contestname']))
+        c = p.join()
         c.invisible = True
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')
