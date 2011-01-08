@@ -8,7 +8,7 @@
 #
 
 cd "$(dirname "$(readlink -f "$0")")"
-aptitude install python-virtualenv python-dev libpq-dev libyaml-dev libcap-dev
+aptitude --yes install python-virtualenv python-dev libpq-dev libyaml-dev libcap-dev make
 virtualenv --no-site-packages .
 ln -s python bin/python2.6
 source bin/activate
@@ -16,6 +16,9 @@ easy_install zc.buildout
 easy_install -U distribute
 mkdir -p src/python var/{buildout,cache}
 buildout -c buildout_judge.cfg
-cd satori.judge/runner
-make runner
-cp runner /usr/bin
+(
+  cd satori.judge/runner
+  make runner
+  cp runner /usr/bin
+)
+cp satori.judge/satori/judge/default_judge.py /bin/judge
