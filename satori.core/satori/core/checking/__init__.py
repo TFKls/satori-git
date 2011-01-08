@@ -127,6 +127,9 @@ class CheckingMaster(Client2):
             self.start_ranking(Ranking.objects.get(id=event.object_id))
 
         while self.work_queue:
+            if self.slave.terminated:
+                return;
+
             event = self.work_queue.pop()
 
             logging.debug('checking master: work item %s', event.type)
