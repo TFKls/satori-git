@@ -26,7 +26,7 @@ class CheckingMaster(Client2):
         self.ranking_map = dict()
         self.scheduled_test_suite_results_map = dict()
 
-        self.test_suite_results_to_start = queue()
+        self.test_suite_results_to_start = deque()
         self.test_suite_results_to_send = dict()
         self.test_results_to_send = dict()
         self.work_queue = deque()
