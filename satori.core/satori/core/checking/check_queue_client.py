@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import os
+import logging
 from django.conf import settings
 from threading import Lock
 from multiprocessing.connection import Client
@@ -17,6 +18,7 @@ class CheckQueueClient(object):
         return cls._instance
 
     def __init__(self, pid):
+        logging.info('Starting check queue client for pid %s', pid)
         self.lock = Lock()
         self.lock.acquire()
         self.connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
@@ -33,6 +35,7 @@ class CheckQueueClient(object):
         self.connection.recv()
         self.connection.send(Receive())
         result = self.connection.recv()
+        logging.info('Check queue client: received %s for pid %s', result[1], pid)
         self.lock.release()
         return result[1]
 
