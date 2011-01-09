@@ -2,51 +2,35 @@
 import os
 import logging
 from django.conf import settings
-from threading import Lock
+from threading import local, current_thread
+from multiprocessing import current_process
 from multiprocessing.connection import Client
 from satori.events import Event, Attach, Map, Send, Receive
 
-class CheckQueueClient(object):
-    _pid = -1
-
-    @classmethod
-    def get_instance(cls):
-        pid = os.getpid()
-        if pid != cls._pid:
-            cls._instance = CheckQueueClient(pid=pid)
-            cls._pid = pid
-        return cls._instance
+class CheckQueueClient(local):
+    def new_connection(self):
+        self.pid = current_process().pid
+        self.tid = current_thread().ident
+        logging.info('Starting check queue client connection for pid %s tid %s', self.pid, self.tid)
+        self.tag = str(self.pid) + '_' + str(self.tid)
+        self.queue = 'check_queue_client_' + self.tag
+        self.connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
+        self.connection.send(Attach(self.queue))
+        self.connection.recv()
+        self.connection.send(Map({'type': 'checking_test_result_dequeue_result', 'tag': str(self.tag)}, self.queue))
+        self.connection.recv()
 
     def __init__(self, pid):
-        logging.info('Starting check queue client for pid %s', pid)
-        self.lock = Lock()
-        self.lock.acquire()
-        self.connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
-        queue = 'check_queue_client_' + str(pid)
-        self.connection.send(Attach(queue))
-        self.connection.recv()
-        self.connection.send(Map({'type': 'checking_test_result_dequeue_result', 'tag': str(pid)}, queue))
-        self.connection.recv()
-        self.lock.release()
+        self.new_connection()
 
     def get_next(self, role):
-        self.lock.acquire()
-        self.connection.send(Send(Event(type='checking_test_result_dequeue', tag=str(self._pid), tester_id=role.id)))
+        if (self.pid != current_process().pid) or (self.tid != current_thread().ident):
+            self.new_connection()
+        self.connection.send(Send(Event(type='checking_test_result_dequeue', tag=str(self.tag), tester_id=role.id)))
         self.connection.recv()
         self.connection.send(Receive())
         result = self.connection.recv()
-        logging.info('Check queue client: received %s for pid %s', result[1], self._pid)
-        self.lock.release()
+        logging.debug('Check queue client: received %s for pid %s tid %s', result[1], self.pid, self.tid)
         return result[1]
 
-    def checking_checked_test_result(self, test_result):
-        self.lock.acquire()
-        self.connection.send(Send(Event(type='checking_checked_test_result', id=test_result.id)))
-        self.connection.recv()
-        self.lock.release()
-
-    def checking_new_submit(self, submit):
-        self.lock.acquire()
-        self.connection.send(Send(Event(type='checking_new_submit', id=submit.id)))
-        self.connection.recv()
-        self.lock.release()
+check_queue_client = CheckQueueClient()

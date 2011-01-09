@@ -23,10 +23,10 @@ class Judge(object):
     @ExportMethod(SubmitToCheck, [], PCGlobal('JUDGE'))
     @staticmethod
     def get_next():
-        from satori.core.checking.check_queue_client import CheckQueueClient
+        from satori.core.checking.check_queue_client import check_queue_client
         r = token_container.token.role
 
-        next = CheckQueueClient.get_instance().get_next(r)
+        next = check_queue_client.get_next(r)
 
         if next.test_result_id is None:
             return None
