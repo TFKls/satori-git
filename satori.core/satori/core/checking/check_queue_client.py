@@ -20,7 +20,7 @@ class CheckQueueClient(local):
         self.connection.send(Map({'type': 'checking_test_result_dequeue_result', 'tag': str(self.tag)}, self.queue))
         self.connection.recv()
 
-    def __init__(self, pid):
+    def __init__(self):
         self.new_connection()
 
     def get_next(self, role):
