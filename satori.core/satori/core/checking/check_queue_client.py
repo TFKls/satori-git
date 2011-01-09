@@ -35,7 +35,7 @@ class CheckQueueClient(object):
         self.connection.recv()
         self.connection.send(Receive())
         result = self.connection.recv()
-        logging.info('Check queue client: received %s for pid %s', result[1], pid)
+        logging.info('Check queue client: received %s for pid %s', result[1], self._pid)
         self.lock.release()
         return result[1]
 
