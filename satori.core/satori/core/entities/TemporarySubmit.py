@@ -13,13 +13,14 @@ class TemporarySubmit(Entity):
 
     pending       = models.BooleanField(default=True)
     date_created  = models.DateTimeField(auto_now_add=True)
+    tester        = models.ForeignKey('role', null=True)
 
     test_data     = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
     submit_data   = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
     result        = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
-        fields = [('pending', 'MANAGE'), ('date_created', 'MANAGE')]
+        fields = [('pending', 'MANAGE'), ('date_created', 'MANAGE'), ('tester', 'MANAGE')]
 
     def save(self, *args, **kwargs):
         self.fixup_test_data()
