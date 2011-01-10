@@ -57,6 +57,7 @@ class SerialDispatcher(DispatcherBase):
             self.accumulate(result)
             if not self.status():
                 self.finish()
+                return
         self.send_test()
 
     def send_test(self):

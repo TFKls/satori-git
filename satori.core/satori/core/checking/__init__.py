@@ -112,7 +112,7 @@ class CheckingMaster(Client2):
             logging.debug('checking master: rejudge test result %s: in queue', test_result.id)
         elif test_result in self.test_result_judged_set:
             logging.debug('checking master: rejudge test result %s: in judge', test_result.id)
-            test_result.pending = False
+            test_result.pending = True
             test_result.tester = None
             test_result.save()
             self.test_result_judged_set.remove(test_result)
@@ -120,7 +120,7 @@ class CheckingMaster(Client2):
             self.test_result_set.add(test_result)
         else:
             logging.debug('checking master: rejudge test result %s: rejudge', test_result.id)
-            test_result.pending = False
+            test_result.pending = True
             test_result.tester = None
             test_result.save()
             self.test_result_queue.append(test_result)
