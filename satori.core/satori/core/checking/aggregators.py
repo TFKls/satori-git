@@ -123,7 +123,7 @@ class AggregatorBase(object):
     def checked_test_suite_results(self, test_suite_results):
         raise NotImplementedError
 
-    def rejudge_test_suite_results(self, test_suite_results):
+    def rejudged_test_suite_results(self, test_suite_results):
         raise NotImplementedError
 
     def created_contestants(self, contestants):
@@ -270,7 +270,7 @@ class ICPCAggregator(AggregatorBase):
                 self.contestants[c.id] = ICPCAggregator.CScore()
             self.contestants[c.id].add(result)
 
-    def rejudge_test_suite_results(self, test_suite_results):
+    def rejudged_test_suite_results(self, test_suite_results):
         raise NotImplementedError
 
     def created_contestant(self, contestant):
