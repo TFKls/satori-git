@@ -26,11 +26,17 @@ class CheckingMaster(Client2):
         self.ranking_map = dict()
         self.scheduled_test_suite_results_map = dict()
 
-        self.test_suite_results_to_start = deque()
-        self.test_suite_results_to_send = dict()
-        self.test_results_to_send = dict()
-        self.work_queue = deque()
-
+        self.test_results_to_rejudge = set()
+        self.test_suite_result_checked_test_results = dict()
+        self.test_suite_result_rejudged_test_results = dict()
+        self.test_suite_results_to_start = set()
+        self.test_suite_results_to_rejudge = set()
+        self.ranking_created_contestants = dict()
+        self.ranking_created_submits = dict()
+        self.ranking_checked_test_suite_results = dict()
+        self.ranking_rejudged_test_suite_results = dict()
+        self.rankings_to_rejudge = set()
+    
     def init(self):
         self.attach(self.queue)
         self.map({'type': 'checking_checked_test_result'}, self.queue)
@@ -40,7 +46,6 @@ class CheckingMaster(Client2):
         self.map({'type': 'checking_new_submit'}, self.queue)
         self.map({'type': 'checking_new_contestant'}, self.queue)
         self.map({'type': 'checking_test_result_dequeue'}, self.queue)
-        self.map({'type': 'db', 'model': 'core.ranking', 'action': 'I'}, self.queue)
 
         for test_result in TestResult.objects.filter(pending=True, submit__problem__contest__archived=False):
             if test_result.tester:
@@ -53,8 +58,123 @@ class CheckingMaster(Client2):
         for ranking in Ranking.objects.filter(contest__archived=False):
             self.start_ranking(ranking)
 
-        # do work queue
-        self.handle_event(None, Event(type='dummy_event'))
+        self.do_work()
+
+    def do_work(self):
+        flag = True
+        while flag:
+            flag = False
+            while self.test_suite_results_to_start:
+                flag = True
+                test_suite_result = self.test_suite_results_to_start.pop()
+                self.start_test_suite_result(test_suite_result)
+            while self.test_results_to_rejudge:
+                flag = True
+                test_result = self.test_results_to_rejudge.pop()
+                self.do_rejudge_test_result(test_result)
+            while self.test_suite_results_to_rejudge:
+                flag = True
+                test_suite_result = self.test_suite_results_to_rejudge.pop()
+                self.do_rejudge_test_suite_result(test_suite_result)
+            while self.rankings_to_rejudge:
+                flag = True
+                ranking = self.rankings_to_rejudge.pop()
+                self.do_rejudge_ranking(ranking)
+            while self.test_suite_result_rejudged_test_results:
+                flag = True
+                (test_suite_result, test_results) = self.test_suite_result_rejudged_test_results.popitem()
+                self.do_notify_test_suite_result_rejudged_test_results(test_suite_result, test_results)
+            while self.test_suite_result_checked_test_results:
+                flag = True
+                (test_suite_result, test_results) = self.test_suite_result_checked_test_results.popitem()
+                self.do_notify_test_suite_result_checked_test_results(test_suite_result, test_results)
+            while self.ranking_created_contestants:
+                flag = True
+                (ranking, contestants) = self.ranking_created_contestants.popitem()
+                self.do_notify_ranking_created_contestants(ranking, contestants)
+            while self.ranking_created_submits:
+                flag = True
+                (ranking, submits) = self.ranking_created_submits.popitem()
+                self.do_notify_ranking_created_submits(ranking, submits)
+            while self.ranking_rejudged_test_suite_results:
+                flag = True
+                (ranking, test_suite_results) = self.ranking_rejudged_test_suite_results.popitem()
+                self.do_notify_ranking_rejudged_test_suite_results(ranking, test_suite_results)
+            while self.ranking_checked_test_suite_results:
+                flag = True
+                (ranking, test_suite_results) = self.ranking_checked_test_suite_results.popitem()
+                self.do_notify_ranking_checked_test_suite_results(ranking, test_suite_results)
+    
+    def do_rejudge_test_result(self, test_result):
+        if test_result in self.test_result_set:
+            logging.debug('checking master: rejudge test result %s: in queue', test_result.id)
+        elif test_result in self.test_result_judged_set:
+            logging.debug('checking master: rejudge test result %s: in judge', test_result.id)
+            test_result.pending = False
+            test_result.tester = None
+            test_result.save()
+            self.test_result_judged_set.remove(test_result)
+            self.test_result_queue.append(test_result)
+            self.test_result_set.add(test_result)
+        else:
+            logging.debug('checking master: rejudge test result %s: rejudge', test_result.id)
+            test_result.pending = False
+            test_result.tester = None
+            test_result.save()
+            self.test_result_queue.append(test_result)
+            self.test_result_set.add(test_result)
+            for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
+                self.test_suite_result_rejudged_test_results.setdefault(test_suite_result, set()).add(test_result)
+            for test_suite_result in TestSuiteResult.objects.filter(submit=test_result.submit, test_suite__tests=test_result.test):
+                if not test_suite_result in self.test_suite_result_map:
+                    self.test_suite_results_to_rejudge.add(test_suite_result)
+
+    def do_notify_test_suite_result_rejudged_test_results(self, test_suite_result, rejudged_test_results):
+        logging.debug('checking master: notify test suite result %s: rejudged test results %s', test_suite_result.id, ','.join(str(x.id) for x in rejudged_test_results))
+        self.call_test_suite_result(test_suite_result, 'rejudged_test_results', [rejudged_test_results])
+
+    def do_notify_test_suite_result_checked_test_results(self, test_suite_result, checked_test_results):
+        logging.debug('checking master: notify test suite result %s: checked test results %s', test_suite_result.id, ','.join(str(x.id) for x in checked_test_results))
+        self.call_test_suite_result(test_suite_result, 'checked_test_results', [checked_test_results])
+
+    def do_rejudge_test_suite_result(self, test_suite_result):
+        if test_suite_result in self.test_suite_result_map:
+            logging.debug('checking master: rejudge test suite result %s: running', test_suite_result.id)
+            self.stop_test_suite_result(test_suite_result)
+            self.start_test_suite_result(test_suite_result)
+        else:
+            logging.debug('checking master: rejudge test suite result %s: not running', test_suite_result.id)
+            test_suite_result = TestSuiteResult.objects.get(id=test_suite_result.id)
+            for ranking in self.scheduled_test_suite_results_map.get(test_suite_result, []):
+                self.ranking_rejudged_test_suite_results.setdefault(ranking, set()).add(test_suite_result)
+            test_suite_result.pending = True
+            test_suite_result.save()
+            self.start_test_suite_result(test_suite_result)
+
+    def do_notify_ranking_created_submits(self, ranking, created_submits):
+        logging.debug('checking master: notify ranking %s: created submits %s', ranking.id, ','.join(str(x.id) for x in created_submits))
+        self.call_ranking(ranking, 'created_submits', [created_submits])
+
+    def do_notify_ranking_created_contestants(self, ranking, created_contestants):
+        logging.debug('checking master: notify ranking %s: created contestants %s', ranking.id, ','.join(str(x.id) for x in created_contestants))
+        self.call_ranking(ranking, 'created_contestants', [created_contestants])
+
+    def do_notify_ranking_rejudged_test_suite_results(self, ranking, rejudged_test_suite_results):
+        logging.debug('checking master: notify ranking %s: rejudged test suite results %s', ranking.id, ','.join(str(x.id) for x in rejudged_test_suite_results))
+        self.call_ranking(ranking, 'rejudged_test_suite_results', [rejudged_test_suite_results])
+
+    def do_notify_ranking_checked_test_suite_results(self, ranking, checked_test_suite_results):
+        logging.debug('checking master: notify ranking %s: checked test suite results %s', ranking.id, ','.join(str(x.id) for x in checked_test_suite_results))
+        self.call_ranking(ranking, 'checked_test_suite_results', [checked_test_suite_results])
+
+    def do_rejudge_ranking(self, ranking):
+        if ranking in self.ranking_map:
+            logging.debug('checking master: rejudge ranking %s: running', ranking.id)
+            self.stop_ranking(ranking)
+            self.start_ranking(ranking)
+        else:
+            logging.debug('checking master: rejudge ranking %s: not running', ranking.id)
+            self.start_ranking(ranking)
 
     def handle_event(self, queue, event):
         logging.debug('checking master: event %s', event.type)
@@ -62,68 +182,37 @@ class CheckingMaster(Client2):
         if event.type == 'checking_checked_test_result':
             test_result = TestResult.objects.get(id=event.id)
             if test_result in self.test_result_judged_set:
+                logging.debug('checking master: checked test result %s', test_result.id)
                 self.test_result_judged_set.remove(test_result)
+                for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
+                    self.test_suite_result_checked_test_results.setdefault(test_suite_result, set()).add(test_result)
             elif test_result in self.test_result_set:
                 logging.error('checking master: checked test in queue')
-                return
             else:
                 logging.error('checking master: checked test not in queue')
-                return
-            
-            for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
-                self.call_test_suite_result(test_suite_result, 'checked_test_results', [[test_result]])
         elif event.type == 'checking_rejudge_test_result':
             test_result = TestResult.objects.get(id=event.id)
-            was_pending = test_result.pending
-            if test_result not in self.test_result_set:
-                if test_result in self.test_result_judged_set:
-                    self.test_result_judged_set.remove(test_result)
-                # transaction (?)
-                test_result.tester = None
-                test_result.pending = True
-                test_result.save()
-                # end transaction
-                self.test_result_queue.append(test_result)
-                self.test_result_set.add(test_result)
-            if not was_pending:
-                for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
-                    self.call_test_suite_result(test_suite_result, 'rejudged_test_results', [[test_result]])
-            for test_suite_result in TestSuiteResult.objects.filter(submit=test_result.submit, test_suite__tests=test_result.test):
-                self.start_test_suite_result(test_suite_result)
+            logging.debug('checking master: rejudge test result %s', test_result.id)
+            self.test_results_to_rejudge.add(test_result)
         elif event.type == 'checking_rejudge_test_suite_result':
             test_suite_result = TestSuiteResult.objects.get(id=event.id)
-            was_pending = test_suite_result.pending
-            if test_suite_result.submit.problem.contest.archived:
-                return
-            if test_suite_result in self.test_suite_result_map:
-                self.stop_test_suite_result(test_suite_result)
-            if was_pending:
-                for ranking in self.scheduled_test_suite_results_map.get(test_suite_result, []):
-                    self.call_ranking(ranking, 'rejudged_test_suite_results', [[test_suite_result]])
-            # transaction (?)
-            test_suite_result.pending = True
-            test_suite_result.save()
-            # end transaction
-            self.start_test_suite_result(test_suite_result)
+            logging.debug('checking master: rejudge test suite result %s', test_suite_result.id)
+            self.test_suite_results_to_rejudge.add(test_suite_result)
         elif event.type == 'checking_rejudge_ranking':
             ranking = Ranking.objects.get(id=event.id)
-            if ranking.contest.archived:
-                return
-            self.stop_ranking(ranking)
-            self.start_ranking(ranking)
+            logging.debug('checking master: rejudge ranking %s', ranking.id)
+            self.rankings_to_rejudge.add(ranking)
         elif event.type == 'checking_new_submit':
             submit = Submit.objects.get(id=event.id)
-            if submit.problem.contest.archived:
-                return
+            logging.debug('checking master: new submit %s', submit.id)
             self.schedule_test_suite_result(None, submit, submit.problem.default_test_suite)
-            for ranking in Ranking.objects.filter(contest=submit.problem.contest, contest__archived=False):
-                self.call_ranking(ranking, 'created_submits', [[submit]])
+            for ranking in Ranking.objects.filter(contest=submit.problem.contest):
+                self.ranking_created_submits.setdefault(ranking, set()).add(submit)
         elif event.type == 'checking_new_contestant':
             contestant = Contestant.objects.get(id=event.id)
-            if contetstant.contest.archived:
-                return
-            for ranking in Ranking.objects.get(contest=contestant.contest):
-                self.call_ranking(ranking, 'created_contestants', [[contestant]])
+            logging.debug('checking master: new contestant %s', contestant.id)
+            for ranking in Ranking.objects.filter(contest=contestant.contest):
+                self.ranking_created_contestants.setdefault(ranking, set()).add(contestant)
         elif event.type == 'checking_test_result_dequeue':
             e = Event(type='checking_test_result_dequeue_result')
             e.tag = event.tag
@@ -138,23 +227,8 @@ class CheckingMaster(Client2):
                 e.test_result_id = None
             logging.debug('Check queue: dequeue by %s: %s', event.tester_id, e)
             self.send(e)
-        elif event.type == 'db' and event.model == 'core.ranking' and event.action == 'I':
-            self.start_ranking(Ranking.objects.get(id=event.object_id))
 
-        while self.work_queue:
-            if self.slave.terminated:
-                return;
-
-            event = self.work_queue.pop()
-
-            logging.debug('checking master: work item %s', event.type)
-
-            if event.type == 'checked_test_result':
-                self.call_test_suite_result(event.test_suite_result, 'checked_test_results', [[event.test_result]])
-            elif event.type == 'checked_test_suite_result':
-                self.call_ranking(event.ranking, 'checked_test_suite_results', [[event.test_suite_result]])
-            elif event.type == 'start_test_suite_result':
-                self.start_test_suite_result(event.test_suite_result)
+        self.do_work()
 
     def start_test_suite_result(self, test_suite_result):
         if test_suite_result in self.test_suite_result_map:
@@ -206,7 +280,7 @@ class CheckingMaster(Client2):
         test_suite_result.pending = False
         test_suite_result.save()
         for ranking in self.scheduled_test_suite_results_map.get(test_suite_result, []):
-            self.work_queue.append(Event(type='checked_test_suite_result', ranking=ranking, test_suite_result=test_suite_result))
+            self.ranking_checked_test_suite_results.setdefault(ranking, set()).add(test_suite_result)
         self.stop_test_suite_result(test_suite_result)
 
     def stop_test_suite_result(self, test_suite_result):
@@ -296,7 +370,7 @@ class CheckingMaster(Client2):
         else:
             logging.debug('Scheduling test result: %s - already checked', test_result.id)
             if test_suite_result is not None:
-                self.work_queue.append(Event(type='checked_test_result', test_suite_result=test_suite_result, test_result=test_result))
+                self.test_suite_result_checked_test_results.setdefault(test_suite_result, set()).add(test_result)
         if test_suite_result is not None:
             self.scheduled_test_results_map.setdefault(test_result, []).append(test_suite_result)
 
@@ -306,13 +380,13 @@ class CheckingMaster(Client2):
         if test_suite_result.pending:
             if test_suite_result not in self.test_suite_result_map:
                 logging.debug('Scheduling test suite result: %s - starting', test_suite_result.id)
-                self.work_queue.append(Event(type='start_test_suite_result', test_suite_result=test_suite_result))
+                self.test_suite_results_to_start.add(test_suite_result)
             else:
                 logging.debug('Scheduling test suite result: %s - already running', test_suite_result.id)
         else:
             logging.debug('Scheduling test suite result: %s - already checked', test_suite_result.id)
             if ranking is not None:
-                self.work_queue.append(Event(type='checked_test_suite_result', ranking=ranking, test_suite_result=test_suite_result))
+                self.ranking_checked_test_suite_results.setdefault(ranking, set()).add(test_suite_result)
         if ranking is not None:
             self.scheduled_test_suite_results_map.setdefault(test_suite_result, []).append(ranking)
 

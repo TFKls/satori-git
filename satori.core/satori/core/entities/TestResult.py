@@ -12,7 +12,7 @@ class TestResult(Entity):
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testresult')
 
     submit        = models.ForeignKey('Submit', related_name='test_results')
-    test          = models.ForeignKey('Test', related_name='test_results+')
+    test          = models.ForeignKey('Test', related_name='test_results')
     tester        = models.ForeignKey('Role', related_name='test_results+', null=True)
     pending       = models.BooleanField(default=True)
 
