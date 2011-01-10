@@ -371,33 +371,31 @@ class CheckingMaster(Client2):
     # callback
     def schedule_test_result(self, test_suite_result, submit, test):
         (test_result, created) = TestResult.objects.get_or_create(submit=submit, test=test)
-        if test_result.pending:
-            if (test_result not in self.test_result_set) and (test_result not in self.test_result_judged_set):
-                logging.debug('Scheduling test result: %s - adding to queue', test_result.id)
-                self.test_result_queue.append(test_result)
-                self.test_result_set.add(test_result)
-            else:
-                logging.debug('Scheduling test result: %s - already in queue', test_result.id)
+        if (test_result in self.test_result_set) or (test_result in self.test_result_judged_set):
+            logging.debug('Scheduling test result: %s - already in queue', test_result.id)
+        elif test_result.pending:
+            logging.debug('Scheduling test result: %s - adding to queue', test_result.id)
+            self.test_result_queue.append(test_result)
+            self.test_result_set.add(test_result)
         else:
             logging.debug('Scheduling test result: %s - already checked', test_result.id)
             if test_suite_result is not None:
                 self.test_suite_result_checked_test_results.setdefault(test_suite_result, set()).add(test_result)
         if test_suite_result is not None:
-            self.scheduled_test_results_map.setdefault(test_result, []).append(test_suite_result)
+            self.scheduled_test_results_map.setdefault(test_result, set()).add(test_suite_result)
 
     # callback
     def schedule_test_suite_result(self, ranking, submit, test_suite):
         (test_suite_result, created) = TestSuiteResult.objects.get_or_create(submit=submit, test_suite=test_suite)
-        if test_suite_result.pending:
-            if test_suite_result not in self.test_suite_result_map:
-                logging.debug('Scheduling test suite result: %s - starting', test_suite_result.id)
-                self.test_suite_results_to_start.add(test_suite_result)
-            else:
-                logging.debug('Scheduling test suite result: %s - already running', test_suite_result.id)
+        if test_suite_result in self.test_suite_result_map:
+            logging.debug('Scheduling test suite result: %s - already running', test_suite_result.id)
+        elif test_suite_result.pending:
+            logging.debug('Scheduling test suite result: %s - starting', test_suite_result.id)
+            self.test_suite_results_to_start.add(test_suite_result)
         else:
             logging.debug('Scheduling test suite result: %s - already checked', test_suite_result.id)
             if ranking is not None:
                 self.ranking_checked_test_suite_results.setdefault(ranking, set()).add(test_suite_result)
         if ranking is not None:
-            self.scheduled_test_suite_results_map.setdefault(test_suite_result, []).append(ranking)
+            self.scheduled_test_suite_results_map.setdefault(test_suite_result, set()).add(ranking)
 
