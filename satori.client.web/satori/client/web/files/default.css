@@ -36,7 +36,7 @@ div.bodywrapper {
 }
 
 div.body {
-    background-color: #ffffff;
+    background-color: transparent;
     color: #000000;
     padding: 0 0px 0px 20px;
     font-size: 90%;

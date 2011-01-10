@@ -6,6 +6,7 @@ from django.conf import settings
 from satori.client.web.librecaptcha import *
 from satori.client.common.remote import *
 from _Request import Request
+import traceback
 
 class RegisterRequest(Request):
     pathName = 'register'
@@ -18,6 +19,7 @@ class RegisterRequest(Request):
         password = vars['password']
         confirm = vars['confirm']
         fullname = vars['fullname']
+        affiliation = vars['affiliation']
         email = vars['email']
         lw_path = vars['lw_path']
         remote_ip = request.META['REMOTE_ADDR']
@@ -31,7 +33,9 @@ class RegisterRequest(Request):
             error = 'captchafail'
         else:
             try:
-                User.register(UserStruct(login=login, email=email, name=fullname), password=password)
+                om = OaMap()
+                om.set_str('affiliation',affiliation)
+                u = User.register(UserStruct(login=login, email=email, name=fullname), password=password, profile=om.get_map())
             except InvalidLogin:
                 error = 'badlogin'
             except InvalidPassword:
@@ -40,6 +44,7 @@ class RegisterRequest(Request):
                 error = 'bademail'
             except:
                 error = 'regfail'
+                traceback.print_exc()
         if error:
             return GetLink(DefaultLayout(maincontent='registerform',status=[error]),'')
         else:

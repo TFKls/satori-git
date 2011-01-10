@@ -91,7 +91,6 @@ body {
     text-align:center;
 	text-decoration:none;
 	color: #CCCCCC;
-	font-size: 95%;
 }
 
 
@@ -122,12 +121,11 @@ body {
     text-align: left;
 }
 
-#navigationPanel a, a:visited, a:active{
+#navigationPanel a, #navigationPanel a:visited, #navigationPanel a:active{
 	color: #444444;
 	display: block;
 	text-decoration: none;
 	font-family: Arial, Sans-Serif;
-    font-size: 90%;
 }
 
 .logos {
@@ -149,7 +147,7 @@ table.messagebox {
 
 table.messagebox tr.privheader td
 {
-    background-color: #E0E0FF;
+    background-color: #E0F8FF;
     padding : 0.25em 0.5em;
 }
 
@@ -157,14 +155,14 @@ table.messagebox tr.privheader td
 table.messagebox tr.privcontent td
 {
     padding : 0.5em 0.5em;
-    background-color: #F2F2FF;
+    background-color: #F0F8FF;
 }
 
 
 table.messagebox tr.privanswer td
 {
     padding : 0.5em 0.5em;
-    background-color: #E8E8FF;
+    background-color: #E8F8FF;
 }
 
 .newsmsg {
@@ -239,4 +237,28 @@ div.scrollbar {
     width : 100%;
     text-align : center;
     font-size : large;
+}
+
+div.scrollbar a {
+    color : black;
+    text-decoration : none;
+    font-size : large;
+}
+
+div.scrollbar a:hover {
+    color : black;
+    text-decoration : none;
+    font-size : large;
+}
+
+div.scrollbar a:visited {
+    color : black;
+    text-decoration : none;
+    font-size : large;
+}
+
+
+td.formexplain {
+    font-size : x-small;
+    text-align : left;
 }
