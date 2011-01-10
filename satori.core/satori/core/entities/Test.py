@@ -58,7 +58,7 @@ class Test(Entity):
         self.update_fields(fields, ['name', 'description', 'environment', 'obsolete'])
         self.save()
         self.data_set_map(data)
-        #TODO: REJUDGE!
+        self.rejudge()
         return self
 
     #@ExportMethod(NoneType, [DjangoId('Test')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
@@ -69,6 +69,11 @@ class Test(Entity):
             super(Test, self).delete()
         except DatabaseError:
             raise CannotDeleteObject()
+
+    @ExportMethod(NoneType, [DjangoId('Test')], PCArg('self', 'MANAGE'))
+    def rejudge(self):
+        RawEvent().send(Event(type='checking_rejudge_test', id=self.id))
+
 
 class TestEvents(Events):
     model = Test

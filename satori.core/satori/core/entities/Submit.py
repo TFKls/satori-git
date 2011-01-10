@@ -80,6 +80,11 @@ class Submit(Entity):
         if test_suite_result is None:
             return None
         return test_suite_result.report
+    
+    @ExportMethod(NoneType, [DjangoId('Submit')], PCArg('self', 'MANAGE'))
+    def rejudge(self):
+        RawEvent().send(Event(type='checking_rejudge_submit', id=self.id))
+
 
 class SubmitEvents(Events):
     model = Submit
