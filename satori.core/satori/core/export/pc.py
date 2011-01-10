@@ -87,6 +87,8 @@ class PCEach(object):
         __pc__self.sub = sub
 
     def __call__(__pc__self, **kwargs):
+        if kwargs[__pc__self.name] is None:
+            return True
         return all(__pc__self.sub(item=x) for x in kwargs[__pc__self.name])
 
     def __str__(__pc__self):
@@ -100,6 +102,8 @@ class PCEachKey(object):
         __pc__self.sub = sub
 
     def __call__(__pc__self, **kwargs):
+        if kwargs[__pc__self.name] is None:
+            return True
         return all(__pc__self.sub(item=x) for x in kwargs[__pc__self.name].keys())
 
     def __str__(__pc__self):
@@ -113,6 +117,8 @@ class PCEachValue(object):
         __pc__self.sub = sub
 
     def __call__(__pc__self, **kwargs):
+        if kwargs[__pc__self.name] is None:
+            return True
         return all(__pc__self.sub(item=x) for x in kwargs[__pc__self.name].values())
 
     def __str__(__pc__self):

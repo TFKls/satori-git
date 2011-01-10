@@ -49,12 +49,13 @@ class User(Role):
         Global.get_instance().authenticated.add_member(user)
         return user
         
-    @ExportMethod(NoneType, [DjangoStruct('User'), unicode], PCPermit(), [InvalidLogin, InvalidPassword, InvalidEmail, CannotSetField])
+    @ExportMethod(NoneType, [DjangoStruct('User'), unicode, TypedMap(unicode, AnonymousAttribute)], PCEachValue('profile', PCRawBlob('item')), [InvalidLogin, InvalidPassword, InvalidEmail, CannotSetField])
     @staticmethod
-    def register(fields, password):
+    def register(fields, password, profile={}):
         fields.activated = not settings.ACTIVATION_REQUIRED
         user = User.create(fields)
         user.set_password(password)
+        user.profile_set_map(profile)
         if settings.ACTIVATION_REQUIRED:
             send_mail(settings.ACTIVATION_EMAIL_SUBJECT, settings.ACTIVATION_EMAIL_BODY.format(code=user.activation_code, name=user.name), settings.ACTIVATION_EMAIL_FROM, [user.email])
 
