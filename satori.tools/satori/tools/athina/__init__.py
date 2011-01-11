@@ -223,7 +223,6 @@ def athina_import():
         problem['mapping'] = Creator('ProblemMapping', contest=contest, problem=problem['object']).fields(code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite'])()
         Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='CountAggregator')()
         Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='CountAggregator')()
-
     for id, submit in sorted(submits.iteritems()):
     	user = users[submit['user']]
         token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
