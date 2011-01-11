@@ -76,9 +76,9 @@ class TestSuite(Entity):
         #TODO: REJUDGE!
         return self
 
-#    @ExportMethod(DjangoStructList('Test'), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
-#    def get_tests(self):
-#        return self.tests.all().order_by('
+    @ExportMethod(DjangoStructList('Test'), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
+    def get_tests(self):
+        return self.tests.all()
 
 class TestSuiteEvents(Events):
     model = TestSuite
