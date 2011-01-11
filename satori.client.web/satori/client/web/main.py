@@ -12,6 +12,7 @@ from base64 import *
 import re
                 
 def load(request,argstr):
+    try:
 	Session.request = request
 	try:
             token_container.set_token(request.COOKIES.get('satori_token', ''))
@@ -35,8 +36,11 @@ def load(request,argstr):
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
-	
+    except:
+        return render_to_response('htmls/error.html')
+        
 def activate(request,argstr):
+    try:
 	Session.request = request
         try:
             token_container.set_token(request.COOKIES.get('satori_token', ''))
@@ -56,9 +60,12 @@ def activate(request,argstr):
             link = GetLink(DefaultLayout(maincontent='loginform',status=['activation_failed']),'')
             res = HttpResponseRedirect(link)        
             return res
+    except:
+        return render_to_response('htmls/error.html')
 
 
 def loadPOST(request,argstr=""):
+    try:
 	Session.request = request
         try:
             token_container.set_token(request.COOKIES.get('satori_token', ''))
@@ -74,8 +81,11 @@ def loadPOST(request,argstr=""):
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
+    except:
+        return render_to_response('htmls/error.html')
 
 def loadfile(request,argstr=""):
+    try:
 	Session.request = request
 	try:
             token_container.set_token(request.COOKIES.get('satori_token', ''))
@@ -91,3 +101,5 @@ def loadfile(request,argstr=""):
 	if request.COOKIES.get('satori_token', '') != token_container.get_token():
 	    res.set_cookie('satori_token', token_container.get_token())
 	return res
+    except:
+        return render_to_response('htmls/error.html')
