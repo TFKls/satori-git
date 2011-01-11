@@ -72,7 +72,7 @@ class TestSuite(Entity):
         count = 0
         for test in test_list:
             count += 1
-            TestMapping(suite=test_suite, test=test, order=count).save()
+            TestMapping(suite=self, test=test, order=count).save()
         #TODO: REJUDGE!
         return self
 
