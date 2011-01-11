@@ -197,6 +197,7 @@ if options.debug:
     check_run += [ '--debug', '/check.debug.log' ]
 check_run += checker
 ret = subprocess.call(check_run)
+communicate('SETBLOB', {'name': 'check.log', 'path': '/check.log'})
 if options.debug:
     communicate('SETBLOB', {'name': 'check.debug.log', 'path': '/check.debug.log'})
 if ret != 0:

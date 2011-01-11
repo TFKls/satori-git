@@ -328,49 +328,37 @@ class JailRun(Object):
                 etime = datetime.datetime.now()
                 if cmd != 'cmd_QUERYCG':
                     print 'served ', cmd, input, raw_output, stime, etime, etime - stime
-            
+
+            @staticmethod
+            def oa_for_judge(attr):
+                ret = {}
+                ret['is_blob'] = bool(attr.is_blob)
+                ret['value'] = unicode(attr.value)
+                ret['filename'] = unicode(attr.filename)
+                return ret
+
             def cmd_GETSUBMIT(self, input):
                 output = {}
-                for name, field in self.jail_run.submit['submit_data'].items():
-                    output[name] = field
+                for attr in self.jail_run.submit['submit_data'].get_list():
+                    output[unicode(attr.name)] = self.oa_for_judge(attr)
                 return output
             
             def cmd_GETTEST(self, input):
                 output = {}
-                for name, field in self.jail_run.submit['test_data'].items():
-                    output[name] = field
+                for attr in self.jail_run.submit['test_data'].get_list():
+                    output[unicode(attr.name)] = self.oa_for_judge(attr)
                 return output
-            def cmd_GETCACHE(self, input):
-                hash = gen_hash(input['what'])
-                fname = jailPath(self.jail_run.root, input['path'])
-                #TODO: Przeszukac cache
-                return { 'res' : 'OK' }
-            
-            def cmd_PUTCACHE(self, input):
-                hash = gen_hash(input['what'])
-                fname = jailPath(self.jail_run.root, input['path'])
-                type = input['how']
-                #TODO: Handle cache
-                return { 'res' : 'OK' }
-            
-            def cmd_GETBLOB(self, input):
-                hash = input['hash']
-                fname = jailPath(self.jail_run.root, input['path'])
-                #TODO: Thrift get blob
-                return { 'res' : 'OK' }
             
             def cmd_GETTESTBLOB(self, input):
                 name = input['name']
                 fname = jailPath(self.jail_run.root, input['path'])
-                self.jail_run.submit['test_result'].test.data_get_blob_path(name, fname)
-                #TODO: Thrift get blob
+                self.jail_run.submit['test_data'].get_blob_path(name, fname)
                 return { 'res' : 'OK' }
             
             def cmd_GETSUBMITBLOB(self, input):
                 name = input['name']
                 fname = jailPath(self.jail_run.root, input['path'])
-                self.jail_run.submit['test_result'].submit.data_get_blob_path(name, fname)
-                #TODO: Thrift get blob
+                self.jail_run.submit['submit_data'].get_blob_path(name, fname)
                 return { 'res' : 'OK' }
             
             def cgroup_path(self, path):
@@ -419,7 +407,6 @@ class JailRun(Object):
                 file = jailPath(self.jail_run.root, input['file'])
                 pid = self.fuser(file)
                 #TODO: Check pid
-                print 'Gotya ', pid
                 if pid is not None:
                     with open(os.path.join(path, 'tasks'), 'w') as f:
                         f.write(str(pid))
