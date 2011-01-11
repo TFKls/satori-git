@@ -24,7 +24,8 @@ cgroup = 'runner'
 cgroup_memory = 512*1024*1024
 cgroup_time = 5*60*1000
 default_judge = '/bin/judge'
-debug = '/judge.debug.txt'
+#debug = '/judge.debug.txt'
+debug = None
 host_eth = 'vethsh'
 host_ip = '192.168.100.101'
 guest_eth = 'vethsg'
@@ -52,12 +53,21 @@ def judge_bash():
 
 def judge_loop():
     while True:
-        token_container.set_token(Machine.authenticate(login, secret))
+        try:
+            token_container.set_token(Machine.authenticate(login, secret))
+        except (TokenInvalid, TokenExpired):
+            token_container.set_token('')
+            continue
         submit = Judge.get_next()
         if submit != None:
             tr = submit['test_result']
             td = submit['test_data']
             sd = submit['submit_data']
+
+            sub = {
+                'test_data' : OaMap(td),
+                'submit_data' : OaMap(sd),
+            }
 
             submit['test_data'] = {}
             for n,f in td.items():
@@ -89,7 +99,7 @@ def judge_loop():
                         with open(dst_path, 'w') as judge_dst:
                             shutil.copyfileobj(judge_src, judge_dst)
                 os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
-                jr = JailRun(submit=submit, root=jail_dir, cgroup_path=cgroup_dir, template_path=templates_dir, path='/judge', debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time, host_eth=host_eth, host_ip=host_ip, guest_eth=guest_eth, guest_ip=guest_ip, netmask=netmask, control_port=control_port, args = ['--control-host', host_ip, '--control-port', str(control_port)])
+                jr = JailRun(submit=sub, root=jail_dir, cgroup_path=cgroup_dir, template_path=templates_dir, path='/judge', debug=debug, cgroup=cgroup, cgroup_memory=cgroup_memory, cgroup_time=cgroup_time, host_eth=host_eth, host_ip=host_ip, guest_eth=guest_eth, guest_ip=guest_ip, netmask=netmask, control_port=control_port, args = ['--control-host', host_ip, '--control-port', str(control_port)])
                 res = jr.run()
                 if debug:
                     dh = anonymous_blob_path(debug)
