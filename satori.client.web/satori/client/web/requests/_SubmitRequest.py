@@ -19,5 +19,5 @@ class SubmitRequest(Request):
         cid = c.id
         pid = p.id
 #        cct = CurrentContestant
-        Submit.create(SubmitStruct(problem_mapping=p), content=submit.read(), filename=submit.name)
+        Submit.create(SubmitStruct(problem=p), content=submit.read(), filename=submit.name)
         return GetLink(ret,'')

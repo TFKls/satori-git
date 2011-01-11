@@ -19,36 +19,48 @@
 <table class="tlist">
 <tr>
     <th>#</th>
+{% if widget.isadmin %}
     <th>User</th>
+{% endif %}
     <th>Problem</th>
     <th>Time</th>
     <th>Status</th>
-    <th></th>
+{% comment %}  
+    <th></th> 
+{% endcomment %}
 </tr>
 {% for s in widget.submits %}
-<tr class={% switch s.status %}
+<tr>
+    <td>{{s.id}}</td>
+{% if widget.isadmin %}   
+     <td>{{s.user}}</td>
+{% endif %}
+    <td>{{s.problem}}</td>
+    <td>{{s.time}}</td>
+
+<td class={% switch s.status %}
                 {% case "QUE" %} "staQUE"
                 {% case "ACC" %} "staACC"
                 {% case "OK" %} "staOK"
                 {% case "TLE" %} "staTLE"
+                {% case "ANS" %} "staANS"
                 {% case "RTE" %} "staRTE"
                 {% case "MEM" %} "staMEM"
                 {% case "REJ" %} "staREJ"
                 {% case "CMP" %} "staCMP"
                 {% else %} ""
            {% endswitch %}>
-    <td>{{s.id}}</td>
-    <td>{{s.user}}</td>
-    <td>{{s.problem}}</td>
-    <td>{{s.time}}</td>
-    <td>{{s.status}}</td>
-    <td><a href="{{s.link}}" class="showhidelink">Show/hide details</a></td>
+
+    {{s.status}}</td>
+{% comment %}    <td><a href="{{s.link}}" class="showhidelink">Show/hide details</a></td> {% endcomment %}
 </tr>
+{% comment %}
 {% if s.showdetails %}
 <tr>
     <td colspan="6">{{s.details}}</td>
 </tr>
 {% endif %}
+{% endcomment %}
 {% endfor %}
 
 

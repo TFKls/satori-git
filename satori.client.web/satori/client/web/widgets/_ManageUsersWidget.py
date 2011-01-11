@@ -74,7 +74,7 @@ class ManageUsersWidget(Widget):
             q['members'] = contestant.members
             self.pending.append(q)
             
-        self.ppcount = (allacc.count+limit-1)/limit
+        self.ppcount = (allpend.count+limit-1)/limit
         
         self.plinks = []
         for i in range(1,self.ppcount+1):

@@ -16,7 +16,7 @@ class AskQuestionRequest(Request):
         if pt=='':
             problem = None
         else:
-            problem = ProblemMapping.filter(ProblemMappingStruct(id=int(pt)))
+            problem = ProblemMapping.filter(ProblemMappingStruct(id=int(pt)))[0]
         Question.create(QuestionStruct(problem=problem,contest=c,content=request.POST['content']))
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')
