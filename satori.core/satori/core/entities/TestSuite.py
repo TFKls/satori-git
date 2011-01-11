@@ -60,7 +60,7 @@ class TestSuite(Entity):
     @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'problem', 'dispatcher', 'accumulators'])
-        modified = test_suite.update_fields(fields, ['name', 'description'])
+        test_suite.update_fields(fields, ['name', 'description'])
         return self
 
     @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite'), DjangoIdList('Test')], PCArg('self', 'MANAGE'), [CannotSetField])
@@ -72,13 +72,17 @@ class TestSuite(Entity):
         count = 0
         for test in test_list:
             count += 1
-            TestMapping(suite=test_suite, test=test, order=count).save()
-        #TODO: REJUDGE!
+            TestMapping(suite=self, test=test, order=count).save()
+        self.rejudge()
         return self
 
     @ExportMethod(DjangoStructList('Test'), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
     def get_tests(self):
         return self.tests.all()
+
+    @ExportMethod(NoneType, [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
+    def rejudge(self):
+        RawEvent().send(Event(type='checking_rejudge_test_suite', id=self.id))
 
 class TestSuiteEvents(Events):
     model = TestSuite

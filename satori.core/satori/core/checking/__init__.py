@@ -40,6 +40,7 @@ class CheckingMaster(Client2):
     def init(self):
         self.attach(self.queue)
         self.map({'type': 'checking_rejudge_test'}, self.queue)
+        self.map({'type': 'checking_rejudge_test_suite'}, self.queue)
         self.map({'type': 'checking_rejudge_submit'}, self.queue)
         self.map({'type': 'checking_checked_test_result'}, self.queue)
         self.map({'type': 'checking_rejudge_test_result'}, self.queue)
@@ -196,6 +197,10 @@ class CheckingMaster(Client2):
             test = Test.objects.get(id=event.id)
             logging.debug('checking master: rejudge test %s', test.id)
             self.test_results_to_rejudge.update(test.test_results.all())
+        elif event.type == 'checking_rejudge_test_suite':
+            test_suite = TestSuite.objects.get(id=event.id)
+            logging.debug('checking master: rejudge test suite %s', test_suite.id)
+            self.test_suite_results_to_rejudge.update(test.test_suite_results.all())
         elif event.type == 'checking_rejudge_submit':
             submit = Submit.objects.get(id=event.id)
             logging.debug('checking master: rejudge submit %s', submit.id)
