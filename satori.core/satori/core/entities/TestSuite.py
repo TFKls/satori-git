@@ -66,7 +66,7 @@ class TestSuite(Entity):
     @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite'), DjangoIdList('Test')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify_full(self, fields, test_list):
         self.forbid_fields(fields, ['id', 'problem'])
-        modified = test_suite.update_fields(fields, ['name', 'description', 'dispatcher', 'accumulators'])
+        modified = self.update_fields(fields, ['name', 'description', 'dispatcher', 'accumulators'])
         self.save()
         TestMapping.objects.filter(suite=self).delete()
         count = 0
