@@ -1,5 +1,34 @@
 <!--<h3>Identities</h3> -->
+{% if widget.status == "loginfail" %}
+    <p class="errormsg">Login failed.</p>
+{% endif %}
+{% if widget.status == "ok" %}
+    <p class="okmsg">Password changed successfully.</p>
+{% endif %}
+{% if widget.status == "passfail" %}
+    <p class="errormsg">Invalid password.</p>
+{% endif %}
+{% if widget.status == "nomatch" %}
+    <p class="errormsg">Passwords do not match.</p>
+{% endif %}
 
+<h3>Change password</h3>
+<p>Please fill in the form to login.</p>
+
+<form method="post" action="process.updateprofile">
+    <table style="margin: auto; text-align: center">
+        <tr><td><span class="message">Old password:</span> <input type="password" class="smallinputbox" name="password"/></td></tr>
+        <tr><td><span class="message">New password:</span> <input type="password" class="smallinputbox" name="newpass"/></td></tr>
+        <tr><td><span class="message">Confirm new password:</span> <input type="password" class="smallinputbox" name="confirmpass"/></td></tr>
+        <tr><td><input type="submit" value="Sign in" class="button"/></td></tr>
+    </table>
+    <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
+    <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
+</form>
+
+
+
+{% comment %}
 <div class = "">
     <span class = "">
         <table class="tlist">
@@ -37,3 +66,5 @@
     </p>
 </form>
 
+
+{% endcomment %}

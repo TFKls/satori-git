@@ -31,7 +31,7 @@ class MenuWidget(Widget):
             self.menuitems.append([label,GetLink(dict,'')])
 
         addwidget(True, 'News', 'news')
-#        addwidget(CurrentUser(), 'Profile', 'profile')
+        addwidget(CurrentUser(), 'Profile', 'profile')
         addwidget(not contest,'Select contest','selectcontest')
         addwidget(contest,'Problems','problems',contest,'VIEW')
         addwidget(cuser,'Submit','submit',contest,'VIEW')
