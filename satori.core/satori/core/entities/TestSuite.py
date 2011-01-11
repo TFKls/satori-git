@@ -73,12 +73,16 @@ class TestSuite(Entity):
         for test in test_list:
             count += 1
             TestMapping(suite=self, test=test, order=count).save()
-        #TODO: REJUDGE!
+        self.rejudge()
         return self
 
     @ExportMethod(DjangoStructList('Test'), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
     def get_tests(self):
         return self.tests.all()
+
+    @ExportMethod(NoneType, [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
+    def rejudge(self):
+        RawEvent().send(Event(type='checking_rejudge_test_suite', id=self.id))
 
 class TestSuiteEvents(Events):
     model = TestSuite
