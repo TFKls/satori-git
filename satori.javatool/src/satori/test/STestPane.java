@@ -1,6 +1,8 @@
 package satori.test;
 
 import java.awt.datatransfer.Transferable;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -29,6 +31,13 @@ public class STestPane implements SList<STestImpl>, SPane {
 	private JPanel pane;
 	private SScrollPane scroll_pane;
 	
+	private SListener<STestImpl> new_test_listener = new SListener<STestImpl>() {
+		@Override public void call(STestImpl unused) {
+			STestImpl test = factory.createNew();
+			suite.addTest(test);
+			add(test);
+		}
+	};
 	private SListener<STestImpl> close_test_listener = new SListener<STestImpl>() {
 		@Override public void call(STestImpl test) {
 			remove(test);
@@ -54,17 +63,17 @@ public class STestPane implements SList<STestImpl>, SPane {
 		@Override public boolean importData(TransferSupport support) {
 			if (!support.isDrop()) return false;
 			Transferable t = support.getTransferable();
-			if (!support.isDataFlavorSupported(STestTransfer.flavor)) return false;
 			STestTransfer data;
 			try { data = (STestTransfer)t.getTransferData(STestTransfer.flavor); }
-			catch(Exception ex) { return false; }
+			catch(UnsupportedFlavorException ex) { return false; }
+			catch(IOException ex) { return false; }
 			List<STestImpl> tests = new ArrayList<STestImpl>();
 			for (STestSnap snap : data.getTests()) {
-				STestImpl test;
-				try { test = factory.create(snap); }
+				if (suite.hasTest(snap.getId())) continue;
+				try { tests.add(factory.create(snap)); }
 				catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
-				if (test != null) tests.add(test);
 			}
+			for (STestImpl test : tests) suite.addTest(test);
 			add(tests);
 			return true;
 		}
@@ -74,12 +83,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 		pane = new JPanel();
 		pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
 		addRow(new SGenericRowView("Status", new SStatusItemView.Factory()));
-		addRow(new SButtonRowView(new SButtonItemView.Factory(close_test_listener), new SButtonRowView.NewCallback() {
-			@Override public void call() {
-				STestImpl test = factory.createNew();
-				if (test != null) add(test);
-			}
-		}));
+		addRow(new SButtonRowView(new SButtonItemView.Factory(close_test_listener), new_test_listener));
 		addRow(new SGenericRowView("Test name", new SInfoItemView.Factory()));
 		meta.createTestPane(this);
 		
@@ -93,22 +97,24 @@ public class STestPane implements SList<STestImpl>, SPane {
 		pane.add(row.getPane());
 	}
 	
-	private void addColumn(STestImpl test) {
-		for (SRowView row : rows) row.addColumn(test);
+	private void addColumn(STestImpl test, int index) {
+		for (SRowView row : rows) row.addColumn(test, index);
 	}
 	private void removeColumn(int index) {
 		for (SRowView row : rows) row.removeColumn(index);
 	}
 	
 	@Override public void add(STestImpl test) {
+		int index = tests.size();
 		tests.add(test);
-		addColumn(test);
+		addColumn(test, index);
 		pane.revalidate(); pane.repaint();
 	}
 	@Override public void add(Iterable<STestImpl> tests) {
+		int index = this.tests.size();
 		for (STestImpl test : tests) {
 			this.tests.add(test);
-			addColumn(test);
+			addColumn(test, index++);
 		}
 		pane.revalidate(); pane.repaint();
 	}

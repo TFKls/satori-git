@@ -17,7 +17,7 @@ public class SGenericRowView implements SRowView {
 	private JPanel pane;
 	private JLabel label;
 	
-	SGenericRowView(String name, SItemViewFactory factory) {
+	public SGenericRowView(String name, SItemViewFactory factory) {
 		this.name = name;
 		this.factory = factory;
 		initialize();
@@ -33,18 +33,14 @@ public class SGenericRowView implements SRowView {
 		pane.add(label);
 	}
 	
-	@Override public void addColumn(STestImpl test) {
-		addColumn(test, items.size());
-	}
 	@Override public void addColumn(STestImpl test, int index) {
 		SItemView c = factory.createView(test);
 		items.add(index, c);
-		if (++index >= pane.getComponentCount()) index = -1;
-		pane.add(c.getPane(), index);
+		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
+		pane.add(c.getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);
-		//pane.invalidate(); pane.repaint();
 		items.remove(index);
 	}
 }

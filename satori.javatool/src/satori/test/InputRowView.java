@@ -1,24 +1,28 @@
 package satori.test;
 
-import java.util.List;
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Font;
 import java.util.ArrayList;
-import java.awt.*;
-import javax.swing.*;
+import java.util.List;
+
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
 
 public class InputRowView implements SRowView {
-	private InputMetadata meta;
-	private List<SItemView> items;
+	private final InputMetadata meta;
+	private List<SItemView> items = new ArrayList<SItemView>();
 	
 	private JPanel pane;
 	private JLabel label;
 		
 	public InputRowView(InputMetadata meta) {
 		this.meta = meta;
-		items = new ArrayList<SItemView>();
 		initialize();
 	}
 	
-	public JComponent getPane() { return pane; }
+	@Override public JComponent getPane() { return pane; }
 	
 	private void initialize() {
 		pane = new JPanel();
@@ -29,14 +33,11 @@ public class InputRowView implements SRowView {
 		pane.add(label);
 	}
 	
-	@Override public void addColumn(STestImpl test) {
-		addColumn(test, items.size());
-	}
 	@Override public void addColumn(STestImpl test, int index) {
 		SItemView c = meta.createInputView(test.getInput(meta));
 		items.add(index, c);
-		if (++index >= pane.getComponentCount()) index = -1;
-		pane.add(c.getPane(), index);
+		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
+		pane.add(c.getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);

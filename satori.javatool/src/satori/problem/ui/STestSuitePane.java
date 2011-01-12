@@ -21,7 +21,6 @@ import satori.problem.STestSuiteImpl;
 import satori.test.STestFactory;
 import satori.test.STestImpl;
 import satori.test.STestPane;
-import satori.test.STestSnap;
 
 public class STestSuitePane implements SPane, SView {
 	private final STestSuiteImpl suite;
@@ -37,25 +36,10 @@ public class STestSuitePane implements SPane, SView {
 	private JPanel button_pane;
 	private JButton save_button, reload_button, delete_button, close_button;
 	
-	private class TestFactory implements STestFactory {
-		private final STestFactory parent_factory;
-		public TestFactory(STestFactory factory) { parent_factory = factory; }
-		@Override public STestImpl create(STestSnap snap) throws SException {
-			if (suite.hasTest(snap.getId())) return null;
-			STestImpl test = parent_factory.create(snap);
-			suite.addTest(test);
-			return test;
-		}
-		@Override public STestImpl createNew() {
-			STestImpl test = parent_factory.createNew();
-			suite.addTest(test);
-			return test;
-		}
-	}
 	public STestSuitePane(STestSuiteImpl suite, STabs parent, STestFactory factory) {
 		this.suite = suite;
 		this.parent = parent;
-		this.factory = new TestFactory(factory);
+		this.factory = factory;
 		initialize();
 	}
 	

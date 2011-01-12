@@ -13,20 +13,20 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import satori.common.SListener;
+
 public class SButtonRowView implements SRowView {
-	public interface NewCallback { void call(); }
-	
 	private final SItemViewFactory factory;
-	private final NewCallback new_callback;
+	private final SListener<STestImpl> new_listener;
 	private List<SItemView> items = new ArrayList<SItemView>();
 	
 	private JPanel pane;
 	private JLabel label;
 	private JButton add_button;
 	
-	SButtonRowView(SItemViewFactory factory, NewCallback new_callback) {
+	public SButtonRowView(SItemViewFactory factory, SListener<STestImpl> new_listener) {
 		this.factory = factory;
-		this.new_callback = new_callback;
+		this.new_listener = new_listener;
 		initialize();
 	}
 	
@@ -43,23 +43,19 @@ public class SButtonRowView implements SRowView {
 		add_button.setPreferredSize(new Dimension(30, 25));
 		add_button.setToolTipText("Add new test");
 		add_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { new_callback.call(); }
+			@Override public void actionPerformed(ActionEvent e) { new_listener.call(null); }
 		});
 		pane.add(add_button);
 	}
 	
-	@Override public void addColumn(STestImpl test) {
-		addColumn(test, items.size());
-	}
 	@Override public void addColumn(STestImpl test, int index) {
 		SItemView c = factory.createView(test);
 		items.add(index, c);
-		if (++index >= pane.getComponentCount()) index = -1;
-		pane.add(c.getPane(), index);
+		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
+		pane.add(c.getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);
-		//pane.invalidate(); pane.repaint();
 		items.remove(index);
 	}
 }
