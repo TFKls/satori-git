@@ -8,7 +8,7 @@
 #
 
 cd "$(dirname "$(readlink -f "$0")")"
-aptitude --yes install python-virtualenv python-dev libpq-dev libyaml-dev libcap-dev make
+aptitude -y install python-virtualenv python-dev libpq-dev libyaml-dev libcap-dev make
 virtualenv --no-site-packages .
 ln -s python bin/python2.6
 source bin/activate
