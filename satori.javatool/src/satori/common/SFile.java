@@ -1,6 +1,11 @@
 package satori.common;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.digest.DigestUtils;
 
 public class SFile {
 	private String name;
@@ -37,10 +42,17 @@ public class SFile {
 	
 	private SFile() {}
 	
-	public static SFile createLocal(File file) {
+	private static String computeHash(File file) throws SException {
+		byte[] bin_hash;
+		try { bin_hash = DigestUtils.sha384(new FileInputStream(file)); }
+		catch(IOException ex) { throw new SException(ex); }
+		return Base64.encodeBase64URLSafeString(bin_hash);
+	}
+	
+	public static SFile createLocal(File file) throws SException {
 		SFile self = new SFile();
 		self.name = file.getName();
-		self.hash = null;
+		self.hash = computeHash(file);
 		self.file = file;
 		self.remote = false;
 		return self;
@@ -54,31 +66,22 @@ public class SFile {
 		return self;
 	}
 	
+	public void markRemote() { remote = true; }
 	public void markRemote(String new_hash) {
-		if (hash != null && !hash.equals(new_hash)) throw new RuntimeException("Hash codes don't match");
-		hash = new_hash;
+		if (!hash.equals(new_hash)) throw new RuntimeException("Hash codes don't match");
 		remote = true;
 	}
 	public void update(SFile other) {
 		if (!name.equals(other.name)) throw new RuntimeException("File names don't match"); 
-		if (hash != null && other.hash != null && !hash.equals(other.hash)) throw new RuntimeException("Hash codes don't match");
-		if (file == null && other.file != null) file = other.file;
+		if (!hash.equals(other.hash)) throw new RuntimeException("Hash codes don't match");
+		if (file == null && other.file != null) file = other.file; //TODO: ?
 		if (other.remote) remote = true; 
 	}
 	public boolean check(SFile other) {
 		if (!name.equals(other.name)) return true;
-		if (hash != null && other.hash != null) {
-			if (!hash.equals(other.hash)) return true;
-			if (file == null && other.file != null) file = other.file;
-			if (other.remote) remote = true;
-			return false;
-		}
-		if (file != null && other.file != null) {
-			if (!file.equals(other.file)) return true;
-			if (hash == null && other.hash != null) hash = other.hash;
-			if (other.remote) remote = true;
-			return false;
-		}
-		return true;
+		if (!hash.equals(other.hash)) return true;
+		if (file == null && other.file != null) file = other.file; //TODO: ?
+		if (other.remote) remote = true;
+		return false;
 	}
 }

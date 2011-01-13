@@ -3,6 +3,7 @@ package satori.test;
 import java.io.File;
 
 import satori.attribute.SFileAttribute;
+import satori.common.SException;
 import satori.common.SFile;
 import satori.common.SView;
 import satori.common.SViewList;
@@ -46,7 +47,7 @@ public class SFileInput extends Input {
 		test.setAttr(meta.getName(), new SFileAttribute(data));
 		updateViews();
 	}
-	public void setLocal(File file) {
+	public void setLocal(File file) throws SException {
 		data = SFile.createLocal(file);
 		test.setAttr(meta.getName(), new SFileAttribute(data));
 		updateViews();

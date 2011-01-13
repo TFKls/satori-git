@@ -7,7 +7,11 @@ import satori.attribute.SAttributeReader;
 import satori.blob.SBlobClient;
 import satori.common.SException;
 import satori.common.SFile;
+import satori.login.SLogin;
+import satori.thrift.SThriftClient;
+import satori.thrift.SThriftCommand;
 import satori.thrift.gen.AnonymousAttribute;
+import satori.thrift.gen.Blob;
 
 public class SAttributeData {
 	static class AttributeWrap implements SAttributeReader {
@@ -47,11 +51,29 @@ public class SAttributeData {
 		return map;
 	}
 	
+	private static class ExistsCommand implements SThriftCommand {
+		private final String hash;
+		private boolean result;
+		public ExistsCommand(String hash) { this.hash = hash; }
+		public boolean getResult() { return result; }
+		@Override public void call() throws Exception {
+			Blob.Iface iface = new Blob.Client(SThriftClient.getProtocol());
+			result = iface.Blob_exists(SLogin.getToken(), hash);
+		}
+	}
+	private static boolean checkBlobExists(SFile file) throws SException {
+		ExistsCommand command = new ExistsCommand(file.getHash());
+		SThriftClient.call(command);
+		return command.getResult();
+	}
+	
 	static void createBlobs(SAttributeReader test) throws SException {
 		for (String name : test.getNames()) if (test.isBlob(name)) {
 			SFile file = test.getBlob(name);
+			//TODO: remove this remote stuff?
 			if (file.isRemote()) continue;
-			file.markRemote(SBlobClient.putBlob(file.getFile()));
+			if (checkBlobExists(file)) file.markRemote();
+			else file.markRemote(SBlobClient.putBlob(file.getFile()));
 		}
 	}
 }

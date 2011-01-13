@@ -27,6 +27,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.TransferHandler;
 
+import satori.common.SException;
 import satori.common.SFile;
 import satori.main.SFrame;
 
@@ -59,7 +60,8 @@ public class SFileInputView implements SItemView {
 			file_chooser.setSelectedFile(input.getFile());
 			int ret = file_chooser.showOpenDialog(SFrame.get().getFrame());
 			if (ret != JFileChooser.APPROVE_OPTION) return;
-			input.setLocal(file_chooser.getSelectedFile());
+			try { input.setLocal(file_chooser.getSelectedFile()); }
+			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 		}
 		@Override public void mouseDragged(MouseEvent e) {
 			label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
@@ -143,7 +145,8 @@ public class SFileInputView implements SItemView {
 			}
 			catch(Exception ex) { return false; }
 			if (file_list == null || file_list.size() != 1) return false;
-			input.setLocal(file_list.get(0));
+			try { input.setLocal(file_list.get(0)); }
+			catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
 			return true;
 		}
 		@Override protected Transferable createTransferable(JComponent c) { return new SFileTransferable(input.getData()); }
