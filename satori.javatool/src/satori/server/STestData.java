@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import satori.attribute.SAttributeReader;
+import satori.common.SAssert;
 import satori.common.SException;
 import satori.login.SLogin;
 import satori.server.SAttributeData.AttributeWrap;
@@ -74,7 +75,7 @@ public class STestData {
 		}
 	}
 	public static long create(STestReader test) throws SException {
-		if (test.getData() == null) throw new RuntimeException("Attribute map is null");
+		SAssert.assertNotNull(test.getData(), "Attribute map is null");
 		createBlobs(test.getData());
 		CreateCommand command = new CreateCommand(test);
 		SThriftClient.call(command);
@@ -90,7 +91,7 @@ public class STestData {
 		}
 	}
 	public static void save(STestReader test) throws SException {
-		if (test.getData() == null) throw new RuntimeException("Attribute map is null");
+		SAssert.assertNotNull(test.getData(), "Attribute map is null");
 		createBlobs(test.getData());
 		SThriftClient.call(new SaveCommand(test));
 	}

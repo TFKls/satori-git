@@ -5,6 +5,7 @@ import java.util.Map;
 
 import satori.attribute.SAttributeReader;
 import satori.blob.SBlobClient;
+import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SFile;
 import satori.login.SLogin;
@@ -35,7 +36,7 @@ public class SAttributeData {
 		for (String name : attrs.getNames()) {
 			if (attrs.isBlob(name)) {
 				SFile file = attrs.getBlob(name);
-				if (!file.isRemote()) throw new RuntimeException("Non-remote blob");
+				SAssert.assertTrue(file.isRemote(), "Non-remote blob");
 				AnonymousAttribute attr = new AnonymousAttribute();
 				attr.setIs_blob(true);
 				attr.setFilename(file.getName());

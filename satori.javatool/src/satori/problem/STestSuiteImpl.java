@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import satori.common.SAssert;
 import satori.common.SDataStatus;
 import satori.common.SException;
 import satori.common.SId;
@@ -117,8 +118,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		return false;
 	}
 	private boolean check(STestSuiteReader source) {
-		if (source.getId() != getId()) throw new RuntimeException("Test suite ids don't match");
-		if (source.getProblemId() != getProblemId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getId(), getId(), "Test suite ids don't match");
+		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		if (!source.getName().equals(name)) return true;
 		if (!source.getDescription().equals(desc)) return true;
 		if (checkTestLists(source.getTests())) return true;
@@ -152,12 +153,12 @@ public class STestSuiteImpl implements STestSuiteReader {
 	}
 	public boolean hasTest(long id) { return getTest(id) != null; }
 	public void addTest(STestImpl test) {
-		if (tests.contains(test)) throw new RuntimeException("Test already contained");
+		SAssert.assertFalse(tests.contains(test), "Test already contained");
 		tests.add(test);
 		notifyModified();
 	}
 	public void removeTest(STestImpl test) {
-		if (!tests.contains(test)) throw new RuntimeException("Removing uncontained test");
+		SAssert.assertTrue(tests.contains(test), "Removing uncontained test");
 		tests.remove(test);
 		notifyModified();
 	}
@@ -182,7 +183,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	private void updateViews() { views.update(); }
 	
 	public void reload() throws SException {
-		if (!isRemote()) throw new RuntimeException("Test suite not remote");
+		SAssert.assertTrue(isRemote(), "Test suite not remote");
 		snap.reload();
 		pane.removeAll();
 		for (STestImpl test : tests) test.close();
@@ -193,7 +194,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		notifyUpToDate();
 	}
 	public void create() throws SException {
-		if (isRemote()) throw new RuntimeException("Test suite already created");
+		SAssert.assertFalse(isRemote(), "Test suite already created");
 		id.set(STestSuiteData.create(this));
 		notifyUpToDate();
 		snap = STestSuiteSnap.create(problem.getTestList(), this);
@@ -201,13 +202,13 @@ public class STestSuiteImpl implements STestSuiteReader {
 		problem.getTestSuiteList().addTestSuite(snap);
 	}
 	public void save() throws SException {
-		if (!isRemote()) throw new RuntimeException("Test suite not remote");
+		SAssert.assertTrue(isRemote(), "Test suite not remote");
 		STestSuiteData.save(this);
 		notifyUpToDate();
 		snap.set(this);
 	}
 	public void delete() throws SException {
-		if (!isRemote()) throw new RuntimeException("Test suite not remote");
+		SAssert.assertTrue(isRemote(), "Test suite not remote");
 		STestSuiteData.delete(getId());
 		id.clear();
 		notifyOutdated();

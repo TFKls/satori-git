@@ -1,5 +1,6 @@
 package satori.problem;
 
+import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SReference;
 import satori.common.SReferenceList;
@@ -49,7 +50,7 @@ public class SProblemSnap implements SProblemReader {
 	}*/
 	
 	private void setBasic(SProblemReader source) {
-		if (source.getId() != getId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getId(), getId(), "Problem ids don't match");
 		name = source.getName();
 		desc = source.getDescription();
 	}
@@ -115,11 +116,11 @@ public class SProblemSnap implements SProblemReader {
 	private void updateViews() { views.update(); }
 	
 	public void setTestList(STestList test_list) {
-		if (this.test_list != null) throw new RuntimeException("Multiple test list");
+		SAssert.assertNull(this.test_list, "Multiple test list");
 		this.test_list = test_list;
 	}
 	public void setTestSuiteList(STestSuiteList suite_list) {
-		if (this.suite_list != null) throw new RuntimeException("Multiple test suite list");
+		SAssert.assertNull(this.suite_list, "Multiple test suite list");
 		this.suite_list = suite_list;
 	}
 	

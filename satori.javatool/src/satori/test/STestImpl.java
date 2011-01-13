@@ -6,6 +6,7 @@ import java.util.List;
 import satori.attribute.SAttribute;
 import satori.attribute.SAttributeMap;
 import satori.attribute.SAttributeReader;
+import satori.common.SAssert;
 import satori.common.SDataStatus;
 import satori.common.SException;
 import satori.common.SId;
@@ -68,8 +69,8 @@ public class STestImpl implements STestReader {
 	}
 	
 	private boolean check(STestReader source) {
-		if (source.getId() != getId()) throw new RuntimeException("Test ids don't match");
-		if (source.getProblemId() != getProblemId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getId(), getId(), "Test ids don't match");
+		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		if (!source.getName().equals(name)) return true;
 		if (attrs.check(source.getData())) return true;
 		return false;
@@ -124,7 +125,7 @@ public class STestImpl implements STestReader {
 	}
 	
 	public void reload() throws SException {
-		if (!isRemote()) throw new RuntimeException("Test not remote");
+		SAssert.assertTrue(isRemote(), "Test not remote");
 		snap.reload();
 		name = snap.getName();
 		attrs = SAttributeMap.create(snap.getData());
@@ -132,7 +133,7 @@ public class STestImpl implements STestReader {
 		notifyUpToDate();
 	}
 	public void create() throws SException {
-		if (isRemote()) throw new RuntimeException("Test already created");
+		SAssert.assertFalse(isRemote(), "Test already created");
 		id.set(STestData.create(this));
 		updateInputs();
 		notifyUpToDate();
@@ -141,14 +142,14 @@ public class STestImpl implements STestReader {
 		problem.getTestList().addTest(snap);
 	}
 	public void save() throws SException {
-		if (!isRemote()) throw new RuntimeException("Test not remote");
+		SAssert.assertTrue(isRemote(), "Test not remote");
 		STestData.save(this);
 		updateInputs();
 		notifyUpToDate();
 		snap.set(this);
 	}
 	public void delete() throws SException {
-		if (!isRemote()) throw new RuntimeException("Test not remote");
+		SAssert.assertTrue(isRemote(), "Test not remote");
 		STestData.delete(getId());
 		id.clear();
 		updateInputs();

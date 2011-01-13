@@ -1,5 +1,6 @@
 package satori.problem;
 
+import satori.common.SAssert;
 import satori.common.SDataStatus;
 import satori.common.SException;
 import satori.common.SId;
@@ -63,7 +64,7 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	}
 	
 	private boolean check(SProblemReader source) {
-		if (source.getId() != getId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getId(), getId(), "Problem ids don't match");
 		if (!source.getName().equals(name)) return true;
 		if (!source.getDescription().equals(desc)) return true;
 		return false;
@@ -116,6 +117,7 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	private void updateViews() { views.update(); }
 	
 	public void reload() throws SException {
+		SAssert.assertTrue(isRemote(), "Problem not remote");
 		set(SProblemData.load(getId()));
 		notifyUpToDate();
 		snap.set(this);
@@ -123,7 +125,7 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		suite_list.reload();
 	}
 	public void create() throws SException {
-		if (isRemote()) throw new RuntimeException("Problem already created");
+		SAssert.assertFalse(isRemote(), "Problem already created");
 		id.set(SProblemData.create(this));
 		test_list.setProblemId(getId());
 		suite_list.setProblemId(getId());
@@ -135,12 +137,13 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		problem_list.addProblem(snap);
 	}
 	public void save() throws SException {
-		if (!isRemote()) throw new RuntimeException("Problem not created");
+		SAssert.assertTrue(isRemote(), "Problem not remote");
 		SProblemData.save(this);
 		notifyUpToDate();
 		snap.set(this);
 	}
 	public void delete() throws SException {
+		SAssert.assertTrue(isRemote(), "Problem not remote");
 		SProblemData.delete(getId());
 		id.clear();
 		notifyOutdated();

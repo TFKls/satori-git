@@ -68,12 +68,12 @@ public class SFile {
 	
 	public void markRemote() { remote = true; }
 	public void markRemote(String new_hash) {
-		if (!hash.equals(new_hash)) throw new RuntimeException("Hash codes don't match");
+		SAssert.assertEquals(hash, new_hash, "Hash codes don't match");
 		remote = true;
 	}
 	public void update(SFile other) {
-		if (!name.equals(other.name)) throw new RuntimeException("File names don't match"); 
-		if (!hash.equals(other.hash)) throw new RuntimeException("Hash codes don't match");
+		SAssert.assertEquals(name, other.name, "File names don't match"); 
+		SAssert.assertEquals(hash, other.hash, "Hash codes don't match");
 		if (file == null && other.file != null) file = other.file; //TODO: ?
 		if (other.remote) remote = true; 
 	}

@@ -2,6 +2,7 @@ package satori.test;
 
 import satori.attribute.SAttributeMap;
 import satori.attribute.SAttributeReader;
+import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SListener;
 import satori.common.SListenerList;
@@ -49,15 +50,15 @@ public class STestSnap implements STestReader {
 	}
 	
 	public void set(STestReader source) {
-		if (source.getId() != getId()) throw new RuntimeException("Test ids don't match");
-		if (source.getProblemId() != getProblemId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getId(), getId(), "Test ids don't match");
+		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		name = source.getName();
 		attrs = SAttributeMap.create(source.getData());
 		notifyModified();
 	}
 	public void setBasic(STestBasicReader source) {
-		if (source.getId() != getId()) throw new RuntimeException("Test ids don't match");
-		if (source.getProblemId() != getProblemId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getId(), getId(), "Test ids don't match");
+		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		name = source.getName();
 		notifyModified();
 	}

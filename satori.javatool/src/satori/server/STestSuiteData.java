@@ -5,6 +5,7 @@ import static satori.server.STestData.createTestList;
 import java.util.ArrayList;
 import java.util.List;
 
+import satori.common.SAssert;
 import satori.common.SException;
 import satori.login.SLogin;
 import satori.problem.STestSuiteBasicReader;
@@ -76,7 +77,7 @@ public class STestSuiteData {
 		}
 	}
 	public static long create(STestSuiteReader suite) throws SException {
-		if (suite.getTests() == null) throw new RuntimeException("List of tests is null");
+		SAssert.assertNotNull(suite.getTests(), "List of tests is null");
 		CreateCommand command = new CreateCommand(suite);
 		SThriftClient.call(command);
 		return command.getResult();
@@ -91,7 +92,7 @@ public class STestSuiteData {
 		}
 	}
 	public static void save(STestSuiteReader suite) throws SException {
-		if (suite.getTests() == null) throw new RuntimeException("List of tests is null");
+		SAssert.assertNotNull(suite.getTests(), "List of tests is null");
 		SThriftClient.call(new SaveCommand(suite));
 	}
 	

@@ -3,6 +3,7 @@ package satori.problem;
 import java.util.ArrayList;
 import java.util.List;
 
+import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SListener;
 import satori.common.SReference;
@@ -48,7 +49,7 @@ public class STestSuiteSnap implements STestSuiteReader {
 	}
 	
 	public static STestSuiteSnap create(STestList test_list, STestSuiteReader source) {
-		if (source.getProblemId() != test_list.getProblemId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getProblemId(), test_list.getProblemId(), "Problem ids don't match");
 		STestSuiteSnap self = new STestSuiteSnap(test_list);
 		self.id = source.getId();
 		self.problem_id = source.getProblemId();
@@ -59,7 +60,7 @@ public class STestSuiteSnap implements STestSuiteReader {
 		return self;
 	}
 	public static STestSuiteSnap createBasic(STestList test_list, STestSuiteBasicReader source) {
-		if (source.getProblemId() != test_list.getProblemId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getProblemId(), test_list.getProblemId(), "Problem ids don't match");
 		STestSuiteSnap self = new STestSuiteSnap(test_list);
 		self.id = source.getId();
 		self.problem_id = source.getProblemId();
@@ -70,8 +71,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 	}
 	
 	public void set(STestSuiteReader source) {
-		if (source.getId() != getId()) throw new RuntimeException("Test suite ids don't match");
-		if (source.getProblemId() != getProblemId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getId(), getId(), "Test suite ids don't match");
+		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		name = source.getName();
 		desc = source.getDescription();
 		if (tests != null) for (STestSnap test : tests) test.removeDeletedListener(test_deleted_listener);
@@ -80,8 +81,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 		notifyModified();
 	}
 	public void setBasic(STestSuiteBasicReader source) {
-		if (source.getId() != getId()) throw new RuntimeException("Test suite ids don't match");
-		if (source.getProblemId() != getProblemId()) throw new RuntimeException("Problem ids don't match");
+		SAssert.assertEquals(source.getId(), getId(), "Test suite ids don't match");
+		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		name = source.getName();
 		desc = source.getDescription();
 		notifyModified();
