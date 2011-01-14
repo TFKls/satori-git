@@ -23,6 +23,7 @@ class QuestionsWidget(Widget):
                 r['answer'] = text2html(q.answer)
             else:
                 r['answer'] = None
+#            r['public'] = MyContestant(c).parent_role
             self.questions.append(r)
         self.questions.sort(key=lambda question : question['q'].date_created, reverse=True)
 #        for m in MessageGlobal.filter():

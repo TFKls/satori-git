@@ -14,6 +14,7 @@ class SubmitWidget(Widget):
         for p in ProblemMapping.filter({'contest':c}):
             if Allowed(p,'SUBMIT'):
                 self.problems.append(p)
+        self.problems.sort(key=lambda p : p.code)
         if len(self.problems)==0:
             self.noproblem = True
             

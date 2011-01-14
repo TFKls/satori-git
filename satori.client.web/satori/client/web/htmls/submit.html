@@ -11,10 +11,12 @@ No problems to submit!
         {% endfor %}
     </select>
     </p>
+{% comment %}
     <textarea rows="15" style="width: 100%"></textarea>
-    <table class="tlist">
-        <tr><td>You can also submit solution from your local files: <input type="file" name="content" style="margin-left: 2em"/></td>
-        <td style="text-align: right"><input type="submit" class="button" value="Submit"/></td></tr>
+{% endcomment %}
+    <table>
+        <tr><td>Select file: <input type="file" name="content" style="margin-left: 2em"/></td></tr>
+        <tr><td style="text-align: left"><input type="submit" class="button" value="Submit"/></td></tr>
     </table>
 
     <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>

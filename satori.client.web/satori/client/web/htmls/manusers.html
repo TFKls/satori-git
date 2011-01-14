@@ -1,22 +1,26 @@
 <h4>Accepted users</h4>
 <p>The list of all accepted users of this contest:</p>
 <table class="tlist">
-<tr><th>No.</th><th>Login</th><th>Full name</th><th>&nbsp</th></tr>
+<tr><th>No.</th><th>Login</th><th>Full name</th><th>&nbsp;</th><th>&nbsp;</th></tr>
 {% for q in widget.accepted %}
 <tr>
     <th>{{q.number}}.</th>
     <td>
-    {% for u in q.members %}
-        {{u.login}} <br/>
-    {% endfor %}
+        {{q.c.name}}
     </td>
     <td>
-    {% for u in q.members %}
-        {{u.name}} <br/>
-    {% endfor %}
+        {{q.c.usernames}}
     </td>
     <td>
         {{q.admin}}
+    </td>
+    <td>
+        <form action="process.accept" method="post">
+            <input type="hidden" name="conuser_id" value="{{ q.c.id }}"/>
+            <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
+            <input type="hidden" name="back_path" value="{{ widget.path }}"/>
+            <input type="submit" name="revoke" value="Revoke" class="button"/>
+        </form>   
     </td>
 </tr>
 {% endfor %}
@@ -58,7 +62,7 @@
             <input type="hidden" name="conuser_id" value="{{ q.c.id }}"/>
             <input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
             <input type="hidden" name="back_path" value="{{ widget.path }}"/>
-            <input type="submit" value="Accept" class="button"/>
+            <input type="submit" name="accept" value="Accept" class="button"/>
         </form>   
     </td>
 </tr>

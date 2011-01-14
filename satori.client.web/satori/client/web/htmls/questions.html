@@ -21,6 +21,7 @@
 <p>Asked questions:</p>
 {% for question in widget.questions %}
 <div>
+    {{ question.public }}
     <table class="messagebox">
         <tr class="privheader">
             {% if question.q.problem.code %}

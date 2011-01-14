@@ -31,3 +31,13 @@ def getfile(argstr, request):
         response.write(reader.read(reader.length))
         reader.close()
         return response
+    if params[0]=='submit':
+        pid = int(params[1])
+        s = Submit.filter({'id' : pid})[0]
+        response = HttpResponse(mimetype='text/plain; charset=utf-8')
+        response['Content-Disposition'] = 'attachment; filename=submit'+params[1]
+        reader = s.data_get_blob('content')
+        response.write(reader.read(reader.length))
+        reader.close()
+        return response
+        

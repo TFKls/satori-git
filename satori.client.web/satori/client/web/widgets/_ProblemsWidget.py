@@ -32,14 +32,14 @@ class ProblemsWidget(Widget):
                     if ((times.start_on is None) or (times.start_on < datetime.now())) and ((times.finish_on is None) or (times.finish_on > datetime.now())):
                         entry["from"] = "Active"
                         if times.start_on:
-                            entry["from"] = entry["from"]+" from "+times.start_on
+                            entry["from"] = entry["from"]+" from "+str(times.start_on)
                     if times.start_on and times.start_on > datetime.now():
-                        entry["from"] = "Start on "+times.start_on
+                        entry["from"] = "Start on "+str(times.start_on)
                     if times.finish_on:
-                        if times.finish_on>datetime_now():
-                            entry["until"] = "Finish on "+times.finish_on
+                        if times.finish_on>datetime.now():
+                            entry["until"] = "Finish on "+str(times.finish_on)
                         else:
-                            entry["until"] = "Submits ended "+times.finish_on
+                            entry["until"] = "Submits ended "+str(times.finish_on)
                     else:
                         entry["until"] = "Submitable forever"
                     if (times.start_on is None) or (times.start_on < datetime.now()):

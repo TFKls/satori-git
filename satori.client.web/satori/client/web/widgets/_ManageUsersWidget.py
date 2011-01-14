@@ -19,6 +19,8 @@ class ManageUsersWidget(Widget):
         self.contest = c
         self.accepted = list()
         self.pending = list()
+        self.back_to = ToString(params)
+        self.path = path
         
         if 'apage' in d.keys():
             apage = int(d['apage'][0])-1

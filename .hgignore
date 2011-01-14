@@ -12,3 +12,5 @@ syntax: regexp
 /build/
 /dist/
 \.egg-info/
+tmp/*
+satori.javatool/bin/*

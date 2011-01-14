@@ -155,7 +155,9 @@ table.messagebox tr.privheader td
 table.messagebox tr.privcontent td
 {
     padding : 0.5em 0.5em;
-    background-color: #F0F8FF;
+/*    border : 1px solid;
+    border-color : black; */
+    background-color: #F0F8FF; 
 }
 
 
@@ -193,7 +195,7 @@ table.tlist th{
 }
 
 .staOK {
-    background-color: #00CC00;
+    background-color: #66EE66;
 }
 
 .staACC {
@@ -201,15 +203,19 @@ table.tlist th{
 }
 
 .staRTE {
-    background-color: #EE0000;
+    background-color: #EE9999;
 }
 
 .staTLE {
-    background-color: #EE0000;
+    background-color: #EE9999;
+}
+
+.staANS {
+    background-color: #EE9999;
 }
 
 .staMEM {
-    background-color: #EE0000;
+    background-color: #EE9999;
 }
 
 .staREJ {
@@ -261,4 +267,9 @@ div.scrollbar a:visited {
 td.formexplain {
     font-size : x-small;
     text-align : left;
+}
+
+span.signature {
+  font-style : italic;
+  font-size : smaller;
 }

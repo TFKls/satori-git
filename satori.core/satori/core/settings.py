@@ -13,7 +13,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-ACTIVATION_REQUIRED = True
+ACTIVATION_REQUIRED = False
 EMAIL_HOST = 'tcs.uj.edu.pl'
 ACTIVATION_EMAIL_FROM = 'satori@tcs.uj.edu.pl'
 ACTIVATION_EMAIL_SUBJECT = 'Your Satori account activation'

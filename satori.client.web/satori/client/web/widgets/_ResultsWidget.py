@@ -52,6 +52,7 @@ class ResultsWidget(Widget):
             submits = c.get_results(contestant=cct,limit=limit,offset=self.offset)
 
         self.pcount = (submits.count+limit-1)/limit
+        self.displaypages = self.pcount>1
         
         self.links = []
         for i in range(1,self.pcount+1):
@@ -71,11 +72,12 @@ class ResultsWidget(Widget):
             s = {}
             id = str(submit.submit.id)
             s["id"] = id
-            s["time"] = submit.submit.time
+            s["time"] = submit.submit.time.strftime("%b %d, %Y, %H:%M:%S")
             s["user"] = submit.contestant
             s["problem"] = submit.problem
             s["status"] = submit.status
             s["details"] = submit.details
+            s["viewlink"] = GetLink(DefaultLayout(dict=params,maincontent='viewsubmit',id=[str(id)]),'')
             _shown = deepcopy(shown)
             if id in _shown:
                 s["showdetails"] = True

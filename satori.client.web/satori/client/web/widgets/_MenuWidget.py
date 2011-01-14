@@ -35,7 +35,7 @@ class MenuWidget(Widget):
         addwidget(not contest,'Select contest','selectcontest')
         addwidget(contest,'Problems','problems',contest,'VIEW')
         addwidget(cuser,'Submit','submit',contest,'VIEW')
-        addwidget(contest,'Results','results',contest,'VIEW')
+        addwidget(cuser,'Results','results',contest,'VIEW')
         addwidget(contest,'Question','questions',contest,'ASK_QUESTIONS')
         addwidget(contest,'Answers','answers',contest,'MANAGE')
         if contest:

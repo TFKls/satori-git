@@ -3,7 +3,7 @@
 from django.db import models
 
 from satori.core.dbev   import Events
-from satori.core.models import Entity
+from satori.core.models import Entity, Contest
 
 @ExportModel
 class Submit(Entity):
@@ -80,6 +80,10 @@ class Submit(Entity):
         if test_suite_result is None:
             return None
         return test_suite_result.report
+
+    @ExportMethod(ResultToRender, [DjangoId('Submit')], PCArg('self', 'OBSERVE'))
+    def get_result(self):
+        return self.problem.contest.submit_to_result_to_render(self)
     
     @ExportMethod(NoneType, [DjangoId('Submit')], PCArg('self', 'MANAGE'))
     def rejudge(self):
