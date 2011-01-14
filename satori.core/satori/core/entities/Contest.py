@@ -114,6 +114,7 @@ class Contest(Entity):
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'contestant_role'])
         modified = self.update_fields(fields, ['name', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
+        self.save()
         if 'name' in modified:
             role = self.contestant_role
             role.name='Contestant of ' + self.name
