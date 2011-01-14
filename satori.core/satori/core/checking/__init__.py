@@ -200,7 +200,7 @@ class CheckingMaster(Client2):
         elif event.type == 'checking_rejudge_test_suite':
             test_suite = TestSuite.objects.get(id=event.id)
             logging.debug('checking master: rejudge test suite %s', test_suite.id)
-            self.test_suite_results_to_rejudge.update(test.test_suite_results.all())
+            self.test_suite_results_to_rejudge.update(test_suite.test_suite_results.all())
         elif event.type == 'checking_rejudge_submit':
             submit = Submit.objects.get(id=event.id)
             logging.debug('checking master: rejudge submit %s', submit.id)
