@@ -260,22 +260,22 @@ class CountAggregator(AggregatorBase):
             time = timedelta(0)
             if self.time_start is not None and result.submit.time > self.time_start:
                 time = result.submit.time - self.time_start
-            r = (time, result.oa_get_str('status') == 'OK')
+            r = (result.submit.time, time, result.oa_get_str('status') == 'OK')
             
             if u['f'] is None:
                 b = (0, timedelta(0), 0)
             else:
-                b = (1, u['f'][0], u['s'].index(u['f']))
+                b = (1, u['f'][1], u['s'].index(u['f']))
             
             u['s'].add(r)
             i = u['s'].index(r)
-            if r[1] and ((u['f'] is None) or i <= b[2]):
+            if r[2] and ((u['f'] is None) or i <= b[2]):
                 u['f'] = r
 
             if u['f'] is None:
                 a = (0, timedelta(0), 0)
             else:
-                a = (1, u['f'][0], u['s'].index(u['f']))
+                a = (1, u['f'][1], u['s'].index(u['f']))
 
             self.problems_solved += a[0] - b[0]
             self.time_used += a[1] - b[1]
@@ -299,7 +299,13 @@ class CountAggregator(AggregatorBase):
                 tasks.append(task)
             tu = self.time_used
             tu = (tu.microseconds + (tu.seconds + tu.days * 24 * 3600) * 10**6) / 10**6
-            return [ str(self.name), str(self.problems_solved), str(timedelta(seconds=int(tu))), ' '.join(tasks) ]
+            ret = []
+            ret.append(str(self.name))
+            ret.append(str(self.problems_solved))
+            if self.time_start is not None:
+                ret.append(str(timedelta(seconds=int(tu))))
+            ret.append(' '.join(tasks))
+            return ret
 
     def __init__(self, supervisor, ranking):
         super(CountAggregator, self).__init__(supervisor, ranking)
@@ -311,25 +317,31 @@ class CountAggregator(AggregatorBase):
         self.star_collapse = 5
         self.time_start=None 
         self.time_stop=None
+        self.hide_invisible=True
         
-#        self.time_start=datetime(year=2010,month=1,day=1)
         oa = self.ranking.oa_get_map()
         if 'time_start' in oa:
             self.time_start = datetime.strptime(oa['time_start'].value, '%Y-%m-%d %H:%M:%S')
         if 'time_stop' in oa:
             self.time_stop = datetime.strptime(oa['time_stop'].value, '%Y-%m-%d %H:%M:%S')
-
-#        self.time_start=datetime(year=2011,month=1,day=14,hour=13,minute=40)
-#        self.time_stop=datetime(year=2011,month=1,day=14,hour=13,minute=42)
-
-
-        self.rest.add_header(['Name', 'Score', 'Time', 'Tasks'])
-        self.rest.add_footer(['Name', 'Score', 'Time', 'Tasks'])
+        if 'hide_invisible' in oa:
+            self.hide_invisible = bool(oa['hide_invisible'].value == '1')
+        
+        header = []
+        header.append('Name')
+        header.append('Score')
+        if self.time_start is not None:
+            header.append('Time')
+        header.append('Tasks')
+        self.rest.add_header(header)
+        self.rest.add_footer(header)
 
     def checked_test_suite_results(self, test_suite_results):
         mod = False
         for result in test_suite_results:
             c = result.submit.contestant
+            if c.invisible and self.hide_invisible:
+                continue
             if c.id not in self.contestant:
                 self.contestant[c.id] = CountAggregator.Score(name=c.usernames, star_penalty=self.star_penalty, time_start=self.time_start, time_stop=self.time_stop, star_collapse=self.star_collapse)
             mc = self.contestant[c.id]
@@ -339,7 +351,6 @@ class CountAggregator(AggregatorBase):
             if a != b:
                 self.rest.set_row(c, a, '', mc.get_row())
         self.rest.store()
-
 
     def created_submits(self, submits):
         r = self.ranking
