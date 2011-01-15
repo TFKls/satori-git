@@ -3,7 +3,7 @@ import logging
 from collections import deque
 
 from satori.core.checking.accumulators import accumulators
-from satori.core.models import Test
+from satori.core.models import Test, TestMapping
 
 class DispatcherBase(object):
     def __init__(self, supervisor, test_suite_result):
