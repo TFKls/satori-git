@@ -33,6 +33,8 @@ guest_ip = '192.168.100.102'
 netmask = '255.255.255.0'
 control_port = 8765
 
+
+
 def judge_bash():
     from optparse import OptionParser
     parser = OptionParser(usage="usage: %prog [options] DIR")
@@ -69,21 +71,6 @@ def judge_loop():
                 'submit_data' : OaMap(sd),
             }
 
-            submit['test_data'] = {}
-            for n,f in td.items():
-                submit['test_data'][unicode(n)] = {
-                    'is_blob'  : bool(f.is_blob),
-                    'value'    : unicode(f.value),
-                    'filename' : unicode(f.filename)
-                }
-            submit['submit_data'] = {}
-            for n,f in sd.items():
-                submit['submit_data'][unicode(n)] = {
-                    'is_blob'  : bool(f.is_blob),
-                    'value'    : unicode(f.value),
-                    'filename' : unicode(f.filename)
-                }
-
             template = 'default'
             if 'judge.template' in td and not td['judge.template']['is_blob']:
                 template = td['judge.template']['value']
@@ -113,27 +100,6 @@ def judge_loop():
             time.sleep(sleep_time)
 
 def judge_initialize():
-    try:
-        token_container.set_token(User.authenticate('admin', 'admin'))
-        try:
-            machine = Machine.create(MachineStruct(login=login, name=login, address='0.0.0.0', netmask='0.0.0.0'))
-            machine.set_password(secret)
-        except:
-            traceback.print_exc()
-            machine = Machine.filter({'login':'checker'})[0]
-        Privilege.global_grant(role=machine, right='ADMIN')
-    except:
-        traceback.print_exc()
-        pass
-    if False:
-        subprocess.check_call(['busybox', 'mdev', '-s'])
-        subprocess.check_call(['mkdir', '-p', '/dev/pts'])
-        subprocess.check_call(['mount', '-t', 'devpts', '-o', 'rw,nosuid,noexec,relatime,gid=5,mode=620,ptmxmode=000', 'devpts', '/dev/pts'])
-        subprocess.check_call(['ln', '-s', '/proc/self/fd/0', '/dev/stdin'])
-        subprocess.check_call(['ln', '-s', '/proc/self/fd/1', '/dev/stdout'])
-        subprocess.check_call(['ln', '-s', '/proc/self/fd/2', '/dev/stderr'])
-        subprocess.check_call(['/usr/sbin/sshd'])
-
     subprocess.check_call(['iptables', '-P', 'INPUT', 'ACCEPT'])
     subprocess.check_call(['iptables', '-F', 'INPUT'])
     subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
@@ -162,7 +128,11 @@ def judge_initialize():
     subprocess.check_call(['mount', '-t', 'cgroup', '-o', 'rw,nosuid,noexec,relatime,memory,cpuacct,cpuset', 'cgroup', cgroup_dir])
     if templates_src:
         subprocess.check_call(['mkdir', '-p', templates_dir])
-        subprocess.check_call(['mount', templates_src, templates_dir])
+        subprocess.check_call(['mkdir', '-p', templates_dir+'.temp'])
+        subprocess.check_call(['mount', templates_src, templates_dir+'.temp'])
+        subprocess.check_call(['rsync', '-a', templates_dir+'.temp', templates_dir])
+        subprocess.check_call(['umount', templates_dir+'.temp'])
+        subprocess.call(['rmdir', templates_dir+'.temp'])
 
 def judge_finalize():
         subprocess.call(['umount', '-l', cgroup_dir])
@@ -170,7 +140,6 @@ def judge_finalize():
         if templates_src:
             subprocess.call(['umount', '-l', templates_dir])
             subprocess.call(['rmdir', templates_dir])
-        #subprocess.call(['reboot', '-f'])
 
 def judge_init():
     try:

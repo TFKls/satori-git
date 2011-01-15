@@ -19,8 +19,8 @@ from oa_map import get_oa_map
 from token_container import token_container
 
 client_host = 'satori.tcs.uj.edu.pl'
-client_port = 38889
-blob_port = 38887
+client_port = 2889
+blob_port = 2887
 
 if getpass.getuser() == 'gutowski':
     client_host = 'satori.tcs.uj.edu.pl'
