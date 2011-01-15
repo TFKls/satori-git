@@ -35,8 +35,8 @@ class TestSuite(Entity):
     def save(self, *args, **kwargs):
         from satori.core.checking.dispatchers  import dispatchers
         from satori.core.checking.accumulators import accumulators
-        if not self.name:
-            self.name = str(datetime.now())
+#        if not self.name:
+#            self.name = str(datetime.now())
         if not self.dispatcher in dispatchers:
             raise ValueError('Dispatcher '+self.dispatcher+' is not allowed')
         for accumulator in self.accumulators.split(','):
