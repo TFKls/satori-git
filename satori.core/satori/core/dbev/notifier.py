@@ -30,6 +30,8 @@ def handle_notifications(cursor, slave):
             t = int(res['transaction'])
             if transaction is None or transaction > t:
                 transaction = t
+        if transaction is None:
+            break
         cursor.execute('SELECT * FROM core_notification WHERE transaction=%s', [transaction])
         events = {}
         for row in cursor:
