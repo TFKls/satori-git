@@ -169,7 +169,7 @@ public class STestImpl implements STestReader {
 	private static final String xml =
 		"<test>" +
 		"    <input name=\"time\" description=\"Time limit\" type=\"value\" required=\"true\" default_value=\"10000\" />" +
-		"    <input name=\"memory\" description=\"Memory limit\" type=\"value\" required=\"true\" default_value=\"268435456\" />" +
+		"    <input name=\"memory\" description=\"Memory limit\" type=\"value\" required=\"true\" default_value=\"1073741824\" />" +
 		"    <input name=\"input\" description=\"Input file\" type=\"file\" required=\"true\" />" +
 		"    <input name=\"hint\" description=\"Output/hint file\" type=\"file\" required=\"false\" />" +
 		"    <input name=\"checker\" description=\"Checker\" type=\"file\" required=\"false\" />" +
