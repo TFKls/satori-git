@@ -51,6 +51,7 @@ class Submit(Entity):
     @ExportMethod(NoneType, [DjangoId('Submit'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('overrides', PCRawBlob('item'))))
     def override(self, overrides):
         self.overrides_set_map(overrides)
+        self.rejudge()
 
     @ExportMethod(DjangoStructList('TestResult'), [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
     def get_test_suite_results(self, test_suite=None):
