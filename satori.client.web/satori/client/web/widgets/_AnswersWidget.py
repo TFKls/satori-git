@@ -12,14 +12,14 @@ class AnswersWidget(Widget):
         d = follow(params,path)
         _params = deepcopy(params)
         _d = follow(_params,path)
+        allq = Question.filter(QuestionStruct(contest=c))
         if 'edit' in d.keys():
             self.editing = Question.filter({'id' : int(d['edit'][0])})[0]
             del _d['edit']
         self.back_to = ToString(_params);
-        c = ActiveContest(params)
+        c = self.contest
         if not c:
             raise RuntimeError('') # TODO
-        allq = Question.filter(QuestionStruct(contest=c))
         self.problems = ProblemMapping.filter(ProblemMappingStruct(contest=c))
         self.questions = []
         

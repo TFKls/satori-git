@@ -11,7 +11,7 @@ class QuestionsWidget(Widget):
         self.contest = ActiveContest(params)
         d = follow(params,path)
         self.back_to = ToString(params);
-        c = ActiveContest(params)
+        c = self.contest
         if not c:
             raise RuntimeError('') # TODO
         allq = Question.filter(QuestionStruct(contest=c))

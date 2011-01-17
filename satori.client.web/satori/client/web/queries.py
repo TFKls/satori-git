@@ -28,8 +28,9 @@ def ActiveContest(d):
         except:
                 return None
 
-def MyContestant(c):
-    u = CurrentUser()
+def MyContestant(c,u = None):
+    if not u:
+        u = CurrentUser()
     if u and c:
 	try:
 	    cu =c.find_contestant(user = u)
@@ -58,8 +59,9 @@ def Allowed(o, str):
 #    return False
 
 # default dictionary, if need to return to main screen
-def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
-	a = ActiveContest(dict)
+def DefaultLayout(dict = {}, maincontent = 'news', contest = None, **kwargs):
+        if not contest:
+    	    contest = ActiveContest(dict)
 	params = kwargs
 	params['name'] = [maincontent]
 	d = {'name' : ['cover'], 
@@ -70,8 +72,8 @@ def DefaultLayout(dict = {}, maincontent = 'news', **kwargs):
                   }]
         }
 	#d = {'name' : ['main'], 'content' : [{'name' : ['news']} ], 'login' : [{'name' : ['login']}]}
-	if a:
-		d['contestid'] = [str(a.id)]
+	if contest:
+		d['contestid'] = [str(contest.id)]
 	return d
 
 

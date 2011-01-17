@@ -11,7 +11,7 @@ class MenuWidget(Widget):
         self.menuitems = []
         contest = ActiveContest(params)
         user = CurrentUser()
-        cuser = CurrentContestant(params)
+        cuser = MyContestant(contest,user)
         def addwidget(check,label,wname,object = None,rights = ''):
             params_copy = deepcopy(params)
             d = follow(params_copy, content_path)
@@ -30,26 +30,31 @@ class MenuWidget(Widget):
                 return
             self.menuitems.append([label,GetLink(dict,'')])
 
+        rview = Allowed(contest,'VIEW')
+        cview = contest and rview
+        cuview = cuser and rview
+        cmanage = contest and Allowed(contest,'MANAGE')
+        
         addwidget(True, 'News', 'news')
-        addwidget(CurrentUser(), 'Profile', 'profile')
+        addwidget(user, 'Profile', 'profile')
         addwidget(not contest,'Select contest','selectcontest')
-        addwidget(contest,'Problems','problems',contest,'VIEW')
-        addwidget(cuser,'Submit','submit',contest,'VIEW')
-        addwidget(cuser,'Results','results',contest,'VIEW')
+        addwidget(cview,'Problems','problems')
+        addwidget(cuview,'Submit','submit')
+        addwidget(cview,'Results','results')
         addwidget(contest,'Question','questions',contest,'ASK_QUESTIONS')
-        addwidget(contest,'Answers','answers',contest,'MANAGE')
+        addwidget(cmanage,'Answers','answers')
         if contest:
             for r in Ranking.filter({'contest':contest}):
-                addlink(True,r.name,DefaultLayout(dict=params,maincontent='ranking',id=[str(r.id)]),r,'VIEW')
+                addlink(True,r.name,DefaultLayout(dict=params,maincontent='ranking',id=[str(r.id)],contest=contest))
         if contest:
             for s in Subpage.filter({'contest':contest,'is_announcement':False}):
-                addlink(True,s.name,DefaultLayout(dict=params,maincontent='subpage',subid=[str(s.id)]),s,'VIEW')
+                addlink(True,s.name,DefaultLayout(dict=params,maincontent='subpage',subid=[str(s.id)],contest=contest))
         
-        addwidget(contest,'Manage contest','mancontest',contest,'MANAGE')
+        addwidget(cmanage,'Manage contest','mancontest',)
         if cuser:
-            addwidget(user,'Manage news','mannews',contest,'MANAGE')
+            addwidget(cmanage,'Manage news','mannews')
         else:
             addwidget(user,'Manage news','mannews','global','ADMIN')
-        addwidget(contest,'Contestants','manusers',contest,'MANAGE')
+        addwidget(cmanage,'Contestants','manusers')
         addwidget(user, 'Problem repository','repository','global','ADMIN')
         addlink(contest,'Return to main',DefaultLayout())

@@ -47,7 +47,7 @@ class ResultsWidget(Widget):
                 submits = c.get_results(contestant=Contestant(int(curuser)),limit=limit,offset=self.offset)
             else:
                 submits = c.get_all_results(limit=limit,offset=self.offset)
-            self.users = [('', 'All', False), ('mine', 'Your own', False)] + [(c.id, c.name, False) for c in Contestant.filter(ContestantStruct(contest=c))]
+#            self.users = [('', 'All', False), ('mine', 'Your own', False)] + [(c.id, c.name, False) for c in Contestant.filter(ContestantStruct(contest=c))]
         else:
             submits = c.get_results(contestant=cct,limit=limit,offset=self.offset)
 
@@ -77,7 +77,7 @@ class ResultsWidget(Widget):
             s["problem"] = submit.problem
             s["status"] = submit.status
             s["details"] = submit.details
-            s["viewlink"] = GetLink(DefaultLayout(dict=params,maincontent='viewsubmit',id=[str(id)]),'')
+            s["viewlink"] = GetLink(DefaultLayout(dict=params,maincontent='viewsubmit',id=[str(id)],contest=c),'')
             _shown = deepcopy(shown)
             if id in _shown:
                 s["showdetails"] = True
@@ -91,3 +91,4 @@ class ResultsWidget(Widget):
                 del d['shown']
             s["link"] = GetLink(_params,'')
             self.submits.append(s)
+
