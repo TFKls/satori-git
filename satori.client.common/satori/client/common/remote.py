@@ -22,7 +22,11 @@ client_host = 'satori.tcs.uj.edu.pl'
 client_port = 2889
 blob_port = 2887
 
-if getpass.getuser() == 'gutowski':
+if getpass.getuser() == 'satori':
+    client_host = 'satori.tcs.uj.edu.pl'
+    client_port = 38889
+    blob_port = 38887
+elif getpass.getuser() == 'gutowski':
     client_host = 'satori.tcs.uj.edu.pl'
     client_port = 38889
     blob_port = 38887
