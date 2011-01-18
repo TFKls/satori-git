@@ -30,9 +30,8 @@ class MenuWidget(Widget):
                 return
             self.menuitems.append([label,GetLink(dict,'')])
 
-        rview = Allowed(contest,'VIEW')
-        cview = contest and rview
-        cuview = cuser and rview
+        cview = contest and Alowed(contest,'VIEW')
+        cuview = cuser and cview
         cmanage = contest and Allowed(contest,'MANAGE')
         
         addwidget(True, 'News', 'news')
