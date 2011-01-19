@@ -6,6 +6,7 @@ No problems to submit!
 <form action="process.submit" method="post" enctype="multipart/form-data">
     <p>Please select problem:
     <select name="problem" style="margin-left: 2em">
+        <option value="" selected>None</option>
         {% for p in widget.problems %}
             <option value="{{p.id}}">{{p.code}}: {{p.title}}</option>
         {% endfor %}

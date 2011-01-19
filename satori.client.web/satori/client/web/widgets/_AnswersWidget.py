@@ -9,6 +9,7 @@ class AnswersWidget(Widget):
     def __init__(self, params, path):
         self.htmlFile = 'htmls/answers.html'
         self.contest = ActiveContest(params)
+        c = self.contest
         d = follow(params,path)
         _params = deepcopy(params)
         _d = follow(_params,path)
@@ -17,7 +18,6 @@ class AnswersWidget(Widget):
             self.editing = Question.filter({'id' : int(d['edit'][0])})[0]
             del _d['edit']
         self.back_to = ToString(_params);
-        c = self.contest
         if not c:
             raise RuntimeError('') # TODO
         self.problems = ProblemMapping.filter(ProblemMappingStruct(contest=c))

@@ -4,7 +4,7 @@
 {% if widget.isadmin %}
 <form action="process.adjustresult" method="POST">
     <p>Filter submits:
-<select name="user" onChange="submit();" style="margin-left: 2em">
+<select name="user" style="margin-left: 2em">
 {% for value,name,sel in widget.users %}
 <option value="{{ value }}" {% if sel %} selected="selected" {% endif %}>{{ name }}</option>
 {% endfor %}
