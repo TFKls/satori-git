@@ -69,8 +69,8 @@ public class SButtonItemView implements SItemView {
 		move_button.setFocusable(false);
 		move_button.addMouseMotionListener(new MouseMotionListener() {
 			@Override public void mouseDragged(MouseEvent e) {
-				move_button.getModel().setPressed(false);
 				move_button.getModel().setArmed(false);
+				move_button.getModel().setPressed(false);
 				move_button.getModel().setRollover(false);
 				move_listener.call(test, e);
 			}
