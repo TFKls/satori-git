@@ -89,18 +89,18 @@ public class STestListPane implements SList<STestSnap>, SPane {
 	}
 	
 	private static class TestTransferable implements Transferable {
-		private final STestTransfer data;
-		public TestTransferable(STestTransfer data) { this.data = data; }
+		private final STestSnapTransfer data;
+		public TestTransferable(STestSnapTransfer data) { this.data = data; }
 		@Override public DataFlavor[] getTransferDataFlavors() {
 			DataFlavor[] flavors = new DataFlavor[1];
-			flavors[0] = STestTransfer.flavor;
+			flavors[0] = STestSnapTransfer.flavor;
 			return flavors;
 		}
 		@Override public boolean isDataFlavorSupported(DataFlavor flavor) {
-			return flavor.match(STestTransfer.flavor);
+			return flavor.match(STestSnapTransfer.flavor);
 		}
 		@Override public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
-			if (flavor.match(STestTransfer.flavor)) return data;
+			if (flavor.match(STestSnapTransfer.flavor)) return data;
 			else throw new UnsupportedFlavorException(flavor);
 		}
 	}
@@ -108,8 +108,8 @@ public class STestListPane implements SList<STestSnap>, SPane {
 		@Override public boolean canImport(TransferSupport support) { return false; }
 		@Override public boolean importData(TransferSupport support) { return false; }
 		@Override protected Transferable createTransferable(JComponent c) {
-			STestTransfer tests = new STestTransfer();
-			for (int index : list.getSelectedIndices()) tests.addTest(list_model.getItem(index));
+			STestSnapTransfer tests = new STestSnapTransfer();
+			for (int index : list.getSelectedIndices()) tests.add(list_model.getItem(index));
 			return new TestTransferable(tests);
 		}
 		@Override public int getSourceActions(JComponent c) { return COPY; }

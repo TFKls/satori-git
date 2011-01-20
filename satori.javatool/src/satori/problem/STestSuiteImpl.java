@@ -157,9 +157,23 @@ public class STestSuiteImpl implements STestSuiteReader {
 		tests.add(test);
 		notifyModified();
 	}
+	public void addTest(STestImpl test, int index) {
+		SAssert.assertFalse(tests.contains(test), "Test already contained");
+		tests.add(index, test);
+		notifyModified();
+	}
 	public void removeTest(STestImpl test) {
 		SAssert.assertTrue(tests.contains(test), "Removing uncontained test");
 		tests.remove(test);
+		notifyModified();
+	}
+	public void moveTest(STestImpl test, int index) {
+		SAssert.assertTrue(tests.contains(test), "Moving uncontained test");
+		int old_index = tests.indexOf(test);
+		if (index == old_index || index == old_index+1) return;
+		tests.remove(test);
+		if (old_index < index) --index;
+		tests.add(index, test);
 		notifyModified();
 	}
 	
