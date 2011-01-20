@@ -1,7 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-from datetime import datetime
-
 from django.db import models
 
 from satori.core.dbev   import Events
@@ -35,8 +33,6 @@ class TestSuite(Entity):
     def save(self, *args, **kwargs):
         from satori.core.checking.dispatchers  import dispatchers
         from satori.core.checking.accumulators import accumulators
-#        if not self.name:
-#            self.name = str(datetime.now())
         if not self.dispatcher in dispatchers:
             raise ValueError('Dispatcher '+self.dispatcher+' is not allowed')
         for accumulator in self.accumulators.split(','):
