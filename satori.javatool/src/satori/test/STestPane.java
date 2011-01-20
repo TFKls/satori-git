@@ -90,18 +90,19 @@ public class STestPane implements SList<STestImpl>, SPane {
 				try { data = (STestSnapTransfer)t.getTransferData(STestSnapTransfer.flavor); }
 				catch(UnsupportedFlavorException ex) { return false; }
 				catch(IOException ex) { return false; }
-				List<STestImpl> tests = new ArrayList<STestImpl>();
+				List<STestImpl> new_tests = new ArrayList<STestImpl>();
 				for (STestSnap snap : data.get()) {
 					if (suite.hasTest(snap.getId())) continue;
-					try { tests.add(factory.create(snap)); }
+					try { new_tests.add(factory.create(snap)); }
 					catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
 				}
 				Point pos = support.getDropLocation().getDropPoint();
 				int index = (int)Math.round((pos.getX()-120)/120);
 				if (index < 0) index = 0;
 				if (index > tests.size()) index = tests.size();
-				for (STestImpl test : tests) suite.addTest(test, index++);
-				add(tests, index);
+				int cur_index = index;
+				for (STestImpl test : new_tests) suite.addTest(test, cur_index++);
+				add(new_tests, index);
 				return true;
 			}
 			else if (support.isDataFlavorSupported(STestTransfer.flavor)) {
