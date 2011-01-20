@@ -60,7 +60,7 @@ class TestSuite(Entity):
     @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'problem', 'dispatcher', 'accumulators'])
-        test_suite.update_fields(fields, ['name', 'description'])
+        self.update_fields(fields, ['name', 'description'])
         return self
 
     @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite'), DjangoIdList('Test')], PCArg('self', 'MANAGE'), [CannotSetField])
