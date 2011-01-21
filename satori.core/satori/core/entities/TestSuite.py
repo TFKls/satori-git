@@ -74,7 +74,7 @@ class TestSuite(Entity):
 
     @ExportMethod(DjangoStructList('Test'), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
     def get_tests(self):
-        return self.tests.all()
+        return self.tests.all().extra(order_by=['core_testmapping.order'])
 
     @ExportMethod(NoneType, [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
     def rejudge(self):
