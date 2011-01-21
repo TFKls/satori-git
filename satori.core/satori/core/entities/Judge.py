@@ -40,6 +40,14 @@ class Judge(object):
 
     @ExportMethod(NoneType, [DjangoId('TestResult'), TypedMap(unicode, AnonymousAttribute)], PCGlobal('JUDGE'))
     @staticmethod
+    def set_partial_result(test_result, result):
+        if test_result.tester != token_container.token.role:
+            return
+
+        test_result.oa_set_map(result)
+
+    @ExportMethod(NoneType, [DjangoId('TestResult'), TypedMap(unicode, AnonymousAttribute)], PCGlobal('JUDGE'))
+    @staticmethod
     def set_result(test_result, result):
         if test_result.tester != token_container.token.role:
             return
