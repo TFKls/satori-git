@@ -46,9 +46,7 @@ class SerialDispatcher(DispatcherBase):
 
     def init(self):
         super(SerialDispatcher, self).init()
-        #for test in self.test_suite_result.test_suite.tests.all():
-        for testmap in TestMapping.objects.filter(suite=self.test_suite_result.test_suite):
-            test = testmap.test
+        for test in self.test_suite_result.test_suite.get_tests():
             self.to_check.append(test.id)
         self.send_test()
 
@@ -80,9 +78,7 @@ class ParallelDispatcher(DispatcherBase):
     def init(self):
         super(ParallelDispatcher, self).init()
         submit = self.test_suite_result.submit
-        #for test in self.test_suite_result.test_suite.tests.all():
-        for testmap in TestMapping.objects.filter(suite=self.test_suite_result.test_suite):
-            test = testmap.test
+        for test in self.test_suite_result.test_suite.get_tests():
             self.to_check.add(test.id)
             self.supervisor.schedule_test_result(test_suite_result=self.test_suite_result, submit=submit, test=test)
 
