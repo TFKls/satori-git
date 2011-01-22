@@ -28,6 +28,28 @@ class RankingParams(Entity):
         cls._inherit_add(inherits, 'MANAGE', 'ranking', 'MANAGE')
         return inherits
 
+    @ExportMethod(DjangoStruct('RankingParams'), [DjangoStruct('RankingParams')], PCArgField('fields', 'ranking', 'MANAGE'), [CannotSetField])
+    @staticmethod
+    def create(fields):
+        params = RankingParams()
+        params.forbid_fields(fields, ['id'])
+        params.update_fields(fields, ['ranking', 'problem', 'test_suite'])
+        if params.ranking.contest != params.problem.contest or params.problem.problem != params.test_suite.problem:
+            raise CannotSetField()
+        params.save()
+        params.ranking.rejudge()
+        return params
+
+    @ExportMethod(DjangoStruct('RankingParams'), [DjangoId('RankingParams'), DjangoStruct('RankingParams')], PCArg('self', 'MANAGE'), [CannotSetField])
+    def modify(self, fields):
+        self.forbid_fields(fields, ['id', 'ranking', 'problem'])
+        self.update_fields(fields, ['test_suite'])
+        if self.ranking.contest != self.problem.contest or self.problem.problem != self.test_suite.problem:
+            raise CannotSetField()
+        self.save()
+        self.ranking.rejudge()
+        return self
+
 class RankingParamsEvents(Events):
     model = RankingParams
     on_insert = on_update = ['ranking', 'problem', 'test_suite']
