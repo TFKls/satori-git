@@ -47,6 +47,8 @@ class ProblemMapping(Entity):
         problem_mapping = ProblemMapping()
         problem_mapping.forbid_fields(fields, [ 'id' ])
         problem_mapping.update_fields(fields, [ 'contest', 'problem', 'code', 'title', 'default_test_suite' ])
+        if problem_mapping.problem != problem_mapping.default_test_suite.problem:
+            raise CannotSetField()
         problem_mapping.save()
         return problem_mapping
 
@@ -54,6 +56,8 @@ class ProblemMapping(Entity):
     def modify(self, fields):
         self.forbid_fields(fields, [ 'id', 'contest', 'problem' ])
         self.update_fields(fields, [ 'code', 'title', 'default_test_suite' ])
+        if self.problem != self.default_test_suite.problem:
+            raise CannotSetField()
         self.save()
         return self
 
