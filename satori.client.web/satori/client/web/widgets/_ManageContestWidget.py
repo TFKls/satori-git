@@ -17,6 +17,10 @@ class ManageContestWidget(Widget):
         self.subpages.sort(key=lambda s : s[0].order)
         self.addlink = ToString(DefaultLayout(dict=params,maincontent='editsubpage'))
         self.htmlFile = 'htmls/mancontest.html'
+        self.aggregators = Global.get_aggregators().items()
+#        for a in self.aggregators.iteritems():
+#            print a[0]
+#            print a[1]
         authenticated = Security.authenticated()
         
         if Privilege.get(authenticated, c, 'JOIN') is not None:

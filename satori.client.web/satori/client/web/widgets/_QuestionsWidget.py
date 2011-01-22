@@ -12,6 +12,7 @@ class QuestionsWidget(Widget):
         d = follow(params,path)
         self.back_to = ToString(params);
         c = self.contest
+        ct = MyContestant(c)
         if not c:
             raise RuntimeError('') # TODO
         allq = Question.filter(QuestionStruct(contest=c))
@@ -23,7 +24,7 @@ class QuestionsWidget(Widget):
                 r['answer'] = text2html(q.answer)
             else:
                 r['answer'] = None
-#            r['public'] = MyContestant(c).parent_role
+            r['public'] = (q.inquirer.id != ct.id)
             self.questions.append(r)
         self.questions.sort(key=lambda question : question['q'].date_created, reverse=True)
 #        for m in MessageGlobal.filter():

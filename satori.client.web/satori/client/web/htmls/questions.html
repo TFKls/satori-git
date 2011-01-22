@@ -21,23 +21,22 @@
 <p>Asked questions:</p>
 {% for question in widget.questions %}
 <div>
-    {{ question.public }}
-    <table class="messagebox">
-        <tr class="privheader">
+    <table {% if question.public %} class="pubquestion" {% else %} class="privquestion" {% endif %}>
+        <tr class="qheader">
             {% if question.q.problem.code %}
             <td><strong>Problem {{ question.q.problem.code }} </strong></td>
             {% else %}
             <td><i>General</i></td>
             {% endif %}
         </tr>
-        <tr class="privcontent">
+        <tr class="qcontent">
             <td>{{ question.q.content }} </td>
         </tr>
 {% if question.answer %}
-        <tr class="privheader">
+        <tr class="qheader">
             <td><strong>Answer</strong></td>
         </tr>
-        <tr class="privanswer">
+        <tr class="qanswer">
             <td>{{ question.answer|safe}} </td>
         </tr>
 {% endif %}

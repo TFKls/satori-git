@@ -136,7 +136,7 @@ body {
     text-align: center;
 }
 
-table.messagebox {
+table.pubquestion {
     width : 100%;
     border-collapse : collapse;
     cellspacing : 0;
@@ -145,27 +145,63 @@ table.messagebox {
 }
 
 
-table.messagebox tr.privheader td
+
+table.privquestion {
+    width : 100%;
+    border-collapse : collapse;
+    cellspacing : 0;
+    cellpadding : 0;
+    margin-top : 1em;
+}
+
+
+table.privquestion tr.qheader td
 {
-    background-color: #E0F8FF;
+    background-color: #D0E8F0;
     padding : 0.25em 0.5em;
 }
 
 
-table.messagebox tr.privcontent td
+table.privquestion tr.qcontent td
 {
     padding : 0.5em 0.5em;
-/*    border : 1px solid;
-    border-color : black; */
-    background-color: #F0F8FF; 
+    border : 1px solid;
+    border-color : #E0F8FF;
+/*    background-color: #F0F8FF; */
 }
 
 
-table.messagebox tr.privanswer td
+table.privquestion tr.qanswer td
 {
     padding : 0.5em 0.5em;
     background-color: #E8F8FF;
 }
+
+table.pubquestion tr.qheader td
+{
+    border : solid 1px;
+    background-color: #D0E020;
+    border-color: #D0E020;
+    padding : 0.25em 0.5em;
+}
+
+
+table.pubquestion tr.qcontent td
+{
+    padding : 0.5em 0.5em;
+    border-width : 0px 1px 1px 1px;
+    border-style : solid;
+    border-color: #809020;
+/*    background-color: #F0F8FF; */
+}
+
+
+table.pubquestion tr.qanswer td
+{
+    padding : 0.5em 0.5em;
+    background-color: #D0E020;
+}
+
 
 .newsmsg {
     padding-bottom: 1em;

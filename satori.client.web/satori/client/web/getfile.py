@@ -27,7 +27,7 @@ def getfile(argstr, request):
         t = Test.filter({'id' : int(params[1])})[0]
         response = HttpResponse(mimetype='application/octet-stream')
         response['Content-Disposition'] = 'attachment; filename='+t.name+'.'+params[2]
-        reader = t.oa_get_blob(params[2])
+        reader = t.data_get_blob(params[2])
         response.write(reader.read(reader.length))
         reader.close()
         return response

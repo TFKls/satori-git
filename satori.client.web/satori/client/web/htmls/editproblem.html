@@ -1,5 +1,6 @@
 <h3>{{ widget.p.name }}</h3>
 
+{% comment %}
 <form action="process.set_default_td" method="POST" enctype="multipart/form-data">
     <p>Select default judge:
     <select name="default_judge" onChange="submit();" style="margin-left: 2em">
@@ -38,12 +39,24 @@
     <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
     <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
 </form>
+{% endcomment %}
+
+<h4>Suites</h4>
+<table class="tlist">
+{% for ts,link in widget.suites %}
+<tr>
+    <td>{{ts.name}}</td>
+    <td>{{ts.description}}</td>
+    <td><a href="{{link}}">(edit)</a></td>
+</tr>
+{% endfor %}
+</table>
 
 <h4>Tests</h4>
 <p>Below there are given all tests that are connected to this problem. For given problem instance you can always
 pick any subset of this tests as your test suite.</p>
 <table class="tlist">
-{% for t,link in widget.tests %}
+{% for t,link,attr in widget.tests %}
     <tr>
     <th>
         {{t.name}}
@@ -55,6 +68,17 @@ pick any subset of this tests as your test suite.</p>
         <a href="{{link}}">view/correct</a>
     </td>
     </tr>
+    {% for a in attr %}
+    <tr>
+        <td>{{ a.name }}</td>
+        {% if a.is_blob %}
+            <td><a href="getfile.testdata.{{t.id}}.{{a.name}}">{{ a.filename }}</a></td>
+        {% else %}
+            <td>{{ a.value }}</td>
+        {% endif %}
+        <td></td>
+    </tr>
+    {% endfor %}
 {% endfor %}
 </table>
 <p>If you would like to add new test please go here: <a href={{widget.addlink}}>Add new test</a>.</p>

@@ -16,12 +16,21 @@
         <tr><td>PDF statement:<input type="file" name="pdfstatement" style="margin-left: 2em"/></td>
         <td style="text-align:right"><input type="submit" value="Confirm changes"/></td></tr>
     </table>
+    <h4>Default test suite:</h4>
+    <select name="dts">
+    {% for ts in widget.suites %}
+        <option value="{{ ts.id }}" {%if ts.id == widget.dts.id %} selected {% endif %}> {{ ts.name }} </option>
+    {% endfor %}
+    </select>
 <input type="hidden" name="pm_id" value="{{widget.pm.id}}"/>
 <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
 <input type="hidden" name="back_path" value="{{widget.back_path}}"/>
 </form>
 
 
+
+
+{% comment %}
 <h4>Tests</h4>
 <p>Here you can change the test suite for this problem. If you want to add new test please go to problem
 repository, select problem {{ widget.problem.name }}, add your test there, and then come back here to join 
@@ -43,3 +52,4 @@ your test to this test suite.</p>
     <td></td><td></td><td><input type="submit" value="Alter test suite"/></td></tr>
 </table>
 </form>
+{% endcomment %}

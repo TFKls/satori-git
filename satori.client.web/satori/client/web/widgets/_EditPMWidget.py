@@ -9,16 +9,15 @@ class EditPMWidget(Widget):
         self.htmlFile='htmls/editprmap.html'
         d = follow(params,path)
         id = int(d['problemid'][0])
-        p = ProblemMapping.filter({'id':id})[0]
-        self.pm = p
-        self.problem = p.problem
-        self.tests = list()
+        pm = ProblemMapping.filter({'id':id})[0]
+        p = pm.problem
+        self.pm = pm
+        self.problem = p
+        self.tests = Test.filter(TestStruct(problem=p))
+        self.suites = TestSuite.filter(TestSuiteStruct(problem=p))
         self.back_to = ToString(params)
         self.path = path
-        s = p.statement_get_str('text')
+        s = pm.statement_get_str('text')
         if s:
             self.statement = s
-        dts = p.default_test_suite
-        for t in Test.filter({'problem':p.problem}):
-            checked = bool(TestMapping.filter({'test':t, 'suite':dts}))
-            self.tests.append([t,checked])
+        self.dts = pm.default_test_suite

@@ -7,7 +7,7 @@ from blist import blist, sortedset
 
 from django.db.models import F
 
-from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping
+from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping, RankingParams
 from satori.events import Event, Client2
 
 def key_sortable(cls):
@@ -356,7 +356,13 @@ class CountAggregator(AggregatorBase):
         r = self.ranking
         for submit in submits:
             pm = submit.problem
-            ts = pm.default_test_suite
+            try:
+                rp = RankingParams.get(ranking = r, problem = pm)
+                ts = rp.test_suite
+            except RankingParams.DoesNotExist:
+                ts = None
+            if ts is None:
+                ts = pm.default_test_suite
             self.supervisor.schedule_test_suite_result(r, submit, ts)
 
     def created_contestants(self, contestants):

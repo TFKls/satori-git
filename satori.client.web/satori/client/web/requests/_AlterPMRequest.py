@@ -19,6 +19,6 @@ class AlterPMRequest(Request):
             pm.statement_set_blob_hash('pdf',phash)
         pm.code = request.POST['code']
         pm.title = request.POST['title']
+        pm.default_test_suite = TestSuite.filter(TestSuiteStruct(id=int(request.POST['dts'])))[0]
         d = ParseURL(request.POST['back_to'])
-        ret = DefaultLayout(dict=d,maincontent='problems')
-        return GetLink(ret,'')
+        return GetLink(d,'')
