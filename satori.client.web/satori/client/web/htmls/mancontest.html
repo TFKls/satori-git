@@ -1,21 +1,30 @@
 <h3>Rankings</h3>
 
-{% for a in widget.aggregators %}
-
-{{a}}<br/>
-
-{% endfor %}
-<h3>Subpages</h3>
-
-<table>
-{% for s,editlink in widget.subpages %}
+<table class="tlist">
+{% for s,editlink in widget.rankings %}
 <tr>
 <td>{{s.name}}</td>
-<td><a href={{ editlink }}>Edit</a></td>
+<td>{{s.aggregator}}</td>
+<td><a href={{ editlink }}>(edit)</a></td>
 </tr>
 {% endfor %}
 </table>
-<a href="{{widget.addlink}}">Create new subpage</a>
+
+<p><a href="{{widget.addrankinglink}}">Create new ranking</a></p>
+
+
+<h3>Subpages</h3>
+
+<table class="tlist">
+{% for s,editlink in widget.subpages %}
+<tr>
+<td>{{s.name}}</td>
+<td><a href={{ editlink }}>(edit)</a></td>
+</tr>
+{% endfor %}
+</table>
+
+<p><a href="{{widget.addsubpagelink}}">Create new subpage</a></p>
 
 <h3>Global rights</h3>
 <form action="process.contestrights" method="POST">

@@ -357,7 +357,7 @@ class CountAggregator(AggregatorBase):
         for submit in submits:
             pm = submit.problem
             try:
-                rp = RankingParams.get(ranking = r, problem = pm)
+                rp = RankingParams.objects.get(ranking = r, problem =  pm)
                 ts = rp.test_suite
             except RankingParams.DoesNotExist:
                 ts = None
@@ -367,6 +367,51 @@ class CountAggregator(AggregatorBase):
 
     def created_contestants(self, contestants):
         pass
+
+
+
+class MarksAggregator(AggregatorBase):
+
+    def __init__(self, supervisor, ranking):
+        super(MarksAggregator, self).__init__(supervisor, ranking)
+    
+    def recompute_row(self,c):
+        row = [c.usernames.rjust(20)]
+        for p in self.marked:
+            row.append(self.scores[c].get(p,'\-'))
+        row.append('Total'.rjust(20))
+        self.rest.set_row(c,c.usernames,'',row)
+        self.rest.store()
+
+    def init(self):
+        r = self.ranking
+        self.marked = []
+        self.scores = {}
+        super(MarksAggregator, self).init()
+        header = ['Contestant'.rjust(20)]
+        for rp in ProblemMapping.objects.filter(contest=r.contest):
+            self.marked.append(rp)
+            header.append(rp.code)
+        for c in Contestant.objects.filter(contest=r.contest):
+            if not c.invisible:
+                self.scores[c] = {}
+                self.recompute_row(c)
+        header.append('Total'.rjust(10))
+#        row = ['aa','1']
+        self.rest.add_header(header)
+        self.rest.add_footer(header)
+
+        
+    def checked_test_suite_results(self, test_suite_results):
+        pass
+
+    def created_submits(self, submits):
+        print "Detected submit!!!"
+
+    def created_contestants(self, contestants):
+        pass
+
+
 
 aggregators = {}
 for item in globals().values():

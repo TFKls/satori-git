@@ -4,6 +4,7 @@ from satori.client.web.queries import *
 class ManageContestWidget(Widget):
     pathName = 'mancontest'
     def __init__(self, params, path):
+        self.htmlFile = 'htmls/mancontest.html'
         c = ActiveContest(params)
         self.contest = c
         self.accepted = list()
@@ -14,13 +15,16 @@ class ManageContestWidget(Widget):
         for s in Subpage.get_for_contest(c,False):
             editlink = ToString(DefaultLayout(dict=params,maincontent='editsubpage',edit=[str(s.id)]))
             self.subpages.append([s,editlink])
+        self.rankings = []
         self.subpages.sort(key=lambda s : s[0].order)
-        self.addlink = ToString(DefaultLayout(dict=params,maincontent='editsubpage'))
-        self.htmlFile = 'htmls/mancontest.html'
-        self.aggregators = Global.get_aggregators().items()
-#        for a in self.aggregators.iteritems():
-#            print a[0]
-#            print a[1]
+        self.addsubpagelink = ToString(DefaultLayout(dict=params,maincontent='editsubpage',contest=c))
+
+
+        for r in Ranking.filter(RankingStruct(contest=c)):
+            editlink = ToString(DefaultLayout(dict=params,maincontent='editranking',edit=[str(r.id)]))
+            self.rankings.append([r,editlink])
+        self.addrankinglink = ToString(DefaultLayout(dict=params,maincontent='editranking',contest=c))
+            
         authenticated = Security.authenticated()
         
         if Privilege.get(authenticated, c, 'JOIN') is not None:
