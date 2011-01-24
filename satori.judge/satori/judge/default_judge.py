@@ -16,6 +16,7 @@ import datetime
 import getpass
 import httplib
 import logging
+import math
 import os
 import shutil
 import subprocess
@@ -48,9 +49,46 @@ parser.add_option('--default-checker-memory', dest='checker_memory', default=102
 (options, args) = parser.parse_args()
 
 def parse_time(timestr):
-    return 0
-def parse_memory(memorystr):
-    return 0
+    mul = 0.001
+    timestr = timestr.strip().lower()
+    if timestr[-1] == 's':
+        mul = 1
+        timestr = timestr[:-1]
+    if timestr[-1] == 'c':
+        mul = 0.01
+        timestr = timestr[:-1]
+    elif timestr[-1] == 'm':
+        mul = 0.001
+        timestr = timestr[:-1]
+    elif timestr[-1] == 'µ':
+        mul = 0.000001
+        timestr = timestr[:-1]
+    elif timestr[-1] == 'n'
+        timestr = mul = 0.000000001
+        timestr[0:-1]
+    return int(math.ceil(float(timestr) * mul * 1000))
+def parse_memory(memstr):
+    mul = 1
+    memstr = memstr.strip().lower()
+    if memstr[-1] == 'b':
+        mul = 1
+        memstr = memstr[:-1]
+    if memstr[-1] == 'k':
+        mul = 1024
+        memstr = memstr[:-1]
+    elif memstr[-1] == 'm':
+        mul = 1024**2
+        memstr = memstr[:-1]
+    elif memstr[-1] == 'g':
+        mul = 1024**3
+        memstr = memstr[:-1]
+    elif memstr[-1] == 't':
+        mul = 1024**4
+        memstr = memstr[:-1]
+    elif memstr[-1] == 'p':
+        mul = 1024**5
+        memstr = memstr[:-1]
+    return int(math.ceil(float(memstr) * mul))
 
 options.jail = os.path.abspath(os.path.join('/', options.jail))
 options.directory = os.path.abspath(os.path.join('/', options.directory))[1:]
@@ -75,8 +113,8 @@ test   = communicate('GETTEST', check=False)
 
 filename   = submit['content']['filename']
 fileext    = filename.split(".")[-1].lower()
-time_limit   = int(test.get('time', {'value' : options.execute_time})['value'])
-memory_limit = int(test.get('memory', {'value' : options.execute_memory})['value'])
+time_limit   = parse_time(test.get('time', {'value' : options.execute_time})['value'])
+memory_limit = parse_memory(test.get('memory', {'value' : options.execute_memory})['value'])
 has_checker  = 'checker' in test and test['checker']['is_blob']
 
 if fileext == 'c':
