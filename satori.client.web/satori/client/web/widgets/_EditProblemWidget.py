@@ -43,7 +43,7 @@ class EditProblemWidget(Widget):
         for ts in TestSuite.filter(TestSuiteStruct(problem=p)):
             link = ToString(DefaultLayout(maincontent='editsuite',dict=params,id=[str(ts.id)]))
             self.suites.append([ts,link])
-            
+        self.addsuitelink = ToString(DefaultLayout(maincontent='editsuite',dict=params,problem=[str(p.id)]))
         self.tests = []
 #        _params = deepcopy(params)
 #        _d = follow(_params,path)

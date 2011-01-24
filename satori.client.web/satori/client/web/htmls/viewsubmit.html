@@ -32,11 +32,23 @@
     {{widget.status}}</td>
 </tr>
 <tr>
-    <td colspan="6">{{widget.submit.details}}</td>
+    <td colspan="6">{{widget.details}}</td>
 </tr>
 
 
 </table>
+
+{% if widget.suites %}
+<h3>Suite results</h3>
+
+<table class="tlist">
+{% for s in widget.suites %}
+<tr>
+    <td>{{s.test_suite.name}}</td><td>{{s.test_suite.description}}</td><td>{{s.status}}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
 
 {% if widget.results %}
 <h3>Test results</h3>

@@ -11,14 +11,20 @@ class ViewSubmitWidget(Widget):
         s = Submit.filter({'id' : int(d['id'][0])})[0]
         res = s.get_result()
         self.sid = s.id
-        self.user = s.contestant.usernames
-        self.problem = s.problem.code
+        self.user = res.contestant
+        self.problem = res.problem
         self.time = s.time
-        tsr = TestSuiteResult.filter(TestSuiteResultStruct(submit=s,test_suite = s.problem.default_test_suite))
-        if tsr:
-            tsr = tsr[0]
+        self.details = res.details
+        self.status = res.status
+#        tsr = TestSuiteResult.filter(TestSuiteResultStruct(submit=s,test_suite = s.problem.default_test_suite))
+#        if tsr:
+#            tsr = tsr[0]
+#            self.results = []
+        self.isadmin = Allowed(c,'MANAGE')
+        if self.isadmin:
+            self.suites = TestSuiteResult.filter(TestSuiteResultStruct(submit=s))
             self.results = []
-            for t in s.problem.default_test_suite.get_tests():
+            for t in Test.filter(TestStruct(problem=s.problem.problem)):
                 testres = TestResult.filter(TestResultStruct(test=t,submit=s))
                 if len(testres)>0:
                     testres = testres[0]
@@ -30,9 +36,9 @@ class ViewSubmitWidget(Widget):
                         if not v.is_blob:
                             d['attr'].append([k,v.value])
                     self.results.append(d)                        
-        else:
-            self.results = None
-        self.status = res.status
+#        else:
+#            self.results = None
+            self.results.sort(key=lambda r: r['test'].name)
         rawcode = s.data_get_blob('content').read(100000)
         self.code = text2html('::\n\n'+''.join('  '+s for s in rawcode.splitlines(True)))
 #        self.content = text2html(s.content)

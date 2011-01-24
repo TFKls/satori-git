@@ -13,7 +13,10 @@
         <option value="{{a}}" {% if a == widget.editing.aggregator %} selected {% endif %}>{{a}}</option>
         {% endfor %}
     </select>
-{% comment %}
+{% comment %}    
+    <select name="visibility">
+        
+    </select>
     <p>Header:</p>
     <textarea name="header" rows="10" style="width: 100%">{{ widget.editing.header}}</textarea>
 

@@ -9,13 +9,22 @@ class EditSuiteWidget(Widget):
     def __init__(self,params,path):
         self.htmlFile='htmls/editsuite.html'
         d = follow(params,path)
-        id = int(d['id'][0])
-        ts = TestSuite.filter({'id':id})[0]
-        self.ts = ts
-        problem = ts.problem
+        if 'id' in d.keys():
+            id = int(d['id'][0])
+        else:
+            id = None
+        if id:
+            ts = TestSuite.filter({'id':id})[0]
+            self.ts = ts
+            problem = ts.problem
+            selected = [t.id for t in ts.get_tests()]
+        else:
+            selected = []
+            problem = Problem.filter(ProblemStruct(id=int(d['problem'][0])))[0]
+        self.problem = problem
         self.back_to = ToString(params)
         self.back_path = path
-        selected = [t.id for t in ts.get_tests()]
+        self.accumulators = Global.get_instance().get_accumulators()
         alltests = Test.filter(TestStruct(problem=problem))
         alltests.sort(key=lambda x : x.name)
         self.tests = []

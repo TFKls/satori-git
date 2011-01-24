@@ -180,8 +180,8 @@ table.privquestion tr.qanswer td
 table.pubquestion tr.qheader td
 {
     border : solid 1px;
-    background-color: #D0E020;
-    border-color: #D0E020;
+    background-color: #D8D020;
+    border-color: #D8D020;
     padding : 0.25em 0.5em;
 }
 
@@ -191,7 +191,7 @@ table.pubquestion tr.qcontent td
     padding : 0.5em 0.5em;
     border-width : 0px 1px 1px 1px;
     border-style : solid;
-    border-color: #809020;
+    border-color: #D8D020;
 /*    background-color: #F0F8FF; */
 }
 

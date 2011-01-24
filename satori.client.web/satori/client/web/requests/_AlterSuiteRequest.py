@@ -9,7 +9,11 @@ class AlterSuiteRequest(Request):
     pathName = 'altersuite'
     @classmethod
     def process(cls, request):
-        ts = TestSuite.filter(TestSuiteStruct(id=int(request.POST['id'])))[0]
+        if request.POST['id']:
+            ts = TestSuite.filter(TestSuiteStruct(id=int(request.POST['id'])))[0]
+        else:
+            ts = None
+            problem = Problem.filter(ProblemStruct(id=int(request.POST['problem'])))[0]
         tests = []
         for k in request.POST.keys():
             if k[0:4] == 'test':
@@ -17,6 +21,14 @@ class AlterSuiteRequest(Request):
                 tests.append(t)
         name = request.POST['name']
         description = request.POST['description']
-        ts.modify_full(TestSuiteStruct(name=name,description=description),tests)
+        accumulators = request.POST['accumulators']
+        tsstruct = TestSuiteStruct(name=name,description=description,accumulators=accumulators)
+        if not ts:
+            tsstruct.problem = problem
+            tsstruct.dispatcher='SerialDispatcher'
+        if ts:
+            ts.modify_full(tsstruct,tests)
+        else:
+            TestSuite.create(tsstruct,tests)
         d = ParseURL(request.POST['back_to'])
         return GetLink(d,'')

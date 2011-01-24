@@ -51,7 +51,7 @@ class ResultsWidget(Widget):
             else:
                 getall = True
                 submits = c.get_all_results(limit=limit,offset=self.offset)
-            self.users = [('all', 'All', getall), ('mine', 'Your own', getmine)] + [(c.id, c.usernames, not getall and not getmine and str(c.id)==curuser) for c in Contestant.filter(ContestantStruct(contest=c))]
+            self.users = [('all', 'All', getall), ('mine', 'Your own', getmine)] + [(ct.id, ct.usernames, not getall and not getmine and str(ct.id)==curuser) for ct in Contestant.filter(ContestantStruct(contest=c))]
         else:
             submits = c.get_results(contestant=cct,limit=limit,offset=self.offset)
 

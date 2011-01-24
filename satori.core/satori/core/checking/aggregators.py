@@ -377,9 +377,16 @@ class MarksAggregator(AggregatorBase):
     
     def recompute_row(self,c):
         row = [c.usernames.rjust(20)]
+        total = 0
         for p in self.marked:
-            row.append(self.scores[c].get(p,'\-'))
-        row.append('Total'.rjust(20))
+            if p in self.scores[c].keys():
+                score = self.scores[c][p][0]
+                total = total + score
+                ss = str(score).rjust(3)
+            else:
+                ss = ' \- '
+            row.append(ss)
+        row.append(str(total).rjust(10))
         self.rest.set_row(c,c.usernames,'',row)
         self.rest.store()
 
@@ -391,6 +398,8 @@ class MarksAggregator(AggregatorBase):
         header = ['Contestant'.rjust(20)]
         for rp in ProblemMapping.objects.filter(contest=r.contest):
             self.marked.append(rp)
+        self.marked.sort(key=lambda p: p.code)
+        for rp in self.marked:
             header.append(rp.code)
         for c in Contestant.objects.filter(contest=r.contest):
             if not c.invisible:
@@ -403,13 +412,40 @@ class MarksAggregator(AggregatorBase):
 
         
     def checked_test_suite_results(self, test_suite_results):
-        pass
+        for tr in test_suite_results:
+            print "Found result."
+            submit = tr.submit
+            p = submit.problem
+            c = submit.contestant
+            checked = int(tr.oa_get_str('checked'))
+            passed = int(tr.oa_get_str('passed'))
+            if checked == 0:
+                score = 0
+            else:
+                score = int(100*passed/checked)
+            print c.usernames + "," + p.code + ": "+str(score)
+            if not c.invisible and ((not (p in self.scores[c].keys())) or self.scores[c][p][1]<submit.time):
+                self.scores[c][p] = [score,submit.time]
+                self.recompute_row(c)
 
     def created_submits(self, submits):
-        print "Detected submit!!!"
+        r = self.ranking
+        for submit in submits:
+            pm = submit.problem
+            try:
+                rp = RankingParams.objects.get(ranking = r, problem =  pm)
+                ts = rp.test_suite
+            except RankingParams.DoesNotExist:
+                ts = None
+            if ts is None:
+                ts = pm.default_test_suite
+            self.supervisor.schedule_test_suite_result(r, submit, ts)
 
     def created_contestants(self, contestants):
-        pass
+        for c in contestants:
+            if not c.invisible:
+                self.scores[c] = {}
+                self.recompute_row(c)
 
 
 
