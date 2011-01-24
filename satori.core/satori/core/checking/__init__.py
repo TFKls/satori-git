@@ -47,6 +47,7 @@ class CheckingMaster(Client2):
         self.map({'type': 'checking_rejudge_test_result'}, self.queue)
         self.map({'type': 'checking_rejudge_test_suite_result'}, self.queue)
         self.map({'type': 'checking_rejudge_ranking'}, self.queue)
+        self.map({'type': 'checking_default_test_suite_change'}, self.queue)
         self.map({'type': 'checking_new_submit'}, self.queue)
         self.map({'type': 'checking_new_contestant'}, self.queue)
         self.map({'type': 'checking_test_result_dequeue'}, self.queue)
