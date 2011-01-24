@@ -14,3 +14,5 @@ syntax: regexp
 \.egg-info/
 tmp/*
 satori.javatool/bin/*
+\.orig$
+syncdb.sh

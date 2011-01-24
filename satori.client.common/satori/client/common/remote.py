@@ -30,6 +30,9 @@ elif getpass.getuser() == 'gutowski':
     client_host = 'satori.tcs.uj.edu.pl'
     client_port = 38889
     blob_port = 38887
+    client_host = 'student.tcs.uj.edu.pl'
+    client_port = 36889
+    blob_port = 36887
 elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     client_host = 'localhost'
     client_port = 37889
