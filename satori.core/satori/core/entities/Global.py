@@ -26,7 +26,7 @@ class Global(Entity):
         cls._inherit_add(inherits, 'MANAGE_CONTESTS', 'id', 'ADMIN')
         cls._inherit_add(inherits, 'MANAGE_PROBLEMS', 'id', 'ADMIN')
         cls._inherit_add(inherits, 'JUDGE', 'id', 'ADMIN')
-        cls._inherit_add(inherits, 'RAW_BLOB', 'id', 'ADMIN')
+        cls._inherit_add(inherits, 'RAW_BLOB', 'id', 'JUDGE')
         return inherits
 
     def save(self, *args, **kwargs):
