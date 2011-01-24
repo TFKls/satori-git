@@ -46,7 +46,8 @@ class Contest(Entity):
 
     name            = models.CharField(max_length=50, unique=True)
     problems        = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
-    contestant_role = models.ForeignKey('Role', related_name='contests+')
+    contestant_role = models.ForeignKey('Role', related_name='contest_contestants+')
+    admin_role      = models.ForeignKey('Role', related_name='contest_admins+')
     archived        = models.BooleanField(default=False)
 
     lock_start   = models.DateTimeField(null=True)
@@ -58,7 +59,7 @@ class Contest(Entity):
     intra_files  = AttributeGroupField(PCArg('self', 'VIEW_INTRA_FILES'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
-        fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
+        fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
     @classmethod
     def inherit_rights(cls):
@@ -100,13 +101,19 @@ class Contest(Entity):
     @staticmethod
     def create(fields):
         contest = Contest()
-        contest.forbid_fields(fields, ['id', 'contestant_role'])
+        contest.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
         contest.update_fields(fields, ['name', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         contestant_role = Role(name='Contestant of ' + contest.name)
         contestant_role.save()
+        admin_role = Role(name='Administrator of ' + contest.name)
+        admin_role.save()
         contest.contestant_role = contestant_role
+        contest.admin_role = admin_role
         contest.save()
-        Privilege.grant(token_container.token.role, contest, 'MANAGE')
+        contest.admin_role.add_member(token_container.token.role)
+        Privilege.grant(contest.admin_role, contest, 'MANAGE')
+        Privilege.grant(contest.admin_role, contest.admin_role, 'MANAGE')
+        Privilege.grant(contest.admin_role, contest.contestant_role, 'MANAGE')
         Privilege.grant(contest.contestant_role, contest, 'VIEW')
         return contest
    
@@ -118,6 +125,9 @@ class Contest(Entity):
         if 'name' in modified:
             role = self.contestant_role
             role.name='Contestant of ' + self.name
+            role.save()
+            role = self.admin_role
+            role.name='Administrator of ' + self.name
             role.save()
         return self
 
@@ -152,8 +162,7 @@ class Contest(Entity):
             contestant.invisible = True
             contestant.save()
 #TODO: REJUDGE!
-        Privilege.grant(user, self, 'MANAGE')
-        Privilege.grant(user, self.contestant_role, 'MANAGE')
+        self.admin_role.add_member(user)
 
     @staticmethod
     def submit_to_result_to_render(submit):

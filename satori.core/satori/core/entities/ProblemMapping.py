@@ -41,7 +41,7 @@ class ProblemMapping(Entity):
     def __str__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
 
-    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCAnd(PCArgField('fields', 'contest', 'MANAGE'), PCArgField('fields', 'problem', 'MANAGE')), [CannotSetField])
     @staticmethod
     def create(fields):
         problem_mapping = ProblemMapping()
@@ -50,6 +50,7 @@ class ProblemMapping(Entity):
         if problem_mapping.problem != problem_mapping.default_test_suite.problem:
             raise CannotSetField()
         problem_mapping.save()
+        Privilege.grant(problem_mapping.contest.admin_role, problem_mapping.problem, 'MANAGE')
         return problem_mapping
 
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
