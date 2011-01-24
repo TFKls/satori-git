@@ -36,6 +36,7 @@ class CheckingMaster(Client2):
         self.ranking_checked_test_suite_results = dict()
         self.ranking_rejudged_test_suite_results = dict()
         self.rankings_to_rejudge = set()
+        self.rankings_changed_default_test_suite = dict()
     
     def init(self):
         self.attach(self.queue)
@@ -83,6 +84,11 @@ class CheckingMaster(Client2):
                 flag = True
                 ranking = self.rankings_to_rejudge.pop()
                 self.do_rejudge_ranking(ranking)
+            while self.rankings_changed_default_test_suite:
+                flag = True
+                (ranking, problem_mappings) = self.rankings_changed_default_test_suite.popitem()
+                for problem_mapping in problem_mappings:
+                    self.do_ranking_changed_default_test_suite(ranking, problem_mapping)
             while self.test_suite_result_rejudged_test_results:
                 flag = True
                 (test_suite_result, test_results) = self.test_suite_result_rejudged_test_results.popitem()
@@ -179,6 +185,15 @@ class CheckingMaster(Client2):
             logging.debug('checking master: rejudge ranking %s: not running', ranking.id)
             self.start_ranking(ranking)
 
+    def do_ranking_changed_default_test_suite(self, ranking, problem_mapping):
+        if ranking in self.ranking_map:
+            logging.debug('checking master: changed_default_test_suite ranking %s: running', ranking.id)
+            self.call_ranking(ranking, 'changed_default_test_suite', problem_mapping)
+        else:
+            logging.debug('checking master: changed_default_test_suite ranking %s: not running', ranking.id)
+            self.start_ranking(ranking)
+
+
     def handle_event(self, queue, event):
         logging.debug('checking master: event %s', event.type)
 
@@ -218,6 +233,12 @@ class CheckingMaster(Client2):
             ranking = Ranking.objects.get(id=event.id)
             logging.debug('checking master: rejudge ranking %s', ranking.id)
             self.rankings_to_rejudge.add(ranking)
+        elif event.type == 'checking_default_test_suite_change':
+            problem_mapping = ProblemMapping.objects.get(id=event.id)
+            for submit in Submit.objects.filter(problem=problem_mapping):
+                self.schedule_test_suite_result(None, submit, problem_mapping.default_test_suite)
+            for ranking in Ranking.objects.filter(contest=problem_mapping.contest):
+                self.rankings_changed_default_test_suite.setdefault(ranking, set()).add(problem_mapping)
         elif event.type == 'checking_new_submit':
             submit = Submit.objects.get(id=event.id)
             logging.debug('checking master: new submit %s', submit.id)

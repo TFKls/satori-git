@@ -55,10 +55,12 @@ class ProblemMapping(Entity):
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, [ 'id', 'contest', 'problem' ])
-        self.update_fields(fields, [ 'code', 'title', 'default_test_suite' ])
+        update = self.update_fields(fields, [ 'code', 'title', 'default_test_suite' ])
         if self.problem != self.default_test_suite.problem:
             raise CannotSetField()
         self.save()
+        if 'default_test_suite' in update:
+            RawEvent().send(Event(type='checking_default_test_suite_change', id=self.id))
         return self
 
 class ProblemMappingEvents(Events):
