@@ -26,28 +26,6 @@ import yaml
 import traceback
 from optparse import OptionParser
 
-parser = OptionParser()
-
-parser.add_option('-d', '--debug', dest='debug', action='store_true', default=False)
-
-parser.add_option('-H', '--control-host', dest='host', default='192.168.100.101', action='store', type='string')
-parser.add_option('-P', '--control-port', dest='port', default=8765, action='store', type='int')
-
-parser.add_option('-J', '--jail', dest='jail', default='/jail', action='store', type='string')
-parser.add_option('-T', '--template', dest='template', default='judge', action='store', type='string')
-parser.add_option('-U', '--user', dest='user', default='runner', action='store', type='string')
-parser.add_option('-G', '--group', dest='group', default='runner', action='store', type='string')
-parser.add_option('-D', '--directory', dest='directory', default='/runner', action='store', type='string')
-
-parser.add_option('--default-compile-time', dest='compile_time', default=20*1000, action='store', type='int')
-parser.add_option('--default-compile-memory', dest='compile_memory', default=256*1024*1024, action='store', type='int')
-parser.add_option('--default-execute-time', dest='execute_time', default=10*1000, action='store', type='int')
-parser.add_option('--default-execute-memory', dest='execute_memory', default=256*1024*1024, action='store', type='int')
-parser.add_option('--default-checker-time', dest='checker_time', default=60*1000, action='store', type='int')
-parser.add_option('--default-checker-memory', dest='checker_memory', default=1024*1024*1024, action='store', type='int')
-
-(options, args) = parser.parse_args()
-
 def parse_time(timestr):
     mul = 0.001
     timestr = timestr.strip().lower()
@@ -67,6 +45,9 @@ def parse_time(timestr):
         timestr = mul = 0.000000001
         timestr[0:-1]
     return int(math.ceil(float(timestr) * mul * 1000))
+def parse_time_callback(option, opt_str, value, parser):
+    setattr(parser.values, option.dest, parse_time(value))
+
 def parse_memory(memstr):
     mul = 1
     memstr = memstr.strip().lower()
@@ -89,6 +70,30 @@ def parse_memory(memstr):
         mul = 1024**5
         memstr = memstr[:-1]
     return int(math.ceil(float(memstr) * mul))
+def parse_memory_callback(option, opt_str, value, parser):
+    setattr(parser.values, option.dest, parse_memory(value))
+
+parser = OptionParser()
+
+parser.add_option('-d', '--debug', dest='debug', action='store_true', default=False)
+
+parser.add_option('-H', '--control-host', dest='host', default='192.168.100.101', action='store', type='string')
+parser.add_option('-P', '--control-port', dest='port', default=8765, action='store', type='int')
+
+parser.add_option('-J', '--jail', dest='jail', default='/jail', action='store', type='string')
+parser.add_option('-T', '--template', dest='template', default='judge', action='store', type='string')
+parser.add_option('-U', '--user', dest='user', default='runner', action='store', type='string')
+parser.add_option('-G', '--group', dest='group', default='runner', action='store', type='string')
+parser.add_option('-D', '--directory', dest='directory', default='/runner', action='store', type='string')
+
+parser.add_option('--default-compile-time', dest='compile_time', default=20*1000, type='int', action="callback", callback=parse_time_callback)
+parser.add_option('--default-compile-memory', dest='compile_memory', default=256*1024*1024, type='int', action="callback", callback=parse_memory_callback)
+parser.add_option('--default-execute-time', dest='execute_time', default=10*1000, type='int', action="callback", callback=parse_time_callback)
+parser.add_option('--default-execute-memory', dest='execute_memory', default=256*1024*1024, type='int', action="callback", callback=parse_memory_callback)
+parser.add_option('--default-checker-time', dest='checker_time', default=60*1000, type='int', action="callback", callback=parse_time_callback)
+parser.add_option('--default-checker-memory', dest='checker_memory', default=1024*1024*1024, type='int', action="callback", callback=parse_memory_callback)
+
+(options, args) = parser.parse_args()
 
 options.jail = os.path.abspath(os.path.join('/', options.jail))
 options.directory = os.path.abspath(os.path.join('/', options.directory))[1:]
@@ -107,14 +112,19 @@ def communicate(cmd, args={}, check=True):
         raise Exception('Communication '+cmd+' finished with failure')
     return ret
 
-
 submit = communicate('GETSUBMIT', check=False)
 test   = communicate('GETTEST', check=False)
 
 filename   = submit['content']['filename']
 fileext    = filename.split(".")[-1].lower()
-time_limit   = parse_time(test.get('time', {'value' : options.execute_time})['value'])
-memory_limit = parse_memory(test.get('memory', {'value' : options.execute_memory})['value'])
+if 'time' in test and not test['time']['is_blob']:
+    time_limit = parse_time(test.get('time')['value'])
+else:
+    time_limit = options.execute_time
+if 'memory' in test and not test['memory']['is_blob']:
+    memory_limit = parse_memory(test.get('memory')['value'])
+else:
+    time_limit = options.execute_memory
 has_checker  = 'checker' in test and test['checker']['is_blob']
 
 if fileext == 'c':
@@ -135,8 +145,9 @@ else:
 
 communicate('CREATEJAIL', {'path': options.jail, 'template': options.template})
 
-communicate('GETSUBMITBLOB', {'name': 'content', 'path': os.path.join(options.jail, options.directory, source_file)})
+
 #COMPILE
+communicate('GETSUBMITBLOB', {'name': 'content', 'path': os.path.join(options.jail, options.directory, source_file)})
 compile_run = ["runner", "--quiet",
       "--root="+options.jail,
       "--work-dir="+options.directory,
@@ -166,8 +177,8 @@ if ret:
     sys.exit(0)
 
 
-communicate('GETTESTBLOB', {'name': 'input', 'path': '/tmp/data.in'})
 #RUN
+communicate('GETTESTBLOB', {'name': 'input', 'path': '/tmp/data.in'})
 execute_run = ["runner",
       "--root="+options.jail,
       "--work-dir="+options.directory,
@@ -202,8 +213,8 @@ if ret != "OK":
     sys.exit(0)
 
 
-communicate('GETTESTBLOB', {'name': 'hint', 'path': '/tmp/data.hint'})
 #TEST
+communicate('GETTESTBLOB', {'name': 'hint', 'path': '/tmp/data.hint'})
 if has_checker:
     communicate('GETTESTBLOB', {'name': 'checker', 'path': '/tmp/checker.x'})
     os.chmod("/tmp/checker.x",0755)

@@ -15,6 +15,5 @@ setup(name='satori.judge',
     entry_points='''
         [console_scripts]
         satori.judge_init = satori.judge:judge_init
-        satori.judge_try = satori.judge:judge_try
     ''',
 )
