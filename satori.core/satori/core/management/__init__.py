@@ -14,7 +14,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
 
     from satori.core.dbev.install import install_dbev_sql, install_rights_sql
     from satori.core.export       import token_container, DjangoStruct
-    from satori.core.models       import Security, Privilege, Global, User
+    from satori.core.models       import Security, Privilege, Global, User, Machine
     from satori.core.sec          import Token
 
     print 'Installing DBEV'
@@ -43,5 +43,12 @@ def create_admin(app, created_models, verbosity, **kwargs):
     admin = User.create(DjangoStruct('User')(login=settings.ADMIN_NAME, name='Super Admin', activated=True))
     admin.set_password(settings.ADMIN_PASSWORD)
     Privilege.global_grant(admin, 'ADMIN')
+
+    print 'Creating checkers'
+
+    for (login, password, address, netmask) in settings.CHECKERS:
+        checker = Machine.create(DjangoStruct('Machine')(login=login, address=address, netmask=netmask))
+        checker.set_password(password)
+        Privilege.global_grant(checker, 'JUDGE')
 
 post_syncdb.connect(create_admin)
