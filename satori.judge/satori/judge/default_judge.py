@@ -63,7 +63,7 @@ def parse_time(timestr):
     elif timestr[-1] == 'µ':
         mul = 0.000001
         timestr = timestr[:-1]
-    elif timestr[-1] == 'n'
+    elif timestr[-1] == 'n':
         timestr = mul = 0.000000001
         timestr[0:-1]
     return int(math.ceil(float(timestr) * mul * 1000))
