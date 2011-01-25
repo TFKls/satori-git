@@ -28,7 +28,7 @@ parser.add_option('--template-src', dest='template_src', default='student.tcs.uj
 parser.add_option('--retry-time', dest='retry_time', default=5, action='store', type='int')
 
 parser.add_option('--cgroup', dest='cgroup', default='runner', action='store', type='string')
-parser.add_option('--memory', dest='cgroup_memory', default=2*1024*1024, action='store', type='int')
+parser.add_option('--memory', dest='cgroup_memory', default=2*1024*1024*1024, action='store', type='int')
 parser.add_option('--time', dest='cgroup_time', default=5*60*1000, action='store', type='int')
 
 parser.add_option('--judge', dest='default_judge', default='/bin/judge', action='store', type='string')
@@ -70,7 +70,7 @@ def judge_loop():
                 template_path=options.template_dir)
             try:
                 jb.create()
-                dst_path = os.path.join(jail_dir, 'judge')
+                dst_path = os.path.join(options.jail_dir, 'judge')
                 if td.get('judge') and td.get('judge').is_blob:
                     td.get_blob_path('judge', dst_path)
                 else:
