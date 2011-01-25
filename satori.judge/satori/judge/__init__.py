@@ -132,26 +132,26 @@ def judge_initialize():
     subprocess.check_call(['iptables', '-F', 'FORWARD'])
     subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
 
-    subprocess.call(['umount', '-l', cgroup_dir])
-    subprocess.call(['rmdir', cgroup_dir])
-    subprocess.check_call(['mkdir', '-p', cgroup_dir])
-    subprocess.check_call(['mount', '-t', 'cgroup', '-o', 'rw,nosuid,noexec,relatime,memory,cpuacct,cpuset', 'cgroup', cgroup_dir])
-    if templates_src:
-        subprocess.call(['umount', '-l', templates_dir])
-        subprocess.call(['rmdir', templates_dir])
-        subprocess.check_call(['mkdir', '-p', templates_dir])
-        subprocess.check_call(['mkdir', '-p', templates_dir+'.temp'])
-        subprocess.check_call(['mount', templates_src, templates_dir+'.temp'])
-        subprocess.check_call(['rsync', '-a', templates_dir+'.temp/', templates_dir])
-        subprocess.check_call(['umount', templates_dir+'.temp'])
-        subprocess.call(['rmdir', templates_dir+'.temp'])
+    subprocess.call(['umount', '-l', options.cgroup_dir])
+    subprocess.call(['rmdir', options.cgroup_dir])
+    subprocess.check_call(['mkdir', '-p', options.cgroup_dir])
+    subprocess.check_call(['mount', '-t', 'cgroup', '-o', 'rw,nosuid,noexec,relatime,memory,cpuacct,cpuset', 'cgroup', options.cgroup_dir])
+    if options.template_src:
+        subprocess.call(['umount', '-l', options.template_dir])
+        subprocess.call(['rmdir', options.template_dir])
+        subprocess.check_call(['mkdir', '-p', options.template_dir])
+        subprocess.check_call(['mkdir', '-p', options.template_dir+'.temp'])
+        subprocess.check_call(['mount', options.template_src, templates_dir+'.temp'])
+        subprocess.check_call(['rsync', '-a', options.template_dir+'.temp/', templates_dir])
+        subprocess.check_call(['umount', options.template_dir+'.temp'])
+        subprocess.call(['rmdir', options.template_dir+'.temp'])
 
 def judge_finalize():
-        subprocess.call(['umount', '-l', cgroup_dir])
-        subprocess.call(['rmdir', cgroup_dir])
-        if templates_src:
-            subprocess.call(['umount', '-l', templates_dir])
-            subprocess.call(['rmdir', templates_dir])
+        subprocess.call(['umount', '-l', options.cgroup_dir])
+        subprocess.call(['rmdir', options.cgroup_dir])
+        if options.template_src:
+            subprocess.call(['umount', '-l', options.template_dir])
+            subprocess.call(['rmdir', options.template_dir])
 
 def judge_init():
     try:
