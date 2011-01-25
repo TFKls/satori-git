@@ -141,8 +141,8 @@ def judge_initialize():
         subprocess.call(['rmdir', options.template_dir])
         subprocess.check_call(['mkdir', '-p', options.template_dir])
         subprocess.check_call(['mkdir', '-p', options.template_dir+'.temp'])
-        subprocess.check_call(['mount', options.template_src, templates_dir+'.temp'])
-        subprocess.check_call(['rsync', '-a', options.template_dir+'.temp/', templates_dir])
+        subprocess.check_call(['mount', options.template_src, options.template_dir+'.temp'])
+        subprocess.check_call(['rsync', '-a', options.template_dir+'.temp/', options.template_dir])
         subprocess.check_call(['umount', options.template_dir+'.temp'])
         subprocess.call(['rmdir', options.template_dir+'.temp'])
 
