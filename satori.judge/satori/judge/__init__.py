@@ -61,8 +61,8 @@ def judge_loop():
             }
 
             template = 'default'
-            if 'template' in td and not td['template'].is_blob:
-                template = td['template'].value
+            if td.get('template') not td.get('template').is_blob:
+                template = td.get('template').value
 
             jb = JailBuilder(
                 root=options.jail_dir,
@@ -71,7 +71,7 @@ def judge_loop():
             try:
                 jb.create()
                 dst_path = os.path.join(jail_dir, 'judge')
-                if 'judge' in td and td['judge'].is_blob:
+                if td.get('judge') and td.get('judge').is_blob:
                     td.get_blob_path('judge', dst_path)
                 else:
                     with open(options.default_judge, 'r') as judge_src:
