@@ -119,7 +119,7 @@ class Contest(Entity):
    
     @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), DjangoStruct('Contest')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        self.forbid_fields(fields, ['id', 'contestant_role'])
+        self.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
         modified = self.update_fields(fields, ['name', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         self.save()
         if 'name' in modified:
