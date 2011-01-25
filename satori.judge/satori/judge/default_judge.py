@@ -28,7 +28,7 @@ from optparse import OptionParser
 
 def parse_time(timestr):
     mul = 0.001
-    timestr = timestr.strip().lower()
+    timestr = unicode(timestr.strip().lower())
     if timestr[-1] == 's':
         mul = 1
         timestr = timestr[:-1]
@@ -38,7 +38,7 @@ def parse_time(timestr):
     elif timestr[-1] == 'm':
         mul = 0.001
         timestr = timestr[:-1]
-    elif timestr[-1] == 'µ':
+    elif timestr[-1] == u'µ':
         mul = 0.000001
         timestr = timestr[:-1]
     elif timestr[-1] == 'n':
@@ -50,7 +50,7 @@ def parse_time_callback(option, opt_str, value, parser):
 
 def parse_memory(memstr):
     mul = 1
-    memstr = memstr.strip().lower()
+    memstr = unicode(memstr.strip().lower())
     if memstr[-1] == 'b':
         mul = 1
         memstr = memstr[:-1]
