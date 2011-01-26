@@ -36,6 +36,7 @@ class TemporarySubmit(Entity):
         ts.test_data_set_map(test_data)
         ts.submit_data_set_map(test_data)
         Privilege.grant(token_container.token.role, ts, 'MANAGE')
+        RawEvent().send(Event(type='checking_new_temporary_submit', id=ts.id))
         return ts
 
 class TemporarySubmitEvents(Events):

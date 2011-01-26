@@ -16,6 +16,8 @@ class CheckingMaster(Client2):
     def __init__(self):
         super(CheckingMaster, self).__init__()
 
+        self.temporary_submit_queue = deque()
+
         self.test_result_queue = deque()
         self.test_result_set = set()
         self.test_result_judged_set = set()
@@ -49,6 +51,7 @@ class CheckingMaster(Client2):
         self.map({'type': 'checking_rejudge_ranking'}, self.queue)
         self.map({'type': 'checking_default_test_suite_change'}, self.queue)
         self.map({'type': 'checking_new_submit'}, self.queue)
+        self.map({'type': 'checking_new_temporary_submit'}, self.queue)
         self.map({'type': 'checking_new_contestant'}, self.queue)
         self.map({'type': 'checking_test_result_dequeue'}, self.queue)
 
@@ -62,6 +65,8 @@ class CheckingMaster(Client2):
             self.start_test_suite_result(test_suite_result)
         for ranking in Ranking.objects.filter(contest__archived=False):
             self.start_ranking(ranking)
+        for temporary_submit in TemporarySubmit.objects.filter(pending=True):
+            self.temporary_submit_queue.append(temporary_submit)
 
         self.do_work()
 
@@ -246,6 +251,10 @@ class CheckingMaster(Client2):
             self.schedule_test_suite_result(None, submit, submit.problem.default_test_suite)
             for ranking in Ranking.objects.filter(contest=submit.problem.contest):
                 self.ranking_created_submits.setdefault(ranking, set()).add(submit)
+        elif event.type == 'checking_new_temporary_submit':
+            temporary_submit = TemporarySubmit.objects.get(id=event.id)
+            logging.debug('checking master: new temporary submit %s', temporary_submit.id)
+            self.temporary_submit_queue.append(temporary_submit)
         elif event.type == 'checking_new_contestant':
             contestant = Contestant.objects.get(id=event.id)
             logging.debug('checking master: new contestant %s', contestant.id)
@@ -254,7 +263,12 @@ class CheckingMaster(Client2):
         elif event.type == 'checking_test_result_dequeue':
             e = Event(type='checking_test_result_dequeue_result')
             e.tag = event.tag
-            if self.test_result_queue:
+            if self.temporary_submit_queue:
+                temporary_submit = self.temporary_submit_queue.popleft()
+                temporary_submit.tester = Role.objects.get(id=event.tester_id)
+                temporary_submit.save()
+                e.test_result_id = -temporary_submit.id
+            elif self.test_result_queue:
                 test_result = self.test_result_queue.popleft()
                 self.test_result_set.remove(test_result)
                 self.test_result_judged_set.add(test_result)

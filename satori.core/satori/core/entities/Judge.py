@@ -11,7 +11,7 @@ from satori.core.models import Role
 from satori.events      import Event
 
 SubmitToCheck = Struct('SubmitToCheck', (
-    ('test_result', DjangoId(TestResult), True),
+    ('test_result', long, True),
     ('test_data', TypedMap(unicode, AnonymousAttribute), False),
     ('submit_data', TypedMap(unicode, AnonymousAttribute), False),
 ))
@@ -32,28 +32,49 @@ class Judge(object):
             return None
 
         ret = SubmitToCheck()
-        ret.test_result = TestResult.objects.get(id=next.test_result_id)
-        ret.test_data = ret.test_result.test.data_get_map()
-        ret.submit_data = ret.test_result.submit.data_get_map()
+        ret.test_result = next.test_result_id
+
+        if next.test_result_id > 0:
+            test_result = TestResult.objects.get(id=next.test_result_id)
+            ret.test_data = test_result.test.data_get_map()
+            ret.submit_data = test_result.submit.data_get_map()
+        else:
+            temporary_submit = TemporarySubmit.objects.get(id=-next.test_result_id)
+            ret.test_data = temporary_submit.test_data_get_map()
+            ret.submit_data = temporary_submit.submit_data_get_map()
 
         return ret
 
-    @ExportMethod(NoneType, [DjangoId('TestResult'), TypedMap(unicode, AnonymousAttribute)], PCGlobal('JUDGE'))
+    @ExportMethod(NoneType, [long, TypedMap(unicode, AnonymousAttribute)], PCGlobal('JUDGE'))
     @staticmethod
-    def set_partial_result(test_result, result):
-        if test_result.tester != token_container.token.role:
-            return
+    def set_partial_result(test_result_id, result):
+        if test_result_id > 0:
+            test_result = TestResult.objects.get(id=test_result_id)
+            if test_result.tester != token_container.token.role:
+                return
+            test_result.oa_set_map(result)
+        else:
+            temporary_submit = TemporarySubmit.objects.get(id=-test_result_id)
+            if temporary_submit.tester != token_container.token.role:
+                return
+            temporary_submit.result_set_map(result)
 
-        test_result.oa_set_map(result)
-
-    @ExportMethod(NoneType, [DjangoId('TestResult'), TypedMap(unicode, AnonymousAttribute)], PCGlobal('JUDGE'))
+    @ExportMethod(NoneType, [long, TypedMap(unicode, AnonymousAttribute)], PCGlobal('JUDGE'))
     @staticmethod
-    def set_result(test_result, result):
-        if test_result.tester != token_container.token.role:
-            return
-
-        test_result.oa_set_map(result)
-        test_result.pending = False
-        test_result.save()
+    def set_result(test_result_id, result):
+        if test_result_id > 0:
+            test_result = TestResult.objects.get(id=test_result_id)
+            if test_result.tester != token_container.token.role:
+                return
+            test_result.oa_set_map(result)
+            test_result.pending = False
+            test_result.save()
+            RawEvent().send(Event(type='checking_checked_test_result', id=test_result.id))
+        else:
+            temporary_submit = TemporarySubmit.objects.get(id=-test_result_id)
+            if temporary_submit.tester != token_container.token.role:
+                return
+            temporary_submit.result_set_map(result)
+            temporary_submit.pending = False
+            temporary_submit.save()
         
-        RawEvent().send(Event(type='checking_checked_test_result', id=test_result.id))
