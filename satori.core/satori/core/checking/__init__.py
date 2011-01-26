@@ -189,7 +189,7 @@ class CheckingMaster(Client2):
     def do_ranking_changed_default_test_suite(self, ranking, problem_mapping):
         if ranking in self.ranking_map:
             logging.debug('checking master: changed_default_test_suite ranking %s: running', ranking.id)
-            self.call_ranking(ranking, 'changed_default_test_suite', problem_mapping)
+            self.call_ranking(ranking, 'changed_default_test_suite', [problem_mapping])
         else:
             logging.debug('checking master: changed_default_test_suite ranking %s: not running', ranking.id)
             self.start_ranking(ranking)
