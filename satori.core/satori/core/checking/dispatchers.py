@@ -3,6 +3,7 @@ import logging
 from collections import deque
 
 from satori.core.checking.accumulators import accumulators
+from satori.core.checking.reporters import reporters
 from satori.core.models import Test, TestMapping
 
 class DispatcherBase(object):
@@ -14,10 +15,13 @@ class DispatcherBase(object):
         self.accumulators = [
             accumulators[accumulator](test_suite_result) for accumulator in accumulator_list
         ]
+        self.reporter = reporters[test_suite_result.test_suite.reporter](test_suite_result)
 
     def init(self):
         for accumulator in self.accumulators:
             accumulator.init()
+        self.reporter.init()
+
     def checked_test_results(self, test_results):
         raise NotImplementedError
     def rejudged_test_results(self, test_results):
@@ -28,6 +32,7 @@ class DispatcherBase(object):
     def accumulate(self, test_result):
         for accumulator in self.accumulators:
             accumulator.accumulate(test_result)
+        self.reporter.accumulate(test_result)
 
     def status(self):
         return all(accumulator.status() for accumulator in self.accumulators)
@@ -35,6 +40,7 @@ class DispatcherBase(object):
     def finish(self):
         for accumulator in self.accumulators:
             accumulator.deinit()
+        self.reporter.deinit()
         self.supervisor.finished_test_suite_result(self.test_suite_result)
 
 class SerialDispatcher(DispatcherBase):

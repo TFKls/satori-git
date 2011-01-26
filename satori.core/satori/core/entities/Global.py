@@ -95,6 +95,17 @@ class Global(Entity):
 
     @ExportMethod(TypedMap(unicode, unicode), [], PCPermit())
     @staticmethod
+    def get_reporters():
+        from satori.core.checking.reporters import reporters
+        ret = {}
+        for name in reporters:
+            ret[name] = reporters[name].__doc__
+            if ret[name] is None:
+                ret[name] = ''
+        return ret
+
+    @ExportMethod(TypedMap(unicode, unicode), [], PCPermit())
+    @staticmethod
     def get_aggregators():
         from satori.core.checking.aggregators import aggregators
         ret = {}

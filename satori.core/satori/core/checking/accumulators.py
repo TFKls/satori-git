@@ -19,35 +19,6 @@ class AccumulatorBase(object):
         pass
 
 
-class StatusReporter(AccumulatorBase):
-    def __init__(self, test_suite_result):
-        super(StatusReporter, self).__init__(test_suite_result)
-
-    def init(self):
-        status = self.test_suite_result.oa_get_str('status')
-        if status is None:
-            status = ''
-        self.test_suite_result.status = status
-        self.test_suite_result.report = ''
-        self.test_suite_result.save()
-
-    def accumulate(self, test_result):
-        status = self.test_suite_result.oa_get_str('status')
-        if status is None:
-            status = ''
-        self.test_suite_result.status = status
-        self.test_suite_result.report = ''
-        self.test_suite_result.save()
-
-    def deinit(self):
-        status = self.test_suite_result.oa_get_str('status')
-        if status is None:
-            status = ''
-        self.test_suite_result.status = status
-        self.test_suite_result.report = 'Finished checking: {0}'.format(status)
-        self.test_suite_result.save()
-
-
 class StatusAccumulator(AccumulatorBase):
     def __init__(self, test_suite_result):
         super(StatusAccumulator, self).__init__(test_suite_result)
@@ -113,36 +84,6 @@ class CountAccumulator(AccumulatorBase):
         self.test_suite_result.oa_set_str('passed', self.passed)
         self.test_suite_result.status = self._status
         self.test_suite_result.save()
-
-
-class CountReporter(AccumulatorBase):
-    def __init__(self, test_suite_result):
-        super(CountReporter, self).__init__(test_suite_result)
-
-    def init(self):
-        status = self.test_suite_result.oa_get_str('status')
-        if status is None:
-            status = ''
-        self.test_suite_result.status = status
-        self.test_suite_result.report = ''
-        self.test_suite_result.save()
-
-    def accumulate(self, test_result):
-        status = self.test_suite_result.oa_get_str('status')
-        if status is None:
-            status = ''
-        self.test_suite_result.status = status
-        self.test_suite_result.report = self.test_suite_result.report + ' [' + test_result.test.name + ' : ' + test_result.oa_get_str('status') + ']'
-        self.test_suite_result.save()
-
-    def deinit(self):
-        status = self.test_suite_result.oa_get_str('status')
-        if status is None:
-            status = ''
-        self.test_suite_result.status = status
-#        self.test_suite_result.report = 'Finished checking: {0}'.format(status)
-        self.test_suite_result.save()
-
 
 
 accumulators = {}
