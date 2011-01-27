@@ -35,7 +35,7 @@ class DispatcherBase(object):
         self.reporter.accumulate(test_result)
 
     def status(self):
-        return all(accumulator.status() for accumulator in self.accumulators)
+        return all(accumulator.status() for accumulator in self.accumulators) and self.reporter.status()
 
     def finish(self):
         for accumulator in self.accumulators:
