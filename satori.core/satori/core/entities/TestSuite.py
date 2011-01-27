@@ -39,9 +39,10 @@ class TestSuite(Entity):
             raise ValueError('Dispatcher '+self.dispatcher+' is not allowed')
         if not self.reporter in reporters:
             raise ValueError('Reporter '+self.reporter+' is not allowed')
-        for accumulator in self.accumulators.split(','):
-            if not accumulator in accumulators:
-                raise ValueError('Accumulator '+accumulator+' is not allowed')
+        if self.accumulators:
+            for accumulator in self.accumulators.split(','):
+                if not accumulator in accumulators:
+                    raise ValueError('Accumulator '+accumulator+' is not allowed')
         super(TestSuite,self).save(*args, **kwargs)
 
     @ExportMethod(DjangoStruct('TestSuite'), [DjangoStruct('TestSuite'), DjangoIdList('Test')], PCArgField('fields', 'problem', 'MANAGE'), [CannotSetField])
