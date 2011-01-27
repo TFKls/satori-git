@@ -115,6 +115,7 @@ class Contest(Entity):
         Privilege.grant(contest.admin_role, contest.admin_role, 'MANAGE')
         Privilege.grant(contest.admin_role, contest.contestant_role, 'MANAGE')
         Privilege.grant(contest.contestant_role, contest, 'VIEW')
+        Privilege.grant(contest.contestant_role, contest, 'VIEW_INTRA_FILES')
         return contest
    
     @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), DjangoStruct('Contest')], PCArg('self', 'MANAGE'), [CannotSetField])
