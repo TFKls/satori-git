@@ -51,39 +51,16 @@ class CountAccumulator(AccumulatorBase):
         super(CountAccumulator, self).__init__(test_suite_result)
 
     def init(self):
-#        print 'CountAccumulator starting up!'
-        self.suite = self.test_suite_result.test_suite
-#        self.testcount = self.suite.get_tests().count()
-        self.checked = 0
-        self.passed = 0
-        self._status = '0 / 0'
-        self.test_suite_result.oa_set_str('status', 'QUE')
-        self.test_suite_result.status = 'QUE'
-        self.test_suite_result.report = ''
-        self.test_suite_result.save()
+        pass
 
     def accumulate(self, test_result):
-        status = test_result.oa_get_str('status')
-        logging.debug('Status Accumulator %s: %s += %s', self.test_suite_result.id, self._status, status)
-        self.test_suite_result.report = self.test_suite_result.report + ' [' + test_result.test.name + ' : ' + status + ']'
-        if status is None:
-            status = 'INT'
-        self.checked = self.checked+1
-        if status == 'OK':
-            self.passed = self.passed+1
-        self._status = str(self.passed) + ' / '+ str(self.checked)
-        self.test_suite_result.save()
+        pass
 
     def status(self):
         return True
 
     def deinit(self):
-        logging.debug('Status Accumulator %s: %s', self.test_suite_result.id, self._status)
-        self.test_suite_result.oa_set_str('status', self._status)
-        self.test_suite_result.oa_set_str('checked', self.checked)
-        self.test_suite_result.oa_set_str('passed', self.passed)
-        self.test_suite_result.status = self._status
-        self.test_suite_result.save()
+        pass
 
 
 accumulators = {}

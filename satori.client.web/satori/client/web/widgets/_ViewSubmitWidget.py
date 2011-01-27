@@ -40,5 +40,6 @@ class ViewSubmitWidget(Widget):
 #            self.results = None
             self.results.sort(key=lambda r: r['test'].name)
         rawcode = s.data_get_blob('content').read(100000)
-        self.code = text2html('::\n\n'+''.join('  '+s for s in rawcode.splitlines(True)))
+        rawcode = unicode(rawcode,'utf8')
+        self.code = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
 #        self.content = text2html(s.content)

@@ -2,12 +2,18 @@
 <form action="process.altersuite" method="POST">
 Name: <input type="text" name="name" value="{{widget.ts.name}}"/>
 Description: <input type="text" name="description" value="{{widget.ts.description}}"/>
-Accumulator: 
-<select name="accumulators">
-    {% for a in widget.accumulators %}
-    <option value={{a}} {% if a == widget.ts.accumulators %} selected {% endif %} >{{a}}</option>
+<br/>
+Reporter:
+<select name="reporter">
+    {% for a in widget.all_reporters %}
+    <option value="{{a}}" {% if a == widget.ts.reporter %} selected {% endif %} >{{a}}</option>
     {% endfor %}
 </select>
+<br/>
+Accumulators:<br/>
+    {% for a,checked in widget.accumulators %}
+    <input type="checkbox" name="acc_{{a}}" {% if checked %}checked{% endif %}/>{{a}}<br/>
+    {% endfor %}
 
 <input type="hidden" name="id" value="{{widget.ts.id}}"/>
 <input type="hidden" name="problem" value="{{widget.problem.id}}"/>

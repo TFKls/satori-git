@@ -388,14 +388,13 @@ class MarksAggregator(AggregatorBase):
             row.append(ss)
         row.append(str(total).rjust(10))
         self.rest.set_row(c,c.usernames,'',row)
-        self.rest.store()
 
     def init(self):
         r = self.ranking
         self.marked = []
         self.scores = {}
         super(MarksAggregator, self).init()
-        header = ['Contestant'.rjust(20)]
+        header = ['Contestant']
         for rp in ProblemMapping.objects.filter(contest=r.contest):
             self.marked.append(rp)
         self.marked.sort(key=lambda p: p.code)
@@ -405,10 +404,11 @@ class MarksAggregator(AggregatorBase):
             if not c.invisible:
                 self.scores[c] = {}
                 self.recompute_row(c)
-        header.append('Total'.rjust(10))
+        header.append('Total')
 #        row = ['aa','1']
         self.rest.add_header(header)
         self.rest.add_footer(header)
+        self.rest.store()
 
         
     def checked_test_suite_results(self, test_suite_results):
@@ -427,6 +427,7 @@ class MarksAggregator(AggregatorBase):
             if not c.invisible and ((not (p in self.scores[c].keys())) or self.scores[c][p][1]<submit.time):
                 self.scores[c][p] = [score,submit.time]
                 self.recompute_row(c)
+                self.rest.store()
 
     def created_submits(self, submits):
         r = self.ranking

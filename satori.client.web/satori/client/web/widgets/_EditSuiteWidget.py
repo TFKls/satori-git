@@ -24,7 +24,12 @@ class EditSuiteWidget(Widget):
         self.problem = problem
         self.back_to = ToString(params)
         self.back_path = path
-        self.accumulators = Global.get_instance().get_accumulators()
+        all_accumulators = Global.get_instance().get_accumulators()
+        self.all_reporters = Global.get_instance().get_reporters()
+        accumulators = ts.accumulators.split(',')
+        self.accumulators = []
+        for t in all_accumulators.keys():
+            self.accumulators.append([t,t in accumulators])
         alltests = Test.filter(TestStruct(problem=problem))
         alltests.sort(key=lambda x : x.name)
         self.tests = []
