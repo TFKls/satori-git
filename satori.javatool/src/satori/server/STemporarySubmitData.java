@@ -6,9 +6,9 @@ import static satori.server.SAttributeData.createBlobs;
 import java.util.Collections;
 
 import satori.attribute.SAttributeReader;
+import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SException;
-import satori.common.SFile;
 import satori.login.SLogin;
 import satori.server.SAttributeData.AttributeWrap;
 import satori.test.STemporarySubmitReader;
@@ -45,12 +45,12 @@ public class STemporarySubmitData {
 	}
 	
 	private static class SubmitDataWrap implements SAttributeReader {
-		private final SFile submit;
-		public SubmitDataWrap(SFile submit) { this.submit = submit; }
+		private final SBlob submit;
+		public SubmitDataWrap(SBlob submit) { this.submit = submit; }
 		@Override public Iterable<String> getNames() { return Collections.singleton("content"); }
 		@Override public boolean isBlob(String name) { return true; }
 		@Override public String getString(String name) { return null; }
-		@Override public SFile getBlob(String name) { return submit; }
+		@Override public SBlob getBlob(String name) { return submit; }
 	}
 	private static class CreateCommand implements SThriftCommand {
 		private final SAttributeReader submit_data;
@@ -66,7 +66,7 @@ public class STemporarySubmitData {
 			result = iface.TemporarySubmit_create(SLogin.getToken(), createAttrMap(test_data), createAttrMap(submit_data)).getId();
 		}
 	}
-	public static long create(SFile submit, SAttributeReader test_data) throws SException {
+	public static long create(SBlob submit, SAttributeReader test_data) throws SException {
 		SAssert.assertNotNull(submit, "Submit is null");
 		SAssert.assertNotNull(test_data, "Attribute map is null");
 		SAttributeReader submit_data = new SubmitDataWrap(submit);

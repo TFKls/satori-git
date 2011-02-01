@@ -1,6 +1,6 @@
 package satori.attribute;
 
-import satori.common.SFile;
+import satori.blob.SBlob;
 
 public class SStringAttribute implements SAttribute {
 	private String value = null;
@@ -23,7 +23,7 @@ public class SStringAttribute implements SAttribute {
 	
 	@Override public boolean isBlob() { return false; }
 	@Override public String getString() { return value; }
-	@Override public SFile getBlob() { return null; }
+	@Override public SBlob getBlob() { return null; }
 	
 	@Override public boolean check(SAttributeReader source, String name) {
 		String other = source.getString(name);

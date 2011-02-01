@@ -1,33 +1,33 @@
 package satori.test;
 
-import satori.attribute.SFileAttribute;
-import satori.common.SFile;
+import satori.attribute.SBlobAttribute;
+import satori.blob.SBlob;
 import satori.common.SData;
 import satori.common.SView;
 import satori.common.SViewList;
 
-public class SFileInput extends Input implements SData<SFile> {
+public class SBlobInput extends Input implements SData<SBlob> {
 	public static enum Status { VALID, INVALID, DISABLED };
 	
-	private final SFileInputMetadata meta;
+	private final SBlobInputMetadata meta;
 	private final STestImpl test;
 	
-	private SFile data;
+	private SBlob data;
 	
 	private final SViewList views = new SViewList();
 	
-	public SFileInput(SFileInputMetadata meta, STestImpl test) {
+	public SBlobInput(SBlobInputMetadata meta, STestImpl test) {
 		this.meta = meta;
 		this.test = test;
 	}
 	
-	@Override public SFileInputMetadata getMetadata() { return meta; }
+	@Override public SBlobInputMetadata getMetadata() { return meta; }
 	
-	@Override public SFile get() { return data; }
-	@Override public void set(SFile data) {
+	@Override public SBlob get() { return data; }
+	@Override public void set(SBlob data) {
 		if (data == this.data) return; //TODO: compare files
 		this.data = data;
-		test.setAttr(meta.getName(), data != null ? new SFileAttribute(data) : null);
+		test.setAttr(meta.getName(), data != null ? new SBlobAttribute(data) : null);
 		updateViews();
 	}
 	

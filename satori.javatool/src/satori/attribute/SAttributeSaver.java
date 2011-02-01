@@ -1,8 +1,8 @@
 package satori.attribute;
 
-import satori.common.SFile;
+import satori.blob.SBlob;
 
 public interface SAttributeSaver {
 	void saveString(String name, String value);
-	void saveFile(String name, SFile file);
+	void saveFile(String name, SBlob blob);
 }

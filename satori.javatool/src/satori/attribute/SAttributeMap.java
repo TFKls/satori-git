@@ -5,7 +5,7 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 
-import satori.common.SFile;
+import satori.blob.SBlob;
 
 public class SAttributeMap implements SAttributeReader {
 	private Map<String, SAttribute> map = new HashMap<String, SAttribute>();
@@ -16,7 +16,7 @@ public class SAttributeMap implements SAttributeReader {
 		//if (source == null) return null; //TODO: ?
 		SAttributeMap self = new SAttributeMap();
 		for (String name : source.getNames()) {
-			if (source.isBlob(name)) self.map.put(name, new SFileAttribute(source.getBlob(name)));
+			if (source.isBlob(name)) self.map.put(name, new SBlobAttribute(source.getBlob(name)));
 			else self.map.put(name, new SStringAttribute(source.getString(name)));
 		}
 		return self;
@@ -37,7 +37,7 @@ public class SAttributeMap implements SAttributeReader {
 		if (!map.containsKey(name)) return null;
 		return map.get(name).getString();
 	}
-	@Override public SFile getBlob(String name) {
+	@Override public SBlob getBlob(String name) {
 		if (!map.containsKey(name)) return null;
 		return map.get(name).getBlob();
 	}

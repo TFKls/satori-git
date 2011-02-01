@@ -29,13 +29,13 @@ import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.TransferHandler;
 
+import satori.blob.SBlob;
 import satori.common.SData;
 import satori.common.SException;
-import satori.common.SFile;
 import satori.main.SFrame;
 
-public class SFileInputView implements SPaneView {
-	private final SData<SFile> data;
+public class SBlobInputView implements SPaneView {
+	private final SData<SBlob> data;
 	
 	private JPanel pane;
 	private JButton clear_button;
@@ -43,7 +43,7 @@ public class SFileInputView implements SPaneView {
 	private Font set_font, unset_font;
 	private Color default_color;
 	
-	public SFileInputView(SData<SFile> data) {
+	public SBlobInputView(SData<SBlob> data) {
 		this.data = data;
 		initialize();
 	}
@@ -55,7 +55,7 @@ public class SFileInputView implements SPaneView {
 		file_chooser.setSelectedFile(data.get() != null ? data.get().getFile() : null);
 		int ret = file_chooser.showDialog(SFrame.get().getFrame(), "Load");
 		if (ret != JFileChooser.APPROVE_OPTION) return;
-		try { data.set(SFile.createLocal(file_chooser.getSelectedFile())); }
+		try { data.set(SBlob.createLocal(file_chooser.getSelectedFile())); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void saveFile() {
@@ -98,14 +98,14 @@ public class SFileInputView implements SPaneView {
 		@Override public void mouseReleased(MouseEvent e) {}
 	}
 	
-	private static DataFlavor sFileFlavor = new DataFlavor(SFile.class, "Satori file");
+	private static DataFlavor sFileFlavor = new DataFlavor(SBlob.class, "Satori file");
 	private static DataFlavor stdFileListFlavor = DataFlavor.javaFileListFlavor;
 	private static DataFlavor nixFileListFlavor = new DataFlavor("text/uri-list;class=java.lang.String", "Unix file list");
 	
 	private static class SFileTransferable implements Transferable {
-		private final SFile data;
+		private final SBlob data;
 		
-		public SFileTransferable(SFile data) { this.data = data; }
+		public SFileTransferable(SBlob data) { this.data = data; }
 		
 		@Override public DataFlavor[] getTransferDataFlavors() {
 			DataFlavor[] flavors = new DataFlavor[1];
@@ -154,8 +154,8 @@ public class SFileInputView implements SPaneView {
 			if (!support.isDrop()) return false;
 			Transferable t = support.getTransferable();
 			if (support.isDataFlavorSupported(sFileFlavor)) {
-				SFile object;
-				try { object = (SFile)t.getTransferData(sFileFlavor); }
+				SBlob object;
+				try { object = (SBlob)t.getTransferData(sFileFlavor); }
 				catch(Exception ex) { return false; }
 				data.set(object);
 				return true;
@@ -169,7 +169,7 @@ public class SFileInputView implements SPaneView {
 			}
 			catch(Exception ex) { return false; }
 			if (file_list == null || file_list.size() != 1) return false;
-			try { data.set(SFile.createLocal(file_list.get(0))); }
+			try { data.set(SBlob.createLocal(file_list.get(0))); }
 			catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
 			return true;
 		}
@@ -205,7 +205,7 @@ public class SFileInputView implements SPaneView {
 	@Override public void update() {
 		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
 		else pane.setBackground(Color.LIGHT_GRAY);
-		SFile file = data.get();
+		SBlob file = data.get();
 		label.setFont(file != null && file.getName() != null ? set_font : unset_font);
 		label.setText(file != null && file.getName() != null ?
 				(file.isRemote() ? "[" + file.getName() + "]" : file.getName()) :

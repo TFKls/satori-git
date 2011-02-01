@@ -1,4 +1,4 @@
-package satori.common;
+package satori.blob;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,9 +11,10 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 
-import satori.blob.SBlobClient;
+import satori.common.SAssert;
+import satori.common.SException;
 
-public class SFile {
+public class SBlob {
 	private String name;
 	private String hash;
 	private File file;
@@ -24,7 +25,7 @@ public class SFile {
 	public File getFile() { return file; }
 	public boolean isRemote() { return remote; }
 	
-	/*public boolean equals(SFile data) {
+	/*public boolean equals(SBlob data) {
 		if (name == null && data.name != null) return false;
 		if (name != null && !name.equals(data.name)) return false;
 		if (hash == null && data.hash != null) return false;
@@ -36,7 +37,7 @@ public class SFile {
 	}
 	@Override public boolean equals(Object arg) {
 		if (!(arg instanceof SFile)) return false;
-		return equals((SFile)arg);
+		return equals((SBlob)arg);
 	}
 	@Override public int hashCode() {
 		int result = 0;
@@ -46,7 +47,7 @@ public class SFile {
 		return result;
 	}*/
 	
-	private SFile() {}
+	private SBlob() {}
 	
 	private static String computeHash(File file) throws SException {
 		byte[] bin_hash;
@@ -67,16 +68,16 @@ public class SFile {
 		}
 	}
 	
-	public static SFile createLocal(File file) throws SException {
-		SFile self = new SFile();
+	public static SBlob createLocal(File file) throws SException {
+		SBlob self = new SBlob();
 		self.name = file.getName();
 		self.hash = computeHash(file);
 		self.file = file;
 		self.remote = false;
 		return self;
 	}
-	public static SFile createRemote(String name, String hash) {
-		SFile self = new SFile();
+	public static SBlob createRemote(String name, String hash) {
+		SBlob self = new SBlob();
 		self.name = name;
 		self.hash = hash;
 		self.file = null;
@@ -99,13 +100,13 @@ public class SFile {
 	}
 	public void markRemote() { remote = true; }
 	
-	public void update(SFile other) {
+	public void update(SBlob other) {
 		SAssert.assertEquals(name, other.name, "File names don't match"); 
 		SAssert.assertEquals(hash, other.hash, "Hash codes don't match");
 		if (file == null && other.file != null) file = other.file; //TODO: ?
 		if (other.remote) remote = true; 
 	}
-	public boolean check(SFile other) {
+	public boolean check(SBlob other) {
 		if (!name.equals(other.name)) return true;
 		if (!hash.equals(other.hash)) return true;
 		if (file == null && other.file != null) file = other.file; //TODO: ?

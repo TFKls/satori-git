@@ -1,7 +1,7 @@
 package satori.test;
 
+import satori.blob.SBlob;
 import satori.common.SException;
-import satori.common.SFile;
 
 import java.io.StringReader;
 import java.io.IOException;
@@ -40,8 +40,8 @@ public class XmlParser {
 		String required = node.getAttribute("required");
 		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
-		SFile def_value = null;
-		return new SFileInputMetadata(name, desc, required.equals("true"), def_value);
+		SBlob def_value = null;
+		return new SBlobInputMetadata(name, desc, required.equals("true"), def_value);
 	}
 	
 	/*private static OutputMetadata parseOutput(Element node) throws ParseException {

@@ -17,7 +17,7 @@ import javax.swing.JPanel;
 import satori.common.SException;
 import satori.common.SListener;
 import satori.common.SListener0;
-import satori.common.ui.SFileInputView;
+import satori.common.ui.SBlobInputView;
 import satori.main.SFrame;
 
 public class SSolutionPane implements SRowView {
@@ -33,7 +33,7 @@ public class SSolutionPane implements SRowView {
 	
 	private JPanel pane;
 	private JPanel solution_pane;
-	private SFileInputView solution_input;
+	private SBlobInputView solution_input;
 	private SResultButtonRowView button_row;
 	private SResultStatusRowView status_row;
 	
@@ -62,7 +62,7 @@ public class SSolutionPane implements SRowView {
 		JLabel solution_label = new JLabel("Solution");
 		solution_label.setPreferredSize(new Dimension(120, 20));
 		solution_pane.add(solution_label);
-		solution_input = new SFileInputView(solution);
+		solution_input = new SBlobInputView(solution);
 		solution.addView(solution_input);
 		solution_pane.add(solution_input.getPane());
 		JButton remove_button = new JButton("X");

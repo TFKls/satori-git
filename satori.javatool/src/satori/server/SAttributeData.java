@@ -4,9 +4,9 @@ import java.util.HashMap;
 import java.util.Map;
 
 import satori.attribute.SAttributeReader;
+import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SException;
-import satori.common.SFile;
 import satori.login.SLogin;
 import satori.thrift.SThriftClient;
 import satori.thrift.SThriftCommand;
@@ -24,22 +24,22 @@ public class SAttributeData {
 			if (attr.isIs_blob()) return null;
 			return attr.getValue();
 		}
-		@Override public SFile getBlob(String name) {
+		@Override public SBlob getBlob(String name) {
 			AnonymousAttribute attr = data.get(name);
 			if (!attr.isIs_blob()) return null;
-			return SFile.createRemote(attr.getFilename(), attr.getValue());
+			return SBlob.createRemote(attr.getFilename(), attr.getValue());
 		}
 	}
 	static Map<String, AnonymousAttribute> createAttrMap(SAttributeReader attrs) {
 		Map<String, AnonymousAttribute> map = new HashMap<String, AnonymousAttribute>();
 		for (String name : attrs.getNames()) {
 			if (attrs.isBlob(name)) {
-				SFile file = attrs.getBlob(name);
-				SAssert.assertTrue(file.isRemote(), "Non-remote blob");
+				SBlob blob = attrs.getBlob(name);
+				SAssert.assertTrue(blob.isRemote(), "Non-remote blob");
 				AnonymousAttribute attr = new AnonymousAttribute();
 				attr.setIs_blob(true);
-				attr.setFilename(file.getName());
-				attr.setValue(file.getHash());
+				attr.setFilename(blob.getName());
+				attr.setValue(blob.getHash());
 				map.put(name, attr);
 			} else {
 				AnonymousAttribute attr = new AnonymousAttribute();
@@ -61,19 +61,19 @@ public class SAttributeData {
 			result = iface.Blob_exists(SLogin.getToken(), hash);
 		}
 	}
-	private static boolean checkBlobExists(SFile file) throws SException {
-		ExistsCommand command = new ExistsCommand(file.getHash());
+	private static boolean checkBlobExists(SBlob blob) throws SException {
+		ExistsCommand command = new ExistsCommand(blob.getHash());
 		SThriftClient.call(command);
 		return command.getResult();
 	}
 	
 	static void createBlobs(SAttributeReader test) throws SException {
 		for (String name : test.getNames()) if (test.isBlob(name)) {
-			SFile file = test.getBlob(name);
+			SBlob blob = test.getBlob(name);
 			//TODO: remove this remote stuff?
-			if (file.isRemote()) continue;
-			if (checkBlobExists(file)) file.markRemote();
-			else file.saveRemote();
+			if (blob.isRemote()) continue;
+			if (checkBlobExists(blob)) blob.markRemote();
+			else blob.saveRemote();
 		}
 	}
 }
