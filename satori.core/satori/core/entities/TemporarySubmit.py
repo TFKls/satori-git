@@ -34,7 +34,7 @@ class TemporarySubmit(Entity):
     def create(test_data, submit_data):
         ts = TemporarySubmit.objects.create()
         ts.test_data_set_map(test_data)
-        ts.submit_data_set_map(test_data)
+        ts.submit_data_set_map(submit_data)
         Privilege.grant(token_container.token.role, ts, 'MANAGE')
         RawEvent().send(Event(type='checking_new_temporary_submit', id=ts.id))
         return ts
