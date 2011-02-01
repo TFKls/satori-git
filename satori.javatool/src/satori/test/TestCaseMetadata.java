@@ -15,7 +15,7 @@ public class TestCaseMetadata extends Metadata {
 		for (InputMetadata im : inputs) test.addInput(im.createInput(test));
 	}
 	
-	public void createTestPane(STestPane view) {
+	public void createTestPane(STestInputPane view) {
 		for (InputMetadata im : inputs) view.addRow(im.createInputRowView());
 	}
 	

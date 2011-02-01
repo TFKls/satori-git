@@ -29,7 +29,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 	private final STestSuiteImpl suite;
 	private final STestFactory factory;
 	
-	private List<SRowView> rows = new ArrayList<SRowView>();
+	private STestInputPane input_pane;
 	private List<STestImpl> tests = new ArrayList<STestImpl>();
 	
 	private JPanel pane;
@@ -146,26 +146,23 @@ public class STestPane implements SList<STestImpl>, SPane {
 	private void initialize() {
 		pane = new JPanel();
 		pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
-		addRow(new SGenericRowView("Status", new SStatusItemView.Factory()));
-		addRow(new SButtonRowView(new SButtonItemView.Factory(transfer_handler, close_test_listener), new_test_listener));
-		addRow(new SGenericRowView("Test name", new SInfoItemView.Factory()));
-		meta.createTestPane(this);
+		input_pane = new STestInputPane();
+		input_pane.addRow(new SGenericRowView("Status", new SStatusItemView.Factory()));
+		input_pane.addRow(new SButtonRowView(new SButtonItemView.Factory(transfer_handler, close_test_listener), new_test_listener));
+		input_pane.addRow(new SGenericRowView("Test name", new SInfoItemView.Factory()));
+		meta.createTestPane(input_pane);
+		pane.add(input_pane.getPane());
 		
 		scroll_pane = new SScrollPane();
 		scroll_pane.setView(pane);
 		scroll_pane.getPane().setTransferHandler(transfer_handler);
 	}
 	
-	public void addRow(SRowView row) {
-		rows.add(row);
-		pane.add(row.getPane());
-	}
-	
 	private void addColumn(STestImpl test, int index) {
-		for (SRowView row : rows) row.addColumn(test, index);
+		input_pane.addColumn(test, index);
 	}
 	private void removeColumn(int index) {
-		for (SRowView row : rows) row.removeColumn(index);
+		input_pane.removeColumn(index);
 	}
 	
 	@Override public void add(STestImpl test) {
