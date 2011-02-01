@@ -1,5 +1,7 @@
 package satori.test;
 
+import satori.common.ui.SPaneView;
+
 public interface SItemViewFactory {
-	SItemView createView(STestImpl test);
+	SPaneView createView(STestImpl test);
 }

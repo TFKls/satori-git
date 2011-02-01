@@ -2,6 +2,8 @@ package satori.test;
 
 import satori.attribute.SFileAttribute;
 import satori.common.SFile;
+import satori.common.ui.SFileInputView;
+import satori.common.ui.SPaneView;
 
 public class SFileInputMetadata extends InputMetadata {
 	private final SFile def_value;
@@ -17,5 +19,9 @@ public class SFileInputMetadata extends InputMetadata {
 	
 	@Override public Input createInput(STestImpl test) { return new SFileInput(this, test); }
 	
-	@Override public SItemView createInputView(Input input) { return new SFileInputView(this, (SFileInput)input); }
+	@Override public SPaneView createInputView(Input input) { 
+		SFileInputView view = new SFileInputView((SFileInput)input);
+		((SFileInput)input).addView(view);
+		return view;
+	}
 }

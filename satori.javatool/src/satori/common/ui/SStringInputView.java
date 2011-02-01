@@ -1,13 +1,32 @@
-package satori.test;
+package satori.common.ui;
 
-import java.awt.*;
-import java.awt.datatransfer.*;
-import java.awt.event.*;
-import javax.swing.*;
+import java.awt.Color;
+import java.awt.Dimension;
+import java.awt.Font;
+import java.awt.Insets;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.Transferable;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
+import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 
-public class SStringInputView implements SItemView {
-	private final SStringInputMetadata meta;
-	private final SStringInput input;
+import javax.swing.ImageIcon;
+import javax.swing.JButton;
+import javax.swing.JComponent;
+import javax.swing.JLabel;
+import javax.swing.JPanel;
+import javax.swing.JTextField;
+import javax.swing.TransferHandler;
+
+import satori.common.SData;
+
+public class SStringInputView implements SPaneView {
+	private final SData<String> data;
 
 	private JPanel pane;
 	private JButton clear_button;
@@ -17,23 +36,21 @@ public class SStringInputView implements SItemView {
 	private Font set_font, unset_font;
 	private Color default_color;
 	
-	SStringInputView(SStringInputMetadata meta, SStringInput input) {
-		this.meta = meta;
-		this.input = input;
-		input.addView(this);
+	public SStringInputView(SData<String> data) {
+		this.data = data;
 		initialize();
 	}
 	
 	@Override public JComponent getPane() { return pane; }
 	
 	private class ButtonListener implements ActionListener {
-		@Override public void actionPerformed(ActionEvent e) { input.clearData(); }
+		@Override public void actionPerformed(ActionEvent e) { data.set(null); }
 	}
 	
 	private class LabelListener implements MouseListener, MouseMotionListener {
 		@Override public void mouseClicked(MouseEvent e) {
 			edit_mode = true;
-			field.setText(input.getValue());
+			field.setText(data.get());
 			field.selectAll();
 			label.setVisible(false);
 			field.setVisible(true); 
@@ -52,8 +69,8 @@ public class SStringInputView implements SItemView {
 	private class FieldListener implements ActionListener, FocusListener {
 		@Override public void actionPerformed(ActionEvent e) {
 			edit_mode = false;
-			if (field.getText().isEmpty()) input.clearData();
-			else input.setValue(field.getText());
+			if (field.getText().isEmpty()) data.set(null);
+			else data.set(field.getText());
 			field.setVisible(false);
 			label.setVisible(true); 
 		}
@@ -78,14 +95,14 @@ public class SStringInputView implements SItemView {
 		@Override public boolean importData(TransferSupport support) {
 			if (!support.isDrop()) return false;
 			Transferable t = support.getTransferable();
-			String data;
-			try { data = (String)t.getTransferData(DataFlavor.stringFlavor); }
+			String object;
+			try { object = (String)t.getTransferData(DataFlavor.stringFlavor); }
 			catch (Exception e) { return false; }
-			if (data == null || data.isEmpty()) input.clearData();
-			else input.setValue(data);
+			if (object == null || object.isEmpty()) data.set(null);
+			else data.set(object);
 			return true;
 		}
-		@Override protected Transferable createTransferable(JComponent c) { return new StringSelection(input.getValue()); }
+		@Override protected Transferable createTransferable(JComponent c) { return new StringSelection(data.get()); }
 		@Override public int getSourceActions(JComponent c) { return COPY; }
 		@Override protected void exportDone(JComponent source, Transferable data, int action) {}
 	}
@@ -123,15 +140,9 @@ public class SStringInputView implements SItemView {
 	}
 	
 	@Override public void update() {
-		switch (input.getStatus()) {
-		case VALID:
-			pane.setBackground(default_color); break;
-		case INVALID:
-			pane.setBackground(Color.YELLOW); break;
-		case DISABLED:
-			pane.setBackground(Color.LIGHT_GRAY); break;
-		}
-		label.setFont(input.isDataSet() ? set_font : unset_font);
-		label.setText(input.isDataSet() ? input.getValue() : "Not set");
+		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
+		else pane.setBackground(Color.LIGHT_GRAY);
+		label.setFont(data.get() != null ? set_font : unset_font);
+		label.setText(data.get() != null ? data.get() : "Not set");
 	}
 }

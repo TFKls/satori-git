@@ -10,9 +10,11 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import satori.common.ui.SPaneView;
+
 public class InputRowView implements SRowView {
 	private final InputMetadata meta;
-	private List<SItemView> items = new ArrayList<SItemView>();
+	private List<SPaneView> items = new ArrayList<SPaneView>();
 	
 	private JPanel pane;
 	private JLabel label;
@@ -34,7 +36,7 @@ public class InputRowView implements SRowView {
 	}
 	
 	@Override public void addColumn(STestImpl test, int index) {
-		SItemView c = meta.createInputView(test.getInput(meta));
+		SPaneView c = meta.createInputView(test.getInput(meta));
 		items.add(index, c);
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
 		pane.add(c.getPane(), pane_index);

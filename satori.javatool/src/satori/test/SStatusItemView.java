@@ -5,7 +5,9 @@ import java.awt.Dimension;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-public class SStatusItemView implements SItemView {
+import satori.common.ui.SPaneView;
+
+public class SStatusItemView implements SPaneView {
 	private final STestImpl test;
 	
 	private JLabel label;
@@ -41,6 +43,6 @@ public class SStatusItemView implements SItemView {
 	}
 	
 	public static class Factory implements SItemViewFactory {
-		@Override public SItemView createView(STestImpl test) { return new SStatusItemView(test); }
+		@Override public SPaneView createView(STestImpl test) { return new SStatusItemView(test); }
 	}
 }

@@ -1,4 +1,4 @@
-package satori.test;
+package satori.common.ui;
 
 import java.awt.Color;
 import java.awt.Dimension;
@@ -29,11 +29,11 @@ import javax.swing.TransferHandler;
 
 import satori.common.SException;
 import satori.common.SFile;
+import satori.common.SData;
 import satori.main.SFrame;
 
-public class SFileInputView implements SItemView {
-	private final SFileInputMetadata meta;
-	private final SFileInput input;
+public class SFileInputView implements SPaneView {
+	private final SData<SFile> data;
 
 	private JPanel pane;
 	private JButton clear_button;
@@ -41,26 +41,24 @@ public class SFileInputView implements SItemView {
 	private Font set_font, unset_font;
 	private Color default_color;
 	
-	SFileInputView(SFileInputMetadata meta, SFileInput input) {
-		this.meta = meta;
-		this.input = input;
-		input.addView(this);
+	public SFileInputView(SData<SFile> data) {
+		this.data = data;
 		initialize();
 	}
 	
 	@Override public JComponent getPane() { return pane; }
 	
 	private class ButtonListener implements ActionListener {
-		@Override public void actionPerformed(ActionEvent e) { input.clearData(); }
+		@Override public void actionPerformed(ActionEvent e) { data.set(null); }
 	}
 	
 	private class LabelListener implements MouseListener, MouseMotionListener {
 		@Override public void mouseClicked(MouseEvent e) {
 			JFileChooser file_chooser = new JFileChooser();
-			file_chooser.setSelectedFile(input.getFile());
+			file_chooser.setSelectedFile(data.get().getFile());
 			int ret = file_chooser.showOpenDialog(SFrame.get().getFrame());
 			if (ret != JFileChooser.APPROVE_OPTION) return;
-			try { input.setLocal(file_chooser.getSelectedFile()); }
+			try { data.set(SFile.createLocal(file_chooser.getSelectedFile())); }
 			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 		}
 		@Override public void mouseDragged(MouseEvent e) {
@@ -129,11 +127,10 @@ public class SFileInputView implements SItemView {
 			if (!support.isDrop()) return false;
 			Transferable t = support.getTransferable();
 			if (support.isDataFlavorSupported(sFileFlavor)) {
-				SFile data;
-				try { data = (SFile)t.getTransferData(sFileFlavor); }
+				SFile object;
+				try { object = (SFile)t.getTransferData(sFileFlavor); }
 				catch(Exception ex) { return false; }
-				if (data == null) input.clearData();
-				else input.setData(data);
+				data.set(object);
 				return true;
 			}
 			List<File> file_list = null;
@@ -145,11 +142,11 @@ public class SFileInputView implements SItemView {
 			}
 			catch(Exception ex) { return false; }
 			if (file_list == null || file_list.size() != 1) return false;
-			try { input.setLocal(file_list.get(0)); }
+			try { data.set(SFile.createLocal(file_list.get(0))); }
 			catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
 			return true;
 		}
-		@Override protected Transferable createTransferable(JComponent c) { return new SFileTransferable(input.getData()); }
+		@Override protected Transferable createTransferable(JComponent c) { return new SFileTransferable(data.get()); }
 		@Override public int getSourceActions(JComponent c) { return COPY; }
 		@Override protected void exportDone(JComponent source, Transferable data, int action) {}
 	}
@@ -179,17 +176,12 @@ public class SFileInputView implements SItemView {
 	}
 	
 	@Override public void update() {
-		switch (input.getStatus()) {
-		case VALID:
-			pane.setBackground(default_color); break;
-		case INVALID:
-			pane.setBackground(Color.YELLOW); break;
-		case DISABLED:
-			pane.setBackground(Color.LIGHT_GRAY); break;
-		}
-		label.setFont(input.getName() != null ? set_font : unset_font);
-		label.setText(input.getName() != null ?
-				(input.isRemote() ? "[" + input.getName() + "]" : input.getName()) :
-				(input.isRemote() ? "Remote" : "Not set"));
+		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
+		else pane.setBackground(Color.LIGHT_GRAY);
+		SFile file = data.get();
+		label.setFont(file != null && file.getName() != null ? set_font : unset_font);
+		label.setText(file != null && file.getName() != null ?
+				(file.isRemote() ? "[" + file.getName() + "]" : file.getName()) :
+				(file.isRemote() ? "Remote" : "Not set"));
 	}
 }

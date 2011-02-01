@@ -1,10 +1,11 @@
 package satori.test;
 
 import satori.attribute.SStringAttribute;
+import satori.common.SData;
 import satori.common.SView;
 import satori.common.SViewList;
 
-public class SStringInput extends Input {
+public class SStringInput extends Input implements SData<String> {
 	public static enum Status { VALID, INVALID, DISABLED };
 	
 	private final SStringInputMetadata meta;
@@ -19,32 +20,27 @@ public class SStringInput extends Input {
 		this.test = test;
 	}
 	
-	public SStringInputMetadata getMetadata() { return meta; }
-	public String getData() { return data; }
+	@Override public SStringInputMetadata getMetadata() { return meta; }
 	
-	public String getValue() { return data; }
-	public boolean isDataSet() { return data != null; }
+	@Override public String get() { return data; }
+	@Override public void set(String data) {
+		if (data == null && this.data == null) return;
+		if (data != null && data.equals(this.data)) return;
+		this.data = data;
+		test.setAttr(meta.getName(), new SStringAttribute(data));
+		updateViews();
+	}
 	
 	public Status getStatus() {
 		if (meta.getRequired() && data == null) return Status.INVALID;
 		else return Status.VALID;
 	}
 	
-	public void update() {
-		data = test.getData().getString(meta.getName());
-		updateViews();
-	}
+	@Override public boolean isEnabled() { return getStatus() != Status.DISABLED; }
+	@Override public boolean isValid() { return getStatus() == Status.VALID; }
 	
-	public void setValue(String data) {
-		if (data.equals(this.data)) return;
-		this.data = data;
-		test.setAttr(meta.getName(), new SStringAttribute(data));
-		updateViews();
-	}
-	public void clearData() {
-		if (data == null) return;
-		data = null;
-		test.setAttr(meta.getName(), null);
+	@Override public void update() {
+		data = test.getData().getString(meta.getName());
 		updateViews();
 	}
 	

@@ -9,7 +9,9 @@ import java.awt.event.FocusListener;
 import javax.swing.JComponent;
 import javax.swing.JTextField;
 
-public class SInfoItemView implements SItemView {
+import satori.common.ui.SPaneView;
+
+public class SInfoItemView implements SPaneView {
 	private STestImpl test;
 	
 	private JTextField name_field;
@@ -42,6 +44,6 @@ public class SInfoItemView implements SItemView {
 	}
 	
 	public static class Factory implements SItemViewFactory {
-		@Override public SItemView createView(STestImpl test) { return new SInfoItemView(test); }
+		@Override public SPaneView createView(STestImpl test) { return new SInfoItemView(test); }
 	}
 }

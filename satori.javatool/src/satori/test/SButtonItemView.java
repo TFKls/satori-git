@@ -15,9 +15,10 @@ import javax.swing.JPanel;
 import satori.common.SException;
 import satori.common.SListener;
 import satori.common.SListener2;
+import satori.common.ui.SPaneView;
 import satori.main.SFrame;
 
-public class SButtonItemView implements SItemView {
+public class SButtonItemView implements SPaneView {
 	private final STestImpl test;
 	private final SListener<STestImpl> close_listener;
 	private final SListener2<STestImpl, MouseEvent> move_listener;
@@ -125,7 +126,7 @@ public class SButtonItemView implements SItemView {
 			this.move_listener = move_listener;
 			this.close_listener = close_listener;
 		}
-		@Override public SItemView createView(STestImpl test) {
+		@Override public SPaneView createView(STestImpl test) {
 			return new SButtonItemView(test, move_listener, close_listener);
 		}
 	}

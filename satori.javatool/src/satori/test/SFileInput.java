@@ -1,14 +1,12 @@
 package satori.test;
 
-import java.io.File;
-
 import satori.attribute.SFileAttribute;
-import satori.common.SException;
 import satori.common.SFile;
+import satori.common.SData;
 import satori.common.SView;
 import satori.common.SViewList;
 
-public class SFileInput extends Input {
+public class SFileInput extends Input implements SData<SFile> {
 	public static enum Status { VALID, INVALID, DISABLED };
 	
 	private final SFileInputMetadata meta;
@@ -23,39 +21,26 @@ public class SFileInput extends Input {
 		this.test = test;
 	}
 	
-	public SFileInputMetadata getMetadata() { return meta; }
-	public SFile getData() { return data; }
+	@Override public SFileInputMetadata getMetadata() { return meta; }
 	
-	public String getName() { return data == null ? null : data.getName(); }
-	public File getFile() { return data == null ? null : data.getFile(); }
-	public boolean isRemote() { return data == null ? false : data.isRemote(); }
-	public boolean isDataSet() { return data != null; }
+	@Override public SFile get() { return data; }
+	@Override public void set(SFile data) {
+		if (data == this.data) return; //TODO: compare files
+		this.data = data;
+		test.setAttr(meta.getName(), new SFileAttribute(data));
+		updateViews();
+	}
 	
 	public Status getStatus() {
 		if (meta.getRequired() && data == null) return Status.INVALID;
 		else return Status.VALID;
 	}
 	
-	public void update() {
-		data = test.getData().getBlob(meta.getName());
-		updateViews();
-	}
+	@Override public boolean isEnabled() { return getStatus() != Status.DISABLED; }
+	@Override public boolean isValid() { return getStatus() == Status.VALID; }
 	
-	public void setData(SFile data) {
-		if (data == this.data) return; //TODO: compare files
-		this.data = data;
-		test.setAttr(meta.getName(), new SFileAttribute(data));
-		updateViews();
-	}
-	public void setLocal(File file) throws SException {
-		data = SFile.createLocal(file);
-		test.setAttr(meta.getName(), new SFileAttribute(data));
-		updateViews();
-	}
-	public void clearData() {
-		if (data == null) return;
-		data = null;
-		test.setAttr(meta.getName(), null);
+	@Override public void update() {
+		data = test.getData().getBlob(meta.getName());
 		updateViews();
 	}
 	

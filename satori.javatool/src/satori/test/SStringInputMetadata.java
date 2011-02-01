@@ -1,6 +1,8 @@
 package satori.test;
 
 import satori.attribute.SStringAttribute;
+import satori.common.ui.SPaneView;
+import satori.common.ui.SStringInputView;
 
 public class SStringInputMetadata extends InputMetadata {
 	public final String def_value;
@@ -17,5 +19,9 @@ public class SStringInputMetadata extends InputMetadata {
 	
 	@Override public Input createInput(STestImpl test) { return new SStringInput(this, test); }
 	
-	@Override public SItemView createInputView(Input input) { return new SStringInputView(this, (SStringInput)input); }
+	@Override public SPaneView createInputView(Input input) {
+		SStringInputView view = new SStringInputView((SStringInput)input);
+		((SStringInput)input).addView(view);
+		return view;
+	}
 }
