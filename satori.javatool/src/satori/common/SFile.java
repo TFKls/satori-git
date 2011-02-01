@@ -2,10 +2,16 @@ package satori.common;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
+import org.apache.commons.io.IOUtils;
+
+import satori.blob.SBlobClient;
 
 public class SFile {
 	private String name;
@@ -48,6 +54,18 @@ public class SFile {
 		catch(IOException ex) { throw new SException(ex); }
 		return Base64.encodeBase64URLSafeString(bin_hash);
 	}
+	private static void copy(File src, File dst) throws IOException {
+		InputStream in = null;
+		OutputStream out = null;
+		try {
+			in = new FileInputStream(src);
+			out = new FileOutputStream(dst);
+			IOUtils.copy(in, out);
+		} finally {
+			IOUtils.closeQuietly(in);
+			IOUtils.closeQuietly(out);
+		}
+	}
 	
 	public static SFile createLocal(File file) throws SException {
 		SFile self = new SFile();
@@ -66,11 +84,21 @@ public class SFile {
 		return self;
 	}
 	
-	public void markRemote() { remote = true; }
-	public void markRemote(String new_hash) {
-		SAssert.assertEquals(hash, new_hash, "Hash codes don't match");
+	public void saveLocal(File dst) throws SException {
+		if (dst.equals(file)) return;
+		if (file == null) SBlobClient.getBlob(hash, dst);
+		else {
+			try { copy(file, dst); }
+			catch(IOException ex) { throw new SException(ex); }
+		}
+	}
+	public void saveRemote() throws SException {
+		String remote_hash = SBlobClient.putBlob(file);
+		SAssert.assertEquals(hash, remote_hash, "Hash codes don't match");
 		remote = true;
 	}
+	public void markRemote() { remote = true; }
+	
 	public void update(SFile other) {
 		SAssert.assertEquals(name, other.name, "File names don't match"); 
 		SAssert.assertEquals(hash, other.hash, "Hash codes don't match");

@@ -4,7 +4,6 @@ import java.util.HashMap;
 import java.util.Map;
 
 import satori.attribute.SAttributeReader;
-import satori.blob.SBlobClient;
 import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SFile;
@@ -74,7 +73,7 @@ public class SAttributeData {
 			//TODO: remove this remote stuff?
 			if (file.isRemote()) continue;
 			if (checkBlobExists(file)) file.markRemote();
-			else file.markRemote(SBlobClient.putBlob(file.getFile()));
+			else file.saveRemote();
 		}
 	}
 }

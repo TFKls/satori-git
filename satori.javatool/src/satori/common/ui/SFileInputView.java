@@ -24,12 +24,14 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
 import javax.swing.JLabel;
+import javax.swing.JMenuItem;
 import javax.swing.JPanel;
+import javax.swing.JPopupMenu;
 import javax.swing.TransferHandler;
 
+import satori.common.SData;
 import satori.common.SException;
 import satori.common.SFile;
-import satori.common.SData;
 import satori.main.SFrame;
 
 public class SFileInputView implements SPaneView {
@@ -48,18 +50,43 @@ public class SFileInputView implements SPaneView {
 	
 	@Override public JComponent getPane() { return pane; }
 	
+	private void loadFile() {
+		JFileChooser file_chooser = new JFileChooser();
+		file_chooser.setSelectedFile(data.get() != null ? data.get().getFile() : null);
+		int ret = file_chooser.showDialog(SFrame.get().getFrame(), "Load");
+		if (ret != JFileChooser.APPROVE_OPTION) return;
+		try { data.set(SFile.createLocal(file_chooser.getSelectedFile())); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+	}
+	private void saveFile() {
+		if (data.get() == null) return;
+		JFileChooser file_chooser = new JFileChooser();
+		String name = data.get().getName();
+		if (name != null && !name.isEmpty()) file_chooser.setSelectedFile(new File(file_chooser.getCurrentDirectory(), name));
+		int ret = file_chooser.showDialog(SFrame.get().getFrame(), "Save");
+		if (ret != JFileChooser.APPROVE_OPTION) return;
+		try { data.get().saveLocal(file_chooser.getSelectedFile()); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+	}
+	
 	private class ButtonListener implements ActionListener {
 		@Override public void actionPerformed(ActionEvent e) { data.set(null); }
 	}
 	
 	private class LabelListener implements MouseListener, MouseMotionListener {
 		@Override public void mouseClicked(MouseEvent e) {
-			JFileChooser file_chooser = new JFileChooser();
-			file_chooser.setSelectedFile(data.get() != null ? data.get().getFile() : null);
-			int ret = file_chooser.showOpenDialog(SFrame.get().getFrame());
-			if (ret != JFileChooser.APPROVE_OPTION) return;
-			try { data.set(SFile.createLocal(file_chooser.getSelectedFile())); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+			JPopupMenu popup = new JPopupMenu();
+			JMenuItem loadItem = new JMenuItem("Load");
+			loadItem.addActionListener(new ActionListener() {
+				@Override public void actionPerformed(ActionEvent e) { loadFile(); }
+			});
+			popup.add(loadItem);
+			JMenuItem saveItem = new JMenuItem("Save");
+			saveItem.addActionListener(new ActionListener() {
+				@Override public void actionPerformed(ActionEvent e) { saveFile(); }
+			});
+			popup.add(saveItem);
+			popup.show(e.getComponent(), e.getX(), e.getY());
 		}
 		@Override public void mouseDragged(MouseEvent e) {
 			label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
