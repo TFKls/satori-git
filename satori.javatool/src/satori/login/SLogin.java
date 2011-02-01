@@ -1,6 +1,7 @@
 package satori.login;
 
 import satori.common.SException;
+import satori.config.SConfig;
 import satori.thrift.SThriftClient;
 import satori.thrift.SThriftCommand;
 import satori.thrift.gen.User;
@@ -42,4 +43,5 @@ public class SLogin {
 	public static String getToken() { return token; }
 	public static String getLogin() { return username; }
 	public static String getPassword() { return password; }
+	public static String getFullLogin() { return username + "@" + SConfig.getHost(); }
 }

@@ -31,7 +31,7 @@ public class SFrame {
 	
 	private void updateLogin() {
 		if (SLogin.getLogin() != null) {
-			session_menu.setText("Session (" + SLogin.getLogin() + ")");
+			session_menu.setText("Session (" + SLogin.getFullLogin() + ")");
 		} else {
 			session_menu.setText("Session");
 		}
