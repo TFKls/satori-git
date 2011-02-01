@@ -57,7 +57,8 @@ public class STestSuiteData {
 		struct.setName(suite.getName());
 		struct.setDescription(suite.getDescription());
 		struct.setDispatcher("SerialDispatcher");
-		struct.setAccumulators("StatusAccumulator");
+		struct.setAccumulators("");
+		struct.setReporter("StatusReporter");
 		return struct;
 	}
 	private static List<Long> createTestIdList(Iterable<? extends STestBasicReader> tests) {
