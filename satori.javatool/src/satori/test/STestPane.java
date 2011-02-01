@@ -1,15 +1,21 @@
 package satori.test;
 
+import java.awt.Dimension;
+import java.awt.FlowLayout;
+import java.awt.Insets;
 import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JPanel;
 import javax.swing.TransferHandler;
@@ -30,6 +36,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 	private final STestFactory factory;
 	
 	private STestInputPane input_pane;
+	private List<SSolutionPane> solution_panes = new ArrayList<SSolutionPane>();
 	private List<STestImpl> tests = new ArrayList<STestImpl>();
 	
 	private JPanel pane;
@@ -47,6 +54,9 @@ public class STestPane implements SList<STestImpl>, SPane {
 			remove(test);
 			suite.removeTest(test);
 		}
+	};
+	private SListener<SSolutionPane> remove_solution_listener = new SListener<SSolutionPane>() {
+		@Override public void call(SSolutionPane removed_pane) { removeSolutionPane(removed_pane); }
 	};
 	
 	private static class MoveTestTransferable implements Transferable {
@@ -152,17 +162,46 @@ public class STestPane implements SList<STestImpl>, SPane {
 		input_pane.addRow(new SGenericRowView("Test name", new SInfoItemView.Factory()));
 		meta.createTestPane(input_pane);
 		pane.add(input_pane.getPane());
+		JPanel bottom_pane = new JPanel();
+		bottom_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		JButton bottom_button = new JButton("Add solution");
+		bottom_button.setMargin(new Insets(0, 0, 0, 0));
+		bottom_button.setPreferredSize(new Dimension(120, 20));
+		bottom_button.setFocusable(false);
+		bottom_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { addSolutionPane(); }
+		});
+		bottom_pane.add(bottom_button);
+		pane.add(bottom_pane);
 		
 		scroll_pane = new SScrollPane();
 		scroll_pane.setView(pane);
 		scroll_pane.getPane().setTransferHandler(transfer_handler);
 	}
 	
+	private void addSolutionPane() {
+		SSolution solution = new SSolution();
+		SSolutionPane new_pane = new SSolutionPane(solution, remove_solution_listener);
+		pane.add(new_pane.getPane(), solution_panes.size()+1);
+		solution_panes.add(new_pane);
+		int index = 0;
+		for (STestImpl test : tests) new_pane.addColumn(test, index++);
+		pane.revalidate(); pane.repaint();
+	}
+	private void removeSolutionPane(SSolutionPane removed_pane) {
+		for (int index = tests.size()-1; index >= 0; --index) removed_pane.removeColumn(index);
+		pane.remove(solution_panes.indexOf(removed_pane)+1);
+		solution_panes.remove(removed_pane);
+		pane.revalidate(); pane.repaint();
+	}
+	
 	private void addColumn(STestImpl test, int index) {
 		input_pane.addColumn(test, index);
+		for (SRowView pane : solution_panes) pane.addColumn(test, index);
 	}
 	private void removeColumn(int index) {
 		input_pane.removeColumn(index);
+		for (SRowView pane : solution_panes) pane.removeColumn(index);
 	}
 	
 	@Override public void add(STestImpl test) {

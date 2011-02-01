@@ -37,11 +37,11 @@ public class SButtonRowView implements SRowView {
 		pane = new JPanel();
 		pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		label = new JLabel();
-		label.setPreferredSize(new Dimension(120, 25));
+		label.setPreferredSize(new Dimension(120, 20));
 		pane.add(label);
 		add_button = new JButton("+");
 		add_button.setMargin(new Insets(0, 0, 0, 0));
-		add_button.setPreferredSize(new Dimension(30, 25));
+		add_button.setPreferredSize(new Dimension(24, 20));
 		add_button.setToolTipText("Add new test");
 		add_button.setFocusable(false);
 		add_button.addActionListener(new ActionListener() {

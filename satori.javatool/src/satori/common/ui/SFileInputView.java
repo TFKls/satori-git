@@ -34,7 +34,7 @@ import satori.main.SFrame;
 
 public class SFileInputView implements SPaneView {
 	private final SData<SFile> data;
-
+	
 	private JPanel pane;
 	private JButton clear_button;
 	private JLabel label;

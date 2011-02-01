@@ -27,7 +27,7 @@ import satori.common.SData;
 
 public class SStringInputView implements SPaneView {
 	private final SData<String> data;
-
+	
 	private JPanel pane;
 	private JButton clear_button;
 	private JLabel label;

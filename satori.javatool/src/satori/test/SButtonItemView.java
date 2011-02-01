@@ -65,7 +65,7 @@ public class SButtonItemView implements SPaneView {
 		pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		move_button = new JButton("M");
 		move_button.setMargin(new Insets(0, 0, 0, 0));
-		move_button.setPreferredSize(new Dimension(24, 25));
+		move_button.setPreferredSize(new Dimension(24, 20));
 		move_button.setToolTipText("Move");
 		move_button.setFocusable(false);
 		move_button.addMouseMotionListener(new MouseMotionListener() {
@@ -80,7 +80,7 @@ public class SButtonItemView implements SPaneView {
 		pane.add(move_button);
 		save_button = new JButton("S");
 		save_button.setMargin(new Insets(0, 0, 0, 0));
-		save_button.setPreferredSize(new Dimension(24, 25));
+		save_button.setPreferredSize(new Dimension(24, 20));
 		save_button.setToolTipText("Save");
 		save_button.setFocusable(false);
 		save_button.addActionListener(new ActionListener() {
@@ -89,7 +89,7 @@ public class SButtonItemView implements SPaneView {
 		pane.add(save_button);
 		reload_button = new JButton("R");
 		reload_button.setMargin(new Insets(0, 0, 0, 0));
-		reload_button.setPreferredSize(new Dimension(24, 25));
+		reload_button.setPreferredSize(new Dimension(24, 20));
 		reload_button.setToolTipText("Reload");
 		reload_button.setFocusable(false);
 		reload_button.addActionListener(new ActionListener() {
@@ -98,7 +98,7 @@ public class SButtonItemView implements SPaneView {
 		pane.add(reload_button);
 		delete_button = new JButton("D");
 		delete_button.setMargin(new Insets(0, 0, 0, 0));
-		delete_button.setPreferredSize(new Dimension(24, 25));
+		delete_button.setPreferredSize(new Dimension(24, 20));
 		delete_button.setToolTipText("Delete");
 		delete_button.setFocusable(false);
 		delete_button.addActionListener(new ActionListener() {
@@ -107,7 +107,7 @@ public class SButtonItemView implements SPaneView {
 		pane.add(delete_button);
 		close_button = new JButton("X");
 		close_button.setMargin(new Insets(0, 0, 0, 0));
-		close_button.setPreferredSize(new Dimension(24, 25));
+		close_button.setPreferredSize(new Dimension(24, 20));
 		close_button.setToolTipText("Close");
 		close_button.setFocusable(false);
 		close_button.addActionListener(new ActionListener() {

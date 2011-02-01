@@ -10,6 +10,8 @@ import satori.common.SAssert;
 import satori.common.SDataStatus;
 import satori.common.SException;
 import satori.common.SId;
+import satori.common.SListener0;
+import satori.common.SListener0List;
 import satori.common.SReference;
 import satori.common.SView;
 import satori.common.SViewList;
@@ -25,6 +27,7 @@ public class STestImpl implements STestReader {
 	
 	private final List<Input> inputs = new ArrayList<Input>();
 	private final SDataStatus status = new SDataStatus();
+	private final SListener0List data_modified_listeners = new SListener0List();
 	private final SViewList views = new SViewList();
 	private final SReference reference = new SReference() {
 		@Override public void notifyModified() { snapModified(); }
@@ -95,6 +98,7 @@ public class STestImpl implements STestReader {
 		//TODO: check if not equal
 		attrs.setAttr(name, attr);
 		notifyModified();
+		callDataModifiedListeners();
 	}
 	
 	public Input getInput(InputMetadata meta) {
@@ -116,6 +120,10 @@ public class STestImpl implements STestReader {
 		updateViews();
 	}
 	
+	public void addDataModifiedListener(SListener0 listener) { data_modified_listeners.add(listener); }
+	public void removeDataModifiedListener(SListener0 listener) { data_modified_listeners.remove(listener); }
+	private void callDataModifiedListeners() { data_modified_listeners.call(); }
+	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { views.update(); }
@@ -131,6 +139,7 @@ public class STestImpl implements STestReader {
 		attrs = SAttributeMap.create(snap.getData());
 		updateInputs();
 		notifyUpToDate();
+		callDataModifiedListeners();
 	}
 	public void create() throws SException {
 		SAssert.assertFalse(isRemote(), "Test already created");
