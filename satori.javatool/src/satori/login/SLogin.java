@@ -19,7 +19,7 @@ public class SLogin {
 		}
 		@Override public void call() throws Exception {
 			User.Iface iface = new User.Client(SThriftClient.getProtocol());
-			token = iface.User_authenticate(token, username, password);
+			token = iface.User_authenticate("", username, password);
 		}
 	}
 	public static void login(String username, String password) throws SException {
