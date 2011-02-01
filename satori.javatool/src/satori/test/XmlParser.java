@@ -19,7 +19,7 @@ public class XmlParser {
 		ParseException(Exception ex) { super(ex); }
 	}
 	
-	private static InputMetadata parseInput(Element node) throws ParseException {
+	private static InputMetadata parseInputValue(Element node) throws ParseException {
 		String name = node.getAttribute("name");
 		if (name.isEmpty()) throw new ParseException("Input name undefined");
 		String desc = node.getAttribute("description");
@@ -27,20 +27,21 @@ public class XmlParser {
 		String required = node.getAttribute("required");
 		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
-		String type = node.getAttribute("type");
-		if (type.isEmpty()) throw new ParseException("Input type undefined");
-		InputMetadata meta;
-		if (type.equals("value")) {
-			String def_str = node.getAttribute("default_value");
-			String def_value = def_str.isEmpty() ? null : def_str;
-			meta = new SStringInputMetadata(name, desc, required.equals("true"), def_value); 
-		}
-		else if (type.equals("file")) {
-			SFile def_value = null;
-			meta = new SFileInputMetadata(name, desc, required.equals("true"), def_value);
-		}
-		else throw new ParseException("Invalid input type: " + type);
-		return meta;
+		String def_value = node.getAttribute("default");
+		if (def_value.isEmpty()) def_value = null;
+		return new SStringInputMetadata(name, desc, required.equals("true"), def_value); 
+	}
+	
+	private static InputMetadata parseInputFile(Element node) throws ParseException {
+		String name = node.getAttribute("name");
+		if (name.isEmpty()) throw new ParseException("Input name undefined");
+		String desc = node.getAttribute("description");
+		if (desc.isEmpty()) throw new ParseException("Input description undefined");
+		String required = node.getAttribute("required");
+		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
+		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
+		SFile def_value = null;
+		return new SFileInputMetadata(name, desc, required.equals("true"), def_value);
 	}
 	
 	/*private static OutputMetadata parseOutput(Element node) throws ParseException {
@@ -84,18 +85,24 @@ public class XmlParser {
 		return stage;
 	}*/
 	
-	private static TestCaseMetadata parse(Document doc) throws ParseException {
-		doc.normalizeDocument();
+	private static TestCaseMetadata parseInputs(Element node) throws ParseException {
 		TestCaseMetadata testcase = new TestCaseMetadata();
-		Element node = doc.getDocumentElement();
-		//NodeList children = node.getElementsByTagName("stage");
-		NodeList children = node.getElementsByTagName("input");
-		for (int s = 0; s < children.getLength(); ++s) {
-			Element child = (Element)children.item(s);
-			//testcase.addStage(parseStage(child));
-			testcase.addInput(parseInput(child));
+		NodeList children = node.getElementsByTagName("*");
+		for (int i = 0; i < children.getLength(); ++i) {
+			Element child = (Element)children.item(i);
+			if (child.getNodeName().equals("value")) testcase.addInput(parseInputValue(child));
+			else if (child.getNodeName().equals("file")) testcase.addInput(parseInputFile(child));
+			else throw new ParseException("Incorrect input type: " + child.getNodeName());
 		}
 		return testcase;
+	}
+	
+	private static TestCaseMetadata parse(Document doc) throws ParseException {
+		doc.normalizeDocument();
+		Element node = doc.getDocumentElement();
+		NodeList children = node.getElementsByTagName("input");
+		if (children.getLength() != 1) throw new ParseException("Incorrect number of input groups");
+		return parseInputs((Element)children.item(0));
 	}
 	
 	public static TestCaseMetadata parse(String str) throws ParseException {
