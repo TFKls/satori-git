@@ -27,7 +27,7 @@ public class SStringInput extends Input implements SData<String> {
 		if (data == null && this.data == null) return;
 		if (data != null && data.equals(this.data)) return;
 		this.data = data;
-		test.setAttr(meta.getName(), new SStringAttribute(data));
+		test.setAttr(meta.getName(), data != null ? new SStringAttribute(data) : null);
 		updateViews();
 	}
 	

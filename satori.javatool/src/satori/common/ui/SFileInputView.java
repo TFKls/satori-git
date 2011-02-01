@@ -55,7 +55,7 @@ public class SFileInputView implements SPaneView {
 	private class LabelListener implements MouseListener, MouseMotionListener {
 		@Override public void mouseClicked(MouseEvent e) {
 			JFileChooser file_chooser = new JFileChooser();
-			file_chooser.setSelectedFile(data.get().getFile());
+			file_chooser.setSelectedFile(data.get() != null ? data.get().getFile() : null);
 			int ret = file_chooser.showOpenDialog(SFrame.get().getFrame());
 			if (ret != JFileChooser.APPROVE_OPTION) return;
 			try { data.set(SFile.createLocal(file_chooser.getSelectedFile())); }
@@ -182,6 +182,6 @@ public class SFileInputView implements SPaneView {
 		label.setFont(file != null && file.getName() != null ? set_font : unset_font);
 		label.setText(file != null && file.getName() != null ?
 				(file.isRemote() ? "[" + file.getName() + "]" : file.getName()) :
-				(file.isRemote() ? "Remote" : "Not set"));
+				(file != null && file.isRemote() ? "Remote" : "Not set"));
 	}
 }

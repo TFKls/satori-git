@@ -27,7 +27,7 @@ public class SFileInput extends Input implements SData<SFile> {
 	@Override public void set(SFile data) {
 		if (data == this.data) return; //TODO: compare files
 		this.data = data;
-		test.setAttr(meta.getName(), new SFileAttribute(data));
+		test.setAttr(meta.getName(), data != null ? new SFileAttribute(data) : null);
 		updateViews();
 	}
 	
