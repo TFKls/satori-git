@@ -42,20 +42,29 @@ public class SLoginDialog {
 		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0;
 		username = new JTextField(SLogin.getLogin());
 		username.setPreferredSize(new Dimension(200, username.getPreferredSize().height));
+		username.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				password.selectAll();
+				password.requestFocus();
+			}
+		});
+		username.selectAll();
 		field_pane.add(username, c);
+		ActionListener confirm_listener = new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				confirmed = true;
+				dialog.setVisible(false);
+			}
+		};
 		password = new JPasswordField(SLogin.getPassword());
 		password.setPreferredSize(new Dimension(200, password.getPreferredSize().height));
+		password.addActionListener(confirm_listener);
 		field_pane.add(password, c);
 		dialog.getContentPane().add(field_pane, BorderLayout.CENTER);
 		button_pane = new JPanel();
 		button_pane.setLayout(new FlowLayout(FlowLayout.CENTER));
 		confirm = new JButton("Login");
-		confirm.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				confirmed = true;
-				dialog.setVisible(false);
-			}
-		});
+		confirm.addActionListener(confirm_listener);
 		button_pane.add(confirm);
 		cancel = new JButton("Cancel");
 		cancel.addActionListener(new ActionListener() {
