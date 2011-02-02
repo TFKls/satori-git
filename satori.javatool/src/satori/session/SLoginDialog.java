@@ -1,4 +1,4 @@
-package satori.login;
+package satori.session;
 
 import java.awt.BorderLayout;
 import java.awt.Dimension;
@@ -40,7 +40,7 @@ public class SLoginDialog {
 		field_pane.add(new JLabel("User: "), c);
 		field_pane.add(new JLabel("Password: "), c);
 		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0;
-		username = new JTextField(SLogin.getLogin());
+		username = new JTextField(SSession.getLogin());
 		username.setPreferredSize(new Dimension(200, username.getPreferredSize().height));
 		username.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
@@ -56,7 +56,7 @@ public class SLoginDialog {
 				dialog.setVisible(false);
 			}
 		};
-		password = new JPasswordField(SLogin.getPassword());
+		password = new JPasswordField(SSession.getPassword());
 		password.setPreferredSize(new Dimension(200, password.getPreferredSize().height));
 		password.addActionListener(confirm_listener);
 		field_pane.add(password, c);
@@ -81,7 +81,7 @@ public class SLoginDialog {
 	private void process() throws SException {
 		dialog.setVisible(true);
 		if (!confirmed) return;
-		SLogin.login(username.getText(), new String(password.getPassword()));
+		SSession.login(username.getText(), new String(password.getPassword()));
 	}
 	
 	public static void show() throws SException {

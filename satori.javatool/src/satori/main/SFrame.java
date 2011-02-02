@@ -15,16 +15,16 @@ import satori.common.SException;
 import satori.common.ui.STabbedPane;
 import satori.config.SConfig;
 import satori.config.SConfigDialog;
-import satori.login.SLogin;
-import satori.login.SLoginDialog;
 import satori.problem.ui.SProblemListPane;
+import satori.session.SSession;
+import satori.session.SLoginDialog;
 
 public class SFrame {
 	private STabbedPane tabs = new STabbedPane();
 	
 	private JFrame frame;
 	private JMenu session_menu, open_menu;
-	private JMenuItem login_button, logout_button, config_button;
+	private JMenuItem login_button, anonymous_button, logout_button, config_button;
 	private JMenuItem problems_button;
 	private JLabel session_label;
 	
@@ -32,23 +32,28 @@ public class SFrame {
 	
 	public JFrame getFrame() { return frame; }
 	
-	private void updateLogin() {
-		if (SLogin.getLogin() != null) {
-			session_label.setText("Session: " + SLogin.getFullLogin());
-		} else {
-			session_label.setText("Session: not logged in");
-		}
+	private void updateSession() {
+		if (!SSession.isConnected()) { session_label.setText("Session: disconnected"); return; }
+		String login = SSession.hasLogin() ? SSession.getLogin() : "<anonymous>";
+		session_label.setText("Session: " + login + "@" + SSession.getHost());
 	}
 	
 	private void loginRequest() {
 		try { SLoginDialog.show(); }
 		catch(SException ex) { showErrorDialog(ex); return; }
-		updateLogin();
+		updateSession();
+	}
+	private void anonymousLoginRequest() {
+		try { SSession.connect(); }
+		catch(SException ex) { showErrorDialog(ex); return; }
+		updateSession();
 	}
 	private void logoutRequest() {
-		try { SLogin.logout(); }
-		catch(SException ex) { showErrorDialog(ex); return; }
-		updateLogin();
+		SSession.disconnect();
+		updateSession();
+	}
+	private void configRequest() {
+		SConfigDialog.show();
 	}
 	
 	private void problemsRequest() {
@@ -56,9 +61,6 @@ public class SFrame {
 		try { pane = SProblemListPane.get(tabs); }
 		catch(SException ex) { showErrorDialog(ex); return; }
 		tabs.openPane("Problems", pane);
-	}
-	private void configRequest() {
-		SConfigDialog.show();
 	}
 	
 	private void initialize() {
@@ -78,6 +80,13 @@ public class SFrame {
 			}
 		});
 		session_menu.add(login_button);
+		anonymous_button = new JMenuItem("Anonymous login");
+		anonymous_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				anonymousLoginRequest();
+			}
+		});
+		session_menu.add(anonymous_button);
 		logout_button = new JMenuItem("Logout");
 		logout_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
@@ -103,7 +112,7 @@ public class SFrame {
 		open_menu.add(problems_button);
 		menu_bar.add(open_menu);
 		frame.setJMenuBar(menu_bar);
-		updateLogin();
+		updateSession();
 		
 		frame.setSize(960, 720);
 	}

@@ -9,8 +9,8 @@ import java.util.List;
 import satori.attribute.SAttributeReader;
 import satori.common.SAssert;
 import satori.common.SException;
-import satori.login.SLogin;
 import satori.server.SAttributeData.AttributeWrap;
+import satori.session.SSession;
 import satori.test.STestBasicReader;
 import satori.test.STestReader;
 import satori.thrift.SThriftClient;
@@ -47,8 +47,8 @@ public class STestData {
 		public LoadCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			result = new TestWrap(iface.Test_get_struct(SLogin.getToken(), id));
-			result.setData(new AttributeWrap(iface.Test_data_get_map(SLogin.getToken(), id)));
+			result = new TestWrap(iface.Test_get_struct(SSession.getToken(), id));
+			result.setData(new AttributeWrap(iface.Test_data_get_map(SSession.getToken(), id)));
 		}
 	}
 	public static STestReader load(long id) throws SException {
@@ -71,7 +71,7 @@ public class STestData {
 		public CreateCommand(STestReader test) { this.test = test; }
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			result = iface.Test_create(SLogin.getToken(), createStruct(test), createAttrMap(test.getData())).getId();
+			result = iface.Test_create(SSession.getToken(), createStruct(test), createAttrMap(test.getData())).getId();
 		}
 	}
 	public static long create(STestReader test) throws SException {
@@ -87,7 +87,7 @@ public class STestData {
 		public SaveCommand(STestReader test) { this.test = test; }
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			iface.Test_modify_full(SLogin.getToken(), test.getId(), createStruct(test), createAttrMap(test.getData()));
+			iface.Test_modify_full(SSession.getToken(), test.getId(), createStruct(test), createAttrMap(test.getData()));
 		}
 	}
 	public static void save(STestReader test) throws SException {
@@ -101,7 +101,7 @@ public class STestData {
 		public DeleteCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			iface.Entity_delete(SLogin.getToken(), id);
+			iface.Entity_delete(SSession.getToken(), id);
 		}
 	}
 	public static void delete(long id) throws SException {
@@ -117,7 +117,7 @@ public class STestData {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
 			TestStruct filter = new TestStruct();
 			filter.setProblem(problem_id);
-			List<TestStruct> list = iface.Test_filter(SLogin.getToken(), filter);
+			List<TestStruct> list = iface.Test_filter(SSession.getToken(), filter);
 			result = new ArrayList<STestBasicReader>();
 			for (TestStruct struct : list) result.add(new TestBasicWrap(struct));
 		}

@@ -14,8 +14,7 @@ import java.net.URL;
 import org.apache.commons.io.IOUtils;
 
 import satori.common.SException;
-import satori.config.SConfig;
-import satori.login.SLogin;
+import satori.session.SSession;
 
 public class SBlobClient {
 	private static String putBlob(String address, File file) throws SException {
@@ -25,7 +24,7 @@ public class SBlobClient {
 			connection.setDoOutput(true);
 			connection.setUseCaches(false);
 			connection.setRequestMethod("PUT");
-			connection.setRequestProperty("Cookie", "satori_token=" + SLogin.getToken());
+			connection.setRequestProperty("Cookie", "satori_token=" + SSession.getToken());
 			connection.setRequestProperty("Content-length", String.valueOf(file.length()));
 			connection.setRequestProperty("Filename", file.getName());
 			InputStream file_in = null;
@@ -59,7 +58,7 @@ public class SBlobClient {
 			HttpURLConnection connection = (HttpURLConnection)url.openConnection();
 			connection.setUseCaches(false);
 			connection.setRequestMethod("GET");
-			connection.setRequestProperty("Cookie", "satori_token=" + SLogin.getToken());
+			connection.setRequestProperty("Cookie", "satori_token=" + SSession.getToken());
 			connection.setRequestProperty("Content-length", "0");
 			int response = connection.getResponseCode();
 			if (response != HttpURLConnection.HTTP_OK) throw new SException("Error loading blob: " + response + " " + connection.getResponseMessage());
@@ -78,11 +77,13 @@ public class SBlobClient {
 	}
 	
 	public static String putBlob(File file) throws SException {
-		String address = "http://" + SConfig.getHost() + ":" + SConfig.getBlobsPort() + "/blob/upload";
+		SSession.ensureConnected();
+		String address = "http://" + SSession.getHost() + ":" + SSession.getBlobsPort() + "/blob/upload";
 		return putBlob(address, file);
 	}
 	public static void getBlob(String hash, File file) throws SException {
-		String address = "http://" + SConfig.getHost() + ":" + SConfig.getBlobsPort() + "/blob/download/" + hash;
+		SSession.ensureConnected();
+		String address = "http://" + SSession.getHost() + ":" + SSession.getBlobsPort() + "/blob/download/" + hash;
 		getBlobAux(address, file);
 	}
 }

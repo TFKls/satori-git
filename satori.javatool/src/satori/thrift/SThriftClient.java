@@ -8,7 +8,7 @@ import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
 import satori.common.SException;
-import satori.config.SConfig;
+import satori.session.SSession;
 
 public class SThriftClient {
 	private static TTransport transport = null;
@@ -16,14 +16,20 @@ public class SThriftClient {
 	
 	public static void setUpProtocol() throws SException {
 		if (transport != null) transport.close();
-		transport = new TFramedTransport(new TSocket(SConfig.getHost(), SConfig.getThriftPort()));
+		SSession.ensureConnected();
+		transport = new TFramedTransport(new TSocket(SSession.getHost(), SSession.getThriftPort()));
 		try { transport.open(); }
 		catch(TException ex) { throw new SException(ex); }
 		protocol = new TBinaryProtocol(transport);
 	}
+	public static void closeProtocol() {
+		protocol = null;
+		if (transport != null) transport.close();
+		transport = null;
+	}
 	
 	public static TProtocol getProtocol() throws SException {
-		if (protocol == null) setUpProtocol();
+		if (protocol == null) throw new SException("Thrift protocol not set");
 		return protocol;
 	}
 	

@@ -9,8 +9,8 @@ import satori.attribute.SAttributeReader;
 import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SException;
-import satori.login.SLogin;
 import satori.server.SAttributeData.AttributeWrap;
+import satori.session.SSession;
 import satori.test.STemporarySubmitReader;
 import satori.thrift.SThriftClient;
 import satori.thrift.SThriftCommand;
@@ -34,8 +34,8 @@ public class STemporarySubmitData {
 		public LoadCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			TemporarySubmit.Iface iface = new TemporarySubmit.Client(SThriftClient.getProtocol());
-			result = new TemporarySubmitWrap(iface.TemporarySubmit_get_struct(SLogin.getToken(), id));
-			result.setResult(new AttributeWrap(iface.TemporarySubmit_result_get_map(SLogin.getToken(), id)));
+			result = new TemporarySubmitWrap(iface.TemporarySubmit_get_struct(SSession.getToken(), id));
+			result.setResult(new AttributeWrap(iface.TemporarySubmit_result_get_map(SSession.getToken(), id)));
 		}
 	}
 	public static STemporarySubmitReader load(long id) throws SException {
@@ -63,7 +63,7 @@ public class STemporarySubmitData {
 		}
 		@Override public void call() throws Exception {
 			TemporarySubmit.Iface iface = new TemporarySubmit.Client(SThriftClient.getProtocol());
-			result = iface.TemporarySubmit_create(SLogin.getToken(), createAttrMap(test_data), createAttrMap(submit_data)).getId();
+			result = iface.TemporarySubmit_create(SSession.getToken(), createAttrMap(test_data), createAttrMap(submit_data)).getId();
 		}
 	}
 	public static long create(SBlob submit, SAttributeReader test_data) throws SException {

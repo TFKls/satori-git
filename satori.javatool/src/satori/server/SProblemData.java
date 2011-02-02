@@ -4,8 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 
 import satori.common.SException;
-import satori.login.SLogin;
 import satori.problem.SProblemReader;
+import satori.session.SSession;
 import satori.thrift.SThriftClient;
 import satori.thrift.SThriftCommand;
 import satori.thrift.gen.Problem;
@@ -28,7 +28,7 @@ public class SProblemData {
 		public LoadCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			Problem.Iface iface = new Problem.Client(SThriftClient.getProtocol());
-			result = new ProblemWrap(iface.Problem_get_struct(SLogin.getToken(), id));
+			result = new ProblemWrap(iface.Problem_get_struct(SSession.getToken(), id));
 		}
 	}
 	public static SProblemReader load(long id) throws SException {
@@ -51,7 +51,7 @@ public class SProblemData {
 		public CreateCommand(SProblemReader problem) { this.problem = problem; }
 		@Override public void call() throws Exception {
 			Problem.Iface iface = new Problem.Client(SThriftClient.getProtocol());
-			result = iface.Problem_create(SLogin.getToken(), createStruct(problem)).getId();
+			result = iface.Problem_create(SSession.getToken(), createStruct(problem)).getId();
 		}
 	}
 	public static long create(SProblemReader problem) throws SException {
@@ -65,7 +65,7 @@ public class SProblemData {
 		public SaveCommand(SProblemReader problem) { this.problem = problem; }
 		@Override public void call() throws Exception {
 			Problem.Iface iface = new Problem.Client(SThriftClient.getProtocol());
-			iface.Problem_modify(SLogin.getToken(), problem.getId(), createStruct(problem));
+			iface.Problem_modify(SSession.getToken(), problem.getId(), createStruct(problem));
 		}
 	}
 	public static void save(SProblemReader problem) throws SException {
@@ -77,7 +77,7 @@ public class SProblemData {
 		public DeleteCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			Problem.Iface iface = new Problem.Client(SThriftClient.getProtocol());
-			iface.Entity_delete(SLogin.getToken(), id);
+			iface.Entity_delete(SSession.getToken(), id);
 		}
 	}
 	public static void delete(long id) throws SException {
@@ -90,7 +90,7 @@ public class SProblemData {
 		@Override public void call() throws Exception {
 			Problem.Iface iface = new Problem.Client(SThriftClient.getProtocol());
 			ProblemStruct filter = new ProblemStruct();
-			List<ProblemStruct> list = iface.Problem_filter(SLogin.getToken(), filter);
+			List<ProblemStruct> list = iface.Problem_filter(SSession.getToken(), filter);
 			result = new ArrayList<SProblemReader>();
 			for (ProblemStruct struct : list) result.add(new ProblemWrap(struct));
 		}

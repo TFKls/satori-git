@@ -7,9 +7,9 @@ import java.util.List;
 
 import satori.common.SAssert;
 import satori.common.SException;
-import satori.login.SLogin;
 import satori.problem.STestSuiteBasicReader;
 import satori.problem.STestSuiteReader;
+import satori.session.SSession;
 import satori.test.STestBasicReader;
 import satori.thrift.SThriftClient;
 import satori.thrift.SThriftCommand;
@@ -40,8 +40,8 @@ public class STestSuiteData {
 		public LoadCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
-			result = new TestSuiteWrap(iface.TestSuite_get_struct(SLogin.getToken(), id));
-			result.setTests(createTestList(iface.TestSuite_get_tests(SLogin.getToken(), id)));
+			result = new TestSuiteWrap(iface.TestSuite_get_struct(SSession.getToken(), id));
+			result.setTests(createTestList(iface.TestSuite_get_tests(SSession.getToken(), id)));
 			//TODO: load tests
 		}
 	}
@@ -74,7 +74,7 @@ public class STestSuiteData {
 		public CreateCommand(STestSuiteReader suite) { this.suite = suite; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
-			result = iface.TestSuite_create(SLogin.getToken(), createStruct(suite), createTestIdList(suite.getTests())).getId();
+			result = iface.TestSuite_create(SSession.getToken(), createStruct(suite), createTestIdList(suite.getTests())).getId();
 		}
 	}
 	public static long create(STestSuiteReader suite) throws SException {
@@ -89,7 +89,7 @@ public class STestSuiteData {
 		public SaveCommand(STestSuiteReader suite) { this.suite = suite; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
-			iface.TestSuite_modify_full(SLogin.getToken(), suite.getId(), createStruct(suite), createTestIdList(suite.getTests()));
+			iface.TestSuite_modify_full(SSession.getToken(), suite.getId(), createStruct(suite), createTestIdList(suite.getTests()));
 		}
 	}
 	public static void save(STestSuiteReader suite) throws SException {
@@ -102,7 +102,7 @@ public class STestSuiteData {
 		public DeleteCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
-			iface.TestSuite_delete(SLogin.getToken(), id);
+			iface.TestSuite_delete(SSession.getToken(), id);
 		}
 	}
 	public static void delete(long id) throws SException {
@@ -118,7 +118,7 @@ public class STestSuiteData {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
 			TestSuiteStruct filter = new TestSuiteStruct();
 			filter.setProblem(problem_id);
-			List<TestSuiteStruct> list = iface.TestSuite_filter(SLogin.getToken(), filter);
+			List<TestSuiteStruct> list = iface.TestSuite_filter(SSession.getToken(), filter);
 			result = new ArrayList<STestSuiteBasicReader>();
 			for (TestSuiteStruct struct : list) result.add(new TestSuiteBasicWrap(struct));
 		}

@@ -7,7 +7,7 @@ import satori.attribute.SAttributeReader;
 import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SException;
-import satori.login.SLogin;
+import satori.session.SSession;
 import satori.thrift.SThriftClient;
 import satori.thrift.SThriftCommand;
 import satori.thrift.gen.AnonymousAttribute;
@@ -58,7 +58,7 @@ public class SAttributeData {
 		public boolean getResult() { return result; }
 		@Override public void call() throws Exception {
 			Blob.Iface iface = new Blob.Client(SThriftClient.getProtocol());
-			result = iface.Blob_exists(SLogin.getToken(), hash);
+			result = iface.Blob_exists(SSession.getToken(), hash);
 		}
 	}
 	private static boolean checkBlobExists(SBlob blob) throws SException {
