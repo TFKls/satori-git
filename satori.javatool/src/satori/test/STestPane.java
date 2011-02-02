@@ -75,6 +75,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 			else throw new UnsupportedFlavorException(flavor);
 		}
 	}
+	@SuppressWarnings("serial")
 	private class TestTransferHandler extends TransferHandler implements SListener2<STestImpl, MouseEvent> {
 		private STestImpl test;
 		

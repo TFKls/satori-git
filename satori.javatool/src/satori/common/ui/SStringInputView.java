@@ -83,6 +83,7 @@ public class SStringInputView implements SPaneView {
 		@Override public void focusLost(FocusEvent e) { editDone(); }
 	}
 	
+	@SuppressWarnings("serial")
 	private class LabelTransferHandler extends TransferHandler {
 		@Override public boolean canImport(TransferSupport support) {
 			if (!support.isDataFlavorSupported(DataFlavor.stringFlavor)) return false;

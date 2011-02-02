@@ -27,6 +27,7 @@ import satori.problem.STestSuiteSnap;
 public class STestSuiteListPane implements SList<STestSuiteSnap>, SPane {
 	private final SProblemPane parent;
 	
+	@SuppressWarnings("serial")
 	private static class ListModel extends AbstractListModel implements SView {
 		private List<STestSuiteSnap> list = new ArrayList<STestSuiteSnap>();
 		private Comparator<STestSuiteSnap> comparator = new Comparator<STestSuiteSnap>() {

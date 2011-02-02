@@ -153,6 +153,7 @@ public class SBlobInputView implements SPaneView {
 		}
 	}
 	
+	@SuppressWarnings("unchecked")
 	private static List<File> importStdFileList(Object obj) {
 		try { return (List<File>)obj; }
 		catch(Exception ex) { return null; }
@@ -173,6 +174,7 @@ public class SBlobInputView implements SPaneView {
 		return list;
 	}
 	
+	@SuppressWarnings("serial")
 	private class SFileTransferHandler extends TransferHandler {
 		@Override public boolean canImport(TransferSupport support) {
 			if ((support.getSourceDropActions() & COPY) != COPY) return false;

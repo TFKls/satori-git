@@ -33,6 +33,7 @@ public class SProblemListPane implements SList<SProblemSnap>, SPane {
 	private final SProblemList problem_list;
 	private final STabs parent;
 	
+	@SuppressWarnings("serial")
 	private static class ListModel extends AbstractListModel implements SView {
 		private List<SProblemSnap> list = new ArrayList<SProblemSnap>();
 		private Comparator<SProblemSnap> comparator = new Comparator<SProblemSnap>() {

@@ -14,6 +14,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 
 public class XmlParser {
+	@SuppressWarnings("serial")
 	public static class ParseException extends SException {
 		ParseException(String msg) { super(msg); }
 		ParseException(Exception ex) { super(ex); }

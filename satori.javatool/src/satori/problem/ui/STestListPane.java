@@ -33,6 +33,7 @@ import satori.test.STestSnap;
 public class STestListPane implements SList<STestSnap>, SPane {
 	private final SProblemPane parent;
 	
+	@SuppressWarnings("serial")
 	private static class ListModel extends AbstractListModel implements SView {
 		private List<STestSnap> list = new ArrayList<STestSnap>();
 		private Comparator<STestSnap> comparator = new Comparator<STestSnap>() {
@@ -104,6 +105,7 @@ public class STestListPane implements SList<STestSnap>, SPane {
 			else throw new UnsupportedFlavorException(flavor);
 		}
 	}
+	@SuppressWarnings("serial")
 	private class TestTransferHandler extends TransferHandler {
 		@Override public boolean canImport(TransferSupport support) { return false; }
 		@Override public boolean importData(TransferSupport support) { return false; }
