@@ -75,6 +75,7 @@ public class SLoginDialog {
 		button_pane.add(cancel);
 		dialog.getContentPane().add(button_pane, BorderLayout.SOUTH);
 		dialog.pack();
+		dialog.setLocationRelativeTo(SFrame.get().getFrame());
 	}
 	
 	private void process() throws SException {

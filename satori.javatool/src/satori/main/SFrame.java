@@ -1,9 +1,11 @@
 package satori.main;
 
+import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JFrame;
+import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -22,8 +24,9 @@ public class SFrame {
 	
 	private JFrame frame;
 	private JMenu session_menu, open_menu;
-	private JMenuItem login_button, logout_button;
-	private JMenuItem problems_button, config_button;
+	private JMenuItem login_button, logout_button, config_button;
+	private JMenuItem problems_button;
+	private JLabel session_label;
 	
 	private SFrame() { initialize(); }
 	
@@ -31,9 +34,9 @@ public class SFrame {
 	
 	private void updateLogin() {
 		if (SLogin.getLogin() != null) {
-			session_menu.setText("Session (" + SLogin.getFullLogin() + ")");
+			session_label.setText("Session: " + SLogin.getFullLogin());
 		} else {
-			session_menu.setText("Session");
+			session_label.setText("Session: not logged in");
 		}
 	}
 	
@@ -61,12 +64,13 @@ public class SFrame {
 	private void initialize() {
 		frame = new JFrame("Satori Tool");
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		frame.getContentPane().add(tabs.getPane());
+		frame.getContentPane().setLayout(new BorderLayout());
+		frame.getContentPane().add(tabs.getPane(), BorderLayout.CENTER);
+		session_label = new JLabel();
+		frame.getContentPane().add(session_label, BorderLayout.NORTH);
 		
 		JMenuBar menu_bar = new JMenuBar();
-		//menu_bar.setLayout(new BorderLayout());
-		//menu_bar.add(Box.createHorizontalGlue());
-		session_menu = new JMenu();
+		session_menu = new JMenu("Session");
 		login_button = new JMenuItem("Login...");
 		login_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
@@ -81,6 +85,13 @@ public class SFrame {
 			}
 		});
 		session_menu.add(logout_button);
+		config_button = new JMenuItem("Server configuration...");
+		config_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				configRequest();
+			}
+		});
+		session_menu.add(config_button);
 		menu_bar.add(session_menu);
 		open_menu = new JMenu("Open");
 		problems_button = new JMenuItem("Problems");
@@ -90,13 +101,6 @@ public class SFrame {
 			}
 		});
 		open_menu.add(problems_button);
-		config_button = new JMenuItem("Configuration");
-		config_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				configRequest();
-			}
-		});
-		open_menu.add(config_button);
 		menu_bar.add(open_menu);
 		frame.setJMenuBar(menu_bar);
 		updateLogin();
@@ -105,7 +109,6 @@ public class SFrame {
 	}
 	
 	public void start() {
-		//frame.pack();
 		SConfig.load();
 		if (!SConfig.hasConfig()) SConfigDialog.show();
 		frame.setVisible(true);

@@ -28,7 +28,7 @@ public class SConfigDialog {
 	}
 	
 	private void initialize() {
-		dialog = new JDialog(SFrame.get().getFrame(), "Configuration", true);
+		dialog = new JDialog(SFrame.get().getFrame(), "Server configuration", true);
 		dialog.getContentPane().setLayout(new BorderLayout());
 		field_pane = new JPanel();
 		field_pane.setLayout(new GridBagLayout());
@@ -38,25 +38,29 @@ public class SConfigDialog {
 		field_pane.add(new JLabel("Thrift port: "), c);
 		field_pane.add(new JLabel("Blobs port: "), c);
 		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0;
+		ActionListener confirm_listener = new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) {
+				confirmed = true;
+				dialog.setVisible(false);
+			}
+		};
 		host = new JTextField(SConfig.getHost());
 		host.setPreferredSize(new Dimension(200, host.getPreferredSize().height));
+		host.addActionListener(confirm_listener);
 		field_pane.add(host, c);
 		thrift_port = new JTextField(String.valueOf(SConfig.getThriftPort()));
 		thrift_port.setPreferredSize(new Dimension(75, thrift_port.getPreferredSize().height));
+		thrift_port.addActionListener(confirm_listener);
 		field_pane.add(thrift_port, c);
 		blobs_port = new JTextField(String.valueOf(SConfig.getBlobsPort()));
 		blobs_port.setPreferredSize(new Dimension(75, blobs_port.getPreferredSize().height));
+		blobs_port.addActionListener(confirm_listener);
 		field_pane.add(blobs_port, c);
 		dialog.getContentPane().add(field_pane, BorderLayout.CENTER);
 		button_pane = new JPanel();
 		button_pane.setLayout(new FlowLayout(FlowLayout.CENTER));
 		confirm = new JButton("Save");
-		confirm.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				confirmed = true;
-				dialog.setVisible(false);
-			}
-		});
+		confirm.addActionListener(confirm_listener);
 		button_pane.add(confirm);
 		cancel = new JButton("Cancel");
 		cancel.addActionListener(new ActionListener() {
@@ -67,6 +71,7 @@ public class SConfigDialog {
 		button_pane.add(cancel);
 		dialog.getContentPane().add(button_pane, BorderLayout.SOUTH);
 		dialog.pack();
+		dialog.setLocationRelativeTo(SFrame.get().getFrame());
 	}
 	
 	private void process() {
