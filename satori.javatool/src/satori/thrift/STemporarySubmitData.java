@@ -4,8 +4,10 @@ import static satori.thrift.SAttributeData.createAttrMap;
 import static satori.thrift.SAttributeData.createBlobs;
 
 import java.util.Collections;
+import java.util.Map;
 
 import satori.attribute.SAttributeReader;
+import satori.attribute.SBlobAttribute;
 import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SException;
@@ -49,6 +51,7 @@ public class STemporarySubmitData {
 		@Override public boolean isBlob(String name) { return true; }
 		@Override public String getString(String name) { return null; }
 		@Override public SBlob getBlob(String name) { return submit; }
+		@Override public Map<String, SBlobAttribute> getMap() { return Collections.singletonMap("content", new SBlobAttribute(getBlob("content"))); }
 	}
 	private static class CreateCommand implements SThriftCommand {
 		private final SAttributeReader submit_data;

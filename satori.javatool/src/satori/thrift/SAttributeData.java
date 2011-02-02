@@ -3,7 +3,10 @@ package satori.thrift;
 import java.util.HashMap;
 import java.util.Map;
 
+import satori.attribute.SAttribute;
 import satori.attribute.SAttributeReader;
+import satori.attribute.SBlobAttribute;
+import satori.attribute.SStringAttribute;
 import satori.blob.SBlob;
 import satori.common.SException;
 import satori.session.SSession;
@@ -25,6 +28,14 @@ public class SAttributeData {
 			AnonymousAttribute attr = data.get(name);
 			if (!attr.isIs_blob()) return null;
 			return SBlob.createRemote(attr.getFilename(), attr.getValue());
+		}
+		@Override public Map<String, SAttribute> getMap() {
+			Map<String, SAttribute> result = new HashMap<String, SAttribute>();
+			for (String name : getNames()) {
+				if (isBlob(name)) result.put(name, new SBlobAttribute(getBlob(name)));
+				else result.put(name, new SStringAttribute(getString(name)));
+			}
+			return result;
 		}
 	}
 	static Map<String, AnonymousAttribute> createAttrMap(SAttributeReader attrs) {

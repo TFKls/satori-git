@@ -13,7 +13,7 @@ public class SInputMetadata {
 	public String getDescription() { return desc; }
 	public boolean isBlob() { return is_blob; }
 	public boolean isRequired() { return required; }
-	public SAttribute getDefaultValue() { return def_value != null ? def_value.copy() : null; }
+	public SAttribute getDefaultValue() { return def_value != null ? def_value : null; }
 	
 	public SInputMetadata(String name, String desc, boolean is_blob, boolean required, SAttribute def_value) {
 		this.name = name;
@@ -22,9 +22,4 @@ public class SInputMetadata {
 		this.required = required;
 		this.def_value = def_value;
 	}
-	
-	//public abstract Input createInput(STestImpl test);
-	
-	//public abstract SPaneView createInputView(Input input);
-	//public InputRowView createInputRowView() { return new InputRowView(this); }
 }

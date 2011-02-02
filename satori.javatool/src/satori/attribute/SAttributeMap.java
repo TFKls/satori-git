@@ -1,35 +1,39 @@
 package satori.attribute;
 
+import java.util.Collections;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 
 import satori.blob.SBlob;
 
 public class SAttributeMap implements SAttributeReader {
-	private Map<String, SAttribute> map = new HashMap<String, SAttribute>();
+	private Map<String, SAttribute> map;
 	
 	private SAttributeMap() {}
 	
 	public static SAttributeMap create(SAttributeReader source) {
 		//if (source == null) return null; //TODO: ?
 		SAttributeMap self = new SAttributeMap();
-		for (String name : source.getNames()) {
-			if (source.isBlob(name)) self.map.put(name, new SBlobAttribute(source.getBlob(name)));
-			else self.map.put(name, new SStringAttribute(source.getString(name)));
-		}
+		self.map = new HashMap<String, SAttribute>(source.getMap());
 		return self;
 	}
 	public static SAttributeMap createEmpty() {
-		return new SAttributeMap();
+		SAttributeMap self = new SAttributeMap();
+		self.map = new HashMap<String, SAttribute>();
+		return self;
 	}
 	
-	/*@Override public boolean equals(Object arg) {
-		if (!(arg instanceof SAttributeMap)) return false;
-		return map.equals(((SAttributeMap)arg).map);
+	public boolean equals(SAttributeMap other) {
+		return map.equals(other.map);
 	}
-	@Override public int hashCode() { return map.hashCode(); }*/
+	public boolean equals(SAttributeReader other) {
+		return map.equals(other.getMap());
+	}
+	@Override public boolean equals(Object other) {
+		if (!(other instanceof SAttributeMap)) return false;
+		return equals((SAttributeMap)other);
+	}
+	@Override public int hashCode() { return map.hashCode(); }
 	
 	@Override public Iterable<String> getNames() { return map.keySet(); }
 	@Override public boolean isBlob(String name) { return map.get(name).isBlob(); }
@@ -41,18 +45,12 @@ public class SAttributeMap implements SAttributeReader {
 		if (!map.containsKey(name)) return null;
 		return map.get(name).getBlob();
 	}
+	@Override public Map<String, SAttribute> getMap() {
+		return Collections.unmodifiableMap(map);
+	}
 	
 	public void setAttr(String name, SAttribute attr) {
 		if (attr == null) map.remove(name);
 		else map.put(name, attr);
-	}
-	public boolean check(SAttributeReader source) {
-		Set<String> names = new HashSet<String>();
-		for (String name : source.getNames()) names.add(name);
-		boolean modified = !map.keySet().equals(names);
-		for (Map.Entry<String, SAttribute> entry : map.entrySet()) {
-			if (entry.getValue().check(source, entry.getKey())) modified = true;
-		}
-		return modified;
 	}
 }

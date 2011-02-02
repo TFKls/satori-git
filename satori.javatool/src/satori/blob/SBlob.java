@@ -22,18 +22,18 @@ public class SBlob {
 	public String getHash() { return hash; }
 	public File getFile() { return file; }
 	
-	/*public boolean equals(SBlob data) {
-		if (name == null && data.name != null) return false;
-		if (name != null && !name.equals(data.name)) return false;
-		if (hash == null && data.hash != null) return false;
-		if (hash != null && !hash.equals(data.hash)) return false;
-		if (file == null && data.file != null) return false;
-		if (file != null && !file.equals(data.file)) return false;
+	public boolean equals(SBlob other) {
+		if (name == null && other.name != null) return false;
+		if (name != null && !name.equals(other.name)) return false;
+		if (hash == null && other.hash != null) return false;
+		if (hash != null && !hash.equals(other.hash)) return false;
+		if (file == null && other.file != null) return false;
+		if (file != null && !file.equals(other.file)) return false;
 		return true;
 	}
-	@Override public boolean equals(Object arg) {
-		if (!(arg instanceof SFile)) return false;
-		return equals((SBlob)arg);
+	@Override public boolean equals(Object other) {
+		if (!(other instanceof SBlob)) return false;
+		return equals((SBlob)other);
 	}
 	@Override public int hashCode() {
 		int result = 0;
@@ -41,7 +41,7 @@ public class SBlob {
 		if (hash != null) result ^= hash.hashCode();
 		if (file != null) result ^= file.hashCode();
 		return result;
-	}*/
+	}
 	
 	private SBlob() {}
 	
@@ -102,11 +102,5 @@ public class SBlob {
 			hash = remote_hash;
 			throw new SException("Hash codes don't match. Perhaps the local file has been modified");
 		}
-	}
-	
-	public boolean check(SBlob other) {
-		if (!name.equals(other.name)) return true;
-		if (!hash.equals(other.hash)) return true;
-		return false;
 	}
 }

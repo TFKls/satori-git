@@ -73,7 +73,7 @@ public class STestImpl implements STestReader {
 		SAssert.assertEquals(source.getId(), getId(), "Test ids don't match");
 		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		if (!source.getName().equals(name)) return true;
-		if (attrs.check(source.getData())) return true;
+		if (!attrs.equals(source.getData())) return true;
 		return false;
 	}
 	
