@@ -17,10 +17,10 @@ import satori.common.SView;
 import satori.common.ui.SPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
-import satori.problem.STestSuiteImpl;
-import satori.test.STestFactory;
-import satori.test.STestImpl;
-import satori.test.STestPane;
+import satori.problem.impl.STestSuiteImpl;
+import satori.test.impl.STestFactory;
+import satori.test.impl.STestImpl;
+import satori.test.ui.STestPane;
 
 public class STestSuitePane implements SPane, SView {
 	private final STestSuiteImpl suite;

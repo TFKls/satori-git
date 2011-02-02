@@ -29,6 +29,7 @@ import satori.common.SList;
 import satori.common.SView;
 import satori.common.ui.SPane;
 import satori.test.STestSnap;
+import satori.test.ui.STestSnapTransfer;
 
 public class STestListPane implements SList<STestSnap>, SPane {
 	private final SProblemPane parent;

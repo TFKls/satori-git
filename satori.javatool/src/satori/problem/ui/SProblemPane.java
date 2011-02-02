@@ -20,12 +20,12 @@ import satori.common.ui.SPane;
 import satori.common.ui.STabbedPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
-import satori.problem.SProblemImpl;
-import satori.problem.STestSuiteImpl;
 import satori.problem.STestSuiteSnap;
-import satori.test.STestFactory;
-import satori.test.STestImpl;
+import satori.problem.impl.SProblemImpl;
+import satori.problem.impl.STestSuiteImpl;
 import satori.test.STestSnap;
+import satori.test.impl.STestFactory;
+import satori.test.impl.STestImpl;
 
 public class SProblemPane implements SPane, SView {
 	private final SProblemImpl problem;

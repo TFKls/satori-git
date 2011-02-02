@@ -10,9 +10,9 @@ import satori.common.SReference;
 import satori.common.SReferenceList;
 import satori.common.SView;
 import satori.common.SViewList;
-import satori.server.STestSuiteData;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
+import satori.thrift.STestSuiteData;
 
 public class STestSuiteSnap implements STestSuiteReader {
 	private final STestList test_list;

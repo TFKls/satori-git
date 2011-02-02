@@ -14,7 +14,7 @@ import javax.swing.JTextField;
 
 import satori.common.SView;
 import satori.common.ui.SPane;
-import satori.problem.SProblemImpl;
+import satori.problem.impl.SProblemImpl;
 
 public class SProblemInfoPane implements SPane, SView {
 	private final SProblemImpl problem;

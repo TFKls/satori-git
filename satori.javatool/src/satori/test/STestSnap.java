@@ -10,7 +10,7 @@ import satori.common.SReference;
 import satori.common.SReferenceList;
 import satori.common.SView;
 import satori.common.SViewList;
-import satori.server.STestData;
+import satori.thrift.STestData;
 
 public class STestSnap implements STestReader {
 	private long id;

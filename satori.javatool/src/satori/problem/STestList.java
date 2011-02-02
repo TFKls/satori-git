@@ -7,9 +7,9 @@ import java.util.Map;
 
 import satori.common.SException;
 import satori.common.SList;
-import satori.server.STestData;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
+import satori.thrift.STestData;
 
 public class STestList {
 	private long problem_id; //TODO: make final

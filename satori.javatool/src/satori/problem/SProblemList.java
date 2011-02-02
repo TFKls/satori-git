@@ -5,7 +5,7 @@ import java.util.Map;
 
 import satori.common.SException;
 import satori.common.SList;
-import satori.server.SProblemData;
+import satori.thrift.SProblemData;
 
 public class SProblemList {
 	private Map<Long, SProblemSnap> problems = null;

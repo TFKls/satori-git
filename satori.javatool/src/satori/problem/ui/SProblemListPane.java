@@ -25,9 +25,9 @@ import satori.common.SView;
 import satori.common.ui.SPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
-import satori.problem.SProblemImpl;
 import satori.problem.SProblemList;
 import satori.problem.SProblemSnap;
+import satori.problem.impl.SProblemImpl;
 
 public class SProblemListPane implements SList<SProblemSnap>, SPane {
 	private final SProblemList problem_list;

@@ -14,7 +14,7 @@ import javax.swing.JTextField;
 
 import satori.common.SView;
 import satori.common.ui.SPane;
-import satori.problem.STestSuiteImpl;
+import satori.problem.impl.STestSuiteImpl;
 
 public class STestSuiteInfoPane implements SPane, SView {
 	private final STestSuiteImpl suite;
