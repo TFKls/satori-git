@@ -50,6 +50,14 @@ public class STestImpl implements STestReader {
 	
 	private STestImpl() {}
 	
+	private void addInputs(TestCaseMetadata meta) {
+		for (InputMetadata im : meta.getInputs()) {
+			if (im.isBlob()) addInput(new SBlobInput(im, this));
+			else addInput(new SStringInput(im, this));
+		}
+		updateInputs();
+	}
+	
 	public static STestImpl create(STestSnap snap, SParentProblem problem) throws SException {
 		//TODO: check problem id
 		if (!snap.isComplete()) snap.reload();
@@ -60,8 +68,7 @@ public class STestImpl implements STestReader {
 		self.problem = problem;
 		self.name = snap.getName();
 		self.attrs = SAttributeMap.create(snap.getData());
-		getMetadataInstance().createTestCase(self);
-		self.updateInputs();
+		self.addInputs(getMetadataInstance());
 		return self;
 	}
 	public static STestImpl createNew(SParentProblem problem) {
@@ -71,8 +78,7 @@ public class STestImpl implements STestReader {
 		self.problem = problem;
 		self.name = "";
 		self.attrs = SAttributeMap.create(getMetadataInstance().getDefaultAttrs());
-		getMetadataInstance().createTestCase(self);
-		self.updateInputs();
+		self.addInputs(getMetadataInstance());
 		return self;
 	}
 	

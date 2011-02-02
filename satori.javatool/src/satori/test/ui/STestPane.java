@@ -32,6 +32,7 @@ import satori.test.STestSnap;
 import satori.test.impl.SSolution;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
+import satori.test.meta.InputMetadata;
 import satori.test.meta.TestCaseMetadata;
 
 public class STestPane implements SList<STestImpl>, SPane {
@@ -165,7 +166,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 		input_pane.addRow(new SGenericRowView("Status", new SStatusItemView.Factory()));
 		input_pane.addRow(new SButtonRowView(new SButtonItemView.Factory(transfer_handler, close_test_listener), new_test_listener));
 		input_pane.addRow(new SGenericRowView("Test name", new SInfoItemView.Factory()));
-		meta.createTestPane(input_pane);
+		for (InputMetadata im : meta.getInputs()) input_pane.addRow(new InputRowView(im));
 		pane.add(input_pane.getPane());
 		JPanel bottom_pane = new JPanel();
 		bottom_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
