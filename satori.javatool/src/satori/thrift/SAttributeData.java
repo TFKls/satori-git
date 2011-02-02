@@ -5,7 +5,6 @@ import java.util.Map;
 
 import satori.attribute.SAttributeReader;
 import satori.blob.SBlob;
-import satori.common.SAssert;
 import satori.common.SException;
 import satori.session.SSession;
 import satori.thrift.gen.AnonymousAttribute;
@@ -33,7 +32,6 @@ public class SAttributeData {
 		for (String name : attrs.getNames()) {
 			if (attrs.isBlob(name)) {
 				SBlob blob = attrs.getBlob(name);
-				SAssert.assertTrue(blob.isRemote(), "Non-remote blob");
 				AnonymousAttribute attr = new AnonymousAttribute();
 				attr.setIs_blob(true);
 				attr.setFilename(blob.getName());
@@ -68,10 +66,7 @@ public class SAttributeData {
 	static void createBlobs(SAttributeReader test) throws SException {
 		for (String name : test.getNames()) if (test.isBlob(name)) {
 			SBlob blob = test.getBlob(name);
-			//TODO: remove this remote stuff?
-			if (blob.isRemote()) continue;
-			if (checkBlobExists(blob)) blob.markRemote();
-			else blob.saveRemote();
+			if (!checkBlobExists(blob)) blob.saveRemote();
 		}
 	}
 }

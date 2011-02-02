@@ -11,19 +11,16 @@ import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.codec.digest.DigestUtils;
 import org.apache.commons.io.IOUtils;
 
-import satori.common.SAssert;
 import satori.common.SException;
 
 public class SBlob {
 	private String name;
 	private String hash;
 	private File file;
-	private boolean remote;
 	
 	public String getName() { return name; }
 	public String getHash() { return hash; }
 	public File getFile() { return file; }
-	public boolean isRemote() { return remote; }
 	
 	/*public boolean equals(SBlob data) {
 		if (name == null && data.name != null) return false;
@@ -32,7 +29,6 @@ public class SBlob {
 		if (hash != null && !hash.equals(data.hash)) return false;
 		if (file == null && data.file != null) return false;
 		if (file != null && !file.equals(data.file)) return false;
-		if (remote != data.remote) return false;
 		return true;
 	}
 	@Override public boolean equals(Object arg) {
@@ -73,7 +69,6 @@ public class SBlob {
 		self.name = file.getName();
 		self.hash = computeHash(file);
 		self.file = file;
-		self.remote = false;
 		return self;
 	}
 	public static SBlob createRemote(String name, String hash) {
@@ -81,7 +76,6 @@ public class SBlob {
 		self.name = name;
 		self.hash = hash;
 		self.file = null;
-		self.remote = true;
 		return self;
 	}
 	
@@ -91,7 +85,6 @@ public class SBlob {
 		result.name = name;
 		result.hash = hash;
 		result.file = file;
-		result.remote = remote;
 		return result;
 	}
 	
@@ -105,25 +98,15 @@ public class SBlob {
 	}
 	public void saveRemote() throws SException {
 		String remote_hash = SBlobClient.putBlob(file);
-		remote = true;
 		if (remote_hash != hash) {
 			hash = remote_hash;
 			throw new SException("Hash codes don't match. Perhaps the local file has been modified");
 		}
 	}
-	public void markRemote() { remote = true; }
 	
-	public void update(SBlob other) {
-		SAssert.assertEquals(name, other.name, "File names don't match"); 
-		SAssert.assertEquals(hash, other.hash, "Hash codes don't match");
-		if (file == null && other.file != null) file = other.file; //TODO: ?
-		if (other.remote) remote = true; 
-	}
 	public boolean check(SBlob other) {
 		if (!name.equals(other.name)) return true;
 		if (!hash.equals(other.hash)) return true;
-		if (file == null && other.file != null) file = other.file; //TODO: ?
-		if (other.remote) remote = true;
 		return false;
 	}
 }

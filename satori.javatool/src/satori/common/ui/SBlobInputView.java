@@ -247,6 +247,6 @@ public class SBlobInputView implements SPaneView {
 		else pane.setBackground(Color.LIGHT_GRAY);
 		SBlob file = data.get();
 		label.setFont(file != null ? set_font : unset_font);
-		label.setText(file != null ? (file.isRemote() ? "[" + file.getName() + "]" : file.getName()) : "Not set");
+		label.setText(file != null ? file.getName() : "Not set");
 	}
 }
