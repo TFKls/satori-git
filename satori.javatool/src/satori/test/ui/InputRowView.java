@@ -10,7 +10,11 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
 
+import satori.common.ui.SBlobInputView;
 import satori.common.ui.SPaneView;
+import satori.common.ui.SStringInputView;
+import satori.test.impl.SBlobInput;
+import satori.test.impl.SStringInput;
 import satori.test.impl.STestImpl;
 import satori.test.meta.InputMetadata;
 
@@ -38,7 +42,16 @@ public class InputRowView implements SRowView {
 	}
 	
 	@Override public void addColumn(STestImpl test, int index) {
-		SPaneView c = meta.createInputView(test.getInput(meta));
+		SPaneView c;
+		if (meta.isBlob()) {
+			SBlobInput input = (SBlobInput)test.getInput(meta);
+			c = new SBlobInputView(input);
+			input.addView(c);
+		} else {
+			SStringInput input = (SStringInput)test.getInput(meta);
+			c = new SStringInputView(input);
+			input.addView(c);
+		}
 		items.add(index, c);
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
 		pane.add(c.getPane(), pane_index);

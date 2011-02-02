@@ -25,6 +25,8 @@ public class SBlobAttribute implements SAttribute {
 	@Override public String getString() { return null; }
 	@Override public SBlob getBlob() { return blob; }
 	
+	@Override public SBlobAttribute copy() { return new SBlobAttribute(blob); }
+	
 	@Override public boolean check(SAttributeReader source, String name) {
 		SBlob other = source.getBlob(name);
 		if (other == null) return true;

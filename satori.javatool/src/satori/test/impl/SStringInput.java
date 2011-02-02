@@ -4,24 +4,24 @@ import satori.attribute.SStringAttribute;
 import satori.common.SData;
 import satori.common.SView;
 import satori.common.SViewList;
-import satori.test.meta.SStringInputMetadata;
+import satori.test.meta.InputMetadata;
 
 public class SStringInput extends Input implements SData<String> {
 	public static enum Status { VALID, INVALID, DISABLED };
 	
-	private final SStringInputMetadata meta;
+	private final InputMetadata meta;
 	private final STestImpl test;
 	
 	private String data;
 	
 	private final SViewList views = new SViewList();
 	
-	public SStringInput(SStringInputMetadata meta, STestImpl test) {
+	public SStringInput(InputMetadata meta, STestImpl test) {
 		this.meta = meta;
 		this.test = test;
 	}
 	
-	@Override public SStringInputMetadata getMetadata() { return meta; }
+	@Override public InputMetadata getMetadata() { return meta; }
 	
 	@Override public String get() { return data; }
 	@Override public void set(String data) {
@@ -33,7 +33,7 @@ public class SStringInput extends Input implements SData<String> {
 	}
 	
 	public Status getStatus() {
-		if (meta.getRequired() && data == null) return Status.INVALID;
+		if (meta.isRequired() && data == null) return Status.INVALID;
 		else return Status.VALID;
 	}
 	

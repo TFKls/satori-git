@@ -12,7 +12,8 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import satori.blob.SBlob;
+import satori.attribute.SAttribute;
+import satori.attribute.SStringAttribute;
 import satori.common.SException;
 
 public class XmlParser {
@@ -30,9 +31,9 @@ public class XmlParser {
 		String required = node.getAttribute("required");
 		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
-		String def_value = node.getAttribute("default");
-		if (def_value.isEmpty()) def_value = null;
-		return new SStringInputMetadata(name, desc, required.equals("true"), def_value); 
+		String def_str = node.getAttribute("default");
+		SAttribute def_value = def_str.isEmpty() ? null : new SStringAttribute(def_str);
+		return new InputMetadata(name, desc, false, required.equals("true"), def_value); 
 	}
 	
 	private static InputMetadata parseInputFile(Element node) throws ParseException {
@@ -43,8 +44,8 @@ public class XmlParser {
 		String required = node.getAttribute("required");
 		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
-		SBlob def_value = null;
-		return new SBlobInputMetadata(name, desc, required.equals("true"), def_value);
+		SAttribute def_value = null;
+		return new InputMetadata(name, desc, true, required.equals("true"), def_value);
 	}
 	
 	/*private static OutputMetadata parseOutput(Element node) throws ParseException {

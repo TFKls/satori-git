@@ -5,24 +5,24 @@ import satori.blob.SBlob;
 import satori.common.SData;
 import satori.common.SView;
 import satori.common.SViewList;
-import satori.test.meta.SBlobInputMetadata;
+import satori.test.meta.InputMetadata;
 
 public class SBlobInput extends Input implements SData<SBlob> {
 	public static enum Status { VALID, INVALID, DISABLED };
 	
-	private final SBlobInputMetadata meta;
+	private final InputMetadata meta;
 	private final STestImpl test;
 	
 	private SBlob data;
 	
 	private final SViewList views = new SViewList();
 	
-	public SBlobInput(SBlobInputMetadata meta, STestImpl test) {
+	public SBlobInput(InputMetadata meta, STestImpl test) {
 		this.meta = meta;
 		this.test = test;
 	}
 	
-	@Override public SBlobInputMetadata getMetadata() { return meta; }
+	@Override public InputMetadata getMetadata() { return meta; }
 	
 	@Override public SBlob get() { return data; }
 	@Override public void set(SBlob data) {
@@ -33,7 +33,7 @@ public class SBlobInput extends Input implements SData<SBlob> {
 	}
 	
 	public Status getStatus() {
-		if (meta.getRequired() && data == null) return Status.INVALID;
+		if (meta.isRequired() && data == null) return Status.INVALID;
 		else return Status.VALID;
 	}
 	
