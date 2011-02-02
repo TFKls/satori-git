@@ -43,19 +43,30 @@ public class SStringInputView implements SPaneView {
 	
 	@Override public JComponent getPane() { return pane; }
 	
+	private void edit() {
+		if (edit_mode) return;
+		edit_mode = true;
+		field.setText(data.get());
+		field.selectAll();
+		label.setVisible(false);
+		field.setVisible(true); 
+		field.requestFocus();
+	}
+	private void editDone() {
+		if (!edit_mode) return;
+		edit_mode = false;
+		if (field.getText().isEmpty()) data.set(null);
+		else data.set(field.getText());
+		field.setVisible(false);
+		label.setVisible(true); 
+	}
+	
 	private class ButtonListener implements ActionListener {
 		@Override public void actionPerformed(ActionEvent e) { data.set(null); }
 	}
 	
 	private class LabelListener implements MouseListener, MouseMotionListener {
-		@Override public void mouseClicked(MouseEvent e) {
-			edit_mode = true;
-			field.setText(data.get());
-			field.selectAll();
-			label.setVisible(false);
-			field.setVisible(true); 
-			field.requestFocus();
-		}
+		@Override public void mouseClicked(MouseEvent e) { edit(); }
 		@Override public void mouseDragged(MouseEvent e) {
 			label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
 		}
@@ -67,20 +78,9 @@ public class SStringInputView implements SPaneView {
 	}
 	
 	private class FieldListener implements ActionListener, FocusListener {
-		@Override public void actionPerformed(ActionEvent e) {
-			edit_mode = false;
-			if (field.getText().isEmpty()) data.set(null);
-			else data.set(field.getText());
-			field.setVisible(false);
-			label.setVisible(true); 
-		}
+		@Override public void actionPerformed(ActionEvent e) { editDone(); }
 		@Override public void focusGained(FocusEvent e) {}
-		@Override public void focusLost(FocusEvent e) {
-			if (!edit_mode) return;
-			edit_mode = false;
-			field.setVisible(false);
-			label.setVisible(true); 
-		}
+		@Override public void focusLost(FocusEvent e) { editDone(); }
 	}
 	
 	private class LabelTransferHandler extends TransferHandler {
@@ -116,7 +116,6 @@ public class SStringInputView implements SPaneView {
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
 		pane.add(clear_button);
 		clear_button.setBounds(4, 4, 13, 13);
-		clear_button.setActionCommand("clear");
 		clear_button.addActionListener(new ButtonListener());
 		label = new JLabel();
 		pane.add(label);
@@ -129,7 +128,6 @@ public class SStringInputView implements SPaneView {
 		field.setVisible(false);
 		pane.add(field);
 		field.setBounds(20, 0, 100, 20);
-		field.setActionCommand("accept");
 		FieldListener field_listener = new FieldListener();
 		field.addActionListener(field_listener);
 		field.addFocusListener(field_listener);

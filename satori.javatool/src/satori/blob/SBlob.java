@@ -85,6 +85,16 @@ public class SBlob {
 		return self;
 	}
 	
+	public SBlob rename(String name) {
+		if (name.equals(this.name)) return this;
+		SBlob result = new SBlob();
+		result.name = name;
+		result.hash = hash;
+		result.file = file;
+		result.remote = remote;
+		return result;
+	}
+	
 	public void saveLocal(File dst) throws SException {
 		if (dst.equals(file)) return;
 		if (file == null) SBlobClient.getBlob(hash, dst);
@@ -95,8 +105,11 @@ public class SBlob {
 	}
 	public void saveRemote() throws SException {
 		String remote_hash = SBlobClient.putBlob(file);
-		SAssert.assertEquals(hash, remote_hash, "Hash codes don't match");
 		remote = true;
+		if (remote_hash != hash) {
+			hash = remote_hash;
+			throw new SException("Hash codes don't match. Perhaps the local file has been modified");
+		}
 	}
 	public void markRemote() { remote = true; }
 	

@@ -9,6 +9,8 @@ import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -27,6 +29,7 @@ import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JTextField;
 import javax.swing.TransferHandler;
 
 import satori.blob.SBlob;
@@ -40,6 +43,8 @@ public class SBlobInputView implements SPaneView {
 	private JPanel pane;
 	private JButton clear_button;
 	private JLabel label;
+	private JTextField field;
+	private boolean edit_mode = false;
 	private Font set_font, unset_font;
 	private Color default_color;
 	
@@ -68,6 +73,22 @@ public class SBlobInputView implements SPaneView {
 		try { data.get().saveLocal(file_chooser.getSelectedFile()); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
+	private void rename() {
+		if (edit_mode || data.get() == null) return;
+		edit_mode = true;
+		field.setText(data.get().getName());
+		field.selectAll();
+		label.setVisible(false);
+		field.setVisible(true); 
+		field.requestFocus();
+	}
+	private void renameDone() {
+		if (!edit_mode) return;
+		edit_mode = false;
+		data.set(data.get().rename(field.getText()));
+		field.setVisible(false);
+		label.setVisible(true); 
+	}
 	
 	private class ButtonListener implements ActionListener {
 		@Override public void actionPerformed(ActionEvent e) { data.set(null); }
@@ -86,6 +107,11 @@ public class SBlobInputView implements SPaneView {
 				@Override public void actionPerformed(ActionEvent e) { saveFile(); }
 			});
 			popup.add(saveItem);
+			JMenuItem renameItem = new JMenuItem("Rename");
+			renameItem.addActionListener(new ActionListener() {
+				@Override public void actionPerformed(ActionEvent e) { rename(); }
+			});
+			popup.add(renameItem);
 			popup.show(e.getComponent(), e.getX(), e.getY());
 		}
 		@Override public void mouseDragged(MouseEvent e) {
@@ -96,6 +122,12 @@ public class SBlobInputView implements SPaneView {
 		@Override public void mouseMoved(MouseEvent e) {}
 		@Override public void mousePressed(MouseEvent e) {}
 		@Override public void mouseReleased(MouseEvent e) {}
+	}
+	
+	private class FieldListener implements ActionListener, FocusListener {
+		@Override public void actionPerformed(ActionEvent e) { renameDone(); }
+		@Override public void focusGained(FocusEvent e) {}
+		@Override public void focusLost(FocusEvent e) { renameDone(); }
 	}
 	
 	private static DataFlavor sFileFlavor = new DataFlavor(SBlob.class, "Satori file");
@@ -187,7 +219,6 @@ public class SBlobInputView implements SPaneView {
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
 		pane.add(clear_button);
 		clear_button.setBounds(4, 4, 13, 13);
-		clear_button.setActionCommand("clear");
 		clear_button.addActionListener(new ButtonListener());
 		label = new JLabel();
 		pane.add(label);
@@ -196,6 +227,13 @@ public class SBlobInputView implements SPaneView {
 		label.addMouseListener(label_listener);
 		label.addMouseMotionListener(label_listener);
 		label.setTransferHandler(new SFileTransferHandler());
+		field = new JTextField();
+		field.setVisible(false);
+		pane.add(field);
+		field.setBounds(20, 0, 100, 20);
+		FieldListener field_listener = new FieldListener();
+		field.addActionListener(field_listener);
+		field.addFocusListener(field_listener);
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);
 		default_color = pane.getBackground();
@@ -206,9 +244,7 @@ public class SBlobInputView implements SPaneView {
 		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
 		else pane.setBackground(Color.LIGHT_GRAY);
 		SBlob file = data.get();
-		label.setFont(file != null && file.getName() != null ? set_font : unset_font);
-		label.setText(file != null && file.getName() != null ?
-				(file.isRemote() ? "[" + file.getName() + "]" : file.getName()) :
-				(file != null && file.isRemote() ? "Remote" : "Not set"));
+		label.setFont(file != null ? set_font : unset_font);
+		label.setText(file != null ? (file.isRemote() ? "[" + file.getName() + "]" : file.getName()) : "Not set");
 	}
 }
