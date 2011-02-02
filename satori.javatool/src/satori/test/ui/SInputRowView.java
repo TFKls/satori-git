@@ -16,16 +16,16 @@ import satori.common.ui.SStringInputView;
 import satori.test.impl.SBlobInput;
 import satori.test.impl.SStringInput;
 import satori.test.impl.STestImpl;
-import satori.test.meta.InputMetadata;
+import satori.test.meta.SInputMetadata;
 
-public class InputRowView implements SRowView {
-	private final InputMetadata meta;
+public class SInputRowView implements SRowView {
+	private final SInputMetadata meta;
 	private List<SPaneView> items = new ArrayList<SPaneView>();
 	
 	private JPanel pane;
 	private JLabel label;
 		
-	public InputRowView(InputMetadata meta) {
+	public SInputRowView(SInputMetadata meta) {
 		this.meta = meta;
 		initialize();
 	}
@@ -44,14 +44,13 @@ public class InputRowView implements SRowView {
 	@Override public void addColumn(STestImpl test, int index) {
 		SPaneView c;
 		if (meta.isBlob()) {
-			SBlobInput input = (SBlobInput)test.getInput(meta);
+			SBlobInput input = new SBlobInput(meta, test);
 			c = new SBlobInputView(input);
-			input.addView(c);
 		} else {
-			SStringInput input = (SStringInput)test.getInput(meta);
+			SStringInput input = new SStringInput(meta, test);
 			c = new SStringInputView(input);
-			input.addView(c);
 		}
+		test.addView(c);
 		items.add(index, c);
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
 		pane.add(c.getPane(), pane_index);

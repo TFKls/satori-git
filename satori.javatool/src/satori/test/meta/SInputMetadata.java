@@ -2,7 +2,7 @@ package satori.test.meta;
 
 import satori.attribute.SAttribute;
 
-public class InputMetadata {
+public class SInputMetadata {
 	private final String name;
 	private final String desc;
 	private final boolean is_blob;
@@ -15,7 +15,7 @@ public class InputMetadata {
 	public boolean isRequired() { return required; }
 	public SAttribute getDefaultValue() { return def_value != null ? def_value.copy() : null; }
 	
-	public InputMetadata(String name, String desc, boolean is_blob, boolean required, SAttribute def_value) {
+	public SInputMetadata(String name, String desc, boolean is_blob, boolean required, SAttribute def_value) {
 		this.name = name;
 		this.desc = desc;
 		this.is_blob = is_blob;

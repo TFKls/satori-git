@@ -1,11 +1,10 @@
 package satori.test.impl;
 
-import java.util.ArrayList;
-import java.util.List;
-
-import satori.attribute.SAttribute;
 import satori.attribute.SAttributeMap;
 import satori.attribute.SAttributeReader;
+import satori.attribute.SBlobAttribute;
+import satori.attribute.SStringAttribute;
+import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SDataStatus;
 import satori.common.SException;
@@ -18,9 +17,8 @@ import satori.common.SViewList;
 import satori.problem.SParentProblem;
 import satori.test.STestReader;
 import satori.test.STestSnap;
-import satori.test.meta.InputMetadata;
-import satori.test.meta.TestCaseMetadata;
-import satori.test.meta.XmlParser;
+import satori.test.meta.STestMetadata;
+import satori.test.meta.SXmlParser;
 import satori.thrift.STestData;
 
 public class STestImpl implements STestReader {
@@ -30,7 +28,6 @@ public class STestImpl implements STestReader {
 	private String name;
 	private SAttributeMap attrs;
 	
-	private final List<Input> inputs = new ArrayList<Input>();
 	private final SDataStatus status = new SDataStatus();
 	private final SListener0List data_modified_listeners = new SListener0List();
 	private final SViewList views = new SViewList();
@@ -50,14 +47,6 @@ public class STestImpl implements STestReader {
 	
 	private STestImpl() {}
 	
-	private void addInputs(TestCaseMetadata meta) {
-		for (InputMetadata im : meta.getInputs()) {
-			if (im.isBlob()) addInput(new SBlobInput(im, this));
-			else addInput(new SStringInput(im, this));
-		}
-		updateInputs();
-	}
-	
 	public static STestImpl create(STestSnap snap, SParentProblem problem) throws SException {
 		//TODO: check problem id
 		if (!snap.isComplete()) snap.reload();
@@ -68,7 +57,6 @@ public class STestImpl implements STestReader {
 		self.problem = problem;
 		self.name = snap.getName();
 		self.attrs = SAttributeMap.create(snap.getData());
-		self.addInputs(getMetadataInstance());
 		return self;
 	}
 	public static STestImpl createNew(SParentProblem problem) {
@@ -78,7 +66,6 @@ public class STestImpl implements STestReader {
 		self.problem = problem;
 		self.name = "";
 		self.attrs = SAttributeMap.create(getMetadataInstance().getDefaultAttrs());
-		self.addInputs(getMetadataInstance());
 		return self;
 	}
 	
@@ -105,18 +92,21 @@ public class STestImpl implements STestReader {
 		this.name = name;
 		notifyModified();
 	}
-	public void setAttr(String name, SAttribute attr) {
-		//TODO: check if not equal
-		attrs.setAttr(name, attr);
+	public void setDataString(String name, String value) {
+		String old_value = attrs.getString(name);
+		if (value == null && old_value == null) return;
+		if (value != null && value.equals(old_value)) return;
+		attrs.setAttr(name, value != null ? new SStringAttribute(value) : null);
 		notifyModified();
 		callDataModifiedListeners();
 	}
-	
-	public Input getInput(InputMetadata meta) {
-		for (Input input : inputs) if (input.getMetadata() == meta) return input;
-		return null;
+	public void setDataBlob(String name, SBlob blob) {
+		SBlob old_blob = attrs.getBlob(name);
+		if (blob == old_blob) return; //TODO: compare blobs
+		attrs.setAttr(name, blob != null ? new SBlobAttribute(blob) : null);
+		notifyModified();
+		callDataModifiedListeners();
 	}
-	public void addInput(Input input) { inputs.add(input); }
 	
 	private void notifyModified() {
 		status.markModified();
@@ -139,23 +129,17 @@ public class STestImpl implements STestReader {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { views.update(); }
 	
-	private void updateInputs() {
-		for (Input input : inputs) input.update();
-	}
-	
 	public void reload() throws SException {
 		SAssert.assertTrue(isRemote(), "Test not remote");
 		snap.reload();
 		name = snap.getName();
 		attrs = SAttributeMap.create(snap.getData());
-		updateInputs();
 		notifyUpToDate();
 		callDataModifiedListeners();
 	}
 	public void create() throws SException {
 		SAssert.assertFalse(isRemote(), "Test already created");
 		id.set(STestData.create(this));
-		updateInputs();
 		notifyUpToDate();
 		snap = STestSnap.create(this);
 		snap.addReference(reference);
@@ -164,7 +148,6 @@ public class STestImpl implements STestReader {
 	public void save() throws SException {
 		SAssert.assertTrue(isRemote(), "Test not remote");
 		STestData.save(this);
-		updateInputs();
 		notifyUpToDate();
 		snap.set(this);
 	}
@@ -172,7 +155,6 @@ public class STestImpl implements STestReader {
 		SAssert.assertTrue(isRemote(), "Test not remote");
 		STestData.delete(getId());
 		id.clear();
-		updateInputs();
 		notifyOutdated();
 		snap.removeReference(reference);
 		snap.notifyDeleted();
@@ -197,13 +179,13 @@ public class STestImpl implements STestReader {
 		"    </input>" +
 		"</checker>";
 	
-	private static TestCaseMetadata meta_instance = null;
+	private static STestMetadata meta_instance = null;
 	
 	private static void createMetadata() {
-		try { meta_instance = XmlParser.parse(xml); }
-		catch(XmlParser.ParseException ex) { throw new RuntimeException(ex); }
+		try { meta_instance = SXmlParser.parse(xml); }
+		catch(SXmlParser.ParseException ex) { throw new RuntimeException(ex); }
 	}
-	public static TestCaseMetadata getMetadataInstance() {
+	public static STestMetadata getMetadataInstance() {
 		if (meta_instance == null) createMetadata();
 		return meta_instance;
 	}

@@ -32,11 +32,11 @@ import satori.test.STestSnap;
 import satori.test.impl.SSolution;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
-import satori.test.meta.InputMetadata;
-import satori.test.meta.TestCaseMetadata;
+import satori.test.meta.SInputMetadata;
+import satori.test.meta.STestMetadata;
 
 public class STestPane implements SList<STestImpl>, SPane {
-	private final TestCaseMetadata meta;
+	private final STestMetadata meta;
 	private final STestSuiteImpl suite;
 	private final STestFactory factory;
 	
@@ -150,7 +150,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 	}
 	private TestTransferHandler transfer_handler = new TestTransferHandler();
 	
-	public STestPane(TestCaseMetadata meta, STestSuiteImpl suite, STestFactory factory) {
+	public STestPane(STestMetadata meta, STestSuiteImpl suite, STestFactory factory) {
 		this.meta = meta;
 		this.suite = suite;
 		this.factory = factory;
@@ -166,7 +166,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 		input_pane.addRow(new SGenericRowView("Status", new SStatusItemView.Factory()));
 		input_pane.addRow(new SButtonRowView(new SButtonItemView.Factory(transfer_handler, close_test_listener), new_test_listener));
 		input_pane.addRow(new SGenericRowView("Test name", new SInfoItemView.Factory()));
-		for (InputMetadata im : meta.getInputs()) input_pane.addRow(new InputRowView(im));
+		for (SInputMetadata im : meta.getInputs()) input_pane.addRow(new SInputRowView(im));
 		pane.add(input_pane.getPane());
 		JPanel bottom_pane = new JPanel();
 		bottom_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));

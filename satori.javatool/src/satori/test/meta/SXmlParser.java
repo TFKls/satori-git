@@ -16,14 +16,14 @@ import satori.attribute.SAttribute;
 import satori.attribute.SStringAttribute;
 import satori.common.SException;
 
-public class XmlParser {
+public class SXmlParser {
 	@SuppressWarnings("serial")
 	public static class ParseException extends SException {
 		ParseException(String msg) { super(msg); }
 		ParseException(Exception ex) { super(ex); }
 	}
 	
-	private static InputMetadata parseInputValue(Element node) throws ParseException {
+	private static SInputMetadata parseInputValue(Element node) throws ParseException {
 		String name = node.getAttribute("name");
 		if (name.isEmpty()) throw new ParseException("Input name undefined");
 		String desc = node.getAttribute("description");
@@ -33,10 +33,10 @@ public class XmlParser {
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
 		String def_str = node.getAttribute("default");
 		SAttribute def_value = def_str.isEmpty() ? null : new SStringAttribute(def_str);
-		return new InputMetadata(name, desc, false, required.equals("true"), def_value); 
+		return new SInputMetadata(name, desc, false, required.equals("true"), def_value); 
 	}
 	
-	private static InputMetadata parseInputFile(Element node) throws ParseException {
+	private static SInputMetadata parseInputFile(Element node) throws ParseException {
 		String name = node.getAttribute("name");
 		if (name.isEmpty()) throw new ParseException("Input name undefined");
 		String desc = node.getAttribute("description");
@@ -45,7 +45,7 @@ public class XmlParser {
 		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
 		SAttribute def_value = null;
-		return new InputMetadata(name, desc, true, required.equals("true"), def_value);
+		return new SInputMetadata(name, desc, true, required.equals("true"), def_value);
 	}
 	
 	/*private static OutputMetadata parseOutput(Element node) throws ParseException {
@@ -89,8 +89,8 @@ public class XmlParser {
 		return stage;
 	}*/
 	
-	private static TestCaseMetadata parseInputs(Element node) throws ParseException {
-		TestCaseMetadata testcase = new TestCaseMetadata();
+	private static STestMetadata parseInputs(Element node) throws ParseException {
+		STestMetadata testcase = new STestMetadata();
 		NodeList children = node.getElementsByTagName("*");
 		for (int i = 0; i < children.getLength(); ++i) {
 			Element child = (Element)children.item(i);
@@ -101,7 +101,7 @@ public class XmlParser {
 		return testcase;
 	}
 	
-	private static TestCaseMetadata parse(Document doc) throws ParseException {
+	private static STestMetadata parse(Document doc) throws ParseException {
 		doc.normalizeDocument();
 		Element node = doc.getDocumentElement();
 		NodeList children = node.getElementsByTagName("input");
@@ -109,7 +109,7 @@ public class XmlParser {
 		return parseInputs((Element)children.item(0));
 	}
 	
-	public static TestCaseMetadata parse(String str) throws ParseException {
+	public static STestMetadata parse(String str) throws ParseException {
 		InputSource is = new InputSource();
 		is.setCharacterStream(new StringReader(str));
 		try { return parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is)); }
