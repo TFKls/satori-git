@@ -34,8 +34,7 @@ public class SProblemInfoPane implements SPane, SView {
 	private void updateDescription() { problem.setDescription(desc_field.getText()); }
 	
 	private void initialize() {
-		pane = new JPanel();
-		pane.setLayout(new GridBagLayout());
+		pane = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.gridx = 0; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.0; c.weighty = 0.0;
 		pane.add(new JLabel("Name: "), c);

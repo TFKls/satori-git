@@ -1,6 +1,5 @@
 package satori.test.ui;
 
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -62,11 +61,11 @@ public class SButtonItemView implements SPaneView {
 	}
 	
 	private void initialize() {
-		pane = new JPanel();
-		pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		SDimension.setItemSize(pane);
 		move_button = new JButton("M");
 		move_button.setMargin(new Insets(0, 0, 0, 0));
-		move_button.setPreferredSize(new Dimension(24, 20));
+		SDimension.setSize(move_button, 20);
 		move_button.setToolTipText("Move");
 		move_button.setFocusable(false);
 		move_button.addMouseMotionListener(new MouseMotionListener() {
@@ -81,7 +80,7 @@ public class SButtonItemView implements SPaneView {
 		pane.add(move_button);
 		save_button = new JButton("S");
 		save_button.setMargin(new Insets(0, 0, 0, 0));
-		save_button.setPreferredSize(new Dimension(24, 20));
+		SDimension.setSize(save_button, 20);
 		save_button.setToolTipText("Save");
 		save_button.setFocusable(false);
 		save_button.addActionListener(new ActionListener() {
@@ -90,7 +89,7 @@ public class SButtonItemView implements SPaneView {
 		pane.add(save_button);
 		reload_button = new JButton("R");
 		reload_button.setMargin(new Insets(0, 0, 0, 0));
-		reload_button.setPreferredSize(new Dimension(24, 20));
+		SDimension.setSize(reload_button, 20);
 		reload_button.setToolTipText("Reload");
 		reload_button.setFocusable(false);
 		reload_button.addActionListener(new ActionListener() {
@@ -99,7 +98,7 @@ public class SButtonItemView implements SPaneView {
 		pane.add(reload_button);
 		delete_button = new JButton("D");
 		delete_button.setMargin(new Insets(0, 0, 0, 0));
-		delete_button.setPreferredSize(new Dimension(24, 20));
+		SDimension.setSize(delete_button, 20);
 		delete_button.setToolTipText("Delete");
 		delete_button.setFocusable(false);
 		delete_button.addActionListener(new ActionListener() {
@@ -108,7 +107,7 @@ public class SButtonItemView implements SPaneView {
 		pane.add(delete_button);
 		close_button = new JButton("X");
 		close_button.setMargin(new Insets(0, 0, 0, 0));
-		close_button.setPreferredSize(new Dimension(24, 20));
+		SDimension.setSize(close_button, 20);
 		close_button.setToolTipText("Close");
 		close_button.setFocusable(false);
 		close_button.addActionListener(new ActionListener() {

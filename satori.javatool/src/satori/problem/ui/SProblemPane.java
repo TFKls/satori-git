@@ -146,15 +146,13 @@ public class SProblemPane implements SPane, SView {
 		test_list_pane = new STestListPane(this);
 		suite_list_pane = new STestSuiteListPane(this);
 		
-		main_pane = new JPanel();
-		main_pane.setLayout(new GridBagLayout());
+		main_pane = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.gridx = 0; c.gridy = 0; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 2;
 		status_label = new JLabel();
 		main_pane.add(status_label, c);
 		c.gridx = 0; c.gridy = 1; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 2;
-		button_pane = new JPanel();
-		button_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		button_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		save_button = new JButton("Save");
 		save_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { saveRequest(); }
@@ -180,14 +178,14 @@ public class SProblemPane implements SPane, SView {
 		c.gridx = 0; c.gridy = 2; c.fill = GridBagConstraints.BOTH; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 2;
 		main_pane.add(info_pane.getPane(), c);
 		test_list_pane.getPane().setBorder(BorderFactory.createTitledBorder("Tests"));
-		test_list_pane.getPane().setPreferredSize(new Dimension(320, 160));
+		test_list_pane.getPane().setPreferredSize(new Dimension(320, 110));
 		c.gridx = 0; c.gridy = 3; c.fill = GridBagConstraints.BOTH; c.weightx = 0.5; c.weighty = 0.4; c.gridwidth = 1;
 		main_pane.add(test_list_pane.getPane(), c);
 		suite_list_pane.getPane().setBorder(BorderFactory.createTitledBorder("Test suites"));
-		suite_list_pane.getPane().setPreferredSize(new Dimension(320, 160));
+		suite_list_pane.getPane().setPreferredSize(new Dimension(320, 110));
 		c.gridx = 1; c.gridy = 3; c.fill = GridBagConstraints.BOTH; c.weightx = 0.5; c.weighty = 0.4; c.gridwidth = 1;
 		main_pane.add(suite_list_pane.getPane(), c);
-		tabs.getPane().setPreferredSize(new Dimension(640, 320));
+		tabs.getPane().setPreferredSize(new Dimension(640, 370));
 		c.gridx = 0; c.gridy = 4; c.fill = GridBagConstraints.BOTH; c.weightx = 1.0; c.weighty = 0.6; c.gridwidth = 2;
 		main_pane.add(tabs.getPane(), c);
 		scroll_pane = new JScrollPane(main_pane);

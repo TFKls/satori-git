@@ -17,8 +17,7 @@ public class SScrollPane implements SPane {
 	@Override public JComponent getPane() { return pane; }
 	
 	private void initialize() {
-		inner_pane = new JPanel();
-		inner_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		inner_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		pane = new JScrollPane(inner_pane);
 		pane.setBorder(new EmptyBorder(0, 0, 0, 0));
 	}

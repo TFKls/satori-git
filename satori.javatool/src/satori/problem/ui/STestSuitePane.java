@@ -93,15 +93,13 @@ public class STestSuitePane implements SPane, SView {
 		info_pane = new STestSuiteInfoPane(suite);
 		test_pane = new STestPane(STestImpl.getMetadataInstance(), suite, factory);
 		
-		main_pane = new JPanel();
-		main_pane.setLayout(new GridBagLayout());
+		main_pane = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.gridx = 0; c.gridy = 0; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 1;
 		status_label = new JLabel();
 		main_pane.add(status_label, c);
 		c.gridx = 0; c.gridy = 1; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 1;
-		button_pane = new JPanel();
-		button_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		button_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		save_button = new JButton("Save");
 		save_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { saveRequest(); }

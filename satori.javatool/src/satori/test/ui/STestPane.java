@@ -1,6 +1,5 @@
 package satori.test.ui;
 
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.Point;
@@ -14,6 +13,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -32,7 +32,6 @@ import satori.test.STestSnap;
 import satori.test.impl.SSolution;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
-import satori.test.meta.SInputMetadata;
 import satori.test.meta.STestMetadata;
 
 public class STestPane implements SList<STestImpl>, SPane {
@@ -44,7 +43,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 	private List<SSolutionPane> solution_panes = new ArrayList<SSolutionPane>();
 	private List<STestImpl> tests = new ArrayList<STestImpl>();
 	
-	private JPanel pane;
+	private JComponent pane;
 	private SScrollPane scroll_pane;
 	
 	private SListener<STestImpl> new_test_listener = new SListener<STestImpl>() {
@@ -160,19 +159,17 @@ public class STestPane implements SList<STestImpl>, SPane {
 	@Override public JComponent getPane() { return scroll_pane.getPane(); }
 	
 	private void initialize() {
-		pane = new JPanel();
-		pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
+		pane = new Box(BoxLayout.Y_AXIS);
 		input_pane = new STestInputPane();
 		input_pane.addRow(new SGenericRowView("Status", new SStatusItemView.Factory()));
 		input_pane.addRow(new SButtonRowView(new SButtonItemView.Factory(transfer_handler, close_test_listener), new_test_listener));
-		input_pane.addRow(new SGenericRowView("Test name", new SInfoItemView.Factory()));
-		for (SInputMetadata im : meta.getInputs()) input_pane.addRow(new SInputRowView(im));
+		input_pane.addRow(new SGenericRowView("Name", new SInfoItemView.Factory()));
+		input_pane.addRow(new SDataRowView(meta));
 		pane.add(input_pane.getPane());
-		JPanel bottom_pane = new JPanel();
-		bottom_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		JPanel bottom_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		JButton bottom_button = new JButton("Add solution");
 		bottom_button.setMargin(new Insets(0, 0, 0, 0));
-		bottom_button.setPreferredSize(new Dimension(120, 20));
+		SDimension.setHeight(bottom_button);
 		bottom_button.setFocusable(false);
 		bottom_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { addSolutionPane(); }

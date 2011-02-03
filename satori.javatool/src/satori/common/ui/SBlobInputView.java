@@ -37,10 +37,11 @@ import satori.common.SData;
 import satori.common.SException;
 import satori.main.SFrame;
 
-public class SBlobInputView implements SPaneView {
+public class SBlobInputView implements SInputView {
 	private final SData<SBlob> data;
 	
-	private JPanel pane;
+	private String desc;
+	private JComponent pane;
 	private JButton clear_button;
 	private JLabel label;
 	private JTextField field;
@@ -213,33 +214,42 @@ public class SBlobInputView implements SPaneView {
 	}
 	
 	private void initialize() {
-		pane = new JPanel();
-		pane.setLayout(null);
-		pane.setPreferredSize(new Dimension(120, 20));
+		pane = new JPanel(null);
 		byte[] icon = {71,73,70,56,57,97,7,0,7,0,-128,1,0,-1,0,0,-1,-1,-1,33,-7,4,1,10,0,1,0,44,0,0,0,0,7,0,7,0,0,2,13,12,126,6,-63,-72,-36,30,76,80,-51,-27,86,1,0,59};
 		clear_button = new JButton(new ImageIcon(icon));
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
-		pane.add(clear_button);
-		clear_button.setBounds(4, 4, 13, 13);
 		clear_button.addActionListener(new ButtonListener());
+		pane.add(clear_button);
 		label = new JLabel();
-		pane.add(label);
-		label.setBounds(20, 0, 100, 20);
 		LabelListener label_listener = new LabelListener();
 		label.addMouseListener(label_listener);
 		label.addMouseMotionListener(label_listener);
 		label.setTransferHandler(new SFileTransferHandler());
+		pane.add(label);
 		field = new JTextField();
 		field.setVisible(false);
-		pane.add(field);
-		field.setBounds(20, 0, 100, 20);
 		FieldListener field_listener = new FieldListener();
 		field.addActionListener(field_listener);
 		field.addFocusListener(field_listener);
+		pane.add(field);
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);
 		default_color = pane.getBackground();
 		update();
+	}
+	
+	@Override public void setDimension(Dimension dim) {
+		pane.setPreferredSize(dim);
+		pane.setMinimumSize(dim);
+		pane.setMaximumSize(dim);
+		clear_button.setBounds(4, 4, 13, dim.height-7);
+		label.setBounds(20, 0, dim.width-20, dim.height);
+		field.setBounds(20, 0, dim.width-20, dim.height);
+	}
+	@Override public void setDescription(String desc) {
+		this.desc = desc;
+		update();
+		label.setToolTipText(desc);
 	}
 	
 	@Override public void update() {
@@ -247,6 +257,6 @@ public class SBlobInputView implements SPaneView {
 		else pane.setBackground(Color.LIGHT_GRAY);
 		SBlob file = data.get();
 		label.setFont(file != null ? set_font : unset_font);
-		label.setText(file != null ? file.getName() : "Not set");
+		label.setText(file != null ? file.getName() : desc);
 	}
 }

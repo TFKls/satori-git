@@ -1,6 +1,5 @@
 package satori.test.ui;
 
-import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
@@ -8,6 +7,7 @@ import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
@@ -34,8 +34,7 @@ public class SSolutionPane implements SRowView {
 		@Override public void call() { refreshAll(); }
 	};
 	
-	private JPanel pane;
-	private JPanel solution_pane;
+	private JComponent pane;
 	private SBlobInputView solution_input;
 	private SResultButtonRowView button_row;
 	private SResultStatusRowView status_row;
@@ -58,19 +57,19 @@ public class SSolutionPane implements SRowView {
 	}
 	
 	private void initialize() {
-		pane = new JPanel();
-		pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
-		solution_pane = new JPanel();
-		solution_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		pane = new Box(BoxLayout.Y_AXIS);
+		JPanel solution_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		JLabel solution_label = new JLabel("Solution");
-		solution_label.setPreferredSize(new Dimension(120, 20));
+		SDimension.setLabelSize(solution_label);
 		solution_pane.add(solution_label);
 		solution_input = new SBlobInputView(solution);
+		solution_input.setDimension(SDimension.itemDim);
+		solution_input.setDescription("Solution file");
 		solution.addView(solution_input);
 		solution_pane.add(solution_input.getPane());
 		JButton remove_button = new JButton("X");
 		remove_button.setMargin(new Insets(0, 0, 0, 0));
-		remove_button.setPreferredSize(new Dimension(24, 20));
+		SDimension.setSize(remove_button, 20);
 		remove_button.setToolTipText("Remove solution");
 		remove_button.setFocusable(false);
 		remove_button.addActionListener(new ActionListener() {

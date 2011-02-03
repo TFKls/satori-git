@@ -1,11 +1,14 @@
 package satori.test.meta;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.LineIterator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
@@ -113,8 +116,23 @@ public class SXmlParser {
 		InputSource is = new InputSource();
 		is.setCharacterStream(new StringReader(str));
 		try { return parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is)); }
-		catch(IOException ex) { throw new RuntimeException(ex); }
+		catch(IOException ex) { throw new ParseException(ex); }
 		catch(SAXException ex) { throw new ParseException(ex); }
 		catch(ParserConfigurationException ex) { throw new ParseException(ex); }
+	}
+	
+	public static STestMetadata parseJudge(File file) throws ParseException {
+		StringBuilder xml = new StringBuilder();
+		LineIterator line_iter = null;
+		try {
+			line_iter = FileUtils.lineIterator(file);
+			while (line_iter.hasNext()) {
+				String line = line_iter.next();
+				if (line.startsWith("#@")) xml.append(line.substring(2));
+			}
+		}
+		catch(IOException ex) { throw new ParseException(ex); }
+		finally { LineIterator.closeQuietly(line_iter); }
+		return parse(xml.toString());
 	}
 }

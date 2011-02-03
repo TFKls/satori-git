@@ -1,7 +1,5 @@
 package satori.test.ui;
 
-import java.awt.Dimension;
-
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
@@ -23,7 +21,7 @@ public class SStatusItemView implements SPaneView {
 	
 	private void initialize() {
 		label = new JLabel();
-		label.setPreferredSize(new Dimension(120, 20));
+		SDimension.setItemSize(label);
 		update();
 	}
 	

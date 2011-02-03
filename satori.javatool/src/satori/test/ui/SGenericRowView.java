@@ -1,13 +1,9 @@
 package satori.test.ui;
 
-import java.awt.Dimension;
-import java.awt.FlowLayout;
-import java.util.ArrayList;
-import java.util.List;
-
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import satori.common.ui.SPaneView;
 import satori.test.impl.STestImpl;
@@ -15,10 +11,8 @@ import satori.test.impl.STestImpl;
 public class SGenericRowView implements SRowView {
 	private final String name;
 	private final SItemViewFactory factory;
-	private List<SPaneView> items = new ArrayList<SPaneView>();
 	
-	private JPanel pane;
-	private JLabel label;
+	private JComponent pane;
 	
 	public SGenericRowView(String name, SItemViewFactory factory) {
 		this.name = name;
@@ -29,21 +23,19 @@ public class SGenericRowView implements SRowView {
 	@Override public JComponent getPane() { return pane; }
 	
 	private void initialize() {
-		pane = new JPanel();
-		pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		label = new JLabel(name);
-		label.setPreferredSize(new Dimension(120, 20));
+		pane = new Box(BoxLayout.X_AXIS);
+		JLabel label = new JLabel(name);
+		SDimension.setLabelSize(label);
 		pane.add(label);
+		pane.add(Box.createHorizontalGlue());
 	}
 	
 	@Override public void addColumn(STestImpl test, int index) {
 		SPaneView c = factory.createView(test);
-		items.add(index, c);
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
 		pane.add(c.getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);
-		items.remove(index);
 	}
 }

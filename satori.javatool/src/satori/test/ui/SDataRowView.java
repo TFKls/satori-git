@@ -5,12 +5,16 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import satori.test.impl.STestResult;
+import satori.test.impl.STestImpl;
+import satori.test.meta.STestMetadata;
 
-public class SResultStatusRowView implements SSolutionRowView {
+public class SDataRowView implements SRowView {
+	private final STestMetadata meta;
+	
 	private JComponent pane;
 	
-	public SResultStatusRowView() {
+	public SDataRowView(STestMetadata meta) {
+		this.meta = meta;
 		initialize();
 	}
 	
@@ -18,16 +22,18 @@ public class SResultStatusRowView implements SSolutionRowView {
 	
 	private void initialize() {
 		pane = new Box(BoxLayout.X_AXIS);
-		JLabel label = new JLabel("Status");
+		JLabel label = new JLabel("Data");
 		SDimension.setLabelSize(label);
-		pane.add(label);
+		Box label_box = new Box(BoxLayout.Y_AXIS);
+		label_box.add(label);
+		label_box.add(Box.createVerticalGlue());
+		pane.add(label_box);
 		pane.add(Box.createHorizontalGlue());
 	}
 	
-	@Override public void addColumn(STestResult result, int index) {
-		SResultStatusItemView c = new SResultStatusItemView(result);
+	@Override public void addColumn(STestImpl test, int index) {
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
-		pane.add(c.getPane(), pane_index);
+		pane.add(new SDataItemView(meta, test).getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);

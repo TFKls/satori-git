@@ -3,24 +3,25 @@ package satori.test.ui;
 import java.util.ArrayList;
 import java.util.List;
 
+import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
-import javax.swing.JPanel;
 
 import satori.test.impl.STestImpl;
 
 public class STestInputPane implements SRowView {
 	private List<SRowView> rows = new ArrayList<SRowView>();
 	
-	private JPanel pane;
+	private JComponent pane;
 	
-	public STestInputPane() { initialize(); }
+	public STestInputPane() {
+		initialize();
+	}
 	
 	@Override public JComponent getPane() { return pane; }
 	
 	private void initialize() {
-		pane = new JPanel();
-		pane.setLayout(new BoxLayout(pane, BoxLayout.Y_AXIS));
+		pane = new Box(BoxLayout.Y_AXIS);
 	}
 		
 	public void addRow(SRowView row) {

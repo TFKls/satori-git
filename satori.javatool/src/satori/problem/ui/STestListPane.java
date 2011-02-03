@@ -120,10 +120,8 @@ public class STestListPane implements SList<STestSnap>, SPane {
 	}
 	
 	private void initialize() {
-		main_pane = new JPanel();
-		main_pane.setLayout(new BorderLayout());
-		button_pane = new JPanel();
-		button_pane.setLayout(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		main_pane = new JPanel(new BorderLayout());
+		button_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		new_button = new JButton("New");
 		new_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { newRequest(); }

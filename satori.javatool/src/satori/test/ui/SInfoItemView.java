@@ -1,6 +1,5 @@
 package satori.test.ui;
 
-import java.awt.Dimension;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -29,7 +28,7 @@ public class SInfoItemView implements SPaneView {
 	
 	private void initialize() {
 		name_field = new JTextField();
-		name_field.setPreferredSize(new Dimension(120, 20));
+		SDimension.setItemSize(name_field);
 		name_field.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { updateName(); }
 		});
