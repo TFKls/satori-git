@@ -4,6 +4,7 @@ from collections import deque
 from django.db import transaction
 import logging
 
+from satori.ars import perf
 from satori.core.models import *
 from satori.events import Event, Client2
 
@@ -39,7 +40,9 @@ class CheckingMaster(Client2):
         self.ranking_rejudged_test_suite_results = dict()
         self.rankings_to_rejudge = set()
         self.rankings_changed_default_test_suite = dict()
-    
+
+        self.test_suite_result_cache = {}    
+
     def init(self):
         self.attach(self.queue)
         self.map({'type': 'checking_rejudge_test'}, self.queue)
@@ -360,7 +363,13 @@ class CheckingMaster(Client2):
         self.ranking_map[ranking] = aggregator(self, ranking)
         self.call_ranking(ranking, 'init', [])
         self.call_ranking(ranking, 'created_contestants', [Contestant.objects.filter(contest=ranking.contest)])
+        
+        for tsr in TestSuiteResult.objects.filter(submit__problem__contest=ranking.contest):
+            self.test_suite_result_cache[(tsr.test_suite_id, tsr.submit_id)] = tsr
+
         self.call_ranking(ranking, 'created_submits', [Submit.objects.filter(problem__contest=ranking.contest)])
+
+        self.test_suite_result_cache = {}
 
     def call_ranking(self, ranking, name, args):
         if ranking not in self.ranking_map:
@@ -369,6 +378,7 @@ class CheckingMaster(Client2):
 
         logging.debug('Calling ranking: %s.%s', ranking.id, name)
 
+        perf.begin('ranking')
         try:
             transaction.enter_transaction_management(True)
             transaction.managed(True)
@@ -394,6 +404,7 @@ class CheckingMaster(Client2):
             transaction.commit()
             transaction.managed(False)
             transaction.leave_transaction_management()
+        perf.end('ranking')
 
     def stop_ranking(self, ranking):
         if ranking not in self.ranking_map:
@@ -427,7 +438,11 @@ class CheckingMaster(Client2):
 
     # callback
     def schedule_test_suite_result(self, ranking, submit, test_suite):
-        (test_suite_result, created) = TestSuiteResult.objects.get_or_create(submit=submit, test_suite=test_suite)
+        if (test_suite.id, submit.id) in self.test_suite_result_cache:
+            test_suite_result = self.test_suite_result_cache[(test_suite.id, submit.id)]
+            created = False
+        else:
+            (test_suite_result, created) = TestSuiteResult.objects.get_or_create(submit=submit, test_suite=test_suite)
         if test_suite_result in self.test_suite_result_map:
             logging.debug('Scheduling test suite result: %s - already running', test_suite_result.id)
         elif test_suite_result.pending:
