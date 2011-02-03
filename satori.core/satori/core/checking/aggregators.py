@@ -372,7 +372,7 @@ class ACMAggregator(AggregatorBase2):
                             if self.score.aggregator.time_start:
                                 self.ok_time = time - self.score.aggregator.time_start
                             else:
-                                self.ok_time = timedelta()
+                                self.ok_time = time - datetime.min
                             break
                         self.star_count += 1
 
@@ -399,7 +399,10 @@ class ACMAggregator(AggregatorBase2):
                 self.ranking_entry.save()
             else:
                 points = len([s for s in score_list])
-                time = sum([s.ok_time + self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
+                if self.aggregator.time_start:
+                    time = sum([s.ok_time + self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
+                else:
+                    time = sum([self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
                 time_seconds = (time.microseconds + (time.seconds + time.days * 24 * 3600) * 10**6) / 10**6
                 time_str = str(timedelta(seconds=time_seconds))
                 problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
