@@ -38,18 +38,20 @@ public class SResultButtonItemView implements SPaneView {
 	
 	private void initialize() {
 		pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		SDimension.setItemSize(pane);
-		JButton run_button = new JButton("Run");
+		SDimension.setButtonItemSize(pane);
+		JButton run_button = new JButton(SIcons.runIcon);
 		run_button.setMargin(new Insets(0, 0, 0, 0));
+		SDimension.setButtonSize(run_button);
+		run_button.setToolTipText("Run");
 		run_button.setFocusable(false);
-		SDimension.setHeight(run_button);
 		run_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { runRequest(); }
 		});
 		pane.add(run_button);
-		JButton refresh_button = new JButton("Refresh");
+		JButton refresh_button = new JButton(SIcons.refreshIcon);
 		refresh_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setHeight(refresh_button);
+		SDimension.setButtonSize(refresh_button);
+		refresh_button.setToolTipText("Refresh");
 		refresh_button.setFocusable(false);
 		refresh_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { refreshRequest(); }

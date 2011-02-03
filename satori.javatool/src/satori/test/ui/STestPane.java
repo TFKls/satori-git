@@ -112,7 +112,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 					catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
 				}
 				Point pos = support.getDropLocation().getDropPoint();
-				int index = (int)Math.round((pos.getX()-120)/120);
+				int index = (int)Math.round((pos.getX() - SDimension.labelWidth) / SDimension.itemWidth);
 				if (index < 0) index = 0;
 				if (index > tests.size()) index = tests.size();
 				int cur_index = index;
@@ -128,7 +128,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 				if (data.getTestSuite() != suite) return false;
 				STestImpl test = data.getTest();
 				Point pos = support.getDropLocation().getDropPoint();
-				int index = (int)Math.round((pos.getX()-120)/120);
+				int index = (int)Math.round((pos.getX() - SDimension.labelWidth) / SDimension.itemWidth);
 				if (index < 0) index = 0;
 				if (index > tests.size()) index = tests.size();
 				suite.moveTest(test, index);
@@ -169,7 +169,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 		JPanel bottom_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		JButton bottom_button = new JButton("Add solution");
 		bottom_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setHeight(bottom_button);
+		SDimension.setButtonHeight(bottom_button);
 		bottom_button.setFocusable(false);
 		bottom_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { addSolutionPane(); }

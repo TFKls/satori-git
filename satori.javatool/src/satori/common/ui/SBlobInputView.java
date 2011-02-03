@@ -218,6 +218,8 @@ public class SBlobInputView implements SInputView {
 		byte[] icon = {71,73,70,56,57,97,7,0,7,0,-128,1,0,-1,0,0,-1,-1,-1,33,-7,4,1,10,0,1,0,44,0,0,0,0,7,0,7,0,0,2,13,12,126,6,-63,-72,-36,30,76,80,-51,-27,86,1,0,59};
 		clear_button = new JButton(new ImageIcon(icon));
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
+		clear_button.setToolTipText("Clear");
+		clear_button.setFocusable(false);
 		clear_button.addActionListener(new ButtonListener());
 		pane.add(clear_button);
 		label = new JLabel();
@@ -242,9 +244,9 @@ public class SBlobInputView implements SInputView {
 		pane.setPreferredSize(dim);
 		pane.setMinimumSize(dim);
 		pane.setMaximumSize(dim);
-		clear_button.setBounds(4, 4, 13, dim.height-7);
-		label.setBounds(20, 0, dim.width-20, dim.height);
-		field.setBounds(20, 0, dim.width-20, dim.height);
+		clear_button.setBounds(0, (dim.height-13)/2, 13, 13);
+		label.setBounds(16, 0, dim.width-16, dim.height);
+		field.setBounds(16, 0, dim.width-16, dim.height);
 	}
 	@Override public void setDescription(String desc) {
 		this.desc = desc;

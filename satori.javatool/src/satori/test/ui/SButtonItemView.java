@@ -20,16 +20,16 @@ import satori.test.impl.STestImpl;
 
 public class SButtonItemView implements SPaneView {
 	private final STestImpl test;
-	private final SListener<STestImpl> close_listener;
+	private final SListener<STestImpl> remove_listener;
 	private final SListener2<STestImpl, MouseEvent> move_listener;
 
 	private JPanel pane;
-	private JButton move_button, save_button, reload_button, delete_button, close_button;
+	private JButton move_button, save_button, reload_button, delete_button, remove_button;
 	
-	public SButtonItemView(STestImpl test, SListener2<STestImpl, MouseEvent> move_listener, SListener<STestImpl> close_listener) {
+	public SButtonItemView(STestImpl test, SListener2<STestImpl, MouseEvent> move_listener, SListener<STestImpl> remove_listener) {
 		this.test = test;
 		this.move_listener = move_listener;
-		this.close_listener = close_listener;
+		this.remove_listener = remove_listener;
 		test.addView(this); //TODO
 		initialize();
 	}
@@ -54,18 +54,18 @@ public class SButtonItemView implements SPaneView {
 		try { test.delete(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
-	private void closeRequest() {
+	private void removeRequest() {
 		if (test.isModified() && !askUnsaved()) return;
-		close_listener.call(test);
+		remove_listener.call(test);
 		test.close();
 	}
 	
 	private void initialize() {
 		pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		SDimension.setItemSize(pane);
-		move_button = new JButton("M");
+		SDimension.setButtonItemSize(pane);
+		move_button = new JButton(SIcons.moveIcon);
 		move_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setSize(move_button, 20);
+		SDimension.setButtonSize(move_button);
 		move_button.setToolTipText("Move");
 		move_button.setFocusable(false);
 		move_button.addMouseMotionListener(new MouseMotionListener() {
@@ -78,42 +78,42 @@ public class SButtonItemView implements SPaneView {
 			@Override public void mouseMoved(MouseEvent e) {}
 		});
 		pane.add(move_button);
-		save_button = new JButton("S");
+		save_button = new JButton(SIcons.saveIcon);
 		save_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setSize(save_button, 20);
+		SDimension.setButtonSize(save_button);
 		save_button.setToolTipText("Save");
 		save_button.setFocusable(false);
 		save_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { saveRequest(); }
 		});
 		pane.add(save_button);
-		reload_button = new JButton("R");
+		reload_button = new JButton(SIcons.refreshIcon);
 		reload_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setSize(reload_button, 20);
+		SDimension.setButtonSize(reload_button);
 		reload_button.setToolTipText("Reload");
 		reload_button.setFocusable(false);
 		reload_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { reloadRequest(); }
 		});
 		pane.add(reload_button);
-		delete_button = new JButton("D");
+		delete_button = new JButton(SIcons.trashIcon);
 		delete_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setSize(delete_button, 20);
+		SDimension.setButtonSize(delete_button);
 		delete_button.setToolTipText("Delete");
 		delete_button.setFocusable(false);
 		delete_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { deleteRequest(); }
 		});
 		pane.add(delete_button);
-		close_button = new JButton("X");
-		close_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setSize(close_button, 20);
-		close_button.setToolTipText("Close");
-		close_button.setFocusable(false);
-		close_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { closeRequest(); }
+		remove_button = new JButton(SIcons.removeIcon);
+		remove_button.setMargin(new Insets(0, 0, 0, 0));
+		SDimension.setButtonSize(remove_button);
+		remove_button.setToolTipText("Remove");
+		remove_button.setFocusable(false);
+		remove_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { removeRequest(); }
 		});
-		pane.add(close_button);
+		pane.add(remove_button);
 		update();
 	}
 	

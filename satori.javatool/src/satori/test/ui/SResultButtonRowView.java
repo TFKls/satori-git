@@ -31,18 +31,20 @@ public class SResultButtonRowView implements SSolutionRowView {
 	private void initialize() {
 		pane = new Box(BoxLayout.X_AXIS);
 		JPanel label_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		SDimension.setLabelSize(label_pane);
-		JButton run_button = new JButton("Run");
+		SDimension.setButtonLabelSize(label_pane);
+		JButton run_button = new JButton(SIcons.runIcon);
 		run_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setHeight(run_button);
+		SDimension.setButtonSize(run_button);
+		run_button.setToolTipText("Run all tests");
 		run_button.setFocusable(false);
 		run_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { run_all_listener.call(); }
 		});
 		label_pane.add(run_button);
-		JButton refresh_button = new JButton("Refresh");
+		JButton refresh_button = new JButton(SIcons.refreshIcon);
 		refresh_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setHeight(refresh_button);
+		SDimension.setButtonSize(refresh_button);
+		refresh_button.setToolTipText("Refresh all results");
 		refresh_button.setFocusable(false);
 		refresh_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { refresh_all_listener.call(); }

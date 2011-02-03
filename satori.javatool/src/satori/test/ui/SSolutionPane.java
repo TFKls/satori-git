@@ -60,16 +60,16 @@ public class SSolutionPane implements SRowView {
 		pane = new Box(BoxLayout.Y_AXIS);
 		JPanel solution_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		JLabel solution_label = new JLabel("Solution");
-		SDimension.setLabelSize(solution_label);
+		SDimension.setButtonLabelSize(solution_label);
 		solution_pane.add(solution_label);
 		solution_input = new SBlobInputView(solution);
-		solution_input.setDimension(SDimension.itemDim);
+		solution_input.setDimension(SDimension.buttonItemDim);
 		solution_input.setDescription("Solution file");
 		solution.addView(solution_input);
 		solution_pane.add(solution_input.getPane());
-		JButton remove_button = new JButton("X");
+		JButton remove_button = new JButton(SIcons.removeIcon);
 		remove_button.setMargin(new Insets(0, 0, 0, 0));
-		SDimension.setSize(remove_button, 20);
+		SDimension.setButtonSize(remove_button);
 		remove_button.setToolTipText("Remove solution");
 		remove_button.setFocusable(false);
 		remove_button.addActionListener(new ActionListener() {
