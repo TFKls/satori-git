@@ -16,7 +16,7 @@ public class SInfoItemView implements SPaneView {
 	
 	private JTextField name_field;
 	
-	private SInfoItemView(STestImpl test) {
+	public SInfoItemView(STestImpl test) {
 		this.test = test;
 		test.addView(this);
 		initialize();
@@ -41,9 +41,5 @@ public class SInfoItemView implements SPaneView {
 	
 	@Override public void update() {
 		name_field.setText(test.getName());
-	}
-	
-	public static class Factory implements SItemViewFactory {
-		@Override public SPaneView createView(STestImpl test) { return new SInfoItemView(test); }
 	}
 }

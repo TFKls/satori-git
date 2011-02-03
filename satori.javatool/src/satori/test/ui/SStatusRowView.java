@@ -5,14 +5,12 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import satori.test.impl.STestResult;
+import satori.test.impl.STestImpl;
 
-public class SResultStatusRowView implements SSolutionRowView {
+public class SStatusRowView implements SRowView {
 	private JComponent pane;
 	
-	public SResultStatusRowView() {
-		initialize();
-	}
+	public SStatusRowView() { initialize(); }
 	
 	@Override public JComponent getPane() { return pane; }
 	
@@ -24,9 +22,9 @@ public class SResultStatusRowView implements SSolutionRowView {
 		pane.add(Box.createHorizontalGlue());
 	}
 	
-	@Override public void addColumn(STestResult result, int index) {
+	@Override public void addColumn(STestImpl test, int index) {
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
-		pane.add(new SResultStatusItemView(result).getPane(), pane_index);
+		pane.add(new SStatusItemView(test).getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);

@@ -3,6 +3,7 @@ package satori.test.ui;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.MouseEvent;
 
 import javax.swing.Box;
 import javax.swing.BoxLayout;
@@ -10,19 +11,22 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import satori.common.SListener;
-import satori.common.ui.SPaneView;
+import satori.common.SListener1;
+import satori.common.SListener0;
+import satori.common.SListener2;
 import satori.test.impl.STestImpl;
 
 public class SButtonRowView implements SRowView {
-	private final SItemViewFactory factory;
-	private final SListener<STestImpl> new_listener;
+	private final SListener2<STestImpl, MouseEvent> move_listener;
+	private final SListener1<STestImpl> remove_listener;
+	private final SListener0 add_listener;
 	
 	private JComponent pane;
 	
-	public SButtonRowView(SItemViewFactory factory, SListener<STestImpl> new_listener) {
-		this.factory = factory;
-		this.new_listener = new_listener;
+	public SButtonRowView(SListener2<STestImpl, MouseEvent> move_listener, SListener1<STestImpl> remove_listener, SListener0 add_listener) {
+		this.move_listener = move_listener;
+		this.remove_listener = remove_listener;
+		this.add_listener = add_listener;
 		initialize();
 	}
 	
@@ -39,16 +43,15 @@ public class SButtonRowView implements SRowView {
 		add_button.setToolTipText("Add new test");
 		add_button.setFocusable(false);
 		add_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { new_listener.call(null); }
+			@Override public void actionPerformed(ActionEvent e) { add_listener.call(); }
 		});
 		pane.add(add_button);
 		pane.add(Box.createHorizontalGlue());
 	}
 	
 	@Override public void addColumn(STestImpl test, int index) {
-		SPaneView c = factory.createView(test);
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
-		pane.add(c.getPane(), pane_index);
+		pane.add(new SButtonItemView(test, move_listener, remove_listener).getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);

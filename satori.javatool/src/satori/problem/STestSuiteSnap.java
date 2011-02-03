@@ -5,7 +5,7 @@ import java.util.List;
 
 import satori.common.SAssert;
 import satori.common.SException;
-import satori.common.SListener;
+import satori.common.SListener1;
 import satori.common.SReference;
 import satori.common.SReferenceList;
 import satori.common.SView;
@@ -25,7 +25,7 @@ public class STestSuiteSnap implements STestSuiteReader {
 	
 	private final SViewList views = new SViewList();
 	private final SReferenceList refs = new SReferenceList();
-	private final SListener<STestSnap> test_deleted_listener = new SListener<STestSnap>() {
+	private final SListener1<STestSnap> test_deleted_listener = new SListener1<STestSnap>() {
 		@Override public void call(STestSnap test) { testDeleted(test); }
 	};
 	

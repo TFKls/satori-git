@@ -12,7 +12,7 @@ import javax.swing.JComponent;
 import javax.swing.JPanel;
 
 import satori.common.SException;
-import satori.common.SListener;
+import satori.common.SListener1;
 import satori.common.SListener2;
 import satori.common.ui.SPaneView;
 import satori.main.SFrame;
@@ -20,13 +20,13 @@ import satori.test.impl.STestImpl;
 
 public class SButtonItemView implements SPaneView {
 	private final STestImpl test;
-	private final SListener<STestImpl> remove_listener;
+	private final SListener1<STestImpl> remove_listener;
 	private final SListener2<STestImpl, MouseEvent> move_listener;
 
 	private JPanel pane;
 	private JButton move_button, save_button, reload_button, delete_button, remove_button;
 	
-	public SButtonItemView(STestImpl test, SListener2<STestImpl, MouseEvent> move_listener, SListener<STestImpl> remove_listener) {
+	public SButtonItemView(STestImpl test, SListener2<STestImpl, MouseEvent> move_listener, SListener1<STestImpl> remove_listener) {
 		this.test = test;
 		this.move_listener = move_listener;
 		this.remove_listener = remove_listener;
@@ -118,16 +118,4 @@ public class SButtonItemView implements SPaneView {
 	}
 	
 	@Override public void update() {}
-	
-	public static class Factory implements SItemViewFactory {
-		public final SListener2<STestImpl, MouseEvent> move_listener;
-		public final SListener<STestImpl> close_listener;
-		public Factory(SListener2<STestImpl, MouseEvent> move_listener, SListener<STestImpl> close_listener) {
-			this.move_listener = move_listener;
-			this.close_listener = close_listener;
-		}
-		@Override public SPaneView createView(STestImpl test) {
-			return new SButtonItemView(test, move_listener, close_listener);
-		}
-	}
 }

@@ -4,8 +4,8 @@ import satori.attribute.SAttributeMap;
 import satori.attribute.SAttributeReader;
 import satori.common.SAssert;
 import satori.common.SException;
-import satori.common.SListener;
-import satori.common.SListenerList;
+import satori.common.SListener1;
+import satori.common.SListener1List;
 import satori.common.SReference;
 import satori.common.SReferenceList;
 import satori.common.SView;
@@ -20,7 +20,7 @@ public class STestSnap implements STestReader {
 	
 	private final SViewList views = new SViewList();
 	private final SReferenceList refs = new SReferenceList();
-	private final SListenerList<STestSnap> deleted = new SListenerList<STestSnap>();
+	private final SListener1List<STestSnap> deleted = new SListener1List<STestSnap>();
 	
 	@Override public boolean hasId() { return true; }
 	@Override public long getId() { return id; }
@@ -77,8 +77,8 @@ public class STestSnap implements STestReader {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { views.update(); }
 	
-	public void addDeletedListener(SListener<STestSnap> listener) { deleted.add(listener); }
-	public void removeDeletedListener(SListener<STestSnap> listener) { deleted.remove(listener); }
+	public void addDeletedListener(SListener1<STestSnap> listener) { deleted.add(listener); }
+	public void removeDeletedListener(SListener1<STestSnap> listener) { deleted.remove(listener); }
 	
 	public void addReference(SReference ref) { refs.add(ref); }
 	public void removeReference(SReference ref) { refs.remove(ref); }

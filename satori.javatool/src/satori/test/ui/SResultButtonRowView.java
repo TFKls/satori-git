@@ -55,9 +55,8 @@ public class SResultButtonRowView implements SSolutionRowView {
 	}
 	
 	@Override public void addColumn(STestResult result, int index) {
-		SResultButtonItemView c = new SResultButtonItemView(result);
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
-		pane.add(c.getPane(), pane_index);
+		pane.add(new SResultButtonItemView(result).getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);

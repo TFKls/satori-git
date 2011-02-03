@@ -39,6 +39,6 @@ public class SDataItemView implements SPane {
 			test.addView(view);
 			pane.add(view.getPane());
 		}
-		pane.add(Box.createVerticalGlue());
+		//pane.add(Box.createVerticalGlue());
 	}
 }

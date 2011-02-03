@@ -22,7 +22,8 @@ import javax.swing.TransferHandler;
 
 import satori.common.SException;
 import satori.common.SList;
-import satori.common.SListener;
+import satori.common.SListener1;
+import satori.common.SListener0;
 import satori.common.SListener2;
 import satori.common.ui.SPane;
 import satori.common.ui.SScrollPane;
@@ -46,20 +47,20 @@ public class STestPane implements SList<STestImpl>, SPane {
 	private JComponent pane;
 	private SScrollPane scroll_pane;
 	
-	private SListener<STestImpl> new_test_listener = new SListener<STestImpl>() {
-		@Override public void call(STestImpl unused) {
+	private SListener0 new_test_listener = new SListener0() {
+		@Override public void call() {
 			STestImpl test = factory.createNew();
 			suite.addTest(test);
 			add(test);
 		}
 	};
-	private SListener<STestImpl> close_test_listener = new SListener<STestImpl>() {
+	private SListener1<STestImpl> close_test_listener = new SListener1<STestImpl>() {
 		@Override public void call(STestImpl test) {
 			remove(test);
 			suite.removeTest(test);
 		}
 	};
-	private SListener<SSolutionPane> remove_solution_listener = new SListener<SSolutionPane>() {
+	private SListener1<SSolutionPane> remove_solution_listener = new SListener1<SSolutionPane>() {
 		@Override public void call(SSolutionPane removed_pane) { removeSolutionPane(removed_pane); }
 	};
 	
@@ -161,9 +162,9 @@ public class STestPane implements SList<STestImpl>, SPane {
 	private void initialize() {
 		pane = new Box(BoxLayout.Y_AXIS);
 		input_pane = new STestInputPane();
-		input_pane.addRow(new SGenericRowView("Status", new SStatusItemView.Factory()));
-		input_pane.addRow(new SButtonRowView(new SButtonItemView.Factory(transfer_handler, close_test_listener), new_test_listener));
-		input_pane.addRow(new SGenericRowView("Name", new SInfoItemView.Factory()));
+		input_pane.addRow(new SStatusRowView());
+		input_pane.addRow(new SButtonRowView(transfer_handler, close_test_listener, new_test_listener));
+		input_pane.addRow(new SInfoRowView());
 		input_pane.addRow(new SDataRowView(meta));
 		pane.add(input_pane.getPane());
 		JPanel bottom_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
@@ -176,7 +177,6 @@ public class STestPane implements SList<STestImpl>, SPane {
 		});
 		bottom_pane.add(bottom_button);
 		pane.add(bottom_pane);
-		
 		scroll_pane = new SScrollPane();
 		scroll_pane.setView(pane);
 		scroll_pane.getPane().setTransferHandler(transfer_handler);

@@ -11,7 +11,7 @@ public class SStatusItemView implements SPaneView {
 	
 	private JLabel label;
 	
-	private SStatusItemView(STestImpl test) {
+	public SStatusItemView(STestImpl test) {
 		this.test = test;
 		test.addView(this);
 		initialize();
@@ -39,9 +39,5 @@ public class SStatusItemView implements SPaneView {
 		}
 		if (status_text.isEmpty()) status_text = "saved";
 		label.setText(status_text);
-	}
-	
-	public static class Factory implements SItemViewFactory {
-		@Override public SPaneView createView(STestImpl test) { return new SStatusItemView(test); }
 	}
 }

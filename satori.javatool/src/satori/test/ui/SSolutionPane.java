@@ -15,7 +15,7 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import satori.common.SException;
-import satori.common.SListener;
+import satori.common.SListener1;
 import satori.common.SListener0;
 import satori.common.ui.SBlobInputView;
 import satori.main.SFrame;
@@ -25,7 +25,7 @@ import satori.test.impl.STestResult;
 
 public class SSolutionPane implements SRowView {
 	private final SSolution solution;
-	private final SListener<SSolutionPane> remove_listener;
+	private final SListener1<SSolutionPane> remove_listener;
 	private final List<STestResult> results = new ArrayList<STestResult>();
 	private final SListener0 run_all_listener = new SListener0() {
 		@Override public void call() { runAll(); }
@@ -39,7 +39,7 @@ public class SSolutionPane implements SRowView {
 	private SResultButtonRowView button_row;
 	private SResultStatusRowView status_row;
 	
-	public SSolutionPane(SSolution solution, SListener<SSolutionPane> remove_listener) {
+	public SSolutionPane(SSolution solution, SListener1<SSolutionPane> remove_listener) {
 		this.solution = solution;
 		this.remove_listener = remove_listener;
 		initialize();
