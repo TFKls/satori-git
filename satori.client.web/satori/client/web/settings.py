@@ -1,5 +1,6 @@
 # Django settings for satoritest project.
 
+import getpass
 import os
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 
@@ -13,13 +14,26 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
-DATABASE_ENGINE = 'postgresql_psycopg2'           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
-DATABASE_NAME = 'duraj'             # Or path to database file if using sqlite3.
-DATABASE_USER = 'duraj'             # Not used with sqlite3.
-DATABASE_PASSWORD = 'UYfs7d'         # Not used with sqlite3.
-DATABASE_HOST = 'student.tcs.uj.edu.pl'             # Set to empty string for localhost. Not used with sqlite3.
+DATABASE_ENGINE = ''           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
+DATABASE_NAME = ''             # Or path to database file if using sqlite3.
+DATABASE_USER = ''             # Not used with sqlite3.
+DATABASE_PASSWORD = ''         # Not used with sqlite3.
+DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
+THRIFT_HOST = 'localhost'
+THRIFT_PORT = 38889
+BLOB_PORT = 38887
+if getpass.getuser() == 'gutowski':
+    THRIFT_PORT = 39889
+    BLOB_PORT = 39887
+if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
+    THRIFT_PORT = 37889
+    BLOB_PORT = 37887
+if getpass.getuser() == 'duraj':
+    THRIFT_PORT = 36889
+    BLOB_PORT = 36887
+    
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.

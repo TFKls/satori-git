@@ -1,4 +1,5 @@
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from django.http import HttpResponse
 import re
 

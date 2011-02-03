@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import getpass
+import new
 import os
 import shutil
 import sys
@@ -11,6 +12,7 @@ from types import FunctionType
 
 from thrift.transport.TSocket import TSocket
 
+from satori.client.common import setup_api
 from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 from satori.ars.thrift import ThriftClient, ThriftReader
 from satori.objects import Argument, Signature, ArgumentMode
@@ -18,29 +20,33 @@ from unwrap import unwrap_interface
 from oa_map import get_oa_map
 from token_container import token_container
 
-client_host = 'satori.tcs.uj.edu.pl'
-client_port = 2889
-blob_port = 2887
+client_host = ''
+client_port = 0
+blob_port = 0
 
-if getpass.getuser() == 'satori':
-    client_host = 'satori.tcs.uj.edu.pl'
-    client_port = 38889
-    blob_port = 38887
-elif getpass.getuser() == 'gutowski':
-    client_host = 'satori.tcs.uj.edu.pl'
-    client_port = 38889
-    blob_port = 38887
-    client_host = 'student.tcs.uj.edu.pl'
-    client_port = 36889
-    blob_port = 36887
-elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
-    client_host = 'localhost'
-    client_port = 37889
-    blob_port = 37887
-elif getpass.getuser() == 'duraj':
-    client_host = 'localhost'
-    client_port = 36889
-    blob_port = 36887
+#client_host = 'satori.tcs.uj.edu.pl'
+#client_port = 2889
+#blob_port = 2887
+#
+#if getpass.getuser() == 'satori':
+#    client_host = 'satori.tcs.uj.edu.pl'
+#    client_port = 38889
+#    blob_port = 38887
+#elif getpass.getuser() == 'gutowski':
+#    client_host = 'satori.tcs.uj.edu.pl'
+#    client_port = 38889
+#    blob_port = 38887
+#    client_host = 'student.tcs.uj.edu.pl'
+#    client_port = 36889
+#    blob_port = 36887
+#elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
+#    client_host = 'localhost'
+#    client_port = 37889
+#    blob_port = 37887
+#elif getpass.getuser() == 'duraj':
+#    client_host = 'localhost'
+#    client_port = 36889
+#    blob_port = 36887
 
 def transport_factory():
     return TSocket(host=client_host, port=client_port)
@@ -141,26 +147,21 @@ class BlobReader(object):
     def close(self):
         self.con.close()
 
-def anonymous_blob(length):
-    return BlobWriter(length)
-def anonymous_blob_path(path):
-    with open(path, 'r') as src:
-        ln = os.fstat(src.fileno()).st_size
-        blob = anonymous_blob(ln)
-        shutil.copyfileobj(src, blob, ln)
-    return blob.close()
+def setup(host, thrift_port, blob_port_):
+    global client_host, client_port, blob_port
+    client_host = host
+    client_port = thrift_port
+    blob_port = blob_port_
 
-print 'Bootstrapping client...'
+    print 'Bootstrapping client...'
 
-(_interface, _client) = bootstrap_thrift_client(transport_factory)
-_classes = unwrap_interface(_interface, BlobReader, BlobWriter)
+    (_interface, _client) = bootstrap_thrift_client(transport_factory)
+    _classes = unwrap_interface(_interface, BlobReader, BlobWriter)
 
-_module = sys.modules[__name__]
-for name, value in _classes.iteritems():
-    setattr(_module, name, value)
+    _classes['token_container'] = token_container
+    _classes['OaMap'] = get_oa_map(_classes['Attribute'], _classes['AnonymousAttribute'], _classes['BadAttributeType'], _classes['Blob'])
 
-OaMap = get_oa_map(_classes['Attribute'], _classes['AnonymousAttribute'], _classes['BadAttributeType'], _classes['Blob'])
+    setup_api(_classes)
 
-setattr(_module, '__all__', _classes.keys() + ['token_container', 'anonymous_blob', 'anonymous_blob_path', 'OaMap'])
+    print 'Client bootstrapped.'
 
-print 'Client bootstrapped.'

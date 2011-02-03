@@ -2,7 +2,8 @@
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from django.db import models
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from _Request import Request
 
 class AlterPMRequest(Request):
@@ -13,7 +14,7 @@ class AlterPMRequest(Request):
         pm.statement_set_str('text',request.POST['statement'])
         if 'pdfstatement' in request.FILES.keys():
             pdf = request.FILES['pdfstatement']
-            writer = anonymous_blob(pdf.size)
+            writer = Blob.create(pdf.size)
             writer.write(pdf.read())
             phash = writer.close()
             pm.statement_set_blob_hash('pdf',phash)

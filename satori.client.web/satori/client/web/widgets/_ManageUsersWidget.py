@@ -1,7 +1,8 @@
 ﻿# vim:ts=4:sts=4:sw=4:expandtab
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from _Widget import Widget
 from copy import deepcopy
 

@@ -14,5 +14,6 @@ setup(name='satori.tools',
     entry_points='''
         [console_scripts]
         satori.athina_import = satori.tools.athina:athina_import
+        satori.console = satori.tools.console:main
     ''',
 )

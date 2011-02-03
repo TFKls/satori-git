@@ -2,7 +2,8 @@
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from django.db import models
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from _Request import Request
 
 class RejudgeRankingRequest(Request):

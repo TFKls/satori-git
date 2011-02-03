@@ -2,7 +2,8 @@
 from copy import deepcopy
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from _Widget import Widget
 
 # results table (a possible main content)

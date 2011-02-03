@@ -2,7 +2,8 @@ from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from URLDictionary import *
 from satori.client.web.widgets import Widget
 from requests import process

@@ -1,5 +1,6 @@
 from django.http import HttpResponse
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from os.path import getsize,dirname
 import crypt
 

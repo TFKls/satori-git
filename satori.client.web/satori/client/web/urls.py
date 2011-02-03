@@ -1,4 +1,5 @@
 from django.conf.urls.defaults import *
+from django.conf import settings
 
 import os
 
@@ -7,6 +8,9 @@ PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 # Uncomment the next two lines to enable the admin:
 from django.contrib import admin
 admin.autodiscover()
+
+from satori.client.common import remote
+remote.setup(settings.THRIFT_HOST, settings.THRIFT_PORT, settings.BLOB_PORT)
 
 urlpatterns = patterns('',
 #     (r'^$', 'satori.client.web.main.loaddefault'),

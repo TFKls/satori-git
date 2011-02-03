@@ -97,7 +97,7 @@ def judge_loop():
                     args = ['--control-host', options.host_ip, '--control-port', str(options.control_port)])
                 res = jr.run()
                 if options.debug:
-                    dh = anonymous_blob_path(options.debug)
+                    dh = Blob.create_path(options.debug)
                     res['judge.log'] = {'is_blob':True, 'value':dh, 'filename': 'judge.log'}
                 Judge.set_result(tr, res)
             except:
