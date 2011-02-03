@@ -381,7 +381,7 @@ class ACMAggregator(AggregatorBase2):
                     if self.star_count < self.score.aggregator.star_collapse:
                         return self.problem.code + '*' * self.star_count
                     else:
-                        return self.problem_code + '\\ :sup:`(' + str(self.star_count) + ')`\\'
+                        return self.problem.code + '\\ :sup:`(' + str(self.star_count) + ')`\\'
                 else:
                     return self.problem.code
 
