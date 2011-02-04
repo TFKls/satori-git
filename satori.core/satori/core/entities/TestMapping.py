@@ -5,7 +5,7 @@ from django.db import models
 from satori.core.dbev   import Events
 from satori.core.models import Entity
 
-@ExportModel
+#@ExportModel
 class TestMapping(Entity):
     """Model. Intermediary for many-to-many relationship between TestSuites and
     Tests.
@@ -16,15 +16,18 @@ class TestMapping(Entity):
     test          = models.ForeignKey('Test', related_name='test_mappings+')
     order         = models.IntegerField()
 
+    params        = AttributeGroupField(PCArg('self', 'MANAGE'), PCDeny(), '')
+
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('suite', 'test'), ('suite', 'order'))
         ordering        = ('order',)
 
-    class ExportMeta(object):
-        fields = [('suite', 'VIEW'), ('test', 'VIEW'), ('order', 'VIEW')]
+#    class ExportMeta(object):
+#        fields = [('suite', 'VIEW'), ('test', 'VIEW'), ('order', 'VIEW')]
 
-    def __str__(self):
-        return str(self.order)+": ("+self.suite.name+","+self.test.name+")"
+    def save(*args, **kwargs):
+        self.fixup_params()
+        super(TestMapping, self).save(*args, **kwargs)
 
 class TestMappingEvents(Events):
     model = TestMapping
