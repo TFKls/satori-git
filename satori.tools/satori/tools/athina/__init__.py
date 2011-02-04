@@ -50,29 +50,18 @@ class Creator(object):
 
 def athina_import():
     import os,sys,getpass
-    from optparse import OptionParser
-    parser = OptionParser(usage='usage: %prog [options] DIR')
-    parser.add_option('-U', '--user',
-        default='',
-        action='store',
-        type='string',
-        help='Username')
-    parser.add_option('-P', '--password',
-        default='',
-        action='store',
-        type='string',
-        help='Password')
-    parser.add_option('-N', '--name',
+    from satori.tools import options, setup
+    options.add_option('-N', '--name',
         default='',
         action='store',
         type='string',
         help='Contest name')
-    parser.add_option('-E', '--environment',
+    options.add_option('-E', '--environment',
         default='default',
         action='store',
         type='string',
         help='Test environment name')
-    (options, args) = parser.parse_args()
+    (options, args) = setup()
     if len(args) != 1:
 	    parser.error('incorrect number of arguments')
     base_dir = unicode(args[0])
@@ -82,12 +71,6 @@ def athina_import():
     def get_path(*args):
         return os.path.join(base_dir, 'server', 'contest', *args)
 
-    if not options.user:
-    	options.user = getpass.getuser()
-    print 'User: ', options.user
-    if not options.password:
-        options.password = getpass.getpass('Password: ')
-    print 'Password: ', '*' * len(options.password)
     while not options.name:
         options.name = raw_input('Contest name: ')
     print 'Contest name: ', options.name
@@ -186,10 +169,7 @@ def athina_import():
 #    print 'problems: ', problems
 #    print 'submits:  ', submits
 
-
-
-    mytoken = User.authenticate(options.user, options.password)
-    token_container.set_token(mytoken)
+    mytoken = token_container.get_token()
 
     contest = Creator('Contest', name=options.name)()
     Privilege.grant(contest.contestant_role, contest, 'SUBMIT')
@@ -219,7 +199,7 @@ def athina_import():
                 oa.set_str('time', str(10*int(test['timelimit'])))
             test['object'] = Creator('Test', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default_' + str(test['test'])).fields(environment=options.environment).additional(data=oa.get_map())()
             tests.append(test['object'])
-        problem['testsuite'] = Creator('TestSuite', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default').fields(dispatcher='SerialDispatcher', accumulators='StatusAccumulator').additional(test_list=tests)()
+        problem['testsuite'] = Creator('TestSuite', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default').fields(reporter='StatusReporter', dispatcher='SerialDispatcher', accumulators='StatusAccumulator').additional(test_list=tests)()
         problem['mapping'] = Creator('ProblemMapping', contest=contest, problem=problem['object']).fields(code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite'])()
         Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='CountAggregator')()
         Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='CountAggregator')()
