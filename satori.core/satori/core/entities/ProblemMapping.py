@@ -21,7 +21,7 @@ class ProblemMapping(Entity):
     statement          = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class Meta:                                                # pylint: disable-msg=C0111
-        unique_together = (('contest', 'code'), ('contest', 'problem'))
+        unique_together = (('contest', 'code'))
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('problem', 'MANAGE'), ('code', 'VIEW'), ('title', 'VIEW'), ('default_test_suite', 'MANAGE')]
