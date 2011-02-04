@@ -102,7 +102,8 @@ public class STestImpl implements STestReader {
 	}
 	public void setDataBlob(String name, SBlob blob) {
 		SBlob old_blob = attrs.getBlob(name);
-		if (blob == old_blob) return; //TODO: compare blobs
+		if (blob == null && old_blob == null) return;
+		if (blob != null && blob.equals(old_blob)) return;
 		attrs.setAttr(name, blob != null ? new SBlobAttribute(blob) : null);
 		notifyModified();
 		callDataModifiedListeners();

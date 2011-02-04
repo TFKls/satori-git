@@ -10,6 +10,7 @@ public class SBlobAttribute implements SAttribute {
 	public SBlob get() { return blob; }
 	
 	public boolean equals(SBlobAttribute other) {
+		if (other == null) return false;
 		if (blob == null) return other.blob == null;
 		return blob.equals(other.blob);
 	}

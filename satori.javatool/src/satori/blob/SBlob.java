@@ -23,6 +23,7 @@ public class SBlob {
 	public File getFile() { return file; }
 	
 	public boolean equals(SBlob other) {
+		if (other == null) return false;
 		if (name == null && other.name != null) return false;
 		if (name != null && !name.equals(other.name)) return false;
 		if (hash == null && other.hash != null) return false;

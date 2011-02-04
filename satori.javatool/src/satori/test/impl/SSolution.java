@@ -14,7 +14,8 @@ public class SSolution implements SData<SBlob> {
 	
 	@Override public SBlob get() { return blob; }
 	@Override public void set(SBlob blob) {
-		if (blob == this.blob) return;
+		if (blob == null && this.blob == null) return;
+		if (blob != null && blob.equals(this.blob)) return;
 		this.blob = blob;
 		callModifiedListeners();
 		updateViews();
