@@ -12,7 +12,7 @@ class ProblemMapping(Entity):
     """
     parent_entity      = models.OneToOneField(Entity, parent_link=True, related_name='cast_problemmapping')
 
-    contest            = models.ForeignKey('Contest', related_name='problem_mappings+')
+    contest            = models.ForeignKey('Contest', related_name='problem_mappings')
     problem            = models.ForeignKey('Problem', related_name='problem_mappings+')
     code               = models.CharField(max_length=10)
     title              = models.CharField(max_length=64)
