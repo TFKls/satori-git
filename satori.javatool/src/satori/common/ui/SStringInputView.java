@@ -11,6 +11,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseMotionListener;
 
@@ -65,12 +67,16 @@ public class SStringInputView implements SInputView {
 		if (focus) label.requestFocus();
 		field.setVisible(false);
 	}
-	
-	private class ButtonListener implements ActionListener {
-		@Override public void actionPerformed(ActionEvent e) {
-			try { data.set(null); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
-		}
+	private void editCancel() {
+		if (!edit_mode) return;
+		edit_mode = false;
+		label.setVisible(true);
+		label.requestFocus();
+		field.setVisible(false);
+	}
+	private void clear() {
+		try { data.set(null); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	
 	private class LabelListener implements MouseMotionListener {
@@ -78,12 +84,6 @@ public class SStringInputView implements SInputView {
 			label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
 		}
 		@Override public void mouseMoved(MouseEvent e) {}
-	}
-	
-	private class FieldListener implements ActionListener, FocusListener {
-		@Override public void actionPerformed(ActionEvent e) { editDone(true); }
-		@Override public void focusGained(FocusEvent e) {}
-		@Override public void focusLost(FocusEvent e) { editDone(false); }
 	}
 	
 	@SuppressWarnings("serial")
@@ -119,7 +119,9 @@ public class SStringInputView implements SInputView {
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
 		clear_button.setToolTipText("Clear");
 		clear_button.setFocusable(false);
-		clear_button.addActionListener(new ButtonListener());
+		clear_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { clear(); }
+		});
 		pane.add(clear_button);
 		label = new JButton();
 		label.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
@@ -135,9 +137,24 @@ public class SStringInputView implements SInputView {
 		pane.add(label);
 		field = new JTextField();
 		field.setVisible(false);
-		FieldListener field_listener = new FieldListener();
-		field.addActionListener(field_listener);
-		field.addFocusListener(field_listener);
+		field.addKeyListener(new KeyListener() {
+			@Override public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					e.consume();
+					editDone(true);
+				}
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					editCancel();
+				}
+			}
+			@Override public void keyReleased(KeyEvent e) {}
+			@Override public void keyTyped(KeyEvent e) {}
+		});
+		field.addFocusListener(new FocusListener() {
+			@Override public void focusGained(FocusEvent e) {}
+			@Override public void focusLost(FocusEvent e) { editDone(false); }
+		});
 		pane.add(field);
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);

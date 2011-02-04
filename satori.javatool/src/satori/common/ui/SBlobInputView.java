@@ -12,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -95,12 +97,16 @@ public class SBlobInputView implements SInputView {
 		if (focus) label.requestFocus();
 		field.setVisible(false);
 	}
-	
-	private class ButtonListener implements ActionListener {
-		@Override public void actionPerformed(ActionEvent e) {
-			try { data.set(null); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
-		}
+	private void renameCancel() {
+		if (!edit_mode) return;
+		edit_mode = false;
+		label.setVisible(true);
+		label.requestFocus();
+		field.setVisible(false);
+	}
+	private void clear() {
+		try { data.set(null); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	
 	private Point popup_location = null;
@@ -127,26 +133,20 @@ public class SBlobInputView implements SInputView {
 	}
 	
 	private class LabelListener implements MouseListener, MouseMotionListener {
-		@Override public void mouseClicked(MouseEvent e) {}
-		@Override public void mouseDragged(MouseEvent e) {
-			popup_location = null;
-			label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
-		}
-		@Override public void mouseEntered(MouseEvent e) {}
-		@Override public void mouseExited(MouseEvent e) {}
-		@Override public void mouseMoved(MouseEvent e) {}
 		@Override public void mousePressed(MouseEvent e) {
 			popup_location = e.getPoint();
 		}
 		@Override public void mouseReleased(MouseEvent e) {
 			popup_location = null;
 		}
-	}
-	
-	private class FieldListener implements ActionListener, FocusListener {
-		@Override public void actionPerformed(ActionEvent e) { renameDone(true); }
-		@Override public void focusGained(FocusEvent e) {}
-		@Override public void focusLost(FocusEvent e) { renameDone(false); }
+		@Override public void mouseDragged(MouseEvent e) {
+			popup_location = null;
+			label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
+		}
+		@Override public void mouseClicked(MouseEvent e) {}
+		@Override public void mouseEntered(MouseEvent e) {}
+		@Override public void mouseExited(MouseEvent e) {}
+		@Override public void mouseMoved(MouseEvent e) {}
 	}
 	
 	private static DataFlavor sFileFlavor = new DataFlavor(SBlob.class, "Satori file");
@@ -239,7 +239,9 @@ public class SBlobInputView implements SInputView {
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
 		clear_button.setToolTipText("Clear");
 		clear_button.setFocusable(false);
-		clear_button.addActionListener(new ButtonListener());
+		clear_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { clear(); }
+		});
 		pane.add(clear_button);
 		label = new JButton();
 		label.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
@@ -257,9 +259,24 @@ public class SBlobInputView implements SInputView {
 		pane.add(label);
 		field = new JTextField();
 		field.setVisible(false);
-		FieldListener field_listener = new FieldListener();
-		field.addActionListener(field_listener);
-		field.addFocusListener(field_listener);
+		field.addKeyListener(new KeyListener() {
+			@Override public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					e.consume();
+					renameDone(true);
+				}
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					renameCancel();
+				}
+			}
+			@Override public void keyReleased(KeyEvent e) {}
+			@Override public void keyTyped(KeyEvent e) {}
+		});
+		field.addFocusListener(new FocusListener() {
+			@Override public void focusGained(FocusEvent e) {}
+			@Override public void focusLost(FocusEvent e) { renameDone(false); }
+		});
 		pane.add(field);
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);
