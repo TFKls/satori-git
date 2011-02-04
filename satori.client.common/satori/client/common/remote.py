@@ -24,30 +24,6 @@ client_host = ''
 client_port = 0
 blob_port = 0
 
-#client_host = 'satori.tcs.uj.edu.pl'
-#client_port = 2889
-#blob_port = 2887
-#
-#if getpass.getuser() == 'satori':
-#    client_host = 'satori.tcs.uj.edu.pl'
-#    client_port = 38889
-#    blob_port = 38887
-#elif getpass.getuser() == 'gutowski':
-#    client_host = 'satori.tcs.uj.edu.pl'
-#    client_port = 38889
-#    blob_port = 38887
-#    client_host = 'student.tcs.uj.edu.pl'
-#    client_port = 36889
-#    blob_port = 36887
-#elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
-#    client_host = 'localhost'
-#    client_port = 37889
-#    blob_port = 37887
-#elif getpass.getuser() == 'duraj':
-#    client_host = 'localhost'
-#    client_port = 36889
-#    blob_port = 36887
-
 def transport_factory():
     return TSocket(host=client_host, port=client_port)
 
