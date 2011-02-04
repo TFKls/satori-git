@@ -84,4 +84,5 @@ def setup():
         password = getpass.getpass('Password: ')
 
         token_container.set_token(User.authenticate(username, password))
-
+   
+    return (options.options, options.args)
