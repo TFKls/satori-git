@@ -106,11 +106,11 @@ class ReSTTable(object):
         for i in range(len(r)):
             if i >= len(self.column_width):
                 self.column_modified = True
-                self.column_width.append(len(r[i]))
+                self.column_width.append(max(10,len(r[i])))
             else:
                 if len(r[i]) > self.column_width[i]:
                     self.colum_modified = True
-                    self.column_width[i] = len(r[i])
+                    self.column_width[i] = max(2*self.column_width[i], len(r[i]))
 
     def clear(self):
         self.column_width = []
