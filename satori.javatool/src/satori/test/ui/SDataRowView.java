@@ -6,17 +6,11 @@ import javax.swing.JComponent;
 import javax.swing.JLabel;
 
 import satori.test.impl.STestImpl;
-import satori.test.meta.STestMetadata;
 
 public class SDataRowView implements SRowView {
-	private final STestMetadata meta;
-	
 	private JComponent pane;
 	
-	public SDataRowView(STestMetadata meta) {
-		this.meta = meta;
-		initialize();
-	}
+	public SDataRowView() { initialize(); }
 	
 	@Override public JComponent getPane() { return pane; }
 	
@@ -33,7 +27,7 @@ public class SDataRowView implements SRowView {
 	
 	@Override public void addColumn(STestImpl test, int index) {
 		int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
-		pane.add(new SDataItemView(meta, test).getPane(), pane_index);
+		pane.add(new SDataItemView(test).getPane(), pane_index);
 	}
 	@Override public void removeColumn(int index) {
 		pane.remove(index+1);

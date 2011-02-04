@@ -85,14 +85,19 @@ public class SBlobInputView implements SInputView {
 	}
 	private void renameDone() {
 		if (!edit_mode) return;
+		SBlob new_data = data.get().rename(field.getText());
+		try { data.set(new_data); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 		edit_mode = false;
-		data.set(data.get().rename(field.getText()));
 		field.setVisible(false);
 		label.setVisible(true); 
 	}
 	
 	private class ButtonListener implements ActionListener {
-		@Override public void actionPerformed(ActionEvent e) { data.set(null); }
+		@Override public void actionPerformed(ActionEvent e) {
+			try { data.set(null); }
+			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		}
 	}
 	
 	private class LabelListener implements MouseListener, MouseMotionListener {
@@ -192,7 +197,8 @@ public class SBlobInputView implements SInputView {
 				SBlob object;
 				try { object = (SBlob)t.getTransferData(sFileFlavor); }
 				catch(Exception ex) { return false; }
-				data.set(object);
+				try { data.set(object); }
+				catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
 				return true;
 			}
 			List<File> file_list = null;

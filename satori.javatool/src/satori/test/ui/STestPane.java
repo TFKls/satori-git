@@ -41,10 +41,8 @@ import satori.test.STestSnap;
 import satori.test.impl.SSolution;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
-import satori.test.meta.STestMetadata;
 
 public class STestPane implements SList<STestImpl>, SPane {
-	private final STestMetadata meta;
 	private final STestSuiteImpl suite;
 	private final STestFactory factory;
 	
@@ -195,8 +193,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 		@Override public void dropActionChanged(DropTargetDragEvent e) { indicateDrop(e.getLocation()); }
 	};
 	
-	public STestPane(STestMetadata meta, STestSuiteImpl suite, STestFactory factory) {
-		this.meta = meta;
+	public STestPane(STestSuiteImpl suite, STestFactory factory) {
 		this.suite = suite;
 		this.factory = factory;
 		initialize();
@@ -221,7 +218,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 		input_pane.addRow(new SStatusRowView());
 		input_pane.addRow(new SButtonRowView(transfer_handler, close_test_listener, new_test_listener));
 		input_pane.addRow(new SInfoRowView());
-		input_pane.addRow(new SDataRowView(meta));
+		input_pane.addRow(new SDataRowView());
 		pane.add(input_pane.getPane());
 		JPanel bottom_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
 		JButton bottom_button = new JButton("Add solution");

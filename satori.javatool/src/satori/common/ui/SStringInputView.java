@@ -24,6 +24,8 @@ import javax.swing.JTextField;
 import javax.swing.TransferHandler;
 
 import satori.common.SData;
+import satori.common.SException;
+import satori.main.SFrame;
 
 public class SStringInputView implements SInputView {
 	private final SData<String> data;
@@ -56,14 +58,18 @@ public class SStringInputView implements SInputView {
 	private void editDone() {
 		if (!edit_mode) return;
 		edit_mode = false;
-		if (field.getText().isEmpty()) data.set(null);
-		else data.set(field.getText());
+		String new_data = field.getText().isEmpty() ? null : field.getText();
+		try { data.set(new_data); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 		field.setVisible(false);
 		label.setVisible(true); 
 	}
 	
 	private class ButtonListener implements ActionListener {
-		@Override public void actionPerformed(ActionEvent e) { data.set(null); }
+		@Override public void actionPerformed(ActionEvent e) {
+			try { data.set(null); }
+			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		}
 	}
 	
 	private class LabelListener implements MouseListener, MouseMotionListener {
@@ -100,8 +106,9 @@ public class SStringInputView implements SInputView {
 			String object;
 			try { object = (String)t.getTransferData(DataFlavor.stringFlavor); }
 			catch (Exception e) { return false; }
-			if (object == null || object.isEmpty()) data.set(null);
-			else data.set(object);
+			if (object != null && object.isEmpty()) object = null;
+			try { data.set(object); }
+			catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
 			return true;
 		}
 		@Override protected Transferable createTransferable(JComponent c) { return new StringSelection(data.get()); }

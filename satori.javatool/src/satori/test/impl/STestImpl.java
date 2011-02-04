@@ -18,7 +18,6 @@ import satori.problem.SParentProblem;
 import satori.test.STestReader;
 import satori.test.STestSnap;
 import satori.test.meta.STestMetadata;
-import satori.test.meta.SXmlParser;
 import satori.thrift.STestData;
 
 public class STestImpl implements STestReader {
@@ -27,9 +26,11 @@ public class STestImpl implements STestReader {
 	private SParentProblem problem;
 	private String name;
 	private SAttributeMap attrs;
+	private STestMetadata meta;
 	
 	private final SDataStatus status = new SDataStatus();
 	private final SListener0List data_modified_listeners = new SListener0List();
+	private final SListener0List metadata_modified_listeners = new SListener0List();
 	private final SViewList views = new SViewList();
 	private final SReference reference = new SReference() {
 		@Override public void notifyModified() { snapModified(); }
@@ -41,6 +42,8 @@ public class STestImpl implements STestReader {
 	@Override public long getProblemId() { return problem.getId(); }
 	@Override public String getName() { return name; }
 	@Override public SAttributeReader getData() { return attrs; }
+	public SBlob getJudge() { return attrs.getBlob("judge"); }
+	public STestMetadata getMetadata() { return meta; }
 	public boolean isRemote() { return hasId(); }
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
@@ -57,15 +60,16 @@ public class STestImpl implements STestReader {
 		self.problem = problem;
 		self.name = snap.getName();
 		self.attrs = SAttributeMap.create(snap.getData());
+		self.meta = STestMetadata.get(self.attrs.getBlob("judge"));
 		return self;
 	}
 	public static STestImpl createNew(SParentProblem problem) {
-		//TODO: check problem id
 		STestImpl self = new STestImpl();
 		self.id = new SId();
 		self.problem = problem;
 		self.name = "";
-		self.attrs = SAttributeMap.create(getMetadataInstance().getDefaultAttrs());
+		self.meta = STestMetadata.getDefault();
+		self.attrs = SAttributeMap.create(self.meta.getDefaultAttrs());
 		return self;
 	}
 	
@@ -108,6 +112,17 @@ public class STestImpl implements STestReader {
 		notifyModified();
 		callDataModifiedListeners();
 	}
+	public void setJudge(SBlob judge) throws SException {
+		SBlob old_judge = attrs.getBlob("judge");
+		if (judge == null && old_judge == null) return;
+		if (judge != null && judge.equals(old_judge)) return;
+		meta = STestMetadata.get(judge);
+		attrs = SAttributeMap.create(meta.getDefaultAttrs());
+		attrs.setAttr("judge", judge != null ? new SBlobAttribute(judge) : null);
+		notifyModified();
+		callMetadataModifiedListeners();
+		callDataModifiedListeners();
+	}
 	
 	private void notifyModified() {
 		status.markModified();
@@ -125,6 +140,10 @@ public class STestImpl implements STestReader {
 	public void addDataModifiedListener(SListener0 listener) { data_modified_listeners.add(listener); }
 	public void removeDataModifiedListener(SListener0 listener) { data_modified_listeners.remove(listener); }
 	private void callDataModifiedListeners() { data_modified_listeners.call(); }
+	
+	public void addMetadataModifiedListener(SListener0 listener) { metadata_modified_listeners.add(listener); }
+	public void removeMetadataModifiedListener(SListener0 listener) { metadata_modified_listeners.remove(listener); }
+	private void callMetadataModifiedListeners() { metadata_modified_listeners.call(); }
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
@@ -166,28 +185,5 @@ public class STestImpl implements STestReader {
 		if (snap == null) return;
 		snap.removeReference(reference);
 		snap = null;
-	}
-	
-	// TODO: Get rid of the following code
-	private static final String xml =
-		"<checker name=\"Default judge\">" +
-		"    <input>" +
-		"        <value name=\"time\" description=\"Time limit\" required=\"true\"/>" +
-		"        <value name=\"memory\" description=\"Memory limit\" required=\"true\" default=\"1073741824\"/>" +
-		"        <file name=\"input\" description=\"Input file\" required=\"true\"/>" +
-		"        <file name=\"hint\" description=\"Output/hint file\" required=\"false\"/>" +
-		"        <file name=\"checker\" description=\"Checker\" required=\"false\"/>" +
-		"    </input>" +
-		"</checker>";
-	
-	private static STestMetadata meta_instance = null;
-	
-	private static void createMetadata() {
-		try { meta_instance = SXmlParser.parse(xml); }
-		catch(SXmlParser.ParseException ex) { throw new RuntimeException(ex); }
-	}
-	public static STestMetadata getMetadataInstance() {
-		if (meta_instance == null) createMetadata();
-		return meta_instance;
 	}
 }

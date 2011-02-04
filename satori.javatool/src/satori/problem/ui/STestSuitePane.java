@@ -19,7 +19,6 @@ import satori.common.ui.STabs;
 import satori.main.SFrame;
 import satori.problem.impl.STestSuiteImpl;
 import satori.test.impl.STestFactory;
-import satori.test.impl.STestImpl;
 import satori.test.ui.STestPane;
 
 public class STestSuitePane implements SPane, SView {
@@ -91,7 +90,7 @@ public class STestSuitePane implements SPane, SView {
 	
 	private void initialize() {
 		info_pane = new STestSuiteInfoPane(suite);
-		test_pane = new STestPane(STestImpl.getMetadataInstance(), suite, factory);
+		test_pane = new STestPane(suite, factory);
 		
 		main_pane = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();

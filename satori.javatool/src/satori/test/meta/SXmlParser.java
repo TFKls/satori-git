@@ -19,7 +19,7 @@ import satori.attribute.SAttribute;
 import satori.attribute.SStringAttribute;
 import satori.common.SException;
 
-public class SXmlParser {
+class SXmlParser {
 	@SuppressWarnings("serial")
 	public static class ParseException extends SException {
 		ParseException(String msg) { super(msg); }
