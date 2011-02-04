@@ -36,7 +36,6 @@ public class SResultButtonRowView implements SSolutionRowView {
 		run_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(run_button);
 		run_button.setToolTipText("Run all tests");
-		run_button.setFocusable(false);
 		run_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { run_all_listener.call(); }
 		});
@@ -45,7 +44,6 @@ public class SResultButtonRowView implements SSolutionRowView {
 		refresh_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(refresh_button);
 		refresh_button.setToolTipText("Refresh all results");
-		refresh_button.setFocusable(false);
 		refresh_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { refresh_all_listener.call(); }
 		});

@@ -224,7 +224,6 @@ public class STestPane implements SList<STestImpl>, SPane {
 		JButton bottom_button = new JButton("Add solution");
 		bottom_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonHeight(bottom_button);
-		bottom_button.setFocusable(false);
 		bottom_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { addSolutionPane(); }
 		});

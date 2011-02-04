@@ -67,7 +67,6 @@ public class SButtonItemView implements SPaneView {
 		move_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(move_button);
 		move_button.setToolTipText("Move");
-		move_button.setFocusable(false);
 		move_button.addMouseMotionListener(new MouseMotionListener() {
 			@Override public void mouseDragged(MouseEvent e) {
 				move_button.getModel().setArmed(false);
@@ -82,7 +81,6 @@ public class SButtonItemView implements SPaneView {
 		save_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(save_button);
 		save_button.setToolTipText("Save");
-		save_button.setFocusable(false);
 		save_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { saveRequest(); }
 		});
@@ -91,7 +89,6 @@ public class SButtonItemView implements SPaneView {
 		reload_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(reload_button);
 		reload_button.setToolTipText("Reload");
-		reload_button.setFocusable(false);
 		reload_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { reloadRequest(); }
 		});
@@ -100,7 +97,6 @@ public class SButtonItemView implements SPaneView {
 		delete_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(delete_button);
 		delete_button.setToolTipText("Delete");
-		delete_button.setFocusable(false);
 		delete_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { deleteRequest(); }
 		});
@@ -109,7 +105,6 @@ public class SButtonItemView implements SPaneView {
 		remove_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(remove_button);
 		remove_button.setToolTipText("Remove");
-		remove_button.setFocusable(false);
 		remove_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { removeRequest(); }
 		});

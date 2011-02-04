@@ -43,7 +43,6 @@ public class SResultButtonItemView implements SPaneView {
 		run_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(run_button);
 		run_button.setToolTipText("Run");
-		run_button.setFocusable(false);
 		run_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { runRequest(); }
 		});
@@ -52,7 +51,6 @@ public class SResultButtonItemView implements SPaneView {
 		refresh_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(refresh_button);
 		refresh_button.setToolTipText("Refresh");
-		refresh_button.setFocusable(false);
 		refresh_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { refreshRequest(); }
 		});

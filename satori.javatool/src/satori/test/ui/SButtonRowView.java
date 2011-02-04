@@ -41,7 +41,6 @@ public class SButtonRowView implements SRowView {
 		add_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonSize(add_button);
 		add_button.setToolTipText("Add new test");
-		add_button.setFocusable(false);
 		add_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { add_listener.call(); }
 		});
