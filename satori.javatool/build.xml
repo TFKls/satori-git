@@ -3,7 +3,7 @@
         <fileset dir="lib" includes="**/*.jar"/>
     </path>
 
-    <target name="thrift" depends="thrift.clean,thrift.gen,thrift.compile,thrift.jar,thrift.clean"/>
+    <target name="thrift" depends="thrift.clean,thrift.gen,thrift.compile,thrift.jar,thrift.finalclean"/>
 
     <target name="thrift.clean">
         <delete dir="gen-java" quiet="true"/>
@@ -12,7 +12,7 @@
 
     <target name="thrift.gen">
         <echo message="Running thrift generator on satori.thrift"/>
-        <exec executable="thrift">
+        <exec executable="thrift" failonerror="true">
             <arg line="--strict --gen java satori.thrift"/>
         </exec>
     </target>
@@ -26,6 +26,11 @@
 
     <target name="thrift.jar" depends="thrift.compile">
         <jar destfile="satori.thrift.gen.jar" basedir="thrift-bin"/>
+    </target>
+
+    <target name="thrift.finalclean">
+        <delete dir="gen-java" quiet="true"/>
+        <delete dir="thrift-bin" quiet="true"/>
     </target>
 
     <target name="main" depends="main.clean,main.compile,main.jar"/>
