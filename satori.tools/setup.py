@@ -5,7 +5,6 @@ setup(name='satori.tools',
     packages=find_packages(),
     namespace_packages=[
         'satori',
-        'satori.tools',
     ],
     install_requires=[
         'setuptools',
