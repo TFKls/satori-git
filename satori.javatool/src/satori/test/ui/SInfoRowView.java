@@ -16,9 +16,14 @@ public class SInfoRowView implements SRowView {
 	
 	private void initialize() {
 		pane = new Box(BoxLayout.X_AXIS);
-		JLabel label = new JLabel("Name");
-		SDimension.setLabelSize(label);
-		pane.add(label);
+		JLabel name_label = new JLabel("Name");
+		SDimension.setLabelSize(name_label);
+		JLabel judge_label = new JLabel("Judge");
+		SDimension.setLabelSize(judge_label);
+		Box label_box = new Box(BoxLayout.Y_AXIS);
+		label_box.add(name_label);
+		label_box.add(judge_label);
+		pane.add(label_box);
 		pane.add(Box.createHorizontalGlue());
 	}
 	

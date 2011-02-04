@@ -10,6 +10,7 @@ public class SStringAttribute implements SAttribute {
 	public String get() { return value; }
 	
 	public boolean equals(SStringAttribute other) {
+		if (other == null) return false;
 		if (value == null) return other.value == null;
 		return value.equals(other.value);
 	}

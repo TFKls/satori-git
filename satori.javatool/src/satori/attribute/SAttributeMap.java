@@ -24,9 +24,11 @@ public class SAttributeMap implements SAttributeReader {
 	}
 	
 	public boolean equals(SAttributeMap other) {
+		if (other == null) return false;
 		return map.equals(other.map);
 	}
 	public boolean equals(SAttributeReader other) {
+		if (other == null) return false;
 		return map.equals(other.getMap());
 	}
 	@Override public boolean equals(Object other) {
