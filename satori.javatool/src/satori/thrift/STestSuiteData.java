@@ -3,7 +3,9 @@ package satori.thrift;
 import static satori.thrift.STestData.createTestList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import satori.common.SAssert;
 import satori.common.SException;
@@ -11,6 +13,7 @@ import satori.problem.STestSuiteBasicReader;
 import satori.problem.STestSuiteReader;
 import satori.session.SSession;
 import satori.test.STestBasicReader;
+import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.TestSuite;
 import satori.thrift.gen.TestSuiteStruct;
 
@@ -64,6 +67,14 @@ public class STestSuiteData {
 		for (STestBasicReader test : tests) list.add(test.getId());
 		return list;
 	}
+	private static Map<String, AnonymousAttribute> createParams() {
+		return Collections.<String, AnonymousAttribute>emptyMap();
+	}
+	private static List<Map<String, AnonymousAttribute>> createTestParams(Iterable<? extends STestBasicReader> tests) {
+		List<Map<String, AnonymousAttribute>> result = new ArrayList<Map<String, AnonymousAttribute>>();
+		for (@SuppressWarnings("unused") STestBasicReader test : tests) result.add(Collections.<String, AnonymousAttribute>emptyMap());
+		return result;
+	}
 	
 	private static class CreateCommand implements SThriftCommand {
 		private final STestSuiteReader suite;
@@ -72,7 +83,7 @@ public class STestSuiteData {
 		public CreateCommand(STestSuiteReader suite) { this.suite = suite; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
-			result = iface.TestSuite_create(SSession.getToken(), createStruct(suite), createTestIdList(suite.getTests())).getId();
+			result = iface.TestSuite_create(SSession.getToken(), createStruct(suite), createParams(), createTestIdList(suite.getTests()), createTestParams(suite.getTests())).getId();
 		}
 	}
 	public static long create(STestSuiteReader suite) throws SException {
@@ -87,7 +98,7 @@ public class STestSuiteData {
 		public SaveCommand(STestSuiteReader suite) { this.suite = suite; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
-			iface.TestSuite_modify_full(SSession.getToken(), suite.getId(), createStruct(suite), createTestIdList(suite.getTests()));
+			iface.TestSuite_modify_full(SSession.getToken(), suite.getId(), createStruct(suite), createParams(), createTestIdList(suite.getTests()), createTestParams(suite.getTests()));
 		}
 	}
 	public static void save(STestSuiteReader suite) throws SException {
