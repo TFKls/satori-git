@@ -18,6 +18,8 @@ class TestSuite(Entity):
     dispatcher    = models.CharField(max_length=128)
     reporter      = models.CharField(max_length=128)
     accumulators  = models.CharField(max_length=1024)
+    
+    params        = AttributeGroupField(PCArg('self', 'MANAGE'), PCDeny(), '')
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('problem', 'name'),)
@@ -32,6 +34,7 @@ class TestSuite(Entity):
         return inherits
 
     def save(self, *args, **kwargs):
+        self.fixup_params()
         from satori.core.checking.dispatchers  import dispatchers
         from satori.core.checking.accumulators import accumulators
         from satori.core.checking.reporters import reporters
@@ -45,17 +48,24 @@ class TestSuite(Entity):
                     raise ValueError('Accumulator '+accumulator+' is not allowed')
         super(TestSuite,self).save(*args, **kwargs)
 
-    @ExportMethod(DjangoStruct('TestSuite'), [DjangoStruct('TestSuite'), DjangoIdList('Test')], PCArgField('fields', 'problem', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('TestSuite'), [DjangoStruct('TestSuite'), TypedMap(unicode, AnonymousAttribute), DjangoIdList('Test'), TypedList(TypedMap(unicode, AnonymousAttribute))],
+        PCAnd(PCArgField('fields', 'problem', 'MANAGE'), PCEachValue('params', PCRawBlob('item')), PCEach('test_params', PCEachValue('item', PCRawBlob('item')))),
+        [CannotSetField])
     @staticmethod
-    def create(fields, test_list):
+    def create(fields, params, test_list, test_params):
+        if len(test_list) != len(test_params):
+            raise RuntimeError('Bad test_params length.')
         test_suite = TestSuite()
         test_suite.forbid_fields(fields, ['id'])
         test_suite.update_fields(fields, ['problem', 'name', 'description', 'dispatcher', 'reporter', 'accumulators'])
         test_suite.save()
+        test_suite.params_set_map(params)
         count = 0
         for test in test_list:
             count += 1
-            TestMapping(suite=test_suite, test=test, order=count).save()
+            t = TestMapping(suite=test_suite, test=test, order=count)
+            t.save()
+            t.params_set_map(test_params[i])
         return test_suite
 
     @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite')], PCArg('self', 'MANAGE'), [CannotSetField])
@@ -64,22 +74,34 @@ class TestSuite(Entity):
         self.update_fields(fields, ['name', 'description'])
         return self
 
-    @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite'), DjangoIdList('Test')], PCArg('self', 'MANAGE'), [CannotSetField])
-    def modify_full(self, fields, test_list):
+    @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite'), 
+        TypedMap(unicode, AnonymousAttribute), DjangoIdList('Test'), TypedList(TypedMap(unicode, AnonymousAttribute))],
+        PCAnd(PCArg('self', 'MANAGE'), PCEachValue('params', PCRawBlob('item')), PCEach('test_params', PCEachValue('item', PCRawBlob('item')))),
+        [CannotSetField])
+    def modify_full(self, fields, params, test_list, test_params):
+        if len(test_list) != len(test_params):
+            raise RuntimeError('Bad test_params length.')
         self.forbid_fields(fields, ['id', 'problem'])
         self.update_fields(fields, ['name', 'description', 'dispatcher', 'reporter', 'accumulators'])
         self.save()
+        self.params_set_map(params)
         TestMapping.objects.filter(suite=self).delete()
         count = 0
         for test in test_list:
             count += 1
-            TestMapping(suite=self, test=test, order=count).save()
+            t = TestMapping(suite=self, test=test, order=count)
+            t.save()
+            t.params_set_map(test_params[i])
         self.rejudge()
         return self
 
     @ExportMethod(DjangoStructList('Test'), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
     def get_tests(self):
         return self.tests.all().extra(order_by=['core_testmapping.order'])
+
+    @ExportMethod(TypedList(TypedMap(unicode, AnonymousAttribute)), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
+    def get_test_params(self):
+        return [x.params_get_map() for x in self.tests.all().extra(order_by=['core_testmapping.order'])]
 
     @ExportMethod(NoneType, [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
     def rejudge(self):
