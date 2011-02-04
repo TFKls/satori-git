@@ -62,10 +62,10 @@ class TestSuite(Entity):
         test_suite.params_set_map(params)
         count = 0
         for test in test_list:
-            count += 1
             t = TestMapping(suite=test_suite, test=test, order=count)
             t.save()
-            t.params_set_map(test_params[i])
+            t.params_set_map(test_params[count])
+            count += 1
         return test_suite
 
     @ExportMethod(DjangoStruct('TestSuite'), [DjangoId('TestSuite'), DjangoStruct('TestSuite')], PCArg('self', 'MANAGE'), [CannotSetField])
