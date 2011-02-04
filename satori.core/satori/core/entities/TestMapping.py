@@ -25,7 +25,7 @@ class TestMapping(Entity):
 #    class ExportMeta(object):
 #        fields = [('suite', 'VIEW'), ('test', 'VIEW'), ('order', 'VIEW')]
 
-    def save(*args, **kwargs):
+    def save(self, *args, **kwargs):
         self.fixup_params()
         super(TestMapping, self).save(*args, **kwargs)
 
