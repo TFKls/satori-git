@@ -1,6 +1,7 @@
 ﻿from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from datetime import datetime
 from operator import attrgetter,itemgetter
 from _Widget import Widget

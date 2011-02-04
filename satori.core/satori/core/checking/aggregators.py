@@ -3,12 +3,17 @@ import logging
 from collections import deque
 from copy import deepcopy
 from datetime import datetime, timedelta
-from blist import blist, sortedset
+from blist import blist, sortedset, sortedlist
+from operator import attrgetter
 
 from django.db.models import F
 
+from satori.ars import perf
 from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping, RankingParams
 from satori.events import Event, Client2
+
+maxint = 2**31 - 1
+max_seconds_per_problem = maxint / 10
 
 def key_sortable(cls):
     def lt(self, other):
@@ -153,7 +158,7 @@ class ReSTTable(object):
             self.store()
     
     def set_row(self, contestant, sort, individual, _row):
-        print contestant.id, sort, individual, _row
+#        print contestant.id, sort, individual, _row
         if contestant.id in self.c_map:
             self.del_row(contestant)
         row = ReSTTable.Row(contestant, sort, individual, _row)
@@ -192,15 +197,62 @@ class ReSTTable(object):
             pos += 1
         self.column_modified = False
 
+class RestTable2(object):
+    def __init__(self, *cols):
+        self.col_width = [col[0] for col in cols]
+        self.col_name = [col[1] for col in cols]
+        self.row_separator = '+' + '+'.join(['-' * width for width in self.col_width]) + '+\n'
+        self.header_separator = '+' + '+'.join(['=' * width for width in self.col_width]) + '+\n'
+        self.header_row = self.generate_row(*self.col_name)
+
+    def generate_row(self, *items):
+        if len(items) != len(self.col_width):
+            raise RuntimeError('Item count not equal to column count.')
+
+        max_count = 0
+        row_items = []
+
+        for i in range(len(items)):
+            item = unicode(items[i])
+            width = self.col_width[i]
+            row_item = []
+            first = 0
+            while first < len(item):
+                pos = item.rfind(' ', first, first + width)
+                if first + width >= len(item):
+                    item_elem = item[first:]
+                    first = len(item)
+                elif pos == -1:
+                    item_elem = item[first : first+width]
+                    first += width
+                else:
+                    item_elem = item[first : pos]
+                    first = pos + 1
+                item_elem = '|' + item_elem + ' ' * (width - len(item_elem))
+                row_item.append(item_elem)
+            row_items.append(row_item)
+            if max_count < len(row_item):
+                max_count = len(row_item)
+
+        for i in range(len(items)):
+            if len(row_items[i]) < max_count:
+                filling = '|' + ' ' * self.col_width[i]
+                while len(row_items[i]) < max_count:
+                    row_items[i].append(filling)
+
+        return ''.join([''.join([row_items[j][i] for j in range(len(items))]) + '|\n' for i in range(max_count)])
+
+
 class AggregatorBase(object):
     def __init__(self, supervisor, ranking):
         super(AggregatorBase, self).__init__()
         self.supervisor = supervisor
         self.ranking = ranking
-        self.rest = ReSTTable(ranking)
+#        self.rest = ReSTTable(ranking)
 
     def init(self):
-        self.rest.clear()
+        pass
+#        self.rest.clear()
     
     def checked_test_suite_results(self, test_suite_results):
         raise NotImplementedError
@@ -229,11 +281,175 @@ class AggregatorBase(object):
     def created_submits(self, submits):
         raise NotImplementedError
 
+class AggregatorBase2(AggregatorBase):
+    def __init__(self, supervisor, ranking):
+        super(AggregatorBase2, self).__init__(supervisor, ranking)
+
+        self.test_suites = {}
+        self.problems = {}
+        self.submit_cache = {}
+        self.scores = {}
+
+    def init(self):
+        super(AggregatorBase2, self).init()
+
+        self.hide_invisible = (self.ranking.oa_get_str('hide_invisible') or '0') == '1'
+
+        for rp in RankingParams.objects.filter(ranking=self.ranking):
+            if rp.test_suite:
+                self.test_suites[rp.problem_id] = rp.test_suite
+
+        for p in ProblemMapping.objects.filter(contest__id=self.ranking.contest_id):
+            self.problems[p.id] = p
+            if p not in self.test_suites:
+                self.test_suites[p.id] = p.default_test_suite
+                
+        self.changed_contestants()
+
+    def changed_contestants(self):
+        ranking_entry_cache = dict((r.contestant_id, r) for r in RankingEntry.objects.filter(ranking=self.ranking))
+
+        new_contestants = set()
+        old_contestants = set(self.scores.keys())
+        for c in Contestant.objects.filter(contest__id=self.ranking.contest_id):
+            new_contestants.add(c.id)
+
+            if not c.id in self.scores:
+                self.scores[c.id] = self.get_score()
+
+            self.scores[c.id].contestant = c
+            self.scores[c.id].hidden = c.invisible and self.hide_invisible
+            if c.id in ranking_entry_cache:
+                self.scores[c.id].ranking_entry = ranking_entry_cache[c.id]
+            else:
+                (self.scores[c.id].ranking_entry, created) = RankingEntry.objects.get_or_create(ranking=self.ranking, contestant=c, defaults={'position': maxint})
+
+            self.scores[c.id].update()
+    
+        for cid in old_contestants:
+            if cid not in new_contestants:
+                del self.scores[cid]
+    
+    def created_submits(self, submits):
+        for submit in submits:
+            self.submit_cache[submit.id] = submit
+            self.supervisor.schedule_test_suite_result(self.ranking, submit, self.test_suites[submit.problem_id])
+    
+    def checked_test_suite_results(self, test_suite_results):
+        changed_contestants = set()
+        
+        for result in test_suite_results:
+            s = self.submit_cache[result.submit_id]
+            self.scores[s.contestant_id].aggregate(result)
+            changed_contestants.add(s.contestant_id)
+
+        for cid in changed_contestants:
+            self.scores[cid].update()
+    
+    def created_contestants(self, contestants):
+        pass
+
+class ACMAggregator(AggregatorBase2):
+    class ACMScore(object):
+        class ACMProblemScore(object):
+            def __init__(self, score, problem):
+                self.score = score
+                self.ok = False
+                self.star_count = 0
+                self.ok_time = timedelta()
+                self.result_list = sortedlist()
+                self.problem = problem
+
+            def aggregate(self, result):
+                ok = result.oa_get_str('status') == 'OK'
+                if ok:
+                    self.ok = True
+                self.result_list.add((self.score.aggregator.submit_cache[result.submit_id].time, ok))
+                if self.ok:
+                    self.star_count = 0
+                    for (time, ok) in self.result_list:
+                        if ok:
+                            if self.score.aggregator.time_start:
+                                self.ok_time = time - self.score.aggregator.time_start
+                            else:
+                                self.ok_time = time - datetime.min
+                            break
+                        self.star_count += 1
+
+            def get_str(self):
+                if self.star_count > 0:
+                    if self.star_count < self.score.aggregator.star_collapse:
+                        return self.problem.code + '*' * self.star_count
+                    else:
+                        return self.problem.code + '\\ :sup:`(' + str(self.star_count) + ')`\\'
+                else:
+                    return self.problem.code
+
+        def __init__(self, aggregator):
+            self.aggregator = aggregator
+            self.hidden = False
+            self.scores = {}
+
+        def update(self):
+            score_list = [s for s in self.scores.values() if s.ok]
+            if self.hidden or not score_list:
+                self.ranking_entry.row = ''
+                self.ranking_entry.individual = ''
+                self.ranking_entry.position = maxint
+                self.ranking_entry.save()
+            else:
+                points = len([s for s in score_list])
+                if self.aggregator.time_start:
+                    time = sum([s.ok_time + self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
+                else:
+                    time = sum([self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
+                time_seconds = (time.microseconds + (time.seconds + time.days * 24 * 3600) * 10**6) / 10**6
+                time_str = str(timedelta(seconds=time_seconds))
+                problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
+
+                if time_seconds > max_seconds_per_problem:
+                    time_seconds = max_seconds_per_problem
+        
+                self.ranking_entry.row = self.aggregator.table.generate_row('#####', self.contestant.name, str(points), time_str, problems) + self.aggregator.table.row_separator
+                self.ranking_entry.individual = ''
+                self.ranking_entry.position = maxint - (max_seconds_per_problem * points) + time_seconds
+                self.ranking_entry.save()
+
+        def aggregate(self, result):
+            submit = self.aggregator.submit_cache[result.submit_id]
+            if submit.problem_id not in self.scores:
+                self.scores[submit.problem_id] = self.ACMProblemScore(self, self.aggregator.problems[submit.problem_id])
+            self.scores[submit.problem_id].aggregate(result)
+
+    def __init__(self, supervisor, ranking):
+        super(ACMAggregator, self).__init__(supervisor, ranking)
+        self.table = RestTable2((5, 'Lp.'), (20, 'Name'), (5, 'Score'), (15, 'Time'), (20, 'Tasks'))
+
+    def init(self):
+        super(ACMAggregator, self).init()
+        
+        self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
+        self.ranking.footer = ''
+        self.ranking.save()
+        
+        time_start = self.ranking.oa_get_str('time_start')
+        if time_start:
+            self.time_start = datetime.strptime(time_start, '%Y-%m-%d %H:%M:%S')
+        else:
+            self.time_start = None
+        self.star_penalty = timedelta(minutes=int(self.ranking.oa_get_str('star_penalty') or '20'))
+        self.star_collapse = int(self.ranking.oa_get_str('star_collapse') or '5')
+        
+    def get_score(self):
+        return self.ACMScore(self)
+
+
 class CountAggregator(AggregatorBase):
 
     @key_sortable
     class Score(object):
-        def __init__(self, name, star_penalty, time_start, time_stop, star_collapse):
+        def __init__(self, aggregator, name, star_penalty, time_start, time_stop, star_collapse):
+            self.aggregator = aggregator
             self.problems_solved = 0
             self.time_used = timedelta(0)
             self.name = name
@@ -250,17 +466,18 @@ class CountAggregator(AggregatorBase):
             if self.time_stop is not None:
                 if result.submit.time > self.time_stop:
                     return self
-
-            if result.submit.problem.id not in self.problems:
-                self.problems[result.submit.problem.id] = {
+        
+            submit = self.aggregator.submit_cache[result.submit_id]
+            if submit.problem_id not in self.problems:
+                self.problems[submit.problem_id] = {
                     's' : sortedset(),
                     'f' : None
                 }
-            u = self.problems[result.submit.problem.id]
+            u = self.problems[submit.problem_id]
             time = timedelta(0)
-            if self.time_start is not None and result.submit.time > self.time_start:
-                time = result.submit.time - self.time_start
-            r = (result.submit.time, time, result.oa_get_str('status') == 'OK')
+            if self.time_start is not None and submit.time > self.time_start:
+                time = submit.time - self.time_start
+            r = (submit.time, time, result.oa_get_str('status') == 'OK')
             
             if u['f'] is None:
                 b = (0, timedelta(0), 0)
@@ -310,6 +527,9 @@ class CountAggregator(AggregatorBase):
     def __init__(self, supervisor, ranking):
         super(CountAggregator, self).__init__(supervisor, ranking)
         self.contestant = {}
+        self.contestant_cache = {}
+        self.submit_cache = {}
+        self.tsr_map = {}
 
     def init(self):
         super(CountAggregator, self).init()
@@ -339,11 +559,10 @@ class CountAggregator(AggregatorBase):
     def checked_test_suite_results(self, test_suite_results):
         mod = False
         for result in test_suite_results:
-            c = result.submit.contestant
+            s = self.submit_cache[result.submit_id]
+            c = self.contestant_cache[s.contestant_id]
             if c.invisible and self.hide_invisible:
                 continue
-            if c.id not in self.contestant:
-                self.contestant[c.id] = CountAggregator.Score(name=c.usernames, star_penalty=self.star_penalty, time_start=self.time_start, time_stop=self.time_stop, star_collapse=self.star_collapse)
             mc = self.contestant[c.id]
             b = mc.get_key()
             mc += result
@@ -353,22 +572,19 @@ class CountAggregator(AggregatorBase):
         self.rest.store()
 
     def created_submits(self, submits):
-        r = self.ranking
+
         for submit in submits:
-            pm = submit.problem
-            try:
-                rp = RankingParams.objects.get(ranking = r, problem =  pm)
-                ts = rp.test_suite
-            except RankingParams.DoesNotExist:
-                ts = None
-            if ts is None:
-                ts = pm.default_test_suite
-            self.supervisor.schedule_test_suite_result(r, submit, ts)
+            self.submit_cache[submit.id] = submit
+            self.supervisor.schedule_test_suite_result(self.ranking, submit, tsmap[submit.problem_id])
 
     def created_contestants(self, contestants):
-        pass
+        for c in contestants:
+            self.contestant_cache[c.id] = c
+            if c.id not in self.contestant:
+                self.contestant[c.id] = CountAggregator.Score(aggregator=self, name=c.usernames, star_penalty=self.star_penalty, time_start=self.time_start, time_stop=self.time_stop, star_collapse=self.star_collapse)
 
-
+class CountAggregator(ACMAggregator):
+    pass
 
 class MarksAggregator(AggregatorBase):
 
@@ -413,7 +629,7 @@ class MarksAggregator(AggregatorBase):
         
     def checked_test_suite_results(self, test_suite_results):
         for tr in test_suite_results:
-            print "Found result."
+#            print "Found result."
             submit = tr.submit
             p = submit.problem
             c = submit.contestant
@@ -423,7 +639,7 @@ class MarksAggregator(AggregatorBase):
                 score = 0
             else:
                 score = int(100*passed/checked)
-            print c.usernames + "," + p.code + ": "+str(score)
+#            print c.usernames + "," + p.code + ": "+str(score)
             if not c.invisible and ((not (p in self.scores[c].keys())) or self.scores[c][p][1]<submit.time):
                 self.scores[c][p] = [score,submit.time]
                 self.recompute_row(c)

@@ -4,7 +4,8 @@ from satori.client.web.queries import *
 from django.db import models
 from django.conf import settings
 from satori.client.web.librecaptcha import *
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from _Request import Request
 import traceback
 

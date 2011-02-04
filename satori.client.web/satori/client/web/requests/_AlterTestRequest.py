@@ -2,7 +2,8 @@
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from django.db import models
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from _Request import Request
 from django.http import HttpResponse
 
@@ -32,7 +33,7 @@ class AlterTestRequest(Request):
                 t.data_set_str(name[6:],value)
         for name,f in request.FILES.iteritems():
             if not name+"_clear" in request.POST.keys():
-                writer = anonymous_blob(f.size)
+                writer = Blob.create(f.size)
                 writer.write(f.read())
                 fhash = writer.close()
                 t.data_set_blob_hash(name[5:],fhash)

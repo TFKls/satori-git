@@ -457,7 +457,7 @@ class JailRun(Object):
 
             def cmd_SETBLOB(self, input):
                 path = os.path.join(jailPath(self.jail_run.root, input['path']))
-                hash = anonymous_blob_path(path)
+                hash = Blob.create_path(path)
                 filename = input.get('filename', os.path.basename(path)) 
                 self.result[input['name']] = {'is_blob': True, 'value': hash, 'filename': filename}
                 return { 'res' : 'OK' }

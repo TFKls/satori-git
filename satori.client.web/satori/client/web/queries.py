@@ -1,6 +1,7 @@
 ﻿
 from URLDictionary import *
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from datetime import datetime
 from xml.dom import minidom
 from satori.client.web.sphinx.translator import rendertask

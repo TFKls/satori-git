@@ -2,7 +2,8 @@
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from django.db import models
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from _Request import Request
 
 class SetDefaultTDRequest(Request):
@@ -22,7 +23,7 @@ class SetDefaultTDRequest(Request):
                 p.default_test_data_set_str(name[6:],value)
         for name,f in request.FILES.iteritems():
             if not name+"_clear" in request.POST.keys():
-                writer = anonymous_blob(f.size)
+                writer = Blob.create(f.size)
                 writer.write(f.read())
                 fhash = writer.close()
                 p.default_test_data_set_blob_hash(name[5:],fhash)
