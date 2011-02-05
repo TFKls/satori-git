@@ -88,10 +88,10 @@ class TestSuite(Entity):
         TestMapping.objects.filter(suite=self).delete()
         count = 0
         for test in test_list:
-            count += 1
             t = TestMapping(suite=self, test=test, order=count)
             t.save()
-            t.params_set_map(test_params[i])
+            t.params_set_map(test_params[count])
+            count += 1
         self.rejudge()
         return self
 
