@@ -30,7 +30,7 @@ public class SButtonItemView implements SPaneView {
 		this.test = test;
 		this.move_listener = move_listener;
 		this.remove_listener = remove_listener;
-		test.addView(this); //TODO
+		test.addView(this);
 		initialize();
 	}
 	
@@ -39,6 +39,7 @@ public class SButtonItemView implements SPaneView {
 	private boolean askUnsaved() { return SFrame.showWarningDialog("All unsaved changes to the test will be lost."); }
 	
 	private void saveRequest() {
+		if (!test.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
 		try { if (test.isRemote()) test.save(); else test.create(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}

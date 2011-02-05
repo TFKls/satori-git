@@ -68,7 +68,8 @@ public class STestSuitePane implements SPane, SView {
 	private boolean askUnsaved() { return SFrame.showWarningDialog("Unsaved changes to the test suite will be lost."); }
 	
 	private void saveRequest() {
-		if (!suite.isSaveable()) { SFrame.showErrorDialog("Cannot save test suite with new tests"); return; }
+		if (!suite.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
+		if (!suite.hasNonremoteTests()) { SFrame.showErrorDialog("Cannot save: some tests do not exist remotely"); return; }
 		try { if (suite.isRemote()) suite.save(); else suite.create(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}

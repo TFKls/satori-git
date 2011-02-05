@@ -47,6 +47,7 @@ public class STestImpl implements STestReader {
 	public boolean isRemote() { return hasId(); }
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
+	public boolean isProblemRemote() { return problem.hasId(); }
 	
 	private STestImpl() {}
 	

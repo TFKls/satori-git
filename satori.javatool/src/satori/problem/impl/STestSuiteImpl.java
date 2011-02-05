@@ -47,7 +47,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
 	
-	public boolean isSaveable() {
+	public boolean isProblemRemote() { return problem.hasId(); }
+	public boolean hasNonremoteTests() {
 		for (STestImpl test : getTests()) if (!test.isRemote()) return false;
 		return true;
 	}
