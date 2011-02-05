@@ -11,7 +11,6 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
@@ -26,14 +25,15 @@ import javax.swing.ListSelectionModel;
 import javax.swing.TransferHandler;
 
 import satori.common.SList;
+import satori.common.SListener0;
+import satori.common.SListener1;
 import satori.common.SView;
 import satori.common.ui.SPane;
+import satori.problem.STestList;
 import satori.test.STestSnap;
 import satori.test.ui.STestSnapTransfer;
 
-public class STestListPane implements SList<STestSnap>, SPane {
-	private final SProblemPane parent;
-	
+public class STestListPane implements SPane, SListener1<STestList> {
 	@SuppressWarnings("serial")
 	private static class ListModel extends AbstractListModel implements SView {
 		private List<STestSnap> list = new ArrayList<STestSnap>();
@@ -67,6 +67,10 @@ public class STestListPane implements SList<STestSnap>, SPane {
 		@Override public int getSize() { return list.size(); }
 	}
 	
+	private final SListener0 new_listener;
+	private final SListener1<List<STestSnap>> open_listener;
+	
+	private STestList test_list = null;
 	private ListModel list_model = new ListModel();
 	
 	private JPanel main_pane;
@@ -75,19 +79,20 @@ public class STestListPane implements SList<STestSnap>, SPane {
 	private JList list;
 	private JScrollPane list_pane;
 	
-	public STestListPane(SProblemPane parent) {
-		this.parent = parent;
+	public STestListPane(SListener0 new_listener, SListener1<List<STestSnap>> open_listener) {
+		this.new_listener = new_listener;
+		this.open_listener = open_listener;
 		initialize();
 	}
 	
 	@Override public JComponent getPane() { return main_pane; }
 	
-	private void newRequest() { parent.newTest(); }
+	private void newRequest() { new_listener.call(); }
 	private void openRequest() {
 		if (list.isSelectionEmpty()) return;
-		Collection<STestSnap> snaps = new ArrayList<STestSnap>();
+		List<STestSnap> snaps = new ArrayList<STestSnap>();
 		for (int index : list.getSelectedIndices()) snaps.add(list_model.getItem(index));
-		parent.openTests(snaps);
+		open_listener.call(snaps);
 	}
 	
 	private static class TestTransferable implements Transferable {
@@ -151,30 +156,38 @@ public class STestListPane implements SList<STestSnap>, SPane {
 		main_pane.add(list_pane, BorderLayout.CENTER);
 	}
 	
-	@Override public void add(STestSnap test) {
-		list.clearSelection();
-		list_model.addItem(test);
-		test.addView(list_model);
-		list_model.updateAfterAdd();
-	}
-	@Override public void add(Iterable<STestSnap> tests) {
-		list.clearSelection();
-		for (STestSnap t : tests) {
-			list_model.addItem(t);
-			t.addView(list_model);
+	private SList<STestSnap> list_listener = new SList<STestSnap>() {
+		@Override public void add(STestSnap test) {
+			list.clearSelection();
+			list_model.addItem(test);
+			test.addView(list_model);
+			list_model.updateAfterAdd();
 		}
-		list_model.updateAfterAdd();
-	}
-	@Override public void remove(STestSnap test) {
-		list.clearSelection();
-		test.removeView(list_model);
-		list_model.removeItem(test);
-		list_model.updateAfterRemove();
-	}
-	@Override public void removeAll() {
-		list.clearSelection();
-		for (STestSnap t : list_model.getItems()) t.removeView(list_model);
-		list_model.removeAllItems();
-		list_model.updateAfterRemove();
+		@Override public void add(Iterable<STestSnap> tests) {
+			list.clearSelection();
+			for (STestSnap t : tests) {
+				list_model.addItem(t);
+				t.addView(list_model);
+			}
+			list_model.updateAfterAdd();
+		}
+		@Override public void remove(STestSnap test) {
+			list.clearSelection();
+			test.removeView(list_model);
+			list_model.removeItem(test);
+			list_model.updateAfterRemove();
+		}
+		@Override public void removeAll() {
+			list.clearSelection();
+			for (STestSnap t : list_model.getItems()) t.removeView(list_model);
+			list_model.removeAllItems();
+			list_model.updateAfterRemove();
+		}
+	};
+	
+	@Override public void call(STestList test_list) {
+		if (this.test_list != null) this.test_list.removePane(list_listener);
+		this.test_list = test_list;
+		if (this.test_list != null) this.test_list.addPane(list_listener);
 	}
 }

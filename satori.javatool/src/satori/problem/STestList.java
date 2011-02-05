@@ -12,15 +12,12 @@ import satori.test.STestSnap;
 import satori.thrift.STestData;
 
 public class STestList {
-	private long problem_id; //TODO: make final
+	private final long problem_id;
 	
 	private Map<Long, STestSnap> tests = null;
-	
-	private final List<SList<STestSnap>> panes = new ArrayList<SList<STestSnap>>();
+	private List<SList<STestSnap>> panes = new ArrayList<SList<STestSnap>>();
 	
 	public long getProblemId() { return problem_id; }
-	public void setProblemId(long id) { problem_id = id; } //TODO: remove
-	
 	public STestSnap getTestSnap(long id) { return tests.get(id); }
 	
 	private STestList(long problem_id) { this.problem_id = problem_id; }

@@ -11,8 +11,6 @@ public class SProblemSnap implements SProblemReader {
 	private long id;
 	private String name;
 	private String desc;
-	//private Map<Long, STestSnap> tests;
-	//private Map<Long, STestSuiteSnap> suites;
 	
 	private STestList test_list = null;
 	private STestSuiteList suite_list = null;
@@ -35,94 +33,31 @@ public class SProblemSnap implements SProblemReader {
 		self.id = source.getId();
 		self.name = source.getName();
 		self.desc = source.getDescription();
-		//self.tests = null;
-		//self.suites = null;
 		return self;
 	}
-	/*public static SProblemSnap createNew(SProblemReader source) {
-		SProblemSnap self = new SProblemSnap();
-		self.id = source.getId();
-		self.name = source.getName();
-		self.desc = source.getDescription();
-		self.tests = new HashMap<Long, STestSnap>();
-		self.suites = new HashMap<Long, STestSuiteSnap>();
-		return self;
-	}*/
 	
-	private void setBasic(SProblemReader source) {
+	public void set(SProblemReader source) {
 		SAssert.assertEquals(source.getId(), getId(), "Problem ids don't match");
 		name = source.getName();
 		desc = source.getDescription();
-	}
-	/*private void setTests(Iterable<STestBasicReader> source) {
-		Map<Long, STestSnap> new_tests = new HashMap<Long, STestSnap>();
-		for (STestBasicReader test : source) {
-			STestSnap current = tests != null ? tests.get(test.getId()) : null;
-			if (current != null) current.setBasic(test);
-			else current = STestSnap.createBasic(test);
-			new_tests.put(current.getId(), current);
-		}
-		if (tests != null) for (long id : tests.keySet()) {
-			if (!new_tests.containsKey(id)) tests.get(id).notifyDeleted();
-		}
-		tests = new_tests;
-	}
-	private void setTestSuites(Iterable<STestSuiteBasicReader> source) {
-		Map<Long, STestSuiteSnap> new_suites = new HashMap<Long, STestSuiteSnap>();
-		for (STestSuiteBasicReader suite : source) {
-			STestSuiteSnap current = suites != null ? suites.get(suite.getId()) : null;
-			if (current != null) current.setBasic(suite);
-			else current = STestSuiteSnap.createBasic(test_list, suite);
-			new_suites.put(current.getId(), current);
-		}
-		if (suites != null) for (long id : suites.keySet()) {
-			if (!new_suites.containsKey(id)) suites.get(id).notifyDeleted();
-		}
-		suites = new_suites;
-	}*/
-	
-	public void set(SProblemReader source) {
-		setBasic(source);
 		notifyModified();
 	}
-	/*public void reload() throws SException {
-		setBasic(SProblemData.load(id));
-		setTests(STestData.list(id));
-		setTestSuites(STestSuiteData.list(id));
-		notifyModified();
-	}*/
-	
-	/*public void addTest(STestSnap test) {
-		if (tests.containsKey(test.getId())) throw new RuntimeException("Test already contained");
-		tests.put(test.getId(), test);
-		notifyModified();
-	}
-	public void removeTest(STestSnap test) {
-		if (tests.get(test.getId()) != test) throw new RuntimeException("Removing uncontained test");
-		tests.remove(test.getId());
-		notifyModified();
-	}*/
 	
 	private void notifyModified() {
 		updateViews();
 		refs.notifyModified();
 	}
 	public void notifyDeleted() {
+		if (test_list != null) test_list.delete();
+		test_list = null;
+		if (suite_list != null) suite_list.delete();
+		suite_list = null;
 		refs.notifyDeleted();
 	}
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { views.update(); }
-	
-	public void setTestList(STestList test_list) {
-		SAssert.assertNull(this.test_list, "Multiple test list");
-		this.test_list = test_list;
-	}
-	public void setTestSuiteList(STestSuiteList suite_list) {
-		SAssert.assertNull(this.suite_list, "Multiple test suite list");
-		this.suite_list = suite_list;
-	}
 	
 	public void addReference(SReference ref) throws SException {
 		if (test_list == null) test_list = STestList.createRemote(id);

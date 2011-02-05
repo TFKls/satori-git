@@ -20,13 +20,14 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
 import satori.common.SList;
+import satori.common.SListener0;
+import satori.common.SListener1;
 import satori.common.SView;
 import satori.common.ui.SPane;
+import satori.problem.STestSuiteList;
 import satori.problem.STestSuiteSnap;
 
-public class STestSuiteListPane implements SList<STestSuiteSnap>, SPane {
-	private final SProblemPane parent;
-	
+public class STestSuiteListPane implements SPane, SListener1<STestSuiteList> {
 	@SuppressWarnings("serial")
 	private static class ListModel extends AbstractListModel implements SView {
 		private List<STestSuiteSnap> list = new ArrayList<STestSuiteSnap>();
@@ -60,7 +61,11 @@ public class STestSuiteListPane implements SList<STestSuiteSnap>, SPane {
 		@Override public int getSize() { return list.size(); }
 	}
 	
-	private ListModel list_model;
+	private final SListener0 new_listener;
+	private final SListener1<STestSuiteSnap> open_listener;
+	
+	private STestSuiteList suite_list = null;
+	private ListModel list_model = new ListModel();
 	
 	private JPanel main_pane;
 	private JPanel button_pane;
@@ -68,17 +73,18 @@ public class STestSuiteListPane implements SList<STestSuiteSnap>, SPane {
 	private JList list;
 	private JScrollPane list_pane;
 	
-	public STestSuiteListPane(SProblemPane parent) {
-		this.parent = parent;
+	public STestSuiteListPane(SListener0 new_listener, SListener1<STestSuiteSnap> open_listener) {
+		this.new_listener = new_listener;
+		this.open_listener = open_listener;
 		initialize();
 	}
 	
 	@Override public JComponent getPane() { return main_pane; }
 	
-	private void newRequest() { parent.newTestSuite(); }
+	private void newRequest() { new_listener.call(); }
 	private void openRequest() {
 		if (list.isSelectionEmpty()) return;
-		parent.openTestSuite(list_model.getItem(list.getSelectedIndex()));
+		open_listener.call(list_model.getItem(list.getSelectedIndex()));
 	}
 	
 	private void initialize() {
@@ -95,7 +101,6 @@ public class STestSuiteListPane implements SList<STestSuiteSnap>, SPane {
 		});
 		button_pane.add(open_button);
 		main_pane.add(button_pane, BorderLayout.NORTH);
-		list_model = new ListModel();
 		list = new JList(list_model);
 		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.addMouseListener(new MouseAdapter() {
@@ -107,30 +112,38 @@ public class STestSuiteListPane implements SList<STestSuiteSnap>, SPane {
 		main_pane.add(list_pane, BorderLayout.CENTER);
 	}
 	
-	@Override public void add(STestSuiteSnap suite) {
-		list.clearSelection();
-		list_model.addItem(suite);
-		suite.addView(list_model);
-		list_model.updateAfterAdd();
-	}
-	@Override public void add(Iterable<STestSuiteSnap> suites) {
-		list.clearSelection();
-		for (STestSuiteSnap ts : suites) {
-			list_model.addItem(ts);
-			ts.addView(list_model);
+	private SList<STestSuiteSnap> list_listener = new SList<STestSuiteSnap>() {
+		@Override public void add(STestSuiteSnap suite) {
+			list.clearSelection();
+			list_model.addItem(suite);
+			suite.addView(list_model);
+			list_model.updateAfterAdd();
 		}
-		list_model.updateAfterAdd();
-	}
-	@Override public void remove(STestSuiteSnap suite) {
-		list.clearSelection();
-		suite.removeView(list_model);
-		list_model.removeItem(suite);
-		list_model.updateAfterRemove();
-	}
-	@Override public void removeAll() {
-		list.clearSelection();
-		for (STestSuiteSnap ts : list_model.getItems()) ts.removeView(list_model);
-		list_model.removeAllItems();
-		list_model.updateAfterRemove();
+		@Override public void add(Iterable<STestSuiteSnap> suites) {
+			list.clearSelection();
+			for (STestSuiteSnap ts : suites) {
+				list_model.addItem(ts);
+				ts.addView(list_model);
+			}
+			list_model.updateAfterAdd();
+		}
+		@Override public void remove(STestSuiteSnap suite) {
+			list.clearSelection();
+			suite.removeView(list_model);
+			list_model.removeItem(suite);
+			list_model.updateAfterRemove();
+		}
+		@Override public void removeAll() {
+			list.clearSelection();
+			for (STestSuiteSnap ts : list_model.getItems()) ts.removeView(list_model);
+			list_model.removeAllItems();
+			list_model.updateAfterRemove();
+		}
+	};
+	
+	@Override public void call(STestSuiteList suite_list) {
+		if (this.suite_list != null) this.suite_list.removePane(list_listener);
+		this.suite_list = suite_list;
+		if (this.suite_list != null) this.suite_list.addPane(list_listener);
 	}
 }

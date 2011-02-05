@@ -4,6 +4,7 @@ import satori.common.SAssert;
 import satori.common.SDataStatus;
 import satori.common.SException;
 import satori.common.SId;
+import satori.common.SListener1;
 import satori.common.SReference;
 import satori.common.SView;
 import satori.common.SViewList;
@@ -18,12 +19,10 @@ import satori.thrift.SProblemData;
 public class SProblemImpl implements SProblemReader, SParentProblem {
 	private final SProblemList problem_list;
 	
-	private SProblemSnap snap = null;
+	private SProblemSnap snap;
 	private SId id;
 	private String name;
 	private String desc;
-	private STestList test_list;
-	private STestSuiteList suite_list;
 	
 	private final SDataStatus status = new SDataStatus();
 	private final SViewList views = new SViewList();
@@ -31,6 +30,8 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		@Override public void notifyModified() { snapModified(); }
 		@Override public void notifyDeleted() { snapDeleted(); }
 	};
+	private SListener1<STestList> test_list_listener = null;
+	private SListener1<STestSuiteList> suite_list_listener = null;
 	
 	@Override public boolean hasId() { return id.isSet(); }
 	@Override public long getId() { return id.get(); }
@@ -40,8 +41,8 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
 	
-	@Override public STestList getTestList() { return test_list; }
-	@Override public STestSuiteList getTestSuiteList() { return suite_list; }
+	@Override public STestList getTestList() { return snap.getTestList(); }
+	@Override public STestSuiteList getTestSuiteList() { return snap.getTestSuiteList(); }
 	
 	private SProblemImpl(SProblemList problem_list) {
 		this.problem_list = problem_list;
@@ -54,18 +55,14 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		self.id = new SId(snap.getId());
 		self.name = snap.getName();
 		self.desc = snap.getDescription();
-		self.test_list = self.snap.getTestList();
-		self.suite_list = self.snap.getTestSuiteList();
 		return self;
 	}
 	public static SProblemImpl createNew(SProblemList problem_list) {
 		SProblemImpl self = new SProblemImpl(problem_list);
+		self.snap = null;
 		self.id = new SId();
 		self.name = "";
 		self.desc = "";
-		//TODO: correct the following
-		self.test_list = STestList.createNew(-1);
-		self.suite_list = STestSuiteList.createNew(-1, self.test_list);
 		return self;
 	}
 	
@@ -101,8 +98,8 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		snap = null;
 		id.clear();
 		notifyOutdated();
-		test_list.delete(); //TODO: ?
-		suite_list.delete(); //TODO: ?
+		test_list_listener.call(null);
+		suite_list_listener.call(null);
 	}
 	
 	private void notifyModified() {
@@ -118,6 +115,17 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		updateViews();
 	}
 	
+	public void setTestListListener(SListener1<STestList> listener) {
+		SAssert.assertNull(test_list_listener, "Test list listener already set");
+		test_list_listener = listener;
+		if (snap != null) listener.call(snap.getTestList());
+	}
+	public void setTestSuiteListListener(SListener1<STestSuiteList> listener) {
+		SAssert.assertNull(suite_list_listener, "Test suite list listener already set");
+		suite_list_listener = listener;
+		if (snap != null) listener.call(snap.getTestSuiteList());
+	}
+	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { views.update(); }
@@ -127,20 +135,18 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		set(SProblemData.load(getId()));
 		notifyUpToDate();
 		snap.set(this);
-		test_list.reload();
-		suite_list.reload();
+		snap.getTestList().reload();
+		snap.getTestSuiteList().reload();
 	}
 	public void create() throws SException {
 		SAssert.assertFalse(isRemote(), "Problem already created");
 		id.set(SProblemData.create(this));
-		test_list.setProblemId(getId());
-		suite_list.setProblemId(getId());
 		notifyUpToDate();
 		snap = SProblemSnap.create(this);
-		snap.setTestList(test_list);
-		snap.setTestSuiteList(suite_list);
-		snap.addReference(reference);
 		problem_list.addProblem(snap);
+		snap.addReference(reference);
+		test_list_listener.call(snap.getTestList());
+		suite_list_listener.call(snap.getTestSuiteList());
 	}
 	public void save() throws SException {
 		SAssert.assertTrue(isRemote(), "Problem not remote");
@@ -151,18 +157,14 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	public void delete() throws SException {
 		SAssert.assertTrue(isRemote(), "Problem not remote");
 		SProblemData.delete(getId());
-		id.clear();
-		notifyOutdated();
-		snap.removeReference(reference);
-		snap.notifyDeleted();
 		problem_list.removeProblem(snap);
-		snap = null;
-		test_list.delete(); //TODO: ?
-		suite_list.delete(); //TODO: ?
+		snap.notifyDeleted(); //calls snapDeleted
 	}
 	public void close() {
 		if (snap == null) return;
 		snap.removeReference(reference);
 		snap = null;
+		test_list_listener.call(null);
+		suite_list_listener.call(null);
 	}
 }
