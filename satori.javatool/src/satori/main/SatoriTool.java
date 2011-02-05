@@ -5,8 +5,11 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import satori.test.ui.SIcons;
+
 public class SatoriTool {
 	public static void main(String[] args) {
+		SIcons.loadResources(SatoriTool.class.getClassLoader());
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override public void run() {
 				InputMap im = (InputMap)UIManager.get("Button.focusInputMap");
