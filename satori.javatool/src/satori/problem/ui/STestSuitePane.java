@@ -14,14 +14,14 @@ import javax.swing.JPanel;
 
 import satori.common.SException;
 import satori.common.SView;
-import satori.common.ui.SPane;
+import satori.common.ui.STabPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
 import satori.problem.impl.STestSuiteImpl;
 import satori.test.impl.STestFactory;
 import satori.test.ui.STestPane;
 
-public class STestSuitePane implements SPane, SView {
+public class STestSuitePane implements STabPane, SView {
 	private final STestSuiteImpl suite;
 	private final STabs parent;
 	private final STestFactory factory;
@@ -49,23 +49,22 @@ public class STestSuitePane implements SPane, SView {
 		private final STestSuiteImpl suite;
 		public TabModel(STestSuiteImpl suite) { this.suite = suite; }
 		@Override public String getTitle() {
-			String title = suite.getName().isEmpty() ? "(Tests)" : suite.getName();
-			if (suite.isModified()) title += "*";
-			return title;
+			return suite.getName().isEmpty() ? "(Tests)" : suite.getName();
 		}
 	}
 	public void open() {
 		suite.addView(this);
 		tab_view = parent.openPane(new TabModel(suite), this);
 		suite.addView(tab_view);
+		test_pane.addParentView(tab_view);
 	}
-	private void close() {
+	@Override public boolean hasUnsavedData() { return suite.isModifiedRecursive(); }
+	@Override public void close() {
+		suite.close();
 		suite.removeView(tab_view);
 		parent.closePane(this);
 		suite.removeView(this);
 	}
-	
-	private boolean askUnsaved() { return SFrame.showWarningDialog("Unsaved changes to the test suite will be lost."); }
 	
 	private void saveRequest() {
 		if (!suite.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
@@ -74,7 +73,7 @@ public class STestSuitePane implements SPane, SView {
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void reloadRequest() {
-		if (!suite.isRemote() || suite.isModifiedRecursive() && !askUnsaved()) return;
+		if (!suite.isRemote()) return;
 		try { suite.reload(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
@@ -84,8 +83,7 @@ public class STestSuitePane implements SPane, SView {
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void closeRequest() {
-		if (suite.isModifiedRecursive() && !askUnsaved()) return;
-		suite.close();
+		if (hasUnsavedData() && !SFrame.showWarningDialog("This tab contains unsaved data.")) return;
 		close();
 	}
 	

@@ -22,14 +22,14 @@ import javax.swing.ListSelectionModel;
 import satori.common.SException;
 import satori.common.SList;
 import satori.common.SView;
-import satori.common.ui.SPane;
+import satori.common.ui.STabPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
 import satori.problem.SProblemList;
 import satori.problem.SProblemSnap;
 import satori.problem.impl.SProblemImpl;
 
-public class SProblemListPane implements SList<SProblemSnap>, SPane {
+public class SProblemListPane implements STabPane, SList<SProblemSnap> {
 	private final SProblemList problem_list;
 	private final STabs parent;
 	
@@ -99,7 +99,9 @@ public class SProblemListPane implements SList<SProblemSnap>, SPane {
 		try { problem_list.load(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
-	private void closeRequest() {
+	
+	@Override public boolean hasUnsavedData() { return false; }
+	@Override public void close() {
 		parent.closePane(this);
 		problem_list.setPane(null);
 	}
@@ -119,7 +121,7 @@ public class SProblemListPane implements SList<SProblemSnap>, SPane {
 		button_pane.add(reload_button);
 		close_button = new JButton("Close");
 		close_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { closeRequest(); }
+			@Override public void actionPerformed(ActionEvent e) { close(); }
 		});
 		button_pane.add(close_button);
 		main_pane.add(button_pane, BorderLayout.NORTH);

@@ -33,6 +33,8 @@ import satori.common.SList;
 import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SListener2;
+import satori.common.SView;
+import satori.common.SViewList;
 import satori.common.ui.SPane;
 import satori.common.ui.SScrollPane;
 import satori.main.SFrame;
@@ -49,6 +51,7 @@ public class STestPane implements SList<STestImpl>, SPane {
 	private STestInputPane input_pane;
 	private List<SSolutionPane> solution_panes = new ArrayList<SSolutionPane>();
 	private List<STestImpl> tests = new ArrayList<STestImpl>();
+	private SViewList parent_views = new SViewList();
 	
 	private JComponent pane;
 	private SScrollPane scroll_pane;
@@ -264,12 +267,14 @@ public class STestPane implements SList<STestImpl>, SPane {
 	@Override public void add(STestImpl test) {
 		int index = tests.size();
 		tests.add(test);
+		addParentViews(test);
 		addColumn(test, index);
 		pane.revalidate(); pane.repaint();
 	}
 	public void add(Iterable<STestImpl> tests, int index) {
 		for (STestImpl test : tests) {
 			this.tests.add(index, test);
+			addParentViews(test);
 			addColumn(test, index++);
 		}
 		pane.revalidate(); pane.repaint();
@@ -279,11 +284,13 @@ public class STestPane implements SList<STestImpl>, SPane {
 	}
 	@Override public void remove(STestImpl test) {
 		removeColumn(tests.indexOf(test));
+		removeParentViews(test); //TODO: ?
 		tests.remove(test);
 		pane.revalidate(); pane.repaint();
 	}
 	@Override public void removeAll() {
 		for (int i = tests.size()-1; i >= 0; --i) removeColumn(i);
+		for (STestImpl test : tests) removeParentViews(test); //TODO: ?
 		tests.clear();
 		pane.revalidate(); pane.repaint();
 	}
@@ -295,5 +302,20 @@ public class STestPane implements SList<STestImpl>, SPane {
 		tests.add(index, test);
 		addColumn(test, index);
 		pane.revalidate(); pane.repaint();
+	}
+	
+	public void addParentView(SView view) {
+		for (STestImpl test : tests) test.addView(view);
+		parent_views.add(view);
+	}
+	public void removeParentView(SView view) {
+		parent_views.remove(view);
+		for (STestImpl test : tests) test.removeView(view);
+	}
+	private void addParentViews(STestImpl test) {
+		for (SView view : parent_views.get()) test.addView(view);
+	}
+	private void removeParentViews(STestImpl test) {
+		for (SView view : parent_views.get()) test.removeView(view);
 	}
 }

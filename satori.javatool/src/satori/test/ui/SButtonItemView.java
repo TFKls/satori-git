@@ -22,7 +22,7 @@ public class SButtonItemView implements SPaneView {
 	private final STestImpl test;
 	private final SListener1<STestImpl> remove_listener;
 	private final SListener2<STestImpl, MouseEvent> move_listener;
-
+	
 	private JPanel pane;
 	private JButton move_button, save_button, reload_button, delete_button, remove_button;
 	
@@ -36,8 +36,6 @@ public class SButtonItemView implements SPaneView {
 	
 	@Override public JComponent getPane() { return pane; }
 	
-	private boolean askUnsaved() { return SFrame.showWarningDialog("All unsaved changes to the test will be lost."); }
-	
 	private void saveRequest() {
 		if (!test.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
 		try { if (test.isRemote()) test.save(); else test.create(); }
@@ -45,7 +43,6 @@ public class SButtonItemView implements SPaneView {
 	}
 	private void reloadRequest() {
 		if (!test.isRemote()) return;
-		if (test.isModified() && !askUnsaved()) return;
 		try { test.reload(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
@@ -56,9 +53,9 @@ public class SButtonItemView implements SPaneView {
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void removeRequest() {
-		if (test.isModified() && !askUnsaved()) return;
-		remove_listener.call(test);
+		if (test.isModified() && !SFrame.showWarningDialog("The test contains unsaved data.")) return;
 		test.close();
+		remove_listener.call(test);
 	}
 	
 	private void initialize() {

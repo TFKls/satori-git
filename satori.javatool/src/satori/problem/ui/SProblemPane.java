@@ -19,7 +19,7 @@ import satori.common.SException;
 import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SView;
-import satori.common.ui.SPane;
+import satori.common.ui.STabPane;
 import satori.common.ui.STabbedPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
@@ -30,7 +30,7 @@ import satori.test.STestSnap;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
 
-public class SProblemPane implements SPane, SView {
+public class SProblemPane implements STabPane, SView {
 	private final SProblemImpl problem;
 	private final STabs parent;
 	
@@ -67,21 +67,24 @@ public class SProblemPane implements SPane, SView {
 		private final SProblemImpl problem;
 		public TabModel(SProblemImpl problem) { this.problem = problem; }
 		@Override public String getTitle() {
-			String title = problem.getName().isEmpty() ? "(Problem)" : problem.getName();
-			if (problem.isModified()) title += "*";
-			return title;
+			return problem.getName().isEmpty() ? "(Problem)" : problem.getName();
 		}
 	}
 	public static SProblemPane open(SProblemImpl problem, STabs parent) {
-		SProblemPane pane = new SProblemPane(problem, parent);
-		problem.setTestListListener(pane.test_list_pane);
-		problem.setTestSuiteListListener(pane.suite_list_pane);
-		problem.addView(pane);
-		pane.tab_view = parent.openPane(new TabModel(problem), pane);
-		problem.addView(pane.tab_view);
-		return pane;
+		SProblemPane self = new SProblemPane(problem, parent);
+		problem.setTestListListener(self.test_list_pane);
+		problem.setTestSuiteListListener(self.suite_list_pane);
+		problem.addView(self);
+		self.tab_view = parent.openPane(new TabModel(problem), self);
+		problem.addView(self.tab_view);
+		self.tabs.addParentView(self.tab_view);
+		return self;
 	}
-	private void close() {
+	@Override public boolean hasUnsavedData() {
+		return problem.isModified() || tabs.hasUnsavedData();
+	}
+	@Override public void close() {
+		problem.close();
 		problem.removeView(tab_view);
 		parent.closePane(this);
 		problem.removeView(this);
@@ -127,14 +130,12 @@ public class SProblemPane implements SPane, SView {
 		}
 	};
 	
-	private boolean askUnsaved() { return SFrame.showWarningDialog("Unsaved changes to the problem will be lost."); }
-	
 	private void saveRequest() {
 		try { if (problem.isRemote()) problem.save(); else problem.create(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void reloadRequest() {
-		if (!problem.isRemote() || problem.isModified() && !askUnsaved()) return;
+		if (!problem.isRemote()) return;
 		try { problem.reload(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
@@ -144,8 +145,7 @@ public class SProblemPane implements SPane, SView {
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void closeRequest() {
-		if (problem.isModified() && !askUnsaved()) return;
-		problem.close();
+		if (hasUnsavedData() && !SFrame.showWarningDialog("This tab contains unsaved data.")) return;
 		close();
 	}
 	
