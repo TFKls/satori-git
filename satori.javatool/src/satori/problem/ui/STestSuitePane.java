@@ -60,6 +60,7 @@ public class STestSuitePane implements STabPane, SView {
 	}
 	@Override public boolean hasUnsavedData() { return suite.isModifiedRecursive(); }
 	@Override public void close() {
+		test_pane.removeAll();
 		suite.close();
 		suite.removeView(tab_view);
 		parent.closePane(this);

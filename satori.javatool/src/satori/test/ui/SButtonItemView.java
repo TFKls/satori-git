@@ -54,7 +54,6 @@ public class SButtonItemView implements SPaneView {
 	}
 	private void removeRequest() {
 		if (test.isModified() && !SFrame.showWarningDialog("The test contains unsaved data.")) return;
-		test.close();
 		remove_listener.call(test);
 	}
 	

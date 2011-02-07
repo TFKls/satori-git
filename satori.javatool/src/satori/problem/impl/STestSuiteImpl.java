@@ -199,7 +199,6 @@ public class STestSuiteImpl implements STestSuiteReader {
 		SAssert.assertTrue(isRemote(), "Test suite not remote");
 		snap.reload(); //calls snapModified
 		pane.removeAll();
-		for (STestImpl test : tests) test.close();
 		name = snap.getName();
 		desc = snap.getDescription();
 		createTestList(snap.getTests());

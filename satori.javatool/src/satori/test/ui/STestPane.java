@@ -283,14 +283,14 @@ public class STestPane implements SList<STestImpl>, SPane {
 		add(tests, this.tests.size());
 	}
 	@Override public void remove(STestImpl test) {
+		test.close();
 		removeColumn(tests.indexOf(test));
-		removeParentViews(test); //TODO: ?
 		tests.remove(test);
 		pane.revalidate(); pane.repaint();
 	}
 	@Override public void removeAll() {
+		for (STestImpl test : tests) test.close();
 		for (int i = tests.size()-1; i >= 0; --i) removeColumn(i);
-		for (STestImpl test : tests) removeParentViews(test); //TODO: ?
 		tests.clear();
 		pane.revalidate(); pane.repaint();
 	}
@@ -314,8 +314,5 @@ public class STestPane implements SList<STestImpl>, SPane {
 	}
 	private void addParentViews(STestImpl test) {
 		for (SView view : parent_views.get()) test.addView(view);
-	}
-	private void removeParentViews(STestImpl test) {
-		for (SView view : parent_views.get()) test.removeView(view);
 	}
 }

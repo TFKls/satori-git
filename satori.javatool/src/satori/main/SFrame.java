@@ -65,6 +65,7 @@ public class SFrame {
 	}
 	private void closeRequest() {
 		if (tabs.hasUnsavedData() && !showWarningDialog("The window contains unsaved data.")) return;
+		tabs.closeAll();
 		System.exit(0);
 	}
 	

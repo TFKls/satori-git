@@ -20,6 +20,9 @@ public class STabbedPane implements SPane, STabs {
 		for (STabPane pane : panes) if (pane.hasUnsavedData()) return true;
 		return false;
 	}
+	public void closeAll() {
+		for (STabPane pane : panes) pane.close();
+	}
 	
 	@Override public void openPane(String title, STabPane pane) {
 		panes.add(pane);
