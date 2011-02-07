@@ -43,7 +43,7 @@ public class SProblemListPane implements STabPane, SList<SProblemSnap> {
 		};
 		
 		public SProblemSnap getItem(int index) { return list.get(index); }
-		public Iterable<SProblemSnap> getItems() { return list; }
+		public List<SProblemSnap> getItems() { return Collections.unmodifiableList(list); }
 		
 		public void addItem(SProblemSnap problem) { list.add(problem); }
 		public void removeItem(SProblemSnap problem) { list.remove(problem); }

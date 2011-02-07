@@ -3,6 +3,7 @@ package satori.attribute;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import satori.blob.SBlob;
 
@@ -37,7 +38,7 @@ public class SAttributeMap implements SAttributeReader {
 	}
 	@Override public int hashCode() { return map.hashCode(); }
 	
-	@Override public Iterable<String> getNames() { return map.keySet(); }
+	@Override public Set<String> getNames() { return map.keySet(); }
 	@Override public boolean isBlob(String name) { return map.get(name).isBlob(); }
 	@Override public String getString(String name) {
 		if (!map.containsKey(name)) return null;

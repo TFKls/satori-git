@@ -28,10 +28,10 @@ public class STestSuiteData {
 		@Override public String getDescription() { return struct.getDescription(); }
 	}
 	static class TestSuiteWrap extends TestSuiteBasicWrap implements STestSuiteReader {
-		private Iterable<STestBasicReader> tests;
+		private List<STestBasicReader> tests;
 		public TestSuiteWrap(TestSuiteStruct struct) { super(struct); }
-		public void setTests(Iterable<STestBasicReader> tests) { this.tests = tests; }
-		@Override public Iterable<STestBasicReader> getTests() { return tests; }
+		public void setTests(List<STestBasicReader> tests) { this.tests = tests; }
+		@Override public List<STestBasicReader> getTests() { return tests; }
 	}
 	
 	private static class LoadCommand implements SThriftCommand {
@@ -43,7 +43,6 @@ public class STestSuiteData {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
 			result = new TestSuiteWrap(iface.TestSuite_get_struct(SSession.getToken(), id));
 			result.setTests(createTestList(iface.TestSuite_get_tests(SSession.getToken(), id)));
-			//TODO: load tests
 		}
 	}
 	public static STestSuiteReader load(long id) throws SException {
@@ -62,7 +61,7 @@ public class STestSuiteData {
 		struct.setReporter("StatusReporter");
 		return struct;
 	}
-	private static List<Long> createTestIdList(Iterable<? extends STestBasicReader> tests) {
+	private static List<Long> createTestIdList(List<? extends STestBasicReader> tests) {
 		List<Long> list = new ArrayList<Long>();
 		for (STestBasicReader test : tests) list.add(test.getId());
 		return list;
@@ -70,7 +69,7 @@ public class STestSuiteData {
 	private static Map<String, AnonymousAttribute> createParams() {
 		return Collections.<String, AnonymousAttribute>emptyMap();
 	}
-	private static List<Map<String, AnonymousAttribute>> createTestParams(Iterable<? extends STestBasicReader> tests) {
+	private static List<Map<String, AnonymousAttribute>> createTestParams(List<? extends STestBasicReader> tests) {
 		List<Map<String, AnonymousAttribute>> result = new ArrayList<Map<String, AnonymousAttribute>>();
 		for (@SuppressWarnings("unused") STestBasicReader test : tests) result.add(Collections.<String, AnonymousAttribute>emptyMap());
 		return result;
@@ -122,7 +121,7 @@ public class STestSuiteData {
 		private final long problem_id;
 		private List<STestSuiteBasicReader> result;
 		public ListCommand(long problem_id) { this.problem_id = problem_id; }
-		public Iterable<STestSuiteBasicReader> getResult() { return result; }
+		public List<STestSuiteBasicReader> getResult() { return result; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
 			TestSuiteStruct filter = new TestSuiteStruct();
@@ -132,9 +131,9 @@ public class STestSuiteData {
 			for (TestSuiteStruct struct : list) result.add(new TestSuiteBasicWrap(struct));
 		}
 	}
-	public static Iterable<STestSuiteBasicReader> list(long problem_id) throws SException {
+	public static List<STestSuiteBasicReader> list(long problem_id) throws SException {
 		ListCommand command = new ListCommand(problem_id);
 		SThriftClient.call(command);
-		return command.getResult();
+		return Collections.unmodifiableList(command.getResult());
 	}
 }

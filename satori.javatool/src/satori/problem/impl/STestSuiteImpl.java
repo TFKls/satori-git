@@ -1,6 +1,7 @@
 package satori.problem.impl;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 
@@ -42,7 +43,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	@Override public long getProblemId() { return problem.getId(); }
 	@Override public String getName() { return name; }
 	@Override public String getDescription() { return desc; }
-	@Override public Iterable<STestImpl> getTests() { return tests; }
+	@Override public List<STestImpl> getTests() { return Collections.unmodifiableList(tests); }
 	public boolean isRemote() { return hasId(); }
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
@@ -59,7 +60,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	private STestSuiteImpl() {}
 	
-	private void createTestList(Iterable<STestSnap> source) throws SException {
+	private void createTestList(List<STestSnap> source) throws SException {
 		List<STestImpl> tests = new ArrayList<STestImpl>();
 		for (STestSnap snap : source) tests.add(STestImpl.create(snap, problem));
 		this.tests = tests;
@@ -86,7 +87,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.tests = new ArrayList<STestImpl>();
 		return self;
 	}
-	public static STestSuiteImpl createNew(Iterable<STestSnap> tests, SParentProblem problem) throws SException {
+	public static STestSuiteImpl createNew(List<STestSnap> tests, SParentProblem problem) throws SException {
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.id = new SId();
 		self.problem = problem;
@@ -106,7 +107,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		return self;
 	}
 	
-	private boolean checkTestLists(Iterable<? extends STestBasicReader> list1) {
+	private boolean checkTestLists(List<? extends STestBasicReader> list1) {
 		Iterator<? extends STestBasicReader> iter1 = list1.iterator();
 		Iterator<STestImpl> iter2 = tests.iterator();
 		while (iter1.hasNext() && iter2.hasNext()) {

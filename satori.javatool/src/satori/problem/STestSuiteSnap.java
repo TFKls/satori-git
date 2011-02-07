@@ -1,6 +1,7 @@
 package satori.problem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import satori.common.SAssert;
@@ -34,7 +35,7 @@ public class STestSuiteSnap implements STestSuiteReader {
 	@Override public long getProblemId() { return problem_id; }
 	@Override public String getName() { return name; }
 	@Override public String getDescription() { return desc; }
-	@Override public Iterable<STestSnap> getTests() { return tests; }
+	@Override public List<STestSnap> getTests() { return Collections.unmodifiableList(tests); }
 	
 	public boolean isComplete() { return tests != null; }
 	
@@ -42,7 +43,7 @@ public class STestSuiteSnap implements STestSuiteReader {
 		this.test_list = test_list;
 	}
 	
-	private void createTestList(Iterable<? extends STestBasicReader> source) {
+	private void createTestList(List<? extends STestBasicReader> source) {
 		List<STestSnap> tests = new ArrayList<STestSnap>();
 		for (STestBasicReader test : source) tests.add(test_list.getTest(test));
 		this.tests = tests;

@@ -5,6 +5,7 @@ import static satori.thrift.SAttributeData.createBlobs;
 
 import java.util.Collections;
 import java.util.Map;
+import java.util.Set;
 
 import satori.attribute.SAttributeReader;
 import satori.attribute.SBlobAttribute;
@@ -47,7 +48,7 @@ public class STemporarySubmitData {
 	private static class SubmitDataWrap implements SAttributeReader {
 		private final SBlob submit;
 		public SubmitDataWrap(SBlob submit) { this.submit = submit; }
-		@Override public Iterable<String> getNames() { return Collections.singleton("content"); }
+		@Override public Set<String> getNames() { return Collections.singleton("content"); }
 		@Override public boolean isBlob(String name) { return true; }
 		@Override public String getString(String name) { return null; }
 		@Override public SBlob getBlob(String name) { return submit; }

@@ -2,6 +2,7 @@ package satori.thrift;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 import satori.attribute.SAttribute;
 import satori.attribute.SAttributeReader;
@@ -17,7 +18,7 @@ public class SAttributeData {
 	static class AttributeWrap implements SAttributeReader {
 		private Map<String, AnonymousAttribute> data;
 		public AttributeWrap(Map<String, AnonymousAttribute> data) { this.data = data; }
-		@Override public Iterable<String> getNames() { return data.keySet(); }
+		@Override public Set<String> getNames() { return data.keySet(); }
 		@Override public boolean isBlob(String name) { return data.get(name).isIs_blob(); }
 		@Override public String getString(String name) {
 			AnonymousAttribute attr = data.get(name);

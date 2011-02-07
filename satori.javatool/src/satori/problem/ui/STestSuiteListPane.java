@@ -38,7 +38,7 @@ public class STestSuiteListPane implements SPane, SListener1<STestSuiteList> {
 		};
 		
 		public STestSuiteSnap getItem(int index) { return list.get(index); }
-		public Iterable<STestSuiteSnap> getItems() { return list; }
+		public List<STestSuiteSnap> getItems() { return Collections.unmodifiableList(list); }
 		
 		public void addItem(STestSuiteSnap suite) { list.add(suite); }
 		public void removeItem(STestSuiteSnap suite) { list.remove(suite); }

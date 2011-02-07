@@ -4,6 +4,7 @@ import static satori.thrift.SAttributeData.createAttrMap;
 import static satori.thrift.SAttributeData.createBlobs;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import satori.attribute.SAttributeReader;
@@ -32,10 +33,10 @@ public class STestData {
 		@Override public SAttributeReader getData() { return data; }
 	}
 	
-	static Iterable<STestBasicReader> createTestList(Iterable<TestStruct> structs) {
+	static List<STestBasicReader> createTestList(List<TestStruct> structs) {
 		List<STestBasicReader> tests = new ArrayList<STestBasicReader>();
 		for (TestStruct struct : structs) tests.add(new TestBasicWrap(struct));
-		return tests;
+		return Collections.unmodifiableList(tests);
 	}
 	
 	private static class LoadCommand implements SThriftCommand {
@@ -110,7 +111,7 @@ public class STestData {
 		private final long problem_id;
 		private List<STestBasicReader> result;
 		public ListCommand(long problem_id) { this.problem_id = problem_id; }
-		public Iterable<STestBasicReader> getResult() { return result; }
+		public List<STestBasicReader> getResult() { return result; }
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
 			TestStruct filter = new TestStruct();
@@ -120,9 +121,9 @@ public class STestData {
 			for (TestStruct struct : list) result.add(new TestBasicWrap(struct));
 		}
 	}
-	public static Iterable<STestBasicReader> list(long problem_id) throws SException {
+	public static List<STestBasicReader> list(long problem_id) throws SException {
 		ListCommand command = new ListCommand(problem_id);
 		SThriftClient.call(command);
-		return command.getResult();
+		return Collections.unmodifiableList(command.getResult());
 	}
 }
