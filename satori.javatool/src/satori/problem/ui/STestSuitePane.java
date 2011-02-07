@@ -59,7 +59,7 @@ public class STestSuitePane implements STabPane, SView {
 		test_pane.addParentView(tab_view);
 	}
 	@Override public boolean hasUnsavedData() {
-		return test_pane.hasUnsavedData();
+		return suite.isModified() || test_pane.hasUnsavedData();
 	}
 	@Override public void close() {
 		test_pane.removeAll();
