@@ -3,6 +3,8 @@ package satori.main;
 import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -16,8 +18,8 @@ import satori.common.ui.STabbedPane;
 import satori.config.SConfig;
 import satori.config.SConfigDialog;
 import satori.problem.ui.SProblemListPane;
-import satori.session.SSession;
 import satori.session.SLoginDialog;
+import satori.session.SSession;
 
 public class SFrame {
 	private STabbedPane tabs = new STabbedPane();
@@ -55,17 +57,20 @@ public class SFrame {
 	private void configRequest() {
 		SConfigDialog.show();
 	}
-	
 	private void problemsRequest() {
 		SProblemListPane pane;
 		try { pane = SProblemListPane.get(tabs); }
 		catch(SException ex) { showErrorDialog(ex); return; }
 		tabs.openPane("Problems", pane);
 	}
+	private void closeRequest() {
+		if (tabs.hasUnsavedData() && !showWarningDialog("The window contains unsaved data.")) return;
+		System.exit(0);
+	}
 	
 	private void initialize() {
 		frame = new JFrame("Satori Tool");
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		frame.getContentPane().setLayout(new BorderLayout());
 		frame.getContentPane().add(tabs.getPane(), BorderLayout.CENTER);
 		session_label = new JLabel();
@@ -112,6 +117,9 @@ public class SFrame {
 		open_menu.add(problems_button);
 		menu_bar.add(open_menu);
 		frame.setJMenuBar(menu_bar);
+		frame.addWindowListener(new WindowAdapter() {
+			@Override public void windowClosing(WindowEvent e) { closeRequest(); }
+		});
 		updateSession();
 		
 		frame.setSize(960, 720);
