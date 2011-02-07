@@ -73,23 +73,6 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		return false;
 	}
 	
-	public void set(SProblemReader source) {
-		if (!check(source)) return;
-		name = source.getName();
-		desc = source.getDescription();
-		notifyModified();
-	}
-	public void setName(String name) {
-		if (this.name.equals(name)) return;
-		this.name = name;
-		notifyModified();
-	}
-	public void setDescription(String desc) {
-		if (this.desc.equals(desc)) return;
-		this.desc = desc;
-		notifyModified();
-	}
-	
 	private void snapModified() {
 		if (!check(snap)) return;
 		notifyOutdated();
@@ -100,6 +83,17 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		notifyOutdated();
 		test_list_listener.call(null);
 		suite_list_listener.call(null);
+	}
+	
+	public void setName(String name) {
+		if (this.name.equals(name)) return;
+		this.name = name;
+		notifyModified();
+	}
+	public void setDescription(String desc) {
+		if (this.desc.equals(desc)) return;
+		this.desc = desc;
+		notifyModified();
 	}
 	
 	private void notifyModified() {
@@ -132,21 +126,20 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	
 	public void reload() throws SException {
 		SAssert.assertTrue(isRemote(), "Problem not remote");
-		set(SProblemData.load(getId()));
+		snap.reload();
+		name = snap.getName();
+		desc = snap.getDescription();
 		notifyUpToDate();
-		snap.set(this);
-		snap.getTestList().reload();
-		snap.getTestSuiteList().reload();
 	}
 	public void create() throws SException {
 		SAssert.assertFalse(isRemote(), "Problem already created");
 		id.set(SProblemData.create(this));
 		notifyUpToDate();
 		snap = SProblemSnap.create(this);
-		problem_list.addProblem(snap);
 		snap.addReference(reference);
 		test_list_listener.call(snap.getTestList());
 		suite_list_listener.call(snap.getTestSuiteList());
+		problem_list.addProblem(snap);
 	}
 	public void save() throws SException {
 		SAssert.assertTrue(isRemote(), "Problem not remote");

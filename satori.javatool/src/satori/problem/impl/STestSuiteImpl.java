@@ -46,7 +46,6 @@ public class STestSuiteImpl implements STestSuiteReader {
 	public boolean isRemote() { return hasId(); }
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
-	
 	public boolean isProblemRemote() { return problem.hasId(); }
 	public boolean hasNonremoteTests() {
 		for (STestImpl test : getTests()) if (!test.isRemote()) return false;
@@ -60,14 +59,13 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	private STestSuiteImpl() {}
 	
-	private List<STestImpl> createTestList(Iterable<STestSnap> source) throws SException {
+	private void createTestList(Iterable<STestSnap> source) throws SException {
 		List<STestImpl> tests = new ArrayList<STestImpl>();
 		for (STestSnap snap : source) tests.add(STestImpl.create(snap, problem));
-		return tests;
+		this.tests = tests;
 	}
 	
 	public static STestSuiteImpl create(STestSuiteSnap snap, SParentProblem problem) throws SException {
-		//TODO: check problem id
 		if (!snap.isComplete()) snap.reload();
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.snap = snap;
@@ -76,11 +74,10 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.problem = problem;
 		self.name = snap.getName();
 		self.desc = snap.getDescription();
-		self.tests = self.createTestList(snap.getTests());
+		self.createTestList(snap.getTests());
 		return self;
 	}
 	public static STestSuiteImpl createNew(SParentProblem problem) {
-		//TODO: check problem id
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.id = new SId();
 		self.problem = problem;
@@ -90,17 +87,15 @@ public class STestSuiteImpl implements STestSuiteReader {
 		return self;
 	}
 	public static STestSuiteImpl createNew(Iterable<STestSnap> tests, SParentProblem problem) throws SException {
-		//TODO: check problem id
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.id = new SId();
 		self.problem = problem;
 		self.name = "";
 		self.desc = "";
-		self.tests = self.createTestList(tests);
+		self.createTestList(tests);
 		return self;
 	}
 	public static STestSuiteImpl createNew(STestImpl test, SParentProblem problem) {
-		//TODO: check problem id
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.id = new SId();
 		self.problem = problem;
@@ -202,12 +197,12 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	public void reload() throws SException {
 		SAssert.assertTrue(isRemote(), "Test suite not remote");
-		snap.reload();
+		snap.reload(); //calls snapModified
 		pane.removeAll();
 		for (STestImpl test : tests) test.close();
 		name = snap.getName();
 		desc = snap.getDescription();
-		tests = createTestList(snap.getTests());
+		createTestList(snap.getTests());
 		pane.add(tests);
 		notifyUpToDate();
 	}
@@ -228,12 +223,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 	public void delete() throws SException {
 		SAssert.assertTrue(isRemote(), "Test suite not remote");
 		STestSuiteData.delete(getId());
-		id.clear();
-		notifyOutdated();
-		snap.removeReference(reference);
-		snap.notifyDeleted();
 		problem.getTestSuiteList().removeTestSuite(snap);
-		snap = null;
+		snap.notifyDeleted(); //calls snapDeleted
 	}
 	public void close() {
 		if (snap == null) return;

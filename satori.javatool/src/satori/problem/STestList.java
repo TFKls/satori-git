@@ -18,7 +18,6 @@ public class STestList {
 	private List<SList<STestSnap>> panes = new ArrayList<SList<STestSnap>>();
 	
 	public long getProblemId() { return problem_id; }
-	public STestSnap getTestSnap(long id) { return tests.get(id); }
 	
 	private STestList(long problem_id) { this.problem_id = problem_id; }
 	
@@ -40,6 +39,14 @@ public class STestList {
 	public void removeTest(STestSnap test) {
 		for (SList<STestSnap> pane : panes) pane.remove(test);
 		tests.remove(test.getId());
+	}
+	
+	//used by STestSuiteSnap
+	public STestSnap getTest(STestBasicReader test) {
+		if (tests.containsKey(test.getId())) return tests.get(test.getId());
+		STestSnap result = STestSnap.createBasic(test);
+		addTest(result);
+		return result;
 	}
 	
 	public void addPane(SList<STestSnap> pane) {

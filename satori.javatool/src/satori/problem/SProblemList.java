@@ -38,9 +38,9 @@ public class SProblemList {
 			new_problems.put(current.getId(), current);
 		}
 		if (pane != null) pane.removeAll();
-		/*if (problems != null) for (Map.Entry<Long, SProblemSnap> entry : problems.entrySet()) {
+		if (problems != null) for (Map.Entry<Long, SProblemSnap> entry : problems.entrySet()) {
 			if (!new_problems.containsKey(entry.getKey())) entry.getValue().notifyDeleted();
-		}*/
+		}
 		problems = new_problems;
 		if (pane != null) pane.add(problems.values());
 	}

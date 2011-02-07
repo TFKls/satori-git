@@ -6,6 +6,7 @@ import satori.common.SReference;
 import satori.common.SReferenceList;
 import satori.common.SView;
 import satori.common.SViewList;
+import satori.thrift.SProblemData;
 
 public class SProblemSnap implements SProblemReader {
 	private long id;
@@ -41,6 +42,11 @@ public class SProblemSnap implements SProblemReader {
 		name = source.getName();
 		desc = source.getDescription();
 		notifyModified();
+	}
+	public void reload() throws SException {
+		set(SProblemData.load(id));
+		if (test_list != null) test_list.reload();
+		if (suite_list != null) suite_list.reload();
 	}
 	
 	private void notifyModified() {
