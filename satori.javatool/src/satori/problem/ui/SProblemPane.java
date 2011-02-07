@@ -85,9 +85,6 @@ public class SProblemPane implements STabPane, SView {
 	}
 	@Override public void close() {
 		problem.close();
-		problem.removeView(tab_view);
-		parent.closePane(this);
-		problem.removeView(this);
 	}
 	
 	private final SListener0 new_test_listener = new SListener0() {
@@ -143,6 +140,7 @@ public class SProblemPane implements STabPane, SView {
 	private void closeRequest() {
 		if (hasUnsavedData() && !SFrame.showWarningDialog("This tab contains unsaved data.")) return;
 		close();
+		parent.closePane(this);
 	}
 	
 	private void initialize() {

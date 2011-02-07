@@ -64,9 +64,6 @@ public class STestSuitePane implements STabPane, SView {
 	@Override public void close() {
 		test_pane.removeAll();
 		suite.close();
-		suite.removeView(tab_view);
-		parent.closePane(this);
-		suite.removeView(this);
 	}
 	
 	private void saveRequest() {
@@ -90,6 +87,7 @@ public class STestSuitePane implements STabPane, SView {
 	private void closeRequest() {
 		if (hasUnsavedData() && !SFrame.showWarningDialog("This tab contains unsaved data.")) return;
 		close();
+		parent.closePane(this);
 	}
 	
 	private void initialize() {

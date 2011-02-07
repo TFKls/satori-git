@@ -11,7 +11,6 @@ import satori.common.SViewList;
 
 public class STabbedPane implements SPane, STabs {
 	private final List<STabPane> panes = new ArrayList<STabPane>();
-	private boolean closing = false;
 	private final SViewList parent_views = new SViewList();
 	private final JTabbedPane tabs = new JTabbedPane();
 	
@@ -22,7 +21,6 @@ public class STabbedPane implements SPane, STabs {
 		return false;
 	}
 	public void closeAll() {
-		closing = true;
 		for (STabPane pane : panes) pane.close();
 		panes.clear();
 		parent_views.update();
@@ -56,7 +54,6 @@ public class STabbedPane implements SPane, STabs {
 	
 	@Override public void closePane(STabPane pane) {
 		tabs.remove(pane.getPane());
-		if (closing) return;
 		panes.remove(pane);
 		parent_views.update();
 	}
