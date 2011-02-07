@@ -82,6 +82,9 @@ public class SProblemListPane implements STabPane, SList<SProblemSnap> {
 	
 	@Override public JComponent getPane() { return main_pane; }
 	
+	@Override public boolean hasUnsavedData() { return false; }
+	@Override public void close() { problem_list.setPane(null); }
+	
 	private void newRequest() {
 		SProblemImpl problem = SProblemImpl.createNew(problem_list);
 		SProblemPane.open(problem, parent);
@@ -99,11 +102,9 @@ public class SProblemListPane implements STabPane, SList<SProblemSnap> {
 		try { problem_list.load(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
-	
-	@Override public boolean hasUnsavedData() { return false; }
-	@Override public void close() {
+	private void closeRequest() {
+		close();
 		parent.closePane(this);
-		problem_list.setPane(null);
 	}
 	
 	private void initialize() {
@@ -121,7 +122,7 @@ public class SProblemListPane implements STabPane, SList<SProblemSnap> {
 		button_pane.add(reload_button);
 		close_button = new JButton("Close");
 		close_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { close(); }
+			@Override public void actionPerformed(ActionEvent e) { closeRequest(); }
 		});
 		button_pane.add(close_button);
 		main_pane.add(button_pane, BorderLayout.NORTH);
