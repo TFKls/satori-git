@@ -44,9 +44,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 	}
 	
 	private void createTestList(List<? extends STestBasicReader> source) {
-		List<STestSnap> tests = new ArrayList<STestSnap>();
+		tests = new ArrayList<STestSnap>();
 		for (STestBasicReader test : source) tests.add(test_list.getTest(test));
-		this.tests = tests;
 	}
 	private void addTestDeletedListeners() {
 		for (STestSnap test : tests) test.addDeletedListener(test_deleted_listener);

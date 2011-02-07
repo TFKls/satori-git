@@ -304,6 +304,11 @@ public class STestPane implements SList<STestImpl>, SPane {
 		pane.revalidate(); pane.repaint();
 	}
 	
+	public boolean hasUnsavedData() {
+		for (STestImpl test : tests) if (test.isModified()) return true;
+		return false;
+	}
+	
 	public void addParentView(SView view) {
 		for (STestImpl test : tests) test.addView(view);
 		parent_views.add(view);

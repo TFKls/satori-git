@@ -58,7 +58,9 @@ public class STestSuitePane implements STabPane, SView {
 		suite.addView(tab_view);
 		test_pane.addParentView(tab_view);
 	}
-	@Override public boolean hasUnsavedData() { return suite.isModifiedRecursive(); }
+	@Override public boolean hasUnsavedData() {
+		return test_pane.hasUnsavedData();
+	}
 	@Override public void close() {
 		test_pane.removeAll();
 		suite.close();
@@ -77,6 +79,8 @@ public class STestSuitePane implements STabPane, SView {
 		if (!suite.isRemote()) return;
 		try { suite.reload(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		test_pane.removeAll();
+		test_pane.add(suite.getTests());
 	}
 	private void deleteRequest() {
 		if (!suite.isRemote() || !SFrame.showWarningDialog("The test suite will be deleted.")) return;

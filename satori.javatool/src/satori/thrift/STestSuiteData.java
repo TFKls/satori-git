@@ -9,6 +9,7 @@ import java.util.Map;
 
 import satori.common.SAssert;
 import satori.common.SException;
+import satori.common.SIdReader;
 import satori.problem.STestSuiteBasicReader;
 import satori.problem.STestSuiteReader;
 import satori.session.SSession;
@@ -61,17 +62,17 @@ public class STestSuiteData {
 		struct.setReporter("StatusReporter");
 		return struct;
 	}
-	private static List<Long> createTestIdList(List<? extends STestBasicReader> tests) {
+	private static List<Long> createTestIdList(List<? extends SIdReader> tests) {
 		List<Long> list = new ArrayList<Long>();
-		for (STestBasicReader test : tests) list.add(test.getId());
+		for (SIdReader test : tests) list.add(test.getId());
 		return list;
 	}
 	private static Map<String, AnonymousAttribute> createParams() {
 		return Collections.<String, AnonymousAttribute>emptyMap();
 	}
-	private static List<Map<String, AnonymousAttribute>> createTestParams(List<? extends STestBasicReader> tests) {
+	private static List<Map<String, AnonymousAttribute>> createTestParams(List<? extends SIdReader> tests) {
 		List<Map<String, AnonymousAttribute>> result = new ArrayList<Map<String, AnonymousAttribute>>();
-		for (@SuppressWarnings("unused") STestBasicReader test : tests) result.add(Collections.<String, AnonymousAttribute>emptyMap());
+		for (@SuppressWarnings("unused") SIdReader test : tests) result.add(Collections.<String, AnonymousAttribute>emptyMap());
 		return result;
 	}
 	
