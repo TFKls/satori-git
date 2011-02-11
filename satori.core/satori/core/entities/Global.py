@@ -9,14 +9,16 @@ from satori.core.models import Entity
 class Global(Entity):
     """Model. Special Global object for privileges.
     """
-    guardian      = models.IntegerField(unique=True)
+    guardian         = models.IntegerField(unique=True)
 
-    anonymous     = models.ForeignKey('Role', related_name='+')
-    authenticated = models.ForeignKey('Role', related_name='+')
-    zero          = models.ForeignKey('Role', related_name='+')
+    anonymous        = models.ForeignKey('Role', related_name='+')
+    authenticated    = models.ForeignKey('Role', related_name='+')
+    zero             = models.ForeignKey('Role', related_name='+')
 
-    checkers      = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
-    generators    = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+    assignment       = models.ForeignKey('Problem', related_name='+')
+
+    checkers         = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+    generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
 
     @classmethod
     def inherit_rights(cls):
@@ -49,15 +51,21 @@ class Global(Entity):
         anonymous.save()
 
         anonymous.add_member(authenticated)
-        
+
+        assignment = Problem(name='ASSIGNMENT', description='Dummy problem for assignments')
+        assignment.save()
+        assignment_suite = TestSuite(problem=assignment, name='ASSIGNMENT', description='Dummy test suite for assignments', dispatcher='SerialDispatcher', reporter='AssignmentReporter', accumulators='')
+
         Privilege.grant(anonymous, authenticated, 'VIEW')
         Privilege.grant(anonymous, anonymous, 'VIEW')
         Privilege.grant(anonymous, zero, 'VIEW')
+        Privilege.grant(anonymous, assignment, 'VIEW')
 
         g = Global()
         g.zero = zero
         g.authenticated = authenticated
         g.anonymous = anonymous
+        g.assignmnet = assignment
         g.save()
 
         return g        

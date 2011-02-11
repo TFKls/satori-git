@@ -19,6 +19,26 @@ class ReporterBase(object):
     def deinit(self):
         pass
 
+class AssignmentReporter(ReporterBase):
+    def __init__(self, test_suite_result):
+        super(AssignmentReporter, self).__init__(test_suite_result)
+
+    def init(self):
+        self.test_suite_result.status = 'ACC'
+        self.test_suite_result.report = ''
+        self.test_suite_result.save()
+
+    def accumulate(self, test_result):
+        pass
+        
+    def status(self):
+        return True
+
+    def deinit(self):
+        self.test_suite_result.status = 'ACC'
+#TODO: Create report based on oa
+        self.test_suite_result.report = ''
+        self.test_suite_result.save()
 
 class StatusReporter(ReporterBase):
     def __init__(self, test_suite_result):

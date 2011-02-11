@@ -53,6 +53,18 @@ class ProblemMapping(Entity):
         Privilege.grant(problem_mapping.contest.admin_role, problem_mapping.problem, 'MANAGE')
         return problem_mapping
 
+    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
+    @staticmethod
+    def create_assignment(fields):
+        problem_mapping = ProblemMapping()
+        problem_mapping.forbid_fields(fields, [ 'id', 'problem', 'default_test_suite' ])
+        problem_mapping.update_fields(fields, [ 'contest', 'code', 'title' ])
+        assignment = Global.get_instance().assignment
+        problem_mapping.problem = assignment
+        problem_mapping.default_test_suite = assignment.test_suites[0]
+        problem_mapping.save()
+        return problem_mapping
+
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, [ 'id', 'contest', 'problem' ])
@@ -63,6 +75,26 @@ class ProblemMapping(Entity):
         if 'default_test_suite' in update:
             RawEvent().send(Event(type='checking_default_test_suite_change', id=self.id))
         return self
+
+    @ExportMethod(NoneType, [DjangoId('ProblemMapping')], PCArg('self', 'MANAGE'), [])
+    def judge_assignment(self, results):
+        if self.problem != Global.get_instance().assignment:
+            raise InvalidArgument()
+        for contestant, result in results.items():
+            if contestant.contest != self:
+                raise InvalidArgument()
+            try:
+                submit = Submit.get(problem=self, contestant=contestant)
+            except Submit.DoesNotExist:
+                submit = Submit(problem=self, contestant=contestant)
+                submit.save()
+            try:
+                tsr = TestSuiteResult.get(problem=self, submit=submit)
+            except TestSuiteResult.DoesNotExist:
+                tsr = TestSuiteResult(problem=self, submit=submit)
+                tsr.save()
+            tsr.oa_set_map()
+
 
 class ProblemMappingEvents(Events):
     model = ProblemMapping
