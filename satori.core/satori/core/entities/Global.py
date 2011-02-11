@@ -66,7 +66,7 @@ class Global(Entity):
         g.zero = zero
         g.authenticated = authenticated
         g.anonymous = anonymous
-        g.assignmnet = assignment
+        g.assignment = assignment
         g.save()
 
         return g        
