@@ -55,6 +55,7 @@ class Global(Entity):
         assignment = Problem(name='ASSIGNMENT', description='Dummy problem for assignments')
         assignment.save()
         assignment_suite = TestSuite(problem=assignment, name='ASSIGNMENT', description='Dummy test suite for assignments', dispatcher='SerialDispatcher', reporter='AssignmentReporter', accumulators='')
+        assignment_suite.save()
 
         Privilege.grant(anonymous, authenticated, 'VIEW')
         Privilege.grant(anonymous, anonymous, 'VIEW')
