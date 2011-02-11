@@ -6,6 +6,7 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.List;
 
 import javax.swing.BorderFactory;
 import javax.swing.JButton;
@@ -15,8 +16,10 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
 import satori.common.SException;
+import satori.common.SListener0;
+import satori.common.SListener1;
 import satori.common.SView;
-import satori.common.ui.SPane;
+import satori.common.ui.STabPane;
 import satori.common.ui.STabbedPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
@@ -27,7 +30,7 @@ import satori.test.STestSnap;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
 
-public class SProblemPane implements SPane, SView {
+public class SProblemPane implements STabPane, SView {
 	private final SProblemImpl problem;
 	private final STabs parent;
 	
@@ -37,7 +40,7 @@ public class SProblemPane implements SPane, SView {
 	private STestSuiteListPane suite_list_pane;
 	private SView tab_view;
 	
-	private STestFactory test_factory = new STestFactory() {
+	private final STestFactory test_factory = new STestFactory() {
 		@Override public STestImpl create(STestSnap snap) throws SException {
 			return STestImpl.create(snap, problem);
 		}
@@ -64,68 +67,68 @@ public class SProblemPane implements SPane, SView {
 		private final SProblemImpl problem;
 		public TabModel(SProblemImpl problem) { this.problem = problem; }
 		@Override public String getTitle() {
-			String title = problem.getName().isEmpty() ? "(Problem)" : problem.getName();
-			if (problem.isModified()) title += "*";
-			return title;
+			return problem.getName().isEmpty() ? "(Problem)" : problem.getName();
 		}
 	}
 	public static SProblemPane open(SProblemImpl problem, STabs parent) {
-		SProblemPane pane = new SProblemPane(problem, parent);
-		problem.getTestList().addPane(pane.test_list_pane);
-		problem.getTestSuiteList().addPane(pane.suite_list_pane);
-		problem.addView(pane);
-		pane.tab_view = parent.openPane(new TabModel(problem), pane);
-		problem.addView(pane.tab_view);
-		return pane;
+		SProblemPane self = new SProblemPane(problem, parent);
+		problem.setTestListListener(self.test_list_pane);
+		problem.setTestSuiteListListener(self.suite_list_pane);
+		problem.addView(self);
+		self.tab_view = parent.openPane(new TabModel(problem), self);
+		problem.addView(self.tab_view);
+		self.tabs.addParentView(self.tab_view);
+		return self;
 	}
-	private void close() {
-		problem.removeView(tab_view);
-		parent.closePane(this);
-		problem.removeView(this);
-		problem.getTestList().removePane(test_list_pane);
-		problem.getTestSuiteList().removePane(suite_list_pane);
+	@Override public boolean hasUnsavedData() {
+		return problem.isModified() || tabs.hasUnsavedData();
 	}
-	
-	public void newTest() {
-		STestSuiteImpl suite = STestSuiteImpl.createNew(test_factory.createNew(), problem);
-		STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
-		suite.setPane(suite_pane.getTestPane());
-		suite_pane.getTestPane().add(suite.getTests());
-		suite_pane.open();
-	}
-	public void openTests(Iterable<STestSnap> snaps) {
-		STestSuiteImpl suite;
-		try { suite = STestSuiteImpl.createNew(snaps, problem); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
-		STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
-		suite.setPane(suite_pane.getTestPane());
-		suite_pane.getTestPane().add(suite.getTests());
-		suite_pane.open();
-	}
-	public void newTestSuite() {
-		STestSuiteImpl suite = STestSuiteImpl.createNew(problem);
-		STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
-		suite.setPane(suite_pane.getTestPane());
-		suite_pane.open();
-	}
-	public void openTestSuite(STestSuiteSnap snap) {
-		STestSuiteImpl suite;
-		try { suite = STestSuiteImpl.create(snap, problem); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
-		STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
-		suite.setPane(suite_pane.getTestPane());
-		suite_pane.getTestPane().add(suite.getTests());
-		suite_pane.open();
+	@Override public void close() {
+		problem.close();
 	}
 	
-	private boolean askUnsaved() { return SFrame.showWarningDialog("Unsaved changes to the problem will be lost."); }
+	private final SListener0 new_test_listener = new SListener0() {
+		@Override public void call() {
+			STestSuiteImpl suite = STestSuiteImpl.createNewTest(problem);
+			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
+			suite_pane.getTestPane().add(suite.getTests());
+			suite_pane.open();
+		}
+	};
+	private final SListener1<List<STestSnap>> open_tests_listener = new SListener1<List<STestSnap>>() {
+		@Override public void call(List<STestSnap> snaps) {
+			STestSuiteImpl suite;
+			try { suite = STestSuiteImpl.createNew(snaps, problem); }
+			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
+			suite_pane.getTestPane().add(suite.getTests());
+			suite_pane.open();
+		}
+	};
+	private final SListener0 new_suite_listener = new SListener0() {
+		@Override public void call() {
+			STestSuiteImpl suite = STestSuiteImpl.createNew(problem);
+			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
+			suite_pane.open();
+		}
+	};
+	private final SListener1<STestSuiteSnap> open_suite_listener = new SListener1<STestSuiteSnap>() {
+		@Override public void call(STestSuiteSnap snap) {
+			STestSuiteImpl suite;
+			try { suite = STestSuiteImpl.create(snap, problem); }
+			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
+			suite_pane.getTestPane().add(suite.getTests());
+			suite_pane.open();
+		}
+	};
 	
 	private void saveRequest() {
 		try { if (problem.isRemote()) problem.save(); else problem.create(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void reloadRequest() {
-		if (!problem.isRemote() || problem.isModified() && !askUnsaved()) return;
+		if (!problem.isRemote()) return;
 		try { problem.reload(); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
@@ -135,16 +138,16 @@ public class SProblemPane implements SPane, SView {
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void closeRequest() {
-		if (problem.isModified() && !askUnsaved()) return;
-		problem.close();
+		if (hasUnsavedData() && !SFrame.showWarningDialog("This tab contains unsaved data.")) return;
 		close();
+		parent.closePane(this);
 	}
 	
 	private void initialize() {
 		tabs = new STabbedPane();
 		info_pane = new SProblemInfoPane(problem);
-		test_list_pane = new STestListPane(this);
-		suite_list_pane = new STestSuiteListPane(this);
+		test_list_pane = new STestListPane(new_test_listener, open_tests_listener);
+		suite_list_pane = new STestSuiteListPane(new_suite_listener, open_suite_listener);
 		
 		main_pane = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();

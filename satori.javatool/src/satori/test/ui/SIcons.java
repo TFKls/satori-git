@@ -4,11 +4,21 @@ import javax.swing.Icon;
 import javax.swing.ImageIcon;
 
 public class SIcons {
-	public static final Icon moveIcon = new ImageIcon("icons/move.gif");
-	public static final Icon saveIcon = new ImageIcon("icons/save.gif");
-	public static final Icon refreshIcon = new ImageIcon("icons/refresh.gif");
-	public static final Icon trashIcon = new ImageIcon("icons/trash.gif");
-	public static final Icon removeIcon = new ImageIcon("icons/remove.gif");
-	public static final Icon addIcon = new ImageIcon("icons/add.gif");
-	public static final Icon runIcon = new ImageIcon("icons/run.gif");
+	public static Icon moveIcon;
+	public static Icon saveIcon;
+	public static Icon refreshIcon;
+	public static Icon trashIcon;
+	public static Icon removeIcon;
+	public static Icon addIcon;
+	public static Icon runIcon;
+	
+	public static void loadResources(ClassLoader loader) {
+		moveIcon = new ImageIcon(loader.getResource("icons/move.gif"));
+		saveIcon = new ImageIcon(loader.getResource("icons/save.gif"));
+		refreshIcon = new ImageIcon(loader.getResource("icons/refresh.gif"));
+		trashIcon = new ImageIcon(loader.getResource("icons/trash.gif"));
+		removeIcon = new ImageIcon(loader.getResource("icons/remove.gif"));
+		addIcon = new ImageIcon(loader.getResource("icons/add.gif"));
+		runIcon = new ImageIcon(loader.getResource("icons/run.gif"));
+	}
 }

@@ -12,7 +12,7 @@ class ProblemMapping(Entity):
     """
     parent_entity      = models.OneToOneField(Entity, parent_link=True, related_name='cast_problemmapping')
 
-    contest            = models.ForeignKey('Contest', related_name='problem_mappings+')
+    contest            = models.ForeignKey('Contest', related_name='problem_mappings')
     problem            = models.ForeignKey('Problem', related_name='problem_mappings+')
     code               = models.CharField(max_length=10)
     title              = models.CharField(max_length=64)
@@ -76,7 +76,7 @@ class ProblemMapping(Entity):
             RawEvent().send(Event(type='checking_default_test_suite_change', id=self.id))
         return self
 
-    @ExportMethod(NoneType, [DjangoId('ProblemMapping')], PCArg('self', 'MANAGE'), [])
+#    @ExportMethod(NoneType, [DjangoId('ProblemMapping')], PCArg('self', 'MANAGE'), [])
     def judge_assignment(self, results):
         if self.problem != Global.get_instance().assignment:
             raise InvalidArgument()

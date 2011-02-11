@@ -1,6 +1,7 @@
 package satori.thrift;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import satori.common.SException;
@@ -84,7 +85,7 @@ public class SProblemData {
 	
 	private static class ListCommand implements SThriftCommand {
 		private List<SProblemReader> result;
-		public Iterable<SProblemReader> getResult() { return result; }
+		public List<SProblemReader> getResult() { return result; }
 		@Override public void call() throws Exception {
 			Problem.Iface iface = new Problem.Client(SThriftClient.getProtocol());
 			ProblemStruct filter = new ProblemStruct();
@@ -93,9 +94,9 @@ public class SProblemData {
 			for (ProblemStruct struct : list) result.add(new ProblemWrap(struct));
 		}
 	}
-	public static Iterable<SProblemReader> list() throws SException {
+	public static List<SProblemReader> list() throws SException {
 		ListCommand command = new ListCommand();
 		SThriftClient.call(command);
-		return command.getResult();
+		return Collections.unmodifiableList(command.getResult());
 	}
 }

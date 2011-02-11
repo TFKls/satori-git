@@ -40,6 +40,15 @@ def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
             else:
                 return oa.value
 
+        def get_blob_filename(self, name):
+            oa = self.get(name)
+            if oa is None:
+                return None
+            elif not oa.is_blob:
+                raise BadAttributeType(name=name, required_type='blob')
+            else:
+                return oa.filename
+
         def get_blob_path(self, name, path):
             return Blob.open_path(self.get_blob_hash(name), path)
 

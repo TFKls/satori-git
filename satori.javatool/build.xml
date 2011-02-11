@@ -1,0 +1,68 @@
+<project default="main">
+    <path id="libs">
+        <fileset dir="lib" includes="**/*.jar"/>
+    </path>
+
+    <target name="thrift" depends="thrift.clean,thrift.gen,thrift.compile,thrift.jar,thrift.finalclean"/>
+
+    <target name="thrift.clean">
+        <delete dir="gen-java" quiet="true"/>
+        <delete dir="thrift-bin" quiet="true"/>
+    </target>
+
+    <target name="thrift.gen">
+        <echo message="Running thrift generator on satori.thrift"/>
+        <exec executable="thrift" failonerror="true">
+            <arg line="--strict --gen java satori.thrift"/>
+        </exec>
+    </target>
+
+    <target name="thrift.compile" depends="thrift.gen">
+        <mkdir dir="thrift-bin"/>
+        <javac srcdir="gen-java" destdir="thrift-bin">
+            <classpath refid="libs"/>
+        </javac>
+    </target>
+
+    <target name="thrift.jar" depends="thrift.compile">
+        <jar destfile="satori.thrift.gen.jar" basedir="thrift-bin"/>
+    </target>
+
+    <target name="thrift.finalclean">
+        <delete dir="gen-java" quiet="true"/>
+        <delete dir="thrift-bin" quiet="true"/>
+    </target>
+
+    <target name="main" depends="main.clean,main.compile,main.jar"/>
+
+    <target name="main.clean">
+        <delete dir="bin" quiet="true"/>
+    </target>
+
+    <target name="main.compile">
+        <mkdir dir="bin"/>
+        <javac srcdir="src" destdir="bin">
+            <classpath>
+                <path refid="libs"/>
+                <path location="satori.thrift.gen.jar"/>
+            </classpath>
+        </javac>
+        <copy todir="bin/icons">
+            <fileset dir="src/icons"/>
+        </copy>
+    </target>
+
+    <target name="main.jar" depends="main.compile">
+        <jar destfile="satori.javatool.jar" basedir="bin"/>
+    </target>
+
+    <target name="run" depends="main.jar">
+        <java classname="satori.main.SatoriTool" fork="true">
+            <classpath>
+                <path refid="libs"/>
+                <path location="satori.thrift.gen.jar"/>
+                <path location="satori.javatool.jar"/>
+            </classpath>
+        </java>
+    </target>
+</project>

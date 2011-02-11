@@ -4,6 +4,7 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
+import java.awt.Point;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
@@ -11,6 +12,8 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -21,15 +24,16 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
 
+import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JFileChooser;
-import javax.swing.JLabel;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
 import javax.swing.JTextField;
+import javax.swing.SwingConstants;
 import javax.swing.TransferHandler;
 
 import satori.blob.SBlob;
@@ -43,7 +47,7 @@ public class SBlobInputView implements SInputView {
 	private String desc;
 	private JComponent pane;
 	private JButton clear_button;
-	private JLabel label;
+	private JButton label;
 	private JTextField field;
 	private boolean edit_mode = false;
 	private Font set_font, unset_font;
@@ -79,61 +83,70 @@ public class SBlobInputView implements SInputView {
 		edit_mode = true;
 		field.setText(data.get().getName());
 		field.selectAll();
-		label.setVisible(false);
 		field.setVisible(true); 
 		field.requestFocus();
+		label.setVisible(false);
 	}
-	private void renameDone() {
+	private void renameDone(boolean focus) {
 		if (!edit_mode) return;
 		SBlob new_data = data.get().rename(field.getText());
 		try { data.set(new_data); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 		edit_mode = false;
+		label.setVisible(true);
+		if (focus) label.requestFocus();
 		field.setVisible(false);
-		label.setVisible(true); 
+	}
+	private void renameCancel() {
+		if (!edit_mode) return;
+		edit_mode = false;
+		label.setVisible(true);
+		label.requestFocus();
+		field.setVisible(false);
+	}
+	private void clear() {
+		try { data.set(null); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	
-	private class ButtonListener implements ActionListener {
-		@Override public void actionPerformed(ActionEvent e) {
-			try { data.set(null); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
-		}
+	private Point popup_location = null;
+	
+	private void showPopup() {
+		JPopupMenu popup = new JPopupMenu();
+		JMenuItem loadItem = new JMenuItem("Load");
+		loadItem.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { loadFile(); }
+		});
+		popup.add(loadItem);
+		JMenuItem saveItem = new JMenuItem("Save");
+		saveItem.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { saveFile(); }
+		});
+		popup.add(saveItem);
+		JMenuItem renameItem = new JMenuItem("Rename");
+		renameItem.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { rename(); }
+		});
+		popup.add(renameItem);
+		if (popup_location != null) popup.show(label, popup_location.x, popup_location.y);
+		else popup.show(label, 0, label.getHeight());
 	}
 	
 	private class LabelListener implements MouseListener, MouseMotionListener {
-		@Override public void mouseClicked(MouseEvent e) {
-			JPopupMenu popup = new JPopupMenu();
-			JMenuItem loadItem = new JMenuItem("Load");
-			loadItem.addActionListener(new ActionListener() {
-				@Override public void actionPerformed(ActionEvent e) { loadFile(); }
-			});
-			popup.add(loadItem);
-			JMenuItem saveItem = new JMenuItem("Save");
-			saveItem.addActionListener(new ActionListener() {
-				@Override public void actionPerformed(ActionEvent e) { saveFile(); }
-			});
-			popup.add(saveItem);
-			JMenuItem renameItem = new JMenuItem("Rename");
-			renameItem.addActionListener(new ActionListener() {
-				@Override public void actionPerformed(ActionEvent e) { rename(); }
-			});
-			popup.add(renameItem);
-			popup.show(e.getComponent(), e.getX(), e.getY());
+		@Override public void mousePressed(MouseEvent e) {
+			popup_location = e.getPoint();
+		}
+		@Override public void mouseReleased(MouseEvent e) {
+			popup_location = null;
 		}
 		@Override public void mouseDragged(MouseEvent e) {
+			popup_location = null;
 			label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
 		}
+		@Override public void mouseClicked(MouseEvent e) {}
 		@Override public void mouseEntered(MouseEvent e) {}
 		@Override public void mouseExited(MouseEvent e) {}
 		@Override public void mouseMoved(MouseEvent e) {}
-		@Override public void mousePressed(MouseEvent e) {}
-		@Override public void mouseReleased(MouseEvent e) {}
-	}
-	
-	private class FieldListener implements ActionListener, FocusListener {
-		@Override public void actionPerformed(ActionEvent e) { renameDone(); }
-		@Override public void focusGained(FocusEvent e) {}
-		@Override public void focusLost(FocusEvent e) { renameDone(); }
 	}
 	
 	private static DataFlavor sFileFlavor = new DataFlavor(SBlob.class, "Satori file");
@@ -226,9 +239,19 @@ public class SBlobInputView implements SInputView {
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
 		clear_button.setToolTipText("Clear");
 		clear_button.setFocusable(false);
-		clear_button.addActionListener(new ButtonListener());
+		clear_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { clear(); }
+		});
 		pane.add(clear_button);
-		label = new JLabel();
+		label = new JButton();
+		label.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
+		label.setBorderPainted(false);
+		label.setContentAreaFilled(false);
+		label.setOpaque(false);
+		label.setHorizontalAlignment(SwingConstants.LEADING);
+		label.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { showPopup(); }
+		});
 		LabelListener label_listener = new LabelListener();
 		label.addMouseListener(label_listener);
 		label.addMouseMotionListener(label_listener);
@@ -236,9 +259,24 @@ public class SBlobInputView implements SInputView {
 		pane.add(label);
 		field = new JTextField();
 		field.setVisible(false);
-		FieldListener field_listener = new FieldListener();
-		field.addActionListener(field_listener);
-		field.addFocusListener(field_listener);
+		field.addKeyListener(new KeyListener() {
+			@Override public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					e.consume();
+					renameDone(true);
+				}
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
+					e.consume();
+					renameCancel();
+				}
+			}
+			@Override public void keyReleased(KeyEvent e) {}
+			@Override public void keyTyped(KeyEvent e) {}
+		});
+		field.addFocusListener(new FocusListener() {
+			@Override public void focusGained(FocusEvent e) {}
+			@Override public void focusLost(FocusEvent e) { renameDone(false); }
+		});
 		pane.add(field);
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);
@@ -251,8 +289,8 @@ public class SBlobInputView implements SInputView {
 		pane.setMinimumSize(dim);
 		pane.setMaximumSize(dim);
 		clear_button.setBounds(0, (dim.height-13)/2, 13, 13);
-		label.setBounds(16, 0, dim.width-16, dim.height);
-		field.setBounds(16, 0, dim.width-16, dim.height);
+		label.setBounds(15, 0, dim.width-15, dim.height);
+		field.setBounds(15, 0, dim.width-15, dim.height);
 	}
 	@Override public void setDescription(String desc) {
 		this.desc = desc;

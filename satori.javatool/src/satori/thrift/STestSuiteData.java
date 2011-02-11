@@ -3,14 +3,18 @@ package satori.thrift;
 import static satori.thrift.STestData.createTestList;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import satori.common.SAssert;
 import satori.common.SException;
+import satori.common.SIdReader;
 import satori.problem.STestSuiteBasicReader;
 import satori.problem.STestSuiteReader;
 import satori.session.SSession;
 import satori.test.STestBasicReader;
+import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.TestSuite;
 import satori.thrift.gen.TestSuiteStruct;
 
@@ -25,10 +29,10 @@ public class STestSuiteData {
 		@Override public String getDescription() { return struct.getDescription(); }
 	}
 	static class TestSuiteWrap extends TestSuiteBasicWrap implements STestSuiteReader {
-		private Iterable<STestBasicReader> tests;
+		private List<STestBasicReader> tests;
 		public TestSuiteWrap(TestSuiteStruct struct) { super(struct); }
-		public void setTests(Iterable<STestBasicReader> tests) { this.tests = tests; }
-		@Override public Iterable<STestBasicReader> getTests() { return tests; }
+		public void setTests(List<STestBasicReader> tests) { this.tests = tests; }
+		@Override public List<STestBasicReader> getTests() { return tests; }
 	}
 	
 	private static class LoadCommand implements SThriftCommand {
@@ -40,7 +44,6 @@ public class STestSuiteData {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
 			result = new TestSuiteWrap(iface.TestSuite_get_struct(SSession.getToken(), id));
 			result.setTests(createTestList(iface.TestSuite_get_tests(SSession.getToken(), id)));
-			//TODO: load tests
 		}
 	}
 	public static STestSuiteReader load(long id) throws SException {
@@ -59,10 +62,18 @@ public class STestSuiteData {
 		struct.setReporter("StatusReporter");
 		return struct;
 	}
-	private static List<Long> createTestIdList(Iterable<? extends STestBasicReader> tests) {
+	private static List<Long> createTestIdList(List<? extends SIdReader> tests) {
 		List<Long> list = new ArrayList<Long>();
-		for (STestBasicReader test : tests) list.add(test.getId());
+		for (SIdReader test : tests) list.add(test.getId());
 		return list;
+	}
+	private static Map<String, AnonymousAttribute> createParams() {
+		return Collections.<String, AnonymousAttribute>emptyMap();
+	}
+	private static List<Map<String, AnonymousAttribute>> createTestParams(List<? extends SIdReader> tests) {
+		List<Map<String, AnonymousAttribute>> result = new ArrayList<Map<String, AnonymousAttribute>>();
+		for (@SuppressWarnings("unused") SIdReader test : tests) result.add(Collections.<String, AnonymousAttribute>emptyMap());
+		return result;
 	}
 	
 	private static class CreateCommand implements SThriftCommand {
@@ -72,7 +83,7 @@ public class STestSuiteData {
 		public CreateCommand(STestSuiteReader suite) { this.suite = suite; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
-			result = iface.TestSuite_create(SSession.getToken(), createStruct(suite), createTestIdList(suite.getTests())).getId();
+			result = iface.TestSuite_create(SSession.getToken(), createStruct(suite), createParams(), createTestIdList(suite.getTests()), createTestParams(suite.getTests())).getId();
 		}
 	}
 	public static long create(STestSuiteReader suite) throws SException {
@@ -87,7 +98,7 @@ public class STestSuiteData {
 		public SaveCommand(STestSuiteReader suite) { this.suite = suite; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
-			iface.TestSuite_modify_full(SSession.getToken(), suite.getId(), createStruct(suite), createTestIdList(suite.getTests()));
+			iface.TestSuite_modify_full(SSession.getToken(), suite.getId(), createStruct(suite), createParams(), createTestIdList(suite.getTests()), createTestParams(suite.getTests()));
 		}
 	}
 	public static void save(STestSuiteReader suite) throws SException {
@@ -111,7 +122,7 @@ public class STestSuiteData {
 		private final long problem_id;
 		private List<STestSuiteBasicReader> result;
 		public ListCommand(long problem_id) { this.problem_id = problem_id; }
-		public Iterable<STestSuiteBasicReader> getResult() { return result; }
+		public List<STestSuiteBasicReader> getResult() { return result; }
 		@Override public void call() throws Exception {
 			TestSuite.Iface iface = new TestSuite.Client(SThriftClient.getProtocol());
 			TestSuiteStruct filter = new TestSuiteStruct();
@@ -121,9 +132,9 @@ public class STestSuiteData {
 			for (TestSuiteStruct struct : list) result.add(new TestSuiteBasicWrap(struct));
 		}
 	}
-	public static Iterable<STestSuiteBasicReader> list(long problem_id) throws SException {
+	public static List<STestSuiteBasicReader> list(long problem_id) throws SException {
 		ListCommand command = new ListCommand(problem_id);
 		SThriftClient.call(command);
-		return command.getResult();
+		return Collections.unmodifiableList(command.getResult());
 	}
 }
