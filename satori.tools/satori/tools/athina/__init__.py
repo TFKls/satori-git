@@ -6,7 +6,8 @@ import string
 import sys
 import traceback
 
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 
 class Creator(object):
     def __init__(self, class_name, **kwargs):

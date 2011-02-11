@@ -2,7 +2,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from satori.judge.judge import JailBuilder, JailRun
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 
 import os
 import stat
@@ -11,36 +12,36 @@ import shutil
 import time
 import subprocess
 import traceback
-from optparse import OptionParser
 
-parser = OptionParser()
+from satori.tools import options, setup
+options = OptionParser()
 
-parser.add_option('-d', '--debug', dest='debug', default='', action='store', type='string')
+options.add_option('--debug', dest='debug', default='', action='store', type='string')
 
-parser.add_option('-L', '--login', dest='login', default='checker', action='store', type='string')
-parser.add_option('-P', '--password', dest='password', default='checker', action='store', type='string')
+options.add_option('--login', dest='login', default='checker', action='store', type='string')
+options.add_option('--password', dest='password', default='checker', action='store', type='string')
 
-parser.add_option('--jail-dir', dest='jail_dir', default='/jail', action='store', type='string')
-parser.add_option('--cgroup-dir', dest='cgroup_dir', default='/cgroup', action='store', type='string')
-parser.add_option('--template-dir', dest='template_dir', default='/template', action='store', type='string')
-parser.add_option('--template-src', dest='template_src', default='student.tcs.uj.edu.pl:/exports/judge', action='store', type='string')
+options.add_option('--jail-dir', dest='jail_dir', default='/jail', action='store', type='string')
+options.add_option('--cgroup-dir', dest='cgroup_dir', default='/cgroup', action='store', type='string')
+options.add_option('--template-dir', dest='template_dir', default='/template', action='store', type='string')
+options.add_option('--template-src', dest='template_src', default='student.tcs.uj.edu.pl:/exports/judge', action='store', type='string')
 
-parser.add_option('--retry-time', dest='retry_time', default=5, action='store', type='int')
+options.add_option('--retry-time', dest='retry_time', default=5, action='store', type='int')
 
-parser.add_option('--cgroup', dest='cgroup', default='runner', action='store', type='string')
-parser.add_option('--memory', dest='cgroup_memory', default=2*1024*1024*1024, action='store', type='int')
-parser.add_option('--time', dest='cgroup_time', default=5*60*1000, action='store', type='int')
+options.add_option('--cgroup', dest='cgroup', default='runner', action='store', type='string')
+options.add_option('--memory', dest='cgroup_memory', default=2*1024*1024*1024, action='store', type='int')
+options.add_option('--time', dest='cgroup_time', default=5*60*1000, action='store', type='int')
 
-parser.add_option('--judge', dest='default_judge', default='/bin/judge', action='store', type='string')
+options.add_option('--judge', dest='default_judge', default='/bin/judge', action='store', type='string')
 
-parser.add_option('--host-interface', dest='host_eth', default='vethsh', action='store', type='string')
-parser.add_option('--host-ip', dest='host_ip', default='192.168.100.101', action='store', type='string')
-parser.add_option('--guest-interface', dest='guest_eth', default='vethsg', action='store', type='string')
-parser.add_option('--guest-ip', dest='guest_ip', default='192.168.100.102', action='store', type='string')
-parser.add_option('--netmask', dest='netmask', default='255.255.255.0', action='store', type='string')
-parser.add_option('--port', dest='control_port', default=8765, action='store', type='int')
+options.add_option('--host-interface', dest='host_eth', default='vethsh', action='store', type='string')
+options.add_option('--host-ip', dest='host_ip', default='192.168.100.101', action='store', type='string')
+options.add_option('--guest-interface', dest='guest_eth', default='vethsg', action='store', type='string')
+options.add_option('--guest-ip', dest='guest_ip', default='192.168.100.102', action='store', type='string')
+options.add_option('--netmask', dest='netmask', default='255.255.255.0', action='store', type='string')
+options.add_option('--port', dest='control_port', default=8765, action='store', type='int')
 
-(options, args) = parser.parse_args()
+(options, args) = setup()
 
 def judge_loop():
     while True:
