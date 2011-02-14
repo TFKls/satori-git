@@ -37,12 +37,15 @@ class AuthSetup:
         print 'Connecting to: {0}:{1}:{2}'.format(self.hostname, self.thrift_port, self.blob_port)
         remote.setup(self.hostname, self.thrift_port, self.blob_port)
     def authenticate(self):
-        token_container.set_token('')
         if self.machine:
             print 'Machine name: {0}'.format(self.machine)
             if not self.password:
                 self.password = getpass.getpass('Password: ')
-            token_container.set_token(Machine.authenticate(self.machine, self.password))
+            try:
+                token_container.set_token(Machine.authenticate(self.machine, self.password))
+            except (TokenInvalid, TokenExpired):
+                token_container.set_token('')
+                token_container.set_token(Machine.authenticate(self.machine, self.password))
         elif self.username != '-':
             if not self.username:
                 self.username = raw_input('User name: ')
@@ -51,7 +54,11 @@ class AuthSetup:
                 print 'User name: {0}'.format(self.username)
             if not self.password:
                 self.password = getpass.getpass('Password: ')
-            token_container.set_token(User.authenticate(self.username, self.password))
+            try:
+                token_container.set_token(User.authenticate(self.username, self.password))
+            except (TokenInvalid, TokenExpired):
+                token_container.set_token('')
+                token_container.set_token(User.authenticate(self.username, self.password))
 
 auth_setup = AuthSetup()
 

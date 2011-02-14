@@ -13,13 +13,8 @@ import time
 import subprocess
 import traceback
 
-from satori.tools import options, setup
-options = OptionParser()
-
+from satori.tools import options, setup, authenticate
 options.add_option('--debug', dest='debug', default='', action='store', type='string')
-
-options.add_option('--login', dest='login', default='checker', action='store', type='string')
-options.add_option('--password', dest='password', default='checker', action='store', type='string')
 
 options.add_option('--jail-dir', dest='jail_dir', default='/jail', action='store', type='string')
 options.add_option('--cgroup-dir', dest='cgroup_dir', default='/cgroup', action='store', type='string')
@@ -45,11 +40,7 @@ options.add_option('--port', dest='control_port', default=8765, action='store', 
 
 def judge_loop():
     while True:
-        try:
-            token_container.set_token(Machine.authenticate(options.login, options.password))
-        except (TokenInvalid, TokenExpired):
-            token_container.set_token('')
-            continue
+    	authenticate()
         submit = Judge.get_next()
         if submit != None:
             tr = submit['test_result']
