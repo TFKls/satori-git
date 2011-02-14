@@ -17,7 +17,7 @@ class Global(Entity):
 
     assignment       = models.ForeignKey('Problem', related_name='+')
 
-    judges           = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+    judges           = AttributeGroupField(PCOr(PCArg('self', 'ADMIN'), PCArg('', 'MANAGE_PROBLEMS')), PCArg('self', 'ADMIN'), '')
     generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
 
     @classmethod
