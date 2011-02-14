@@ -334,7 +334,7 @@ class CheckingMaster(Client2):
         aggregator = aggregators[ranking.aggregator]
         self.ranking_map[ranking] = aggregator(self, ranking)
         self.call_ranking(ranking, 'init', [])
-        self.call_ranking(ranking, 'created_contestants', [Contestant.objects.filter(contest=ranking.contest)])
+        self.call_ranking(ranking, 'changed_contestants', [])
         
         for tsr in TestSuiteResult.objects.filter(submit__problem__contest=ranking.contest):
             self.test_suite_result_cache[(tsr.test_suite_id, tsr.submit_id)] = tsr
