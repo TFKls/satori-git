@@ -27,9 +27,9 @@ BLOB_PORT = 38887
 if getpass.getuser() == 'gutowski':
     THRIFT_PORT = 39889
     BLOB_PORT = 39887
-if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
-    THRIFT_PORT = 37889
-    BLOB_PORT = 37887
+#if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
+#    THRIFT_PORT = 37889
+#    BLOB_PORT = 37887
 #if getpass.getuser() == 'duraj':
 #    THRIFT_HOST = 'localhost'
 #    THRIFT_PORT = 36889
