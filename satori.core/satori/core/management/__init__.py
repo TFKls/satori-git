@@ -62,4 +62,14 @@ def create_admin(app, created_models, verbosity, **kwargs):
         shutil.copyfileobj(default_judge, blob)
     blob.close()
 
+    print 'Setting default profile fields'
+    profile_xml = """
+<profile>
+  <input>
+    <param name="affiliation" description="Affiliation" type="text" required="true"/>
+  </input>
+</profile>
+"""
+    Global.get_instance().profile_fields = profile_xml
+
 post_syncdb.connect(create_admin)
