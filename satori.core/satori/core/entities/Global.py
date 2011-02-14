@@ -17,7 +17,7 @@ class Global(Entity):
 
     assignment       = models.ForeignKey('Problem', related_name='+')
 
-    checkers         = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+    judges           = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
     generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
 
     @classmethod
@@ -34,7 +34,7 @@ class Global(Entity):
     def save(self, *args, **kwargs):
         self.guardian = 1
 
-        self.fixup_checkers()
+        self.fixup_judges()
         self.fixup_generators()
 
         super(Global, self).save(*args, **kwargs)

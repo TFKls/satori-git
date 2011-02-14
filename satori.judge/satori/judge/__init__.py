@@ -27,8 +27,6 @@ options.add_option('--cgroup', dest='cgroup', default='runner', action='store', 
 options.add_option('--memory', dest='cgroup_memory', default=2*1024*1024*1024, action='store', type='int')
 options.add_option('--time', dest='cgroup_time', default=5*60*1000, action='store', type='int')
 
-options.add_option('--judge', dest='default_judge', default='/bin/judge', action='store', type='string')
-
 options.add_option('--host-interface', dest='host_eth', default='vethsh', action='store', type='string')
 options.add_option('--host-ip', dest='host_ip', default='192.168.100.101', action='store', type='string')
 options.add_option('--guest-interface', dest='guest_eth', default='vethsg', action='store', type='string')
@@ -65,11 +63,13 @@ def judge_loop():
                 dst_path = os.path.join(options.jail_dir, 'judge')
                 if td.get('judge') and td.get('judge').is_blob:
                     td.get_blob_path('judge', dst_path)
+                    os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
                 else:
-                    with open(options.default_judge, 'r') as judge_src:
-                        with open(dst_path, 'w') as judge_dst:
-                            shutil.copyfileobj(judge_src, judge_dst)
-                os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
+                    res = dict()
+                    res['status'] = {'is_blob':False, 'value':'INT'}
+                    res['description'] = {'is_blob':False, 'value':'No judge specified'}
+                    Judge.set_result(tr, res)
+                    continue
                 jr = JailRun(
                     submit=sub,
                     root=options.jail_dir,

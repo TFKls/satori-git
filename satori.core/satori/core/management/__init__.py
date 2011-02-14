@@ -1,5 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import os
+import shutil
+
 from django.db.models.signals import post_syncdb
 
 def create_admin(app, created_models, verbosity, **kwargs):
@@ -50,5 +53,13 @@ def create_admin(app, created_models, verbosity, **kwargs):
         checker = Machine.create(DjangoStruct('Machine')(login=login, address=address, netmask=netmask))
         checker.set_password(password)
         Privilege.global_grant(checker, 'JUDGE')
+
+    print 'Registering default judge'
+    
+    default_judge_src = os.path.join(os.path.split(__file__)[0], '..', 'default_judge.py')
+    blob = Global.get_instance().judges_set_blob('default_judge', 'judge.py')
+    with open(default_judge_src) as default_judge:
+        shutil.copyfileobj(default_judge, blob)
+    blob.close()
 
 post_syncdb.connect(create_admin)
