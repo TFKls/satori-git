@@ -46,17 +46,19 @@
 
 using namespace std;
 
-map<int, Runner*> Runner::runners;
-bool Runner::sigterm;
-bool Runner::sigalarm;
-vector<int> Runner::Initializer::signals;
-vector<struct sigaction> Runner::Initializer::handlers;
-set<int> Runner::Initializer::debug_fds;
-Runner::Initializer Runner::initializer;
+namespace runner {
 
-Runner::Initializer::Initializer()
+map<int, Runner*> Runner::runners;
+bool Initializer::sigterm;
+bool Initializer::sigalarm;
+vector<int> Initializer::signals;
+vector<struct sigaction> Initializer::handlers;
+set<int> Logger::debug_fds;
+Initializer Runner::initializer;
+Logger Runner::logger;
+
+Initializer::Initializer()
 {
-    debug_fds.insert(2);
     sigterm = false;
     sigalarm = false;
     signals.push_back(SIGALRM);
@@ -71,12 +73,12 @@ Runner::Initializer::Initializer()
     for (uint i=0; i<signals.size(); i++)
         sigaction(signals[i], &action, &handlers[i]);
 }
-void Runner::Initializer::Stop()
+void Initializer::Stop()
 {
     for (uint i=0; i<signals.size(); i++)
         sigaction(signals[i], &handlers[i], NULL);
 }
-void Runner::Initializer::SignalHandler(int sig, siginfo_t* info, void* data)
+void Initializer::SignalHandler(int sig, siginfo_t* info, void* data)
 {
     if (sig == SIGALRM)
         sigalarm = true;
@@ -96,19 +98,49 @@ void Runner::Unregister(int pid)
 {
     runners.erase(pid);
 }
-void Runner::Process()
+void Runner::StopAll()
+{
+	for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
+		i->second->Stop();
+}
+void Runner::CheckAll()
+{
+	for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
+		i->second->Check();
+}
+void Runner::ProcessAChild(pid_t pid)
+{
+	map<int, Runner*>::const_iterator i = runners.find(pid);
+    if (i != runners.end())
+        i->second->process_child(pid);
+    else
+    {
+        ProcStats P(pid);
+        i = runners.find(P.ppid);
+        if (i != runners.end())
+            i->second->process_child(pid);
+        else
+        {
+            i = runners.find(P.pgrp);
+            if (i != runners.end())
+                i->second->process_child(pid);
+            else
+                waitpid(pid, NULL, 0);
+        }
+    }
+}
+	
+void Initializer::Process()
 {
     if (sigterm)
     {
         sigterm = false;
-        for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
-            i->second->Stop();
+		Runner::StopAll();
     }
     if (sigalarm)
     {
         sigalarm = false;
-        for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
-            i->second->Check();
+		Runner::CheckAll();
     }
     siginfo_t info;
     while (1) {
@@ -118,29 +150,12 @@ void Runner::Process()
         if (info.si_pid == 0)
             break;
         int pid = info.si_pid;
-        map<int, Runner*>::const_iterator i = runners.find(pid);
-        if (i != runners.end())
-            i->second->process_child(pid);
-        else
-        {
-            ProcStats P(pid);
-            i = runners.find(P.ppid);
-            if (i != runners.end())
-                i->second->process_child(pid);
-            else
-            {
-                i = runners.find(P.pgrp);
-                if (i != runners.end())
-                    i->second->process_child(pid);
-                else
-                    waitpid(pid, NULL, 0);
-            }
-        }
-    }
+		Runner::ProcessAChild(pid);
+   }
 }
 
 
-void Runner::ProcessLoop(long ms)
+void Initializer::ProcessLoop(long ms)
 {
     timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
@@ -170,8 +185,12 @@ void Runner::ProcessLoop(long ms)
     }
 }       
 
+Logger::Logger()
+{
+	debug_fds.insert(2);
+}
 
-void Runner::Initializer::Debug(const char* format, va_list args)
+void Logger::Debug(const char* format, va_list args)
 {
     for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
     {
@@ -184,7 +203,7 @@ void Runner::Initializer::Debug(const char* format, va_list args)
         va_end(pars);
     }
 }
-void Runner::Initializer::Fail(int err, const char* format, va_list args)
+void Logger::Fail(int err, const char* format, va_list args)
 {
     for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
     {
@@ -200,7 +219,7 @@ void Runner::Initializer::Fail(int err, const char* format, va_list args)
 }
 
 
-Runner::Buffer::Buffer(size_t _size)
+Buffer::Buffer(size_t _size)
 {
     size = _size;
     fill = 0;
@@ -216,12 +235,12 @@ Runner::Buffer::Buffer(size_t _size)
     else
         buf = NULL;
 }
-Runner::Buffer::~Buffer()
+Buffer::~Buffer()
 {
     if(buf)
         free(buf);
 }
-void Runner::Buffer::Append(void* data, size_t length)
+void Buffer::Append(void* data, size_t length)
 {
     if (fill + length > size)
     {
@@ -238,24 +257,24 @@ void Runner::Buffer::Append(void* data, size_t length)
     memcpy(buf+fill, data, length);
     fill += length;
 }
-string Runner::Buffer::String() const
+string Buffer::String() const
 {
     return string(buf, fill);
 }
-int Runner::Buffer::YamlWriteCallback(void* data, unsigned char* buffer, size_t size)
+int Buffer::YamlWriteCallback(void* data, unsigned char* buffer, size_t size)
 {
     Buffer* buf = (Buffer*)data;
     buf->Append(buffer, size);
     return 1;
 }
-size_t Runner::Buffer::CurlWriteCallback(void* buffer, size_t size, size_t nmemb, void* userp)
+size_t Buffer::CurlWriteCallback(void* buffer, size_t size, size_t nmemb, void* userp)
 {
     Buffer* buf = (Buffer*)userp;
     buf->Append(buffer, size * nmemb);
     return nmemb;
 }
 
-Runner::ProcStats::ProcStats(int _pid)
+ProcStats::ProcStats(int _pid)
 {
     FILE* f;
     char filename[32];
@@ -293,7 +312,7 @@ Runner::ProcStats::ProcStats(int _pid)
         Fail("scanf of '/proc/%d/statm' failed", _pid);
     fclose(f);
 }
-void Runner::UserInfo::set(void* _p)
+void UserInfo::set(void* _p)
 {
     passwd* p = (passwd*)_p;
     ok = true;
@@ -305,7 +324,7 @@ void Runner::UserInfo::set(void* _p)
     dir = p->pw_dir;
     shell = p->pw_shell;
 }
-Runner::UserInfo::UserInfo(const string& name)
+UserInfo::UserInfo(const string& name)
 {
     ok = false;
     if(name == "")
@@ -326,7 +345,7 @@ Runner::UserInfo::UserInfo(const string& name)
                 set(ppwd);
     }
 }
-Runner::UserInfo::UserInfo(int id)
+UserInfo::UserInfo(int id)
 {
     ok = false;
     passwd pwd;
@@ -336,7 +355,7 @@ Runner::UserInfo::UserInfo(int id)
     if (ppwd == &pwd)
         set(ppwd);
 }
-void Runner::GroupInfo::set(void* _g)
+void GroupInfo::set(void* _g)
 {
     struct group* g = (struct group*)_g;
     ok = true;
@@ -347,7 +366,7 @@ void Runner::GroupInfo::set(void* _g)
     for(char** i=g->gr_mem; *i != NULL; i++)
         members.push_back(*i);
 }
-Runner::GroupInfo::GroupInfo(const string& name)
+GroupInfo::GroupInfo(const string& name)
 {
     ok = false;
     if(name == "")
@@ -368,7 +387,7 @@ Runner::GroupInfo::GroupInfo(const string& name)
             set(pgrp);
     }
 }
-Runner::GroupInfo::GroupInfo(int id)
+GroupInfo::GroupInfo(int id)
 {
     ok = false;
     struct group grp;
@@ -379,7 +398,7 @@ Runner::GroupInfo::GroupInfo(int id)
         set(pgrp);
 }
 
-Runner::MountsInfo::MountsInfo()
+MountsInfo::MountsInfo()
 {
     FILE* f;
     f = fopen("/proc/mounts", "r");
@@ -413,7 +432,7 @@ Runner::MountsInfo::MountsInfo()
     }
     fclose(f);
 }
-bool Runner::MountsInfo::Available()
+bool MountsInfo::Available()
 {
     struct stat s;
     if (stat("/proc/mounts", &s))
@@ -426,19 +445,19 @@ Runner::~Runner()
     Stop();
 }
 
-void Runner::Debug(const char* format, ...)
+void Debug(const char* format, ...)
 {
     va_list args;
     va_start(args, format);
-    Initializer::Debug(format, args);
+    Logger::Debug(format, args);
     va_end(args);
 }
-void Runner::Fail(const char* format, ...)
+void Fail(const char* format, ...)
 {
     int err = errno;
     va_list args;
     va_start(args, format);
-    Initializer::Fail(err, format, args);
+    Logger::Fail(err, format, args);
     va_end(args);
 }
 
@@ -483,39 +502,39 @@ void Runner::drop_capability(const string& name, int cap)
         Fail("cap_free('%s') failed", name.c_str());
 }
 
-long Runner::miliseconds(const timeval& tv)
+long miliseconds(const timeval& tv)
 {
     long msecs = tv.tv_sec;
     msecs *= 1000;
     msecs += tv.tv_usec / 1000;
     return msecs;
 }
-long Runner::miliseconds(const timespec& ts)
+long miliseconds(const timespec& ts)
 {
     long msecs = ts.tv_sec;
     msecs *= 1000;
     msecs += ts.tv_nsec / 1000000;
     return msecs;
 }
-void Runner::ms_timeval(long ms, timeval& tv)
+void ms_timeval(long ms, timeval& tv)
 {
     tv.tv_sec = ms/1000;
     tv.tv_usec = (ms%1000)*1000;
 }
-void Runner::ms_timespec(long ms, timespec& ts)
+void ms_timespec(long ms, timespec& ts)
 {
     ts.tv_sec = ms/1000;
     ts.tv_nsec = (ms%1000)*1000000;
 }
-pair<long, long> Runner::miliseconds(const rusage& usage)
+pair<long, long> miliseconds(const rusage& usage)
 {
     return make_pair(miliseconds(usage.ru_utime), miliseconds(usage.ru_stime));
 };
-pair<long, long> Runner::miliseconds(const ProcStats& stat)
+pair<long, long> miliseconds(const ProcStats& stat)
 {
     return make_pair(stat.utime*1000/sysconf(_SC_CLK_TCK), stat.stime*1000/sysconf(_SC_CLK_TCK));
 };
-pair<long, long> Runner::miliseconds(const Controller::Stats& stat)
+pair<long, long> miliseconds(const Controller::Stats& stat)
 {
     const long CGROUP_CPU_CLK_TCK = 100;
     return make_pair(stat.utime*1000/CGROUP_CPU_CLK_TCK, stat.stime*1000/CGROUP_CPU_CLK_TCK);
@@ -525,7 +544,7 @@ bool Runner::milisleep(long ms)
     return usleep(ms*1000);
 };
 
-bool Runner::Controller::Parse(const string& yaml, map<string, string>& data)
+bool Controller::Parse(const string& yaml, map<string, string>& data)
 {
     yaml_parser_t parser;
     yaml_event_t event;
@@ -580,7 +599,7 @@ bool Runner::Controller::Parse(const string& yaml, map<string, string>& data)
     yaml_parser_delete(&parser);
     return true;
 }
-bool Runner::Controller::Dump(const map<string, string>& data, string& yaml)
+bool Controller::Dump(const map<string, string>& data, string& yaml)
 {
     yaml_emitter_t emitter;
     yaml_event_t event;
@@ -655,7 +674,7 @@ bool Runner::Controller::Dump(const map<string, string>& data, string& yaml)
     return true;
 }
 
-bool Runner::Controller::Contact(const string& action, const map<string, string>& input, map<string, string>& output)
+bool Controller::Contact(const string& action, const map<string, string>& input, map<string, string>& output)
 {
     bool result = true;
     string yaml;
@@ -690,7 +709,7 @@ bool Runner::Controller::Contact(const string& action, const map<string, string>
     return result;
 }
 
-void Runner::Controller::CheckOK(const std::string& call, const map<string, string>& output)
+void Controller::CheckOK(const std::string& call, const map<string, string>& output)
 {
     map<string, string>::const_iterator ok = output.find("res");
     if (ok == output.end() || ok->second != "OK")
@@ -701,20 +720,20 @@ void Runner::Controller::CheckOK(const std::string& call, const map<string, stri
     }
 }
 
-Runner::Controller::Controller(const string& _host, int _port)
+Controller::Controller(const string& _host, int _port)
 {
     host = _host;
     port = _port;
 }
 
-void Runner::Controller::GroupCreate(const string& cgroup)
+void Controller::GroupCreate(const string& cgroup)
 {
     map<string, string> input, output;
     input["group"] = cgroup;
     Contact("CREATECG", input, output);
     CheckOK("CREATECG", output);
 }
-void Runner::Controller::GroupJoin(const string& cgroup)
+void Controller::GroupJoin(const string& cgroup)
 {
     map<string, string> input, output;
     input["group"] = cgroup;
@@ -734,14 +753,14 @@ void Runner::Controller::GroupJoin(const string& cgroup)
         Fail("unlink('%s') failed", buf);
     CheckOK("ASSIGNCG", output);
 }
-void Runner::Controller::GroupDestroy(const string& cgroup)
+void Controller::GroupDestroy(const string& cgroup)
 {
     map<string, string> input, output;
     input["group"] = cgroup;
     Contact("DESTROYCG", input, output);
     CheckOK("DESTROYCG", output);
 }
-void Runner::Controller::GroupLimits(const string& cgroup, const Limits& limits)
+void Controller::GroupLimits(const string& cgroup, const Limits& limits)
 {
     map<string, string> input, output;
     if (limits.memory > 0)
@@ -757,7 +776,7 @@ void Runner::Controller::GroupLimits(const string& cgroup, const Limits& limits)
         CheckOK("LIMITCG", output);
     }
 }
-Runner::Controller::Stats Runner::Controller::GroupStats(const string& cgroup)
+Controller::Stats Controller::GroupStats(const string& cgroup)
 {
     map<string, string> input, output;
     input["group"] = cgroup;
@@ -817,12 +836,12 @@ bool Runner::check_times()
             (user_time > 0 && user_time < (long)result.user_time) ||
             (system_time > 0 && system_time < (long)result.system_time))
     {
-        result.SetStatus(RES_TIME);
+        result.SetStatus(Result::RES_TIME);
         return false;
     }
     if ((memory_space > 0) && (curmemory > memory_space))
     {
-        result.SetStatus(RES_MEMORY);
+        result.SetStatus(Result::RES_MEMORY);
         return false;
     }
     return true;
@@ -841,12 +860,12 @@ bool Runner::check_cgroup()
                 (cgroup_user_time > 0 && cgroup_user_time < (long)result.cgroup_user_time) ||
                 (cgroup_system_time > 0 && cgroup_system_time < (long)result.cgroup_system_time))
         {
-            result.SetStatus(RES_TIME);
+            result.SetStatus(Result::RES_TIME);
             return false;
         }
         if (cgroup_memory > 0 && cgroup_memory < (long)result.cgroup_memory)
         {
-            result.SetStatus(RES_MEMORY);
+            result.SetStatus(Result::RES_MEMORY);
             return false;
         }
     }
@@ -1284,7 +1303,7 @@ void Runner::process_child(long epid)
                         }
                         else if (ptrace_safe)
                         {
-                            result.SetStatus(RES_IO);
+                            result.SetStatus(Result::RES_IO);
                             Stop();
                         }
                         after_exec = true;
@@ -1312,7 +1331,7 @@ void Runner::process_child(long epid)
                     default:
                         if (ptrace_safe)
                         {
-                            result.SetStatus(RES_IO);
+                            result.SetStatus(Result::RES_IO);
                             Stop();
                         }
                     //TODO: Handle syscalls!
@@ -1350,9 +1369,9 @@ void Runner::process_child(long epid)
             result.exit_status = status;
             result.usage = usage;
             if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
-                result.SetStatus(RES_OK);
+                result.SetStatus(Result::RES_OK);
             else
-                result.SetStatus(RES_RUNTIME);
+                result.SetStatus(Result::RES_RUNTIME);
             Stop();
         }
     }
@@ -1361,7 +1380,7 @@ void Runner::process_child(long epid)
     if (p==child && force_stop)
     {
         Debug("Child stoped for unknown reason");
-        result.SetStatus(RES_RUNTIME);
+        result.SetStatus(Result::RES_RUNTIME);
         Stop();
     }
     else if (force_stop)
@@ -1386,7 +1405,7 @@ void Runner::Run()
         if ((debug_file != "") && ((debfd = open(debug_file.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)) < 0))
             Fail("open('%s') failed", debug_file.c_str());
         else
-            Initializer::debug_fds.insert(debfd);
+            Logger::debug_fds.insert(debfd);
     }
     if (pivot && !new_mount)
         Fail("Can't run pivot without mount namespace");
@@ -1450,7 +1469,7 @@ void Runner::Stop()
         child=-1;
         if (cgroup != "" && controller)
             controller->GroupDestroy(cgroup);
-        result.SetStatus(RES_STOP);
+        result.SetStatus(Result::RES_STOP);
     }
 }
 
@@ -1469,5 +1488,7 @@ bool Runner::Check()
 void Runner::Wait()
 {
     while (child>0 && Check())
-        ProcessLoop(1000);
+        Initializer::ProcessLoop(1000);
+}
+
 }
