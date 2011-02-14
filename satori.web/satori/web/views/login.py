@@ -3,6 +3,8 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
 from django.shortcuts import render_to_response
+from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 from django import forms
 
 class LoginForm(forms.Form):
@@ -19,7 +21,7 @@ def view(request, general_page_overview):
             try:
                 token = User.authenticate(login=login,password=password)
                 token_container.set_token(token)
-                return render_to_response('news.html', {'general_page_overview' : general_page_overview})
+                return HttpResponseRedirect(reverse('news'))
             except:
                 return render_to_response('login.html', {'general_page_overview' : general_page_overview, 'form' : form, 'failed' : True })
     else:

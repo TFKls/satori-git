@@ -5,5 +5,5 @@ from satori.web.utils.decorators import general_view
 from django.shortcuts import render_to_response
 
 @general_view
-def view(request, general_page_overview):
+def view(request, general_page_overview,contestid):
     return render_to_response('contest_news.html', general_page_overview)
