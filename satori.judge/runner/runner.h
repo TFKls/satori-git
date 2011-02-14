@@ -29,9 +29,9 @@ class Runner
         {
             private:
                 static void SignalHandler(int, siginfo_t*, void*);
-                static std::vector<int> signals;
                 static std::vector<struct sigaction> handlers;
             public:
+                static std::vector<int> signals;
                 static std::set<int> debug_fds;
                 Initializer();
                 static void Stop();

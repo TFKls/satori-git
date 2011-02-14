@@ -147,9 +147,8 @@ void Runner::ProcessLoop(long ms)
     long to = miliseconds(ts)+ms;
     sigset_t orig_mask, blocked_mask;
     sigemptyset(&blocked_mask);
-    sigaddset(&blocked_mask, SIGTERM);
-    sigaddset(&blocked_mask, SIGCHLD);
-    sigaddset(&blocked_mask, SIGALRM);
+	for(vector<int>::iterator it = Initializer::signals.begin(); it != Initializer::signals.end(); ++it)
+		sigaddset(&blocked_mask, *it);
     while (1) {
         sigprocmask(SIG_BLOCK, &blocked_mask, &orig_mask);
         Process();
