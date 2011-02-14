@@ -51,6 +51,7 @@ class ProblemMapping(Entity):
             raise CannotSetField()
         problem_mapping.save()
         Privilege.grant(problem_mapping.contest.admin_role, problem_mapping.problem, 'MANAGE')
+        problem.contest.changed()
         return problem_mapping
 
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
@@ -68,12 +69,13 @@ class ProblemMapping(Entity):
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, [ 'id', 'contest', 'problem' ])
-        update = self.update_fields(fields, [ 'code', 'title', 'default_test_suite' ])
+        modified = self.update_fields(fields, [ 'code', 'title', 'default_test_suite' ])
         if self.problem != self.default_test_suite.problem:
             raise CannotSetField()
         self.save()
-        if 'default_test_suite' in update:
-            RawEvent().send(Event(type='checking_default_test_suite_change', id=self.id))
+        self.contest.changed()
+        if 'default_test_suite' in modified:
+            self.default_test_suite_changed()
         return self
 
 #    @ExportMethod(NoneType, [DjangoId('ProblemMapping')], PCArg('self', 'MANAGE'), [])
