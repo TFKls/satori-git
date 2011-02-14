@@ -1,5 +1,44 @@
 <div id="navigationPanel">
     <ul>
-        <li><a href="{% url news %}">News</a></li>
+        {% if global_page_overview.contest %}
+            <li><a href="{% url contest_news global_page_overview.contest.id %}">News</a></li>
+            {% if global_page_overview.contest_viewable_problems_exist %}
+            {% for subpage in global_page_overview.subpages %}
+                <li><a href="{% url contest_subpage global_page_overview.contest.id subpage.id %}">{{subpage.name}}</a></li>
+            {% endfor %}
+                <li><a href="{% url problems global_page_overview.contest.id %}">Problems</a></li>
+            {% endif %}
+            {% if global_page_overview.contest_submittable_problems_exist %}
+                <li><a href="{% url submit global_page_overview.contest.id %}">Submit</a></li>
+            {% endif %}
+            {% for ranking in global_page_overview.rankings %}
+                <li><a href="{% url ranking global_page_overview.contest.id ranking.id %}">{{ranking.name}}</a></li>
+            {% endfor %}
+            {% if global_page_overview.contestant %}
+                <li><a href="{% url results global_page_overview.contest.id %}">Results</a></li>
+            {% endif %}
+            {% if global_page_overview.contest_can_ask_questions or global_page_overview.contest_answers_exist %}
+                <li><a href="{% url questions global_page_overview.contest.id %}">Questions</a></li>
+            {% endif %}
+            {% if global_page_overview.contest_is_admin %}
+                <li><a href="{% url answers global_page_overview.contest.id %}">Answers</a></li>
+                <li><a href="{% url manage_contest global_page_overview.contest.id %}">Manage contest</a></li>
+                <li><a href="{% url manage_contest_news global_page_overview.contest.id %}">Manage news</a></li>
+                <li><a href="{% url contestants global_page_overview.contest.id %}">Contestants</a></li>
+            {% endif %}
+            {% if global_page_overview.is_problemsetter %}
+                <li><a href="{% url problem_repository %}">Problem repository</a></li>
+            {% endif %}
+            <li><a href="{% url news %}">Return to main</a></li>
+        {% else %}
+            <li><a href="{% url news %}">News</a></li>
+            {% for subpage in global_page_overview.subpages %}
+                <li><a href="{% url subpage global_page_overview.contest.id subpage.id %}">{{subpage.name}}</a></li>
+            {% endfor %}
+            <li><a href="{% url contests %}">Select contest</a></li>
+            {% if global_page_overview.is_problemsetter %}
+                <li><a href="{% url problem_repository %}">Problem repository</a></li>
+            {% endif %}
+        {% endif %}
     </ul>
 </div>

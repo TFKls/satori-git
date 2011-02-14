@@ -11,4 +11,4 @@ def view(request, general_page_overview):
     for m in messages:
         html_messages.append({'m' : m, 'content' : text2html(m.content)})
     html_messages.sort(key=lambda msg: msg['m'].date_created, reverse=True)
-    return render_to_response('news.html', html_messages)
+    return render_to_response('news.html', general_page_overview, html_messages)
