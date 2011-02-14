@@ -17,8 +17,13 @@ class Global(Entity):
 
     assignment       = models.ForeignKey('Problem', related_name='+')
 
-    checkers         = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+    profile_fields   = models.TextField(blank=True, default="")
+
+    judges           = AttributeGroupField(PCOr(PCArg('self', 'ADMIN'), PCArg('', 'MANAGE_PROBLEMS')), PCArg('self', 'ADMIN'), '')
     generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+
+    class ExportMeta(object):
+        fields = [('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -34,7 +39,7 @@ class Global(Entity):
     def save(self, *args, **kwargs):
         self.guardian = 1
 
-        self.fixup_checkers()
+        self.fixup_judges()
         self.fixup_generators()
 
         super(Global, self).save(*args, **kwargs)
@@ -68,6 +73,7 @@ class Global(Entity):
         g.anonymous = anonymous
         g.assignment = assignment
         g.save()
+        Privilege.grant(authenticated, g, 'VIEW')
 
         return g        
 
