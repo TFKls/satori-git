@@ -35,7 +35,7 @@ class Web(object):
             ret.contest_submittable_problems_exist = bool(Privilege.where_can(contest.problems, 'SUBMIT'))
             ret.contest_viewable_problems_exist = bool(Privilege.where_can(contest.problems, 'VIEW'))
         else:
-            ret.subpages = Subpages.get_global(False)
+            ret.subpages = Subpage.get_global(False)
 
 
     
