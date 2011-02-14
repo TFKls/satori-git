@@ -1,5 +1,6 @@
 ﻿from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
+from satori.client.web.urls import PROJECT_PATH
 from satori.client.common import want_import
 want_import(globals(), '*')
 from _Widget import Widget
@@ -19,43 +20,8 @@ class EditTestWidget(Widget):
             p = t.problem
         self.p = p
         self.test = t
-        self.judges = Global.get_instance().checkers_get_list()
-        if 'judge' in d.keys():
-            jhash = d['judge'][0]
-        else:
-            try:
-                jhash = p.default_test_data_get_blob_hash("judge")
-            except:
-                jhash = None
-            try:
-                jhash = t.data_get_blob_hash("judge")
-            except:
-                pass
-        self.judgehash = jhash
-        cjudge = None
-        for j in self.judges:
-            if j.value==jhash:
-                cjudge = Global.get_instance().checkers_get_blob(j.name)
-        self.back_to = ToString(params)
-        self.back_path = path
-        if cjudge:
-            reader = cjudge
-            judge_content = reader.read(reader.length)
-            reader.close()
-            self.judge = parse_judge(judge_content)
-            for d in self.judge:
-                cv = None
-                if t:
-                    try:
-                        cv = t.data_get(d["name"])
-                    except:
-                        pass
-                if not cv:
-                    try:
-                        cv = p.default_test_data_get(d["name"])
-                    except:
-                        pass
-                if not cv and d["default"]:
-                    cv = {'value' : d["default"]}
-                if cv:
-                    d["cv"] = cv["value"]
+        fn = PROJECT_PATH+'/simple_uzi_checker.py'
+        f = open(fn)
+        pd = ParamsDict(parse_judge(f.read()))
+        self.form = pd.create_form()
+        
