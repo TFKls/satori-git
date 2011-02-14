@@ -52,7 +52,6 @@ public class STestImpl implements STestReader {
 	private STestImpl() {}
 	
 	public static STestImpl create(STestSnap snap, SParentProblem problem) throws SException {
-		//TODO: check problem id
 		if (!snap.isComplete()) snap.reload();
 		STestImpl self = new STestImpl();
 		self.snap = snap;
@@ -175,12 +174,8 @@ public class STestImpl implements STestReader {
 	public void delete() throws SException {
 		SAssert.assertTrue(isRemote(), "Test not remote");
 		STestData.delete(getId());
-		id.clear();
-		notifyOutdated();
-		snap.removeReference(reference);
-		snap.notifyDeleted();
 		problem.getTestList().removeTest(snap);
-		snap = null;
+		snap.notifyDeleted(); //calls snapDeleted
 	}
 	public void close() {
 		if (snap == null) return;

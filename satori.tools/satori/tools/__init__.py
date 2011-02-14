@@ -6,7 +6,7 @@ import getpass
 import optparse
 import os
 
-want_import(globals(), 'User', 'token_container')
+want_import(globals(), 'Machine', 'User', 'token_container')
 
 config = ConfigParser.RawConfigParser()
 options = optparse.OptionParser()
@@ -14,8 +14,57 @@ options.add_option('-c', '--config', dest='config', help='alternative configurat
 options.add_option('-s', '--section', dest='section', help='section from configuration file to use')
 options.add_option('-H', '--host', dest='host', help='Satori host in format host_name:thrift_port:blob_port')
 options.add_option('-u', '--username', dest='username', help='user name (or "-" to skip authentication)')
+options.add_option('-m', '--machine', dest='machine', help='machine name (or "-" to skip authentication)')
+
+class AuthSetup:
+    def __init__(self):
+        self.clear()
+    def clear(self):
+        self.section = None
+        self.hostname = None
+        self.thrift_port = None
+        self.blob_port = None
+        self.username = None
+        self.machine = None
+        self.password = None
+    def setup(self):
+        if not self.hostname:
+            raise RuntimeError('Satori host name not specified in config file or arguments')
+        if not self.thrift_port:
+            raise RuntimeError('Satori Thrift port number not specified in config file or arguments')
+        if not self.blob_port:
+            raise RuntimeError('Satori blob port number not specified in config file or arguments')
+        print 'Connecting to: {0}:{1}:{2}'.format(self.hostname, self.thrift_port, self.blob_port)
+        remote.setup(self.hostname, self.thrift_port, self.blob_port)
+    def authenticate(self):
+        if self.machine:
+            print 'Machine name: {0}'.format(self.machine)
+            if not self.password:
+                self.password = getpass.getpass('Password: ')
+            try:
+                token_container.set_token(Machine.authenticate(self.machine, self.password))
+            except (TokenInvalid, TokenExpired):
+                token_container.set_token('')
+                token_container.set_token(Machine.authenticate(self.machine, self.password))
+        elif self.username != '-':
+            if not self.username:
+                self.username = raw_input('User name: ')
+                self.password = None
+            else:
+                print 'User name: {0}'.format(self.username)
+            if not self.password:
+                self.password = getpass.getpass('Password: ')
+            try:
+                token_container.set_token(User.authenticate(self.username, self.password))
+            except (TokenInvalid, TokenExpired):
+                token_container.set_token('')
+                token_container.set_token(User.authenticate(self.username, self.password))
+
+auth_setup = AuthSetup()
 
 def setup():
+    auth_setup.clear()
+
     (options.options, options.args) = options.parse_args()
 
     if options.options.config:
@@ -25,64 +74,51 @@ def setup():
     else:
         config.read(os.path.expanduser('~/.satori.cfg'))
 
-    section = None
-
-    hostname = None
-    thrift_port = None
-    blob_port = None
-    username = None
 
     if options.options.section:
-        section = options.options.section
-        if not config.has_section(section):
-            raise RuntimeError('The specified section "{0}" not found in config file'.format(section))
+        auth_setup.section = options.options.section
+        if not config.has_section(auth_setup.section):
+            raise RuntimeError('The specified section "{0}" not found in config file'.format(auth_setup.section))
     elif config.has_option('defaults', 'section'):
-        section = config.get('defaults', 'section')
-        if not config.has_section(section):
-            raise RuntimeError('The default section "{0}" not found in config file'.format(section))
+        auth_setup.section = config.get('defaults', 'section')
+        if not config.has_section(auth_setup.section):
+            raise RuntimeError('The default section "{0}" not found in config file'.format(auth_setup.section))
 
-    if section:
-        if config.has_option(section, 'host'):
-            hostname = config.get(section, 'host')
+    if auth_setup.section:
+        if config.has_option(auth_setup.section, 'host'):
+            auth_setup.hostname = config.get(auth_setup.section, 'host')
 
-        if config.has_option(section, 'thrift_port'):
-            thrift_port = config.getint(section, 'thrift_port')
+        if config.has_option(auth_setup.section, 'thrift_port'):
+            auth_setup.thrift_port = config.getint(auth_setup.section, 'thrift_port')
 
-        if config.has_option(section, 'blob_port'):
-            blob_port = config.getint(section, 'blob_port')
+        if config.has_option(auth_setup.section, 'blob_port'):
+            auth_setup.blob_port = config.getint(auth_setup.section, 'blob_port')
 
-        if config.has_option(section, 'login'):
-            username = config.get(section, 'login')
+        if config.has_option(auth_setup.section, 'username'):
+            auth_setup.username = config.get(auth_setup.section, 'username')
+
+        if config.has_option(auth_setup.section, 'machine'):
+            auth_setup.machine = config.get(auth_setup.section, 'machine')
+
+        if config.has_option(auth_setup.section, 'password'):
+        	auth_setup.password = config.get(auth_setup.section, 'password')
 
     if options.options.host:
-        (hostname, thrift_port, blob_port) = options.options.host.split(':')
-        thrift_port = int(thrift_port)
-        blob_port = int(blob_port)
+        (auth_setup.hostname, auth_setup.thrift_port, auth_setup.blob_port) = options.options.host.split(':')
+        auth_setup.thrift_port = int(auth_setup.thrift_port)
+        auth_setup.blob_port = int(auth_setup.blob_port)
 
     if options.options.username:
-        username = options.options.username
+        auth_setup.username = options.options.username
 
-    if not hostname:
-        raise RuntimeError('Satori host name not specified in config file or arguments')
+    if options.options.machine:
+        auth_setup.machine = options.options.machine
 
-    if not thrift_port:
-        raise RuntimeError('Satori Thrift port number not specified in config file or arguments')
+    auth_setup.setup()
 
-    if not blob_port:
-        raise RuntimeError('Satori blob port number not specified in config file or arguments')
+    auth_setup.authenticate()
 
-    print 'Connecting to: {0}:{1}:{2}'.format(hostname, thrift_port, blob_port)
-
-    remote.setup(hostname, thrift_port, blob_port)
-
-    if username != '-':
-        if not username:
-            username = raw_input('User name: ')
-        else:
-            print 'User name: {0}'.format(username)
-
-        password = getpass.getpass('Password: ')
-
-        token_container.set_token(User.authenticate(username, password))
-   
     return (options.options, options.args)
+
+def authenticate():
+    auth_setup.authenticate()

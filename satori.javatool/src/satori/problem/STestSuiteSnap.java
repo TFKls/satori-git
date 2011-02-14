@@ -1,6 +1,7 @@
 package satori.problem;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import satori.common.SAssert;
@@ -34,7 +35,7 @@ public class STestSuiteSnap implements STestSuiteReader {
 	@Override public long getProblemId() { return problem_id; }
 	@Override public String getName() { return name; }
 	@Override public String getDescription() { return desc; }
-	@Override public Iterable<STestSnap> getTests() { return tests; }
+	@Override public List<STestSnap> getTests() { return Collections.unmodifiableList(tests); }
 	
 	public boolean isComplete() { return tests != null; }
 	
@@ -42,10 +43,15 @@ public class STestSuiteSnap implements STestSuiteReader {
 		this.test_list = test_list;
 	}
 	
-	private static List<STestSnap> createTestList(STestList test_list, Iterable<? extends STestBasicReader> source) {
-		List<STestSnap> snaps = new ArrayList<STestSnap>();
-		for (STestBasicReader test : source) snaps.add(test_list.getTestSnap(test.getId()));
-		return snaps;
+	private void createTestList(List<? extends STestBasicReader> source) {
+		tests = new ArrayList<STestSnap>();
+		for (STestBasicReader test : source) tests.add(test_list.getTest(test));
+	}
+	private void addTestDeletedListeners() {
+		for (STestSnap test : tests) test.addDeletedListener(test_deleted_listener);
+	}
+	private void removeTestDeletedListeners() {
+		for (STestSnap test : tests) test.removeDeletedListener(test_deleted_listener);
 	}
 	
 	public static STestSuiteSnap create(STestList test_list, STestSuiteReader source) {
@@ -55,8 +61,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 		self.problem_id = source.getProblemId();
 		self.name = source.getName();
 		self.desc = source.getDescription();
-		self.tests = createTestList(test_list, source.getTests());
-		for (STestSnap test : self.tests) test.addDeletedListener(self.test_deleted_listener);
+		self.createTestList(source.getTests());
+		self.addTestDeletedListeners();
 		return self;
 	}
 	public static STestSuiteSnap createBasic(STestList test_list, STestSuiteBasicReader source) {
@@ -75,9 +81,9 @@ public class STestSuiteSnap implements STestSuiteReader {
 		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		name = source.getName();
 		desc = source.getDescription();
-		if (tests != null) for (STestSnap test : tests) test.removeDeletedListener(test_deleted_listener);
-		tests = createTestList(test_list, source.getTests());
-		for (STestSnap test : tests) test.addDeletedListener(test_deleted_listener);
+		if (tests != null) removeTestDeletedListeners();
+		createTestList(source.getTests());
+		addTestDeletedListeners();
 		notifyModified();
 	}
 	public void setBasic(STestSuiteBasicReader source) {

@@ -47,6 +47,9 @@
                 <path location="satori.thrift.gen.jar"/>
             </classpath>
         </javac>
+        <copy todir="bin/icons">
+            <fileset dir="src/icons"/>
+        </copy>
     </target>
 
     <target name="main.jar" depends="main.compile">

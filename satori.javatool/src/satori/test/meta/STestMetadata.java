@@ -3,6 +3,7 @@ package satori.test.meta;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,7 +18,7 @@ public class STestMetadata {
 	
 	STestMetadata() {}
 	
-	public Iterable<SInputMetadata> getInputs() { return inputs; }
+	public List<SInputMetadata> getInputs() { return Collections.unmodifiableList(inputs); }
 	public void addInput(SInputMetadata im) { inputs.add(im); }
 	
 	public SAttributeReader getDefaultAttrs() {

@@ -9,14 +9,21 @@ from satori.core.models import Entity
 class Global(Entity):
     """Model. Special Global object for privileges.
     """
-    guardian      = models.IntegerField(unique=True)
+    guardian         = models.IntegerField(unique=True)
 
-    anonymous     = models.ForeignKey('Role', related_name='+')
-    authenticated = models.ForeignKey('Role', related_name='+')
-    zero          = models.ForeignKey('Role', related_name='+')
+    anonymous        = models.ForeignKey('Role', related_name='+')
+    authenticated    = models.ForeignKey('Role', related_name='+')
+    zero             = models.ForeignKey('Role', related_name='+')
 
-    checkers      = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
-    generators    = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+    assignment       = models.ForeignKey('Problem', related_name='+')
+
+    profile_fields   = models.TextField(blank=True, default="")
+
+    judges           = AttributeGroupField(PCOr(PCArg('self', 'ADMIN'), PCArg('', 'MANAGE_PROBLEMS')), PCArg('self', 'ADMIN'), '')
+    generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+
+    class ExportMeta(object):
+        fields = [('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -32,7 +39,7 @@ class Global(Entity):
     def save(self, *args, **kwargs):
         self.guardian = 1
 
-        self.fixup_checkers()
+        self.fixup_judges()
         self.fixup_generators()
 
         super(Global, self).save(*args, **kwargs)
@@ -49,16 +56,24 @@ class Global(Entity):
         anonymous.save()
 
         anonymous.add_member(authenticated)
-        
+
+        assignment = Problem(name='ASSIGNMENT', description='Dummy problem for assignments')
+        assignment.save()
+        assignment_suite = TestSuite(problem=assignment, name='ASSIGNMENT', description='Dummy test suite for assignments', dispatcher='SerialDispatcher', reporter='AssignmentReporter', accumulators='')
+        assignment_suite.save()
+
         Privilege.grant(anonymous, authenticated, 'VIEW')
         Privilege.grant(anonymous, anonymous, 'VIEW')
         Privilege.grant(anonymous, zero, 'VIEW')
+        Privilege.grant(anonymous, assignment, 'VIEW')
 
         g = Global()
         g.zero = zero
         g.authenticated = authenticated
         g.anonymous = anonymous
+        g.assignment = assignment
         g.save()
+        Privilege.grant(authenticated, g, 'VIEW')
 
         return g        
 

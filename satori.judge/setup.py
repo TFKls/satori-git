@@ -11,6 +11,7 @@ setup(name='satori.judge',
         'python-unshare',
         'pyyaml',
         'satori.client.common',
+        'satori.tools',
     ],
     entry_points='''
         [console_scripts]

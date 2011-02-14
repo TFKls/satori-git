@@ -22,14 +22,14 @@ import javax.swing.ListSelectionModel;
 import satori.common.SException;
 import satori.common.SList;
 import satori.common.SView;
-import satori.common.ui.SPane;
+import satori.common.ui.STabPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
 import satori.problem.SProblemList;
 import satori.problem.SProblemSnap;
 import satori.problem.impl.SProblemImpl;
 
-public class SProblemListPane implements SList<SProblemSnap>, SPane {
+public class SProblemListPane implements STabPane, SList<SProblemSnap> {
 	private final SProblemList problem_list;
 	private final STabs parent;
 	
@@ -43,7 +43,7 @@ public class SProblemListPane implements SList<SProblemSnap>, SPane {
 		};
 		
 		public SProblemSnap getItem(int index) { return list.get(index); }
-		public Iterable<SProblemSnap> getItems() { return list; }
+		public List<SProblemSnap> getItems() { return Collections.unmodifiableList(list); }
 		
 		public void addItem(SProblemSnap problem) { list.add(problem); }
 		public void removeItem(SProblemSnap problem) { list.remove(problem); }
@@ -82,6 +82,9 @@ public class SProblemListPane implements SList<SProblemSnap>, SPane {
 	
 	@Override public JComponent getPane() { return main_pane; }
 	
+	@Override public boolean hasUnsavedData() { return false; }
+	@Override public void close() { problem_list.setPane(null); }
+	
 	private void newRequest() {
 		SProblemImpl problem = SProblemImpl.createNew(problem_list);
 		SProblemPane.open(problem, parent);
@@ -100,8 +103,8 @@ public class SProblemListPane implements SList<SProblemSnap>, SPane {
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void closeRequest() {
+		close();
 		parent.closePane(this);
-		problem_list.setPane(null);
 	}
 	
 	private void initialize() {

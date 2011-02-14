@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import logging
 from blist import sortedlist
+from satori.core.checking.utils import RestTable
 
 class ReporterBase(object):
     def __init__(self, test_suite_result):
@@ -19,39 +20,60 @@ class ReporterBase(object):
     def deinit(self):
         pass
 
+class AssignmentReporter(ReporterBase):
+    def __init__(self, test_suite_result):
+        super(AssignmentReporter, self).__init__(test_suite_result)
+
+    def init(self):
+        self.test_suite_result.status = 'ACC'
+        self.test_suite_result.report = ''
+        self.test_suite_result.save()
+
+    def accumulate(self, test_result):
+        pass
+        
+    def status(self):
+        return True
+
+    def deinit(self):
+        self.test_suite_result.status = 'ACC'
+#TODO: Create report based on oa
+        self.test_suite_result.report = ''
+        self.test_suite_result.save()
 
 class StatusReporter(ReporterBase):
     def __init__(self, test_suite_result):
         super(StatusReporter, self).__init__(test_suite_result)
 
     def init(self):
-        status = self.test_suite_result.oa_get_str('status')
-        if status is None:
-            status = ''
-        self.test_suite_result.status = status
+        self._status = 'OK'
+        self.test_suite_result.oa_set_str('status', 'QUE')
+        self.test_suite_result.status = 'QUE'
         self.test_suite_result.report = ''
         self.test_suite_result.save()
 
     def accumulate(self, test_result):
-        status = self.test_suite_result.oa_get_str('status')
+        status = test_result.oa_get_str('status')
+        logging.debug('Status Reporter %s: %s += %s', self.test_suite_result.id, self._status, status)
         if status is None:
-            status = ''
-        self.test_suite_result.status = status
-        self.test_suite_result.report = ''
-        self.test_suite_result.save()
+            status = 'INT'
+        if self._status == 'OK' and status != 'OK':
+            self._status = status
+
+    def status(self):
+        return self._status == 'OK'
 
     def deinit(self):
-        status = self.test_suite_result.oa_get_str('status')
-        if status is None:
-            status = ''
-        self.test_suite_result.status = status
-        self.test_suite_result.report = 'Finished checking: {0}'.format(status)
+        logging.debug('Status Reporter %s: %s', self.test_suite_result.id, self._status)
+        self.test_suite_result.oa_set_str('status', self._status)
+        self.test_suite_result.status = self._status
+        self.test_suite_result.report = 'Finished checking: {0}'.format(self._status)
         self.test_suite_result.save()
 
 
-class CountReporter(ReporterBase):
+class PointsReporter(ReporterBase):
     def __init__(self, test_suite_result):
-        super(CountReporter, self).__init__(test_suite_result)
+        super(PointsReporter, self).__init__(test_suite_result)
 
     def init(self):
         self.checked = 0

@@ -4,6 +4,7 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from datetime import datetime
 from xml.dom import minidom
+from django import forms
 from satori.client.web.sphinx.translator import rendertask
 from satori.client.web.urls import PROJECT_PATH
 import os
@@ -88,15 +89,64 @@ def parse_judge(judge_content):
     for line in judge_content.splitlines(True):
         if line[0:2]=="#@":
             xml = xml+line.strip("#@")
-    tree = minidom.parseString(xml)
-    idata = tree.getElementsByTagName("input")[0]
-    for n in idata.childNodes:
-        if n.nodeName=="value" or n.nodeName=="file":
-            d = {}
-            d["type"] = n.nodeName
-            d["name"] = n.getAttribute("name")
-            d["description"] = n.getAttribute("description")
-            d["required"] = n.getAttribute("required")=="true"
-            d["default"] = n.getAttribute("default")
-            ret.append(d)
-    return ret
+    return xml
+
+
+class ParamsDict(object):
+    def __init__(self, xml_content):
+        self.fields = []
+        tree = minidom.parseString(xml_content)
+        for section in tree.getElementsByTagName("section"):
+            for n in section.childNodes:
+                if n.nodeName=="param":
+                    d = {}
+                    d["type"] = n.getAttribute("type")
+                    d["name"] = n.getAttribute("name")
+                    d["description"] = n.getAttribute("description")
+                    d["required"] = n.getAttribute("required")=="true"
+                    d["value"] = n.getAttribute("default")
+                    self.fields.append(d)
+                    
+    def fill(self,par_map,groupname = None):
+        for d in self.fields:
+            attr = par_map.get(f["name"],None)
+            if attr:
+                if attr.is_blob:
+                    d["filename"] = attr.filename
+                    d["getlink"] = ''
+                d["value"] = attr.value
+                
+    def get_oa_map(self,form):
+        ret = OaMap()
+        if not form.is_valid():
+            return
+        for d in self.fields:
+            name = d["name"]
+            if d["type"] == "blob":
+                upload = form.cleaned_data[name]
+                writer = ret.set_blob(name,upload.size,upload.name)
+                writer.write(upload.read())
+                writer.close()
+                
+    def form_type(self):
+        c = {}
+        for d in self.fields:
+            if d["type"]=="text" or d["type"]=="size" or d["type"] == "time":
+                c[ d["name"] ] = forms.CharField()
+            elif d["type"]=="int":
+                c[ d["name"] ] = forms.IntegerField()
+            elif d["type"]=="float":
+                c[ d["name"] ] = forms.FloatField()
+            elif d["type"]=="date":
+                c[ d["name"] ] = forms.DateField()
+            elif d["type"]=="bool":
+                c[ d["name"] ] = forms.BooleanField()
+            elif d["type"]=="blob":
+                c[ d["name"] ] = forms.FileField()
+            else:
+                pass    
+            f = c[ d["name"] ]
+            f.required = d["required"]
+            f.label = d["description"]
+            f.initial = d["value"]
+        return type('XMLForm',(forms.Form,),c)
