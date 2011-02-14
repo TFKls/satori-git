@@ -237,7 +237,7 @@ class PointsAggregator(AggregatorBase):
     def init(self):
         super(PointsAggregator, self).init()
 
-        self.problem_list = sorted(self.problem_cache.values(), attrgetter('code'))
+        self.problem_list = sorted(self.problem_cache.values(), key=attrgetter('code'))
        
         columns = [(5, 'Lp.'), (20, 'Name')]
 

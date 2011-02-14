@@ -16,6 +16,7 @@
 #include "runner.h"
 
 using namespace std;
+using namespace runner;
 
 /* program version */
 #ifndef VERSION
@@ -224,14 +225,14 @@ int finish()
 {
   switch (run.result.status)
   {
-    case Runner::RES_OK: printf("OK\n"); break;
-    case Runner::RES_TIME: printf("TLE\n"); break;
-    case Runner::RES_MEMORY: printf("MEM\n"); break;
-    case Runner::RES_IO: printf("IOQ\n"); break;
-    case Runner::RES_ILLEGAL: printf("ILL\n"); break;
-    case Runner::RES_RUNTIME: printf("RTE\n"); break;
-    case Runner::RES_STOP: printf("STP\n"); break;
-    case Runner::RES_FAIL: printf("FLD\n"); break;
+    case Result::RES_OK: printf("OK\n"); break;
+    case Result::RES_TIME: printf("TLE\n"); break;
+    case Result::RES_MEMORY: printf("MEM\n"); break;
+    case Result::RES_IO: printf("IOQ\n"); break;
+    case Result::RES_ILLEGAL: printf("ILL\n"); break;
+    case Result::RES_RUNTIME: printf("RTE\n"); break;
+    case Result::RES_STOP: printf("STP\n"); break;
+    case Result::RES_FAIL: printf("FLD\n"); break;
     default: printf("UNK\n");
   }
   if (!config.quiet)
@@ -244,7 +245,7 @@ int finish()
     printf("Read   : %lu\n", run.result.sum_read);
     printf("Write  : %lu\n", run.result.sum_write);
   }
-  if (run.result.status == Runner::RES_OK)
+  if (run.result.status == Result::RES_OK)
     return 0;
   return 1;
 }
