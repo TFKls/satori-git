@@ -11,7 +11,7 @@ def contest_view(func):
         except:
             token_container.set_token('')
         try:
-            general_page_overview = Web.get_general_page_overview(Contest(contestid))
+            general_page_overview = Web.get_general_page_overview(Contest(int(contestid)))
         except (TokenInvalid, TokenExpired):
             token_container.set_token('')
             res = HttpResponseRedirect(reverse('login'))
