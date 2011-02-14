@@ -43,7 +43,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     print 'Creating superuser'
 
     token_container.set_token(Token(''))
-    admin = User.create(DjangoStruct('User')(login=settings.ADMIN_NAME, name='Super Admin', activated=True))
+    admin = User.create(DjangoStruct('User')(login=settings.ADMIN_NAME, firstname='Super', lastname='Admin', activated=True))
     admin.set_password(settings.ADMIN_PASSWORD)
     Privilege.global_grant(admin, 'ADMIN')
 
