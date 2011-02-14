@@ -17,22 +17,7 @@ Description
         {% endfor %}
     </select>
     <br/>
-    {% if widget.judge %}
-    <h4>Default test data</h4>
-        {% for field in widget.judge %}
-            {{ field.description }}:
-            {% if field.type == "value" %}
-                <input type="text" name="value_{{field.name}}" value="{{field.cv}}"/>
-            {% else %}
-                <input type="file" name="file_{{field.name}}"/>                
-                {% if field.cv %}
-                    <a href="getfile.testdata.{{widget.test.id}}.{{field.name}}">(file uploaded)</a>
-                    <input type="checkbox" name="file_{{field.name}}_clear"/> Clear
-                {% endif %}
-            {% endif %}
-            <br/>
-        {% endfor%}
-    {% endif %}
+    {{ widget.form.as_p }}
     <input type="hidden" name="id" value="{{widget.p.id}}"/>
     <input type="hidden" name="back_to" value="{{widget.back_to}}"/>
     <input type="hidden" name="back_path" value="{{widget.back_path}}"/>

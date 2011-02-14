@@ -30,9 +30,10 @@ if getpass.getuser() == 'gutowski':
 if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
-if getpass.getuser() == 'duraj':
-    THRIFT_PORT = 36889
-    BLOB_PORT = 36887
+#if getpass.getuser() == 'duraj':
+#    THRIFT_HOST = 'localhost'
+#    THRIFT_PORT = 36889
+#    BLOB_PORT = 36887
     
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name

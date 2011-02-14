@@ -1,0 +1,20 @@
+{% load switch %}
+
+{% for f in fparams.fields %}
+{% switch f.type %}
+    {% case "text" "int" "float" "date" "memory" "time" %}
+{{f.description}}: <input type="text" name="{{fparams.title}}_{{f.type}}_{{f.name}}" value="{{f.value}}"/>
+
+    {% case "bool" %}
+{{f.description}}: <input type="checkbox" name="{{fparams.title}}_{{f.type}}_{{f.name}}" {% if f.value %}checked{% endif %}/>
+
+    {% case "blob" %}
+{{f.description}}: 
+    {% if f.value %}
+        <a href="{{f.getlink}}">({{f.value}})</a>
+    {% endif %}
+    <input type="file" name=""{{fparams.title}}_{{f.type}}_{{f.name}}"/>
+{% endswitch %}
+<br/>
+{% endfor %}
+
