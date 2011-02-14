@@ -19,7 +19,7 @@ PageInfo = Struct('PageInfo', [
 class Web(object):
 
     @ExportMethod(PageInfo, [DjangoId('Contest')], PCPermit())
-    def get_general_page_overview(contest):
+    def get_general_page_overview(contest=None):
         ret = PageInfo()
         ret.role = Security.whoami()
         ret.is_problemsetter = Privilege.global_demand('ADMIN')
