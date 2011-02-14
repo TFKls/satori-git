@@ -1,33 +1,16 @@
 <ul class="headerLeftUl">
-    <li><a href="{% url news %}">News</a></li>
-<!--
-    {% for name, link, isLeft in widget.menuitems %}
-        {% if isLeft %}
-            <li><a href="{{link}}">{{name}}</a></li>
-        {% endif %}
-    {% endfor %}
-    -->
+    <li><a href="{% url news %}">Main page</a></li>
+    {% if general_page_overview.contest %}
+        <li>Selected contest {{general_page_overview.contest.name}}</li>
+    {% endif %}
 </ul>
 <ul class="headerRightUl">
     {% if general_page_overview.role %}
         <li>Logged in as {{general_page_overview.role.name}}</li>
+        <li><a href="{% url profile %}">Profile</a></li>
+        <li><a href="{% url logout %}">Sign out</a></li>
     {% else %}
         <li><a href="{% url register %}">Register</a></li>
-    {% endif %}
-    {% if general_page_overview.contest %}
-        <li>Selected contest {{general_page_overview.contest.name}}</li>
-    {% endif %}
-<!--
-    {% for name, link, isLeft in widget.menuitems %}
-        {% if not isLeft %}
-            <li><a href="{{link}}">{{name}}</a></li>
-        {% endif %}
-    {% endfor %}
-    -->
-    {% if general_page_overview.role %}
-        <li><a href="process.logout">Sign out</a></li>
+        <li><a href="{% url login %}">Sign in</a></li>
     {% endif %}
 </ul>
-<!--
-TODO(kalq): Add missing menu items
--->
