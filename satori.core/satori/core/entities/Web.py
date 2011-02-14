@@ -36,6 +36,7 @@ class Web(object):
             ret.contest_viewable_problems_exist = bool(Privilege.where_can(contest.problems, 'VIEW'))
         else:
             ret.subpages = Subpage.get_global(False)
+        return ret
 
 
     
