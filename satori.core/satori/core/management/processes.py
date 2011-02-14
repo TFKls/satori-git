@@ -21,8 +21,6 @@ from   thrift.server.TServer    import TThreadedServer
 from satori.ars.thrift    import ThriftServer
 from satori.core.api      import ars_interface
 from satori.core.checking import CheckingMaster
-from satori.core.checking.check_queue       import CheckQueue
-from satori.core.checking.dispatcher_runner import DispatcherRunner
 from satori.core.dbev.notifier              import run_notifier
 from satori.core.management.master_process  import SatoriProcess
 from satori.events        import Slave2, Client2, Master
@@ -110,15 +108,6 @@ class DebugQueueProcess(EventSlaveProcess):
     def __init__(self):
         super(DebugQueueProcess, self).__init__('debug queue', [DebugQueue()])
 
-
-class CheckQueueProcess(EventSlaveProcess):
-    def __init__(self):
-        super(CheckQueueProcess, self).__init__('check queue', [CheckQueue()])
-
-
-class DispatcherRunnerProcess(EventSlaveProcess):
-    def __init__(self):
-        super(DispatcherRunnerProcess, self).__init__('debug queue', [DispatcherRunner()])
 
 class CheckingMasterProcess(EventSlaveProcess):
     def __init__(self):
