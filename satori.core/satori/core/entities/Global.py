@@ -18,8 +18,12 @@ class Global(Entity):
     assignment       = models.ForeignKey('Problem', related_name='+')
 
     profile_fields   = models.TextField(blank=True, default="")
+
     judges           = AttributeGroupField(PCOr(PCArg('self', 'ADMIN'), PCArg('', 'MANAGE_PROBLEMS')), PCArg('self', 'ADMIN'), '')
     generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
+
+    class ExportMeta(object):
+        fields = [('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -69,6 +73,7 @@ class Global(Entity):
         g.anonymous = anonymous
         g.assignment = assignment
         g.save()
+        Privilege.grant(authenticated, g, 'VIEW')
 
         return g        
 
