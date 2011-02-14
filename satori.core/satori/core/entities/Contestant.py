@@ -18,6 +18,8 @@ class Contestant(Role):
     login       = models.CharField(max_length=64, null=True)
     password    = models.CharField(max_length=128, null=True)
     
+    backup      = AttributeGroupField(PCArg('self', 'EDIT'), PCArg('self', 'EDIT'), '')
+
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'login'),)
 
@@ -27,6 +29,8 @@ class Contestant(Role):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Contestant, cls).inherit_rights()
+        cls._inherit_add(inherits, 'OBSERVE', 'id', 'EDIT')
+        cls._inherit_add(inherits, 'EDIT', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW')
         cls._inherit_add(inherits, 'OBSERVE', 'contest', 'OBSERVE')
         cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
@@ -46,13 +50,14 @@ class Contestant(Role):
         contestant.forbid_fields(fields, ['usernames'])
         modified = contestant.update_fields(fields, ['name', 'contest', 'accepted', 'invisible', 'login'])
         contestant.save()
-        Privilege.grant(contestant, contestant, 'OBSERVE')
+        Privilege.grant(contestant, contestant, 'EDIT')
         for user in user_list:
             if contestant.contest.find_contestant(user):
                 raise AlreadyRegistered(login=user.login)
             contestant.add_member(user)
         if contestant.accepted:
             contestant.contest.contestant_role.add_member(contestant)
+        contestant.contest.changed_contestants()
         return contestant
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), DjangoStruct('Contestant')], PCArg('self', 'MANAGE'), [InvalidLogin, InvalidPassword, CannotSetField])
@@ -65,6 +70,7 @@ class Contestant(Role):
                 self.contest.contestant_role.add_member(self)
             else:
                 self.contest.contestant_role.delete_member(self)
+        contestant.contest.changed_contestants()
         return self
 
     def update_usernames(self):
@@ -73,7 +79,8 @@ class Contestant(Role):
             name = name[0:197] + '...'
         self.usernames = name;
         self.save()
-        return self #TODO: Poinformowac przeliczanie rankingow
+        contestant.contest.changed_contestants()
+        return self
 
     @ExportMethod(DjangoStructList('User'), [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def get_member_users(self):

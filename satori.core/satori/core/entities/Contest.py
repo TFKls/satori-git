@@ -130,6 +130,7 @@ class Contest(Entity):
             role = self.admin_role
             role.name='Administrator of ' + self.name
             role.save()
+        self.changed()
         return self
 
     @ExportMethod(NoneType, [DjangoId('Contest')], PCArg('self', 'MANAGE'))
@@ -139,6 +140,12 @@ class Contest(Entity):
         self.lock_address = '0.0.0.0'
         self.lock_netmask = '255.255.255.255'
         self.save()
+    
+    def changed(self):
+        RawEvent().send(Event(type='checking_changed_contest', id=self.id))
+
+    def changed_contestants(self):
+        RawEvent().send(Event(type='checking_changed_contestants', id=self.id))
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('Role')], PCOr(PCTokenUser('user'), PCArg('self', 'MANAGE')))
     def find_contestant(self, user):
@@ -162,8 +169,8 @@ class Contest(Entity):
         else:
             contestant.invisible = True
             contestant.save()
-#TODO: REJUDGE!
         self.admin_role.add_member(user)
+        self.contestants_changed()
 
     @staticmethod
     def submit_to_result_to_render(submit):

@@ -11,9 +11,9 @@ class Question(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_question')
 
-    problem       = models.ForeignKey('ProblemMapping', null=True)
-    contest       = models.ForeignKey('Contest')
-    inquirer      = models.ForeignKey('Role')
+    problem       = models.ForeignKey('ProblemMapping', null=True, related_name='questions')
+    contest       = models.ForeignKey('Contest', related_name='questions')
+    inquirer      = models.ForeignKey('Role', related_name='questions')
     content       = models.TextField(blank=True)
     answer        = models.TextField(blank=True, null=True)
     date_created  = models.DateTimeField(auto_now_add=True)

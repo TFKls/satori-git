@@ -19,18 +19,22 @@ class User(Role):
     login       = models.CharField(max_length=64, unique=True)
     password    = models.CharField(max_length=128, null=True)
     email       = models.CharField(max_length=128, null=True)
+    firstname   = models.CharField(max_length=64, null=True)
+    lastname    = models.CharField(max_length=64, null=True)
+    confirmed   = models.BooleanField(default=False)
     activated   = models.BooleanField(default=True)
     activation_code = models.CharField(max_length=128, null=True, unique=True)
 
     profile     = AttributeGroupField(PCArg('self', 'EDIT'), PCArg('self', 'EDIT'), '')
 
     class ExportMeta(object):
-        fields = [('login', 'VIEW'), ('email', 'EDIT'), ('activated', 'VIEW')]
+        fields = [('login', 'VIEW'), ('email', 'EDIT'), ('firstname', 'VIEW'), ('lastname', 'VIEW'), ('activated', 'VIEW')]
     
     def save(self, *args, **kwargs):
         self.fixup_profile()
         login_ok(self.login)
         email_ok(self.email)
+        self.name = u' '.join([self.firstname, self.lastname])
         if User.objects.filter(login=self.login).exclude(id=self.id):
             raise InvalidLogin(login=self.login, reason='is already used')
         super(User, self).save(*args, **kwargs)
@@ -39,8 +43,8 @@ class User(Role):
     @staticmethod
     def create(fields):
         user = User()
-        user.forbid_fields(fields, ['id'])
-        modified = user.update_fields(fields, ['name', 'login', 'email', 'activated', 'activation_code'])
+        user.forbid_fields(fields, ['id', 'name'])
+        modified = user.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code'])
         if not 'activation_code' in modified:
             user.activation_code = ''.join([random.choice(string.letters + string.digits) for i in range(16)])
         user.save()
@@ -53,6 +57,7 @@ class User(Role):
     @staticmethod
     def register(fields, password, profile={}):
         fields.activated = not settings.ACTIVATION_REQUIRED
+        fields.confirmed = False
         user = User.create(fields)
         user.set_password(password)
         user.profile_set_map(profile)
@@ -65,13 +70,15 @@ class User(Role):
     @ExportMethod(DjangoStruct('User'), [DjangoId('User'), DjangoStruct('User')], PCArg('self', 'EDIT'), [CannotSetField, InvalidLogin, InvalidEmail])
     def modify(self, fields):
         if Privilege.demand(self, 'MANAGE'):
-            self.forbid_fields(fields, ['id'])
-            changed = self.update_fields(fields, ['name', 'login', 'email', 'activated', 'activation_code'])
+            self.forbid_fields(fields, ['id', 'name'])
+            changed = self.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code'])
         else:
-            self.forbid_fields(fields, ['id', 'login', 'email', 'activated', 'activation_code'])
-            modified = self.update_fields(fields, ['name'])
+            self.forbid_fields(fields, ['id', 'name', 'login', 'confirmed', 'activated', 'activation_code'])
+            if self.confirmed:
+                self.forbid_fields(fields, ['firstname', 'lastname'])
+            changed = self.update_fields(fields, ['email'])
         self.save()
-        if 'name' in modified:
+        if 'firstname' in changed or 'lastname' in changed:
             for c in Contestant.objects.filter(children=self):
                 c.update_usernames()
         return self
@@ -79,7 +86,7 @@ class User(Role):
     @ExportMethod(NoneType, [unicode], PCPermit())
     def activate(activation_code):
         user = User.objects.get(activation_code=activation_code)
-        user.activated = True # TODO
+        user.activated = True
         user.save()
 
     @ExportMethod(unicode, [unicode, unicode], PCPermit(), [LoginFailed])

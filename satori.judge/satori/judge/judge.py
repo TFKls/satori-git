@@ -293,12 +293,14 @@ class JailRun(Object):
 
     def run(self):
         self.parent()
+        if 'status' not in self.result:
+            self.result['status'] = {'is_blob':False, 'value':'INT'}
+            self.result['description'] = {'is_blob':False, 'value':'No status in result'}
         return self.result
 
 
     def create_handler(self, quiet, result):
         qquiet = quiet
-        result['status'] = {'is_blob':False, 'value':'INT'}
         rresult = result
 
         class JailHandler(BaseHTTPServer.BaseHTTPRequestHandler):

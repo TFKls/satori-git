@@ -51,7 +51,7 @@ class Submit(Entity):
     @ExportMethod(NoneType, [DjangoId('Submit'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('overrides', PCRawBlob('item'))))
     def override(self, overrides):
         self.overrides_set_map(overrides)
-        self.rejudge()
+        self.rejudge_test_suite_results()
 
     @ExportMethod(DjangoStructList('TestResult'), [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
     def get_test_suite_results(self, test_suite=None):
@@ -87,9 +87,12 @@ class Submit(Entity):
         return self.problem.contest.submit_to_result_to_render(self)
     
     @ExportMethod(NoneType, [DjangoId('Submit')], PCArg('self', 'MANAGE'))
-    def rejudge(self):
-        RawEvent().send(Event(type='checking_rejudge_submit', id=self.id))
+    def rejudge_test_results(self):
+        RawEvent().send(Event(type='checking_rejudge_submit_test_results', id=self.id))
 
+    @ExportMethod(NoneType, [DjangoId('Submit')], PCArg('self', 'MANAGE'))
+    def rejudge_test_suite_results(self):
+        RawEvent().send(Event(type='checking_rejudge_submit_test_suite_results', id=self.id))
 
 class SubmitEvents(Events):
     model = Submit
