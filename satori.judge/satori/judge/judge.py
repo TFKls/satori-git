@@ -4,7 +4,8 @@
 """
 
 from satori.objects import Object, Argument
-from satori.client.common.remote import *
+from satori.client.common import want_import
+want_import(globals(), '*')
 from types import NoneType
 import BaseHTTPServer
 import cgi

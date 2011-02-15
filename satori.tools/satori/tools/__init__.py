@@ -6,7 +6,7 @@ import getpass
 import optparse
 import os
 
-want_import(globals(), 'Machine', 'User', 'token_container')
+want_import(globals(), 'Machine', 'User', 'token_container', 'TokenInvalid', 'TokenExpired')
 
 config = ConfigParser.RawConfigParser()
 options = optparse.OptionParser()
