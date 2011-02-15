@@ -203,7 +203,7 @@ class PointsAggregator(AggregatorBase):
             self.hidden = False
             self.scores = {}
             for problem_id in self.aggregator.problem_cache:
-                self.scores[problem_id] = PointsProblemScore(self, self.aggregator.problem_cache[problem_id])
+                self.scores[problem_id] = self.PointsProblemScore(self, self.aggregator.problem_cache[problem_id])
 
         def update(self):
             if self.hidden or not any([s.points is not None for s in self.scores.values()]):
@@ -253,7 +253,7 @@ class PointsAggregator(AggregatorBase):
         self.ranking.save()
 
     def get_score(self):
-        return self.ACMScore(self)
+        return self.PointsScore(self)
 
 
 aggregators = {}
