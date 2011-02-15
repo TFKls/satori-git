@@ -16,7 +16,7 @@ class Session(models.Model):
     role            = models.ForeignKey('Role', related_name='sessions', null=True)
     auth            = models.CharField(max_length=16, null=True)
 
-    TIMEOUT         = timedelta(minutes = 50)
+    TIMEOUT         = timedelta(hours = 10)
 
     @property
     def user(self):
