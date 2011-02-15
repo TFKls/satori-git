@@ -51,7 +51,7 @@ class ProblemMapping(Entity):
             raise CannotSetField()
         problem_mapping.save()
         Privilege.grant(problem_mapping.contest.admin_role, problem_mapping.problem, 'MANAGE')
-        self.problem.contest.changed()
+        problem_mapping.problem.contest.changed()
         return problem_mapping
 
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
