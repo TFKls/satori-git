@@ -1,0 +1,21 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+<h2>Submit</h2>
+
+{%if noproblems %}
+
+No problems to submit!
+
+{%else%}
+
+<form action="{% url submit general_page_overview.contest.id %}" method="post" enctype="multipart/form-data">
+<table>
+    {{ form.as_table }}
+</table>
+<input type="submit" value="Submit"/>
+</form>
+{%endif%}
+
+{% endblock %}

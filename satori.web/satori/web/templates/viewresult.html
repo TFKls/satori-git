@@ -1,0 +1,75 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+{% load switch %}
+
+<h3>Submit {{widget.sid}}</h4>
+
+
+<table class="tlist">
+<tr>
+    <th>#</th>
+    <th>User</th>
+    <th>Problem</th>
+    <th>Time</th>
+    <th>Status</th>
+</tr>
+<tr>
+    <td>{{widget.sid}}</td>
+    <td>{{widget.contestant}}</td>
+    <td>{{widget.problem}}</td>
+    <td>{{widget.time}}</td>
+
+<td class={% switch widget.status %}
+                {% case "QUE" %} "staQUE"
+                {% case "ACC" %} "staACC"
+                {% case "OK" %} "staOK"
+                {% case "TLE" %} "staTLE"
+                {% case "ANS" %} "staANS"
+                {% case "RTE" %} "staRTE"
+                {% case "MEM" %} "staMEM"
+                {% case "REJ" %} "staREJ"
+                {% case "CMP" %} "staCMP"
+                {% else %} ""
+           {% endswitch %}>
+
+    {{widget.status}}</td>
+</tr>
+<tr>
+    <td colspan="6">{{widget.details}}</td>
+</tr>
+
+
+</table>
+
+{% if widget.suites %}
+<h3>Suite results</h3>
+
+<table class="tlist">
+{% for s in widget.suites %}
+<tr>
+    <td>{{s.test_suite.name}}</td><td>{{s.test_suite.description}}</td><td>{{s.status}}</td>
+</tr>
+{% endfor %}
+</table>
+{% endif %}
+
+{% if widget.results %}
+<h3>Test results</h3>
+
+{% for t in widget.results %}
+<strong>Test {{ t.test.name}} ({{ t.test.description }})</strong>
+<table>
+{% for k,v in t.attr %}
+<tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+{% endfor %}
+</table>
+{% endfor %}
+
+{% endif %}
+
+<h3>Code (<a href="getfile.submit.{{widget.sid}}">download</a>):</h3>
+{{widget.code|safe}}
+
+{% endblock %}
