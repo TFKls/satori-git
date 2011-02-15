@@ -37,6 +37,7 @@ class Contestant(Role):
         return inherits
 
     def save(self, *args, **kwargs):
+        self.fixup_backup()
         if self.login is not None:
             login_ok(self.login)
             if Contestant.objects.filter(login=self.login, contest=self.contest).exclude(id=self.id):
