@@ -1,12 +1,14 @@
 {% extends "templates/index.html" %}
 
-{% for msg in html_messages %}
+{% block content %}
+
+{% for msg,content in messages %}
 <div class = "newsmsg bDots">
-    <span class = "{{ msg.type }}">
-        <table class="tlist">
-            <tr><td><h4>{{ msg.m.name }}</h4></td><td style="text-align: right"><span class="signature">{{msg.m.date_created}}</span></td></tr>
-            <tr><td colspan="2">{{ msg.content|safe }}</td></tr>
-        </table>
-    </span>
+    <table class="tlist">
+            <tr><td><h4>{{ msg.name }}</h4></td><td style="text-align: right"><span class="signature">{{msg.date_created}}</span></td></tr>
+            <tr><td colspan="2">{{ content|safe }}</td></tr>
+    </table>
 </div>
 {% endfor %}
+
+{% endblock %}

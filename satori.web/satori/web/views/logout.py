@@ -6,4 +6,4 @@ from django.shortcuts import render_to_response
 
 @general_view
 def view(request, general_page_overview):
-    return render_to_response('logout.html', general_page_overview)
+    return render_to_response('logout.html', {'general_page_overview' : general_page_overview})
