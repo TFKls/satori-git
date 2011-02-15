@@ -80,7 +80,7 @@ class Contestant(Role):
             name = name[0:197] + '...'
         self.usernames = name;
         self.save()
-        contestant.contest.changed_contestants()
+        self.contest.changed_contestants()
         return self
 
     @ExportMethod(DjangoStructList('User'), [DjangoId('Contestant')], PCArg('self', 'VIEW'))
