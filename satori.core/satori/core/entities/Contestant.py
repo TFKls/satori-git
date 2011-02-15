@@ -41,6 +41,7 @@ class Contestant(Role):
             login_ok(self.login)
             if Contestant.objects.filter(login=self.login, contest=self.contest).exclude(id=self.id):
                 raise InvalidLogin(login=self.login, reason='is already used')
+        self.fixup_backup()
         super(Contestant, self).save(*args, **kwargs)
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoStruct('Contestant'), DjangoIdList('User')], PCArgField('fields', 'contest', 'MANAGE'), [AlreadyRegistered, InvalidLogin, InvalidPassword, CannotSetField])
