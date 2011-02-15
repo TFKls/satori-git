@@ -10,4 +10,4 @@ def view(request, general_page_overview):
     messages = []
     for message in Subpage.get_global(True):
         messages.append([message,text2html(message.content)])
-    return render_to_response('news.html',{ 'messages' : messages })
+    return render_to_response('news.html',{'general_page_overview' : general_page_overview, 'messages' : messages })
