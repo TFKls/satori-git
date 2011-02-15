@@ -18,7 +18,7 @@ class CreatePMRequest(Request):
             fullts = TestSuite.filter(TestSuiteStruct(name='',problem=problem))[0]
         except:
             params = OaMap()
-            tss = TestSuiteStruct(name='All tests '+str(datetime.now()),problem=problem,dispatcher='SerialDispatcher',accumulators='StatusAccumulator')
+            tss = TestSuiteStruct(name='All tests '+str(datetime.now()),problem=problem,dispatcher='SerialDispatcher',accumulators='StatusAccumulator',reporter='StatusReporter')
             tl = Test.filter(TestStruct(problem=problem))
             tl.sort(key=lambda t : t.name)
             fullts = TestSuite.create(fields=tss,test_list=[],params=params.get_map(),test_params=[])
