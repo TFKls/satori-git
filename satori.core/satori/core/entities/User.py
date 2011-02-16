@@ -62,10 +62,10 @@ class User(Role):
         user.set_password(password)
         user.profile_set_map(profile)
         if settings.ACTIVATION_REQUIRED:
-        send_mail(settings.ACTIVATION_EMAIL_SUBJECT, 
-            unicode(settings.ACTIVATION_EMAIL_BODY).format(code=user.activation_code, name=user.name),
-            settings.ACTIVATION_EMAIL_FROM, 
-            [user.email])
+            send_mail(settings.ACTIVATION_EMAIL_SUBJECT, 
+                unicode(settings.ACTIVATION_EMAIL_BODY).format(code=user.activation_code, name=user.name),
+                settings.ACTIVATION_EMAIL_FROM, 
+                [user.email])
 
     @ExportMethod(DjangoStruct('User'), [DjangoId('User'), DjangoStruct('User')], PCArg('self', 'EDIT'), [CannotSetField, InvalidLogin, InvalidEmail])
     def modify(self, fields):
