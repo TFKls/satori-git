@@ -9,7 +9,7 @@ class RestTable(object):
         self.header_separator = '+' + '+'.join(['=' * width for width in self.col_width]) + '+\n'
         self.header_row = self.generate_row(*self.col_name)
 
-    def escape(item):
+    def escape(self, item):
         ret = []
         for c in unicode(item):
             if c.isalnum() or c.isspace():
@@ -17,7 +17,7 @@ class RestTable(object):
             else:
                 ret.append(u'\\')
                 ret.append(c)
-        ret = u''.join(ret)
+        return u''.join(ret)
 
     def generate_row(self, *items):
         if len(items) != len(self.col_width):
