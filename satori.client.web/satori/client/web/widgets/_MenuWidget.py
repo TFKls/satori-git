@@ -55,5 +55,5 @@ class MenuWidget(Widget):
         else:
             addwidget(user,'Manage news','mannews','global','ADMIN')
         addwidget(cmanage,'Contestants','manusers')
-        addwidget(user, 'Problem repository','repository','global','MANAGE_PROBLEMS')
+#        addwidget(user, 'Problem repository','repository','global','MANAGE_PROBLEMS')
         addlink(contest,'Return to main',DefaultLayout())

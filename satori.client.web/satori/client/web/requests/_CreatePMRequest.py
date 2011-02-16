@@ -15,7 +15,7 @@ class CreatePMRequest(Request):
         contest = ContestById(int(request.POST['contest']))
         problem = Problem.filter({'id' : int(request.POST['problem'])})[0]
         try:
-            fullts = TestSuite.filter(TestSuiteStruct(name='',problem=problem))[0]
+            fullts = TestSuite.filter(TestSuiteStruct(problem=problem))[0]
         except:
             params = OaMap()
             tss = TestSuiteStruct(name='All tests '+str(datetime.now()),problem=problem,dispatcher='SerialDispatcher',accumulators='',reporter='StatusReporter')
