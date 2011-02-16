@@ -29,6 +29,12 @@ SubpageInfo = Struct('SubpageInfo', [
     ('is_admin', bool, False),
     ])
 
+ProblemMappingInfo = Struct('ProblemMappingInfo', [
+    ('problem_mapping', DjangoStruct('ProblemMapping'), False),
+    ('can_submit', bool, False),
+    ('is_admin', bool, False),
+    ])
+
 @ExportClass
 class Web(object):
 
@@ -46,9 +52,9 @@ class Web(object):
             ret.rankings = contest.rankings
             ret.contest_is_admin = Privilege.demand(contest, 'MANAGE')
             ret.contest_can_ask_questions = Privilege.demand(contest, 'ASK_QUESTIONS')
-            ret.contest_answers_exist = bool(Privilege.where_can(contest.questions, 'VIEW'))
-            ret.contest_submittable_problems_exist = bool(Privilege.where_can(contest.problems, 'SUBMIT'))
-            ret.contest_viewable_problems_exist = bool(Privilege.where_can(contest.problems, 'VIEW'))
+            ret.contest_answers_exist = bool(Privilege.where_can(contest.questions.all(), 'VIEW'))
+            ret.contest_submittable_problems_exist = bool(Privilege.where_can(contest.problems.all(), 'SUBMIT'))
+            ret.contest_viewable_problems_exist = bool(Privilege.where_can(contest.problems.all(), 'VIEW'))
         else:
             ret.subpages = Subpage.get_global(False)
         return ret
@@ -64,6 +70,17 @@ class Web(object):
             ret_c.can_join = Privilege.demand(contest, 'JOIN')
             ret_c.is_admin = Privilege.demand(contest, 'MANAGE')
             ret.append(ret_c)
+        return ret
+
+    @ExportMethod(TypedList(ProblemMappingInfo), [DjangoId('Contest')], PCPermit())
+    def get_problem_mapping_list(contest):
+        ret = []
+        for problem in Privilege.where_can(contest.problems.all(), 'VIEW'):
+            ret_p = ProblemMappingInfo()
+            ret_p.problem_mapping = problem
+            ret_p.can_submit = Privilege.demand(problem, 'SUBMIT')
+            ret_p.is_admin = Privilege.demand(problem, 'MANAGE')
+            ret.append(ret_p)
         return ret
 
     @ExportMethod(TypedList(SubpageInfo), [bool], PCPermit())
