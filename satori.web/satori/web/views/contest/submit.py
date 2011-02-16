@@ -6,8 +6,8 @@ from django import forms
 from django.shortcuts import render_to_response
 
 @contest_view
-def view(request, general_page_overview):
-    contest = general_page_overview.contest
+def view(request, page_info):
+    contest = page_info.contest
     submitable = []
     for problem in ProblemMapping.filter(ProblemMappingStruct(contest=contest)):
         if Privilege.demand(problem,"SUBMIT"):
@@ -39,4 +39,4 @@ def view(request, general_page_overview):
             Submit.create(SubmitStruct(problem=problem),content=content,filename=filename)
     else:
         form = SubmitForm()
-    return render_to_response('submit.html', {'general_page_overview' : general_page_overview, 'form' : form})
+    return render_to_response('submit.html', {'page_info' : page_info, 'form' : form})

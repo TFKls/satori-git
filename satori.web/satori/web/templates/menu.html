@@ -1,44 +1,44 @@
 <div id="navigationPanel">
     <ul>
-        {% if general_page_overview.contest %}
-            <li><a href="{% url contest_news general_page_overview.contest.id %}">News</a></li>
-            {% if general_page_overview.contest_viewable_problems_exist %}
-            {% for subpage in general_page_overview.subpages %}
-                <li><a href="{% url contest_subpage general_page_overview.contest.id subpage.id %}">{{subpage.name}}</a></li>
+        {% if page_info.contest %}
+            <li><a href="{% url contest_news page_info.contest.id %}">News</a></li>
+            {% if page_info.contest_viewable_problems_exist %}
+            {% for subpage in page_info.subpages %}
+                <li><a href="{% url contest_subpage page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
-                <li><a href="{% url problems general_page_overview.contest.id %}">Problems</a></li>
+                <li><a href="{% url problems page_info.contest.id %}">Problems</a></li>
             {% endif %}
-            {% if general_page_overview.contest_submittable_problems_exist %}
-                <li><a href="{% url submit general_page_overview.contest.id %}">Submit</a></li>
+            {% if page_info.contest_submittable_problems_exist %}
+                <li><a href="{% url submit page_info.contest.id %}">Submit</a></li>
             {% endif %}
-            {% for ranking in general_page_overview.rankings %}
-                <li><a href="{% url ranking general_page_overview.contest.id ranking.id %}">{{ranking.name}}</a></li>
+            {% for ranking in page_info.rankings %}
+                <li><a href="{% url ranking page_info.contest.id ranking.id %}">{{ranking.name}}</a></li>
             {% endfor %}
-            {% if general_page_overview.contestant %}
-                <li><a href="{% url results general_page_overview.contest.id %}">Results</a></li>
+            {% if page_info.contestant %}
+                <li><a href="{% url results page_info.contest.id %}">Results</a></li>
             {% endif %}
-            {% if general_page_overview.contest_can_ask_questions or general_page_overview.contest_answers_exist %}
-                <li><a href="{% url questions general_page_overview.contest.id %}">Questions</a></li>
+            {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
+                <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
             {% endif %}
             {% comment %}
-            {% if general_page_overview.contest_is_admin %}
-                <li><a href="{% url answers general_page_overview.contest.id %}">Answers</a></li>
-                <li><a href="{% url manage_contest general_page_overview.contest.id %}">Manage contest</a></li>
-                <li><a href="{% url manage_contest_news general_page_overview.contest.id %}">Manage news</a></li>
-                <li><a href="{% url contestants general_page_overview.contest.id %}">Contestants</a></li>
+            {% if page_info.contest_is_admin %}
+                <li><a href="{% url answers page_info.contest.id %}">Answers</a></li>
+                <li><a href="{% url manage_contest page_info.contest.id %}">Manage contest</a></li>
+                <li><a href="{% url manage_contest_news page_info.contest.id %}">Manage news</a></li>
+                <li><a href="{% url contestants page_info.contest.id %}">Contestants</a></li>
             {% endif %}
-            {% if general_page_overview.is_problemsetter %}
+            {% if page_info.is_problemsetter %}
                 <li><a href="{% url problem_repository %}">Problem repository</a></li>
             {% endif %}
             {% endcomment %}
             <li><a href="{% url news %}">Return to main</a></li>
         {% else %}
             <li><a href="{% url news %}">News</a></li>
-            {% for subpage in general_page_overview.subpages %}
-                <li><a href="{% url subpage general_page_overview.contest.id subpage.id %}">{{subpage.name}}</a></li>
+            {% for subpage in page_info.subpages %}
+                <li><a href="{% url subpage page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
             <li><a href="{% url contests %}">Select contest</a></li>
-            {% if general_page_overview.is_problemsetter %}
+            {% if page_info.is_problemsetter %}
                 <li><a href="">Problem repository</a></li>
             {% endif %}
         {% endif %}

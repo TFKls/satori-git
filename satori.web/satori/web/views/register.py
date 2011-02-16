@@ -26,7 +26,7 @@ class RegisterForm(forms.Form):
         return data
         
 @general_view
-def view(request, general_page_overview):
+def view(request, page_info):
     if request.method=="POST":
         form = RegisterForm(request.POST)
         if form.is_valid():

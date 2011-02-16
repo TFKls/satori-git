@@ -5,5 +5,5 @@ from satori.web.utils.decorators import general_view
 from django.shortcuts import render_to_response
 
 @general_view
-def view(request, general_page_overview):
-    return render_to_response('profile.html', general_page_overview)
+def view(request, page_info):
+    return render_to_response('profile.html', page_info)

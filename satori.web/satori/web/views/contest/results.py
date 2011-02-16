@@ -5,9 +5,9 @@ from satori.web.utils.decorators import contest_view
 from django.shortcuts import render_to_response
 
 @contest_view
-def view(request, general_page_overview):
-    contest = general_page_overview.contest
+def view(request, page_info):
+    contest = page_info.contest
     results_aux = contest.get_all_results()
     results = results_aux.results
     rescount = results_aux.count
-    return render_to_response('results.html',{ 'general_page_overview' : general_page_overview, 'results' : results })
+    return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results })

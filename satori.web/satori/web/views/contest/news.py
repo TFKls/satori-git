@@ -16,41 +16,41 @@ class ContestNewsEditForm(forms.Form):
     is_public = forms.BooleanField(label="Show to all visitors", required=False)
 
 @contest_view
-def view(request, general_page_overview):
+def view(request, page_info):
     messages = []
-    for message in Subpage.get_for_contest(general_page_overview.contest,True):
+    for message in Subpage.get_for_contest(page_info.contest,True):
         messages.append([message,text2html(message.content)])
     messages.sort(key=lambda m : m[0].date_created,reverse=True)
-    return render_to_response('news.html',{'general_page_overview' : general_page_overview, 'messages' : messages })
+    return render_to_response('news.html',{'page_info' : page_info, 'messages' : messages })
 
 @contest_view
-def create(request, general_page_overview):
+def create(request, page_info):
     if request.method=="POST":
         form = ContestNewsEditForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            Subpage.create_for_contest(SubpageStruct(is_announcement=True,contest=general_page_overview.contest,name=data["name"],content=data["content"]))
-            return HttpResponseRedirect(reverse('contest_news',args=[general_page_overview.contest.id]))
+            Subpage.create_for_contest(SubpageStruct(is_announcement=True,contest=page_info.contest,name=data["name"],content=data["content"]))
+            return HttpResponseRedirect(reverse('contest_news',args=[page_info.contest.id]))
     else:
         form = ContestNewsEditForm()
-    return render_to_response('news_create.html',{'general_page_overview' : general_page_overview, 'form' : form})
+    return render_to_response('news_create.html',{'page_info' : page_info, 'form' : form})
 
 @contest_view
-def edit(request, general_page_overview,id):
+def edit(request, page_info,id):
     message = Subpage.filter(SubpageStruct(id=int(id)))[0]
     if request.method=="POST":
         form = ContestNewsEditForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
             message.modify(SubpageStruct(name=data["name"],content=data["content"],is_public=data["is_public"]))
-            return HttpResponseRedirect(reverse('contest_news',args=[general_page_overview.contest.id]))
+            return HttpResponseRedirect(reverse('contest_news',args=[page_info.contest.id]))
     else:
         form = ContestNewsEditForm({'name' : message.name, 'content' : message.content, 'is_public' : message.is_public})
-    return render_to_response('news_edit.html',{'general_page_overview' : general_page_overview, 'form' : form, 'message' : message})
+    return render_to_response('news_edit.html',{'page_info' : page_info, 'form' : form, 'message' : message})
 
 @contest_view
-def delete(request, general_page_overview,id):
+def delete(request, page_info,id):
     messages = []
-    for message in Subpage.get_for_contest(general_page_overview.contest,True):
+    for message in Subpage.get_for_contest(page_info.contest,True):
         messages.append([message,text2html(message.content)])
-    return render_to_response('news.html',{'general_page_overview' : general_page_overview, 'messages' : messages })
+    return render_to_response('news.html',{'page_info' : page_info, 'messages' : messages })
