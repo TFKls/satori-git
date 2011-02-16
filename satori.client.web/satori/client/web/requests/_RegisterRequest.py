@@ -16,10 +16,11 @@ class RegisterRequest(Request):
         vars = request.REQUEST
         d = ParseURL(vars.get('back_to', ''))
         path = vars.get('path', '')
-        login = vars['username']
+        login = vars['login']
         password = vars['password']
         confirm = vars['confirm']
-        fullname = vars['fullname']
+        firstname = vars['firstname']
+        lastname = vars['lastname']
         affiliation = vars['affiliation']
         email = vars['email']
         lw_path = vars['lw_path']
@@ -36,7 +37,7 @@ class RegisterRequest(Request):
             try:
                 om = OaMap()
                 om.set_str('affiliation',affiliation)
-                u = User.register(UserStruct(login=login, email=email, name=fullname), password=password, profile=om.get_map())
+                u = User.register(UserStruct(login=login, email=email, firstname=firstname, lastname=lastname), password=password, profile=om.get_map())
             except InvalidLogin:
                 error = 'badlogin'
             except InvalidPassword:

@@ -21,8 +21,9 @@
 
 <form method="post" action="process.register">
     <table style="margin: auto">
-        <tr><td rowspan="5">{{ widget.captchahtml|safe }}</td><td>Login:</td><td><input tabindex="1" type="text" class="smallinputbox" name="username"/></td><td class="formexplain">(5 - 23 alphanumeric, starting with a letter)</td></tr>
-        <tr><td>Full name:</td><td> <input type="text" tabindex="2" class="smallinputbox" name="fullname"/></td><td class="formexplain"></td></tr>        
+        <tr><td rowspan="5">{{ widget.captchahtml|safe }}</td><td>Login:</td><td><input tabindex="1" type="text" class="smallinputbox" name="login"/></td><td class="formexplain">(5 - 23 alphanumeric, starting with a letter)</td></tr>
+        <tr><td>Firstname:</td><td> <input type="text" tabindex="2" class="smallinputbox" name="firstname"/></td><td class="formexplain"></td></tr>        
+        <tr><td>Lastname:</td><td> <input type="text" tabindex="2" class="smallinputbox" name="lastname"/></td><td class="formexplain"></td></tr>        
         <tr><td>E-mail:</td><td> <input type="text" tabindex="3" class="smallinputbox" name="email"/></td><td class="formexplain">(valid, please)</td></tr>        
         <tr><td>Pass:</td><td><input type="password" tabindex="4" class="smallinputbox" name="password"/></td><td class="formexplain">(at least 5 chars)</td></tr>
         <tr><td>Confirm pass:</td><td><input type="password" tabindex="5" class="smallinputbox" name="confirm"/></td><td class="formexplain"></td></tr>
