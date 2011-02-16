@@ -9,6 +9,16 @@ class RestTable(object):
         self.header_separator = '+' + '+'.join(['=' * width for width in self.col_width]) + '+\n'
         self.header_row = self.generate_row(*self.col_name)
 
+    def escape(item):
+        ret = []
+        for c in unicode(item):
+            if c.isalnum() or c.isspace():
+                ret.append(c)
+            else:
+                ret.append(u'\\')
+                ret.append(c)
+        ret = u''.join(ret)
+
     def generate_row(self, *items):
         if len(items) != len(self.col_width):
             raise RuntimeError('Item count not equal to column count.')
@@ -17,15 +27,7 @@ class RestTable(object):
         row_items = []
 
         for i in range(len(items)):
-            item_ = unicode(items[i])
-            item = []
-            for c in item_:
-                if c.isalnum() or c.isspace():
-                    item.append(c)
-                else:
-                    item.append(u'\\')
-                    item.append(c)
-            item = u''.join(item)
+            item = unicode(items[i])
 
             width = self.col_width[i]
             row_item = []
