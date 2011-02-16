@@ -16,9 +16,11 @@ class Subpage(Entity):
     is_everywhere = models.BooleanField(default=False)
     is_announcement = models.BooleanField(default=False)
     name          = models.TextField(blank=False)
-    content       = models.TextField()
     order         = models.IntegerField(default=0)
     date_created  = models.DateTimeField(auto_now_add=True)
+    
+    content       = models.TextField()
+    content_files = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)
@@ -26,6 +28,10 @@ class Subpage(Entity):
 
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('is_public', 'VIEW'), ('is_everywhere', 'VIEW'), ('is_announcement', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW'), ('date_created', 'VIEW')]
+
+    def save(self, *args, **kwargs):
+        self.fixup_content_files()
+        return super(Subpage, self).save(*args, **kwargs)
 
     @classmethod
     def inherit_rights(cls):

@@ -15,11 +15,17 @@ class Question(Entity):
     contest       = models.ForeignKey('Contest', related_name='questions')
     inquirer      = models.ForeignKey('Role', related_name='questions')
     content       = models.TextField(blank=True)
-    answer        = models.TextField(blank=True, null=True)
     date_created  = models.DateTimeField(auto_now_add=True)
+    
+    answer        = models.TextField(blank=True, null=True)
+    answer_files  = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('problem', 'VIEW'), ('contest', 'VIEW'), ('inquirer', 'VIEW'), ('content', 'VIEW'), ('answer', 'VIEW'), ('date_created', 'VIEW')]
+
+    def save(self, *args, **kwargs):
+        self.fixup_answer_files()
+        return super(Subpage, self).__save__(*args, **kwargs)
 
     @classmethod
     def inherit_rights(cls):

@@ -14,11 +14,12 @@ class Problem(Entity):
     name              = models.CharField(max_length=50, unique=True)
     description       = models.TextField(blank=True, default="")
     statement         = models.TextField(blank=True, default="")
+    submit_fields     = models.TextField(blank=True, default="")
 
     default_test_data = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
-        fields = [('name', 'VIEW'), ('description', 'VIEW'), ('statement', 'VIEW')]
+        fields = [('name', 'VIEW'), ('description', 'VIEW'), ('statement', 'VIEW'), ('submit_fields', 'VIEW')]
 
     def save(self, *args, **kwargs):
         self.fixup_default_test_data()
@@ -32,7 +33,7 @@ class Problem(Entity):
     def create(fields):
         problem = Problem()
         problem.forbid_fields(fields, ['id'])
-        problem.update_fields(fields, ['name', 'description', 'statement'])
+        problem.update_fields(fields, ['name', 'description', 'statement', 'submit_fields'])
         problem.save()
         Privilege.grant(token_container.token.role, problem, 'MANAGE')
         return problem
@@ -40,7 +41,7 @@ class Problem(Entity):
     @ExportMethod(DjangoStruct('Problem'), [DjangoId('Problem'), DjangoStruct('Problem')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, ['id'])
-        self.update_fields(fields, ['name', 'description', 'statement'])
+        self.update_fields(fields, ['name', 'description', 'statement', 'submit_fields'])
         self.save()
         return self
 

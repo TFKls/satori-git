@@ -20,7 +20,7 @@ class TestResult(Entity):
         unique_together = (('submit', 'test'),)
 
     class ExportMeta(object):
-        fields = [('submit', 'VIEW'), ('test', 'VIEW'), ('pending', 'VIEW'), ('tester', 'VIEW')]
+        fields = [('submit', 'VIEW'), ('test', 'VIEW'), ('pending', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):

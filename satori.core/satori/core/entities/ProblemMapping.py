@@ -16,15 +16,17 @@ class ProblemMapping(Entity):
     problem            = models.ForeignKey('Problem', related_name='problem_mappings+')
     code               = models.CharField(max_length=10)
     title              = models.CharField(max_length=64)
+    override_fields    = models.TextField(blank=True, default="")
     default_test_suite = models.ForeignKey('TestSuite', related_name='problem_mappings+')
 
-    statement          = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
+    statement          = models.TextField(blank=True, default="")
+    statement_files    = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'code'))
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('problem', 'MANAGE'), ('code', 'VIEW'), ('title', 'VIEW'), ('default_test_suite', 'MANAGE')]
+        fields = [('contest', 'VIEW'), ('problem', 'MANAGE'), ('code', 'VIEW'), ('title', 'VIEW'), ('override_fields', 'VIEW'), ('statement', 'VIEW'), ('default_test_suite', 'MANAGE')]
 
     @classmethod
     def inherit_rights(cls):
@@ -35,7 +37,7 @@ class ProblemMapping(Entity):
         return inherits
 
     def save(self, *args, **kwargs):
-        self.fixup_statement()
+        self.fixup_statement_files()
         super(ProblemMapping, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -46,7 +48,7 @@ class ProblemMapping(Entity):
     def create(fields):
         problem_mapping = ProblemMapping()
         problem_mapping.forbid_fields(fields, [ 'id' ])
-        problem_mapping.update_fields(fields, [ 'contest', 'problem', 'code', 'title', 'default_test_suite' ])
+        problem_mapping.update_fields(fields, [ 'contest', 'problem', 'code', 'title', 'override_fields', 'default_test_suite', 'statement' ])
         if problem_mapping.problem != problem_mapping.default_test_suite.problem:
             raise CannotSetField()
         problem_mapping.save()
@@ -59,7 +61,7 @@ class ProblemMapping(Entity):
     def create_assignment(fields):
         problem_mapping = ProblemMapping()
         problem_mapping.forbid_fields(fields, [ 'id', 'problem', 'default_test_suite' ])
-        problem_mapping.update_fields(fields, [ 'contest', 'code', 'title' ])
+        problem_mapping.update_fields(fields, [ 'contest', 'code', 'title', 'override_fields', 'statement' ])
         assignment = Global.get_instance().assignment
         problem_mapping.problem = assignment
         problem_mapping.default_test_suite = assignment.test_suites[0]
@@ -69,7 +71,7 @@ class ProblemMapping(Entity):
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, [ 'id', 'contest', 'problem' ])
-        modified = self.update_fields(fields, [ 'code', 'title', 'default_test_suite' ])
+        modified = self.update_fields(fields, [ 'code', 'title', 'default_test_suite', 'override_fields', 'statement' ])
         if self.problem != self.default_test_suite.problem:
             raise CannotSetField()
         self.save()
