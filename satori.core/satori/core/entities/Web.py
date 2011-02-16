@@ -24,6 +24,11 @@ ContestInfo = Struct('ContestInfo', [
     ('is_admin', bool, False),
     ])
 
+SubpageInfo = Struct('SubpageInfo', [
+    ('subpage', DjangoStruct('Subpage'), False),
+    ('is_admin', bool, False),
+    ])
+
 @ExportClass
 class Web(object):
 
@@ -59,5 +64,25 @@ class Web(object):
             ret_c.can_join = Privilege.demand(contest, 'JOIN')
             ret_c.is_admin = Privilege.demand(contest, 'MANAGE')
             ret.append(ret_c)
+        return ret
+
+    @ExportMethod(TypedList(SubpageInfo), [bool], PCPermit())
+    def get_subpage_list_global(announcements):
+        ret = []
+        for subpage in Subpage.get_global(announcements):
+            ret_s = SubpageInfo()
+            ret_s.subpage = subpage
+            ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
+            ret.append(ret_s)
+        return ret
+
+    @ExportMethod(TypedList(SubpageInfo), [DjangoId('Contest'), bool], PCPermit())
+    def get_subpage_list_for_contest(contest, announcements):
+        ret = []
+        for subpage in Subpage.get_for_contest(contest, announcements):
+            ret_s = SubpageInfo()
+            ret_s.subpage = subpage
+            ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
+            ret.append(ret_s)
         return ret
 
