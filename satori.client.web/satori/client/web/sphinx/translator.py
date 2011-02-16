@@ -8,6 +8,7 @@ import re
 import sys, os, shutil
 from tempfile import mkdtemp
 from sphinx.application import Sphinx
+from sphinx.errors import PycodeError, SphinxError
 
 TRANS_PATH = os.path.abspath(os.path.split(__file__)[0])
 
@@ -69,17 +70,26 @@ def rendertask(rststring, discpath, mathpath):
     config_overrides['templates_path'].append(templatesdir)
     confToFile(os.path.join(tmpdir,'conf.py'))
 
-    app = Sphinx(srcdir, srcdir, builddir, treedir, 'html', confoverrides = config_overrides, freshenv = True)
-    app.build(None, [indexpath])
+    try:
+        app = Sphinx(srcdir, srcdir, builddir, treedir, 'html',
+                confoverrides = config_overrides,
+                freshenv = True,
+                status=None,
+                warning=None, 
+                warningiserror=True)
+        app.build(None, [indexpath])
+    except SphinxError:
+        raise
+    except PycodeError:
+        raise
 
     outfilepath = os.path.join(builddir, 'index.html')    
-    if os.path.exists(outfilepath):
-        outfile = open(outfilepath,'r')
-        output = outfile.read()
-        output = unicode(output,'utf-8')
-        outfile.close()
-    else:
-        raise Exception('Sphinx html generation error')
+    assert os.path.exists(outfilepath)
+
+    outfile = open(outfilepath,'r')
+    output = outfile.read()
+    output = unicode(output,'utf-8')
+    outfile.close()
 
     def mathrepl(matchobj):
         newimgpath = os.path.join(mathpath, matchobj.group(1))
@@ -88,5 +98,5 @@ def rendertask(rststring, discpath, mathpath):
         return newimgpath
     output = re.sub(r'_images\/math\/([a-zA-Z0-9]*\.png)', mathrepl, output)
 
-    shutil.rmtree(tmpdir, ignore_errors = True)
+    shutil.rmtree(tmpdir, ignore_errors=True)
     return output
