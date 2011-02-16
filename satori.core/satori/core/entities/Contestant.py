@@ -79,6 +79,8 @@ class Contestant(Role):
         name = ', '.join(x.name for x in self.get_members())
         if len(name) > 200:
             name = name[0:197] + '...'
+        if self.name == self.usernames:
+            self.name = usernames
         self.usernames = name;
         self.save()
         self.contest.changed_contestants()
