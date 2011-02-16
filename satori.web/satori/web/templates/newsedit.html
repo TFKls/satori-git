@@ -1,0 +1,12 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+<form action={% url contest_news_create general_page_overview.contest.id %} method="POST">
+<table>
+{{ form.as_table }}
+</table>
+<input type="submit" value="Add"/>
+</form>
+
+{% endblock %}
