@@ -31,7 +31,7 @@ class Subpage(Entity):
 
     def save(self, *args, **kwargs):
         self.fixup_content_files()
-        return super(Subpage, self).__save__(*args, **kwargs)
+        return super(Subpage, self).save(*args, **kwargs)
 
     @classmethod
     def inherit_rights(cls):
