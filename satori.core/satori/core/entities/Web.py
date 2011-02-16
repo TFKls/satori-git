@@ -4,6 +4,7 @@ PageInfo = Struct('PageInfo', [
     ('contest', DjangoStruct('Contest'), False),
     ('contestant', DjangoStruct('Contestant'), False),
     ('role', DjangoStruct('Role'), False),
+    ('user', DjangoStruct('User'), False),
     ('subpages', DjangoStructList('Subpage'), False),
     ('rankings', DjangoStructList('Ranking'), False),
     ('is_admin', bool, False),
@@ -30,6 +31,7 @@ class Web(object):
     def get_general_page_overview(contest=None):
         ret = PageInfo()
         ret.role = Security.whoami()
+        ret.user = Security.whoami_user()
         ret.is_problemsetter = Privilege.global_demand('ADMIN')
         ret.is_problemsetter = Privilege.global_demand('MANAGE_PROBLEMS')
         if contest:
