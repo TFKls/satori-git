@@ -16,13 +16,13 @@ class ProblemsWidget(Widget):
         self.manage = Privilege.demand(c,"MANAGE")
         self.problems = list()
         for p in ProblemMapping.filter({'contest':c}):
-            statement = p.statement_get_str('text')
+            statement = p.statement
             entry = {}
             entry['code'] = p.code
             if statement:
                 entry['showlink'] = GetLink(DefaultLayout(dict = params,maincontent = 'showpm',problemid = [str(p.id)]),'')
             try:
-                entry['pdf'] = p.statement_get_blob_hash('pdf')
+                entry['pdf'] = p.statement_files_get_blob_hash('pdf')
             except:
                 pass
             if Allowed(p,'MANAGE'):

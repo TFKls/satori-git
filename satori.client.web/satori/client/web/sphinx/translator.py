@@ -61,8 +61,10 @@ def rendertask(rststring, discpath, mathpath):
 
     srcdir = tmpdir
     builddir = os.path.join(tmpdir, '_build')
+    staticdir = os.path.join(tmpdir, '_static')
     treedir = os.path.join(tmpdir, '.doctrees')
     os.mkdir(builddir)
+    os.mkdir(staticdir)
     os.mkdir(treedir)
 
     templatesdir = os.path.join(TRANS_PATH, 'templates')

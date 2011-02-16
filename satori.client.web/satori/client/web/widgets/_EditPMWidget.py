@@ -18,7 +18,7 @@ class EditPMWidget(Widget):
         self.suites = TestSuite.filter(TestSuiteStruct(problem=p))
         self.back_to = ToString(params)
         self.path = path
-        s = pm.statement_get_str('text')
+        s = pm.statement
         if s:
             self.statement = s
         self.dts = pm.default_test_suite

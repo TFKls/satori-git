@@ -10,7 +10,7 @@ def getfile(argstr, request):
         pm = ProblemMapping.filter({'id' : int(params[1])})[0]
         response = HttpResponse(mimetype='application/pdf')
         response['Content-Disposition'] = 'attachment; filename='+pm.code+'.pdf'
-        reader = pm.statement_get_blob('pdf')
+        reader = pm.statement_files_get_blob('pdf')
         response.write(reader.read(reader.length))
         reader.close()
         return response
