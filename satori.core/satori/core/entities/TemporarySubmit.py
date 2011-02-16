@@ -20,7 +20,7 @@ class TemporarySubmit(Entity):
     result        = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
-        fields = [('pending', 'MANAGE'), ('date_created', 'MANAGE'), ('tester', 'MANAGE')]
+        fields = [('pending', 'MANAGE'), ('date_created', 'MANAGE')]
 
     def save(self, *args, **kwargs):
         self.fixup_test_data()
