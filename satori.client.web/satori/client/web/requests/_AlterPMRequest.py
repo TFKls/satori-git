@@ -11,13 +11,13 @@ class AlterPMRequest(Request):
     @classmethod
     def process(cls, request):
         pm = ProblemMapping.filter({'id':int(request.POST['pm_id'])})[0]
-        pm.statement_set_str('text',request.POST['statement'])
+        pm.statement = request.POST['statement']
         if 'pdfstatement' in request.FILES.keys():
             pdf = request.FILES['pdfstatement']
             writer = Blob.create(pdf.size)
             writer.write(pdf.read())
             phash = writer.close()
-            pm.statement_set_blob_hash('pdf',phash)
+            pm.statement_files_set_blob_hash('pdf',phash)
         pm.code = request.POST['code']
         pm.title = request.POST['title']
         pm.default_test_suite = TestSuite.filter(TestSuiteStruct(id=int(request.POST['dts'])))[0]
