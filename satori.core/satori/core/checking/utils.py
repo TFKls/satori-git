@@ -17,7 +17,16 @@ class RestTable(object):
         row_items = []
 
         for i in range(len(items)):
-            item = unicode(items[i])
+            item_ = unicode(items[i])
+            item = []
+            for c in item_:
+                if c.isalnum() or c.isspace():
+                    item.append(c)
+                else:
+                    item.append(u'\\')
+                    item.append(c)
+            item = u''.join(item)
+
             width = self.col_width[i]
             row_item = []
             first = 0
@@ -27,8 +36,12 @@ class RestTable(object):
                     item_elem = item[first:]
                     first = len(item)
                 elif pos == -1:
-                    item_elem = item[first : first+width]
-                    first += width
+                    if item[first + width - 1] == u'\\':
+                        item_elem = item[first : first+width-1]
+                        first += width-1
+                    else:
+                        item_elem = item[first : first+width]
+                        first += width
                 else:
                     item_elem = item[first : pos]
                     first = pos + 1
