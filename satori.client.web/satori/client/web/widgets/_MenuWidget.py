@@ -55,5 +55,6 @@ class MenuWidget(Widget):
         else:
             addwidget(user,'Manage news','mannews','global','ADMIN')
         addwidget(cmanage,'Contestants','manusers')
-#        addwidget(user, 'Problem repository','repository','global','MANAGE_PROBLEMS')
+        if Allowed('global', 'MANAGE_PROBLEMS'):
+            self.menuitems.append(['Manage problems and tests','https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp'])
         addlink(contest,'Return to main',DefaultLayout())
