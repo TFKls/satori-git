@@ -71,7 +71,7 @@ class Contestant(Role):
                 self.contest.contestant_role.add_member(self)
             else:
                 self.contest.contestant_role.delete_member(self)
-        contestant.contest.changed_contestants()
+        self.contest.changed_contestants()
         return self
 
     def update_usernames(self):

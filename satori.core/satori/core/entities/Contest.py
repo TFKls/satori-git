@@ -170,7 +170,7 @@ class Contest(Entity):
             contestant.invisible = True
             contestant.save()
         self.admin_role.add_member(user)
-        self.contestants_changed()
+        self.changed_contestants()
 
     @staticmethod
     def submit_to_result_to_render(submit):
