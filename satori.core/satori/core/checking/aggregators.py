@@ -146,7 +146,7 @@ class ACMAggregator(AggregatorBase):
         
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
 
-                self.ranking_entry.row = self.aggregator.table.generate_row('#####', contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
+                self.ranking_entry.row = self.aggregator.table.generate_row('', contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = maxint - (max_seconds_per_problem * points) + time_seconds
                 self.ranking_entry.save()
@@ -218,7 +218,7 @@ class PointsAggregator(AggregatorBase):
                 
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
         
-                row = ['#####', contestant_name]
+                row = ['', contestant_name]
                 for problem in self.aggregator.problem_list:
                     if self.scores[problem.id].points is not None:
                         row.append(self.scores[problem.id].points)
