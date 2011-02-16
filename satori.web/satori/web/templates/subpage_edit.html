@@ -1,0 +1,17 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+{% if general_page_overview.contest %}
+<form action={% url contest_subpage_edit general_page_overview.contest.id subpage.id %} method="POST">
+{% else %}
+<form action={% url subpage_edit message.id %} method="POST">
+{% endif %}
+
+<table>
+{{ form.as_table }}
+</table>
+<input type="submit" value="Save"/>
+</form>
+
+{% endblock %}
