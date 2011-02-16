@@ -463,7 +463,7 @@ def generate_oa(f):
     f.close()
 
 
-def generate_service(f, service_name):
+def generate_service(f, service_name, additional_types, additional_exceptions):
     f.write(T("""
         .
         {0}
@@ -475,6 +475,12 @@ def generate_service(f, service_name):
 
     if service_name + 'Struct' in ars_interface.types:
         generate_type(f, service_name + 'Struct')
+
+    for type_name in additional_types:
+        generate_type(f, type_name)
+
+    for type_name in additional_exceptions:
+        generate_type(f, type_name)
 
     service = ars_interface.services[service_name]
 
@@ -565,19 +571,59 @@ class Command(BaseCommand):
 
         os.makedirs(os.path.join(srcdir))
 
+        type_usage = {}
+
+        def process_type(type_, service):
+            if isinstance(type_, ArsNamedType):
+                type_usage.setdefault(type_.name, set()).add(service.name)
+
+            if isinstance(type_, ArsTypeAlias):
+                process_type(type_.target_type, service)
+            elif isinstance(type_, ArsList):
+                process_type(type_.element_type, service)
+            elif isinstance(type_, ArsSet):
+                process_type(type_.element_type, service)
+            elif isinstance(type_, ArsMap):
+                process_type(type_.key_type, service)
+                process_type(type_.value_type, service)
+            elif isinstance(type_, ArsStructure):
+                for field in type_.fields:
+                    process_type(field.type, service)
+
+        for service in ars_interface.services:
+            for procedure in service.procedures:
+                process_type(procedure.return_type, service)
+                for parameter in procedure.parameters:
+                    process_type(parameter.type, service)
+                for exception_type in procedure.exception_types:
+                    process_type(exception_type, service)
+
         service_names = sorted(ars_interface.services.names)
         type_names = []
         exception_names = []
+
+        additional_types = {}
+        additional_exceptions = {}
+
+        for service_name in service_names:
+            additional_types[service_name] = []
+            additional_exceptions[service_name] = []
 
         for type_name in sorted(ars_interface.types.names):
             if type_name.endswith('Id') and (type_name[:-2] in service_names):
                 continue
             if type_name.endswith('Struct') and (type_name[:-6] in service_names):
                 continue
-            if isinstance(ars_interface.types[type_name], ArsException):
-                exception_names.append(type_name)
+            if len(type_usage[type_name]) == 1:
+                if isinstance(ars_interface.types[type_name], ArsException):
+                    additional_exceptions[type_usage[type_name].pop()].append(type_name)
+                else:
+                    additional_types[type_usage[type_name].pop()].append(type_name)
             else:
-                type_names.append(type_name)
+                if isinstance(ars_interface.types[type_name], ArsException):
+                    exception_names.append(type_name)
+                else:
+                    type_names.append(type_name)
 
         generate_index(open(os.path.join(srcdir, 'index.rst'), 'w'), service_names)
         generate_types(open(os.path.join(srcdir, 'types.rst'), 'w'), type_names)
@@ -585,7 +631,7 @@ class Command(BaseCommand):
         generate_oa(open(os.path.join(srcdir, 'oa.rst'), 'w'))
 
         for service_name in service_names:
-            generate_service(open(os.path.join(srcdir, 'service_{0}.rst'.format(service_name)), 'w'), service_name)
+            generate_service(open(os.path.join(srcdir, 'service_{0}.rst'.format(service_name)), 'w'), service_name, additional_types[service_name], additional_exceptions[service_name])
         
         conf = {
             'project': 'Satori API',
