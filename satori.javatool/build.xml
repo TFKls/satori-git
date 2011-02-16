@@ -1,7 +1,12 @@
-<project default="main">
+<project default="main" xmlns:ivy="antlib:org.apache.ivy.ant">
+
     <path id="libs">
         <fileset dir="lib" includes="**/*.jar"/>
     </path>
+
+    <target name="prepare">
+        <ivy:retrieve />
+    </target>
 
     <target name="thrift" depends="thrift.clean,thrift.gen,thrift.compile,thrift.jar,thrift.finalclean"/>
 
@@ -10,7 +15,14 @@
         <delete dir="thrift-bin" quiet="true"/>
     </target>
 
-    <target name="thrift.gen">
+    <target name="satori.thrift">
+        <echo message="Generating satori.thrift"/>
+        <exec executable="satori.core" failonerror="true">
+            <arg line="idl --output satori.thrift"/>
+        </exec>
+    </target>
+
+    <target name="thrift.gen" depends="satori.thrift">
         <echo message="Running thrift generator on satori.thrift"/>
         <exec executable="thrift" failonerror="true">
             <arg line="--strict --gen java satori.thrift"/>
@@ -64,5 +76,30 @@
                 <path location="satori.javatool.jar"/>
             </classpath>
         </java>
+    </target>
+
+    <target name="dist" depends="prepare,thrift,main">
+        <mkdir dir="dist"/>
+        <copy todir="dist" flatten="true">
+            <fileset dir="lib" includes="**/*.jar"/>
+        </copy>
+        <copy todir="dist" flatten="true">
+            <path location="satori.thrift.gen.jar"/>
+        </copy>
+        <copy todir="dist" flatten="true">
+            <path location="satori.javatool.jar"/>
+        </copy>
+        <copy todir="dist" flatten="true">
+            <path location="satori.javatool.jnlp"/>
+        </copy>
+        <signjar
+            alias="satori"
+            lazy="true"
+            storepass="antpass"
+        >
+            <path>
+                <fileset dir="dist" includes="**/*.jar" />
+            </path>
+        </signjar>
     </target>
 </project>

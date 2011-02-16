@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<jnlp spec="1.0+" codebase="https://satori.tcs.uj.edu.pl/files/javatool/" href="satori.javatool.jnlp">
+    <information>
+        <title>Satori Java Tool</title>
+        <vendor>Satori</vendor>
+        <offline-allowed/>
+    </information>
+    <security>
+        <all-permissions/>
+    </security>
+    <resources>
+        <j2se version="1.6+" href="http://java.sun.com/products/autodl/j2se"/>
+        <jar href="commons-codec-1.4.jar"/>
+        <jar href="commons-io-2.0.1.jar"/>
+        <jar href="libthrift-0.6.0.jar"/>
+        <jar href="slf4j-api-1.6.1.jar"/>
+        <jar href="slf4j-simple-1.6.1.jar"/>
+        <jar href="satori.thrift.gen.jar"/>
+        <jar href="satori.javatool.jar" main="true"/>
+    </resources>
+    <application-desc main-class="satori.main.SatoriTool"/>
+</jnlp>

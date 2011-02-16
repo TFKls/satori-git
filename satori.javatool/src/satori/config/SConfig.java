@@ -3,9 +3,9 @@ package satori.config;
 import java.util.prefs.Preferences;
 
 public class SConfig {
-	private static String host = "localhost";
-	private static int thrift_port = 38889;
-	private static int blobs_port = 38887;
+	private static String host = "satori.tcs.uj.edu.pl";
+	private static int thrift_port = 2889;
+	private static int blobs_port = 2887;
 	private static boolean has_config = false;
 	
 	public static String getHost() { return host; }
