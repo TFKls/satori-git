@@ -37,7 +37,7 @@ class Entity(models.Model):
     @classmethod
     def _inherit_add(cls, inherits, get, id, need, field=None, value=None):
         if get not in inherits:
-        	inherits[get] = []
+            inherits[get] = []
         inherits[get].append((id, need, field, value))
 
     @staticmethod

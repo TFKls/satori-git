@@ -38,7 +38,7 @@ options.add_option('--port', dest='control_port', default=8765, action='store', 
 
 def judge_loop():
     while True:
-    	authenticate()
+        authenticate()
         submit = Judge.get_next()
         if submit != None:
             tr = submit['test_result']

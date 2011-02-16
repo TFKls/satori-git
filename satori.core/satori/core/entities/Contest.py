@@ -175,7 +175,7 @@ class Contest(Entity):
     @staticmethod
     def submit_to_result_to_render(submit):
         return ResultToRender(
-        	submit=submit,
+            submit=submit,
             problem=submit.problem.code,
             contestant=submit.contestant.usernames,
             status=submit.get_test_suite_status(),
@@ -187,9 +187,9 @@ class Contest(Entity):
         res = []
         q = Privilege.where_can(Submit.objects.filter(contestant__contest=self), 'OBSERVE')
         if problem:
-        	q = q.filter(problem=problem)
+            q = q.filter(problem=problem)
         for submit in q.order_by('-id')[offset:offset+limit]:
-        	res.append(Contest.submit_to_result_to_render(submit))
+            res.append(Contest.submit_to_result_to_render(submit))
         return ResultsToRender(
             count=len(q),
             results=res
@@ -200,9 +200,9 @@ class Contest(Entity):
         res = []
         q = Privilege.where_can(Submit.objects.filter(contestant=contestant), 'OBSERVE')
         if problem:
-        	q = q.filter(problem=problem)
+            q = q.filter(problem=problem)
         for submit in q.order_by('-id')[offset:offset+limit]:
-        	res.append(Contest.submit_to_result_to_render(submit))
+            res.append(Contest.submit_to_result_to_render(submit))
         return ResultsToRender(
             count=len(q),
             results=res
@@ -211,7 +211,7 @@ class Contest(Entity):
     @staticmethod
     def contestant_to_contestant_to_render(contestant):
         return ContestantToRender(
-        	contestant=contestant,
+            contestant=contestant,
             name=contestant.usernames,
             members=contestant.get_member_users(),
             admin=any([Privilege.get(member, contestant.contest, 'MANAGE') for member in contestant.get_member_users()]),
@@ -222,7 +222,7 @@ class Contest(Entity):
         res = []
         q = Contestant.objects.filter(contest=self, accepted=True)
         for contestant in q.order_by('name')[offset:offset+limit]:
-        	res.append(Contest.contestant_to_contestant_to_render(contestant))
+            res.append(Contest.contestant_to_contestant_to_render(contestant))
         return ContestantsToRender(
             count=len(q),
             contestants=res
@@ -233,7 +233,7 @@ class Contest(Entity):
         res = []
         q = Contestant.objects.filter(contest=self, accepted=False)
         for contestant in q.order_by('name')[offset:offset+limit]:
-        	res.append(Contest.contestant_to_contestant_to_render(contestant))
+            res.append(Contest.contestant_to_contestant_to_render(contestant))
         return ContestantsToRender(
             count=len(q),
             contestants=res

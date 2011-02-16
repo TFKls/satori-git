@@ -6,4 +6,4 @@ def manage():
     from django.core.management import execute_manager
     import satori.web.settings as settings
 
-   	execute_manager(settings)
+    execute_manager(settings)

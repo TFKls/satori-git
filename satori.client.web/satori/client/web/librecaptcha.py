@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 #    Copyright (c) 2007 Renzo Carbonara <gnuk0001 at gmail dot com>
 #    Based on the original implementation by Ben Maurer <support at recaptcha net>
 #    
@@ -58,7 +60,7 @@ def displayhtml (public_key, use_ssl=False, error=None,
 
     error_param = ''
     if error:
-	error_param = '&error=%s' % error
+        error_param = '&error=%s' % error
 
     if use_ssl:
         server = API_SSL_SERVER
@@ -138,5 +140,3 @@ def submit (recaptcha_challenge_field,
         return RecaptchaResponse (is_valid=True)
     else:
         return RecaptchaResponse (is_valid=False, error_code = return_values [1])
-
-

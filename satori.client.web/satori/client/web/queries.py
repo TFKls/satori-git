@@ -1,4 +1,5 @@
-﻿
+﻿# vim:ts=4:sts=4:sw=4:expandtab
+
 from URLDictionary import *
 from satori.client.common import want_import
 want_import(globals(), '*')
@@ -14,38 +15,38 @@ import os
 
 
 def UserById(uid):
-	return User(int(uid))
+    return User(int(uid))
 
 def ContestById(cid):
-	return Contest.filter({'id' : int(cid)})[0]
+    return Contest.filter({'id' : int(cid)})[0]
 
 def CurrentUser():
     return Security.whoami_user()
 
 def ActiveContest(d):
-	if not 'contestid' in d.keys():
-		return None
-	try:
-        	return ContestById(int(d['contestid'][0]))
-        except:
-                return None
+    if not 'contestid' in d.keys():
+        return None
+    try:
+        return ContestById(int(d['contestid'][0]))
+    except:
+        return None
 
 def MyContestant(c,u = None):
     if not u:
         u = CurrentUser()
     if u and c:
-	try:
-	    cu =c.find_contestant(user = u)
-	except:
-	    return None
-	else:
-	    return cu
+        try:
+            cu =c.find_contestant(user = u)
+        except:
+            return None
+        else:
+            return cu
     else:
-	return None
-	
+        return None
+    
 
 def CurrentContestant(d):
-	return MyContestant(ActiveContest(d))
+    return MyContestant(ActiveContest(d))
 
 def Allowed(o, str):
     if o=='global':
@@ -62,21 +63,21 @@ def Allowed(o, str):
 
 # default dictionary, if need to return to main screen
 def DefaultLayout(dict = {}, maincontent = 'news', contest = None, **kwargs):
-        if not contest:
-    	    contest = ActiveContest(dict)
-	params = kwargs
-	params['name'] = [maincontent]
-	d = {'name' : ['cover'], 
+    if not contest:
+        contest = ActiveContest(dict)
+    params = kwargs
+    params['name'] = [maincontent]
+    d = {'name' : ['cover'], 
          'cover' :[{'name' : ['main'], 
                     'content' : [params], 
                     #'loginspace' : [{'name' : ['loginform']}],
                     'headerspace' : [{'name': ['header']}]
                   }]
         }
-	#d = {'name' : ['main'], 'content' : [{'name' : ['news']} ], 'login' : [{'name' : ['login']}]}
-	if contest:
-		d['contestid'] = [str(contest.id)]
-	return d
+    #d = {'name' : ['main'], 'content' : [{'name' : ['news']} ], 'login' : [{'name' : ['login']}]}
+    if contest:
+        d['contestid'] = [str(contest.id)]
+    return d
 
 
 def text2html(text):

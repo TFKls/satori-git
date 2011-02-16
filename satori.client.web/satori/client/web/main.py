@@ -1,3 +1,5 @@
+# vim:ts=4:sts=4:sw=4:expandtab
+
 from django.http import HttpResponseRedirect
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
@@ -14,36 +16,36 @@ import re
                 
 def load(request,argstr):
 #    try:
-	Session.request = request
-	try:
+        Session.request = request
+        try:
             token_container.set_token(request.COOKIES.get('satori_token', ''))
         except:
             token_container.set_token('')
         args = re.split('\.',unmask(argstr))
-	params = ParseURL(args[0])
-	if len(args)>=2:
+        params = ParseURL(args[0])
+        if len(args)>=2:
             path = args[1]
         else:
             path = ''
-	try:
+        try:
             w = Widget.FromDictionary(params,path)
             res = render_to_response(w.htmlFile, {'widget' : w} )
         except (TokenInvalid, TokenExpired):
             token_container.set_token('')
-	    link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
-	    res = HttpResponseRedirect(link)
-	    res.set_cookie('satori_token', '')
-	    return res
-	if request.COOKIES.get('satori_token', '') != token_container.get_token():
-	    res.set_cookie('satori_token', token_container.get_token())
-	return res
+            link = GetLink(DefaultLayout(dict=params,maincontent='loginform'),path)
+            res = HttpResponseRedirect(link)
+            res.set_cookie('satori_token', '')
+            return res
+        if request.COOKIES.get('satori_token', '') != token_container.get_token():
+            res.set_cookie('satori_token', token_container.get_token())
+        return res
 #    except Exception as e:
 #        raise e
-        return render_to_response('htmls/error.html')
+#        return render_to_response('htmls/error.html')
         
 def activate(request,argstr):
     try:
-	Session.request = request
+        Session.request = request
         try:
             token_container.set_token(request.COOKIES.get('satori_token', ''))
         except:
@@ -68,7 +70,7 @@ def activate(request,argstr):
 
 def loadPOST(request,argstr=""):
     try:
-	Session.request = request
+        Session.request = request
         try:
             token_container.set_token(request.COOKIES.get('satori_token', ''))
         except:
@@ -80,17 +82,17 @@ def loadPOST(request,argstr=""):
             res = HttpResponseRedirect(link)
             res.set_cookie('satori_token', '')
             return res
-	if request.COOKIES.get('satori_token', '') != token_container.get_token():
-	    res.set_cookie('satori_token', token_container.get_token())
-	return res
+        if request.COOKIES.get('satori_token', '') != token_container.get_token():
+            res.set_cookie('satori_token', token_container.get_token())
+        return res
     except Exception as e:
         raise e
         return render_to_response('htmls/error.html')
 
 def loadfile(request,argstr=""):
     try:
-	Session.request = request
-	try:
+        Session.request = request
+        try:
             token_container.set_token(request.COOKIES.get('satori_token', ''))
         except:
             token_container.set_token('')
@@ -101,9 +103,9 @@ def loadfile(request,argstr=""):
             res = HttpResponseRedirect(link)
             res.set_cookie('satori_token', '')
             return res
-	if request.COOKIES.get('satori_token', '') != token_container.get_token():
-	    res.set_cookie('satori_token', token_container.get_token())
-	return res
+        if request.COOKIES.get('satori_token', '') != token_container.get_token():
+            res.set_cookie('satori_token', token_container.get_token())
+        return res
     except Exception as e:
         raise e
         return render_to_response('htmls/error.html')

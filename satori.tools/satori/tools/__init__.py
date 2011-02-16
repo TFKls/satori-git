@@ -101,7 +101,7 @@ def setup():
             auth_setup.machine = config.get(auth_setup.section, 'machine')
 
         if config.has_option(auth_setup.section, 'password'):
-        	auth_setup.password = config.get(auth_setup.section, 'password')
+            auth_setup.password = config.get(auth_setup.section, 'password')
 
     if options.options.host:
         (auth_setup.hostname, auth_setup.thrift_port, auth_setup.blob_port) = options.options.host.split(':')

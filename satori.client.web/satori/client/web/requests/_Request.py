@@ -1,4 +1,5 @@
 ﻿# vim:ts=4:sts=4:sw=4:expandtab
+
 from satori.client.web.URLDictionary import *
 from satori.client.web.queries import *
 from django.http import HttpResponseRedirect
@@ -29,5 +30,5 @@ class Request:
 def process(argstr,request):
     res = MetaRequest.allreqs[argstr].process(request)
     if isinstance(res, HttpResponse):
-    	return res
+        return res
     return HttpResponseRedirect(res)

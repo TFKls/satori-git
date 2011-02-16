@@ -64,10 +64,10 @@ def athina_import():
         help='Test environment name')
     (options, args) = setup()
     if len(args) != 1:
-	    parser.error('incorrect number of arguments')
+        parser.error('incorrect number of arguments')
     base_dir = unicode(args[0])
     if not os.path.exists(os.path.join(base_dir, 'server', 'contest', 'users')):
-    	raise parser.error('provided path is invalid')
+        raise parser.error('provided path is invalid')
 
     def get_path(*args):
         return os.path.join(base_dir, 'server', 'contest', *args)
@@ -97,7 +97,7 @@ def athina_import():
                 with open(get_path('problem', str(d), submit), 'r') as f:
                     problem = f.readline().strip(" \n\t\x00")
                 if problem[0:2] == "__":
-                	continue
+                    continue
                 with open(get_path('data', str(d), submit), 'r') as f:
                     data = f.read()
                 with open(get_path('filename', str(d), submit), 'r') as f:
@@ -205,7 +205,7 @@ def athina_import():
         Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='CountAggregator')()
         Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='CountAggregator')()
     for id, submit in sorted(submits.iteritems()):
-    	user = users[submit['user']]
+        user = users[submit['user']]
         token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
         Creator('Submit', problem=problems[submit['problem']]['mapping']).additional(filename=submit['filename'], content=submit['data']).create()
     token_container.set_token(mytoken)

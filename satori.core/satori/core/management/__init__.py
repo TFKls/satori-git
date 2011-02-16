@@ -25,7 +25,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     sql = install_dbev_sql()
     cursor = connection.cursor()
     for query in sql:
-    	cursor.execute(query)
+        cursor.execute(query)
     cursor.close()
 
     print 'Creating Global object'
@@ -37,7 +37,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     from django.db import connection, transaction
     cursor = connection.cursor()
     for query in sql:
-    	cursor.execute(query)
+        cursor.execute(query)
     cursor.close()
 
     print 'Creating superuser'
