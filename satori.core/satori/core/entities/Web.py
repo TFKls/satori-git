@@ -15,6 +15,14 @@ PageInfo = Struct('PageInfo', [
     ('contest_viewable_problems_exist', bool, False),
     ])
 
+ContestInfo = Struct('ContestInfo', [
+    ('contest', DjangoStruct('Contest'), False),
+    ('contestant', DjangoStruct('Contestant'), False),
+    ('can_apply', bool, False),
+    ('can_join', bool, False),
+    ('is_admin', bool, False),
+    ])
+
 @ExportClass
 class Web(object):
 
@@ -38,5 +46,16 @@ class Web(object):
             ret.subpages = Subpage.get_global(False)
         return ret
 
+    @ExportMethod(TypedList(ContestInfo), [], PCPermit())
+    def get_contest_list():
+        ret = []
+        for contest in Privilege.where_can(Contest.objects.all(), 'VIEW'):
+            ret_c = ContestInfo()
+            ret_c.contest = contest
+            ret_c.contestant = contest.find_contestant(Security.whoami())
+            ret_c.can_apply = Privilege.demand(contest, 'APPLY')
+            ret_c.can_join = Privilege.demand(contest, 'JOIN')
+            ret_c.is_admin = Privilege.demand(contest, 'MANAGE')
+            ret.append(ret_c)
+        return ret
 
-    
