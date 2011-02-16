@@ -39,7 +39,7 @@ ProblemMappingInfo = Struct('ProblemMappingInfo', [
 class Web(object):
 
     @ExportMethod(PageInfo, [DjangoId('Contest')], PCPermit())
-    def get_general_page_overview(contest=None):
+    def get_page_info(contest=None):
         ret = PageInfo()
         ret.role = Security.whoami()
         ret.user = Security.whoami_user()
