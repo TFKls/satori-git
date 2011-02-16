@@ -9,4 +9,4 @@ def view(request, general_page_overview,id):
     subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
     name = subpage.name
     content = subpage.content
-    return render_to_response('contestsubpage.html',{'name' : name, 'content' : content})
+    return render_to_response('contestsubpage.html',{'general_page_overview' : general_page_overview, 'name' : name, 'content' : content})
