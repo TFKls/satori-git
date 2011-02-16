@@ -13,8 +13,8 @@ class TemporarySubmit(Entity):
 
     pending       = models.BooleanField(default=True)
     date_created  = models.DateTimeField(auto_now_add=True)
-    tester        = models.ForeignKey('Role', null=True)
-    owner         = models.ForeignKey('Role')
+    tester        = models.ForeignKey('Role', null=True, related_name='+')
+    owner         = models.ForeignKey('Role', related_name='+')
 
     test_data     = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
     submit_data   = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
