@@ -14,6 +14,7 @@ class TemporarySubmit(Entity):
     pending       = models.BooleanField(default=True)
     date_created  = models.DateTimeField(auto_now_add=True)
     tester        = models.ForeignKey('Role', null=True)
+    owner         = models.ForeignKey('Role')
 
     test_data     = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
     submit_data   = AttributeGroupField(PCArg('self', 'MANAGE'), PCArg('self', 'MANAGE'), '')
@@ -32,7 +33,7 @@ class TemporarySubmit(Entity):
             PCAnd(PCGlobal('TEMPORARY_SUBMIT'), PCEachValue('test_data', PCRawBlob('item')), PCEachValue('submit_data', PCRawBlob('item'))))
     @staticmethod
     def create(test_data, submit_data):
-        ts = TemporarySubmit.objects.create()
+        ts = TemporarySubmit.objects.create(owner=token_container.token.role)
         ts.test_data_set_map(test_data)
         ts.submit_data_set_map(submit_data)
         Privilege.grant(token_container.token.role, ts, 'MANAGE')
