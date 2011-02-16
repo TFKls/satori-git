@@ -12,7 +12,7 @@ class LoginForm(forms.Form):
     password = forms.CharField(widget=forms.PasswordInput, label="Password:")
 
 @general_view
-def view(request, general_page_overview):
+def view(request, page_info):
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -23,7 +23,7 @@ def view(request, general_page_overview):
                 token_container.set_token(token)
                 return HttpResponseRedirect(reverse('news'))
             except:
-                return render_to_response('login.html', {'general_page_overview' : general_page_overview, 'form' : form, 'failed' : True })
+                return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'failed' : True })
     else:
         form = LoginForm()
-    return render_to_response('login.html', {'general_page_overview' : general_page_overview, 'form' : form })
+    return render_to_response('login.html', {'page_info' : page_info, 'form' : form })

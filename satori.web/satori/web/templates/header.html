@@ -1,12 +1,12 @@
 <ul class="headerLeftUl">
     <li><a href="{% url news %}">Main page</a></li>
-    {% if general_page_overview.contest %}
-        <li>Selected contest {{general_page_overview.contest.name}}</li>
+    {% if page_info.contest %}
+        <li>Selected contest {{page_info.contest.name}}</li>
     {% endif %}
 </ul>
 <ul class="headerRightUl">
-    {% if general_page_overview.role %}
-        <li>Logged in as {{general_page_overview.role.name}}</li>
+    {% if page_info.role %}
+        <li>Logged in as {{page_info.role.name}}</li>
         <li><a href="{% url profile %}">Profile</a></li>
         <li><a href="{% url logout %}">Sign out</a></li>
     {% else %}

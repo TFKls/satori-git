@@ -6,11 +6,11 @@ from django.shortcuts import render_to_response
 from satori.web.utils.shortcuts import text2html
 
 @contest_view
-def view(request, general_page_overview, id):
+def view(request, page_info, id):
     submit = Submit.filter(SubmitStruct(id=int(id)))[0]
-    contest = general_page_overview.contest
+    contest = page_info.contest
     res = submit.get_result()
-    admin =  general_page_overview.contest_is_admin
+    admin =  page_info.contest_is_admin
     widget = {}
     widget["sid"] = submit.id
     widget["contestant"] = res.contestant
@@ -38,4 +38,4 @@ def view(request, general_page_overview, id):
     rawcode = submit.data_get_blob('content').read(100000)
     rawcode = unicode(rawcode,'utf8')
     widget["code"] = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
-    return render_to_response('viewresult.html',{'general_page_overview' : general_page_overview, 'widget' : widget})
+    return render_to_response('viewresult.html',{'page_info' : page_info, 'widget' : widget})

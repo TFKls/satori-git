@@ -12,7 +12,7 @@ def contest_view(func):
         except:
             token_container.set_token('')
         try:
-            general_page_overview = Web.get_general_page_overview(Contest(int(contestid)))
+            page_info = Web.get_page_info(Contest(int(contestid)))
         except (TokenInvalid, TokenExpired):
             token_container.set_token('')
             res = HttpResponseRedirect(reverse('login'))
@@ -20,7 +20,7 @@ def contest_view(func):
             #show error page to 404
             pass
         else:
-            res = func(request, general_page_overview, **kwargs)
+            res = func(request, page_info, **kwargs)
         if request.COOKIES.get('satori_token', '') != token_container.get_token():
             res.set_cookie('satori_token', token_container.get_token())
         return res
@@ -33,12 +33,12 @@ def general_view(func):
         except:
             token_container.set_token('')
         try:
-            general_page_overview = Web.get_general_page_overview()
+            page_info = Web.get_page_info()
         except (TokenInvalid, TokenExpired):
             token_container.set_token('')
             res = HttpResponseRedirect(reverse('login'))
         else:
-            res = func(request, general_page_overview, **kwargs)
+            res = func(request, page_info, **kwargs)
         if request.COOKIES.get('satori_token', '') != token_container.get_token():
             res.set_cookie('satori_token', token_container.get_token())
         return res

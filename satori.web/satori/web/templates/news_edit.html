@@ -2,8 +2,8 @@
 
 {% block content %}
 
-{% if general_page_overview.contest %}
-<form action={% url contest_news_edit general_page_overview.contest.id message.id %} method="POST">
+{% if page_info.contest %}
+<form action={% url contest_news_edit page_info.contest.id message.id %} method="POST">
 {% else %}
 <form action={% url news_edit message.id %} method="POST">
 {% endif %}

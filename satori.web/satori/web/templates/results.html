@@ -27,7 +27,7 @@
 
 <tr>
     <th>#</th>
-{% if general_page_overview.contest_is_admin %}
+{% if page_info.contest_is_admin %}
     <th>User</th>
 {% endif %}
     <th>Problem</th>
@@ -40,8 +40,8 @@
 
 {% for s in results %}
 <tr>
-    <td><a href="{% url view_result general_page_overview.contest.id s.submit.id %}">{{s.submit.id}}</a></td>
-{% if general_page_overview.contest_is_admin %}   
+    <td><a href="{% url view_result page_info.contest.id s.submit.id %}">{{s.submit.id}}</a></td>
+{% if page_info.contest_is_admin %}   
      <td>{{s.contestant}}</td>
 {% endif %}
     <td>{{s.problem}}</td>

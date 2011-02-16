@@ -7,9 +7,9 @@ from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 
 @general_view
-def view(request, general_page_overview):
+def view(request, page_info):
     if token_container.get_token()!='':
         token_container.set_token('')
         return HttpResponseRedirect(reverse('logout'))
     else:
-        return render_to_response('logout.html', {'general_page_overview' : general_page_overview})
+        return render_to_response('logout.html', {'page_info' : page_info})
