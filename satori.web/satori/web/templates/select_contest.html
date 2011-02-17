@@ -1,0 +1,55 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+{% if managed %}
+<h3>Managed contests:</h3>
+<table>
+    {% for cinfo in managed %}
+    <tr>
+        <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+
+{% if participating %}
+<h3>Joined contests:</h3>
+<table>
+    {% for cinfo in participating %}
+    <tr>
+        <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
+        <td>{% if not cinfo.contestant.accepted %} (pending) {% endif %}</td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+
+{% if other %}
+<h3>Other contests:</h3>
+<table>
+    {% for cinfo in other %}
+    <tr>
+        <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
+        <td>
+            {% if cinfo.can_join %}
+                <form action="{% url select_contest %}" method="POST"/><input type="submit" name="{{cinfo.contest.id}}" value="Join"/></form>
+            {% else %} 
+                {% if cinfo.can_apply %}
+                <form action="{% url select_contest %}" method="POST"/><input type="submit" name="{{cinfo.contest.id}}" value="Apply"/></form>
+                {% endif %}
+            {% endif %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+{% endif %}
+
+
+
+
+
+
+{% endblock %}

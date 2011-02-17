@@ -47,7 +47,10 @@ class Web(object):
         ret.is_problemsetter = Privilege.global_demand('MANAGE_PROBLEMS')
         if contest:
             ret.contest = contest
-            ret.contestant = contest.find_contestant(ret.role)
+            if ret.role:
+                ret.contestant = contest.find_contestant(ret.role)
+            else
+                ret.contestant = None
             ret.subpages = Subpage.get_for_contest(contest, False)
             ret.rankings = contest.rankings
             ret.contest_is_admin = Privilege.demand(contest, 'MANAGE')
@@ -62,10 +65,14 @@ class Web(object):
     @ExportMethod(TypedList(ContestInfo), [], PCPermit())
     def get_contest_list():
         ret = []
+        whoami = Security.whoami
         for contest in Privilege.where_can(Contest.objects.all(), 'VIEW'):
             ret_c = ContestInfo()
             ret_c.contest = contest
-            ret_c.contestant = contest.find_contestant(Security.whoami())
+            if whoami:
+                ret_c.contestant = contest.find_contestant(whoami)
+            else:
+                ret_c.contestant = None
             ret_c.can_apply = Privilege.demand(contest, 'APPLY')
             ret_c.can_join = Privilege.demand(contest, 'JOIN')
             ret_c.is_admin = Privilege.demand(contest, 'MANAGE')

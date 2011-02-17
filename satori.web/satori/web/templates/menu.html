@@ -37,7 +37,7 @@
             {% for subpage in page_info.subpages %}
                 <li><a href="{% url subpage page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
-            <li><a href="{% url contests %}">Select contest</a></li>
+            <li><a href="{% url select_contest %}">Select contest</a></li>
             {% if page_info.is_problemsetter %}
                 <li><a href="">Problem repository</a></li>
             {% endif %}
