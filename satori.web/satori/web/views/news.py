@@ -18,8 +18,8 @@ class NewsEditForm(forms.Form):
 @general_view
 def view(request, page_info):
     messages = []
-    for message in Subpage.get_global(True):
-        messages.append([message,text2html(message.content)])
+    for message in Web.get_subpage_list_global(True):
+        messages.append([message.subpage,text2html(message.subpage.content),message.is_admin])
     messages.sort(key=lambda m : m[0].date_created,reverse=True)
     return render_to_response('news.html',{'page_info' : page_info, 'messages' : messages })
 

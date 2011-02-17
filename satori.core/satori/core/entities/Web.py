@@ -86,7 +86,7 @@ class Web(object):
     @ExportMethod(TypedList(SubpageInfo), [bool], PCPermit())
     def get_subpage_list_global(announcements):
         ret = []
-        for subpage in Subpage.get_global(announcements):
+        for subpage in Privilege.where_can(Subpage.get_global(announcements), 'VIEW'):
             ret_s = SubpageInfo()
             ret_s.subpage = subpage
             ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
@@ -96,7 +96,7 @@ class Web(object):
     @ExportMethod(TypedList(SubpageInfo), [DjangoId('Contest'), bool], PCPermit())
     def get_subpage_list_for_contest(contest, announcements):
         ret = []
-        for subpage in Subpage.get_for_contest(contest, announcements):
+        for subpage in Privilege.where_can(Subpage.get_for_contest(contest, announcements), 'VIEW'):
             ret_s = SubpageInfo()
             ret_s.subpage = subpage
             ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')

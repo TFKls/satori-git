@@ -2,11 +2,18 @@
 
 {% block content %}
 
-{% for msg,content in messages %}
+{% for msg,content,is_admin in messages %}
 <div class = "newsmsg bDots">
     <table class="tlist">
             <tr><td><h4>{{ msg.name }}</h4></td><td style="text-align: right"><span class="signature">{{msg.date_created}}</span></td></tr>
             <tr><td colspan="2">{{ content|safe }}</td></tr>
+            {% if is_admin %}
+            {% if page_info.contest %}
+                <tr><td><a href="{% url contest_news_edit page_info.contest.id msg.id %}">Edit</a> </td></tr>
+            {% else %}
+                <tr><td><a href="{% url news_edit msg.id %}">Edit</a> </td></tr>
+            {% endif %}
+            {% endif %}
     </table>
 </div>
 {% endfor %}

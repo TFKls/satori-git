@@ -19,7 +19,7 @@ def view(request, page_info,id):
     name = subpage.name
     content = subpage.content
     can_edit = Privilege.demand(subpage,'MANAGE')
-    return render_to_response('subpage.html',{'page_info' : page_info, 'name' : name, 'content' : content, 'can_edit' : can_edit})
+    return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : subpage, 'content' : content, 'can_edit' : can_edit})
 
 @contest_view
 def create(request, page_info):
