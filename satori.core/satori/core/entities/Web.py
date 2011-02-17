@@ -49,7 +49,7 @@ class Web(object):
             ret.contest = contest
             if ret.role:
                 ret.contestant = contest.find_contestant(ret.role)
-            else
+            else:
                 ret.contestant = None
             ret.subpages = Subpage.get_for_contest(contest, False)
             ret.rankings = contest.rankings
