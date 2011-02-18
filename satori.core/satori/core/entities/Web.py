@@ -1,5 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from satori.core.models import PrivilegeTimes
+
 PageInfo = Struct('PageInfo', [
     ('contest', DjangoStruct('Contest'), False),
     ('contestant', DjangoStruct('Contestant'), False),
@@ -33,6 +35,8 @@ ProblemMappingInfo = Struct('ProblemMappingInfo', [
     ('problem_mapping', DjangoStruct('ProblemMapping'), False),
     ('can_submit', bool, False),
     ('is_admin', bool, False),
+    ('contestant_role_view_times', PrivilegeTimes, False),
+    ('contestant_role_submit_times', PrivilegeTimes, False),
     ])
 
 @ExportClass
@@ -87,6 +91,9 @@ class Web(object):
             ret_p.problem_mapping = problem
             ret_p.can_submit = Privilege.demand(problem, 'SUBMIT')
             ret_p.is_admin = Privilege.demand(problem, 'MANAGE')
+            if ret_p.is_admin:
+                ret_p.contestant_role_view_times = Privilege.get(contest.contestant_role, problem, 'VIEW')
+                ret_p.contestant_role_submit_times = Privilege.get(contest.contestant_role, problem, 'SUBMIT')
             ret.append(ret_p)
         return ret
 
