@@ -82,7 +82,7 @@ class Web(object):
     @ExportMethod(TypedList(ProblemMappingInfo), [DjangoId('Contest')], PCPermit())
     def get_problem_mapping_list(contest):
         ret = []
-        for problem in Privilege.where_can(contest.problems.all(), 'VIEW'):
+        for problem in Privilege.where_can(contest.problem_mappings.all(), 'VIEW'):
             ret_p = ProblemMappingInfo()
             ret_p.problem_mapping = problem
             ret_p.can_submit = Privilege.demand(problem, 'SUBMIT')
