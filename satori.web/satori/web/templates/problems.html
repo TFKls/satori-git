@@ -1,0 +1,74 @@
+{% extends "templates/index.html" %}
+
+{% block header %}
+
+{{ form.media }}
+
+{% endblock %}
+
+{% block content %}
+
+<form action="{% url contest_problems page_info.contest.id %}" method="POST">
+<table>
+
+{% for pinfo in problems %}
+{% with pinfo.problem as problem %}
+<tr>
+
+<td>
+{{pinfo.select}}
+</td>
+
+<td>
+ {{ problem.code }} 
+</td>
+
+<td> 
+{{ problem.title }}<br/>
+{% if pinfo.visible %} Visible {% endif %}
+{% if pinfo.submittable %} Submittable {% endif %}
+</td>
+
+<td> 
+{% if pinfo.when_view %}
+
+    {% if pinfo.when_view.start_on %}
+    Appears on: {{ pinfo.when_view.start_on|date:"Y-m-d H:i:s" }}
+    {% endif %}
+<br/>    
+    {% if pinfo.when_view.finish_on %}
+    Hides on: {{ pinfo.when_view.finish_on|date:"Y-m-d H:i:s" }}
+    {% endif %}
+    
+{% endif %}
+</td>
+
+<td> 
+{% if pinfo.when_submit %}
+
+    {% if pinfo.when_submit.start_on %}
+    Submits start on: {{ pinfo.when_submit.start_on|date:"Y-m-d H:i:s" }}
+    {% endif %}
+<br/>    
+    {% if pinfo.when_submit.finish_on %}
+    Submits end on: {{ pinfo.when_submit.finish_on|date:"Y-m-d H:i:s" }}
+    {% endif %}
+    
+{% endif %}
+</td>
+
+
+</tr>
+
+{% endwith %}
+{% endfor %}
+</table>
+
+<h4>Mass edit</h4>
+Set submission times: from {{form.submitstart}} to {{form.submitfinish}}.
+
+<input type="submit"/>
+</form>
+
+
+{% endblock %}

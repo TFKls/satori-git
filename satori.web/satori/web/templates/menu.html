@@ -6,7 +6,7 @@
             {% for subpage in page_info.subpages %}
                 <li><a href="{% url contest_subpage page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
-                <li><a href="{% url problems page_info.contest.id %}">Problems</a></li>
+                <li><a href="{% url contest_problems page_info.contest.id %}">Problems</a></li>
             {% endif %}
             {% if page_info.contest_submittable_problems_exist %}
                 <li><a href="{% url submit page_info.contest.id %}">Submit</a></li>
