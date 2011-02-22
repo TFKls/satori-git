@@ -60,8 +60,8 @@ class Web(object):
             ret.contest_is_admin = Privilege.demand(contest, 'MANAGE')
             ret.contest_can_ask_questions = Privilege.demand(contest, 'ASK_QUESTIONS')
             ret.contest_answers_exist = bool(Privilege.where_can(contest.questions.all(), 'VIEW'))
-            ret.contest_submittable_problems_exist = bool(Privilege.where_can(contest.problems.all(), 'SUBMIT'))
-            ret.contest_viewable_problems_exist = bool(Privilege.where_can(contest.problems.all(), 'VIEW'))
+            ret.contest_submittable_problems_exist = bool(Privilege.where_can(contest.problem_mappings.all(), 'SUBMIT'))
+            ret.contest_viewable_problems_exist = bool(Privilege.where_can(contest.problem_mappings.all(), 'VIEW'))
         else:
             ret.subpages = Subpage.get_global(False)
         return ret
