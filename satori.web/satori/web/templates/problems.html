@@ -65,10 +65,24 @@
 </table>
 
 <h4>Mass edit</h4>
-Set submission times: from {{form.submitstart}} to {{form.submitfinish}}.
+{{form.submitstart.errors}}
+{{form.submitfinish.errors}}
+<p>Set submission times from {{form.submitstart}} to {{form.submitfinish}}
+{{form.viewauto}} Set view times automatically
+<input type="submit" name="changesubmit" value="Change times"/>
+</p>
 
-<input type="submit"/>
+{{form.viewstart.errors}}
+{{form.viewfinish.errors}}
+<p>Set view times from {{form.viewstart}} to {{form.viewfinish}}
+<input type="submit" name="changeview" value="Change times"/>
+</p>
+
+<input type="submit" name="revokesubmit" value="Revoke submits"/>
+<input type="submit" name="revokeview" value="Revoke submits AND hide problems"/>
 </form>
 
+
+<a href="{% url contest_problems_add page_info.contest.id %}">Add new problem</a>
 
 {% endblock %}

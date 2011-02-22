@@ -1,0 +1,21 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+{% if problem %}
+<p>Selected problem {{ problem.name }} ({{problem.description}}).</p>
+<form action="{% url contest_problems_add page_info.contest.id %}?preid={{problem.id}}" method="POST">
+<table>
+{{ form.as_table }}
+</table>
+<input type="submit" value="Add problem"/>
+</form>
+{% else %}
+<form action="{% url contest_problems_add page_info.contest.id %}" method="GET">
+<table>
+{{ form.as_table }}
+</table>
+<input type="submit" value="Choose"/>
+</form>
+{% endif %}
+
+{% endblock %}
