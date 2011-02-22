@@ -36,7 +36,7 @@ class SXmlParser {
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
 		String def_str = node.getAttribute("default");
 		SAttribute def_value = def_str.isEmpty() ? null : new SStringAttribute(def_str);
-		return new SInputMetadata(name, desc, false, required.equals("true"), def_value); 
+		return new SInputMetadata(name, desc, false, required.equals("true"), def_value, null); 
 	}
 	
 	private static SInputMetadata parseInputFile(Element node) throws ParseException {
@@ -48,7 +48,7 @@ class SXmlParser {
 		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
 		SAttribute def_value = null;
-		return new SInputMetadata(name, desc, true, required.equals("true"), def_value);
+		return new SInputMetadata(name, desc, true, required.equals("true"), def_value, null);
 	}
 	
 	/*private static OutputMetadata parseOutput(Element node) throws ParseException {

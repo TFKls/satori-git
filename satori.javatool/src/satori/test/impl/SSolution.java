@@ -13,6 +13,9 @@ public class SSolution implements SData<SBlob> {
 	private final SViewList views = new SViewList();
 	
 	@Override public SBlob get() { return blob; }
+	@Override public boolean isEnabled() { return true; }
+	@Override public boolean isValid() { return blob != null; }
+	@Override public void update() {}
 	@Override public void set(SBlob blob) {
 		if (blob == null && this.blob == null) return;
 		if (blob != null && blob.equals(this.blob)) return;
@@ -20,8 +23,6 @@ public class SSolution implements SData<SBlob> {
 		callModifiedListeners();
 		updateViews();
 	}
-	@Override public boolean isEnabled() { return true; }
-	@Override public boolean isValid() { return blob != null; }
 	
 	public void addModifiedListener(SListener0 listener) { modified_listeners.add(listener); }
 	public void removeModifiedListener(SListener0 listener) { modified_listeners.remove(listener); }

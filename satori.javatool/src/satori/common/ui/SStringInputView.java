@@ -177,6 +177,7 @@ public class SStringInputView implements SInputView {
 	}
 	
 	@Override public void update() {
+		data.update();
 		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
 		else pane.setBackground(Color.LIGHT_GRAY);
 		label.setFont(data.get() != null ? set_font : unset_font);

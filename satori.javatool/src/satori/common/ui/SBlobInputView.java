@@ -386,6 +386,7 @@ public class SBlobInputView implements SInputView {
 	}
 	
 	@Override public void update() {
+		data.update();
 		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
 		else pane.setBackground(Color.LIGHT_GRAY);
 		SBlob file = data.get();
