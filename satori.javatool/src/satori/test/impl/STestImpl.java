@@ -69,7 +69,6 @@ public class STestImpl implements STestReader {
 		self.problem = problem;
 		self.name = "";
 		self.meta = STestMetadata.getDefault();
-		//self.attrs = SAttributeMap.create(self.meta.getDefaultAttrs());
 		self.attrs = SAttributeMap.createEmpty();
 		return self;
 	}
@@ -119,7 +118,7 @@ public class STestImpl implements STestReader {
 		if (judge != null && judge.equals(old_judge)) return;
 		meta = STestMetadata.get(judge);
 		attrs = SAttributeMap.createEmpty();
-		if (judge != null) attrs.setAttr("judge", new SBlobAttribute(judge));
+		attrs.setAttr("judge", judge != null ? new SBlobAttribute(judge) : null);
 		notifyModified();
 		callMetadataModifiedListeners();
 		callDataModifiedListeners();
