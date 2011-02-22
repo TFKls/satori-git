@@ -1,7 +1,9 @@
 package satori.common.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.Font;
 import java.awt.Insets;
 import java.awt.Point;
@@ -14,6 +16,7 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.awt.event.MouseMotionListener;
@@ -21,18 +24,25 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 import java.util.StringTokenizer;
+import java.util.Vector;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JComponent;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
+import javax.swing.JList;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JPopupMenu;
+import javax.swing.JScrollPane;
 import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.TransferHandler;
 
@@ -42,6 +52,11 @@ import satori.common.SException;
 import satori.main.SFrame;
 
 public class SBlobInputView implements SInputView {
+	public static interface BlobLoader {
+		Set<String> getNames() throws SException;
+		SBlob getBlob(String name) throws SException;
+	}
+	
 	private final SData<SBlob> data;
 	
 	private String desc;
@@ -49,6 +64,7 @@ public class SBlobInputView implements SInputView {
 	private JButton clear_button;
 	private JButton label;
 	private JTextField field;
+	private BlobLoader blob_loader = null;
 	private boolean edit_mode = false;
 	private Font set_font, unset_font;
 	private Color default_color;
@@ -60,6 +76,70 @@ public class SBlobInputView implements SInputView {
 	
 	@Override public JComponent getPane() { return pane; }
 	
+	public void setBlobLoader(BlobLoader blob_loader) { this.blob_loader = blob_loader; }
+	
+	public static class LoadRemoteDialog {
+		private final BlobLoader blob_loader;
+		private JDialog dialog;
+		private JList list;
+		private boolean confirmed = false;
+		
+		public LoadRemoteDialog(BlobLoader blob_loader) {
+			this.blob_loader = blob_loader;
+			initialize();
+		}
+		
+		private void initialize() {
+			dialog = new JDialog(SFrame.get().getFrame(), "Load remote", true);
+			dialog.getContentPane().setLayout(new BorderLayout());
+			list = new JList();
+			list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+			list.addMouseListener(new MouseAdapter() {
+				@Override public void mouseClicked(MouseEvent e) {
+					if (e.getClickCount() != 2) return;
+					e.consume();
+					confirmed = true;
+					dialog.setVisible(false);
+				}
+			});
+			JScrollPane list_pane = new JScrollPane(list);
+			list_pane.setPreferredSize(new Dimension(200, 100));
+			dialog.getContentPane().add(list_pane, BorderLayout.CENTER);			
+			JPanel button_pane = new JPanel(new FlowLayout(FlowLayout.CENTER));
+			JButton cancel = new JButton("Cancel");
+			cancel.addActionListener(new ActionListener() {
+				@Override public void actionPerformed(ActionEvent e) {
+					dialog.setVisible(false);
+				}
+			});
+			button_pane.add(cancel);
+			dialog.getContentPane().add(button_pane, BorderLayout.SOUTH);
+			dialog.pack();
+			dialog.setLocationRelativeTo(SFrame.get().getFrame());
+		}
+		
+		public SBlob process() throws SException {
+			Vector<String> names = new Vector<String>(blob_loader.getNames());
+			Collections.sort(names);
+			list.setListData(names);
+			dialog.setVisible(true);
+			if (!confirmed) return null;
+			int index = list.getSelectedIndex();
+			if (index == -1) return null;
+			return blob_loader.getBlob(names.get(index));
+		}
+	}
+	
+	private void loadRemote() {
+		if (blob_loader == null) return;
+		LoadRemoteDialog dialog = new LoadRemoteDialog(blob_loader);
+		try {
+			SBlob blob = dialog.process();
+			if (blob == null) return;
+			data.set(blob);
+		}
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+	}
 	private void loadFile() {
 		JFileChooser file_chooser = new JFileChooser();
 		file_chooser.setSelectedFile(data.get() != null ? data.get().getFile() : null);
@@ -113,7 +193,14 @@ public class SBlobInputView implements SInputView {
 	
 	private void showPopup() {
 		JPopupMenu popup = new JPopupMenu();
-		JMenuItem loadItem = new JMenuItem("Load");
+		if (blob_loader != null) {
+			JMenuItem loadRemoteItem = new JMenuItem("Load remote");
+			loadRemoteItem.addActionListener(new ActionListener() {
+				@Override public void actionPerformed(ActionEvent e) { loadRemote(); }
+			});
+			popup.add(loadRemoteItem);
+		}
+		JMenuItem loadItem = new JMenuItem("Load file");
 		loadItem.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { loadFile(); }
 		});

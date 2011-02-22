@@ -27,7 +27,7 @@ public class STestMetadata {
 		return attrs;
 	}
 	
-	private static final String default_xml =
+	/*private static final String default_xml =
 		"<checker name=\"Default judge\">" +
 		"    <input>" +
 		"        <value name=\"time\" description=\"Time limit\" required=\"true\"/>" +
@@ -36,14 +36,15 @@ public class STestMetadata {
 		"        <file name=\"hint\" description=\"Output/hint file\" required=\"false\"/>" +
 		"        <file name=\"checker\" description=\"Checker\" required=\"false\"/>" +
 		"    </input>" +
-		"</checker>";
+		"</checker>";*/
 	
 	private static STestMetadata default_meta = null;
 	
 	public static STestMetadata getDefault() {
 		if (default_meta == null) {
-			try { default_meta = SXmlParser.parse(default_xml); }
-			catch(SXmlParser.ParseException ex) { throw new RuntimeException(ex); }
+			/*try { default_meta = SXmlParser.parse(default_xml); }
+			catch(SXmlParser.ParseException ex) { throw new RuntimeException(ex); }*/
+			default_meta = new STestMetadata();
 		}
 		return default_meta;
 	}

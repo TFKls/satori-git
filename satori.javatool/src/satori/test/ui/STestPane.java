@@ -22,6 +22,7 @@ import java.awt.event.MouseMotionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 import java.util.TooManyListenersException;
 
 import javax.swing.Box;
@@ -33,6 +34,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.TransferHandler;
 
+import satori.attribute.SAttributeReader;
+import satori.blob.SBlob;
 import satori.common.SException;
 import satori.common.SList;
 import satori.common.SListener0;
@@ -54,6 +57,7 @@ import satori.test.impl.SStringInput;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
 import satori.test.meta.SInputMetadata;
+import satori.thrift.SGlobalData;
 
 public class STestPane implements SPane, SList<STestImpl> {
 	private final STestSuiteImpl suite;
@@ -483,9 +487,22 @@ public class STestPane implements SPane, SList<STestImpl> {
 				@Override public void focusLost(FocusEvent e) { updateName(); }
 			});
 			pane.add(name_field);
-			SInputView judge_view = new SBlobInputView(new SJudgeInput(test));
+			SBlobInputView judge_view = new SBlobInputView(new SJudgeInput(test));
 			judge_view.setDimension(SDimension.itemDim);
 			judge_view.setDescription("Judge file");
+			judge_view.setBlobLoader(new SBlobInputView.BlobLoader() {
+				private SAttributeReader judges = null;
+				private SAttributeReader getJudges() throws SException {
+					if (judges == null) judges = SGlobalData.getJudges();
+					return judges;
+				}
+				@Override public Set<String> getNames() throws SException {
+					return getJudges().getNames();
+				}
+				@Override public SBlob getBlob(String name) throws SException {
+					return getJudges().getBlob(name);
+				}
+			});
 			test.addView(judge_view);
 			pane.add(judge_view.getPane());
 			update();
