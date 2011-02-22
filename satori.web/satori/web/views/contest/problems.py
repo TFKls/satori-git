@@ -20,7 +20,6 @@ class ProblemsPublishForm(forms.Form):
         for pinfo in problem_list:
             if pinfo.is_admin:
                 self.fields[str(pinfo.problem_mapping.id)] = forms.BooleanField(required=False)
-        
 
 
 def between(times, now):
@@ -39,8 +38,9 @@ def between(times, now):
     return False
     
 @contest_view
-def view(request, page_info):
+def viewall(request, page_info):
     problem_list = Web.get_problem_mapping_list(page_info.contest)
+    problem_list.sort(key=lambda p:p.problem_mapping.code)
     if request.method=="POST":
         form = ProblemsPublishForm(data=request.POST,problem_list=problem_list)
         if form.is_valid():
@@ -85,30 +85,34 @@ def view(request, page_info):
         problems.append(p)
     return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems})
 
+class ProblemAddForm(forms.Form):
+    code = forms.CharField(required=True)
+    title = forms.CharField(required=True)
+    suite = forms.ChoiceField(choices=[])
+    statement = forms.CharField(widget=forms.Textarea, required=False)
+    def __init__(self,data=None,suites=[],*args,**kwargs):
+        super(ProblemAddForm,self).__init__(data,*args,**kwargs)
+        self.fields["suite"].choices = [[suite.id,suite.name + '(' + suite.description + ')'] for suite in suites]
+
+
 @contest_view
 def add(request, page_info):
     if 'preid' in request.GET.keys():
         preid = request.GET["preid"]
-        problem = Problem.filter(ProblemStruct(id=int(preid)))[0]
+        problem = Problem(int(preid))
         suites = TestSuite.filter(TestSuiteStruct(problem=problem))
-        suitechoices = [[suite.id,suite.name + '(' + suite.description + ')'] for suite in suites]
         
-        class ProblemAddForm(forms.Form):
-            code = forms.CharField()
-            title = forms.CharField()
-            suite = forms.ChoiceField(choices=suitechoices)
-            statement = forms.CharField(widget=forms.Textarea, required=False)
             
         if request.method=="POST":
-            form = ProblemAddForm(request.POST)
+            form = ProblemAddForm(data=request.POST,suites=suites)
             if form.is_valid():
                 data = form.cleaned_data
                 suite = filter(lambda s:s.id==int(data["suite"]),suites)[0]
                 ProblemMapping.create(ProblemMappingStruct(contest=page_info.contest,problem=problem,code=data['code'],title=data['title'], statement=data['statement'],default_test_suite=suite))
                 return HttpResponseRedirect(reverse('contest_problems',args=[page_info.contest.id]))
         else:
-            form = ProblemAddForm()
-            return render_to_response('problems_add.html', {'page_info' : page_info, 'form' : form, 'problem' : problem } )
+            form = ProblemAddForm(suites=suites)
+            return render_to_response('problems_add.html', {'page_info' : page_info, 'form' : form, 'base' : problem } )
     else:
         problems = Problem.filter()
         choices = [[problem.id, problem.name + '(' + problem.description + ')'] for problem in problems]
@@ -119,4 +123,23 @@ def add(request, page_info):
         form = ProblemPreAddForm()
         return render_to_response('problems_add.html', { 'page_info' : page_info, 'form' : form } )
         
-        
+@contest_view
+def edit(request, page_info, id):
+    mapping = ProblemMapping(int(id))
+    problem = mapping.problem
+    suites = TestSuite.filter(TestSuiteStruct(problem=problem))
+    if request.method=="POST":
+        form = ProblemAddForm(data=request.POST,suites=suites)
+        if form.is_valid():
+            data = form.cleaned_data
+            mapping.modify(ProblemMappingStruct(code=data['code'],title=data['title'],statement=data['statement'],default_test_suite=TestSuite(int(data['suite']))))
+            return HttpResponseRedirect(reverse('contest_problems_view',args=[page_info.contest.id,mapping.id]))
+    else:
+        form = ProblemAddForm(data={'code': mapping.code, 'title': mapping.title, 'statement' : mapping.statement, 'suite' : mapping.default_test_suite.id}, suites=suites)
+    return render_to_response('problems_add.html', {'page_info': page_info, 'form' : form, 'base' : problem, 'editing' : mapping})
+
+@contest_view
+def view(request, page_info, id):
+    mapping = ProblemMapping(int(id))
+    return render_to_response('problems_view.html', {'page_info' : page_info, 'problem' : mapping })
+    

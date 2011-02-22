@@ -1,9 +1,16 @@
 {% extends "templates/index.html" %}
 
 {% block content %}
-{% if problem %}
-<p>Selected problem {{ problem.name }} ({{problem.description}}).</p>
-<form action="{% url contest_problems_add page_info.contest.id %}?preid={{problem.id}}" method="POST">
+{% if base %}
+{% if editing %}
+<p>Editing problem {{ editing.code }} - {{ editing.title }}</p>
+{% endif %}
+<p>Based on problem {{ base.name }} ({{base.description}}).</p>
+{% if editing %}
+<form action="{% url contest_problems_edit page_info.contest.id editing.id %}" method="POST">
+{% else %}
+<form action="{% url contest_problems_add page_info.contest.id %}?preid={{base.id}}" method="POST">
+{% endif %}
 <table>
 {{ form.as_table }}
 </table>

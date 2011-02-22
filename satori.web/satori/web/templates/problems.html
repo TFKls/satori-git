@@ -24,7 +24,7 @@
 </td>
 
 <td> 
-{{ problem.title }}<br/>
+<a href="{% url contest_problems_view page_info.contest.id problem.id %}">{{ problem.title }}</a><br/>
 {% if pinfo.visible %} Visible {% endif %}
 {% if pinfo.submittable %} Submittable {% endif %}
 </td>
@@ -58,6 +58,9 @@
 </td>
 
 
+<td>
+<a href={% url contest_problems_edit page_info.contest.id problem.id %}>Edit problem</a>
+</td>
 </tr>
 
 {% endwith %}
