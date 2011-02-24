@@ -56,4 +56,5 @@ def email_ok(email):
         validate_email(email)
     except ValidationError:
         raise InvalidEmail(email=email, reason='is not RFC3696 compliant')
-
+    if len(email) > 60:
+        raise InvalidEmail(email=email, reason="is too long')

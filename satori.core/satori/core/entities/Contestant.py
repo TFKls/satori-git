@@ -11,7 +11,7 @@ class Contestant(Role):
     """
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_contestant')
 
-    usernames   = models.CharField(max_length=200)
+    usernames   = models.CharField(max_length=256)
     contest     = models.ForeignKey('Contest', related_name='contestants')
     accepted    = models.BooleanField(default=True)
     invisible   = models.BooleanField(default=False)
@@ -78,9 +78,9 @@ class Contestant(Role):
         return self
 
     def update_usernames(self):
-        name = ', '.join([x.name for x in self.get_members()])
-        if len(name) > 200:
-            name = name[0:197] + '...'
+        name = u', '.join([x.name for x in self.get_members()])
+        if len(name) > 250:
+            name = name[0:247] + '...'
         if self.name == self.usernames:
             self.name = name
         self.usernames = name;

@@ -8,10 +8,10 @@ class OpenAttribute(models.Model):
     """Model. Base for all kinds of open attributes.
     """
     entity   = models.ForeignKey('Entity', related_name='attributes')
-    name     = models.CharField(max_length=50)
+    name     = models.CharField(max_length=64)
     is_blob  = models.BooleanField()
     value    = models.TextField()
-    filename = models.CharField(max_length=50)
+    filename = models.CharField(max_length=64)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('entity', 'name'),)
