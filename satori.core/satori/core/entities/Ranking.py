@@ -54,7 +54,7 @@ class Ranking(Entity):
         ranking.save()
         ranking.params_set_map(params)
         for problem in ranking.contest.problem_mappings.all():
-            ranking_params = RankingParams.objects.get_or_create(ranking=ranking, problem=problem)
+            ranking_params = RankingParams.objects.get_or_create(ranking=ranking, problem=problem)[0]
             if problem in problem_test_suites:
                 if problem_test_suites[problem].problem != problem.problem:
                     raise RuntimeError('Invalid test suite')
@@ -84,7 +84,7 @@ class Ranking(Entity):
         self.save()
         self.params_set_map(params)
         for problem in self.contest.problem_mappings.all():
-            ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)
+            ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
             if problem in problem_test_suites:
                 if problem_test_suites[problem].problem != problem.problem:
                     raise RuntimeError('Invalid test suite')
