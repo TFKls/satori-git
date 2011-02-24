@@ -11,7 +11,7 @@ class Contestant(Role):
     """
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_contestant')
 
-    usernames   = models.CharField(max_length=200)
+    usernames   = models.CharField(max_length=256)
     contest     = models.ForeignKey('Contest', related_name='contestants')
     accepted    = models.BooleanField(default=True)
     invisible   = models.BooleanField(default=False)
@@ -50,6 +50,8 @@ class Contestant(Role):
     def create(fields, user_list):
         contestant = Contestant()
         contestant.forbid_fields(fields, ['usernames'])
+        contestant.usernames = ''
+        contestant.name = ''
         modified = contestant.update_fields(fields, ['name', 'contest', 'accepted', 'invisible', 'login'])
         contestant.save()
         Privilege.grant(contestant, contestant, 'EDIT')
@@ -59,7 +61,7 @@ class Contestant(Role):
             contestant.add_member(user)
         if contestant.accepted:
             contestant.contest.contestant_role.add_member(contestant)
-        contestant.contest.changed_contestants()
+        contestant.update_usernames()
         return contestant
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), DjangoStruct('Contestant')], PCArg('self', 'MANAGE'), [InvalidLogin, InvalidPassword, CannotSetField])
@@ -76,11 +78,11 @@ class Contestant(Role):
         return self
 
     def update_usernames(self):
-        name = ', '.join(x.name for x in self.get_members())
-        if len(name) > 200:
-            name = name[0:197] + '...'
+        name = u', '.join([x.name for x in self.get_members()])
+        if len(name) > 250:
+            name = name[0:247] + '...'
         if self.name == self.usernames:
-            self.name = usernames
+            self.name = name
         self.usernames = name;
         self.save()
         self.contest.changed_contestants()

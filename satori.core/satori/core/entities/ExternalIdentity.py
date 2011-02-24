@@ -38,7 +38,7 @@ class ExternalIdentity(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_externalidentity')
 
-    handler  = models.CharField(max_length=16)
+    handler  = models.CharField(max_length=128)
     provider = models.CharField(max_length=512)
     identity = models.CharField(max_length=512, unique=True)
 

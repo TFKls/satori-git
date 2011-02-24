@@ -6,7 +6,7 @@ class Notification(models.Model):
     """
     """
     action      = models.CharField(max_length=1)
-    table       = models.CharField(max_length=50)
+    table       = models.CharField(max_length=64)
     object      = models.IntegerField()
     transaction = models.IntegerField()
     previous    = models.IntegerField(null=True)

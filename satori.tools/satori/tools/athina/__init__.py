@@ -178,7 +178,9 @@ def athina_import():
     Privilege.grant(contest.contestant_role, contest, 'VIEW_TASKS')
 
     for login, user in sorted(users.iteritems()):
-        user['object'] = Creator('User', login=options.name + '_' + user['login']).fields(name=user['name'])()
+        firstname = user['name'].split()[0]
+        lastname = ' '.join(user['name'].split()[1:])
+        user['object'] = Creator('User', login=options.name + '_' + user['login']).fields(firstname=firstname, lastname=lastname)()
         user['object'].set_password(user['password'])
         user['contestant'] = Creator('Contestant', contest=contest, name=user['object'].login).additional(user_list=[user['object']])()
         user['contestant'].set_password(user['password'])
@@ -200,10 +202,10 @@ def athina_import():
                 oa.set_str('time', str(10*int(test['timelimit'])))
             test['object'] = Creator('Test', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default_' + str(test['test'])).fields(environment=options.environment).additional(data=oa.get_map())()
             tests.append(test['object'])
-        problem['testsuite'] = Creator('TestSuite', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default').fields(reporter='StatusReporter', dispatcher='SerialDispatcher', accumulators='StatusAccumulator').additional(test_list=tests)()
+        problem['testsuite'] = Creator('TestSuite', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default').fields(reporter='StatusReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params={}, test_params=[{}]*len(tests))()
         problem['mapping'] = Creator('ProblemMapping', contest=contest, problem=problem['object']).fields(code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite'])()
-        Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='CountAggregator')()
-        Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='CountAggregator')()
+        Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='ACMAggregator').additional(params={}, problem_test_suites={}, problem_test_suite_params={})()
+        Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='ACMAggregator').additional(params={}, problem_test_suites={}, problem_test_suite_params={})()
     for id, submit in sorted(submits.iteritems()):
         user = users[submit['user']]
         token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))

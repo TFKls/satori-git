@@ -13,7 +13,7 @@ class Role(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_role')
 
-    name          = models.CharField(max_length=50)
+    name          = models.CharField(max_length=256)
     children      = models.ManyToManyField('self', related_name='parents', through='RoleMapping', symmetrical=False)
 
     class ExportMeta(object):

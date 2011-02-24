@@ -14,7 +14,7 @@ class ProblemMapping(Entity):
 
     contest            = models.ForeignKey('Contest', related_name='problem_mappings')
     problem            = models.ForeignKey('Problem', related_name='problem_mappings+')
-    code               = models.CharField(max_length=10)
+    code               = models.CharField(max_length=16)
     title              = models.CharField(max_length=64)
     override_fields    = models.TextField(blank=True, default="")
     default_test_suite = models.ForeignKey('TestSuite', related_name='problem_mappings+')
