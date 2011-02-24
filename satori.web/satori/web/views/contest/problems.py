@@ -73,17 +73,21 @@ def viewall(request, page_info):
     else:
         form = ProblemsPublishForm(problem_list=problem_list)
     problems = []
+    any_admin = False
     for pinfo in problem_list:
         p = {}
-        p['select'] = form[str(pinfo.problem_mapping.id)]
+        admin = pinfo.is_admin
         p['problem'] = pinfo.problem_mapping
-        p['admin'] = pinfo.is_admin
-        p['visible'] = between(pinfo.contestant_role_view_times,datetime.now())
-        p['submittable'] = between(pinfo.contestant_role_submit_times,datetime.now())
-        p['when_view'] = pinfo.contestant_role_view_times
-        p['when_submit'] = pinfo.contestant_role_submit_times
+        p['admin'] = admin
+        if admin:
+            any_admin = True
+            p['select'] = form[str(pinfo.problem_mapping.id)]
+            p['visible'] = between(pinfo.contestant_role_view_times,datetime.now())
+            p['submittable'] = between(pinfo.contestant_role_submit_times,datetime.now())
+            p['when_view'] = pinfo.contestant_role_view_times
+            p['when_submit'] = pinfo.contestant_role_submit_times
         problems.append(p)
-    return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems})
+    return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin })
 
 class ProblemAddForm(forms.Form):
     code = forms.CharField(required=True)

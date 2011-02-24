@@ -25,11 +25,14 @@
 
 <td> 
 <a href="{% url contest_problems_view page_info.contest.id problem.id %}">{{ problem.title }}</a><br/>
+{% if problem.admin %}
 {% if pinfo.visible %} Visible {% endif %}
 {% if pinfo.submittable %} Submittable {% endif %}
+{% endif %}
 </td>
 
 <td> 
+{% if problem.admin %}
 {% if pinfo.when_view %}
 
     {% if pinfo.when_view.start_on %}
@@ -41,9 +44,11 @@
     {% endif %}
     
 {% endif %}
+{% endif %}
 </td>
 
 <td> 
+{% if problem.admin %}
 {% if pinfo.when_submit %}
 
     {% if pinfo.when_submit.start_on %}
@@ -55,11 +60,14 @@
     {% endif %}
     
 {% endif %}
+{% endif %}
 </td>
 
 
 <td>
+{% if problem.admin %}
 <a href={% url contest_problems_edit page_info.contest.id problem.id %}>Edit problem</a>
+{% endif %}
 </td>
 </tr>
 
@@ -67,6 +75,7 @@
 {% endfor %}
 </table>
 
+{% if any_admin %}
 <h4>Mass edit</h4>
 {{form.submitstart.errors}}
 {{form.submitfinish.errors}}
@@ -84,8 +93,9 @@
 <input type="submit" name="revokesubmit" value="Revoke submits"/>
 <input type="submit" name="revokeview" value="Revoke submits AND hide problems"/>
 </form>
+{% endif %}
 
-
+{% if page_info.contest.is_admin %}
 <a href="{% url contest_problems_add page_info.contest.id %}">Add new problem</a>
-
+{% endif %}
 {% endblock %}

@@ -12,7 +12,6 @@ PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 
 contestadminpatterns = patterns('',
     (r'$', 'satori.web.views.contest.admin.manage.view'),
-    (r'contestants$', 'satori.web.views.contest.admin.contestants.view'),
     (r'news/(?P<id>\d+)$', 'satori.web.views.contest.admin.news.view'),
     (r'questions$', 'satori.web.views.contest.contest.admin.questions.view'),
     (r'questions/(?P<id>\d+)$', 'satori.web.views.contest.admin.editquestion.view'),
@@ -41,6 +40,9 @@ contestpatterns = patterns('',
     url(r'subpage/(?P<id>\d+)$', 'satori.web.views.contest.subpage.view', name='contest_subpage'),
     url(r'subpage/(?P<id>\d+)/edit$', 'satori.web.views.contest.subpage.edit', name='contest_subpage_edit'),
     url(r'subpage/(?P<id>\d+)/delete$', 'satori.web.views.contest.subpage.delete', name='contest_subpage_delete'),
+    url(r'contestants$', 'satori.web.views.contest.contestants.view', name='contestants'),
+    url(r'manage$', 'satori.web.views.contest.manage.view', name='contest_manage'),
+    url(r'manage/rights$', 'satori.web.views.contest.manage.rights', name='contest_manage_rights'),
 
 #    (r'^admin/', include(contestadminpatterns)),
 )

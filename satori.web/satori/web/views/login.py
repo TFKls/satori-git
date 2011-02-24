@@ -23,6 +23,7 @@ def view(request, page_info):
                 token_container.set_token(token)
                 return HttpResponseRedirect(reverse('news'))
             except:
+                form.errors['__all__']= 'Login failed!'
                 return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'failed' : True })
     else:
         form = LoginForm()
