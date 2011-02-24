@@ -24,7 +24,7 @@ class RankingParams(Entity):
 #    class ExportMeta(object):
 #        fields = [('ranking', 'VIEW'), ('problem', 'VIEW'), ('test_suite', 'VIEW')]
 
-    def save(*args, **kwargs):
+    def save(self, *args, **kwargs):
         self.fixup_params()
         super(RankingParams, self).save(*args, **kwargs)
 
