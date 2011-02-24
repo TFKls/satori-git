@@ -52,7 +52,7 @@ class Ranking(Entity):
         ranking.forbid_fields(fields, ['id', 'header', 'footer'])
         ranking.update_fields(fields, ['contest', 'name', 'aggregator', 'is_public'])
         ranking.save()
-        self.params_set_map(params)
+        ranking.params_set_map(params)
         for problem in ranking.contest.problem_mappings.all():
             ranking_params = RankingParams.get_or_create(ranking=ranking, problem=problem)
             if problem in problem_test_suites:
