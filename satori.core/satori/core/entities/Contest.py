@@ -159,7 +159,7 @@ class Contest(Entity):
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
     def join(self):
-        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN')), name=token_container.token.role.name), user_list=[token_container.token.user])
+        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN'))), user_list=[token_container.token.user])
 
     @ExportMethod(NoneType, [DjangoId('Contest'), DjangoId('User')], PCArg('self', 'MANAGE'))
     def add_admin(self, user):
