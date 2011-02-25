@@ -1,10 +1,11 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import logging
+from blist import blist, sortedset, sortedlist
 from collections import deque
 from copy import deepcopy
 from datetime import datetime, timedelta
-from blist import blist, sortedset, sortedlist
 from operator import attrgetter
+from xml.dom import minidom
 
 from django.db.models import F
 
@@ -12,9 +13,31 @@ from satori.ars import perf
 from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping, RankingParams
 from satori.events import Event, Client2
 from satori.core.checking.utils import RestTable
+from satori.objects import Namespace
 
 maxint = 2**31 - 1
 max_seconds_per_problem = maxint / 10
+
+def parse_params(description, section, subsection, oa_map):
+    result = Namespace()
+    if not description:
+        return result
+    xml = minidom.parse(u'\n'.join([line for line in description.splitlines() if line[0:2] == '#@']))
+    if not xml:
+        return result
+    xml = xml.getElementsByTagNameNS('*', section)
+    if not xml:
+        return result
+    xml = xml[0].getElementsByTagNameNS('*', subsection)
+    if not xml:
+        return result
+    xml = xml[0]
+    for param in xml.getElementsByTagNameNS('*', 'param'):
+        ptype = param.getAttribute('type')
+        pname = param.getAttribute('name')
+        pdefault = param.getAttribute('default')
+        result[pname] = None
+    return result
 
 class AggregatorBase(object):
     def __init__(self, supervisor, ranking):
@@ -26,11 +49,14 @@ class AggregatorBase(object):
         self.problem_cache = {}
         self.submit_cache = {}
         self.scores = {}
+        self.params = Namespace()
+        self.problem_params = {}
 
     def init(self):
-        self.hide_invisible = (self.ranking.oa_get_str('hide_invisible') or '0') == '1'
+        self.params = parse_params(self.__doc__, 'aggregator', 'general', self.ranking.params_get_map())
 
         for rp in RankingParams.objects.filter(ranking=self.ranking):
+            self.problem_params[rp.problem_id] = parse_params(self.__doc__, 'aggregator', 'problem', rp.params_get_map())
             if rp.test_suite:
                 self.test_suites[rp.problem_id] = rp.test_suite
 
@@ -51,7 +77,7 @@ class AggregatorBase(object):
                 self.scores[c.id] = self.get_score()
 
             self.scores[c.id].contestant = c
-            self.scores[c.id].hidden = c.invisible and self.hide_invisible
+            self.scores[c.id].hidden = c.invisible and self.params.hide_invisible
             if c.id in ranking_entry_cache:
                 self.scores[c.id].ranking_entry = ranking_entry_cache[c.id]
             else:
@@ -84,6 +110,22 @@ class AggregatorBase(object):
 
 
 class ACMAggregator(AggregatorBase):
+    """
+#@<aggregator name="ACM style aggregator">
+#@      <general>
+#@              <param type="bool"     name="hide_invisible" description="Hide invisible submits" required="true" default="true"/>
+#@              <param type="datetime" name="time_start"     description="Submission start time"/>
+#@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
+#@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" required="true" default="1200s"/>
+#@              <param type="int"      name="max_stars"      description="Maximal number of stars" required="true" default="4"/>
+#@      </general>
+#@      <problem>
+#@              <param type="float"    name="score"          description="Score" required="true" default="1"/>
+#@              <param type="datetime" name="time_start"     description="Submission start time"/>
+#@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
+#@      </problem>
+#@</aggregator>
+    """
     class ACMScore(object):
         class ACMProblemScore(object):
             def __init__(self, score, problem):
@@ -93,26 +135,31 @@ class ACMAggregator(AggregatorBase):
                 self.ok_time = timedelta()
                 self.result_list = sortedlist()
                 self.problem = problem
+                self.params = self.score.aggregator.problem_params[problem.id]
 
             def aggregate(self, result):
+                time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') == 'OK'
+                if self.params.time_stop and time > self.params.time_stop:
+                    return
                 if ok:
                     self.ok = True
-                self.result_list.add((self.score.aggregator.submit_cache[result.submit_id].time, ok))
+                self.result_list.add((time, ok))
+                self.result_list.sort()
                 if self.ok:
                     self.star_count = 0
                     for (time, ok) in self.result_list:
                         if ok:
-                            if self.score.aggregator.time_start:
-                                self.ok_time = time - self.score.aggregator.time_start
+                            if self.params.time_start and time > self.params.time_start:
+                                self.ok_time = time - self.params.time_start
                             else:
-                                self.ok_time = time - datetime.min
+                                self.ok_time = timedelta()
                             break
                         self.star_count += 1
 
             def get_str(self):
                 if self.star_count > 0:
-                    if self.star_count < self.score.aggregator.star_collapse:
+                    if self.star_count <= self.score.aggregator.params.max_stars:
                         return self.problem.code + '*' * self.star_count
                     else:
                         return self.problem.code + '\\ :sup:`(' + str(self.star_count) + ')`\\'
@@ -132,11 +179,8 @@ class ACMAggregator(AggregatorBase):
                 self.ranking_entry.position = maxint
                 self.ranking_entry.save()
             else:
-                points = len([s for s in score_list])
-                if self.aggregator.time_start:
-                    time = sum([s.ok_time + self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
-                else:
-                    time = sum([self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
+                points = int(sum([s.params.score for s in score_list]))
+                time = sum([s.ok_time + self.aggregator.time_penalty * s.star_count for s in score_list], timedelta(0))
                 time_seconds = (time.microseconds + (time.seconds + time.days * 24 * 3600) * 10**6) / 10**6
                 time_str = str(timedelta(seconds=time_seconds))
                 problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
@@ -162,15 +206,7 @@ class ACMAggregator(AggregatorBase):
 
     def init(self):
         super(ACMAggregator, self).init()
-        
-        time_start = self.ranking.oa_get_str('time_start')
-        if time_start:
-            self.time_start = datetime.strptime(time_start, '%Y-%m-%d %H:%M:%S')
-        else:
-            self.time_start = None
-        self.star_penalty = timedelta(minutes=int(self.ranking.oa_get_str('star_penalty') or '20'))
-        self.star_collapse = int(self.ranking.oa_get_str('star_collapse') or '5')
-        
+
         self.table = RestTable((5, 'Lp.'), (20, 'Name'), (5, 'Score'), (15, 'Time'), (20, 'Tasks'))
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator

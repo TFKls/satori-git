@@ -2,14 +2,22 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#@<checker name="Default judge">
-#@    <input>
-#@        <value name="time" description="Time limit (miliseconds)" required="true"/>
-#@        <value name="memory" description="Memory limit (bytes)" required="true" default="268435456"/>
-#@        <file name="input" description="Input file" required="true"/>
-#@        <file name="hint" description="Output/hint file" required="false"/>
-#@        <file name="checker" description="Specific checker" required="false"/>
-#@    </input>
+#@<checker name="ACM style judge script">
+#@      <input>
+#@              <param type="time" name="time" description="Time limit" required="true" default="10s"/>
+#@              <param type="size" name="memory" description="Memory limit" required="true" default="256MB"/>
+#@              <param type="blob" name="input" description="Input file" required="false"/>
+#@              <param type="blob" name="hint" description="Output/hint file" required="false"/>
+#@              <param type="blob" name="checker" description="Specific checker" required="false"/>
+#@      </input>
+#@      <output>
+#@              <param type="text" name="status" description="Status" required="true"/>
+#@              <param type="blob" name="compile_log" description="Compilation log"/>
+#@              <param type="time" name="execute_time_real" description="Execution time"/>
+#@              <param type="time" name="execute_time_cpu" description="Execution CPU time"/>
+#@              <param type="size" name="execute_memory" description="Execution memory"/>
+#@              <param type="blob" name="check_log" description="Checker log" required="false"/>
+#@      </output>
 #@</checker>
 
 import datetime
@@ -165,13 +173,9 @@ compile_run = ["runner", "--quiet",
       "--stdout=/compile.log", "--trunc-stdout",
       "--stderr=__STDOUT__",
       "--priority=30"]
-if options.debug:
-    compile_run += [ '--debug', '/compile.debug.log' ]
 compile_run += compiler
 ret = subprocess.call(compile_run)
-communicate('SETBLOB', {'name': 'compile.log', 'path': '/compile.log'})
-if options.debug:
-    communicate('SETBLOB', {'name': 'compile.debug.log', 'path': '/compile.debug.log'})
+communicate('SETBLOB', {'name': 'compile_log', 'path': '/compile.log'})
 if ret:
     communicate('SETSTRING', {'name': 'status', 'value': 'CME'})
     sys.exit(0)
@@ -200,18 +204,20 @@ execute_run = ["runner",
       "--stderr=/dev/null",
       "--memlock",
       "--priority=30"]
-if options.debug:
-    execute_run += [ '--debug', '/execute.debug.log' ]
 execute_run += [ os.path.join('/', options.directory, exec_file) ]
 res = subprocess.Popen(execute_run, stdout = subprocess.PIPE).communicate()[0];
-ret = res.split()[0]
-communicate('SETSTRING', {'name': 'execute.log', 'value': res})
-if options.debug:
-    communicate('SETBLOB', {'name': 'execute.debug.log', 'path': '/execute.debug.log'})
+ret = res.splitlines()[0]
+stats = {}
+for line in res.splitlines()[1:]:
+    key = line.split(':')[0].strip().lower()
+    value = u':'.join(line.split(':')[1:]).strip()
+    stats[key] = value
+communicate('SETSTRING', {'name': 'execute_time_real', 'value': str(float(stats['time'])/1000)})
+communicate('SETSTRING', {'name': 'execute_time_cpu', 'value': str(float(stats['cpu'])/1000)})
+communicate('SETSTRING', {'name': 'execute_memory', 'value': str(int(stats['memory']))})
 if ret != "OK":
     communicate('SETSTRING', {'name': 'status', 'value': ret})
     sys.exit(0)
-
 
 #TEST
 communicate('GETTESTBLOB', {'name': 'hint', 'path': '/tmp/data.hint'})
@@ -242,13 +248,9 @@ check_run = ["runner",
       "--stdout=/check.log", "--trunc-stdout",
       "--stderr=__STDOUT__",
       "--priority=30"]
-if options.debug:
-    check_run += [ '--debug', '/check.debug.log' ]
 check_run += checker
 ret = subprocess.call(check_run)
-communicate('SETBLOB', {'name': 'check.log', 'path': '/check.log'})
-if options.debug:
-    communicate('SETBLOB', {'name': 'check.debug.log', 'path': '/check.debug.log'})
+communicate('SETBLOB', {'name': 'check_log', 'path': '/check.log'})
 if ret != 0:
     communicate('SETSTRING', {'name': 'status', 'value': 'ANS'})
     sys.exit(0)
