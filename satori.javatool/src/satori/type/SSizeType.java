@@ -5,9 +5,9 @@ import satori.common.SAssert;
 public enum SSizeType implements SType {
 	INSTANCE;
 	
-	private final long KILO = 1024;
-	private final long MEGA = 1024*1024;
-	private final long GIGA = 1024*1024*1024;
+	private static final long KILO = 1024;
+	private static final long MEGA = 1024*1024;
+	private static final long GIGA = 1024*1024*1024;
 	
 	@Override public boolean isValid(Object obj) {
 		try { getRaw(obj); }
