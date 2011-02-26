@@ -6,9 +6,6 @@ import satori.common.SAssert;
 public enum SBlobType implements SType {
 	INSTANCE;
 	
-	@Override public boolean matchType(Object obj) {
-		return obj instanceof SBlob;
-	}
 	@Override public boolean isValid(Object obj) {
 		SAssert.assertTrue(obj instanceof SBlob, "Incorrect argument type");
 		return true;

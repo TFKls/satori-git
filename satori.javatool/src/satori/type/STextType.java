@@ -5,9 +5,6 @@ import satori.common.SAssert;
 public enum STextType implements SType {
 	INSTANCE;
 	
-	@Override public boolean matchType(Object obj) {
-		return obj instanceof String;
-	}
 	@Override public boolean isValid(Object obj) {
 		SAssert.assertTrue(obj instanceof String, "Incorrect argument type");
 		return true;
