@@ -1,9 +1,13 @@
 package satori.type;
 
+import java.text.DecimalFormat;
+
 import satori.common.SAssert;
 
 public enum STimeType implements SType {
 	INSTANCE;
+	
+	private static final DecimalFormat fmt = new DecimalFormat("0.###");
 	
 	@Override public boolean isValid(Object obj) {
 		try { getRaw(obj); }
@@ -32,6 +36,6 @@ public enum STimeType implements SType {
 		try { time = Long.valueOf(str); }
 		catch(NumberFormatException ex) { throw new STypeException("Invalid attribute data: " + str); }
 		if (time <= 0) throw new STypeException("Invalid attribute data: " + str);
-		return String.valueOf(time*0.001) + "s";
+		return fmt.format(time*0.001) + "s";
 	}
 }
