@@ -44,7 +44,7 @@ class Contest(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_contest')
 
-    name            = models.CharField(max_length=50, unique=True)
+    name            = models.CharField(max_length=64, unique=True)
     problems        = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
     contestant_role = models.ForeignKey('Role', related_name='contest_contestants+')
     admin_role      = models.ForeignKey('Role', related_name='contest_admins+')
@@ -159,7 +159,7 @@ class Contest(Entity):
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
     def join(self):
-        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN')), name=token_container.token.role.name), user_list=[token_container.token.user])
+        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN'))), user_list=[token_container.token.user])
 
     @ExportMethod(NoneType, [DjangoId('Contest'), DjangoId('User')], PCArg('self', 'MANAGE'))
     def add_admin(self, user):

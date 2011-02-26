@@ -1,0 +1,11 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+<form action="{% url contest_manage_rights page_info.contest.id %}" method="POST"/>
+<table>
+{{ rights_form.as_table }}
+</table>
+<input type="submit"/>
+</form>
+{% endblock %}

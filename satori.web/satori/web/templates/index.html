@@ -9,6 +9,8 @@
   <link rel="stylesheet" href="/files/default.css" />
   <link rel="stylesheet" href="/files/pygments.css" />
   <link rel="stylesheet" href="/files/html4css1.css" />
+  {% block header %}
+  {% endblock %}
 </head>
 <body>
     <div id="cover">
@@ -60,14 +62,8 @@
             </div> 
         </div>
         <div id="footer">
-        <!--            Debug:
-                <ul>
-                    {% for key, v in widget.params.items %}
-                    <li> {{ key }}: {{v}} </li>
-                    {% endfor %}
-                </ul> -->
 
-        </div>  
+        </div>
     </div>
 </body>
 </html>

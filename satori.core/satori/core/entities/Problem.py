@@ -11,7 +11,7 @@ class Problem(Entity):
     """
     parent_entity     = models.OneToOneField(Entity, parent_link=True, related_name='cast_problem')
 
-    name              = models.CharField(max_length=50, unique=True)
+    name              = models.CharField(max_length=64, unique=True)
     description       = models.TextField(blank=True, default="")
     statement         = models.TextField(blank=True, default="")
     submit_fields     = models.TextField(blank=True, default="")

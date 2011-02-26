@@ -14,7 +14,7 @@ class TestSuiteResult(Entity):
     submit        = models.ForeignKey('Submit', related_name='test_suite_results')
     test_suite    = models.ForeignKey('TestSuite', related_name='test_suite_results')
     pending       = models.BooleanField(default=True)
-    status        = models.CharField(max_length=50)
+    status        = models.CharField(max_length=64)
     report        = models.TextField()
 
     class Meta:                                                # pylint: disable-msg=C0111
