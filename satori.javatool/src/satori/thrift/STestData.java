@@ -114,22 +114,24 @@ public class STestData {
 	}
 	
 	private static class SaveCommand implements SThriftCommand {
+		private final long id;
 		private final TestStruct test;
 		private final Map<String, AnonymousAttribute> data;
-		public SaveCommand(TestStruct test, Map<String, AnonymousAttribute> data) {
+		public SaveCommand(long id, TestStruct test, Map<String, AnonymousAttribute> data) {
+			this.id = id;
 			this.test = test;
 			this.data = data;
 		}
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			iface.Test_modify_full(SSession.getToken(), test.getId(), test, data);
+			iface.Test_modify_full(SSession.getToken(), id, test, data);
 		}
 	}
 	public static void save(STestReader test) throws SException {
 		Map<String, Object> raw_data = createRawAttrMap(test.getInput());
 		raw_data.put("judge", test.getJudge());
 		createBlobs(raw_data);
-		SThriftClient.call(new SaveCommand(createStruct(test), convertAttrMap(raw_data)));
+		SThriftClient.call(new SaveCommand(test.getId(), createStruct(test), convertAttrMap(raw_data)));
 	}
 	
 	private static class DeleteCommand implements SThriftCommand {
