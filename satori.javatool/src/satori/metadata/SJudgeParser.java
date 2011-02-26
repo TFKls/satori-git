@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -22,7 +23,10 @@ import org.xml.sax.SAXException;
 import satori.blob.SBlob;
 import satori.common.SException;
 import satori.type.SBlobType;
+import satori.type.SSizeType;
 import satori.type.STextType;
+import satori.type.STimeType;
+import satori.type.SType;
 
 public class SJudgeParser {
 	@SuppressWarnings("serial")
@@ -42,7 +46,15 @@ public class SJudgeParser {
 		public List<SOutputMetadata> getOutputMetadata() { return output_meta; }
 	}
 	
-	private static SInputMetadata parseInputValue(Element node) throws ParseException {
+	private static SInputMetadata parseInputParam(Element node) throws ParseException {
+		String type_str = node.getAttribute("type");
+		if (type_str.isEmpty()) throw new ParseException("Input type undefined");
+		SType type;
+		if (type_str.equals("text")) type = STextType.INSTANCE;
+		else if (type_str.equals("time")) type = STimeType.INSTANCE;
+		else if (type_str.equals("size")) type = SSizeType.INSTANCE;
+		else if (type_str.equals("blob")) type = SBlobType.INSTANCE;
+		else throw new ParseException("Unsupported input type: " + type_str);
 		String name = node.getAttribute("name");
 		if (name.isEmpty()) throw new ParseException("Input name undefined");
 		String desc = node.getAttribute("description");
@@ -52,18 +64,7 @@ public class SJudgeParser {
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
 		String def_value = node.getAttribute("default");
 		if (def_value.isEmpty()) def_value = null;
-		return new SInputMetadata(name, desc, STextType.INSTANCE, required.equals("true"), def_value); 
-	}
-	
-	private static SInputMetadata parseInputFile(Element node) throws ParseException {
-		String name = node.getAttribute("name");
-		if (name.isEmpty()) throw new ParseException("Input name undefined");
-		String desc = node.getAttribute("description");
-		if (desc.isEmpty()) throw new ParseException("Input description undefined");
-		String required = node.getAttribute("required");
-		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
-		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
-		return new SInputMetadata(name, desc, SBlobType.INSTANCE, required.equals("true"), null);
+		return new SInputMetadata(name, desc, type, required.equals("true"), def_value); 
 	}
 	
 	/*private static OutputMetadata parseOutput(Element node) throws ParseException {
@@ -109,14 +110,9 @@ public class SJudgeParser {
 	
 	private static List<SInputMetadata> parseInputs(Element node) throws ParseException {
 		List<SInputMetadata> result = new ArrayList<SInputMetadata>();
-		NodeList children = node.getElementsByTagName("*");
-		for (int i = 0; i < children.getLength(); ++i) {
-			Element child = (Element)children.item(i);
-			if (child.getNodeName().equals("value")) result.add(parseInputValue(child));
-			else if (child.getNodeName().equals("file")) result.add(parseInputFile(child));
-			else throw new ParseException("Incorrect input type: " + child.getNodeName());
-		}
-		return result;
+		NodeList children = node.getElementsByTagName("param");
+		for (int i = 0; i < children.getLength(); ++i) result.add(parseInputParam((Element)children.item(i)));
+		return Collections.unmodifiableList(result);
 	}
 	
 	private static Result parse(Document doc) throws ParseException {
