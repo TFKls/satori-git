@@ -46,7 +46,7 @@ public class STestResult {
 	
 	public void run() throws SException {
 		if (solution.get() == null) return;
-		id.set(STemporarySubmitData.create(solution.get(), test.getData()));
+		id.set(STemporarySubmitData.create(solution.get(), test));
 		status = Status.PENDING;
 		message = null;
 		updateViews();
@@ -59,7 +59,7 @@ public class STestResult {
 			message = null;
 		} else {
 			status = Status.FINISHED;
-			message = source.getResult().getString("status");
+			message = source.getStatus();
 		}
 		updateViews();
 	}

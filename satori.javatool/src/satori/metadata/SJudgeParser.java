@@ -1,8 +1,12 @@
-package satori.test.meta;
+package satori.metadata;
 
 import java.io.File;
 import java.io.IOException;
 import java.io.StringReader;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -15,15 +19,27 @@ import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
 import org.xml.sax.SAXException;
 
-import satori.attribute.SAttribute;
-import satori.attribute.SStringAttribute;
+import satori.blob.SBlob;
 import satori.common.SException;
+import satori.type.SBlobType;
+import satori.type.STextType;
 
-class SXmlParser {
+public class SJudgeParser {
 	@SuppressWarnings("serial")
 	public static class ParseException extends SException {
 		ParseException(String msg) { super(msg); }
 		ParseException(Exception ex) { super(ex); }
+	}
+	
+	public static class Result {
+		private final List<SInputMetadata> input_meta;
+		private final List<SOutputMetadata> output_meta;
+		public Result(List<SInputMetadata> input_meta, List<SOutputMetadata> output_meta) {
+			this.input_meta = input_meta;
+			this.output_meta = output_meta;
+		}
+		public List<SInputMetadata> getInputMetadata() { return input_meta; }
+		public List<SOutputMetadata> getOutputMetadata() { return output_meta; }
 	}
 	
 	private static SInputMetadata parseInputValue(Element node) throws ParseException {
@@ -34,9 +50,9 @@ class SXmlParser {
 		String required = node.getAttribute("required");
 		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
-		String def_str = node.getAttribute("default");
-		SAttribute def_value = def_str.isEmpty() ? null : new SStringAttribute(def_str);
-		return new SInputMetadata(name, desc, false, required.equals("true"), def_value, null); 
+		String def_value = node.getAttribute("default");
+		if (def_value.isEmpty()) def_value = null;
+		return new SInputMetadata(name, desc, STextType.INSTANCE, required.equals("true"), def_value); 
 	}
 	
 	private static SInputMetadata parseInputFile(Element node) throws ParseException {
@@ -47,8 +63,7 @@ class SXmlParser {
 		String required = node.getAttribute("required");
 		if (required.isEmpty()) throw new ParseException("Input required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid input required mode: " + required); 
-		SAttribute def_value = null;
-		return new SInputMetadata(name, desc, true, required.equals("true"), def_value, null);
+		return new SInputMetadata(name, desc, SBlobType.INSTANCE, required.equals("true"), null);
 	}
 	
 	/*private static OutputMetadata parseOutput(Element node) throws ParseException {
@@ -92,27 +107,27 @@ class SXmlParser {
 		return stage;
 	}*/
 	
-	private static STestMetadata parseInputs(Element node) throws ParseException {
-		STestMetadata testcase = new STestMetadata();
+	private static List<SInputMetadata> parseInputs(Element node) throws ParseException {
+		List<SInputMetadata> result = new ArrayList<SInputMetadata>();
 		NodeList children = node.getElementsByTagName("*");
 		for (int i = 0; i < children.getLength(); ++i) {
 			Element child = (Element)children.item(i);
-			if (child.getNodeName().equals("value")) testcase.addInput(parseInputValue(child));
-			else if (child.getNodeName().equals("file")) testcase.addInput(parseInputFile(child));
+			if (child.getNodeName().equals("value")) result.add(parseInputValue(child));
+			else if (child.getNodeName().equals("file")) result.add(parseInputFile(child));
 			else throw new ParseException("Incorrect input type: " + child.getNodeName());
 		}
-		return testcase;
+		return result;
 	}
 	
-	private static STestMetadata parse(Document doc) throws ParseException {
+	private static Result parse(Document doc) throws ParseException {
 		doc.normalizeDocument();
 		Element node = doc.getDocumentElement();
-		NodeList children = node.getElementsByTagName("input");
-		if (children.getLength() != 1) throw new ParseException("Incorrect number of input groups");
-		return parseInputs((Element)children.item(0));
+		NodeList input_children = node.getElementsByTagName("input");
+		if (input_children.getLength() != 1) throw new ParseException("Incorrect number of input groups");
+		List<SInputMetadata> input_meta = parseInputs((Element)input_children.item(0));
+		return new Result(input_meta, null);
 	}
-	
-	public static STestMetadata parse(String str) throws ParseException {
+	private static Result parse(String str) throws ParseException {
 		InputSource is = new InputSource();
 		is.setCharacterStream(new StringReader(str));
 		try { return parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is)); }
@@ -120,8 +135,7 @@ class SXmlParser {
 		catch(SAXException ex) { throw new ParseException(ex); }
 		catch(ParserConfigurationException ex) { throw new ParseException(ex); }
 	}
-	
-	public static STestMetadata parseJudge(File file) throws ParseException {
+	private static Result parse(File file) throws ParseException {
 		StringBuilder xml = new StringBuilder();
 		LineIterator line_iter = null;
 		try {
@@ -134,5 +148,23 @@ class SXmlParser {
 		catch(IOException ex) { throw new ParseException(ex); }
 		finally { LineIterator.closeQuietly(line_iter); }
 		return parse(xml.toString());
+	}
+	
+	private static Map<String, Result> meta = new HashMap<String, Result>();
+	
+	public static Result parseJudge(SBlob judge) throws SException {
+		if (meta.containsKey(judge.getHash())) return meta.get(judge.getHash());
+		File file = judge.getFile();
+		boolean delete = false;
+		if (file == null) {
+			try { file = File.createTempFile("judge", null); }
+			catch(IOException ex) { throw new SException(ex); }
+			judge.saveLocal(file);
+			delete = true;
+		}
+		Result result = SJudgeParser.parse(file);
+		if (delete) file.delete();
+		meta.put(judge.getHash(), result);
+		return result;
 	}
 }

@@ -1,9 +1,10 @@
 package satori.test.impl;
 
-import satori.attribute.SAttributeMap;
-import satori.attribute.SAttributeReader;
-import satori.attribute.SBlobAttribute;
-import satori.attribute.SStringAttribute;
+import java.util.Collections;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
 import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SDataStatus;
@@ -14,10 +15,12 @@ import satori.common.SListener0List;
 import satori.common.SReference;
 import satori.common.SView;
 import satori.common.SViewList;
+import satori.metadata.SInputMetadata;
+import satori.metadata.SJudgeParser;
+import satori.metadata.SOutputMetadata;
 import satori.problem.SParentProblem;
 import satori.test.STestReader;
 import satori.test.STestSnap;
-import satori.test.meta.STestMetadata;
 import satori.thrift.STestData;
 
 public class STestImpl implements STestReader {
@@ -25,8 +28,10 @@ public class STestImpl implements STestReader {
 	private SId id;
 	private SParentProblem problem;
 	private String name;
-	private SAttributeMap attrs;
-	private STestMetadata meta;
+	private SBlob judge;
+	private List<SInputMetadata> input_meta;
+	private List<SOutputMetadata> output_meta;
+	private Map<SInputMetadata, Object> input;
 	
 	private final SDataStatus status = new SDataStatus();
 	private final SListener0List data_modified_listeners = new SListener0List();
@@ -41,9 +46,11 @@ public class STestImpl implements STestReader {
 	@Override public long getId() { return id.get(); }
 	@Override public long getProblemId() { return problem.getId(); }
 	@Override public String getName() { return name; }
-	@Override public SAttributeReader getData() { return attrs; }
-	public SBlob getJudge() { return attrs.getBlob("judge"); }
-	public STestMetadata getMetadata() { return meta; }
+	@Override public SBlob getJudge() { return judge; }
+	@Override public List<SInputMetadata> getInputMetadata() { return input_meta; }
+	@Override public List<SOutputMetadata> getOutputMetadata() { return output_meta; }
+	@Override public Map<SInputMetadata, Object> getInput() { return Collections.unmodifiableMap(input); }
+	public Object getInput(SInputMetadata meta) { return input.get(meta); }
 	public boolean isRemote() { return hasId(); }
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
@@ -59,8 +66,10 @@ public class STestImpl implements STestReader {
 		self.id = new SId(snap.getId());
 		self.problem = problem;
 		self.name = snap.getName();
-		self.attrs = SAttributeMap.create(snap.getData());
-		self.meta = STestMetadata.get(self.attrs.getBlob("judge"));
+		self.judge = snap.getJudge();
+		self.input_meta = snap.getInputMetadata();
+		self.output_meta = snap.getOutputMetadata();
+		self.input = new HashMap<SInputMetadata, Object>(snap.getInput());
 		return self;
 	}
 	public static STestImpl createNew(SParentProblem problem) {
@@ -68,8 +77,10 @@ public class STestImpl implements STestReader {
 		self.id = new SId();
 		self.problem = problem;
 		self.name = "";
-		self.meta = STestMetadata.getDefault();
-		self.attrs = SAttributeMap.createEmpty();
+		self.judge = null;
+		self.input_meta = Collections.emptyList();
+		self.output_meta = Collections.emptyList();
+		self.input = Collections.emptyMap();
 		return self;
 	}
 	
@@ -77,7 +88,9 @@ public class STestImpl implements STestReader {
 		SAssert.assertEquals(source.getId(), getId(), "Test ids don't match");
 		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		if (!source.getName().equals(name)) return true;
-		if (!attrs.equals(source.getData())) return true;
+		if (source.getJudge() == null && judge != null) return true;
+		if (source.getJudge() != null && !source.getJudge().equals(judge)) return true;
+		if (!input.equals(source.getInput())) return true;
 		return false;
 	}
 	
@@ -96,31 +109,29 @@ public class STestImpl implements STestReader {
 		this.name = name;
 		notifyModified();
 	}
-	public void setDataString(String name, String value) {
-		String old_value = attrs.getString(name);
-		if (value == null && old_value == null) return;
-		if (value != null && value.equals(old_value)) return;
-		attrs.setAttr(name, value != null ? new SStringAttribute(value) : null);
-		notifyModified();
-		callDataModifiedListeners();
-	}
-	public void setDataBlob(String name, SBlob blob) {
-		SBlob old_blob = attrs.getBlob(name);
-		if (blob == null && old_blob == null) return;
-		if (blob != null && blob.equals(old_blob)) return;
-		attrs.setAttr(name, blob != null ? new SBlobAttribute(blob) : null);
-		notifyModified();
-		callDataModifiedListeners();
-	}
 	public void setJudge(SBlob judge) throws SException {
-		SBlob old_judge = attrs.getBlob("judge");
-		if (judge == null && old_judge == null) return;
-		if (judge != null && judge.equals(old_judge)) return;
-		meta = STestMetadata.get(judge);
-		attrs = SAttributeMap.createEmpty();
-		attrs.setAttr("judge", judge != null ? new SBlobAttribute(judge) : null);
+		if (judge == null && this.judge == null) return;
+		if (judge != null && judge.equals(this.judge)) return;
+		SJudgeParser.Result parse_result = SJudgeParser.parseJudge(judge);
+		this.judge = judge;
+		input_meta = parse_result.getInputMetadata();
+		output_meta = parse_result.getOutputMetadata();
+		input = new HashMap<SInputMetadata, Object>();
+		for (SInputMetadata meta : input_meta) {
+			Object def_value = meta.getDefaultValue();
+			if (def_value != null) input.put(meta, def_value);
+		}
 		notifyModified();
 		callMetadataModifiedListeners();
+		callDataModifiedListeners();
+	}
+	public void setInput(SInputMetadata meta, Object value) {
+		Object old_value = input.get(meta);
+		if (value == null && old_value == null) return;
+		if (value != null && value.equals(old_value)) return;
+		if (value != null) input.put(meta, value);
+		else input.remove(meta);
+		notifyModified();
 		callDataModifiedListeners();
 	}
 	
@@ -153,7 +164,10 @@ public class STestImpl implements STestReader {
 		SAssert.assertTrue(isRemote(), "Test not remote");
 		snap.reload();
 		name = snap.getName();
-		attrs = SAttributeMap.create(snap.getData());
+		judge = snap.getJudge();
+		input_meta = snap.getInputMetadata();
+		output_meta = snap.getOutputMetadata();
+		input = new HashMap<SInputMetadata, Object>(snap.getInput());
 		notifyUpToDate();
 		callDataModifiedListeners();
 	}

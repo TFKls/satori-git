@@ -1,19 +1,24 @@
 package satori.thrift;
 
-import static satori.thrift.SAttributeData.createAttrMap;
+import static satori.thrift.SAttributeData.convertAttrMap;
 import static satori.thrift.SAttributeData.createBlobs;
+import static satori.thrift.SAttributeData.createFormattedAttrMap;
+import static satori.thrift.SAttributeData.createRawAttrMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
-import satori.attribute.SAttributeReader;
-import satori.common.SAssert;
+import satori.blob.SBlob;
 import satori.common.SException;
+import satori.metadata.SInputMetadata;
+import satori.metadata.SJudgeParser;
+import satori.metadata.SOutputMetadata;
 import satori.session.SSession;
 import satori.test.STestBasicReader;
 import satori.test.STestReader;
-import satori.thrift.SAttributeData.AttributeWrap;
+import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.Test;
 import satori.thrift.gen.TestStruct;
 
@@ -27,10 +32,30 @@ public class STestData {
 		@Override public String getName() { return struct.getName(); }
 	}
 	static class TestWrap extends TestBasicWrap implements STestReader {
-		private SAttributeReader data;
-		public TestWrap(TestStruct struct) { super(struct); }
-		public void setData(SAttributeReader data) { this.data = data; }
-		@Override public SAttributeReader getData() { return data; }
+		private SBlob judge;
+		private List<SInputMetadata> input_meta;
+		private List<SOutputMetadata> output_meta;
+		private Map<SInputMetadata, Object> input;
+		public TestWrap(TestStruct struct, Map<String, AnonymousAttribute> data) throws SException {
+			super(struct);
+			AnonymousAttribute judge_attr = data.get("judge");
+			if (judge_attr == null) {
+				judge = null;
+				input_meta = Collections.emptyList();
+				output_meta = Collections.emptyList();
+				input = Collections.emptyMap();
+			} else {
+				judge = SBlob.createRemote(judge_attr.getFilename(), judge_attr.getValue());
+				SJudgeParser.Result parse_result = SJudgeParser.parseJudge(judge);
+				input_meta = parse_result.getInputMetadata();
+				output_meta = parse_result.getOutputMetadata();
+				input = Collections.unmodifiableMap(createFormattedAttrMap(input_meta, data));
+			}
+		}
+		@Override public SBlob getJudge() { return judge; }
+		@Override public List<SInputMetadata> getInputMetadata() { return input_meta; }
+		@Override public List<SOutputMetadata> getOutputMetadata() { return output_meta; }
+		@Override public Map<SInputMetadata, Object> getInput() { return input; }
 	}
 	
 	static List<STestBasicReader> createTestList(List<TestStruct> structs) {
@@ -41,19 +66,21 @@ public class STestData {
 	
 	private static class LoadCommand implements SThriftCommand {
 		private final long id;
-		private TestWrap result;
-		public STestReader getResult() { return result; }
+		private TestStruct test;
+		private Map<String, AnonymousAttribute> data;
+		public TestStruct getTest() { return test; }
+		public Map<String, AnonymousAttribute> getData() { return data; }
 		public LoadCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			result = new TestWrap(iface.Test_get_struct(SSession.getToken(), id));
-			result.setData(new AttributeWrap(iface.Test_data_get_map(SSession.getToken(), id)));
+			test = iface.Test_get_struct(SSession.getToken(), id);
+			data = iface.Test_data_get_map(SSession.getToken(), id);
 		}
 	}
 	public static STestReader load(long id) throws SException {
 		LoadCommand command = new LoadCommand(id);
 		SThriftClient.call(command);
-		return command.getResult();
+		return new TestWrap(command.getTest(), command.getData());
 	}
 	
 	private static TestStruct createStruct(STestBasicReader test) {
@@ -64,35 +91,45 @@ public class STestData {
 	}
 	
 	private static class CreateCommand implements SThriftCommand {
-		private final STestReader test;
+		private final TestStruct test;
+		private final Map<String, AnonymousAttribute> data;
 		private long result;
 		public long getResult() { return result; }
-		public CreateCommand(STestReader test) { this.test = test; }
+		public CreateCommand(TestStruct test, Map<String, AnonymousAttribute> data) {
+			this.test = test;
+			this.data = data;
+		}
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			result = iface.Test_create(SSession.getToken(), createStruct(test), createAttrMap(test.getData())).getId();
+			result = iface.Test_create(SSession.getToken(), test, data).getId();
 		}
 	}
 	public static long create(STestReader test) throws SException {
-		SAssert.assertNotNull(test.getData(), "Attribute map is null");
-		createBlobs(test.getData());
-		CreateCommand command = new CreateCommand(test);
+		Map<String, Object> raw_data = createRawAttrMap(test.getInput());
+		raw_data.put("judge", test.getJudge());
+		createBlobs(raw_data);
+		CreateCommand command = new CreateCommand(createStruct(test), convertAttrMap(raw_data));
 		SThriftClient.call(command);
 		return command.getResult();
 	}
 	
 	private static class SaveCommand implements SThriftCommand {
-		private final STestReader test;
-		public SaveCommand(STestReader test) { this.test = test; }
+		private final TestStruct test;
+		private final Map<String, AnonymousAttribute> data;
+		public SaveCommand(TestStruct test, Map<String, AnonymousAttribute> data) {
+			this.test = test;
+			this.data = data;
+		}
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			iface.Test_modify_full(SSession.getToken(), test.getId(), createStruct(test), createAttrMap(test.getData()));
+			iface.Test_modify_full(SSession.getToken(), test.getId(), test, data);
 		}
 	}
 	public static void save(STestReader test) throws SException {
-		SAssert.assertNotNull(test.getData(), "Attribute map is null");
-		createBlobs(test.getData());
-		SThriftClient.call(new SaveCommand(test));
+		Map<String, Object> raw_data = createRawAttrMap(test.getInput());
+		raw_data.put("judge", test.getJudge());
+		createBlobs(raw_data);
+		SThriftClient.call(new SaveCommand(createStruct(test), convertAttrMap(raw_data)));
 	}
 	
 	private static class DeleteCommand implements SThriftCommand {
@@ -109,21 +146,21 @@ public class STestData {
 	
 	private static class ListCommand implements SThriftCommand {
 		private final long problem_id;
-		private List<STestBasicReader> result;
+		private List<TestStruct> list;
 		public ListCommand(long problem_id) { this.problem_id = problem_id; }
-		public List<STestBasicReader> getResult() { return result; }
+		public List<TestStruct> getList() { return list; }
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
 			TestStruct filter = new TestStruct();
 			filter.setProblem(problem_id);
-			List<TestStruct> list = iface.Test_filter(SSession.getToken(), filter);
-			result = new ArrayList<STestBasicReader>();
-			for (TestStruct struct : list) result.add(new TestBasicWrap(struct));
+			list = iface.Test_filter(SSession.getToken(), filter);
 		}
 	}
 	public static List<STestBasicReader> list(long problem_id) throws SException {
 		ListCommand command = new ListCommand(problem_id);
 		SThriftClient.call(command);
-		return Collections.unmodifiableList(command.getResult());
+		List<STestBasicReader> result = new ArrayList<STestBasicReader>(); 
+		for (TestStruct struct : command.getList()) result.add(new TestBasicWrap(struct));
+		return Collections.unmodifiableList(result);
 	}
 }

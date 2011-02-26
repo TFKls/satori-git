@@ -26,7 +26,7 @@ import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.Vector;
 
@@ -53,8 +53,7 @@ import satori.main.SFrame;
 
 public class SBlobInputView implements SInputView {
 	public static interface BlobLoader {
-		Set<String> getNames() throws SException;
-		SBlob getBlob(String name) throws SException;
+		Map<String, SBlob> getBlobs() throws SException;
 	}
 	
 	private final SData<SBlob> data;
@@ -119,14 +118,15 @@ public class SBlobInputView implements SInputView {
 		}
 		
 		public SBlob process() throws SException {
-			Vector<String> names = new Vector<String>(blob_loader.getNames());
+			Map<String, SBlob> blobs = blob_loader.getBlobs();
+			Vector<String> names = new Vector<String>(blobs.keySet());
 			Collections.sort(names);
 			list.setListData(names);
 			dialog.setVisible(true);
 			if (!confirmed) return null;
 			int index = list.getSelectedIndex();
 			if (index == -1) return null;
-			return blob_loader.getBlob(names.get(index));
+			return blobs.get(names.get(index));
 		}
 	}
 	
@@ -386,11 +386,10 @@ public class SBlobInputView implements SInputView {
 	}
 	
 	@Override public void update() {
-		data.update();
 		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
 		else pane.setBackground(Color.LIGHT_GRAY);
-		SBlob file = data.get();
-		label.setFont(file != null ? set_font : unset_font);
-		label.setText(file != null ? file.getName() : desc);
+		SBlob blob = data.get();
+		label.setFont(blob != null ? set_font : unset_font);
+		label.setText(blob != null ? blob.getName() : desc);
 	}
 }

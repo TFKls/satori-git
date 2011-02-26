@@ -15,7 +15,6 @@ public class SSolution implements SData<SBlob> {
 	@Override public SBlob get() { return blob; }
 	@Override public boolean isEnabled() { return true; }
 	@Override public boolean isValid() { return blob != null; }
-	@Override public void update() {}
 	@Override public void set(SBlob blob) {
 		if (blob == null && this.blob == null) return;
 		if (blob != null && blob.equals(this.blob)) return;
