@@ -112,14 +112,20 @@ public class STestImpl implements STestReader {
 	public void setJudge(SBlob judge) throws SException {
 		if (judge == null && this.judge == null) return;
 		if (judge != null && judge.equals(this.judge)) return;
-		SJudgeParser.Result parse_result = SJudgeParser.parseJudge(judge);
 		this.judge = judge;
-		input_meta = parse_result.getInputMetadata();
-		output_meta = parse_result.getOutputMetadata();
-		input = new HashMap<SInputMetadata, Object>();
-		for (SInputMetadata meta : input_meta) {
-			Object def_value = meta.getDefaultValue();
-			if (def_value != null) input.put(meta, def_value);
+		if (judge != null) {
+			SJudgeParser.Result parse_result = SJudgeParser.parseJudge(judge);
+			input_meta = parse_result.getInputMetadata();
+			output_meta = parse_result.getOutputMetadata();
+			input = new HashMap<SInputMetadata, Object>();
+			for (SInputMetadata meta : input_meta) {
+				Object def_value = meta.getDefaultValue();
+				if (def_value != null) input.put(meta, def_value);
+			}
+		} else {
+			input_meta = Collections.emptyList();
+			output_meta = Collections.emptyList();
+			input = Collections.emptyMap();
 		}
 		notifyModified();
 		callMetadataModifiedListeners();
