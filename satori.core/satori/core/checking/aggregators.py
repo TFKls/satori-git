@@ -48,13 +48,13 @@ def parse_params(description, section, subsection, oa_map):
             elif ptype == 'float' or ptype == 'time':
                 pvalue = float(pvalue)
             elif ptype == 'datetime':
-                pvalue = datetime.strptime('%Y-%m-%d %H:%M:%S', pvalue)
+                pvalue = datetime.strptime(pvalue, '%Y-%m-%d %H:%M:%S')
             elif ptype == 'bool':
                 if pvalue.lower() == 'true' or pvalue.lower() == 'yes':
                     pvalue = True
                 elif pvalue.lower() == 'false' or pvalue.lower() == 'no':
                     pvalue = False
-                else
+                else:
                     pvalue = bool(pvalue)
         result[pname] = pvalue
     return result
