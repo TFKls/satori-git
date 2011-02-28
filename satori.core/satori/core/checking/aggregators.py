@@ -36,7 +36,27 @@ def parse_params(description, section, subsection, oa_map):
         ptype = param.getAttribute('type')
         pname = param.getAttribute('name')
         pdefault = param.getAttribute('default')
-        result[pname] = None
+        pvalue = pdefault
+
+        oa = oa_map.get(pname)
+        if oa is not None and not oa.is_blob:
+            pvalue = oa.value
+
+        if pvalue is not None:
+            if ptype == 'int' or ptype == 'size':
+                pvalue = int(pvalue)
+            elif ptype == 'float' or ptype == 'time':
+                pvalue = float(pvalue)
+            elif ptype == 'datetime':
+                pvalue = datetime.strptime('%Y-%m-%d %H:%M:%S', pvalue)
+            elif ptype == 'bool':
+                if pvalue.lower() == 'true' or pvalue.lower() == 'yes':
+                    pvalue = True
+                elif pvalue.lower() == 'false' or pvalue.lower() == 'no':
+                    pvalue = False
+                else
+                    pvalue = bool(pvalue)
+        result[pname] = pvalue
     return result
 
 class AggregatorBase(object):
@@ -137,6 +157,7 @@ class ACMAggregator(AggregatorBase):
                 self.problem = problem
                 self.params = self.score.aggregator.problem_params[problem.id]
 
+
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') == 'OK'
@@ -206,6 +227,11 @@ class ACMAggregator(AggregatorBase):
 
     def init(self):
         super(ACMAggregator, self).init()
+        for params in self.problem_params.values():
+            if params.time_start is None:
+                params.time_start = self.params.time_start
+            if params.time_stop is None:
+                params.time_stop = self.params.time_stop
 
         self.table = RestTable((5, 'Lp.'), (20, 'Name'), (5, 'Score'), (15, 'Time'), (20, 'Tasks'))
         
