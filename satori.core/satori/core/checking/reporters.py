@@ -70,6 +70,40 @@ class StatusReporter(ReporterBase):
         self.test_suite_result.report = 'Finished checking: {0}'.format(self._status)
         self.test_suite_result.save()
 
+class MultipleStatusReporter(ReporterBase):
+    def __init__(self, test_suite_result):
+        super(MultipleStatusReporter, self).__init__(test_suite_result)
+
+    def init(self):
+        self._statuses = {}
+        self._status = 'OK'
+        self.test_suite_result.oa_set_str('status', 'QUE')
+        self.test_suite_result.status = 'QUE'
+        self.test_suite_result.report = ''
+        self.test_suite_result.save()
+
+    def accumulate(self, test_result):
+        test = test_result.test
+        code = TestMapping.objects().filter(test=test, suite= self.test_suite_result.suite)[0].order
+        status = test_result.oa_get_str('status')
+        self._statuses[code] = status
+        logging.debug('Status Reporter %s: %s += %s', self.test_suite_result.id, self._status, status)
+        if status is None:
+            status = 'INT'
+        if self._status == 'OK' and status != 'OK':
+            self._status = status
+
+    def status(self):
+        return True
+
+    def deinit(self):
+        logging.debug('Status Reporter %s: %s', self.test_suite_result.id, self._status)
+        self.test_suite_result.oa_set_str('status', self._status)
+        self.test_suite_result.status = self._status
+        report = u'Finished checking: {0}'.format(self._status)
+        report += ' (' + u', '.join([unicode(code) + ' ' + unicode(status) for (code, status) in self._statuses.objects().sorted()]) + ')'
+        self.test_suite_result.report = report
+        self.test_suite_result.save()
 
 class PointsReporter(ReporterBase):
     def __init__(self, test_suite_result):
