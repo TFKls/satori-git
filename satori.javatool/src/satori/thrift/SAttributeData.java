@@ -1,62 +1,46 @@
 package satori.thrift;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
-import satori.attribute.SAttribute;
-import satori.attribute.SAttributeReader;
-import satori.attribute.SBlobAttribute;
-import satori.attribute.SStringAttribute;
 import satori.blob.SBlob;
 import satori.common.SException;
+import satori.metadata.SMetadata;
 import satori.session.SSession;
 import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.Blob;
 
 public class SAttributeData {
-	static class AttributeWrap implements SAttributeReader {
-		private Map<String, AnonymousAttribute> data;
-		public AttributeWrap(Map<String, AnonymousAttribute> data) { this.data = data; }
-		@Override public Set<String> getNames() { return data.keySet(); }
-		@Override public boolean isBlob(String name) { return data.get(name).isIs_blob(); }
-		@Override public String getString(String name) {
-			AnonymousAttribute attr = data.get(name);
-			if (attr.isIs_blob()) return null;
-			return attr.getValue();
-		}
-		@Override public SBlob getBlob(String name) {
-			AnonymousAttribute attr = data.get(name);
-			if (!attr.isIs_blob()) return null;
-			return SBlob.createRemote(attr.getFilename(), attr.getValue());
-		}
-		@Override public Map<String, SAttribute> getMap() {
-			Map<String, SAttribute> result = new HashMap<String, SAttribute>();
-			for (String name : getNames()) {
-				if (isBlob(name)) result.put(name, new SBlobAttribute(getBlob(name)));
-				else result.put(name, new SStringAttribute(getString(name)));
-			}
-			return result;
-		}
-	}
-	static Map<String, AnonymousAttribute> createAttrMap(SAttributeReader attrs) {
+	static Map<String, AnonymousAttribute> convertAttrMap(Map<String, Object> attrs) throws SException {
 		Map<String, AnonymousAttribute> map = new HashMap<String, AnonymousAttribute>();
-		for (String name : attrs.getNames()) {
-			if (attrs.isBlob(name)) {
-				SBlob blob = attrs.getBlob(name);
-				AnonymousAttribute attr = new AnonymousAttribute();
-				attr.setIs_blob(true);
-				attr.setFilename(blob.getName());
-				attr.setValue(blob.getHash());
-				map.put(name, attr);
-			} else {
-				AnonymousAttribute attr = new AnonymousAttribute();
-				attr.setIs_blob(false);
-				attr.setValue(attrs.getString(name));
-				map.put(name, attr);
+		for (Map.Entry<String, Object> entry : attrs.entrySet()) {
+			if (entry.getValue() instanceof String) {
+				String str = (String)entry.getValue();
+				AnonymousAttribute dst = new AnonymousAttribute();
+				dst.setIs_blob(false);
+				dst.setValue(str);
+				map.put(entry.getKey(), dst);
+			}
+			if (entry.getValue() instanceof SBlob) {
+				SBlob blob = (SBlob)entry.getValue();
+				AnonymousAttribute dst = new AnonymousAttribute();
+				dst.setIs_blob(true);
+				dst.setFilename(blob.getName());
+				dst.setValue(blob.getHash());
+				map.put(entry.getKey(), dst);
 			}
 		}
 		return map;
+	}
+	static Map<String, SBlob> getBlobAttrMap(Map<String, AnonymousAttribute> attrs) {
+		Map<String, SBlob> result = new HashMap<String, SBlob>();
+		for (Map.Entry<String, AnonymousAttribute> entry : attrs.entrySet()) {
+			AnonymousAttribute attr = entry.getValue();
+			if (!attr.isIs_blob()) continue; //TODO: do something better
+			result.put(entry.getKey(), SBlob.createRemote(attr.getFilename(), attr.getValue()));
+		}
+		return result;
 	}
 	
 	private static class ExistsCommand implements SThriftCommand {
@@ -75,9 +59,31 @@ public class SAttributeData {
 		return command.getResult();
 	}
 	
-	static void createBlobs(SAttributeReader test) throws SException {
-		for (String name : test.getNames()) if (test.isBlob(name)) {
-			SBlob blob = test.getBlob(name);
+	static Map<String, Object> createRawAttrMap(Map<? extends SMetadata, Object> attrs) throws SException {
+		Map<String, Object> result = new HashMap<String, Object>();
+		for (Map.Entry<? extends SMetadata, Object> entry : attrs.entrySet()) {
+			String key = entry.getKey().getName();
+			Object value = entry.getKey().getType().getRaw(entry.getValue());
+			result.put(key, value);
+		}
+		return result;
+	}
+	static <T extends SMetadata> Map<T, Object> createFormattedAttrMap(List<T> meta_list, Map<String, AnonymousAttribute> attrs) throws SException {
+		Map<T, Object> result = new HashMap<T, Object>();
+		for (T meta : meta_list) {
+			AnonymousAttribute attr = attrs.get(meta.getName());
+			if (attr == null) continue;
+			Object value = attr.isIs_blob() ? SBlob.createRemote(attr.getFilename(), attr.getValue()) : attr.getValue();
+			value = meta.getType().getFormatted(value);
+			if (value != null) result.put(meta, value);
+		}
+		return result;
+	}
+	
+	static void createBlobs(Map<String, Object> attrs) throws SException {
+		for (Object value : attrs.values()) {
+			if (!(value instanceof SBlob)) continue;
+			SBlob blob = (SBlob)value;
 			if (!checkBlobExists(blob)) blob.saveRemote();
 		}
 	}

@@ -22,6 +22,7 @@ import java.awt.event.MouseMotionListener;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.TooManyListenersException;
 
 import javax.swing.Box;
@@ -33,6 +34,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.TransferHandler;
 
+import satori.blob.SBlob;
 import satori.common.SException;
 import satori.common.SList;
 import satori.common.SListener0;
@@ -45,6 +47,7 @@ import satori.common.ui.SPane;
 import satori.common.ui.SScrollPane;
 import satori.common.ui.SStringInputView;
 import satori.main.SFrame;
+import satori.metadata.SInputMetadata;
 import satori.problem.impl.STestSuiteImpl;
 import satori.test.STestSnap;
 import satori.test.impl.SBlobInput;
@@ -53,7 +56,8 @@ import satori.test.impl.SSolution;
 import satori.test.impl.SStringInput;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
-import satori.test.meta.SInputMetadata;
+import satori.thrift.SGlobalData;
+import satori.type.SBlobType;
 
 public class STestPane implements SPane, SList<STestImpl> {
 	private final STestSuiteImpl suite;
@@ -483,9 +487,16 @@ public class STestPane implements SPane, SList<STestImpl> {
 				@Override public void focusLost(FocusEvent e) { updateName(); }
 			});
 			pane.add(name_field);
-			SInputView judge_view = new SBlobInputView(new SJudgeInput(test));
+			SBlobInputView judge_view = new SBlobInputView(new SJudgeInput(test));
 			judge_view.setDimension(SDimension.itemDim);
 			judge_view.setDescription("Judge file");
+			judge_view.setBlobLoader(new SBlobInputView.BlobLoader() {
+				private Map<String, SBlob> blobs = null;
+				@Override public Map<String, SBlob> getBlobs() throws SException {
+					if (blobs == null) blobs = SGlobalData.getJudges();
+					return blobs;
+				}
+			});
 			test.addView(judge_view);
 			pane.add(judge_view.getPane());
 			update();
@@ -544,9 +555,9 @@ public class STestPane implements SPane, SList<STestImpl> {
 		@Override public JComponent getPane() { return pane; }
 		
 		private void fillPane() {
-			for (SInputMetadata im : test.getMetadata().getInputs()) {
+			for (SInputMetadata im : test.getInputMetadata()) {
 				SInputView view;
-				if (im.isBlob()) view = new SBlobInputView(new SBlobInput(im, test));
+				if (im.getType() == SBlobType.INSTANCE) view = new SBlobInputView(new SBlobInput(im, test));
 				else view = new SStringInputView(new SStringInput(im, test));
 				view.setDimension(SDimension.itemDim);
 				view.setDescription(im.getDescription());
