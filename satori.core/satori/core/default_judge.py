@@ -11,12 +11,12 @@
 #@              <param type="blob" name="checker" description="Specific checker" required="false"/>
 #@      </input>
 #@      <output>
-#@              <param type="text" name="status" description="Status" required="true"/>
+#@              <param type="text" name="status" description="Status"/>
 #@              <param type="blob" name="compile_log" description="Compilation log"/>
 #@              <param type="time" name="execute_time_real" description="Execution time"/>
 #@              <param type="time" name="execute_time_cpu" description="Execution CPU time"/>
 #@              <param type="size" name="execute_memory" description="Execution memory"/>
-#@              <param type="blob" name="check_log" description="Checker log" required="false"/>
+#@              <param type="blob" name="check_log" description="Checker log"/>
 #@      </output>
 #@</checker>
 
