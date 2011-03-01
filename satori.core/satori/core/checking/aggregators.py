@@ -22,7 +22,7 @@ def parse_params(description, section, subsection, oa_map):
     result = Namespace()
     if not description:
         return result
-    xml = minidom.parse(u'\n'.join([line for line in description.splitlines() if line[0:2] == '#@']))
+    xml = minidom.parseString(u' '.join([line[2:] for line in description.splitlines() if line[0:2] == '#@']))
     if not xml:
         return result
     xml = xml.getElementsByTagNameNS('*', section)
