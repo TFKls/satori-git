@@ -43,19 +43,22 @@ def parse_params(description, section, subsection, oa_map):
             pvalue = oa.value
 
         if pvalue is not None:
-            if ptype == 'int' or ptype == 'size':
-                pvalue = int(pvalue)
-            elif ptype == 'float' or ptype == 'time':
-                pvalue = float(pvalue)
-            elif ptype == 'datetime':
-                pvalue = datetime.strptime(pvalue, '%Y-%m-%d %H:%M:%S')
-            elif ptype == 'bool':
-                if pvalue.lower() == 'true' or pvalue.lower() == 'yes':
-                    pvalue = True
-                elif pvalue.lower() == 'false' or pvalue.lower() == 'no':
-                    pvalue = False
-                else:
-                    pvalue = bool(pvalue)
+            try:
+                if ptype == 'int' or ptype == 'size':
+                    pvalue = int(pvalue)
+                elif ptype == 'float' or ptype == 'time':
+                    pvalue = float(pvalue)
+                elif ptype == 'datetime':
+                    pvalue = datetime.strptime(pvalue, '%Y-%m-%d %H:%M:%S')
+                elif ptype == 'bool':
+                    if pvalue.lower() == 'true' or pvalue.lower() == 'yes':
+                        pvalue = True
+                    elif pvalue.lower() == 'false' or pvalue.lower() == 'no':
+                        pvalue = False
+                    else:
+                        pvalue = bool(pvalue)
+            except ValueError:
+                pass
         result[pname] = pvalue
     return result
 
