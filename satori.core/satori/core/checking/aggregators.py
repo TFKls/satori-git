@@ -87,7 +87,7 @@ def parse_params(description, section, subsection, oa_map):
                     elif pvalue[-1] == 'n':
                         pvalue = mul = 0.000000001
                         pvalue[0:-1]
-                    pvalue = float(pvalue) * mul
+                    pvalue = timedelta(seconds=float(pvalue) * mul)
                 elif ptype == 'datetime':
                     pvalue = datetime.strptime(pvalue, '%Y-%m-%d %H:%M:%S')
                 elif ptype == 'bool':
@@ -128,7 +128,7 @@ class AggregatorBase(object):
             if p.id not in self.test_suites:
                 self.test_suites[p.id] = p.default_test_suite
             if p.id not in self.problem_params:
-                self.problem_params[p.id] = parse_params(self.__doc__, 'aggregator', 'problem', OaMap())
+                self.problem_params[p.id] = parse_params(self.__doc__, 'aggregator', 'problem', {})
                 
     def changed_contestants(self):
         ranking_entry_cache = dict((r.contestant_id, r) for r in RankingEntry.objects.filter(ranking=self.ranking))
@@ -246,7 +246,7 @@ class ACMAggregator(AggregatorBase):
                 self.ranking_entry.save()
             else:
                 points = int(sum([s.params.score for s in score_list]))
-                time = sum([s.ok_time + self.aggregator.time_penalty * s.star_count for s in score_list], timedelta(0))
+                time = sum([s.ok_time + self.aggregator.params.time_penalty * s.star_count for s in score_list], timedelta(0))
                 time_seconds = (time.microseconds + (time.seconds + time.days * 24 * 3600) * 10**6) / 10**6
                 time_str = str(timedelta(seconds=time_seconds))
                 problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
