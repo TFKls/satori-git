@@ -55,6 +55,8 @@ class Submit(Entity):
         submit.forbid_fields(fields, ['id'])
         submit.update_fields(fields, ['contestant', 'time', 'problem'])
         submit.save()
+        submit.update_fields(fields, ['time'])
+        submit.save()
         Privilege.grant(submit.contestant, submit, 'VIEW')
         blob = submit.data_set_blob('content', filename=filename)
         blob.write(content)
