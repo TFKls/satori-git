@@ -1,10 +1,14 @@
 package satori.test.impl;
 
+import java.util.Collections;
+import java.util.Map;
+
 import satori.common.SException;
 import satori.common.SId;
 import satori.common.SListener0;
 import satori.common.SView;
 import satori.common.SViewList;
+import satori.metadata.SOutputMetadata;
 import satori.test.STemporarySubmitReader;
 import satori.thrift.STemporarySubmitData;
 
@@ -16,7 +20,7 @@ public class STestResult {
 	private final STestImpl test;
 	
 	private Status status = Status.NOT_TESTED;
-	private String message = null;
+	private Map<SOutputMetadata, Object> output = Collections.emptyMap();
 	
 	private final SViewList views = new SViewList();
 	private final SListener0 clear_listener = new SListener0() {
@@ -30,13 +34,14 @@ public class STestResult {
 		test.addDataModifiedListener(clear_listener);
 	}
 	
+	public STestImpl getTest() { return test; }
 	public Status getStatus() { return status; }
-	public String getMessage() { return message; }
+	public Object getOutput(SOutputMetadata meta) { return output.get(meta); }
 	
 	private void clear() {
 		id.clear();
 		status = Status.NOT_TESTED;
-		message = null;
+		output = Collections.emptyMap();
 		updateViews();
 	}
 	
@@ -48,18 +53,18 @@ public class STestResult {
 		if (solution.get() == null) return;
 		id.set(STemporarySubmitData.create(solution.get(), test));
 		status = Status.PENDING;
-		message = null;
+		output = Collections.emptyMap();
 		updateViews();
 	}
 	public void refresh() throws SException {
 		if (!id.isSet()) return;
-		STemporarySubmitReader source = STemporarySubmitData.load(id.get());
+		STemporarySubmitReader source = STemporarySubmitData.load(id.get(), test.getOutputMetadata());
 		if (source.getPending()) {
 			status = Status.PENDING;
-			message = null;
+			output = Collections.emptyMap();
 		} else {
 			status = Status.FINISHED;
-			message = source.getStatus();
+			output = source.getResult();
 		}
 		updateViews();
 	}

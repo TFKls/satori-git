@@ -32,10 +32,10 @@ public class STestData {
 		@Override public String getName() { return struct.getName(); }
 	}
 	static class TestWrap extends TestBasicWrap implements STestReader {
-		private SBlob judge;
-		private List<SInputMetadata> input_meta;
-		private List<SOutputMetadata> output_meta;
-		private Map<SInputMetadata, Object> input;
+		private final SBlob judge;
+		private final List<SInputMetadata> input_meta;
+		private final List<SOutputMetadata> output_meta;
+		private final Map<SInputMetadata, Object> input;
 		public TestWrap(TestStruct struct, Map<String, AnonymousAttribute> data) throws SException {
 			super(struct);
 			AnonymousAttribute judge_attr = data.get("judge");

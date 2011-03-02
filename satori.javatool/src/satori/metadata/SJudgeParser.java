@@ -106,7 +106,7 @@ public class SJudgeParser {
 		if (input_children.getLength() == 0) input_meta = Collections.emptyList();
 		else if (input_children.getLength() == 1) input_meta = parseInputs((Element)input_children.item(0));
 		else throw new ParseException("Too many input groups");
-		NodeList output_children = node.getElementsByTagName("input");
+		NodeList output_children = node.getElementsByTagName("output");
 		List<SOutputMetadata> output_meta;
 		if (output_children.getLength() == 0) output_meta = Collections.emptyList();
 		else if (output_children.getLength() == 1) output_meta = parseOutputs((Element)output_children.item(0));
