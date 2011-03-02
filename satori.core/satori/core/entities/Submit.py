@@ -48,6 +48,24 @@ class Submit(Entity):
         RawEvent().send(Event(type='checking_new_submit', id=submit.id))
         return submit
 
+    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), unicode, unicode, TypedMap(DjangoId('Test'), TypedMap(unicode, AnonymousAttribute))], PCGlobal('ADMIN'), [CannotSetField])
+    @staticmethod
+    def inject(fields, content, filename, test_results):
+        submit = Submit()
+        submit.forbid_fields(fields, ['id'])
+        submit.update_fields(fields, ['contestant', 'time', 'problem'])
+        submit.save()
+        Privilege.grant(submit.contestant, submit, 'VIEW')
+        blob = submit.data_set_blob('content', filename=filename)
+        blob.write(content)
+        blob.close()
+        for test, result in test_results.iteritems():
+            tr = TestResult(submit=submit, test=test, tester=token_container.token.role, pending=False)
+            tr.save()
+            tr.oa_set_map(result)
+        RawEvent().send(Event(type='checking_new_submit', id=submit.id))
+        return submit
+
     @ExportMethod(NoneType, [DjangoId('Submit'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('overrides', PCRawBlob('item'))))
     def override(self, overrides):
         self.overrides_set_map(overrides)
