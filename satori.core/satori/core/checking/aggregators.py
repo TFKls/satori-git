@@ -278,7 +278,7 @@ class ACMAggregator(AggregatorBase):
             if params.time_stop is None:
                 params.time_stop = self.params.time_stop
 
-        self.table = RestTable((5, 'Lp.'), (20, 'Name'), (5, 'Score'), (15, 'Time'), (20, 'Tasks'))
+        self.table = RestTable((4, 'Lp.'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = ''
