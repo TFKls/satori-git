@@ -98,7 +98,7 @@ def parse_params(description, section, subsection, oa_map):
                     else:
                         pvalue = bool(pvalue)
             except ValueError:
-                pass
+                pvalue = None
         result[pname] = pvalue
     return result
 
@@ -272,7 +272,7 @@ class ACMAggregator(AggregatorBase):
 
     def init(self):
         super(ACMAggregator, self).init()
-        for params in self.problem_params.values():
+        for pid, params in self.problem_params.iteritems():
             if params.time_start is None:
                 params.time_start = self.params.time_start
             if params.time_stop is None:
