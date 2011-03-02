@@ -36,7 +36,11 @@ class AssignmentReporter(ReporterBase):
         return True
 
     def deinit(self):
-        self.test_suite_result.status = 'ACC'
+        status = 'ACC'
+        os = self.test_suite_result.submit.overrides_get('status')
+        if os is not None and not os.is_blob:
+            status = os.value
+        self.test_suite_result.status = status
 #TODO: Create report based on oa
         self.test_suite_result.report = ''
         self.test_suite_result.save()
@@ -65,8 +69,12 @@ class StatusReporter(ReporterBase):
 
     def deinit(self):
         logging.debug('Status Reporter %s: %s', self.test_suite_result.id, self._status)
-        self.test_suite_result.oa_set_str('status', self._status)
-        self.test_suite_result.status = self._status
+        status = self._status
+        os = self.test_suite_result.submit.overrides_get('status')
+        if os is not None and not os.is_blob:
+            status = os.value
+        self.test_suite_result.oa_set_str('status', status)
+        self.test_suite_result.status = status
         self.test_suite_result.report = 'Finished checking: {0}'.format(self._status)
         self.test_suite_result.save()
 
@@ -98,8 +106,12 @@ class MultipleStatusReporter(ReporterBase):
 
     def deinit(self):
         logging.debug('Status Reporter %s: %s', self.test_suite_result.id, self._status)
-        self.test_suite_result.oa_set_str('status', self._status)
-        self.test_suite_result.status = self._status
+        status = self._status
+        os = self.test_suite_result.submit.overrides_get('status')
+        if os is not None and not os.is_blob:
+            status = os.value
+        self.test_suite_result.oa_set_str('status', status)
+        self.test_suite_result.status = status
         report = u'Finished checking: {0}'.format(self._status)
         report += ' (' + u', '.join([unicode(code) + ' ' + unicode(status) for (code, status) in self._statuses.objects().sorted()]) + ')'
         self.test_suite_result.report = report

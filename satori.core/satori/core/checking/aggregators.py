@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 import logging
 from blist import blist, sortedset, sortedlist
@@ -44,10 +45,49 @@ def parse_params(description, section, subsection, oa_map):
 
         if pvalue is not None:
             try:
-                if ptype == 'int' or ptype == 'size':
+                if ptype == 'int':
                     pvalue = int(pvalue)
-                elif ptype == 'float' or ptype == 'time':
+                elif ptype == 'size':
+                    mul = 1
+                    pvalue = unicode(pvalue.strip().lower())
+                    if pvalue[-1] == 'b':
+                        pvalue = pvalue[:-1]
+                    if pvalue[-1] == 'k':
+                        mul = 1024
+                        pvalue = pvalue[:-1]
+                    elif pvalue[-1] == 'm':
+                        mul = 1024**2
+                        pvalue = pvalue[:-1]
+                    elif pvalue[-1] == 'g':
+                        mul = 1024**3
+                        pvalue = pvalue[:-1]
+                    elif pvalue[-1] == 't':
+                        mul = 1024**4
+                        pvalue = pvalue[:-1]
+                    elif pvalue[-1] == 'p':
+                        mul = 1024**5
+                        pvalue = pvalue[:-1]
+                    pvalue = int(pvalue * mul)
+                elif ptype == 'float':
                     pvalue = float(pvalue)
+                elif ptype == 'time':
+                    pvalue = unicode(pvalue.strip().lower())
+                    mul = 1
+                    if pvalue[-1] == 's':
+                        pvalue = pvalue[:-1]
+                    if pvalue[-1] == 'c':
+                        mul = 0.01
+                        pvalue = pvalue[:-1]
+                    elif pvalue[-1] == 'm':
+                        mul = 0.001
+                        pvalue = pvalue[:-1]
+                    elif pvalue[-1] == u'µ':
+                        mul = 0.000001
+                        pvalue = pvalue[:-1]
+                    elif pvalue[-1] == 'n':
+                        pvalue = mul = 0.000000001
+                        pvalue[0:-1]
+                    pvalue = float(pvalue) * mul
                 elif ptype == 'datetime':
                     pvalue = datetime.strptime(pvalue, '%Y-%m-%d %H:%M:%S')
                 elif ptype == 'bool':
@@ -159,6 +199,7 @@ class ACMAggregator(AggregatorBase):
                 self.result_list = sortedlist()
                 self.problem = problem
                 self.params = self.score.aggregator.problem_params[problem.id]
+                print self.params
 
 
             def aggregate(self, result):
@@ -241,6 +282,7 @@ class ACMAggregator(AggregatorBase):
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = ''
         self.ranking.save()
+        print self.params
         
     def get_score(self):
         return self.ACMScore(self)
