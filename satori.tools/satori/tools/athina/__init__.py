@@ -1,13 +1,18 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import os
+import re
 import shutil
 import string
 import sys
 import traceback
+from datetime import datetime, timedelta
 
 from satori.client.common import want_import
 want_import(globals(), '*')
+
+def seconds(time):
+    return float(time.microseconds + (time.seconds + time.days * 24 * 3600) * 10**6) / 10**6
 
 class Creator(object):
     def __init__(self, class_name, **kwargs):
@@ -16,6 +21,7 @@ class Creator(object):
         self._struct = globals()[self._name+'Struct']
         self._search = kwargs
         self._create = kwargs
+        self._function = 'create'
         self._additional = {}
 
     def set_fields(self, **kwargs):
@@ -34,14 +40,19 @@ class Creator(object):
         self._additional.update(kwargs)
         return self
 
+    def function(self, f):
+        self._function = f
+        return self
+
     def search(self):
         a = self._class.filter(self._struct(**self._search))
         if len(a):
             return a[0]
         return None
-    
+
     def create(self):
-        return self._class.create(self._struct(**self._create), **self._additional)
+        func = getattr(self._class, self._function)
+        return func(self._struct(**self._create), **self._additional)
 
     def __call__(self):
         a = self.search()
@@ -77,6 +88,17 @@ def athina_import():
     print 'Contest name: ', options.name
     print 'Test environment: ', options.environment
 
+    time_start =  None
+    with open(get_path('times', 'start'), 'r') as f:
+        time_start = datetime.fromtimestamp(int(f.readline().strip(" \n\t\x00")))
+    time_stop =  None
+    with open(get_path('times', 'end'), 'r') as f:
+        time_stop = datetime.fromtimestamp(int(f.readline().strip(" \n\t\x00")))
+    time_freeze =  None
+    with open(get_path('times', 'freeze'), 'r') as f:
+        time_freeze = datetime.fromtimestamp(int(f.readline().strip(" \n\t\x00")))
+
+
     users = {}
     if True:
         for login in os.listdir(get_path('users')):
@@ -103,17 +125,42 @@ def athina_import():
                 with open(get_path('filename', str(d), submit), 'r') as f:
                     filename = f.readline().strip(" \n\t\x00")
                 with open(get_path('time', str(d), submit), 'r') as f:
-                    time = f.readline().strip(" \n\t\x00")
+                    time = datetime.fromtimestamp(int(f.readline().strip(" \n\t\x00")))
                 with open(get_path('user', str(d), submit), 'r') as f:
                     user = f.readline().strip().strip(" \n\t\x00")
+                with open(get_path('log', str(d), submit), 'r') as f:
+                    test_result = {}
+                    for tr in [ x.strip(" \n\t\x00[]") for x in re.split(u'\][^[]*\[', u' '.join(f.readlines())) ]:
+                        m = re.match(u'^(\d+)\s*:\s*(.+?)\s+(\d+)$', tr)
+                        if m:
+                            test_result[int(m.group(1))] = {
+                                'status' : m.group(2),
+                                'time' : int(m.group(3)),
+                            }
+                            continue
+                        m = re.match(u'^(\d+)\s*:\s*(.*)$', tr)
+                        if m:
+                            test_result[int(m.group(1))] = {
+                                'status' : m.group(2),
+                                'time' : 0,
+                            }
+                            continue
+                        test_result[0] = {
+                            'status' : tr,
+                            'time' : 0,
+                        }
+                with open(get_path('status', str(d), submit), 'r') as f:
+                    suite_result = f.readline().strip().strip(" \n\t\x00")
                 submit = int(submit)
                 submits[submit] = {
-                    'submit'   : submit,
-                    'data'     : data,
-                    'filename' : filename,
-                    'problem'  : problem,
-                    'time'     : time,
-                    'user'     : user,
+                    'submit'       : submit,
+                    'data'         : data,
+                    'filename'     : filename,
+                    'problem'      : problem,
+                    'time'         : time,
+                    'user'         : user,
+                    'test_results' : test_result,
+                    'suite_result' : suite_result,
                 }
 
     problems = {}
@@ -156,7 +203,7 @@ def athina_import():
                     'input'     : input,
                     'output'    : output,
                     'memlimit'  : memlimit,
-                    'timelimit' : timelimit,
+                    'timelimit' : timedelta(seconds=float(timelimit)*0.01),
                 }
             problems[dir] = {
                 'problem'   : dir,
@@ -197,17 +244,37 @@ def athina_import():
             if test['output'] != None:
                 oa.set_blob_path('hint', test['output'])
             if test['memlimit'] != None:
-                oa.set_str('memory', str(test['memlimit']))
+                oa.set_str('memory', str(test['memlimit'])+'B')
             if test['timelimit'] != None:
-                oa.set_str('time', str(10*int(test['timelimit'])))
+                oa.set_str('time', str(seconds(test['timelimit']))+'s')
             test['object'] = Creator('Test', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default_' + str(test['test'])).fields(environment=options.environment).additional(data=oa.get_map())()
             tests.append(test['object'])
         problem['testsuite'] = Creator('TestSuite', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default').fields(reporter='StatusReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params={}, test_params=[{}]*len(tests))()
         problem['mapping'] = Creator('ProblemMapping', contest=contest, problem=problem['object']).fields(code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite'])()
-        Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='ACMAggregator').additional(params={}, problem_test_suites={}, problem_test_suite_params={})()
-        Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='ACMAggregator').additional(params={}, problem_test_suites={}, problem_test_suite_params={})()
+    params = OaMap()
+    params.set_str('time_start', time_start.strftime('%Y-%m-%d %H:%M:%S'))
+    params.set_str('time_stop', time_freeze.strftime('%Y-%m-%d %H:%M:%S'))
+    ranking = Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='ACMAggregator').additional(params=params.get_map(), problem_test_suites={}, problem_test_suite_params={})()
+    params = OaMap()
+    params.set_str('time_start', time_start.strftime('%Y-%m-%d %H:%M:%S'))
+    params.set_str('time_stop', (time_stop + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S'))
+    full_ranking = Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='ACMAggregator').additional(params=params.get_map(), problem_test_suites={}, problem_test_suite_params={})()
+    Privilege.grant(contest.contestant_role, full_ranking, 'VIEW', PrivilegeTimes(start_on=time_stop + timedelta(hours=2)))
+    params = OaMap()
+    params.set_str('time_start', time_start.strftime('%Y-%m-%d %H:%M:%S'))
+    params.set_str('show_invisible', '1')
+    admin_ranking = Creator('Ranking', contest=contest, name='Admin Ranking').fields(is_public=False, aggregator='ACMAggregator').additional(params=params.get_map(), problem_test_suites={}, problem_test_suite_params={})()
     for id, submit in sorted(submits.iteritems()):
         user = users[submit['user']]
-        token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
-        Creator('Submit', problem=problems[submit['problem']]['mapping']).additional(filename=submit['filename'], content=submit['data']).create()
-    token_container.set_token(mytoken)
+#        token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
+#        submit['object'] = Creator('Submit', problem=problems[submit['problem']]['mapping']).additional(filename=submit['filename'], content=submit['data']).create()
+#        token_container.set_token(mytoken)
+        test_results = {}
+        problem = problems[submit['problem']]
+        for num, test in problem['tests'].iteritems():
+            if num in submit['test_results']:
+                oa = OaMap()
+                oa.set_str('status', unicode(submit['test_results'][num]['status']))
+                oa.set_str('execute_time_cpu', unicode(submit['test_results'][num]['time']))
+                test_results[test['object']] = oa.get_map()
+        submit['object'] = Creator('Submit', contestant=user['contestant'], time=submit['time'], problem=problems[submit['problem']]['mapping']).additional(filename=submit['filename'], content=submit['data'], test_results=test_results).function('inject')()

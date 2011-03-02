@@ -98,7 +98,7 @@ def parse_params(description, section, subsection, oa_map):
                     else:
                         pvalue = bool(pvalue)
             except ValueError:
-                pass
+                pvalue = None
         result[pname] = pvalue
     return result
 
@@ -142,7 +142,7 @@ class AggregatorBase(object):
                 self.scores[c.id] = self.get_score()
 
             self.scores[c.id].contestant = c
-            self.scores[c.id].hidden = c.invisible and self.params.hide_invisible
+            self.scores[c.id].hidden = c.invisible and not getattr(self.params, 'show_invisible', False)
             if c.id in ranking_entry_cache:
                 self.scores[c.id].ranking_entry = ranking_entry_cache[c.id]
             else:
@@ -178,7 +178,7 @@ class ACMAggregator(AggregatorBase):
     """
 #@<aggregator name="ACM style aggregator">
 #@      <general>
-#@              <param type="bool"     name="hide_invisible" description="Hide invisible submits" required="true" default="true"/>
+#@              <param type="bool"     name="show_invisible" description="Hide invisible submits" required="true" default="false"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" required="true" default="1200s"/>
@@ -272,13 +272,13 @@ class ACMAggregator(AggregatorBase):
 
     def init(self):
         super(ACMAggregator, self).init()
-        for params in self.problem_params.values():
+        for pid, params in self.problem_params.iteritems():
             if params.time_start is None:
                 params.time_start = self.params.time_start
             if params.time_stop is None:
                 params.time_stop = self.params.time_stop
 
-        self.table = RestTable((5, 'Lp.'), (20, 'Name'), (5, 'Score'), (15, 'Time'), (20, 'Tasks'))
+        self.table = RestTable((4, 'Lp.'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = ''
