@@ -9,6 +9,8 @@ import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.util.List;
 
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -26,7 +28,7 @@ import satori.thrift.SGlobalData;
 public class STestSuiteInfoPane implements SPane, SView {
 	private final STestSuiteImpl suite;
 	
-	private JPanel pane;
+	private JComponent pane;
 	private JTextField name_field;
 	private JTextField desc_field;
 	private SGlobalSelectionPane dispatchers, accumulators, reporters;
@@ -45,11 +47,14 @@ public class STestSuiteInfoPane implements SPane, SView {
 	private void updateReporters() { suite.setReporters(reporters.getSelection()); }
 	
 	private void initialize() {
-		pane = new JPanel(new GridBagLayout());
+		pane = new Box(BoxLayout.X_AXIS);
+		pane.setOpaque(true);
+		JPanel pane1 = new JPanel(new GridBagLayout());
+		JPanel pane2 = new JPanel(new GridBagLayout());
 		GridBagConstraints c = new GridBagConstraints();
 		c.gridx = 0; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.0; c.weighty = 0.0;
-		pane.add(new JLabel("Name: "), c);
-		pane.add(new JLabel("Description: "), c);
+		pane1.add(new JLabel("Name "), c);
+		pane1.add(new JLabel("Description "), c);
 		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5; c.weighty = 0.0;
 		name_field = new JTextField();
 		name_field.setPreferredSize(new Dimension(250, 20));
@@ -60,7 +65,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public void focusGained(FocusEvent e) {}
 			@Override public void focusLost(FocusEvent e) { updateName(); }
 		});
-		pane.add(name_field, c);
+		pane1.add(name_field, c);
 		desc_field = new JTextField();
 		desc_field.setPreferredSize(new Dimension(250, 20));
 		desc_field.addActionListener(new ActionListener() {
@@ -70,12 +75,12 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public void focusGained(FocusEvent e) {}
 			@Override public void focusLost(FocusEvent e) { updateDescription(); }
 		});
-		pane.add(desc_field, c);
-		c.gridx = 2; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.0; c.weighty = 0.0;
-		pane.add(new JLabel("Dispatcher: "), c);
-		pane.add(new JLabel("Accumulators: "), c);
-		pane.add(new JLabel("Reporter: "), c);
-		c.gridx = 3; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5; c.weighty = 0.0;
+		pane1.add(desc_field, c);
+		c.gridx = 0; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.0; c.weighty = 0.0;
+		pane2.add(new JLabel("Dispatcher "), c);
+		pane2.add(new JLabel("Accumulators "), c);
+		pane2.add(new JLabel("Reporter "), c);
+		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5; c.weighty = 0.0;
 		dispatchers = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
 			@Override public List<SPair<String, String>> get() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getDispatchers());
@@ -84,7 +89,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public void call() { updateDispatchers(); }
 		});
 		dispatchers.setDimension(new Dimension(250, 20));
-		pane.add(dispatchers.getPane(), c);
+		pane2.add(dispatchers.getPane(), c);
 		accumulators = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
 			@Override public List<SPair<String, String>> get() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getAccumulators());
@@ -93,7 +98,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public void call() { updateAccumulators(); }
 		});
 		accumulators.setDimension(new Dimension(250, 20));
-		pane.add(accumulators.getPane(), c);
+		pane2.add(accumulators.getPane(), c);
 		reporters = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
 			@Override public List<SPair<String, String>> get() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getReporters());
@@ -102,7 +107,10 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public void call() { updateReporters(); }
 		});
 		reporters.setDimension(new Dimension(250, 20));
-		pane.add(reporters.getPane(), c);
+		pane2.add(reporters.getPane(), c);
+		pane.add(pane1);
+		pane.add(Box.createHorizontalStrut(5));
+		pane.add(pane2);
 		update();
 	}
 	

@@ -3,6 +3,7 @@ package satori.common.ui;
 import java.awt.BorderLayout;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
+import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -41,6 +42,7 @@ public class SGlobalSelectionPane implements SPane {
 	private JComponent pane;
 	private JButton clear_button;
 	private JButton label;
+	private Font set_font, unset_font;
 	
 	public SGlobalSelectionPane(Loader loader, boolean multiple, SListener0 listener) {
 		this.loader = loader;
@@ -60,7 +62,8 @@ public class SGlobalSelectionPane implements SPane {
 			else text = new StringBuilder();
 			text.append(p.first);
 		}
-		label.setText(text != null ? text.toString() : null);
+		label.setFont(text != null ? set_font : unset_font);
+		label.setText(text != null ? text.toString() : "Not set");
 	}
 	
 	private static class LoadDialog {
@@ -163,6 +166,8 @@ public class SGlobalSelectionPane implements SPane {
 			@Override public void actionPerformed(ActionEvent e) { load(); }
 		});
 		pane.add(label);
+		set_font = label.getFont().deriveFont(Font.PLAIN);
+		unset_font = label.getFont().deriveFont(Font.ITALIC);
 	}
 	
 	public void setDimension(Dimension dim) {

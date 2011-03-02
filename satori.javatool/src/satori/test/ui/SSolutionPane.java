@@ -195,6 +195,7 @@ public class SSolutionPane implements SRow {
 		}
 		private void initialize() {
 			pane = new Box(BoxLayout.Y_AXIS);
+			pane.setOpaque(true);
 			fillPane();
 			result.getTest().addMetadataModifiedListener(meta_listener);
 			default_color = pane.getBackground();

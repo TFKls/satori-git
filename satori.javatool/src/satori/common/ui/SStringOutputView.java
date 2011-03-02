@@ -3,8 +3,10 @@ package satori.common.ui;
 import java.awt.Dimension;
 import java.awt.Font;
 
+import javax.swing.BorderFactory;
+import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JLabel;
+import javax.swing.SwingConstants;
 
 import satori.common.SOutput;
 
@@ -12,7 +14,7 @@ public class SStringOutputView implements SInputView {
 	private final SOutput<String> data;
 	
 	private String desc;
-	private JLabel label;
+	private JButton label;
 	private Font set_font, unset_font;
 	
 	public SStringOutputView(SOutput<String> data) {
@@ -23,7 +25,13 @@ public class SStringOutputView implements SInputView {
 	@Override public JComponent getPane() { return label; }
 	
 	private void initialize() {
-		label = new JLabel();
+		label = new JButton();
+		label.setBorder(BorderFactory.createEmptyBorder(0, 1, 0, 1));
+		label.setBorderPainted(false);
+		label.setContentAreaFilled(false);
+		label.setOpaque(false);
+		label.setFocusable(false);
+		label.setHorizontalAlignment(SwingConstants.LEADING);
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);
 		update();
