@@ -210,7 +210,6 @@ class ACMAggregator(AggregatorBase):
                 if ok:
                     self.ok = True
                 self.result_list.add((time, ok))
-                self.result_list.sort()
                 if self.ok:
                     self.star_count = 0
                     for (time, ok) in self.result_list:
