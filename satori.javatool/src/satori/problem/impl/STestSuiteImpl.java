@@ -10,6 +10,7 @@ import satori.common.SDataStatus;
 import satori.common.SException;
 import satori.common.SId;
 import satori.common.SIdReader;
+import satori.common.SPair;
 import satori.common.SReference;
 import satori.common.SView;
 import satori.common.SViewList;
@@ -27,6 +28,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 	private String name;
 	private String desc;
 	private List<STestImpl> tests;
+	private List<SPair<String, String>> dispatchers;
+	private List<SPair<String, String>> accumulators;
+	private List<SPair<String, String>> reporters;
 	
 	private final SDataStatus status = new SDataStatus();
 	private final SViewList views = new SViewList();
@@ -42,6 +46,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 	@Override public String getName() { return name; }
 	@Override public String getDescription() { return desc; }
 	@Override public List<STestImpl> getTests() { return Collections.unmodifiableList(tests); }
+	@Override public List<SPair<String, String>> getDispatchers() { return dispatchers; }
+	@Override public List<SPair<String, String>> getAccumulators() { return accumulators; }
+	@Override public List<SPair<String, String>> getReporters() { return reporters; }
 	public boolean isRemote() { return hasId(); }
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
@@ -69,6 +76,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.name = snap.getName();
 		self.desc = snap.getDescription();
 		self.tests = self.createTestList(snap.getTests());
+		self.dispatchers = snap.getDispatchers();
+		self.accumulators = snap.getAccumulators();
+		self.reporters = snap.getReporters();
 		return self;
 	}
 	public static STestSuiteImpl createNew(SParentProblem problem) {
@@ -78,6 +88,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.name = "";
 		self.desc = "";
 		self.tests = new ArrayList<STestImpl>();
+		self.dispatchers = Collections.emptyList();
+		self.accumulators = Collections.emptyList();
+		self.reporters = Collections.emptyList();
 		return self;
 	}
 	public static STestSuiteImpl createNew(List<STestSnap> tests, SParentProblem problem) throws SException {
@@ -87,6 +100,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.name = "";
 		self.desc = "";
 		self.tests = self.createTestList(tests);
+		self.dispatchers = Collections.emptyList();
+		self.accumulators = Collections.emptyList();
+		self.reporters = Collections.emptyList();
 		return self;
 	}
 	public static STestSuiteImpl createNewTest(SParentProblem problem) {
@@ -97,6 +113,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.desc = "";
 		self.tests = new ArrayList<STestImpl>();
 		self.tests.add(STestImpl.createNew(problem));
+		self.dispatchers = Collections.emptyList();
+		self.accumulators = Collections.emptyList();
+		self.reporters = Collections.emptyList();
 		return self;
 	}
 	
@@ -116,6 +135,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 		if (!source.getName().equals(name)) return true;
 		if (!source.getDescription().equals(desc)) return true;
 		if (checkTestLists(source.getTests())) return true;
+		if (!source.getDispatchers().equals(dispatchers)) return true;
+		if (!source.getAccumulators().equals(accumulators)) return true;
+		if (!source.getReporters().equals(reporters)) return true;
 		return false;
 	}
 	
@@ -169,6 +191,22 @@ public class STestSuiteImpl implements STestSuiteReader {
 		notifyModified();
 	}
 	
+	public void setDispatchers(List<SPair<String, String>> dispatchers) {
+		if (this.dispatchers.equals(dispatchers)) return;
+		this.dispatchers = dispatchers;
+		notifyModified();
+	}
+	public void setAccumulators(List<SPair<String, String>> accumulators) {
+		if (this.accumulators.equals(accumulators)) return;
+		this.accumulators = accumulators;
+		notifyModified();
+	}
+	public void setReporters(List<SPair<String, String>> reporters) {
+		if (this.reporters.equals(reporters)) return;
+		this.reporters = reporters;
+		notifyModified();
+	}
+	
 	private void notifyModified() {
 		status.markModified();
 		updateViews();
@@ -193,6 +231,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 		name = snap.getName();
 		desc = snap.getDescription();
 		tests = new_tests;
+		dispatchers = snap.getDispatchers();
+		accumulators = snap.getAccumulators();
+		reporters = snap.getReporters();
 		notifyUpToDate();
 	}
 	public void create() throws SException {
