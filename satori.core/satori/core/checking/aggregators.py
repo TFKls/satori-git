@@ -142,7 +142,7 @@ class AggregatorBase(object):
                 self.scores[c.id] = self.get_score()
 
             self.scores[c.id].contestant = c
-            self.scores[c.id].hidden = c.invisible and self.params.hide_invisible
+            self.scores[c.id].hidden = c.invisible and not getattr(self.params, 'show_invisible', False)
             if c.id in ranking_entry_cache:
                 self.scores[c.id].ranking_entry = ranking_entry_cache[c.id]
             else:
@@ -178,7 +178,7 @@ class ACMAggregator(AggregatorBase):
     """
 #@<aggregator name="ACM style aggregator">
 #@      <general>
-#@              <param type="bool"     name="hide_invisible" description="Hide invisible submits" required="true" default="true"/>
+#@              <param type="bool"     name="show_invisible" description="Hide invisible submits" required="true" default="false"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" required="true" default="1200s"/>

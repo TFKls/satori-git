@@ -257,9 +257,13 @@ def athina_import():
     ranking = Creator('Ranking', contest=contest, name='Ranking').fields(is_public=True, aggregator='ACMAggregator').additional(params=params.get_map(), problem_test_suites={}, problem_test_suite_params={})()
     params = OaMap()
     params.set_str('time_start', time_start.strftime('%Y-%m-%d %H:%M:%S'))
-    params.set_str('hide_invisible', '0')
+    params.set_str('time_stop', (time_stop + timedelta(hours=2)).strftime('%Y-%m-%d %H:%M:%S'))
     full_ranking = Creator('Ranking', contest=contest, name='Full Ranking').fields(is_public=False, aggregator='ACMAggregator').additional(params=params.get_map(), problem_test_suites={}, problem_test_suite_params={})()
     Privilege.grant(contest.contestant_role, full_ranking, 'VIEW', PrivilegeTimes(start_on=time_stop + timedelta(hours=2)))
+    params = OaMap()
+    params.set_str('time_start', time_start.strftime('%Y-%m-%d %H:%M:%S'))
+    params.set_str('show_invisible', '1')
+    admin_ranking = Creator('Ranking', contest=contest, name='Admin Ranking').fields(is_public=False, aggregator='ACMAggregator').additional(params=params.get_map(), problem_test_suites={}, problem_test_suite_params={})()
     for id, submit in sorted(submits.iteritems()):
         user = users[submit['user']]
 #        token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
