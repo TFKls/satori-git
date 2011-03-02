@@ -125,8 +125,10 @@ class AggregatorBase(object):
 
         for p in ProblemMapping.objects.filter(contest__id=self.ranking.contest_id):
             self.problem_cache[p.id] = p
-            if p not in self.test_suites:
+            if p.id not in self.test_suites:
                 self.test_suites[p.id] = p.default_test_suite
+            if p.id not in self.problem_params:
+                self.problem_params[p.id] = parse_params(self.__doc__, 'aggregator', 'problem', OaMap())
                 
     def changed_contestants(self):
         ranking_entry_cache = dict((r.contestant_id, r) for r in RankingEntry.objects.filter(ranking=self.ranking))
