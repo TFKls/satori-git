@@ -1,6 +1,5 @@
 package satori.common.ui;
 
-import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
@@ -24,10 +23,9 @@ import satori.common.SData;
 import satori.common.SException;
 import satori.main.SFrame;
 
-public class SBlobOutputView implements SInputView {
+public class SBlobOutputView implements SPaneView {
 	private final SData<SBlob> data;
 	
-	private String desc;
 	private JButton label;
 	private Font set_font, unset_font;
 	
@@ -67,6 +65,7 @@ public class SBlobOutputView implements SInputView {
 		label.setContentAreaFilled(false);
 		label.setOpaque(false);
 		label.setHorizontalAlignment(SwingConstants.LEADING);
+		label.setToolTipText(data.getDescription());
 		label.addMouseListener(new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) { showPopup(e.getPoint()); }
 		});
@@ -80,19 +79,8 @@ public class SBlobOutputView implements SInputView {
 		update();
 	}
 	
-	@Override public void setDimension(Dimension dim) {
-		label.setPreferredSize(dim);
-		label.setMinimumSize(dim);
-		label.setMaximumSize(dim);
-	}
-	@Override public void setDescription(String desc) {
-		this.desc = desc;
-		update();
-		label.setToolTipText(desc);
-	}
-	
 	@Override public void update() {
 		label.setFont(data.get() != null ? set_font : unset_font);
-		label.setText(data.get() != null ? data.get().getName() : desc);
+		label.setText(data.get() != null ? data.get().getName() : data.getDescription());
 	}
 }

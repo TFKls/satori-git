@@ -1,6 +1,7 @@
 package satori.common.ui;
 
 import java.awt.Color;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Insets;
@@ -29,10 +30,9 @@ import satori.common.SException;
 import satori.common.SInput;
 import satori.main.SFrame;
 
-public class SStringInputView implements SInputView {
+public class SStringInputView implements SPaneView {
 	private final SInput<String> data;
 	
-	private String desc;
 	private JComponent pane;
 	private JButton clear_button;
 	private JButton label;
@@ -106,7 +106,14 @@ public class SStringInputView implements SInputView {
 	}
 	
 	private void initialize() {
-		pane = new JPanel(null);
+		pane = new JPanel(new SLayoutManagerAdapter() {
+			@Override public void layoutContainer(Container parent) {
+				Dimension dim = parent.getSize();
+				clear_button.setBounds(0, (dim.height-13)/2, 13, 13);
+				label.setBounds(15, 0, dim.width-15, dim.height);
+				field.setBounds(15, 0, dim.width-15, dim.height);
+			}
+		});
 		byte[] icon = {71,73,70,56,57,97,7,0,7,0,-128,1,0,-1,0,0,-1,-1,-1,33,-7,4,1,10,0,1,0,44,0,0,0,0,7,0,7,0,0,2,13,12,126,6,-63,-72,-36,30,76,80,-51,-27,86,1,0,59};
 		clear_button = new JButton(new ImageIcon(icon));
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
@@ -122,6 +129,7 @@ public class SStringInputView implements SInputView {
 		label.setContentAreaFilled(false);
 		label.setOpaque(false);
 		label.setHorizontalAlignment(SwingConstants.LEADING);
+		label.setToolTipText(data.getDescription());
 		MouseAdapter label_listener = new MouseAdapter() {
 			@Override public void mouseClicked(MouseEvent e) { edit(); }
 			@Override public void mouseDragged(MouseEvent e) {
@@ -155,23 +163,9 @@ public class SStringInputView implements SInputView {
 		update();
 	}
 	
-	@Override public void setDimension(Dimension dim) {
-		pane.setPreferredSize(dim);
-		pane.setMinimumSize(dim);
-		pane.setMaximumSize(dim);
-		clear_button.setBounds(0, (dim.height-13)/2, 13, 13);
-		label.setBounds(15, 0, dim.width-15, dim.height);
-		field.setBounds(15, 0, dim.width-15, dim.height);
-	}
-	@Override public void setDescription(String desc) {
-		this.desc = desc;
-		update();
-		label.setToolTipText(desc);
-	}
-	
 	@Override public void update() {
 		pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
 		label.setFont(data.get() != null ? set_font : unset_font);
-		label.setText(data.get() != null ? data.get() : desc);
+		label.setText(data.get() != null ? data.get() : data.getDescription());
 	}
 }

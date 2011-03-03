@@ -14,4 +14,5 @@ public class SBlobOutput implements SData<SBlob> {
 	}
 	
 	@Override public SBlob get() { return (SBlob)result.getOutput(meta); }
+	@Override public String getDescription() { return meta.getDescription(); }
 }

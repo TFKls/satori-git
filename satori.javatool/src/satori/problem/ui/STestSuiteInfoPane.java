@@ -57,7 +57,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 		pane1.add(new JLabel("Description "), c);
 		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5; c.weighty = 0.0;
 		name_field = new JTextField();
-		name_field.setPreferredSize(new Dimension(250, 20));
+		name_field.setPreferredSize(new Dimension(120, 20));
 		name_field.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { updateName(); }
 		});
@@ -67,7 +67,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 		});
 		pane1.add(name_field, c);
 		desc_field = new JTextField();
-		desc_field.setPreferredSize(new Dimension(250, 20));
+		desc_field.setPreferredSize(new Dimension(120, 20));
 		desc_field.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { updateDescription(); }
 		});
@@ -88,7 +88,8 @@ public class STestSuiteInfoPane implements SPane, SView {
 		}, false, new SListener0() {
 			@Override public void call() { updateDispatchers(); }
 		});
-		dispatchers.setDimension(new Dimension(250, 20));
+		dispatchers.getPane().setPreferredSize(new Dimension(120, 20));
+		dispatchers.getPane().setMinimumSize(new Dimension(120, 20));
 		pane2.add(dispatchers.getPane(), c);
 		accumulators = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
 			@Override public List<SPair<String, String>> get() throws SException {
@@ -97,7 +98,8 @@ public class STestSuiteInfoPane implements SPane, SView {
 		}, true, new SListener0() {
 			@Override public void call() { updateAccumulators(); }
 		});
-		accumulators.setDimension(new Dimension(250, 20));
+		accumulators.getPane().setPreferredSize(new Dimension(120, 20));
+		accumulators.getPane().setMinimumSize(new Dimension(120, 20));
 		pane2.add(accumulators.getPane(), c);
 		reporters = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
 			@Override public List<SPair<String, String>> get() throws SException {
@@ -106,7 +108,8 @@ public class STestSuiteInfoPane implements SPane, SView {
 		}, false, new SListener0() {
 			@Override public void call() { updateReporters(); }
 		});
-		reporters.setDimension(new Dimension(250, 20));
+		reporters.getPane().setPreferredSize(new Dimension(120, 20));
+		reporters.getPane().setMinimumSize(new Dimension(120, 20));
 		pane2.add(reporters.getPane(), c);
 		pane.add(pane1);
 		pane.add(Box.createHorizontalStrut(5));

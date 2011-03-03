@@ -13,6 +13,7 @@ public class SStringInput implements SInput<String> {
 	}
 	
 	@Override public String get() { return (String)test.getInput(meta); }
+	@Override public String getDescription() { return meta.getDescription(); }
 	@Override public boolean isValid() {
 		String data = get();
 		return data != null ? meta.getType().isValid(data) : !meta.isRequired();

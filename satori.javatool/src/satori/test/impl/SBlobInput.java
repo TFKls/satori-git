@@ -14,6 +14,7 @@ public class SBlobInput implements SInput<SBlob> {
 	}
 	
 	@Override public SBlob get() { return (SBlob)test.getInput(meta); }
+	@Override public String getDescription() { return meta.getDescription(); }
 	@Override public boolean isValid() {
 		SBlob data = get();
 		return data != null ? meta.getType().isValid(data) : !meta.isRequired();

@@ -21,7 +21,7 @@ import satori.common.SListener1;
 import satori.common.SView;
 import satori.common.ui.SBlobInputView;
 import satori.common.ui.SBlobOutputView;
-import satori.common.ui.SInputView;
+import satori.common.ui.SPaneView;
 import satori.common.ui.SPane;
 import satori.common.ui.SStringOutputView;
 import satori.main.SFrame;
@@ -183,12 +183,13 @@ public class SSolutionPane implements SRow {
 		
 		private void fillPane() {
 			for (SOutputMetadata om : result.getTest().getOutputMetadata()) {
-				SInputView view;
+				SPaneView view;
 				if (om.getType() == SBlobType.INSTANCE) view = new SBlobOutputView(new SBlobOutput(om, result));
 				else view = new SStringOutputView(new SStringOutput(om, result));
-				view.setDimension(SDimension.itemDim);
-				view.setDescription(om.getDescription());
 				result.addView(view);
+				view.getPane().setPreferredSize(SDimension.itemDim);
+				view.getPane().setMinimumSize(SDimension.itemDim);
+				view.getPane().setMaximumSize(SDimension.itemDim);
 				pane.add(view.getPane());
 			}
 			pane.add(Box.createVerticalGlue());
@@ -261,9 +262,10 @@ public class SSolutionPane implements SRow {
 		SDimension.setButtonLabelSize(solution_label);
 		solution_pane.add(solution_label);
 		solution_input = new SBlobInputView(solution);
-		solution_input.setDimension(SDimension.buttonItemDim);
-		solution_input.setDescription("Solution file");
 		solution.addView(solution_input);
+		solution_input.getPane().setPreferredSize(SDimension.buttonItemDim);
+		solution_input.getPane().setMinimumSize(SDimension.buttonItemDim);
+		solution_input.getPane().setMaximumSize(SDimension.buttonItemDim);
 		solution_pane.add(solution_input.getPane());
 		JButton remove_button = new JButton(SIcons.removeIcon);
 		remove_button.setMargin(new Insets(0, 0, 0, 0));

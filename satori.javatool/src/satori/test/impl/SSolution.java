@@ -14,6 +14,7 @@ public class SSolution implements SInput<SBlob> {
 	private final List<SView> views = new ArrayList<SView>();
 	
 	@Override public SBlob get() { return blob; }
+	@Override public String getDescription() { return "Solution file"; }
 	@Override public boolean isValid() { return blob != null; }
 	@Override public void set(SBlob blob) {
 		if (blob == null && this.blob == null) return;

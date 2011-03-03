@@ -1,6 +1,7 @@
 package satori.common.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.Font;
@@ -146,7 +147,13 @@ public class SGlobalSelectionPane implements SPane {
 	}
 	
 	private void initialize() {
-		pane = new JPanel(null);
+		pane = new JPanel(new SLayoutManagerAdapter() {
+			@Override public void layoutContainer(Container parent) {
+				Dimension dim = parent.getSize();
+				clear_button.setBounds(0, (dim.height-13)/2, 13, 13);
+				label.setBounds(15, 0, dim.width-15, dim.height);
+			}
+		});
 		byte[] icon = {71,73,70,56,57,97,7,0,7,0,-128,1,0,-1,0,0,-1,-1,-1,33,-7,4,1,10,0,1,0,44,0,0,0,0,7,0,7,0,0,2,13,12,126,6,-63,-72,-36,30,76,80,-51,-27,86,1,0,59};
 		clear_button = new JButton(new ImageIcon(icon));
 		clear_button.setMargin(new Insets(0, 0, 0, 0));
@@ -168,13 +175,5 @@ public class SGlobalSelectionPane implements SPane {
 		pane.add(label);
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);
-	}
-	
-	public void setDimension(Dimension dim) {
-		pane.setPreferredSize(dim);
-		pane.setMinimumSize(dim);
-		pane.setMaximumSize(dim);
-		clear_button.setBounds(0, (dim.height-13)/2, 13, 13);
-		label.setBounds(15, 0, dim.width-15, dim.height);
 	}
 }
