@@ -1,9 +1,9 @@
 package satori.test.impl;
 
-import satori.common.SData;
+import satori.common.SInput;
 import satori.metadata.SInputMetadata;
 
-public class SStringInput implements SData<String> {
+public class SStringInput implements SInput<String> {
 	private final SInputMetadata meta;
 	private final STestImpl test;
 	
@@ -13,7 +13,6 @@ public class SStringInput implements SData<String> {
 	}
 	
 	@Override public String get() { return (String)test.getInput(meta); }
-	@Override public boolean isEnabled() { return true; }
 	@Override public boolean isValid() {
 		String data = get();
 		return data != null ? meta.getType().isValid(data) : !meta.isRequired();

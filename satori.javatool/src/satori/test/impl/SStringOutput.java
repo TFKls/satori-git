@@ -1,9 +1,9 @@
 package satori.test.impl;
 
-import satori.common.SOutput;
+import satori.common.SData;
 import satori.metadata.SOutputMetadata;
 
-public class SStringOutput implements SOutput<String> {
+public class SStringOutput implements SData<String> {
 	private final SOutputMetadata meta;
 	private final STestResult result;
 	

@@ -1,19 +1,18 @@
 package satori.test.impl;
 
 import satori.blob.SBlob;
-import satori.common.SData;
+import satori.common.SInput;
 import satori.common.SListener0;
 import satori.common.SListener0List;
 import satori.common.SView;
 import satori.common.SViewList;
 
-public class SSolution implements SData<SBlob> {
+public class SSolution implements SInput<SBlob> {
 	private SBlob blob;
 	private final SListener0List modified_listeners = new SListener0List();
 	private final SViewList views = new SViewList();
 	
 	@Override public SBlob get() { return blob; }
-	@Override public boolean isEnabled() { return true; }
 	@Override public boolean isValid() { return blob != null; }
 	@Override public void set(SBlob blob) {
 		if (blob == null && this.blob == null) return;

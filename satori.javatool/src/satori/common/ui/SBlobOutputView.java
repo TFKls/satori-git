@@ -19,17 +19,17 @@ import javax.swing.SwingConstants;
 
 import satori.blob.SBlob;
 import satori.common.SException;
-import satori.common.SOutput;
+import satori.common.SData;
 import satori.main.SFrame;
 
 public class SBlobOutputView implements SInputView {
-	private final SOutput<SBlob> data;
+	private final SData<SBlob> data;
 	
 	private String desc;
 	private JButton label;
 	private Font set_font, unset_font;
 	
-	public SBlobOutputView(SOutput<SBlob> data) {
+	public SBlobOutputView(SData<SBlob> data) {
 		this.data = data;
 		initialize();
 	}

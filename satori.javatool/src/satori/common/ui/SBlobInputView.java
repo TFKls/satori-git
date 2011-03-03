@@ -47,7 +47,7 @@ import javax.swing.SwingConstants;
 import javax.swing.TransferHandler;
 
 import satori.blob.SBlob;
-import satori.common.SData;
+import satori.common.SInput;
 import satori.common.SException;
 import satori.main.SFrame;
 
@@ -56,7 +56,7 @@ public class SBlobInputView implements SInputView {
 		Map<String, SBlob> getBlobs() throws SException;
 	}
 	
-	private final SData<SBlob> data;
+	private final SInput<SBlob> data;
 	
 	private String desc;
 	private JComponent pane;
@@ -68,7 +68,7 @@ public class SBlobInputView implements SInputView {
 	private Font set_font, unset_font;
 	private Color default_color;
 	
-	public SBlobInputView(SData<SBlob> data) {
+	public SBlobInputView(SInput<SBlob> data) {
 		this.data = data;
 		initialize();
 	}
@@ -386,10 +386,8 @@ public class SBlobInputView implements SInputView {
 	}
 	
 	@Override public void update() {
-		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
-		else pane.setBackground(Color.LIGHT_GRAY);
-		SBlob blob = data.get();
-		label.setFont(blob != null ? set_font : unset_font);
-		label.setText(blob != null ? blob.getName() : desc);
+		pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
+		label.setFont(data.get() != null ? set_font : unset_font);
+		label.setText(data.get() != null ? data.get().getName() : desc);
 	}
 }

@@ -1,10 +1,10 @@
 package satori.test.impl;
 
 import satori.blob.SBlob;
-import satori.common.SData;
+import satori.common.SInput;
 import satori.metadata.SInputMetadata;
 
-public class SBlobInput implements SData<SBlob> {
+public class SBlobInput implements SInput<SBlob> {
 	private final SInputMetadata meta;
 	private final STestImpl test;
 	
@@ -14,7 +14,6 @@ public class SBlobInput implements SData<SBlob> {
 	}
 	
 	@Override public SBlob get() { return (SBlob)test.getInput(meta); }
-	@Override public boolean isEnabled() { return true; }
 	@Override public boolean isValid() {
 		SBlob data = get();
 		return data != null ? meta.getType().isValid(data) : !meta.isRequired();

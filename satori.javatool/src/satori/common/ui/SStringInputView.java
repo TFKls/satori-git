@@ -25,12 +25,12 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.TransferHandler;
 
-import satori.common.SData;
+import satori.common.SInput;
 import satori.common.SException;
 import satori.main.SFrame;
 
 public class SStringInputView implements SInputView {
-	private final SData<String> data;
+	private final SInput<String> data;
 	
 	private String desc;
 	private JComponent pane;
@@ -41,7 +41,7 @@ public class SStringInputView implements SInputView {
 	private Font set_font, unset_font;
 	private Color default_color;
 	
-	public SStringInputView(SData<String> data) {
+	public SStringInputView(SInput<String> data) {
 		this.data = data;
 		initialize();
 	}
@@ -177,8 +177,7 @@ public class SStringInputView implements SInputView {
 	}
 	
 	@Override public void update() {
-		if (data.isEnabled()) pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
-		else pane.setBackground(Color.LIGHT_GRAY);
+		pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
 		label.setFont(data.get() != null ? set_font : unset_font);
 		label.setText(data.get() != null ? data.get() : desc);
 	}

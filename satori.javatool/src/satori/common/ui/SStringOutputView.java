@@ -8,16 +8,16 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.SwingConstants;
 
-import satori.common.SOutput;
+import satori.common.SData;
 
 public class SStringOutputView implements SInputView {
-	private final SOutput<String> data;
+	private final SData<String> data;
 	
 	private String desc;
 	private JButton label;
 	private Font set_font, unset_font;
 	
-	public SStringOutputView(SOutput<String> data) {
+	public SStringOutputView(SData<String> data) {
 		this.data = data;
 		initialize();
 	}
