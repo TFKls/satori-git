@@ -19,6 +19,42 @@ from satori.objects import Namespace
 maxint = 2**31 - 1
 max_seconds_per_problem = maxint / 10
 
+class OaType(object):
+    @classmethod
+    def value_type(cls):
+        return unicode
+    @classmethod
+    def from_unicode(cls, value):
+        return cls.value_type()(value)
+    @classmethod
+    def to_unicode(cls, value):
+        return unicode(value)
+    @classmethod
+    def name(cls, value):
+        raise NotImplemented
+    def __init__(self, value=None, str_value=None):
+        if value is not None:
+            self.str_value = self.__class__.to_unicode(value)
+        else
+            self.str_value = str_value
+    def value(self):
+        return self.__class__.from_unicode(self.str_value)
+
+class OaParam(object):
+    def __init__(self, name, type_, description = None, required = False, default = None):
+        pass
+
+class OaTypedMap(object):
+    def __init__(self, doc = None, xml = None, dom = None, oa_map = {}):
+        if dom is not None:
+            self._xml = dom
+        elif xml is not None:
+            self._xml = minidom.parseString(xml)
+        elif doc is not None:
+            self._xml = minidom.parseString(u' '.join([line[2:] for line in description.splitlines() if line[0:2] == '#@']))
+        else:
+            pass
+
 def parse_params(description, section, subsection, oa_map):
     result = Namespace()
     if not description:
@@ -201,8 +237,6 @@ class ACMAggregator(AggregatorBase):
                 self.result_list = sortedlist()
                 self.problem = problem
                 self.params = self.score.aggregator.problem_params[problem.id]
-                print self.params
-
 
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
@@ -283,7 +317,6 @@ class ACMAggregator(AggregatorBase):
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = ''
         self.ranking.save()
-        print self.params
         
     def get_score(self):
         return self.ACMScore(self)
