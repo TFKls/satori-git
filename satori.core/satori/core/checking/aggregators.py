@@ -19,6 +19,216 @@ from satori.objects import Namespace
 maxint = 2**31 - 1
 max_seconds_per_problem = maxint / 10
 
+class OaType(object):
+    @classmethod
+    def name(cls, value):
+        raise NotImplemented
+    @classmethod
+    def value_type(cls):
+        raise NotImplemented
+    @classmethod
+    def cast(cls, value):
+        if isinstance(value, cls.value_type()):
+            return value
+        return cls.value_type()(value)
+    @classmethod
+    def _from_unicode(cls, value):
+        return cls.cast(value)
+    @classmethod
+    def from_unicode(cls, value):
+        return cls.cast(cls._from_unicode(unicode(value)))
+    @classmethod
+    def _to_unicode(cls, value):
+        return unicode(value)
+    @classmethod
+    def to_unicode(cls, value):
+        return unicode(cls._to_unicode(cls.cast(value)))
+    def __init__(self, value=None, str_value=None):
+        if value is not None:
+            self.str_value = self.__class__.to_unicode(value)
+        else:
+            self.str_value = str_value
+    def value(self):
+        return self.__class__.from_unicode(self.str_value)
+
+class OaTypeText(OaType):
+    @classmethod
+    def name(cls):
+        return 'text'
+    @classmethod
+    def value_type(cls):
+        return unicode
+ 
+class OaTypeBoolean(OaType):
+    @classmethod
+    def name(cls):
+        return 'bool'
+    @classmethod
+    def value_type(cls):
+        return bool
+    @classmethod
+    def _to_unicode(cls, value):
+        if value:
+            return 'true'
+        return 'false'
+    @classmethod
+    def _from_unicode(cls, value):
+        value = value.lower()
+        if value == 'true' or value == 'yes' or value == '1':
+            return True
+        elif value == 'false' or value == 'no' or value == '0':
+            return False
+        raise ValueError
+ 
+class OaTypeInteger(OaType):
+    @classmethod
+    def name(cls):
+        return 'int'
+    @classmethod
+    def value_type(cls):
+        return int
+ 
+class OaTypeFloat(OaType):
+    @classmethod
+    def name(cls):
+        return 'float'
+    @classmethod
+    def value_type(cls):
+        return float
+ 
+class OaTypeTime(OaType):
+    scales = [ '', 'd', 'c', 'm', None, None, u'µ', None, None, 'n' ]
+    @classmethod
+    def name(cls):
+        return 'time'
+    @classmethod
+    def value_type(cls):
+        return timedelta
+    @classmethod
+    def _to_unicode(cls, value):
+        return unicode(value) + 's'
+    @classmethod
+    def _from_unicode(cls, value):
+        scales = OaTypeTime.scales
+        value = value.strip().lower()
+        for s in reversed(range(0, len(scales))):
+            if scales[s] is not None and value.endswith(scales[s] + 's'):
+                return timedelta(seconds=float(value[:-1*(len(scales[s] + 's'))]) * 0.1**s)
+        return float(value)
+    
+class OaTypeSize(OaType):
+    scales = [ '', 'K', 'M', 'G', 'T' ]
+    @classmethod
+    def name(cls):
+        return 'size'
+    @classmethod
+    def value_type(cls):
+        return int
+    @classmethod
+    def _to_unicode(cls, value):
+        scales = OaTypeSize.scales
+        for s in reversed(range(0, len(scales))):
+            if scales[s] is not None and value % (1024**s) == 0:
+                return unicode(value / (1024**s)) + scales[s] + 'B'
+        return unicode(value)
+    @classmethod
+    def _from_unicode(cls, value):
+        scales = OaTypeSize.scales
+        value = value.strip().upper()
+        for s in reversed(range(0, len(scales))):
+            if scales[s] is not None and value.endswith(scales[s] + 'B'):
+                return int(value[:-1*(len(scales[s] + 'B'))]) * 1024**s
+        return int(value)
+
+class OaTypeDatetime(OaType):
+    @classmethod
+    def name(cls):
+        return 'datetime'
+    @classmethod
+    def value_type(cls):
+        return datetime
+    @classmethod
+    def _to_unicode(cls, value):
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    @classmethod
+    def _from_unicode(cls, value):
+        return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+
+oa_types = {}
+for item in globals().values():
+    if isinstance(item, type) and issubclass(item, OaType) and (item != OaType):
+        oa_types[item.name()] = item
+
+class OaParam(object):
+    def __init__(self, type_, name, description=None, required=False, default=None):
+        if not (isinstance(type_, type) and issubclass(type_, OaType)):
+            type_ = oa_types[type_]
+        self.type_ = type_
+        self.name = unicode(name)
+        self.description = unicode(description)
+        self.required = bool(required)
+        if default is None:
+            self.default = None
+        else:
+            self.default = type_.cast(default)
+    def to_dom(self, doc):
+        ele = doc.createElement('param')
+        ele.setAttribute('type', self.type_.name())
+        ele.setAttribute('name', self.name)
+        if self.description:
+            ele.setAttribute('description', self.description)
+        if self.required:
+            ele.setAttribute('required', 'true')
+        if self.default is not None:
+            ele.setAttribute('default', self.type_.to_unicode(self.default))
+        return ele
+    @staticmethod
+    def from_dom(ele):
+        if ele.tagName != 'param':
+            raise ValueError
+        type_ = oa_types[ele.getAttribute('type')]
+        name = ele.getAttribute('name')
+        description = None
+        if ele.hasAttribute('description'):
+            description = ele.getAttribute('description')
+        required = False
+        if ele.hasAttribute('required'):
+            required = OaTypeBoolean.from_unicode(ele.getAttribute('required'))
+        default = None
+        if ele.hasAttribute('default'):
+            default = type_.from_unicode(ele.getAttribute('default'))
+        return OaParam(type_=type_, name=name, description=description, required=required, default=default)
+    def to_unicode(self, value):
+        return self.type_.to_unicode(value)
+    def from_unicode(self, value):
+        return self.type_.from_unicode(value)
+
+class OaTypedParser(object):
+    def __init__(self, params):
+        self.params = params
+    @staticmethod
+    def from_dom(ele):
+        params = []
+        for param in ele.getElementsByTagNameNS('*', 'param'):
+            params.append(OaParam.from_dom(param))
+        return OaTypedParser(params)
+    def read_oa_map(self, oa_map):
+        result = Namespace()
+        for param in self.params:
+            value = param.default
+            if param.name in oa_map:
+                value = param.from_unicode(oa_map[param.name].value)
+            if param.required and value is None:
+                raise ValueError
+            result[param.name] = value
+        return result
+    def write_oa_map(self, dct):
+        result = {}
+        for param in self.params:
+            if param.name in dct:
+                result[param.name] = OpenAttribute(is_blob = False, value = param.to_unicode(dct[param.name]))
+        return result
+
 def parse_params(description, section, subsection, oa_map):
     result = Namespace()
     if not description:
@@ -30,77 +240,8 @@ def parse_params(description, section, subsection, oa_map):
     if not xml:
         return result
     xml = xml[0].getElementsByTagNameNS('*', subsection)
-    if not xml:
-        return result
-    xml = xml[0]
-    for param in xml.getElementsByTagNameNS('*', 'param'):
-        ptype = param.getAttribute('type')
-        pname = param.getAttribute('name')
-        pdefault = param.getAttribute('default')
-        pvalue = pdefault
-
-        oa = oa_map.get(pname)
-        if oa is not None and not oa.is_blob:
-            pvalue = oa.value
-
-        if pvalue is not None:
-            try:
-                if ptype == 'int':
-                    pvalue = int(pvalue)
-                elif ptype == 'size':
-                    mul = 1
-                    pvalue = unicode(pvalue.strip().lower())
-                    if pvalue[-1] == 'b':
-                        pvalue = pvalue[:-1]
-                    if pvalue[-1] == 'k':
-                        mul = 1024
-                        pvalue = pvalue[:-1]
-                    elif pvalue[-1] == 'm':
-                        mul = 1024**2
-                        pvalue = pvalue[:-1]
-                    elif pvalue[-1] == 'g':
-                        mul = 1024**3
-                        pvalue = pvalue[:-1]
-                    elif pvalue[-1] == 't':
-                        mul = 1024**4
-                        pvalue = pvalue[:-1]
-                    elif pvalue[-1] == 'p':
-                        mul = 1024**5
-                        pvalue = pvalue[:-1]
-                    pvalue = int(pvalue * mul)
-                elif ptype == 'float':
-                    pvalue = float(pvalue)
-                elif ptype == 'time':
-                    pvalue = unicode(pvalue.strip().lower())
-                    mul = 1
-                    if pvalue[-1] == 's':
-                        pvalue = pvalue[:-1]
-                    if pvalue[-1] == 'c':
-                        mul = 0.01
-                        pvalue = pvalue[:-1]
-                    elif pvalue[-1] == 'm':
-                        mul = 0.001
-                        pvalue = pvalue[:-1]
-                    elif pvalue[-1] == u'µ':
-                        mul = 0.000001
-                        pvalue = pvalue[:-1]
-                    elif pvalue[-1] == 'n':
-                        pvalue = mul = 0.000000001
-                        pvalue[0:-1]
-                    pvalue = timedelta(seconds=float(pvalue) * mul)
-                elif ptype == 'datetime':
-                    pvalue = datetime.strptime(pvalue, '%Y-%m-%d %H:%M:%S')
-                elif ptype == 'bool':
-                    if pvalue.lower() == 'true' or pvalue.lower() == 'yes':
-                        pvalue = True
-                    elif pvalue.lower() == 'false' or pvalue.lower() == 'no':
-                        pvalue = False
-                    else:
-                        pvalue = bool(pvalue)
-            except ValueError:
-                pvalue = None
-        result[pname] = pvalue
-    return result
+    parser = OaTypedParser.from_dom(xml[0])
+    return parser.read_oa_map(oa_map)
 
 class AggregatorBase(object):
     def __init__(self, supervisor, ranking):
@@ -201,8 +342,6 @@ class ACMAggregator(AggregatorBase):
                 self.result_list = sortedlist()
                 self.problem = problem
                 self.params = self.score.aggregator.problem_params[problem.id]
-                print self.params
-
 
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
@@ -283,7 +422,6 @@ class ACMAggregator(AggregatorBase):
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = ''
         self.ranking.save()
-        print self.params
         
     def get_score(self):
         return self.ACMScore(self)

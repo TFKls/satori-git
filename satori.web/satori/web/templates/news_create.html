@@ -2,11 +2,7 @@
 
 {% block content %}
 
-{% if page_info.contest %}
-<form action={% url contest_news_create page_info.contest.id %} method="POST">
-{% else %}
-<form action={% url news_create %} method="POST">
-{% endif %}
+<form action="" method="POST">
 
 <table>
 {{ form.as_table }}

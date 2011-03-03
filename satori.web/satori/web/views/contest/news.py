@@ -24,7 +24,7 @@ def view(request, page_info):
     return render_to_response('news.html',{'page_info' : page_info, 'messages' : messages })
 
 @contest_view
-def create(request, page_info):
+def add(request, page_info):
     if request.method=="POST":
         form = ContestNewsEditForm(request.POST)
         if form.is_valid():
@@ -45,7 +45,7 @@ def edit(request, page_info,id):
             message.modify(SubpageStruct(name=data["name"],content=data["content"],is_public=data["is_public"]))
             return HttpResponseRedirect(reverse('contest_news',args=[page_info.contest.id]))
     else:
-        form = ContestNewsEditForm({'name' : message.name, 'content' : message.content, 'is_public' : message.is_public})
+        form = ContestNewsEditForm(initial={'name' : message.name, 'content' : message.content, 'is_public' : message.is_public})
     return render_to_response('news_edit.html',{'page_info' : page_info, 'form' : form, 'message' : message})
 
 @contest_view

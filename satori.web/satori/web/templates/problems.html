@@ -25,14 +25,14 @@
 
 <td> 
 <a href="{% url contest_problems_view page_info.contest.id problem.id %}">{{ problem.title }}</a><br/>
-{% if problem.admin %}
+{% if pinfo.admin %}
 {% if pinfo.visible %} Visible {% endif %}
 {% if pinfo.submittable %} Submittable {% endif %}
 {% endif %}
 </td>
 
 <td> 
-{% if problem.admin %}
+{% if pinfo.admin %}
 {% if pinfo.when_view %}
 
     {% if pinfo.when_view.start_on %}
@@ -48,7 +48,7 @@
 </td>
 
 <td> 
-{% if problem.admin %}
+{% if pinfo.admin %}
 {% if pinfo.when_submit %}
 
     {% if pinfo.when_submit.start_on %}
@@ -65,7 +65,7 @@
 
 
 <td>
-{% if problem.admin %}
+{% if pinfo.admin %}
 <a href={% url contest_problems_edit page_info.contest.id problem.id %}>Edit problem</a>
 {% endif %}
 </td>
