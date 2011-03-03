@@ -40,7 +40,6 @@ import satori.common.SList;
 import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SView;
-import satori.common.SViewList;
 import satori.common.ui.SBlobInputView;
 import satori.common.ui.SInputView;
 import satori.common.ui.SPane;
@@ -65,7 +64,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 	
 	private List<SSolutionPane> solution_panes = new ArrayList<SSolutionPane>();
 	private List<STestImpl> tests = new ArrayList<STestImpl>();
-	private SViewList parent_views = new SViewList();
+	private List<SView> parent_views = new ArrayList<SView>();
 	
 	private JComponent pane;
 	private JComponent input_pane;
@@ -733,6 +732,6 @@ public class STestPane implements SPane, SList<STestImpl> {
 		for (STestImpl test : tests) test.removeView(view);
 	}
 	private void addParentViews(STestImpl test) {
-		for (SView view : parent_views.get()) test.addView(view);
+		for (SView view : parent_views) test.addView(view);
 	}
 }

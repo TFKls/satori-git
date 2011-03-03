@@ -7,11 +7,10 @@ import javax.swing.JComponent;
 import javax.swing.JTabbedPane;
 
 import satori.common.SView;
-import satori.common.SViewList;
 
 public class STabbedPane implements SPane, STabs {
 	private final List<STabPane> panes = new ArrayList<STabPane>();
-	private final SViewList parent_views = new SViewList();
+	private final List<SView> parent_views = new ArrayList<SView>();
 	private final JTabbedPane tabs = new JTabbedPane();
 	
 	@Override public JComponent getPane() { return tabs; }
@@ -23,12 +22,12 @@ public class STabbedPane implements SPane, STabs {
 	public void closeAll() {
 		for (STabPane pane : panes) pane.close();
 		panes.clear();
-		parent_views.update();
+		updateParentViews();
 	}
 	
 	@Override public void openPane(String title, STabPane pane) {
 		panes.add(pane);
-		parent_views.update();
+		updateParentViews();
 		tabs.addTab(title, pane.getPane());
 		tabs.setSelectedComponent(pane.getPane());
 	}
@@ -44,7 +43,7 @@ public class STabbedPane implements SPane, STabs {
 			String title = model.getTitle();
 			if (pane.hasUnsavedData()) title += "*";
 			tabs.setTitleAt(tabs.indexOfComponent(pane.getPane()), title);
-			parent_views.update();
+			updateParentViews();
 		}
 	}
 	@Override public SView openPane(TabModel model, STabPane pane) {
@@ -55,9 +54,10 @@ public class STabbedPane implements SPane, STabs {
 	@Override public void closePane(STabPane pane) {
 		tabs.remove(pane.getPane());
 		panes.remove(pane);
-		parent_views.update();
+		updateParentViews();
 	}
 	
 	public void addParentView(SView view) { parent_views.add(view); }
 	public void removeParentView(SView view) { parent_views.remove(view); }
+	private void updateParentViews() { for (SView view : parent_views) view.update(); }
 }

@@ -13,7 +13,6 @@ import satori.common.SIdReader;
 import satori.common.SPair;
 import satori.common.SReference;
 import satori.common.SView;
-import satori.common.SViewList;
 import satori.problem.SParentProblem;
 import satori.problem.STestSuiteReader;
 import satori.problem.STestSuiteSnap;
@@ -33,7 +32,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	private List<SPair<String, String>> reporters;
 	
 	private final SDataStatus status = new SDataStatus();
-	private final SViewList views = new SViewList();
+	private final List<SView> views = new ArrayList<SView>();
 	private final SReference reference = new SReference() {
 		@Override public void notifyModified() { snapModified(); }
 		@Override public void notifyDeleted() { snapDeleted(); }
@@ -222,7 +221,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
-	private void updateViews() { views.update(); }
+	private void updateViews() { for (SView view : views) view.update(); }
 	
 	public void reload() throws SException {
 		SAssert.assertTrue(isRemote(), "Test suite not remote");

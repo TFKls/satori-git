@@ -9,9 +9,7 @@ import satori.common.SException;
 import satori.common.SListener1;
 import satori.common.SPair;
 import satori.common.SReference;
-import satori.common.SReferenceList;
 import satori.common.SView;
-import satori.common.SViewList;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
 import satori.thrift.STestSuiteData;
@@ -28,8 +26,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 	private List<SPair<String, String>> accumulators;
 	private List<SPair<String, String>> reporters;
 	
-	private final SViewList views = new SViewList();
-	private final SReferenceList refs = new SReferenceList();
+	private final List<SView> views = new ArrayList<SView>();
+	private final List<SReference> refs = new ArrayList<SReference>();
 	private final SListener1<STestSnap> test_deleted_listener = new SListener1<STestSnap>() {
 		@Override public void call(STestSnap test) { testDeleted(test); }
 	};
@@ -113,21 +111,20 @@ public class STestSuiteSnap implements STestSuiteReader {
 	
 	private void testDeleted(STestSnap test) {
 		tests.remove(test);
-		//updateViews(); //TODO: is this necessary?
-		refs.notifyModified();
+		//for (SView view : views) view.update(); //TODO: is this necessary?
+		for (SReference ref : refs) ref.notifyModified();
 	}
 	
 	private void notifyModified() {
-		updateViews();
-		refs.notifyModified();
+		for (SView view : views) view.update();
+		for (SReference ref : refs) ref.notifyModified();
 	}
 	public void notifyDeleted() {
-		refs.notifyDeleted();
+		for (SReference ref : refs) ref.notifyDeleted();
 	}
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
-	private void updateViews() { views.update(); }
 	
 	public void addReference(SReference ref) { refs.add(ref); }
 	public void removeReference(SReference ref) { refs.remove(ref); }

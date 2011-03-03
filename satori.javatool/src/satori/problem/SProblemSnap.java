@@ -1,11 +1,12 @@
 package satori.problem;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SReference;
-import satori.common.SReferenceList;
 import satori.common.SView;
-import satori.common.SViewList;
 import satori.thrift.SProblemData;
 
 public class SProblemSnap implements SProblemReader {
@@ -16,8 +17,8 @@ public class SProblemSnap implements SProblemReader {
 	private STestList test_list = null;
 	private STestSuiteList suite_list = null;
 	
-	private final SViewList views = new SViewList();
-	private final SReferenceList refs = new SReferenceList();
+	private final List<SView> views = new ArrayList<SView>();
+	private final List<SReference> refs = new ArrayList<SReference>();
 	
 	@Override public boolean hasId() { return true; }
 	@Override public long getId() { return id; }
@@ -50,20 +51,19 @@ public class SProblemSnap implements SProblemReader {
 	}
 	
 	private void notifyModified() {
-		updateViews();
-		refs.notifyModified();
+		for (SView view : views) view.update();
+		for (SReference ref : refs) ref.notifyModified();
 	}
 	public void notifyDeleted() {
 		if (test_list != null) test_list.delete();
 		test_list = null;
 		if (suite_list != null) suite_list.delete();
 		suite_list = null;
-		refs.notifyDeleted();
+		for (SReference ref : refs) ref.notifyDeleted();
 	}
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
-	private void updateViews() { views.update(); }
 	
 	public void addReference(SReference ref) throws SException {
 		if (test_list == null) test_list = STestList.createRemote(id);

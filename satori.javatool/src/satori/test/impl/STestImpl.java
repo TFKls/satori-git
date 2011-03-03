@@ -1,5 +1,6 @@
 package satori.test.impl;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -11,10 +12,8 @@ import satori.common.SDataStatus;
 import satori.common.SException;
 import satori.common.SId;
 import satori.common.SListener0;
-import satori.common.SListener0List;
 import satori.common.SReference;
 import satori.common.SView;
-import satori.common.SViewList;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SJudgeParser;
 import satori.metadata.SOutputMetadata;
@@ -34,9 +33,9 @@ public class STestImpl implements STestReader {
 	private Map<SInputMetadata, Object> input;
 	
 	private final SDataStatus status = new SDataStatus();
-	private final SListener0List data_modified_listeners = new SListener0List();
-	private final SListener0List metadata_modified_listeners = new SListener0List();
-	private final SViewList views = new SViewList();
+	private final List<SListener0> data_modified_listeners = new ArrayList<SListener0>();
+	private final List<SListener0> metadata_modified_listeners = new ArrayList<SListener0>();
+	private final List<SView> views = new ArrayList<SView>();
 	private final SReference reference = new SReference() {
 		@Override public void notifyModified() { snapModified(); }
 		@Override public void notifyDeleted() { snapDeleted(); }
@@ -156,15 +155,15 @@ public class STestImpl implements STestReader {
 	
 	public void addDataModifiedListener(SListener0 listener) { data_modified_listeners.add(listener); }
 	public void removeDataModifiedListener(SListener0 listener) { data_modified_listeners.remove(listener); }
-	private void callDataModifiedListeners() { data_modified_listeners.call(); }
+	private void callDataModifiedListeners() { for (SListener0 listener : data_modified_listeners) listener.call(); }
 	
 	public void addMetadataModifiedListener(SListener0 listener) { metadata_modified_listeners.add(listener); }
 	public void removeMetadataModifiedListener(SListener0 listener) { metadata_modified_listeners.remove(listener); }
-	private void callMetadataModifiedListeners() { metadata_modified_listeners.call(); }
+	private void callMetadataModifiedListeners() { for (SListener0 listener : metadata_modified_listeners) listener.call(); }
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
-	private void updateViews() { views.update(); }
+	private void updateViews() { for (SView view : views) view.update(); }
 	
 	public void reload() throws SException {
 		SAssert.assertTrue(isRemote(), "Test not remote");
