@@ -34,27 +34,29 @@ class RankingParams(Entity):
         cls._inherit_add(inherits, 'MANAGE', 'ranking', 'MANAGE')
         return inherits
 
-#    @ExportMethod(DjangoStruct('RankingParams'), [DjangoStruct('RankingParams')], PCArgField('fields', 'ranking', 'MANAGE'), [CannotSetField])
-#    @staticmethod
-#    def create(fields):
-#        params = RankingParams()
-#        params.forbid_fields(fields, ['id'])
-#        params.update_fields(fields, ['ranking', 'problem', 'test_suite'])
-#        if params.ranking.contest != params.problem.contest or params.problem.problem != params.test_suite.problem:
-#            raise CannotSetField()
-#        params.save()
-#        params.ranking.rejudge()
-#        return params
+    @ExportMethod(DjangoStruct('RankingParams'), [DjangoStruct('RankingParams'), TypedMap(unicode, AnonymousAttribute)], PCArgField('fields', 'ranking', 'MANAGE'), [CannotSetField])
+    @staticmethod
+    def create(fields, params):
+        rparams = RankingParams()
+        rparams.forbid_fields(fields, ['id'])
+        rparams.update_fields(fields, ['ranking', 'problem', 'test_suite'])
+        if rparams.ranking.contest != rparams.problem.contest or rparams.problem.problem != rparams.test_suite.problem:
+            raise CannotSetField()
+        rparams.save()
+        rparams.params_set_map(params)
+        rparams.ranking.rejudge()
+        return params
 
-#    @ExportMethod(DjangoStruct('RankingParams'), [DjangoId('RankingParams'), DjangoStruct('RankingParams')], PCArg('self', 'MANAGE'), [CannotSetField])
-#    def modify(self, fields):
-#        self.forbid_fields(fields, ['id', 'ranking', 'problem'])
-#        self.update_fields(fields, ['test_suite'])
-#        if self.ranking.contest != self.problem.contest or self.problem.problem != self.test_suite.problem:
-#            raise CannotSetField()
-#        self.save()
-#        self.ranking.rejudge()
-#        return self
+    @ExportMethod(DjangoStruct('RankingParams'), [DjangoId('RankingParams'), DjangoStruct('RankingParams'), TypedMap(unicode, AnonymousAttribute)], PCArg('self', 'MANAGE'), [CannotSetField])
+    def modify(self, fields, params):
+        self.forbid_fields(fields, ['id', 'ranking', 'problem'])
+        self.update_fields(fields, ['test_suite'])
+        if self.ranking.contest != self.problem.contest or self.problem.problem != self.test_suite.problem:
+            raise CannotSetField()
+        self.save()
+        self.params_set_map(params)
+        self.ranking.rejudge()
+        return self
 
 class RankingParamsEvents(Events):
     model = RankingParams
