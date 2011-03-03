@@ -21,39 +21,124 @@ max_seconds_per_problem = maxint / 10
 
 class OaType(object):
     @classmethod
+    def name(cls, value):
+        raise NotImplemented
+    @classmethod
     def value_type(cls):
-        return unicode
+        raise NotImplemented
     @classmethod
     def from_unicode(cls, value):
         return cls.value_type()(value)
     @classmethod
     def to_unicode(cls, value):
         return unicode(value)
-    @classmethod
-    def name(cls, value):
-        raise NotImplemented
     def __init__(self, value=None, str_value=None):
         if value is not None:
             self.str_value = self.__class__.to_unicode(value)
-        else
+        else:
             self.str_value = str_value
     def value(self):
         return self.__class__.from_unicode(self.str_value)
 
+class OaTypeText(OaType):
+    @classmethod
+    def name(cls):
+        return 'text'
+    @classmethod
+    def value_type(cls):
+        return unicode
+ 
+class OaTypeBoolean(OaType):
+    @classmethod
+    def name(cls):
+        return 'bool'
+    @classmethod
+    def value_type(cls):
+        return bool
+    @classmethod
+    def to_unicode(cls, value):
+        if value:
+            return 'true'
+        return 'false'
+    @classmethod
+    def from_unicode(cls, value):
+        if value.lower() == 'true' or value.lower() == 'yes':
+            return True
+        elif value.lower() == 'false' or value.lower() == 'no':
+            return False
+        return bool(value)
+ 
+class OaTypeInteger(OaType):
+    @classmethod
+    def name(cls):
+        return 'int'
+    @classmethod
+    def value_type(cls):
+        return int
+ 
+class OaTypeFloat(OaType):
+    @classmethod
+    def name(cls):
+        return 'float'
+    @classmethod
+    def value_type(cls):
+        return float
+ 
+class OaTypeTime(OaType):
+    @classmethod
+    def name(cls):
+        return 'time'
+    @classmethod
+    def value_type(cls):
+        return timedelta
+    
+class OaTypeSize(OaType):
+    @classmethod
+    def name(cls):
+        return 'size'
+    @classmethod
+    def value_type(cls):
+        return int
+    @classmethod
+    def from_unicode(cls, value):
+        value = value.strip().lower().rstrip('b')
+        mul = 1
+        if value[-1] == 'k':
+            mul = 1024
+            value = value[:-1]
+        elif value[-1] == 'm':
+            mul = 1024**2
+            value = value[:-1]
+        elif value[-1] == 'g':
+            mul = 1024**3
+            value = value[:-1]
+        elif value[-1] == 't':
+            mul = 1024**4
+            value = value[:-1]
+        elif value[-1] == 'p':
+            mul = 1024**5
+            value = value[:-1]
+        value = int(value) * mul
+
+class OaTypeDatetime(OaType):
+    @classmethod
+    def name(cls):
+        return 'datetime'
+    @classmethod
+    def value_type(cls):
+        return datetime
+    @classmethod
+    def to_unicode(cls, value):
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    @classmethod
+    def from_unicode(cls, value):
+        return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+
 class OaParam(object):
-    def __init__(self, name, type_, description = None, required = False, default = None):
-        pass
+    pass
 
 class OaTypedMap(object):
-    def __init__(self, doc = None, xml = None, dom = None, oa_map = {}):
-        if dom is not None:
-            self._xml = dom
-        elif xml is not None:
-            self._xml = minidom.parseString(xml)
-        elif doc is not None:
-            self._xml = minidom.parseString(u' '.join([line[2:] for line in description.splitlines() if line[0:2] == '#@']))
-        else:
-            pass
+    pass
 
 def parse_params(description, section, subsection, oa_map):
     result = Namespace()
