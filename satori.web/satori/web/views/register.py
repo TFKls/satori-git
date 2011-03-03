@@ -33,7 +33,7 @@ def view(request, page_info):
             data = form.cleaned_data
             profile = OaMap()
             User.register(UserStruct(login=data["login"],firstname=data["firstname"],lastname=data["lastname"],email=data["email"]),password=data["password"],profile=profile.get_map())
-            return HttpResponseRedirect(reverse('login'))
+            return HttpResponseRedirect(reverse('login')+"?status=regok")
     else:
         form = RegisterForm()
     return render_to_response('register.html',{'form' : form})

@@ -8,6 +8,7 @@
     {% for cinfo in managed %}
     <tr>
         <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
+        <td>{{ cinfo.contest.description }}</td>
     </tr>
     {% endfor %}
 </table>
@@ -20,6 +21,7 @@
     {% for cinfo in participating %}
     <tr>
         <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
+        <td>{{ cinfo.contest.description }}</td>
         <td>{% if not cinfo.contestant.accepted %} (pending) {% endif %}</td>
     </tr>
     {% endfor %}
@@ -33,6 +35,7 @@
     {% for cinfo in other %}
     <tr>
         <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
+        <td>{{ cinfo.contest.description }}</td>
         <td>
             {% if cinfo.can_join %}
                 <form action="{% url select_contest %}" method="POST"/><input type="submit" name="{{cinfo.contest.id}}" value="Join"/></form>

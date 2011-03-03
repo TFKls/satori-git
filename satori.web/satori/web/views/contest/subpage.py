@@ -43,7 +43,7 @@ def edit(request, page_info,id):
             subpage.modify(SubpageStruct(name=data["name"],content=data["content"],is_public=data["is_public"]))
             return HttpResponseRedirect(reverse('contest_subpage',args=[page_info.contest.id, subpage.id]))
     else:
-        form = ContestSubpageEditForm({'name' : subpage.name, 'content' : subpage.content, 'is_public' : subpage.is_public})
+        form = ContestSubpageEditForm(initial={'name' : subpage.name, 'content' : subpage.content, 'is_public' : subpage.is_public})
     return render_to_response('subpage_edit.html',{'page_info' : page_info, 'form' : form, 'subpage' : subpage})
 
 @contest_view

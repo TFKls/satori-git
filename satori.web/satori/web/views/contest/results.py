@@ -7,11 +7,12 @@ from django import forms
 
 @contest_view
 def view(request, page_info):
+    max_limit = 500
     contest = page_info.contest
     if not page_info.contest_is_admin:
         results=contest.get_all_results().results
         return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results})
-    contestants = contest.get_contestants().contestants
+    contestants = contest.get_contestants(offset=0,limit=max_limit).contestants
     contestant_choices = [[cinfo.contestant.id,cinfo.name] for cinfo in contestants]
     contestant_choices.append(["all","All results"])
     problems = Web.get_problem_mapping_list(contest=contest)

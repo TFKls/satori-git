@@ -1,0 +1,34 @@
+{% extends "templates/index.html" %}
+
+{% block header %}
+{{ form.media }}
+{% endblock %}
+
+
+
+{% block content %}
+
+<form action="" method="POST">
+<table>
+{{ base_form.as_table }}
+{{ form.as_table }}
+</table>
+<input type="submit"/>
+</form>
+
+<table>
+<tr>
+    <th>Code</th>
+    <th>Title</th>
+    <th>Suite in ranking</th>
+</tr>
+{% for problem, suite in problem_list %}
+<tr>
+    <td>{{problem.code}}</td>
+    <td>{{problem.title}}</td>
+    <td>{% if suite %} {{suite.name}} {% else %} Use default ({{problem.default_test_suite.name}}) {% endif %}</td>
+</tr>
+{% endfor %}
+</table>
+
+{% endblock %}

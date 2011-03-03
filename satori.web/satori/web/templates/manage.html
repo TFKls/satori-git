@@ -2,10 +2,26 @@
 
 {% block content %}
 
-<form action="{% url contest_manage_rights page_info.contest.id %}" method="POST"/>
+<form action="" method="POST"/>
 <table>
-{{ rights_form.as_table }}
+{{ manage_form.as_table }}
 </table>
 <input type="submit"/>
 </form>
+
+<h4>Subpages</h4>
+{% for s in page_info.subpages %}
+<p>{{ s.name }} (<a href="{% url contest_subpage_edit page_info.contest.id s.id %}">edit</a>)</p>
+{% endfor %}
+
+<a href="{% url contest_subpage_create page_info.contest.id %}">Add new subpage</a>
+
+
+<h4>Rankings</h4>
+{% for s in page_info.rankings %}
+<p>{{ s.name }} (<a href="{% url ranking_edit page_info.contest.id s.id %}">edit</a>)</p>
+{% endfor %}
+
+<a href="{% url ranking_add page_info.contest.id %}">Add new ranking</a>
+
 {% endblock %}
