@@ -1,7 +1,7 @@
 package satori.test.ui;
 
+import java.awt.Color;
 import java.awt.FlowLayout;
-import java.awt.Font;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -16,14 +16,22 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 import satori.common.SException;
+import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SView;
 import satori.common.ui.SBlobInputView;
+import satori.common.ui.SBlobOutputView;
+import satori.common.ui.SInputView;
 import satori.common.ui.SPane;
+import satori.common.ui.SStringOutputView;
 import satori.main.SFrame;
+import satori.metadata.SOutputMetadata;
+import satori.test.impl.SBlobOutput;
 import satori.test.impl.SSolution;
+import satori.test.impl.SStringOutput;
 import satori.test.impl.STestImpl;
 import satori.test.impl.STestResult;
+import satori.type.SBlobType;
 
 public class SSolutionPane implements SRow {
 	private final SSolution solution;
@@ -33,7 +41,7 @@ public class SSolutionPane implements SRow {
 	private JComponent pane;
 	private SBlobInputView solution_input;
 	private SSolutionRow button_row;
-	private SSolutionRow status_row;
+	private ResultRow result_row;
 	
 	public SSolutionPane(SSolution solution, SListener1<SSolutionPane> remove_listener) {
 		this.solution = solution;
@@ -149,71 +157,99 @@ public class SSolutionPane implements SRow {
 	}
 	
 //
-//  StatusItem
+//  ResultItem
 //
-	private class StatusItem implements SPane, SView {
+	private class ResultItem implements SPane, SView {
 		private final STestResult result;
 		
-		private JLabel label;
-		private Font normal_font, message_font;
+		private JComponent pane;
+		private Color default_color;
 		
-		public StatusItem(STestResult result) {
+		private final SListener0 meta_listener = new SListener0() {
+			@Override public void call() {
+				pane.removeAll();
+				fillPane();
+				pane.revalidate(); pane.repaint();
+			}
+		};
+		
+		public ResultItem(STestResult result) {
 			this.result = result;
 			result.addView(this);
 			initialize();
 		}
 		
-		@Override public JComponent getPane() { return label; }
+		@Override public JComponent getPane() { return pane; }
 		
+		private void fillPane() {
+			for (SOutputMetadata om : result.getTest().getOutputMetadata()) {
+				SInputView view;
+				if (om.getType() == SBlobType.INSTANCE) view = new SBlobOutputView(new SBlobOutput(om, result));
+				else view = new SStringOutputView(new SStringOutput(om, result));
+				view.setDimension(SDimension.itemDim);
+				view.setDescription(om.getDescription());
+				result.addView(view);
+				pane.add(view.getPane());
+			}
+			pane.add(Box.createVerticalGlue());
+		}
 		private void initialize() {
-			label = new JLabel();
-			SDimension.setItemSize(label);
-			normal_font = label.getFont().deriveFont(Font.PLAIN);
-			message_font = label.getFont().deriveFont(Font.BOLD);
-			update();
+			pane = new Box(BoxLayout.Y_AXIS);
+			pane.setOpaque(true);
+			fillPane();
+			result.getTest().addMetadataModifiedListener(meta_listener);
+			default_color = pane.getBackground();
+		}
+		
+		public void close() {
+			result.getTest().removeMetadataModifiedListener(meta_listener);
 		}
 		
 		@Override public void update() {
 			switch (result.getStatus()) {
 			case NOT_TESTED:
-				label.setFont(normal_font);
-				label.setText("Not tested");
-				break;
+				pane.setBackground(default_color); break;
 			case PENDING:
-				label.setFont(normal_font);
-				label.setText("Pending");
-				break;
+				pane.setBackground(Color.YELLOW); break;
 			case FINISHED:
-				label.setFont(message_font);
-				label.setText(result.getMessage());
-				break;
+				pane.setBackground(Color.GREEN); break;
 			}
 		}
 	}
 	
 //
-//  StatusRow
+//  ResultRow
 //
-	private class StatusRow implements SSolutionRow {
+	private class ResultRow implements SSolutionRow {
+		private List<ResultItem> items = new ArrayList<ResultItem>();
 		private JComponent pane;
 		
-		public StatusRow() { initialize(); }
+		public ResultRow() { initialize(); }
 		
 		@Override public JComponent getPane() { return pane; }
 		
 		private void initialize() {
 			pane = new Box(BoxLayout.X_AXIS);
-			JLabel label = new JLabel("Status");
+			JLabel label = new JLabel("Result");
 			SDimension.setLabelSize(label);
-			pane.add(label);
+			Box label_box = new Box(BoxLayout.Y_AXIS);
+			label_box.add(label);
+			label_box.add(Box.createVerticalGlue());
+			pane.add(label_box);
 			pane.add(Box.createHorizontalGlue());
 		}
 		
+		public void close() { for (ResultItem item : items) item.close(); }
+		
 		@Override public void addColumn(STestResult result, int index) {
+			ResultItem item = new ResultItem(result);
+			items.add(index, item);
 			int pane_index = (index+1 < pane.getComponentCount()) ? index+1 : -1;
-			pane.add(new StatusItem(result).getPane(), pane_index);
+			pane.add(item.getPane(), pane_index);
 		}
 		@Override public void removeColumn(int index) {
+			//items.get(index).close(); // TODO: necessary?
+			items.remove(index);
 			pane.remove(index+1);
 		}
 	}
@@ -235,25 +271,28 @@ public class SSolutionPane implements SRow {
 		remove_button.setToolTipText("Remove solution");
 		remove_button.setFocusable(false);
 		remove_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { remove_listener.call(SSolutionPane.this); }
+			@Override public void actionPerformed(ActionEvent e) {
+				result_row.close();
+				remove_listener.call(SSolutionPane.this);
+			}
 		});
 		solution_pane.add(remove_button);
 		pane.add(solution_pane);
 		button_row = new ButtonRow();
 		pane.add(button_row.getPane());
-		status_row = new StatusRow();
-		pane.add(status_row.getPane());
+		result_row = new ResultRow();
+		pane.add(result_row.getPane());
 	}
 	
 	@Override public void addColumn(STestImpl test, int index) {
 		STestResult result = new STestResult(solution, test);
 		results.add(index, result);
 		button_row.addColumn(result, index);
-		status_row.addColumn(result, index);
+		result_row.addColumn(result, index);
 	}
 	@Override public void removeColumn(int index) {
 		button_row.removeColumn(index);
-		status_row.removeColumn(index);
+		result_row.removeColumn(index);
 		results.get(index).close();
 		results.remove(index);
 	}

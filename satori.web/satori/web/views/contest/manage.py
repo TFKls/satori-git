@@ -7,10 +7,11 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django import forms
 
-class RightsForm(forms.Form):
+class ManageForm(forms.Form):
+    name = forms.CharField(required=True)
+    description = forms.CharField(required=False)
     viewing = forms.ChoiceField(label='Contest visible for',choices=[['none','Contestants only'],['auth','Logged users'],['anonym','Everyone']])
     joining = forms.ChoiceField(label='Joining method',choices=[['none','None (only admin-adding)'],['apply','Application'],['free','Free']])
-
 
 class RightsStatus(object):
     viewing = 'none'
@@ -36,20 +37,16 @@ def get_status(contest):
 def view(request, page_info):
     contest = page_info.contest
     status = get_status(contest)
-    rights_form = RightsForm(data={'viewing' : status.viewing, 'joining' : status.joining})
-    return render_to_response('manage.html', {'page_info' : page_info, 'rights_form' : rights_form})
-
-@contest_view
-def rights(request, page_info):
-    contest = page_info.contest
     if request.method!="POST":
-        return HttpResponseRedirect(reverse('contest_manage',args=[page_info.contest.id]))
-    form = RightsForm(request.POST)
-    if not form.is_valid():
-        return HttpResponseRedirect(reverse('contest_manage',args=[page_info.contest.id]))        
-    status = get_status(contest)
-    viewing = form.cleaned_data['viewing']
-    joining = form.cleaned_data['joining']
+        manage_form = ManageForm(initial={'viewing' : status.viewing, 'joining' : status.joining, 'name' : contest.name})
+        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form})
+    manage_form = ManageForm(request.POST)
+    if not manage_form.is_valid():
+        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form})
+    viewing = manage_form.cleaned_data['viewing']
+    joining = manage_form.cleaned_data['joining']
+    contest.name = manage_form.cleaned_data['name']
+    contest.description = manage_form.cleaned_data['description']
     if status.viewing!=viewing:
         Privilege.revoke(status.auth,contest,'VIEW')
         Privilege.revoke(status.anonym,contest,'VIEW')
@@ -64,5 +61,5 @@ def rights(request, page_info):
             Privilege.grant(status.auth,contest,'APPLY')
         elif joining=='free':
             Privilege.grant(status.auth,contest,'JOIN')
-    return HttpResponseRedirect(reverse('contest_manage',args=[page_info.contest.id]))
+    return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form})
 

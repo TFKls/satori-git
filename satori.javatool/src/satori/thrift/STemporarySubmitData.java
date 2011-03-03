@@ -2,14 +2,18 @@ package satori.thrift;
 
 import static satori.thrift.SAttributeData.convertAttrMap;
 import static satori.thrift.SAttributeData.createBlobs;
+import static satori.thrift.SAttributeData.createFormattedAttrMap;
 import static satori.thrift.SAttributeData.createRawAttrMap;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SException;
+import satori.metadata.SOutputMetadata;
 import satori.session.SSession;
 import satori.test.STemporarySubmitReader;
 import satori.test.STestReader;
@@ -20,33 +24,32 @@ import satori.thrift.gen.TemporarySubmitStruct;
 public class STemporarySubmitData {
 	static class TemporarySubmitWrap implements STemporarySubmitReader {
 		private final boolean pending;
-		private final String status;
-		public TemporarySubmitWrap(TemporarySubmitStruct struct, Map<String, AnonymousAttribute> result) {
+		private final Map<SOutputMetadata, Object> result;
+		public TemporarySubmitWrap(TemporarySubmitStruct struct, List<SOutputMetadata> meta, Map<String, AnonymousAttribute> data) throws SException {
 			pending = struct.isPending();
-			AnonymousAttribute status_attr = result.get("status");
-			status = status_attr != null ? status_attr.getValue() : null;
+			result = Collections.unmodifiableMap(createFormattedAttrMap(meta, data));
 		}
 		@Override public boolean getPending() { return pending; }
-		@Override public String getStatus() { return status; }
+		@Override public Map<SOutputMetadata, Object> getResult() { return result; }
 	}
 	
 	private static class LoadCommand implements SThriftCommand {
 		private final long id;
-		private TemporarySubmitStruct temp_submit;
+		private TemporarySubmitStruct struct;
 		private Map<String, AnonymousAttribute> result;
-		public TemporarySubmitStruct getTempSubmit() { return temp_submit; }
+		public TemporarySubmitStruct getStruct() { return struct; }
 		public Map<String, AnonymousAttribute> getResult() { return result; }
 		public LoadCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			TemporarySubmit.Iface iface = new TemporarySubmit.Client(SThriftClient.getProtocol());
-			temp_submit = iface.TemporarySubmit_get_struct(SSession.getToken(), id);
+			struct = iface.TemporarySubmit_get_struct(SSession.getToken(), id);
 			result = iface.TemporarySubmit_result_get_map(SSession.getToken(), id);
 		}
 	}
-	public static STemporarySubmitReader load(long id) throws SException {
+	public static STemporarySubmitReader load(long id, List<SOutputMetadata> meta) throws SException {
 		LoadCommand command = new LoadCommand(id);
 		SThriftClient.call(command);
-		return new TemporarySubmitWrap(command.getTempSubmit(), command.getResult());
+		return new TemporarySubmitWrap(command.getStruct(), meta, command.getResult());
 	}
 	
 	private static class CreateCommand implements SThriftCommand {

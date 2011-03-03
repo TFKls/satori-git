@@ -1,6 +1,9 @@
 {% extends "templates/index.html" %}
 
 {% block content %}
+{% if page_info.contest_is_admin %}
+<a href="{% url contest_news_add page_info.contest.id %}">Add news</a>
+{% endif %}
 
 {% for msg,content,is_admin in messages %}
 <div class = "newsmsg bDots">
