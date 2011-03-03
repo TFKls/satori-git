@@ -5,8 +5,10 @@ import java.awt.Font;
 import java.awt.Point;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseListener;
 import java.io.File;
 
 import javax.swing.BorderFactory;
@@ -18,8 +20,8 @@ import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 
 import satori.blob.SBlob;
-import satori.common.SException;
 import satori.common.SData;
+import satori.common.SException;
 import satori.main.SFrame;
 
 public class SBlobOutputView implements SInputView {
@@ -47,16 +49,14 @@ public class SBlobOutputView implements SInputView {
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	
-	private Point popup_location = null;
-	
-	private void showPopup() {
+	private void showPopup(Point location) {
 		JPopupMenu popup = new JPopupMenu();
 		JMenuItem saveItem = new JMenuItem("Save");
 		saveItem.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { saveFile(); }
 		});
 		popup.add(saveItem);
-		if (popup_location != null) popup.show(label, popup_location.x, popup_location.y);
+		if (location != null) popup.show(label, location.x, location.y);
 		else popup.show(label, 0, label.getHeight());
 	}
 	
@@ -67,15 +67,13 @@ public class SBlobOutputView implements SInputView {
 		label.setContentAreaFilled(false);
 		label.setOpaque(false);
 		label.setHorizontalAlignment(SwingConstants.LEADING);
-		label.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { showPopup(); }
+		label.addMouseListener(new MouseAdapter() {
+			@Override public void mouseClicked(MouseEvent e) { showPopup(e.getPoint()); }
 		});
-		label.addMouseListener(new MouseListener() {
-			@Override public void mousePressed(MouseEvent e) { popup_location = e.getPoint(); }
-			@Override public void mouseReleased(MouseEvent e) { popup_location = null; }
-			@Override public void mouseClicked(MouseEvent e) {}
-			@Override public void mouseEntered(MouseEvent e) {}
-			@Override public void mouseExited(MouseEvent e) {}
+		label.addKeyListener(new KeyAdapter() {
+			@Override public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) { e.consume(); showPopup(null); }
+			}
 		});
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);

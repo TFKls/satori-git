@@ -9,12 +9,12 @@ import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
+import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
+import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.ImageIcon;
@@ -25,8 +25,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.TransferHandler;
 
-import satori.common.SInput;
 import satori.common.SException;
+import satori.common.SInput;
 import satori.main.SFrame;
 
 public class SStringInputView implements SInputView {
@@ -79,13 +79,6 @@ public class SStringInputView implements SInputView {
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	
-	private class LabelListener implements MouseMotionListener {
-		@Override public void mouseDragged(MouseEvent e) {
-			label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
-		}
-		@Override public void mouseMoved(MouseEvent e) {}
-	}
-	
 	@SuppressWarnings("serial")
 	private class LabelTransferHandler extends TransferHandler {
 		@Override public boolean canImport(TransferSupport support) {
@@ -129,30 +122,30 @@ public class SStringInputView implements SInputView {
 		label.setContentAreaFilled(false);
 		label.setOpaque(false);
 		label.setHorizontalAlignment(SwingConstants.LEADING);
-		label.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { edit(); }
+		MouseAdapter label_listener = new MouseAdapter() {
+			@Override public void mouseClicked(MouseEvent e) { edit(); }
+			@Override public void mouseDragged(MouseEvent e) {
+				label.getTransferHandler().exportAsDrag(label, e, TransferHandler.COPY);
+			}
+		};
+		label.addMouseListener(label_listener);
+		label.addMouseMotionListener(label_listener);
+		label.addKeyListener(new KeyAdapter() {
+			@Override public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) { e.consume(); edit(); }
+			}
 		});
-		label.addMouseMotionListener(new LabelListener());
 		label.setTransferHandler(new LabelTransferHandler());
 		pane.add(label);
 		field = new JTextField();
 		field.setVisible(false);
-		field.addKeyListener(new KeyListener() {
+		field.addKeyListener(new KeyAdapter() {
 			@Override public void keyPressed(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					e.consume();
-					editDone(true);
-				}
-				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) {
-					e.consume();
-					editCancel();
-				}
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) { e.consume(); editDone(true); }
+				if (e.getKeyCode() == KeyEvent.VK_ESCAPE) { e.consume(); editCancel(); }
 			}
-			@Override public void keyReleased(KeyEvent e) {}
-			@Override public void keyTyped(KeyEvent e) {}
 		});
-		field.addFocusListener(new FocusListener() {
-			@Override public void focusGained(FocusEvent e) {}
+		field.addFocusListener(new FocusAdapter() {
 			@Override public void focusLost(FocusEvent e) { editDone(false); }
 		});
 		pane.add(field);
