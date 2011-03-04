@@ -138,7 +138,7 @@ class OaTypeTime(OaType):
                         break
             if not found:
                 parts.append(timedelta(seconds=float(value)))
-        return sum(parts)
+        return sum(parts, timedelta())
     
 class OaTypeSize(OaType):
     scales = [ '', 'K', 'M', 'G', 'T' ]
@@ -414,7 +414,7 @@ class ACMAggregator(AggregatorBase):
                 self.ranking_entry.position = self.position()
                 self.ranking_entry.save()
             else:
-                points = int(sum([s.params.score for s in score_list]))
+                points = int(sum([s.params.score for s in score_list], 0.0))
                 time = sum([s.ok_time + self.aggregator.params.time_penalty * s.star_count for s in score_list], timedelta(0))
                 time_seconds = (time.microseconds + (time.seconds + time.days * 24 * 3600) * 10**6) / 10**6
                 time_str = str(timedelta(seconds=time_seconds))
@@ -492,7 +492,7 @@ class PointsAggregator(AggregatorBase):
                 self.ranking_entry.position = self.position()
                 self.ranking_entry.save()
             else:
-                points = sum([s.points for s in self.scores.values() if s.points is not None])
+                points = sum([s.points for s in self.scores.values() if s.points is not None], 0.0)
                 
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
         
