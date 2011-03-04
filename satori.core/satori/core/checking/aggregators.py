@@ -596,9 +596,9 @@ class MarksAggregator(AggregatorBase):
                         solve_time = self.aggregator.submit_cache[self.scores[pid].ok_submit].time
                         if params.time_start_descent is not None and params.time_descent is not None:
                             score = self.timed_score(score, solve_time, params.time_start_descent, params.time_descent)
-                        if not params.below_zero and score < 0
+                        if not params.below_zero and score < 0:
                             score = 0
-                        if not params.obligatory and score < 0
+                        if not params.obligatory and score < 0:
                             score = 0
                     else:
                         if params.obligatory:
