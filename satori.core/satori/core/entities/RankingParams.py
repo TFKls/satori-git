@@ -5,7 +5,7 @@ from django.db import models
 from satori.core.dbev   import Events
 from satori.core.models import Entity
 
-#@ExportModel
+@ExportModel
 class RankingParams(Entity):
     """Model. Intermediary for many-to-many relationship between Rankings and
     ProblemMappings.
@@ -21,8 +21,8 @@ class RankingParams(Entity):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('ranking', 'problem'),)
 
-#    class ExportMeta(object):
-#        fields = [('ranking', 'VIEW'), ('problem', 'VIEW'), ('test_suite', 'VIEW')]
+    class ExportMeta(object):
+        fields = [('ranking', 'VIEW'), ('problem', 'VIEW'), ('test_suite', 'VIEW')]
 
     def save(self, *args, **kwargs):
         self.fixup_params()
