@@ -408,7 +408,7 @@ class ACMAggregator(AggregatorBase):
 
         def update(self):
             score_list = [s for s in self.scores.values() if s.ok]
-            if self.hidden or (not score_list and not self.params.show_zero):
+            if self.hidden or (not score_list and not self.aggregator.params.show_zero):
                 self.ranking_entry.row = ''
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.position()
