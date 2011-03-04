@@ -65,8 +65,17 @@
 
 {% endfor %}
 
-
 </table>
+
+{% if page_params.pagecount > 1 %}
+{% for number in page_params.loop %}
+{% if number == page_params.page %}
+{{number}}
+{% else %}
+<a href="?contestant={{page_params.contestant}}&problem={{page_params.problem}}&page={{number}}">{{number}}</a>
+{% endif %}
+{% endfor %}
+{% endif %}
 
 
 {% endblock %}
