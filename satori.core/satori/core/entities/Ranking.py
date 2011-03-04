@@ -46,26 +46,34 @@ class Ranking(Entity):
     
     @ExportMethod(DjangoStruct('Ranking'), [DjangoStruct('Ranking'), TypedMap(unicode, AnonymousAttribute),
         TypedMap(DjangoId('ProblemMapping'), DjangoId('TestSuite')), TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute))], 
-        PCAnd(PCArgField('fields', 'contest', 'MANAGE'), PCEachValue('params', PCRawBlob('item')), PCEachValue('problem_test_suite_params', PCEachValue('item', PCRawBlob('item')))),
+        PCAnd(PCArgField('fields', 'contest', 'MANAGE'), PCEachValue('params', PCRawBlob('item')), PCEachValue('problem_params', PCEachValue('item', PCRawBlob('item')))),
         [CannotSetField])
     @staticmethod
-    def create(fields, params, problem_test_suites, problem_test_suite_params):
+    def create(fields, params, problem_test_suites, problem_params):
         ranking = Ranking()
         ranking.forbid_fields(fields, ['id', 'header', 'footer'])
         ranking.update_fields(fields, ['contest', 'name', 'aggregator', 'is_public'])
         ranking.save()
         ranking.params_set_map(params)
-        for problem in ranking.contest.problem_mappings.all():
-            ranking_params = RankingParams.objects.get_or_create(ranking=ranking, problem=problem)[0]
-            if problem in problem_test_suites:
-                if problem_test_suites[problem].problem != problem.problem:
-                    raise RuntimeError('Invalid test suite')
-                ranking_params.test_suite = problem_test_suites[problem]
+        set_params = {}
+        for problem,suite in problem_test_suites.items():
+            if problem.contest != ranking.contest:
+                raise CannotSetField
+            if suite.problem != problem.problem:
+                raise CannotSetField
+            ranking_params = RankingParams(ranking=ranking, problem=problem, test_suite=suite)
             ranking_params.save()
-            if problem in problem_test_suite_params:
-                ranking_params.params_set_map(problem_test_suite_params[problem])
+            set_params[problem.id] = ranking_params
+        for problem,oa_map in problem_params.items():
+            if problem.contest != ranking.contest:
+                raise CannotSetField
+            if problem.id in set_params:
+                ranking_params = set_params[problem.id]
             else:
-                ranking_params.params_set_map({})
+                ranking_params = RankingParams(ranking=ranking, problem=problem)
+                ranking_params.save()
+            ranking_params.params_set_map(oa_map)
+            set_params[problem.id] = ranking_params
         ranking.rejudge()
         return ranking
 
@@ -85,17 +93,30 @@ class Ranking(Entity):
         modified = self.update_fields(fields, ['name', 'aggregator', 'is_public'])
         self.save()
         self.params_set_map(params)
-        for problem in self.contest.problem_mappings.all():
-            ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
-            if problem in problem_test_suites:
-                if problem_test_suites[problem].problem != problem.problem:
-                    raise RuntimeError('Invalid test suite')
-                ranking_params.test_suite = problem_test_suites[problem]
+        set_params = {}
+        for problem,suite in problem_test_suites.items():
+            if problem.contest != self.contest:
+                raise CannotSetField
+            if suite.problem != problem.problem:
+                raise CannotSetField
+            ranking_params = RankingParams.objects().get_or_create(ranking=self, problem=problem)[0]
+            ranking_params.test_suite=suite
             ranking_params.save()
-            if problem in problem_params:
-                ranking_params.params_set_map(problem_params[problem])
+            ranking_params.params_set_map({})
+            set_params[problem.id] = ranking_params
+        for problem,oa_map in problem_params.items():
+            if problem.contest != self.contest:
+                raise CannotSetField
+            if problem.id in set_params:
+                ranking_params = set_params[problem.id]
             else:
-                ranking_params.params_set_map({})
+                ranking_params = RankingParams.objects().get_or_create(ranking=self, problem=problem)[0]
+                ranking_params.save()
+            ranking_params.params_set_map(oa_map)
+            set_params[problem.id] = ranking_params
+        for ex_params in self.ranking_params.objects().all():
+            if ex_params.id not in set_params:
+                ex_params.delete()
         self.rejudge()
         return self
 
@@ -107,12 +128,32 @@ class Ranking(Entity):
                 ret[param.poblem] = param.test_suite
         return ret
 
-    @ExportMethod(TypedMap(DjangoStruct('ProblemMapping'), TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute))), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
+    @ExportMethod(NoneType, [DjangoId('Ranking'), TypedMap(DjangoId('ProblemMapping'), DjangoId('TestSuite'))], PCArg('self', 'MANAGE'))
+    def set_problem_test_suites(self, problem_test_suites):
+        for problem, suite in problem_test_suites.items():
+            if problem.contest != self.contest:
+                raise CannotSetField
+            if suite.problem != problem.problem:
+                raise CannotSetField
+            param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
+            param.test_suite = suite
+            param.save()
+
+    @ExportMethod(TypedMap(DjangoStruct('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def get_problem_params(self):
         ret = {}
         for param in self.ranking_params.all():
             ret[param.poblem] = param.params_get_map()
         return ret
+
+    @ExportMethod(NoneType, [DjangoId('Ranking', TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)))], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('problem_params', PCEachValue('item', PCRawBlob('item')))))
+    def set_problem_params(self, problem_params):
+        for problem, oa_map in problem_params.items():
+            if problem.contest != self.contest:
+                raise CannotSetField
+            param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
+            param.save()
+            param.params_set_map(oa_map)
 
     @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def rejudge(self):
