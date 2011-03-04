@@ -28,6 +28,7 @@ ContestInfo = Struct('ContestInfo', [
 
 SubpageInfo = Struct('SubpageInfo', [
     ('subpage', DjangoStruct('Subpage'), False),
+    ('html', unicode, False),
     ('is_admin', bool, False),
     ])
 
@@ -103,6 +104,10 @@ class Web(object):
         for subpage in Privilege.where_can(Subpage.get_global(announcements), 'VIEW'):
             ret_s = SubpageInfo()
             ret_s.subpage = subpage
+            reader = subpage.content_get_blob('_html')
+            if reader:
+                ret_s.html = reader.read()
+                reader.close()
             ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
             ret.append(ret_s)
         return ret
@@ -113,7 +118,25 @@ class Web(object):
         for subpage in Privilege.where_can(Subpage.get_for_contest(contest, announcements), 'VIEW'):
             ret_s = SubpageInfo()
             ret_s.subpage = subpage
+            reader = subpage.content_get_blob('_html')
+            if reader:
+                ret_s.html = reader.read()
+                reader.close()
             ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
             ret.append(ret_s)
         return ret
+
+    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'VIEW'))
+    def get_accepted_contestants(contest):
+        return contest.contestant_role.children.filter(accepted=True)
+
+    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'MANAGE'))
+    def get_pending_contestants(contest):
+        return contest.contestant_role.children.filter(accepted=False)
+
+    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'MANAGE'))
+    def get_contest_admins(contest):
+        return contest.admin_role.children.all()
+
+
 

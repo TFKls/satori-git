@@ -54,6 +54,7 @@ class ProblemMapping(Entity):
         problem_mapping.save()
         Privilege.grant(problem_mapping.contest.admin_role, problem_mapping.problem, 'MANAGE')
         problem_mapping.contest.changed()
+        problem_mapping.statement_files_set_map(render_sphinx(problem_mapping.statement, problem_mapping.statement_files_get_map()))
         return problem_mapping
 
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
@@ -66,6 +67,7 @@ class ProblemMapping(Entity):
         problem_mapping.problem = assignment
         problem_mapping.default_test_suite = assignment.test_suites[0]
         problem_mapping.save()
+        problem_mapping.statement_files_set_map(render_sphinx(problem_mapping.statement, problem_mapping.statement_files_get_map()))
         return problem_mapping
 
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
@@ -80,6 +82,7 @@ class ProblemMapping(Entity):
         self.contest.changed()
         if 'default_test_suite' in modified:
             self.default_test_suite_changed()
+        self.statement_files_set_map(render_sphinx(self.statement, self.statement_files_get_map()))
         return self
 
     @ExportMethod(NoneType, [DjangoId('ProblemMapping'), TypedMap(DjangoId('Contestant'), TypedMap(unicode, AnonymousAttribute))], PCArg('self', 'MANAGE'), [])
