@@ -20,7 +20,7 @@ def view(request, page_info):
     messages = Web.get_subpage_list_for_contest(page_info.contest,True)
     for m in messages:
         m.html = fill_image_links(m.html, 'Subpage', m.subpage.id, 'content_files')
-    messages.sort(key=lambda m : m.subpage.date_created,reverse=True)
+    messages.sort(key=lambda m : m.subpage.date_created, reverse=True)
     return render_to_response('news.html',{'page_info' : page_info, 'messages' : messages })
 
 @contest_view
