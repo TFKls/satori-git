@@ -49,7 +49,7 @@ class Web(object):
         ret = PageInfo()
         ret.role = Security.whoami()
         ret.user = Security.whoami_user()
-        ret.is_problemsetter = Privilege.global_demand('ADMIN')
+        ret.is_admin = Privilege.global_demand('ADMIN')
         ret.is_problemsetter = Privilege.global_demand('MANAGE_PROBLEMS')
         if contest:
             ret.contest = contest
