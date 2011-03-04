@@ -61,21 +61,25 @@ public class SBlobInputView implements SPaneView {
 	private JButton clear_button;
 	private JButton label;
 	private JTextField field;
-	private BlobLoader blob_loader = null;
+	private BlobLoader blob_loader;
 	private boolean edit_mode = false;
 	private Font set_font, unset_font;
 	private Color default_color;
 	
 	public SBlobInputView(SInput<SBlob> data) {
 		this.data = data;
+		this.blob_loader = null;
+		initialize();
+	}
+	public SBlobInputView(SInput<SBlob> data, BlobLoader blob_loader) {
+		this.data = data;
+		this.blob_loader = blob_loader;
 		initialize();
 	}
 	
 	@Override public JComponent getPane() { return pane; }
 	
-	public void setBlobLoader(BlobLoader blob_loader) { this.blob_loader = blob_loader; }
-	
-	public static class LoadRemoteDialog {
+	private static class LoadRemoteDialog {
 		private final BlobLoader blob_loader;
 		private JDialog dialog;
 		private JList list;
