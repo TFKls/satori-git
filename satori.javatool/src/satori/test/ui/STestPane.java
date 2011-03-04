@@ -486,8 +486,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 				@Override public void focusLost(FocusEvent e) { updateName(); }
 			});
 			pane.add(name_field);
-			SBlobInputView judge_view = new SBlobInputView(new SJudgeInput(test));
-			judge_view.setBlobLoader(new SBlobInputView.BlobLoader() {
+			SBlobInputView judge_view = new SBlobInputView(new SJudgeInput(test), new SBlobInputView.BlobLoader() {
 				private Map<String, SBlob> blobs = null;
 				@Override public Map<String, SBlob> getBlobs() throws SException {
 					if (blobs == null) blobs = SGlobalData.getJudges();

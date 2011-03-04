@@ -17,20 +17,4 @@ public class SDataStatus {
 	public void markOutdated() {
 		outdated = true;
 	}
-	
-	/*public String getStatusText(boolean is_remote) {
-		String result = "";
-		if (is_remote) {
-			if (isOutdated()) result = "outdated";
-		} else {
-			if (isOutdated()) result = "deleted";
-			else result = "new";
-		}
-		if (isModified()) {
-			if (!result.isEmpty()) result += ", ";
-			result += "modified";
-		}
-		if (result.isEmpty()) result = "saved";
-		return result;
-	}*/
 }

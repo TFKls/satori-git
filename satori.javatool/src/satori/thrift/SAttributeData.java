@@ -11,7 +11,7 @@ import satori.session.SSession;
 import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.Blob;
 
-public class SAttributeData {
+class SAttributeData {
 	static Map<String, AnonymousAttribute> convertAttrMap(Map<String, Object> attrs) throws SException {
 		Map<String, AnonymousAttribute> map = new HashMap<String, AnonymousAttribute>();
 		for (Map.Entry<String, Object> entry : attrs.entrySet()) {

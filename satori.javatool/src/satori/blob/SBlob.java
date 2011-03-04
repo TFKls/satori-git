@@ -22,8 +22,7 @@ public class SBlob {
 	public String getHash() { return hash; }
 	public File getFile() { return file; }
 	
-	public boolean equals(SBlob other) {
-		if (other == null) return false;
+	private boolean equalsAux(SBlob other) {
 		if (name == null && other.name != null) return false;
 		if (name != null && !name.equals(other.name)) return false;
 		if (hash == null && other.hash != null) return false;
@@ -34,7 +33,7 @@ public class SBlob {
 	}
 	@Override public boolean equals(Object other) {
 		if (!(other instanceof SBlob)) return false;
-		return equals((SBlob)other);
+		return equalsAux((SBlob)other);
 	}
 	@Override public int hashCode() {
 		int result = 0;
@@ -99,8 +98,6 @@ public class SBlob {
 	}
 	public void saveRemote() throws SException {
 		String remote_hash = SBlobClient.putBlob(file);
-		if (remote_hash.equals(hash)) return;
-		hash = remote_hash;
-		throw new SException("Hash codes don't match. Perhaps the local file has been modified");
+		if (!remote_hash.equals(hash)) throw new SException("Hash codes don't match. Load the local file again");
 	}
 }
