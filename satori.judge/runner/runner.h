@@ -33,7 +33,15 @@ namespace runner {
 		{
 			public:
 				static std::set<int> debug_fds;
+                enum Level { DEBUG, WARNING, ERROR, CRITICAL, NONE };
+            private:
+                static Level level;
+				static void Print(const char*, va_list);
+            public:
+                static void SetLevel(Level);
 				static void Debug(const char*, va_list);
+				static void Warning(const char*, va_list);
+				static void Error(const char*, va_list);
 				static void Fail(int, const char*, va_list);
 				Logger();
 		};

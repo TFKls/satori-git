@@ -85,6 +85,8 @@ static struct
   long          io_write;
   long          priority;
   int           quiet;
+  int           silent;
+  const char*   log_level;
   int           search;
   int           ns_ipc;
   int           ns_net;
@@ -103,7 +105,7 @@ static struct
 
 static struct poptOption CONFIG_OPT[] =
 {
-  { "debug",           0,   POPT_ARG_STRING, &config.debug,          0, "file for debug information",                         "DIR" },
+  { "debug",           0,   POPT_ARG_STRING, &config.debug,          0, "file for debug information",                         "FILE" },
   { "root",            0,   POPT_ARG_STRING, &config.chroot,         0, "run the child with the root directory DIR",          "DIR" },
   { "pivot",           0,   POPT_ARG_NONE,   &config.pivot,          0, "use pivot instead of chroot",                        0 },
   { "work-dir",        0,   POPT_ARG_STRING, &config.workdir,        0, "set the working directory to DIR (inside chroot)",   "DIR" },
@@ -134,7 +136,9 @@ static struct poptOption CONFIG_OPT[] =
   { "env-del",         0,   POPT_ARG_STRING, &config.env_del,        0, "delete environment constants from LIST",             "LIST" },
   { "cap",             0,   POPT_ARG_STRING, &config.cap_level,      0, "set capabilities to LEVEL ('empty', 'safe', 'copy')", "LEVEL" },
   { "priority",        0,   POPT_ARG_LONG,   &config.priority,       0, "set process priority to PRIO",                       "PRIO" },
-  { "quiet",           'q', POPT_ARG_NONE,   &config.quiet,          0, "prints only the result",                             0 },
+  { "quiet",           'q', POPT_ARG_NONE,   &config.quiet,          0, "prints nothing",                                     0 },
+  { "silent",          0,   POPT_ARG_NONE,   &config.silent,         0, "prints only the result",                             0 },
+  { "log-level",       0,   POPT_ARG_STRING, &config.log_level,      0, "set logging verbosity to LEVEL ('debug', 'warning', 'error', 'critical', 'none')", "LEVEL" },
   { "search",          0,   POPT_ARG_NONE,   &config.search,         0, "search PATH for the executable",                     0 },
   { "ns-ipc",          0,   POPT_ARG_NONE,   &config.ns_ipc,         0, "enable ipc namespace",                               0 },
   { "ns-net",          0,   POPT_ARG_NONE,   &config.ns_net,         0, "enable network namespace",                           0 },
@@ -223,19 +227,22 @@ Runner run;
 
 int finish()
 {
-  switch (run.result.status)
-  {
-    case Result::RES_OK: printf("OK\n"); break;
-    case Result::RES_TIME: printf("TLE\n"); break;
-    case Result::RES_MEMORY: printf("MEM\n"); break;
-    case Result::RES_IO: printf("IOQ\n"); break;
-    case Result::RES_ILLEGAL: printf("ILL\n"); break;
-    case Result::RES_RUNTIME: printf("RTE\n"); break;
-    case Result::RES_STOP: printf("STP\n"); break;
-    case Result::RES_FAIL: printf("FLD\n"); break;
-    default: printf("UNK\n");
-  }
   if (!config.quiet)
+  {
+    switch (run.result.status)
+    {
+      case Result::RES_OK: printf("OK\n"); break;
+      case Result::RES_TIME: printf("TLE\n"); break;
+      case Result::RES_MEMORY: printf("MEM\n"); break;
+      case Result::RES_IO: printf("IOQ\n"); break;
+      case Result::RES_ILLEGAL: printf("ILL\n"); break;
+      case Result::RES_RUNTIME: printf("RTE\n"); break;
+      case Result::RES_STOP: printf("STP\n"); break;
+      case Result::RES_FAIL: printf("FLD\n"); break;
+      default: printf("UNK\n");
+    }
+  }
+  if (!config.quiet && !config.silent)
   {
     printf("Status : %d\n", run.result.exit_status);
     printf("Retcode: %d\n", WEXITSTATUS(run.result.exit_status));
@@ -327,6 +334,19 @@ int main(int argc, const char** argv)
     run.lock_memory = true;
   if (config.iotrace)
     run.collect_read_write_files = true;
+  if (config.log_level)
+  {
+    if (strcasecmp("debug", config.log_level) == 0)
+      Logger::SetLevel(Logger::DEBUG);
+    if (strcasecmp("warning", config.log_level) == 0)
+      Logger::SetLevel(Logger::WARNING);
+    if (strcasecmp("error", config.log_level) == 0)
+      Logger::SetLevel(Logger::ERROR);
+    if (strcasecmp("critical", config.log_level) == 0)
+      Logger::SetLevel(Logger::CRITICAL);
+    if (strcasecmp("none", config.log_level) == 0)
+      Logger::SetLevel(Logger::NONE);
+  }
   if (config.env_level)
   {
     if (strcasecmp("empty", config.env_level) == 0)
