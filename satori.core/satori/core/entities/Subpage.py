@@ -13,7 +13,7 @@ class Subpage(Entity):
     
     contest       = models.ForeignKey('Contest', related_name='subpages', null=True)
     is_public     = models.BooleanField(default=True)
-    is_everywhere = models.BooleanField(default=False)
+    is_sticky     = models.BooleanField(default=False)
     is_announcement = models.BooleanField(default=False)
     name          = models.TextField(blank=False)
     order         = models.IntegerField(default=0)
@@ -27,7 +27,7 @@ class Subpage(Entity):
         ordering        = ('order',)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('is_public', 'VIEW'), ('is_everywhere', 'VIEW'), ('is_announcement', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW'), ('date_created', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('is_public', 'VIEW'), ('is_sticky', 'VIEW'), ('is_announcement', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW'), ('date_created', 'VIEW')]
 
     def save(self, *args, **kwargs):
         self.fixup_content_files()
@@ -45,8 +45,8 @@ class Subpage(Entity):
     @staticmethod
     def create_global(fields):
         subpage = Subpage()
-        subpage.forbid_fields(fields, ['id', 'contest', 'is_public'])
-        subpage.update_fields(fields, ['name', 'content', 'is_announcement', 'is_everywhere', 'order'])
+        subpage.forbid_fields(fields, ['id', 'contest'])
+        subpage.update_fields(fields, ['name', 'content', 'is_announcement', 'is_sticky', 'is_public', 'order'])
         subpage.save()
         subpage.content_files_set_map(render_sphinx(subpage.content, subpage.content_files_get_map()))
         return subpage
@@ -55,20 +55,16 @@ class Subpage(Entity):
     @staticmethod
     def create_for_contest(fields):
         subpage = Subpage()
-        subpage.forbid_fields(fields, ['id', 'is_everywhere'])
-        subpage.update_fields(fields, ['name', 'contest', 'content', 'is_announcement', 'is_public', 'order'])
+        subpage.forbid_fields(fields, ['id'])
+        subpage.update_fields(fields, ['name', 'contest', 'content', 'is_announcement', 'is_sticky', 'is_public', 'order'])
         subpage.save()
         subpage.content_files_set_map(render_sphinx(subpage.content, subpage.content_files_get_map()))
         return subpage
 
     @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        if self.contest is None:
-            self.forbid_fields(fields, ['id', 'contest', 'is_public'])
-            self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_everywhere', 'order'])
-        else:
-            self.forbid_fields(fields, ['id', 'contest', 'is_everywhere'])
-            self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_public', 'order'])
+        self.forbid_fields(fields, ['id', 'contest'])
+        self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_sticky', 'is_public', 'order'])
         self.save()
         self.content_files_set_map(render_sphinx(self.content, self.content_files_get_map()))
         return self
@@ -90,7 +86,7 @@ class Subpage(Entity):
     @ExportMethod(DjangoStructList('Subpage'), [DjangoId('Contest'), bool], PCPermit())
     @staticmethod
     def get_for_contest(contest, announcements):
-        return Subpage.objects.filter(is_announcement=announcements, contest=contest) | Subpage.objects.filter(is_announcement=announcements, contest=None, is_everywhere=True)
+        return Subpage.objects.filter(is_announcement=announcements, contest=contest) | Subpage.objects.filter(is_announcement=announcements, contest=None, is_public=True)
 
 class SubpageEvents(Events):
     model = Subpage
