@@ -581,31 +581,53 @@ class MarksAggregator(AggregatorBase):
             return (1.0 - dif/des) * score
 
         def update(self):
+            all_ok = True
             points = []
             for pid in self.aggregator.sorted_problems:
                 problem = self.aggregator.problem_cache[pid]
                 g_count = self.aggregator.group_count[problem.group]
-                maxscore = self.aggregator.problem_params[pid].score
-                score = 0.0
+                params = self.aggregator.problem_params[pid]
+                maxscore = params.score
+                #TODO: Change maxscore based on g_count and group_points
+                score = None
                 if pid in self.scores:
                     if self.scores[pid].ok:
                         score = maxscore
                         solve_time = self.aggregator.submit_cache[self.scores[pid].ok_submit].time
+                        if params.time_start_descent is not None and params.time_descent is not None:
+                            score = self.timed_score(score, solve_time, params.time_start_descent, params.time_descent)
+                        if not params.below_zero and score < 0
+                            score = 0
+                        if not params.obligatory and score < 0
+                            score = 0
+                    else:
+                        if params.obligatory:
+                            all_ok = False
+                else:
+                    if params.obligatory:
+                        all_ok = False
+
                 points.append(score)
 
 
             problems = ' '.join([s.get_str() for s in sorted([s for s in self.scores.values() if s.ok], key=attrgetter('ok_time'))])
             score = sum([p for p in points if p is not None], 0.0)
-            mark = '0.0'
+            if not all_ok:
+                mark = 'FAIL'
+            #TODO: Mark based on score and points_score
 
             contestant_name = self.aggregator.table.escape(self.contestant.name)
             
-            columns = ['', contestant_name, str(mark), str(points), problems]
+            columns = ['', contestant_name, str(mark), str(score), problems]
             pi=0
             for pid in self.aggregator.sorted_problems:
-                if self.aggregator.problem_params[pid].show:
+                params = self.aggregator.problem_params[pid]
+                if params.show:
                     if points[pi] is None:
-                        columns += [ '-' ]
+                        if params.obligatory:
+                            columns += [ 'F' ]
+                        else:
+                            columns += [ '-' ]
                     else:
                         columns += [ '%.2f'%points[pi] ]
                 pi += 1
