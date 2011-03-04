@@ -7,14 +7,14 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django import forms
 from datetime import datetime
-from satori.web.utils.datetimewidget import SatoriSplitDateTime
+from satori.web.utils.forms import SatoriDateTimeField
 
 class ProblemsPublishForm(forms.Form):
-    submitstart = forms.DateTimeField(required=False,widget=SatoriSplitDateTime)
-    submitfinish = forms.DateTimeField(required=False, widget=SatoriSplitDateTime)
+    submitstart = SatoriDateTimeField(required=False)
+    submitfinish = SatoriDateTimeField(required=False)
     viewauto = forms.BooleanField(required=False,initial=True)
-    viewstart = forms.DateTimeField(required=False,widget=SatoriSplitDateTime)
-    viewfinish = forms.DateTimeField(required=False, widget=SatoriSplitDateTime)
+    viewstart = SatoriDateTimeField(required=False)
+    viewfinish = SatoriDateTimeField(required=False)
     def __init__(self,problem_list=[],data=None,*args,**kwargs):
         super(ProblemsPublishForm, self).__init__(data,*args, **kwargs)
         for pinfo in problem_list:
@@ -68,22 +68,28 @@ def viewall(request, page_info):
                     Privilege.revoke(role,s,"SUBMIT")
             elif "revokeview" in request.POST.keys():
                 for s in selected:
+                    Privilege.revoke(role,s,"SUBMIT")
                     Privilege.revoke(role,s,"VIEW")
             problem_list = Web.get_problem_mapping_list(page_info.contest)
+            problem_list.sort(key=lambda p:p.problem_mapping.code)
     else:
         form = ProblemsPublishForm(problem_list=problem_list)
     problems = []
+    any_admin = False
     for pinfo in problem_list:
         p = {}
-        p['select'] = form[str(pinfo.problem_mapping.id)]
+        admin = pinfo.is_admin
         p['problem'] = pinfo.problem_mapping
-        p['admin'] = pinfo.is_admin
-        p['visible'] = between(pinfo.contestant_role_view_times,datetime.now())
-        p['submittable'] = between(pinfo.contestant_role_submit_times,datetime.now())
-        p['when_view'] = pinfo.contestant_role_view_times
-        p['when_submit'] = pinfo.contestant_role_submit_times
+        p['admin'] = admin
+        if admin:
+            any_admin = True
+            p['select'] = form[str(pinfo.problem_mapping.id)]
+            p['visible'] = between(pinfo.contestant_role_view_times,datetime.now())
+            p['submittable'] = between(pinfo.contestant_role_submit_times,datetime.now())
+            p['when_view'] = pinfo.contestant_role_view_times
+            p['when_submit'] = pinfo.contestant_role_submit_times
         problems.append(p)
-    return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems})
+    return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin })
 
 class ProblemAddForm(forms.Form):
     code = forms.CharField(required=True)
@@ -135,7 +141,7 @@ def edit(request, page_info, id):
             mapping.modify(ProblemMappingStruct(code=data['code'],title=data['title'],statement=data['statement'],default_test_suite=TestSuite(int(data['suite']))))
             return HttpResponseRedirect(reverse('contest_problems_view',args=[page_info.contest.id,mapping.id]))
     else:
-        form = ProblemAddForm(data={'code': mapping.code, 'title': mapping.title, 'statement' : mapping.statement, 'suite' : mapping.default_test_suite.id}, suites=suites)
+        form = ProblemAddForm(initial={'code': mapping.code, 'title': mapping.title, 'statement' : mapping.statement, 'suite' : mapping.default_test_suite.id}, suites=suites)
     return render_to_response('problems_add.html', {'page_info': page_info, 'form' : form, 'base' : problem, 'editing' : mapping})
 
 @contest_view

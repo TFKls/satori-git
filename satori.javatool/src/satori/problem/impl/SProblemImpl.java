@@ -1,5 +1,8 @@
 package satori.problem.impl;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import satori.common.SAssert;
 import satori.common.SDataStatus;
 import satori.common.SException;
@@ -7,7 +10,6 @@ import satori.common.SId;
 import satori.common.SListener1;
 import satori.common.SReference;
 import satori.common.SView;
-import satori.common.SViewList;
 import satori.problem.SParentProblem;
 import satori.problem.SProblemList;
 import satori.problem.SProblemReader;
@@ -25,7 +27,7 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	private String desc;
 	
 	private final SDataStatus status = new SDataStatus();
-	private final SViewList views = new SViewList();
+	private final List<SView> views = new ArrayList<SView>();
 	private final SReference reference = new SReference() {
 		@Override public void notifyModified() { snapModified(); }
 		@Override public void notifyDeleted() { snapDeleted(); }
@@ -122,7 +124,7 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
-	private void updateViews() { views.update(); }
+	private void updateViews() { for (SView view : views) view.update(); }
 	
 	public void reload() throws SException {
 		SAssert.assertTrue(isRemote(), "Problem not remote");

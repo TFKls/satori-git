@@ -12,9 +12,9 @@ class Test(Entity):
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_test')
 
     problem       = models.ForeignKey('Problem', related_name='tests')
-    name          = models.CharField(max_length=50)
+    name          = models.CharField(max_length=64)
     description   = models.TextField(blank=True, default='')
-    environment   = models.CharField(max_length=50)
+    environment   = models.CharField(max_length=64)
     obsolete      = models.BooleanField(default=False)
 
     data          = AttributeGroupField(PCArg('self', 'VIEW'), PCDeny(), '')

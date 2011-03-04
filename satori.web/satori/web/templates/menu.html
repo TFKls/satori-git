@@ -20,10 +20,13 @@
             {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
                 <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
             {% endif %}
+            {% if page_info.contest_is_admin %}
+                <li><a href="{% url contestants page_info.contest.id %}">Contestants</a></li>
+                <li><a href="{% url contest_manage page_info.contest.id %}">Manage contest</a></li>
+            {% endif %}
             {% comment %}
             {% if page_info.contest_is_admin %}
                 <li><a href="{% url answers page_info.contest.id %}">Answers</a></li>
-                <li><a href="{% url manage_contest page_info.contest.id %}">Manage contest</a></li>
                 <li><a href="{% url manage_contest_news page_info.contest.id %}">Manage news</a></li>
                 <li><a href="{% url contestants page_info.contest.id %}">Contestants</a></li>
             {% endif %}

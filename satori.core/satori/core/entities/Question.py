@@ -25,7 +25,7 @@ class Question(Entity):
 
     def save(self, *args, **kwargs):
         self.fixup_answer_files()
-        return super(Subpage, self).__save__(*args, **kwargs)
+        return super(Question, self).save(*args, **kwargs)
 
     @classmethod
     def inherit_rights(cls):

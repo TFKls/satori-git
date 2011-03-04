@@ -1,10 +1,12 @@
+# -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 import logging
+from blist import blist, sortedset, sortedlist
 from collections import deque
 from copy import deepcopy
 from datetime import datetime, timedelta
-from blist import blist, sortedset, sortedlist
 from operator import attrgetter
+from xml.dom import minidom
 
 from django.db.models import F
 
@@ -12,9 +14,234 @@ from satori.ars import perf
 from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping, RankingParams
 from satori.events import Event, Client2
 from satori.core.checking.utils import RestTable
+from satori.objects import Namespace
 
 maxint = 2**31 - 1
 max_seconds_per_problem = maxint / 10
+
+class OaType(object):
+    @classmethod
+    def name(cls, value):
+        raise NotImplemented
+    @classmethod
+    def value_type(cls):
+        raise NotImplemented
+    @classmethod
+    def cast(cls, value):
+        if isinstance(value, cls.value_type()):
+            return value
+        return cls.value_type()(value)
+    @classmethod
+    def _from_unicode(cls, value):
+        return cls.cast(value)
+    @classmethod
+    def from_unicode(cls, value):
+        return cls.cast(cls._from_unicode(unicode(value)))
+    @classmethod
+    def _to_unicode(cls, value):
+        return unicode(value)
+    @classmethod
+    def to_unicode(cls, value):
+        return unicode(cls._to_unicode(cls.cast(value)))
+    def __init__(self, value=None, str_value=None):
+        if value is not None:
+            self.str_value = self.__class__.to_unicode(value)
+        else:
+            self.str_value = str_value
+    def value(self):
+        return self.__class__.from_unicode(self.str_value)
+
+class OaTypeText(OaType):
+    @classmethod
+    def name(cls):
+        return 'text'
+    @classmethod
+    def value_type(cls):
+        return unicode
+ 
+class OaTypeBoolean(OaType):
+    @classmethod
+    def name(cls):
+        return 'bool'
+    @classmethod
+    def value_type(cls):
+        return bool
+    @classmethod
+    def _to_unicode(cls, value):
+        if value:
+            return 'true'
+        return 'false'
+    @classmethod
+    def _from_unicode(cls, value):
+        value = value.lower()
+        if value == 'true' or value == 'yes' or value == '1':
+            return True
+        elif value == 'false' or value == 'no' or value == '0':
+            return False
+        raise ValueError
+ 
+class OaTypeInteger(OaType):
+    @classmethod
+    def name(cls):
+        return 'int'
+    @classmethod
+    def value_type(cls):
+        return int
+ 
+class OaTypeFloat(OaType):
+    @classmethod
+    def name(cls):
+        return 'float'
+    @classmethod
+    def value_type(cls):
+        return float
+ 
+class OaTypeTime(OaType):
+    scales = [ '', 'd', 'c', 'm', None, None, u'µ', None, None, 'n' ]
+    @classmethod
+    def name(cls):
+        return 'time'
+    @classmethod
+    def value_type(cls):
+        return timedelta
+    @classmethod
+    def _to_unicode(cls, value):
+        return unicode(value) + 's'
+    @classmethod
+    def _from_unicode(cls, value):
+        scales = OaTypeTime.scales
+        value = value.strip().lower()
+        for s in reversed(range(0, len(scales))):
+            if scales[s] is not None and value.endswith(scales[s] + 's'):
+                return timedelta(seconds=float(value[:-1*(len(scales[s] + 's'))]) * 0.1**s)
+        return float(value)
+    
+class OaTypeSize(OaType):
+    scales = [ '', 'K', 'M', 'G', 'T' ]
+    @classmethod
+    def name(cls):
+        return 'size'
+    @classmethod
+    def value_type(cls):
+        return int
+    @classmethod
+    def _to_unicode(cls, value):
+        scales = OaTypeSize.scales
+        for s in reversed(range(0, len(scales))):
+            if scales[s] is not None and value % (1024**s) == 0:
+                return unicode(value / (1024**s)) + scales[s] + 'B'
+        return unicode(value)
+    @classmethod
+    def _from_unicode(cls, value):
+        scales = OaTypeSize.scales
+        value = value.strip().upper()
+        for s in reversed(range(0, len(scales))):
+            if scales[s] is not None and value.endswith(scales[s] + 'B'):
+                return int(value[:-1*(len(scales[s] + 'B'))]) * 1024**s
+        return int(value)
+
+class OaTypeDatetime(OaType):
+    @classmethod
+    def name(cls):
+        return 'datetime'
+    @classmethod
+    def value_type(cls):
+        return datetime
+    @classmethod
+    def _to_unicode(cls, value):
+        return value.strftime('%Y-%m-%d %H:%M:%S')
+    @classmethod
+    def _from_unicode(cls, value):
+        return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+
+oa_types = {}
+for item in globals().values():
+    if isinstance(item, type) and issubclass(item, OaType) and (item != OaType):
+        oa_types[item.name()] = item
+
+class OaParam(object):
+    def __init__(self, type_, name, description=None, required=False, default=None):
+        if not (isinstance(type_, type) and issubclass(type_, OaType)):
+            type_ = oa_types[type_]
+        self.type_ = type_
+        self.name = unicode(name)
+        self.description = unicode(description)
+        self.required = bool(required)
+        if default is None:
+            self.default = None
+        else:
+            self.default = type_.cast(default)
+    def to_dom(self, doc):
+        ele = doc.createElement('param')
+        ele.setAttribute('type', self.type_.name())
+        ele.setAttribute('name', self.name)
+        if self.description:
+            ele.setAttribute('description', self.description)
+        if self.required:
+            ele.setAttribute('required', 'true')
+        if self.default is not None:
+            ele.setAttribute('default', self.type_.to_unicode(self.default))
+        return ele
+    @staticmethod
+    def from_dom(ele):
+        if ele.tagName != 'param':
+            raise ValueError
+        type_ = oa_types[ele.getAttribute('type')]
+        name = ele.getAttribute('name')
+        description = None
+        if ele.hasAttribute('description'):
+            description = ele.getAttribute('description')
+        required = False
+        if ele.hasAttribute('required'):
+            required = OaTypeBoolean.from_unicode(ele.getAttribute('required'))
+        default = None
+        if ele.hasAttribute('default'):
+            default = type_.from_unicode(ele.getAttribute('default'))
+        return OaParam(type_=type_, name=name, description=description, required=required, default=default)
+    def to_unicode(self, value):
+        return self.type_.to_unicode(value)
+    def from_unicode(self, value):
+        return self.type_.from_unicode(value)
+
+class OaTypedParser(object):
+    def __init__(self, params):
+        self.params = params
+    @staticmethod
+    def from_dom(ele):
+        params = []
+        for param in ele.getElementsByTagNameNS('*', 'param'):
+            params.append(OaParam.from_dom(param))
+        return OaTypedParser(params)
+    def read_oa_map(self, oa_map):
+        result = Namespace()
+        for param in self.params:
+            value = param.default
+            if param.name in oa_map:
+                value = param.from_unicode(oa_map[param.name].value)
+            if param.required and value is None:
+                raise ValueError
+            result[param.name] = value
+        return result
+    def write_oa_map(self, dct):
+        result = {}
+        for param in self.params:
+            if param.name in dct:
+                result[param.name] = OpenAttribute(is_blob = False, value = param.to_unicode(dct[param.name]))
+        return result
+
+def parse_params(description, section, subsection, oa_map):
+    result = Namespace()
+    if not description:
+        return result
+    xml = minidom.parseString(u' '.join([line[2:] for line in description.splitlines() if line[0:2] == '#@']))
+    if not xml:
+        return result
+    xml = xml.getElementsByTagNameNS('*', section)
+    if not xml:
+        return result
+    xml = xml[0].getElementsByTagNameNS('*', subsection)
+    parser = OaTypedParser.from_dom(xml[0])
+    return parser.read_oa_map(oa_map)
 
 class AggregatorBase(object):
     def __init__(self, supervisor, ranking):
@@ -26,18 +253,23 @@ class AggregatorBase(object):
         self.problem_cache = {}
         self.submit_cache = {}
         self.scores = {}
+        self.params = Namespace()
+        self.problem_params = {}
 
     def init(self):
-        self.hide_invisible = (self.ranking.oa_get_str('hide_invisible') or '0') == '1'
+        self.params = parse_params(self.__doc__, 'aggregator', 'general', self.ranking.params_get_map())
 
         for rp in RankingParams.objects.filter(ranking=self.ranking):
+            self.problem_params[rp.problem_id] = parse_params(self.__doc__, 'aggregator', 'problem', rp.params_get_map())
             if rp.test_suite:
                 self.test_suites[rp.problem_id] = rp.test_suite
 
         for p in ProblemMapping.objects.filter(contest__id=self.ranking.contest_id):
             self.problem_cache[p.id] = p
-            if p not in self.test_suites:
+            if p.id not in self.test_suites:
                 self.test_suites[p.id] = p.default_test_suite
+            if p.id not in self.problem_params:
+                self.problem_params[p.id] = parse_params(self.__doc__, 'aggregator', 'problem', {})
                 
     def changed_contestants(self):
         ranking_entry_cache = dict((r.contestant_id, r) for r in RankingEntry.objects.filter(ranking=self.ranking))
@@ -51,7 +283,7 @@ class AggregatorBase(object):
                 self.scores[c.id] = self.get_score()
 
             self.scores[c.id].contestant = c
-            self.scores[c.id].hidden = c.invisible and self.hide_invisible
+            self.scores[c.id].hidden = c.invisible and not getattr(self.params, 'show_invisible', False)
             if c.id in ranking_entry_cache:
                 self.scores[c.id].ranking_entry = ranking_entry_cache[c.id]
             else:
@@ -84,6 +316,22 @@ class AggregatorBase(object):
 
 
 class ACMAggregator(AggregatorBase):
+    """
+#@<aggregator name="ACM style aggregator">
+#@      <general>
+#@              <param type="bool"     name="show_invisible" description="Hide invisible submits" required="true" default="false"/>
+#@              <param type="datetime" name="time_start"     description="Submission start time"/>
+#@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
+#@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" required="true" default="1200s"/>
+#@              <param type="int"      name="max_stars"      description="Maximal number of stars" required="true" default="4"/>
+#@      </general>
+#@      <problem>
+#@              <param type="float"    name="score"          description="Score" required="true" default="1"/>
+#@              <param type="datetime" name="time_start"     description="Submission start time"/>
+#@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
+#@      </problem>
+#@</aggregator>
+    """
     class ACMScore(object):
         class ACMProblemScore(object):
             def __init__(self, score, problem):
@@ -93,26 +341,30 @@ class ACMAggregator(AggregatorBase):
                 self.ok_time = timedelta()
                 self.result_list = sortedlist()
                 self.problem = problem
+                self.params = self.score.aggregator.problem_params[problem.id]
 
             def aggregate(self, result):
+                time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') == 'OK'
+                if self.params.time_stop and time > self.params.time_stop:
+                    return
                 if ok:
                     self.ok = True
-                self.result_list.add((self.score.aggregator.submit_cache[result.submit_id].time, ok))
+                self.result_list.add((time, ok))
                 if self.ok:
                     self.star_count = 0
                     for (time, ok) in self.result_list:
                         if ok:
-                            if self.score.aggregator.time_start:
-                                self.ok_time = time - self.score.aggregator.time_start
+                            if self.params.time_start and time > self.params.time_start:
+                                self.ok_time = time - self.params.time_start
                             else:
-                                self.ok_time = time - datetime.min
+                                self.ok_time = timedelta()
                             break
                         self.star_count += 1
 
             def get_str(self):
                 if self.star_count > 0:
-                    if self.star_count < self.score.aggregator.star_collapse:
+                    if self.star_count <= self.score.aggregator.params.max_stars:
                         return self.problem.code + '*' * self.star_count
                     else:
                         return self.problem.code + '\\ :sup:`(' + str(self.star_count) + ')`\\'
@@ -132,11 +384,8 @@ class ACMAggregator(AggregatorBase):
                 self.ranking_entry.position = maxint
                 self.ranking_entry.save()
             else:
-                points = len([s for s in score_list])
-                if self.aggregator.time_start:
-                    time = sum([s.ok_time + self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
-                else:
-                    time = sum([self.aggregator.star_penalty * s.star_count for s in score_list], timedelta(0))
+                points = int(sum([s.params.score for s in score_list]))
+                time = sum([s.ok_time + self.aggregator.params.time_penalty * s.star_count for s in score_list], timedelta(0))
                 time_seconds = (time.microseconds + (time.seconds + time.days * 24 * 3600) * 10**6) / 10**6
                 time_str = str(timedelta(seconds=time_seconds))
                 problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
@@ -162,16 +411,13 @@ class ACMAggregator(AggregatorBase):
 
     def init(self):
         super(ACMAggregator, self).init()
-        
-        time_start = self.ranking.oa_get_str('time_start')
-        if time_start:
-            self.time_start = datetime.strptime(time_start, '%Y-%m-%d %H:%M:%S')
-        else:
-            self.time_start = None
-        self.star_penalty = timedelta(minutes=int(self.ranking.oa_get_str('star_penalty') or '20'))
-        self.star_collapse = int(self.ranking.oa_get_str('star_collapse') or '5')
-        
-        self.table = RestTable((5, 'Lp.'), (20, 'Name'), (5, 'Score'), (15, 'Time'), (20, 'Tasks'))
+        for pid, params in self.problem_params.iteritems():
+            if params.time_start is None:
+                params.time_start = self.params.time_start
+            if params.time_stop is None:
+                params.time_stop = self.params.time_stop
+
+        self.table = RestTable((4, 'Lp.'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = ''

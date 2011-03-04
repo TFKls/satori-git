@@ -6,22 +6,12 @@
 
 <h2>Results</h2>
 
-{% comment %}
-{% if widget.isadmin %}
-<form action="process.adjustresult" method="POST">
-    <p>Filter submits:
-<select name="user" style="margin-left: 2em">
-{% for value,name,sel in widget.users %}
-<option value="{{ value }}" {% if sel %} selected="selected" {% endif %}>{{ name }}</option>
-{% endfor %}
-</select>
-<input type="submit" value="Change"/>
-<input type="hidden" name="back_to" value="{{ widget.back_to }}"/>
-<input type="hidden" name="back_path" value="{{ widget.back_path }}"/>
-</p>
+{% if page_info.contest_is_admin %}
+<form action="" method="GET"/>
+    {{ form }} 
+    <input type="submit" value="Select"/>
 </form>
 {% endif %}
-{% endcomment %}
 
 <table class="tlist">
 
@@ -78,27 +68,5 @@
 
 </table>
 
-{% comment %}
-
-{% if widget.displaypages %}
-<div class="scrollbar">
-{% if widget.blink %}
-<a href="{{ widget.blink }}">&laquo;</a>
-{% endif %}
-
-{% for link in widget.links %}
-{% if forloop.counter == widget.page %}
-{{ forloop.counter }}
-{% else %}
-<a href="{{ link }}">{{forloop.counter}}</a>
-{% endif %}
-{% endfor %}
-
-{% if widget.flink %}
-<a href="{{ widget.flink }}">&raquo;</a>
-{% endif %}
-</div>
-{% endif %}
-{% endcomment %}
 
 {% endblock %}

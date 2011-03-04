@@ -1,12 +1,10 @@
 package satori.test.impl;
 
 import satori.blob.SBlob;
-import satori.common.SData;
-import satori.test.meta.SInputMetadata;
+import satori.common.SInput;
+import satori.metadata.SInputMetadata;
 
-public class SBlobInput implements SData<SBlob> {
-	public static enum Status { VALID, INVALID, DISABLED };
-	
+public class SBlobInput implements SInput<SBlob> {
 	private final SInputMetadata meta;
 	private final STestImpl test;
 	
@@ -15,14 +13,11 @@ public class SBlobInput implements SData<SBlob> {
 		this.test = test;
 	}
 	
-	@Override public SBlob get() { return test.getData().getBlob(meta.getName()); }
-	@Override public void set(SBlob data) { test.setDataBlob(meta.getName(), data); }
-	
-	public Status getStatus() {
-		if (meta.isRequired() && get() == null) return Status.INVALID;
-		else return Status.VALID;
+	@Override public SBlob get() { return (SBlob)test.getInput(meta); }
+	@Override public String getDescription() { return meta.getDescription(); }
+	@Override public boolean isValid() {
+		SBlob data = get();
+		return data != null ? meta.getType().isValid(data) : !meta.isRequired();
 	}
-	
-	@Override public boolean isEnabled() { return getStatus() != Status.DISABLED; }
-	@Override public boolean isValid() { return getStatus() == Status.VALID; }
+	@Override public void set(SBlob data) { test.setInput(meta, data); }
 }

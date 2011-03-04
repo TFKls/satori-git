@@ -1,8 +1,10 @@
 package satori.test;
 
-import satori.attribute.SAttributeReader;
+import java.util.Map;
+
+import satori.metadata.SOutputMetadata;
 
 public interface STemporarySubmitReader {
 	boolean getPending();
-	SAttributeReader getResult();
+	Map<SOutputMetadata, Object> getResult();
 }

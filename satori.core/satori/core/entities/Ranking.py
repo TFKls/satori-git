@@ -12,7 +12,7 @@ class Ranking(Entity):
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_ranking')
 
     contest       = models.ForeignKey('Contest', related_name='rankings')
-    name          = models.CharField(max_length=50)
+    name          = models.CharField(max_length=64)
     aggregator    = models.CharField(max_length=128)
     header        = models.TextField()
     footer        = models.TextField()
@@ -52,9 +52,9 @@ class Ranking(Entity):
         ranking.forbid_fields(fields, ['id', 'header', 'footer'])
         ranking.update_fields(fields, ['contest', 'name', 'aggregator', 'is_public'])
         ranking.save()
-        self.params_set_map(params)
+        ranking.params_set_map(params)
         for problem in ranking.contest.problem_mappings.all():
-            ranking_params = RankingParams.get_or_create(ranking=ranking, problem=problem)
+            ranking_params = RankingParams.objects.get_or_create(ranking=ranking, problem=problem)[0]
             if problem in problem_test_suites:
                 if problem_test_suites[problem].problem != problem.problem:
                     raise RuntimeError('Invalid test suite')
@@ -84,7 +84,7 @@ class Ranking(Entity):
         self.save()
         self.params_set_map(params)
         for problem in self.contest.problem_mappings.all():
-            ranking_params = RankingParams.get_or_create(ranking=self, problem=problem)
+            ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
             if problem in problem_test_suites:
                 if problem_test_suites[problem].problem != problem.problem:
                     raise RuntimeError('Invalid test suite')

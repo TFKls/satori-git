@@ -1,4 +1,8 @@
-# vim:ts=4:sts=4:sw=4:expandtab
+import os
+from satori.web.sphinx.translator import rendertask
+from satori.web.urls import PROJECT_PATH
 
 def text2html(text):
-    return text
+    return rendertask(unicode(text), os.path.join(PROJECT_PATH, 'files/tmp'), 'files/tmp')
+    
+

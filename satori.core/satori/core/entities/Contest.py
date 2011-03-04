@@ -44,7 +44,8 @@ class Contest(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_contest')
 
-    name            = models.CharField(max_length=50, unique=True)
+    name            = models.CharField(max_length=64, unique=True)
+    description     = models.TextField(blank=True, default="")
     problems        = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
     contestant_role = models.ForeignKey('Role', related_name='contest_contestants+')
     admin_role      = models.ForeignKey('Role', related_name='contest_admins+')
@@ -59,7 +60,7 @@ class Contest(Entity):
     intra_files  = AttributeGroupField(PCArg('self', 'VIEW_INTRA_FILES'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
-        fields = [('name', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
+        fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
     @classmethod
     def inherit_rights(cls):
@@ -102,7 +103,7 @@ class Contest(Entity):
     def create(fields):
         contest = Contest()
         contest.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
-        contest.update_fields(fields, ['name', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
+        contest.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         contestant_role = Role(name='Contestant of ' + contest.name)
         contestant_role.save()
         admin_role = Role(name='Administrator of ' + contest.name)
@@ -121,7 +122,7 @@ class Contest(Entity):
     @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), DjangoStruct('Contest')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
-        modified = self.update_fields(fields, ['name', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
+        modified = self.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         self.save()
         if 'name' in modified:
             role = self.contestant_role
@@ -159,7 +160,7 @@ class Contest(Entity):
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
     def join(self):
-        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN')), name=token_container.token.role.name), user_list=[token_container.token.user])
+        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN'))), user_list=[token_container.token.user])
 
     @ExportMethod(NoneType, [DjangoId('Contest'), DjangoId('User')], PCArg('self', 'MANAGE'))
     def add_admin(self, user):

@@ -1,0 +1,64 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+{% if accepted.contestants %}
+<form action="" method="POST"/>
+<table>
+{% for cinfo in accepted.contestants %}
+<tr>
+    <td>
+        <input type="checkbox" name="revoke_{{cinfo.contestant.id}}"/>
+    </td>
+    <td>
+        {{cinfo.contestant.name}}
+    </td>
+</tr>
+{% endfor %}
+</table>
+<p>
+{% for p in page_params.loop1 %}
+{% if forloop.counter0 == page_params.page1 %}
+{{ p }}
+{% else %}
+<a href="?page1={{p}}&page2={{page_params.page2}}">{{p}}</a>&nbsp;
+{% endif %}
+{% endfor %}
+</p>
+<input type="submit" name="revoke" value="Unaccept selected"/>
+</form>
+
+
+{% endif %}
+
+{% if pending.contestants %}
+<form action="" method="POST"/>
+<table>
+{% for cinfo in pending.contestants %}
+<tr>
+    <td>
+        <input type="checkbox" name="accept_{{cinfo.contestant.id}}"/>
+    </td>
+    <td>
+        {{cinfo.contestant.name}}
+    </td>
+</tr>
+{% endfor %}
+</table>
+<p>
+{% for p in page_params.loop2 %}
+{% if forloop.counter0 == page_params.page2 %}
+{{ p }}
+{% else %}
+<a href="?page1={{page_params.page1}}&page2={{p}}">{{p}}</a>&nbsp;
+{% endif %}
+{% endfor %}
+</p>
+
+<input type="submit" name="accept" value="Accept selected"/>
+</form>
+{% endif %}
+
+<form action="" method="POST">{{ add_form }}<input type="submit" name="add" value="Add"/></form>
+
+{% endblock %}

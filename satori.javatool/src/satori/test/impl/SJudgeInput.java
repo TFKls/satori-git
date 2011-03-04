@@ -1,23 +1,16 @@
 package satori.test.impl;
 
 import satori.blob.SBlob;
-import satori.common.SData;
+import satori.common.SInput;
 import satori.common.SException;
 
-public class SJudgeInput implements SData<SBlob> {
-	public static enum Status { VALID, INVALID, DISABLED };
-	
+public class SJudgeInput implements SInput<SBlob> {
 	private final STestImpl test;
 	
-	public SJudgeInput(STestImpl test) {
-		this.test = test;
-	}
+	public SJudgeInput(STestImpl test) { this.test = test; }
 	
 	@Override public SBlob get() { return test.getJudge(); }
+	@Override public String getDescription() { return "Judge file"; }
+	@Override public boolean isValid() { return test.getJudge() != null; }
 	@Override public void set(SBlob data) throws SException { test.setJudge(data); }
-	
-	public Status getStatus() { return Status.VALID; }
-	
-	@Override public boolean isEnabled() { return getStatus() != Status.DISABLED; }
-	@Override public boolean isValid() { return getStatus() == Status.VALID; }
 }
