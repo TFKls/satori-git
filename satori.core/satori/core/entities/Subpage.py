@@ -48,6 +48,7 @@ class Subpage(Entity):
         subpage.forbid_fields(fields, ['id', 'contest', 'is_public'])
         subpage.update_fields(fields, ['name', 'content', 'is_announcement', 'is_everywhere', 'order'])
         subpage.save()
+        subpage.content_files_set_map(render_sphinx(subpage.content, subpage.content_files_get_map()))
         return subpage
 
     @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
@@ -57,6 +58,7 @@ class Subpage(Entity):
         subpage.forbid_fields(fields, ['id', 'is_everywhere'])
         subpage.update_fields(fields, ['name', 'contest', 'content', 'is_announcement', 'is_public', 'order'])
         subpage.save()
+        subpage.content_files_set_map(render_sphinx(subpage.content, subpage.content_files_get_map()))
         return subpage
 
     @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'), [CannotSetField])
@@ -68,6 +70,7 @@ class Subpage(Entity):
             self.forbid_fields(fields, ['id', 'contest', 'is_everywhere'])
             self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_public', 'order'])
         self.save()
+        self.content_files_set_map(render_sphinx(self.content, self.content_files_get_map()))
         return self
 
     #@ExportMethod(NoneType, [DjangoId('Subpage')], PCArg('self', 'MANAGE'), [CannotDeleteObject])

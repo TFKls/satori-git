@@ -185,12 +185,16 @@ void Initializer::ProcessLoop(long ms)
     }
 }       
 
+Logger::Level Logger::level = Logger::ERROR;
 Logger::Logger()
 {
 	debug_fds.insert(2);
 }
-
-void Logger::Debug(const char* format, va_list args)
+void Logger::SetLevel(Logger::Level _level)
+{
+    level = _level;
+}
+void Logger::Print(const char* format, va_list args)
 {
     for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
     {
@@ -203,21 +207,38 @@ void Logger::Debug(const char* format, va_list args)
         va_end(pars);
     }
 }
+void Logger::Debug(const char* format, va_list args)
+{
+    if(level <= DEBUG)
+        Print(format, args);
+}
+void Logger::Warning(const char* format, va_list args)
+{
+    if(level <= WARNING)
+        Print(format, args);
+}
+void Logger::Error(const char* format, va_list args)
+{
+    if(level <= ERROR)
+        Print(format, args);
+}
 void Logger::Fail(int err, const char* format, va_list args)
 {
-    for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
+    if(level <= CRITICAL)
     {
-        int fd = *i;
-        va_list pars;
-        va_copy(pars, args);
-        dprintf(fd, "[pid: %5d]", getpid());
-        vdprintf(fd, format, pars);
-        dprintf(fd, " (%s)\n", strerror(err));
-        va_end(pars);
+        for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
+        {
+            int fd = *i;
+            va_list pars;
+            va_copy(pars, args);
+            dprintf(fd, "[pid: %5d]", getpid());
+            vdprintf(fd, format, pars);
+            dprintf(fd, " (%s)\n", strerror(err));
+            va_end(pars);
+        }
     }
     exit(1);
 }
-
 
 Buffer::Buffer(size_t _size)
 {

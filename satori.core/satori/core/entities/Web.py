@@ -28,6 +28,7 @@ ContestInfo = Struct('ContestInfo', [
 
 SubpageInfo = Struct('SubpageInfo', [
     ('subpage', DjangoStruct('Subpage'), False),
+    ('html', unicode, False),
     ('is_admin', bool, False),
     ])
 
@@ -35,6 +36,7 @@ ProblemMappingInfo = Struct('ProblemMappingInfo', [
     ('problem_mapping', DjangoStruct('ProblemMapping'), False),
     ('can_submit', bool, False),
     ('is_admin', bool, False),
+    ('has_pdf', bool, False),
     ('contestant_role_view_times', PrivilegeTimes, False),
     ('contestant_role_submit_times', PrivilegeTimes, False),
     ])
@@ -47,7 +49,7 @@ class Web(object):
         ret = PageInfo()
         ret.role = Security.whoami()
         ret.user = Security.whoami_user()
-        ret.is_problemsetter = Privilege.global_demand('ADMIN')
+        ret.is_admin = Privilege.global_demand('ADMIN')
         ret.is_problemsetter = Privilege.global_demand('MANAGE_PROBLEMS')
         if contest:
             ret.contest = contest
@@ -89,6 +91,7 @@ class Web(object):
         for problem in Privilege.where_can(contest.problem_mappings.all(), 'VIEW'):
             ret_p = ProblemMappingInfo()
             ret_p.problem_mapping = problem
+            ret_p.has_pdf = problem.statement_files_get('_pdf') is not None
             ret_p.can_submit = Privilege.demand(problem, 'SUBMIT')
             ret_p.is_admin = Privilege.demand(problem, 'MANAGE')
             if ret_p.is_admin:
@@ -103,6 +106,10 @@ class Web(object):
         for subpage in Privilege.where_can(Subpage.get_global(announcements), 'VIEW'):
             ret_s = SubpageInfo()
             ret_s.subpage = subpage
+            reader = subpage.content_files_get_blob('_html')
+            if reader:
+                ret_s.html = reader.read()
+                reader.close()
             ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
             ret.append(ret_s)
         return ret
@@ -113,7 +120,25 @@ class Web(object):
         for subpage in Privilege.where_can(Subpage.get_for_contest(contest, announcements), 'VIEW'):
             ret_s = SubpageInfo()
             ret_s.subpage = subpage
+            reader = subpage.content_files_get_blob('_html')
+            if reader:
+                ret_s.html = reader.read()
+                reader.close()
             ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
             ret.append(ret_s)
         return ret
+
+    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'VIEW'))
+    def get_accepted_contestants(contest):
+        return contest.contestant_role.children.filter(accepted=True)
+
+    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'MANAGE'))
+    def get_pending_contestants(contest):
+        return contest.contestant_role.children.filter(accepted=False)
+
+    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'MANAGE'))
+    def get_contest_admins(contest):
+        return contest.admin_role.children.all()
+
+
 

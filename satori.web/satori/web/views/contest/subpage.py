@@ -2,7 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
-from satori.web.utils.shortcuts import text2html
+from satori.web.utils.shortcuts import fill_image_links
 from django import forms
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -17,7 +17,7 @@ class ContestSubpageEditForm(forms.Form):
 def view(request, page_info,id):
     subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
     name = subpage.name
-    content = subpage.content
+    content = fill_image_links(subpage.html, 'Subpage', subpage.id, 'content_files')
     can_edit = Privilege.demand(subpage,'MANAGE')
     return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : subpage, 'content' : content, 'can_edit' : can_edit})
 

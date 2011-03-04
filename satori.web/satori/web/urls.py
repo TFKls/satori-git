@@ -10,15 +10,6 @@ PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 
 # Please keep the urlpatterns sorted.
 
-contestadminpatterns = patterns('',
-    (r'$', 'satori.web.views.contest.admin.manage.view'),
-    (r'news/(?P<id>\d+)$', 'satori.web.views.contest.admin.news.view'),
-    (r'questions$', 'satori.web.views.contest.contest.admin.questions.view'),
-    (r'questions/(?P<id>\d+)$', 'satori.web.views.contest.admin.editquestion.view'),
-    (r'ranking/(?P<id>\d+)$', 'satori.web.views.contest.admin.ranking.view'),
-    (r'subpage/(?P<id>\d+)$', 'satori.web.views.contest.admin.subpage.view'),
-)
-
 contestpatterns = patterns('',
     url(r'^$', 'satori.web.views.contest.news.view', name='contest_main'),
     url(r'news$', 'satori.web.views.contest.news.view', name='contest_news'),
@@ -46,23 +37,12 @@ contestpatterns = patterns('',
     url(r'manage$', 'satori.web.views.contest.manage.view', name='contest_manage'),
 #    url(r'manage/rights$', 'satori.web.views.contest.manage.rights', name='contest_manage_rights'),
 
-#    (r'^admin/', include(contestadminpatterns)),
-)
-
-adminpatterns = patterns('',
-    url(r'news/(?P<id>\d+)$', 'satori.web.views.admin.news.view', name='edit_news'),
-    url(r'problems$', 'satori.web.views.admin.problems.view', name='problem_repository'),
-    url(r'problems/(?P<id>\d+)$', 'satori.web.views.admin.viewproblem.view', name='edit_problem'),
-    url(r'ranking/(?P<id>\d+)$', 'satori.web.views.admin.ranking.view'),
-    url(r'subpages/(?P<id>\d+)$', 'satori.web.views.admin.subpages.view', name='edit_subpage'),
-    url(r'users$', 'satori.web.views.admin.users.view', name='users'),
-    url(r'users/(?P<id>\d+)$', 'satori.web.views.admin.edituser.view', name='edit_user'),
 )
 
 urlpatterns = patterns('',
     (r'^$', 'satori.web.views.news.view'),
     url(r'^news$', 'satori.web.views.news.view', name='news'),
-    url(r'^news/create$', 'satori.web.views.news.create', name='news_create'),
+    url(r'^news/add$', 'satori.web.views.news.add', name='news_add'),
     url(r'^news/(?P<id>\d+)/edit$', 'satori.web.views.news.edit', name='news_edit'),
     url(r'^news/(?P<id>\d+)/delete$', 'satori.web.views.news.delete', name='news_delete'),
     url(r'^contest/select$', 'satori.web.views.select.view', name='select_contest'),
@@ -72,8 +52,8 @@ urlpatterns = patterns('',
     url(r'^profile$', 'satori.web.views.profile.view', name='profile'),
     url(r'^register$', 'satori.web.views.register.view', name='register'),
     url(r'^subpage/(?P<id>\d+)$', 'satori.web.views.subpage.view', name='subpage'),
-
-#    (r'admin/', include(adminpatterns)),
+    url(r'^(?P<mode>download|view)/(?P<model>[^/]+)/(?P<id>\d+)/(?P<attr_name>[^/]+)/(?P<file_name>[^/]+)$','satori.web.views.download.getfile', name='download'),
+    url(r'^(?P<mode>download|view)/(?P<model>[^/]+)/(?P<id>\d+)/(?P<group_name>[^/]+)/(?P<attr_name>[^/]+)/(?P<file_name>[^/]+)$','satori.web.views.download.getfile_group', name='download_group'),
     (r'contest/(?P<contestid>\d+)/', include(contestpatterns)),
 
     (r'^files/(?P<path>.*)$', 'django.views.static.serve',

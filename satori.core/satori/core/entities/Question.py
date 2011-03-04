@@ -54,6 +54,8 @@ class Question(Entity):
         self.forbid_fields(fields, ['id', 'contest', 'problem'])
         self.update_fields(fields, ['answer', 'date_created', 'content'])
         self.save()
+        if self.answer is not None:
+            self.answer_files_set_map(render_sphinx(self.answer, self.answer_files_get_map()))
         return self
 
 class QuestionEvents(Events):
