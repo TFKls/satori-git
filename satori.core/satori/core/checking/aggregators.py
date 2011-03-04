@@ -411,7 +411,7 @@ class ACMAggregator(AggregatorBase):
             if self.hidden or (not score_list and not self.aggregator.params.show_zero):
                 self.ranking_entry.row = ''
                 self.ranking_entry.individual = ''
-                self.ranking_entry.position = self.position()
+                self.ranking_entry.position = self.aggregator.position()
                 self.ranking_entry.save()
             else:
                 points = int(sum([s.params.score for s in score_list], 0.0))
@@ -420,14 +420,11 @@ class ACMAggregator(AggregatorBase):
                 time_str = str(timedelta(seconds=time_seconds))
                 problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
 
-                if time_seconds > max_seconds_per_problem:
-                    time_seconds = max_seconds_per_problem
-        
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
 
                 self.ranking_entry.row = self.aggregator.table.generate_row('', contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
                 self.ranking_entry.individual = ''
-                self.ranking_entry.position = self.position(points, time_seconds, contestant_name)
+                self.ranking_entry.position = self.aggregator.position(points, time_seconds, contestant_name)
                 self.ranking_entry.save()
 
         def aggregate(self, result):
@@ -489,7 +486,7 @@ class PointsAggregator(AggregatorBase):
             if self.hidden or not any([s.points is not None for s in self.scores.values()]):
                 self.ranking_entry.row = ''
                 self.ranking_entry.individual = ''
-                self.ranking_entry.position = self.position()
+                self.ranking_entry.position = self.aggregator.position()
                 self.ranking_entry.save()
             else:
                 points = sum([s.points for s in self.scores.values() if s.points is not None], 0.0)
@@ -506,7 +503,7 @@ class PointsAggregator(AggregatorBase):
 
                 self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
                 self.ranking_entry.individual = ''
-                self.ranking_entry.position = self.position(points, contestant_name)
+                self.ranking_entry.position = self.aggregator.position(points, contestant_name)
                 self.ranking_entry.save()
 
         def aggregate(self, result):

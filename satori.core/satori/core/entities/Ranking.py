@@ -30,7 +30,8 @@ class Ranking(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(Ranking, cls).inherit_rights()
-        cls._inherit_add(inherits, 'VIEW', 'contest', 'VIEW', 'is_public', '1')
+        cls._inherit_add(inherits, 'VIEW', 'id', 'VIEW_FULL')
+        cls._inherit_add(inherits, 'VIEW_FULL', 'contest', 'VIEW', 'is_public', '1')
         cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         return inherits
 
@@ -116,7 +117,7 @@ class Ranking(Entity):
     def rejudge(self):
         RawEvent().send(Event(type='checking_rejudge_ranking', id=self.id))
 
-    @ExportMethod(unicode, [DjangoId('Ranking')], PCArg('self', 'VIEW'))
+    @ExportMethod(unicode, [DjangoId('Ranking')], PCArg('self', 'VIEW_FULL'))
     def full_ranking(self):
         res = self.header
         res += ''.join([ entry.row for entry in self.entries.all() ])
