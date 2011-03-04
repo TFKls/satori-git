@@ -146,7 +146,7 @@ class Ranking(Entity):
             ret[param.poblem] = param.params_get_map()
         return ret
 
-    @ExportMethod(NoneType, [DjangoId('Ranking', TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)))], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('problem_params', PCEachValue('item', PCRawBlob('item')))))
+    @ExportMethod(NoneType, [DjangoId('Ranking'), TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute))], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('problem_params', PCEachValue('item', PCRawBlob('item')))))
     def set_problem_params(self, problem_params):
         for problem, oa_map in problem_params.items():
             if problem.contest != self.contest:
