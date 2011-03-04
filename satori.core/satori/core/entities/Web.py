@@ -45,6 +45,7 @@ ProblemMappingInfo = Struct('ProblemMappingInfo', [
 class Web(object):
 
     @ExportMethod(PageInfo, [DjangoId('Contest')], PCPermit())
+    @staticmethod
     def get_page_info(contest=None):
         ret = PageInfo()
         ret.role = Security.whoami()
@@ -69,6 +70,7 @@ class Web(object):
         return ret
 
     @ExportMethod(TypedList(ContestInfo), [], PCPermit())
+    @staticmethod
     def get_contest_list():
         ret = []
         whoami = Security.whoami()
@@ -86,6 +88,7 @@ class Web(object):
         return ret
 
     @ExportMethod(TypedList(ProblemMappingInfo), [DjangoId('Contest')], PCPermit())
+    @staticmethod
     def get_problem_mapping_list(contest):
         ret = []
         for problem in Privilege.where_can(contest.problem_mappings.all(), 'VIEW'):
@@ -100,43 +103,46 @@ class Web(object):
             ret.append(ret_p)
         return ret
 
+    @ExportMethod(SubpageInfo, [DjangoId('Subpage')], PCPermit())
+    @staticmethod
+    def get_subpage_info(subpage):
+        ret_s = SubpageInfo()
+        ret_s.subpage = subpage
+        reader = subpage.content_files_get_blob('_html')
+        if reader:
+            ret_s.html = reader.read()
+            reader.close()
+        ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
+        return ret_s
+
     @ExportMethod(TypedList(SubpageInfo), [bool], PCPermit())
+    @staticmethod
     def get_subpage_list_global(announcements):
         ret = []
         for subpage in Privilege.where_can(Subpage.get_global(announcements), 'VIEW'):
-            ret_s = SubpageInfo()
-            ret_s.subpage = subpage
-            reader = subpage.content_files_get_blob('_html')
-            if reader:
-                ret_s.html = reader.read()
-                reader.close()
-            ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
-            ret.append(ret_s)
+            ret.append(Web.get_subpage_info(subpage))
         return ret
 
     @ExportMethod(TypedList(SubpageInfo), [DjangoId('Contest'), bool], PCPermit())
+    @staticmethod
     def get_subpage_list_for_contest(contest, announcements):
         ret = []
         for subpage in Privilege.where_can(Subpage.get_for_contest(contest, announcements), 'VIEW'):
-            ret_s = SubpageInfo()
-            ret_s.subpage = subpage
-            reader = subpage.content_files_get_blob('_html')
-            if reader:
-                ret_s.html = reader.read()
-                reader.close()
-            ret_s.is_admin = Privilege.demand(subpage, 'MANAGE')
-            ret.append(ret_s)
+            ret.append(Web.get_subpage_info(subpage))
         return ret
 
     @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'VIEW'))
+    @staticmethod
     def get_accepted_contestants(contest):
         return contest.contestant_role.children.filter(accepted=True)
 
     @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'MANAGE'))
+    @staticmethod
     def get_pending_contestants(contest):
         return contest.contestant_role.children.filter(accepted=False)
 
     @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'MANAGE'))
+    @staticmethod
     def get_contest_admins(contest):
         return contest.admin_role.children.all()
 
