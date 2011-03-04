@@ -15,11 +15,10 @@ class ContestSubpageEditForm(forms.Form):
 
 @contest_view
 def view(request, page_info,id):
-    subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
-    name = subpage.name
-    content = fill_image_links(subpage.html, 'Subpage', subpage.id, 'content_files')
-    can_edit = Privilege.demand(subpage,'MANAGE')
-    return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : subpage, 'content' : content, 'can_edit' : can_edit})
+    sinfo = Web.get_subpage_info(Subpage(int(id)))
+    content = fill_image_links(sinfo.html, 'Subpage', id, 'content_files')
+    can_edit = sinfo.subpage.contest and sinfo.is_admin
+    return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : sinfo.subpage, 'content' : content, 'can_edit' : can_edit})
 
 @contest_view
 def create(request, page_info):
@@ -45,13 +44,4 @@ def edit(request, page_info,id):
     else:
         form = ContestSubpageEditForm(initial={'name' : subpage.name, 'content' : subpage.content, 'is_public' : subpage.is_public})
     return render_to_response('subpage_edit.html',{'page_info' : page_info, 'form' : form, 'subpage' : subpage})
-
-@contest_view
-def delete(request, page_info,id):
-    subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
-    name = subpage.name
-    content = subpage.content
-    return render_to_response('subpage.html',{'page_info' : page_info, 'name' : name, 'content' : content})
-# vim:ts=4:sts=4:sw=4:expandtab
-
 

@@ -2,12 +2,7 @@
 
 {% block content %}
 
-{% if page_info.contest %}
-<form action={% url contest_subpage_edit page_info.contest.id subpage.id %} method="POST">
-{% else %}
-<form action={% url subpage_edit message.id %} method="POST">
-{% endif %}
-
+<form action="" method="POST">
 <table>
 {{ form.as_table }}
 </table>
