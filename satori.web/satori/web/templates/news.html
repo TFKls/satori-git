@@ -5,6 +5,11 @@
 <a href="{% url contest_news_add page_info.contest.id %}">Add news</a>
 {% endif %}
 
+{% if page_info.is_admin %}
+<a href="{% url news_add %}">Add global news</a>
+{% endif %}
+
+
 {% for msg in messages %}
 <div class = "newsmsg bDots">
     <table class="tlist">

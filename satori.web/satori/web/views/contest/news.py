@@ -2,7 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
-from satori.web.utils.shortcuts import text2html, fill_image_links
+from satori.web.utils.shortcuts import fill_image_links
 from django import forms
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse

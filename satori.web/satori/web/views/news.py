@@ -2,7 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
-from satori.web.utils.shortcuts import text2html
+from satori.web.utils.shortcuts import text2html, fill_image_links
 from django import forms
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -20,11 +20,11 @@ def view(request, page_info):
     messages = Web.get_subpage_list_global(True)
     for m in messages:
         m.html = fill_image_links(m.html, 'Subpage', m.subpage.id, 'content_files')
-    messages.sort(key=lambda m : m[0].subpage.date_created, reverse=True)
+    messages.sort(key=lambda m : m.subpage.date_created, reverse=True)
     return render_to_response('news.html',{'page_info' : page_info, 'messages' : messages })
 
 @general_view
-def create(request, page_info):
+def add(request, page_info):
     if request.method=="POST":
         form = NewsEditForm(request.POST)
         if form.is_valid():
