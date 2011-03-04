@@ -14,7 +14,7 @@ class RankingEntry(Entity):
     contestant    = models.ForeignKey('Contestant', related_name='ranking_entries+')
     row           = models.TextField()
     individual    = models.TextField()
-    position      = models.IntegerField()
+    position      = models.CharField(max_length=64)
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contestant', 'ranking'),)
