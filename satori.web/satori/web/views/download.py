@@ -5,23 +5,40 @@ from satori.web.utils.decorators import general_view
 from django.http import HttpResponse
 from mimetypes import guess_type
 
-def getfile(request, model, id, attr_name, file_name):
+def blob_generator(blob):
+    length = blob.length()
+    counter = 0
+    chunk = 1024
+    while counter<length:
+        r = min(chunk, length-counter)
+        counter = counter+r
+        yield blob.read(r)
+    blob.close()
+
+def getfile(request, mode, model, id, attr_name, file_name):
     try:
         token_container.set_token(request.COOKIES.get('satori_token', ''))
     except:
         token_container.set_token('')
+
     obj = globals()[model](int(id))
     blob = obj.oa_get_blob(attr_name)
     
-    def generator():
-        length = blob.length()
-        counter = 0
-        chunk = 1024
-        while counter<length:
-            r = min(chunk, length-counter)
-            counter = counter+r
-            yield blob.read(r)
-        blob.close()
-    response = HttpResponse(content=generator,mimetype=guesstype(file_name)[0])
-    response['Content-Disposition'] = 'attachment; filename='+filename
+    response = HttpResponse(content=blob_generator(blob), mimetype=guesstype(file_name)[0])
+    if mode == 'download':
+        response['Content-Disposition'] = 'attachment; filename='+filename
+    return response
+
+def getfile_group(request, mode, model, id, group_name, attr_name, file_name):
+    try:
+        token_container.set_token(request.COOKIES.get('satori_token', ''))
+    except:
+        token_container.set_token('')
+
+    obj = globals()[model](int(id))
+    blob = getattr(obj, group_name + '_get_blob')(attr_name)
+    
+    response = HttpResponse(content=blob_generator(blob), mimetype=guesstype(file_name)[0])
+    if mode == 'download':
+        response['Content-Disposition'] = 'attachment; filename='+filename
     return response
