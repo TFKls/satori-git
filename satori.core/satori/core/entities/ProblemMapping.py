@@ -71,6 +71,8 @@ class ProblemMapping(Entity):
     @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, [ 'id', 'contest', 'problem' ])
+        if self.problem == Global.get_instance().assignment:
+            self.forbid_fields(fields, [ 'default_test_suite' ])
         modified = self.update_fields(fields, [ 'code', 'title', 'default_test_suite', 'override_fields', 'statement' ])
         if self.problem != self.default_test_suite.problem:
             raise CannotSetField()
@@ -80,7 +82,7 @@ class ProblemMapping(Entity):
             self.default_test_suite_changed()
         return self
 
-#    @ExportMethod(NoneType, [DjangoId('ProblemMapping')], PCArg('self', 'MANAGE'), [])
+    @ExportMethod(NoneType, [DjangoId('ProblemMapping'), TypedMap(DjangoId('Contestant'), TypedMap(unicode, AnonymousAttribute))], PCArg('self', 'MANAGE'), [])
     def judge_assignment(self, results):
         if self.problem != Global.get_instance().assignment:
             raise InvalidArgument()
@@ -92,13 +94,8 @@ class ProblemMapping(Entity):
             except Submit.DoesNotExist:
                 submit = Submit(problem=self, contestant=contestant)
                 submit.save()
-            try:
-                tsr = TestSuiteResult.get(problem=self, submit=submit)
-            except TestSuiteResult.DoesNotExist:
-                tsr = TestSuiteResult(problem=self, submit=submit)
-                tsr.save()
-            tsr.oa_set_map()
-
+            submit.overrides_set_map(result)
+            submit.rejudge_test_suite_results()
 
 class ProblemMappingEvents(Events):
     model = ProblemMapping

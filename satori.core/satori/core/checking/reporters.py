@@ -25,6 +25,7 @@ class AssignmentReporter(ReporterBase):
         super(AssignmentReporter, self).__init__(test_suite_result)
 
     def init(self):
+        self.test_suite_result.oa_set_str('status', 'ACC')
         self.test_suite_result.status = 'ACC'
         self.test_suite_result.report = ''
         self.test_suite_result.save()
@@ -37,13 +38,18 @@ class AssignmentReporter(ReporterBase):
 
     def deinit(self):
         status = 'ACC'
-        os = self.test_suite_result.submit.overrides_get('status')
-        if os is not None and not os.is_blob:
-            status = os.value
+        report = ''
+        oa_map = self.test_suite_result.submit.overrides_get_map
+        ostatus = oa_map.get('status', None)
+        if ostatus is not None and not ostatus.is_blob:
+            status = ostatus.value
+        oreport = oa_map.get('report', None)
+        if oreport is not None and not oreport.is_blob:
+            report = oreport.value
         self.test_suite_result.status = status
-#TODO: Create report based on oa
-        self.test_suite_result.report = ''
+        self.test_suite_result.report = report
         self.test_suite_result.save()
+        self.test_suite_result.oa_set_map(oa_map)
 
 class StatusReporter(ReporterBase):
     def __init__(self, test_suite_result):
