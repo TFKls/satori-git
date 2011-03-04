@@ -420,9 +420,6 @@ class ACMAggregator(AggregatorBase):
                 time_str = str(timedelta(seconds=time_seconds))
                 problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
 
-                if time_seconds > max_seconds_per_problem:
-                    time_seconds = max_seconds_per_problem
-        
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
 
                 self.ranking_entry.row = self.aggregator.table.generate_row('', contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
