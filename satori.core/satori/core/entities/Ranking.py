@@ -31,6 +31,7 @@ class Ranking(Entity):
     def inherit_rights(cls):
         inherits = super(Ranking, cls).inherit_rights()
         cls._inherit_add(inherits, 'VIEW', 'id', 'VIEW_FULL')
+        cls._inherit_add(inherits, 'VIEW_FULL', 'id', 'MANAGE')
         cls._inherit_add(inherits, 'VIEW_FULL', 'contest', 'VIEW', 'is_public', '1')
         cls._inherit_add(inherits, 'MANAGE', 'contest', 'MANAGE')
         return inherits
