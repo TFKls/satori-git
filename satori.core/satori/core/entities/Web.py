@@ -104,7 +104,7 @@ class Web(object):
         for subpage in Privilege.where_can(Subpage.get_global(announcements), 'VIEW'):
             ret_s = SubpageInfo()
             ret_s.subpage = subpage
-            reader = subpage.content_get_blob('_html')
+            reader = subpage.content_files_get_blob('_html')
             if reader:
                 ret_s.html = reader.read()
                 reader.close()
@@ -118,7 +118,7 @@ class Web(object):
         for subpage in Privilege.where_can(Subpage.get_for_contest(contest, announcements), 'VIEW'):
             ret_s = SubpageInfo()
             ret_s.subpage = subpage
-            reader = subpage.content_get_blob('_html')
+            reader = subpage.content_files_get_blob('_html')
             if reader:
                 ret_s.html = reader.read()
                 reader.close()
