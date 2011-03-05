@@ -1,5 +1,8 @@
 {% extends "templates/index.html" %}
 
+{% block header %}
+{% endblock %}
+
 {% block content %}
 
 {% if page_info.contest %}
@@ -8,10 +11,57 @@
 <form action={% url subpage_create %} method="POST">
 {% endif %}
 
+<input name="fid" value="{{ fid }}" type="hidden">
 <table>
 {{ form.as_table }}
 </table>
-<input type="submit" value="Add"/>
+<input id="create_subpage" type="submit" value="Add"/>
 </form>
+<form id="file_upload" action={% url contest_subpage_fileupload page_info.contest.id %} method="POST" enctype="multipart/form-data" class="file_upload">
+    <input type="file" name="file" multiple>
+    <input name="fid" value="{{ fid }}" type="hidden">
+    <button>Upload</button>
+    <div>Attachments</div>
+</form>
+<table id="files"></table>
+<script>
+/*global $ */
+$(function () {
+    var notCompletedCounter = 0;
+    $('#file_upload').fileUploadUI({
+        uploadTable: $('#files'),
+        downloadTable: $('#files'),
+        beforeSend: function (event, files, index, xhr, handler, callBack) {
+            if (files[index].size > 10000000) {
+                handler.uploadRow.find('.file_upload_progress').html(' FILE TOO BIG!');
+                setTimeout(function () {
+                    handler.removeNode(handler.uploadRow);
+                }, 5000);
+                return;
+            }
+            $("#create_subpage").attr("disabled", true);
+            notCompletedCounter = notCompletedCounter + files.length;
+            callBack();
+        },
+        buildUploadRow: function (files, index) {
+            return $('<tr><td>' + files[index].name + '<\/td>' +
+                    '<td class="file_upload_progress"><div><\/div><\/td>' +
+                    '<td class="file_upload_cancel">' +
+                    '<button class="ui-state-default ui-corner-all" title="Cancel">' +
+                    '<span class="ui-icon ui-icon-cancel">Cancel<\/span>' +
+                    '<\/button><\/td><\/tr>');
+        },
+        buildDownloadRow: function (file) {
+            return $('<tr><td>' + file.name + '<\/td><td class="file_upload_cancel"><button>Cancel<\/button><\/td><\/tr>');
+        },
+        onComplete: function (event, files, index, xhr, handler) {
+            notCompletedCounter = notCompletedCounter - files.length;
+            if (notCompletedCounter == 0) {
+                $("#create_subpage").attr("disabled", false);
+            }
+        }
+    });
+});
+</script>
 
 {% endblock %}
