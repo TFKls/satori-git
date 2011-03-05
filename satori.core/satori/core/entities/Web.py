@@ -26,6 +26,11 @@ ContestInfo = Struct('ContestInfo', [
     ('is_admin', bool, False),
     ])
 
+SizedContestantList = Struct('SizedContestantList', [
+    ('contestants', DjangoStructList('Contestant'), False),
+    ('count', int, False),
+    ])
+
 SubpageInfo = Struct('SubpageInfo', [
     ('subpage', DjangoStruct('Subpage'), False),
     ('html', unicode, False),
@@ -131,20 +136,23 @@ class Web(object):
             ret.append(Web.get_subpage_info(subpage))
         return ret
 
-    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'VIEW'))
+    @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'VIEW'))
     @staticmethod
-    def get_accepted_contestants(contest):
-        return contest.contestant_role.children.filter(accepted=True)
+    def get_accepted_contestants(contest, limit=20, offset=0):
+        result = Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role)[offset:limit]
+        return SizedContestantList(count=len(result), contestants=result[offset:limit])
 
-    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'MANAGE'))
+    @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
-    def get_pending_contestants(contest):
-        return contest.contestant_role.children.filter(accepted=False)
+    def get_pending_contestants(contest, limit=20, offset=0):
+        result = Contestant.objects.filter(contest=contest, accepted=False).exclude(parents=contest.admin_role)
+        return SizedContestantList(count=len(result), contestants=result[offset:limit])
 
-    @ExportMethod(TypedList(DjangoStruct('Contestant')), [DjangoId('Contest')], PCArg('contest', 'MANAGE'))
+    @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
-    def get_contest_admins(contest):
-        return contest.admin_role.children.all()
+    def get_contest_admins(contest, limit=20, offset=0):
+        result = Contestant.objects.filter(parents=contest.admin_role)
+        return SizedContestantList(count=len(result), contestants=result[offset:limit])
 
 
 
