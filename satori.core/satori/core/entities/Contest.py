@@ -104,14 +104,10 @@ class Contest(Entity):
         contest = Contest()
         contest.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
         contest.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
-        contestant_role = Role(name='Contestant of ' + contest.name)
-        contestant_role.save()
-        admin_role = Role(name='Administrator of ' + contest.name)
-        admin_role.save()
-        contest.contestant_role = contestant_role
-        contest.admin_role = admin_role
+        contest.contestant_role = Role.create(fields=RoleStruct(name='Contestant of ' + contest.name))
+        contest.admin_role = Role.create(fields=RoleStruct(name='Administrator of ' + contest.name))
         contest.save()
-        contest.admin_role.add_member(token_container.token.role)
+        contest.add_admin(token_container.token.user)
         Privilege.grant(contest.admin_role, contest, 'MANAGE')
         Privilege.grant(contest.admin_role, contest.admin_role, 'MANAGE')
         Privilege.grant(contest.admin_role, contest.contestant_role, 'MANAGE')
@@ -125,12 +121,8 @@ class Contest(Entity):
         modified = self.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         self.save()
         if 'name' in modified:
-            role = self.contestant_role
-            role.name='Contestant of ' + self.name
-            role.save()
-            role = self.admin_role
-            role.name='Administrator of ' + self.name
-            role.save()
+            self.contestant_role.modify(fields=RoleStruct(name='Contestant of ' + self.name))
+            self.admin_role.modify(fields=RoleStruct(name='Administrator of ' + self.name))
         self.changed()
         return self
 
@@ -160,18 +152,24 @@ class Contest(Entity):
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest')], PCAnd(PCTokenIsUser(), PCArg('self', 'APPLY')), [AlreadyRegistered])
     def join(self):
-        return Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=bool(Privilege.demand(self, 'JOIN'))), user_list=[token_container.token.user])
+        return Contestant.create(fields=ContestantStruct(contest=self, accepted=bool(Privilege.demand(self, 'JOIN'))), user_list=[token_container.token.user])
 
     @ExportMethod(NoneType, [DjangoId('Contest'), DjangoId('User')], PCArg('self', 'MANAGE'))
     def add_admin(self, user):
         contestant = self.find_contestant(user)
         if contestant is None:
-            Contestant.create(fields=DjangoStruct('Contestant')(contest=self, accepted=True, invisible=True, name=user.login), user_list=[user])
+            contestant = Contestant.create(fields=ContestantStruct(contest=self, accepted=True, invisible=True), user_list=[user])
         else:
-            contestant.invisible = True
-            contestant.save()
-        self.admin_role.add_member(user)
+            contestant.modify(fields=ContestantStruct(accepted=True, invisible=True))
+        self.admin_role.add_member(contestant)
         self.changed_contestants()
+
+    @ExportMethod(NoneType, [DjangoId('Contest'), DjangoId('Role')], PCArg('self', 'MANAGE'))
+    def delete_admin(self, role):
+        contestant = self.find_contestant(role)
+        if contestant is not None:
+            self.admin_role.delete_member(contestant)
+            contestant.modify(fields=ContestantStruct(invisible=False))
 
     @staticmethod
     def submit_to_result_to_render(submit):
