@@ -62,6 +62,7 @@ class Contestant(Role):
         if contestant.accepted:
             contestant.contest.contestant_role.add_member(contestant)
         contestant.update_usernames()
+        # update_usernames() calls self.contest.changed_contestants()
         return contestant
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), DjangoStruct('Contestant')], PCArg('self', 'MANAGE'), [InvalidLogin, InvalidPassword, CannotSetField])
