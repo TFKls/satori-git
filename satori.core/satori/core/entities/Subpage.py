@@ -41,7 +41,7 @@ class Subpage(Entity):
         # TODO: conditional inherit: if contest is set and is_public, inherit VIEW from contest
         return inherits
 
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCGlobal('ADMIN'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCGlobal('ADMIN'), [CannotSetField, SphinxException])
     @staticmethod
     def create_global(fields):
         subpage = Subpage()
@@ -51,7 +51,7 @@ class Subpage(Entity):
         subpage.content_files_set_map(render_sphinx(subpage.content, subpage.content_files_get_map()))
         return subpage
 
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoStruct('Subpage')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField, SphinxException])
     @staticmethod
     def create_for_contest(fields):
         subpage = Subpage()
@@ -61,7 +61,7 @@ class Subpage(Entity):
         subpage.content_files_set_map(render_sphinx(subpage.content, subpage.content_files_get_map()))
         return subpage
 
-    @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Subpage'), [DjangoId('Subpage'), DjangoStruct('Subpage')], PCArg('self', 'MANAGE'), [CannotSetField, SphinxException])
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'contest'])
         self.update_fields(fields, ['name', 'content', 'is_announcement', 'is_sticky', 'is_public', 'order'])
