@@ -19,6 +19,9 @@ from satori.core.export.types_django import DjangoId, DjangoStruct, DjangoIdList
 
 AccessDenied = DefineException('AccessDenied', 'You don\'t have rights to call this procedure')
 
+InvalidArgument = DefineException('InvalidArgument', 'The specified argument is invalid: name={name}, reason={reason}',
+    [('name', unicode, False), ('reason', unicode, False)])
+
 
 exported_classes = []
 global_exception_types = []
@@ -29,6 +32,7 @@ global_exception_types.append(TokenExpired)
 global_exception_types.append(AccessDenied)
 global_exception_types.append(ArgumentNotFound)
 global_exception_types.append(CannotReturnObject)
+#global_exception_types.append(InvalidArgument)
 
 
 def ExportModel(cls):
