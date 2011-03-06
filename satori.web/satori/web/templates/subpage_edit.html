@@ -35,6 +35,12 @@
     {% endfor %}
 </table>
 <script>
+var actualFilesList = {};
+$(function() {
+    $('#files input[name="rfile"]').each(function() {
+        actualFilesList[$(this).val()] = true;
+    });
+});
 $(function() {
     var removedFilesCounter = 0;
     $('.remove_existing').submit(function(event) {
@@ -45,20 +51,34 @@ $(function() {
             '<input type="hidden" name="rfile_' + removedFilesCounter + 
             '" value="' + rfile + '">'
         );
+
+        delete actualFilesList[rfile];
         removedFilesCounter = removedFilesCounter + 1;
         $(event.target).parent().parent().remove();
         return false;
     });
 });
-</script>
-<script>
-/*global $ */
+
 $(function () {
     var notCompletedCounter = 0;
+    var $wrongFileDialog = $('<div></div>')
+            .html('File with a given name already exists!')
+            .dialog({
+                autoOpen: false,
+                resizable: false,
+                title: 'Wrong file name'
+            });
+    $wrongFileDialog.css('font-size: 62.5%');
     $('#file_upload').fileUploadUI({
         uploadTable: $('#files'),
         downloadTable: $('#files'),
         beforeSend: function (event, files, index, xhr, handler, callBack) {
+            ex = 0;
+            if (actualFilesList[files[index].name]) {
+                handler.removeNode(handler.uploadRow);
+                $wrongFileDialog.dialog("open");
+                return;
+            }
             if (files[index].size > 10000000) {
                 handler.uploadRow.find('.file_upload_progress').html(' FILE TOO BIG!');
                 setTimeout(function () {
@@ -66,6 +86,7 @@ $(function () {
                 }, 5000);
                 return;
             }
+            actualFilesList[files[index].name] = true;
             $("#create_subpage").attr("disabled", true);
             notCompletedCounter = notCompletedCounter + files.length;
             callBack();
@@ -81,6 +102,10 @@ $(function () {
         buildDownloadRow: function (file) {
             return $('<tr><td>' + file.name + '<\/td>' + 
                     '<td><form><button type="submit">Cancel<\/button><\/form><\/td><\/tr>');
+        },
+        onAbort: function (event, files, index, xhr, handler) {
+            handler.removeNode(handler.uploadRow);
+            delete actualFilesList[files[index].name];
         },
         onComplete: function (event, files, index, xhr, handler) {
             notCompletedCounter = notCompletedCounter - files.length;
