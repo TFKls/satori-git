@@ -30,13 +30,14 @@ contestpatterns = patterns('',
     url(r'results/(?P<id>\d+)$', 'satori.web.views.contest.viewresult.view', name='view_result'),
     url(r'submit$', 'satori.web.views.contest.submit.view', name='submit'),
     url(r'subpage/create$', 'satori.web.views.contest.subpage.create', name='contest_subpage_create'),
+    url(r'subpage/fileremove$', 'satori.web.views.contest.subpage.fileremove', name='contest_subpage_fileremove'),
+    url(r'subpage/fileupload$', 'satori.web.views.contest.subpage.fileupload', name='contest_subpage_fileupload'),
     url(r'subpage/(?P<id>\d+)$', 'satori.web.views.contest.subpage.view', name='contest_subpage'),
     url(r'subpage/(?P<id>\d+)/edit$', 'satori.web.views.contest.subpage.edit', name='contest_subpage_edit'),
     url(r'subpage/(?P<id>\d+)/delete$', 'satori.web.views.contest.subpage.delete', name='contest_subpage_delete'),
     url(r'contestants$', 'satori.web.views.contest.contestants.view', name='contestants'),
     url(r'manage$', 'satori.web.views.contest.manage.view', name='contest_manage'),
 #    url(r'manage/rights$', 'satori.web.views.contest.manage.rights', name='contest_manage_rights'),
-
 )
 
 urlpatterns = patterns('',
