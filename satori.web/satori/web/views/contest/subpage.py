@@ -32,10 +32,8 @@ def create(request, page_info):
             data = form.cleaned_data
             fid = request.POST["fid"]
             subpage = Subpage.create_for_contest(SubpageStruct(is_announcement=False,contest=page_info.contest,name=data["name"],content=''))
-            for ufile in glob.glob(fid):
-                print ufile
-                print fid
-                subpage.content_files_set_blob_path(ufile, os.path.join(fid, ufile))
+            for ufile in glob.glob(os.path.join(fid, '*')):
+                subpage.content_files_set_blob_path(os.path.basename(ufile), ufile)
             subpage.content = data["content"]
             return HttpResponseRedirect(reverse('contest_subpage',args=[page_info.contest.id, subpage.id]))
     else:
