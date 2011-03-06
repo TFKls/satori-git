@@ -309,3 +309,20 @@ span.signature {
   font-style : italic;
   font-size : smaller;
 }
+
+.subpage_form {
+    width: 100%;
+}
+
+.subpage_form textarea {
+    width: 100%;
+}
+
+.subpage_form th {
+    white-space: nowrap;
+    text-align: left;
+}
+
+.subpage_form td {
+    width: 100%;
+}

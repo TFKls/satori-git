@@ -9,18 +9,32 @@
 {% endif %}
 
 <input name="fid" value="{{ fid }}" type="hidden">
-<table>
-{{ form.as_table }}
+<table class="subpage_form">
+    <tr>
+        <th><label for="id_name">Subpage name:</label></th>
+        <td>{{ form.name }}</td>
+        <td style="text-align: right"><input type="submit" value="Save changes"/></td>
+    </tr>
+    <tr>
+        <th><label for="id_content">Content:</label></th>
+        <td colspan="2">{{ form.content }}</td>
+    </tr>
+    <tr>
+        <th><label for="id_is_public">Show to all visitors:</label></th>
+        <td>{{ form.is_public }}</td>
+    </tr>
 </table>
-<input type="submit" value="Save"/>
 </form>
 
+<h4>Attachments</h4>
+<p>Click to select or drag-and-drop multiple files on the upload field:</p>
 <form id="file_upload" action={% url contest_subpage_fileupload page_info.contest.id %} method="POST" enctype="multipart/form-data" class="file_upload">
     <input type="file" name="file" multiple>
     <input name="fid" value="{{ fid }}" type="hidden">
     <button>Upload</button>
-    <div>Attachments</div>
+    <div>Add new files</div>
 </form>
+
 <table id="files">
     {% for dfile in attachments %}
     <tr> 

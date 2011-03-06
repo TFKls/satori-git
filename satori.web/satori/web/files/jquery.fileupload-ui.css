@@ -12,8 +12,8 @@
   width: 200px;
   height: 30px;
   line-height: 30px;
-  background: palegreen;
-  border: 1px solid limegreen;
+  background: #CCC;
+  border: 1px solid #666;
 }
 
 .file_upload_small {
@@ -21,8 +21,8 @@
   height: 30px;
   line-height: 30px;
   font-size: auto;
-  background: palegreen;
-  border: 1px solid limegreen;
+  background: #CCC;
+  border: 1px solid #666;
 }
 
 .file_upload_large {
@@ -30,12 +30,12 @@
   height: 150px;
   line-height: 150px;
   font-size: 20px;
-  background: palegreen;
-  border: 1px solid limegreen;
+  background: #ccc;
+  border: 1px solid #666;
 }
 
 .file_upload_highlight {
-  background: lawngreen;
+  background: #999;
 }
 
 .file_upload input {
