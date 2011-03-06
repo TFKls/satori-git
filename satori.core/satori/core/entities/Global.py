@@ -19,7 +19,7 @@ class Global(Entity):
 
     profile_fields   = models.TextField(blank=True, default="")
 
-    judges           = AttributeGroupField(PCOr(PCArg('self', 'ADMIN'), PCArg('', 'MANAGE_PROBLEMS')), PCArg('self', 'ADMIN'), '')
+    judges           = AttributeGroupField(PCOr(PCArg('self', 'ADMIN'), PCGlobal('MANAGE_PROBLEMS')), PCArg('self', 'ADMIN'), '')
     generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
 
     class ExportMeta(object):
