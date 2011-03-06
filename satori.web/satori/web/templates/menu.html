@@ -17,9 +17,11 @@
             {% if page_info.contestant %}
                 <li><a href="{% url results page_info.contest.id %}">Results</a></li>
             {% endif %}
+            {% comment %}
             {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
                 <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
             {% endif %}
+            {% endcomment %}
             {% if page_info.contest_is_admin %}
                 <li><a href="{% url contestants page_info.contest.id %}">Contestants</a></li>
                 <li><a href="{% url contest_manage page_info.contest.id %}">Manage contest</a></li>
@@ -38,9 +40,12 @@
         {% else %}
             <li><a href="{% url news %}">News</a></li>
             {% for subpage in page_info.subpages %}
-                <li><a href="{% url subpage page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
+                <li><a href="{% url subpage subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
             <li><a href="{% url select_contest %}">Select contest</a></li>
+            {% if page_info.is_admin %}
+                <li><a href="{% url configuration %}">Configuration</a></li>
+            {% endif %}
             {% if page_info.is_problemsetter %}
                 <li><a href="">Problem repository</a></li>
             {% endif %}

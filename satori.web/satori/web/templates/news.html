@@ -5,7 +5,7 @@
 <a href="{% url contest_news_add page_info.contest.id %}">Add news</a>
 {% endif %}
 
-{% if page_info.is_admin %}
+{% if not page_info.contest and page_info.is_admin %}
 <a href="{% url news_add %}">Add global news</a>
 {% endif %}
 

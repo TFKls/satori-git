@@ -3,15 +3,37 @@
 {% block content %}
 
 {% if page_info.contest %}
-<form action={% url contest_subpage_edit page_info.contest.id subpage.id %} method="POST">
+<form action={% url contest_subpage_edit page_info.contest.id subpage.id %} method="POST" id="edit_form">
 {% else %}
-<form action={% url subpage_edit message.id %} method="POST">
+<form action={% url subpage_edit message.id %} method="POST" id="edit_form">
 {% endif %}
 
+<input name="fid" value="{{ fid }}" type="hidden">
 <table>
 {{ form.as_table }}
 </table>
 <input type="submit" value="Save"/>
 </form>
 
+<form id="file_upload" action={% url contest_subpage_fileupload page_info.contest.id %} method="POST" enctype="multipart/form-data" class="file_upload">
+    <input type="file" name="file" multiple>
+    <input name="fid" value="{{ fid }}" type="hidden">
+    <button>Upload</button>
+    <div>Attachments</div>
+</form>
+<table id="files">
+    {% for dfile in attachments %}
+    <tr> 
+        <td>{{ dfile }}</td>
+        <td>
+        <form class="remove_existing">
+            <input name="rfile" value="{{ dfile }}" type="hidden">
+            <button type="submit">Cancel</button>
+        </form>
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+<script src="/files/scripts/attachments_upload.js"></script>
+<script>createFileUploadInstance('{{ fid }}', '{% url contest_subpage_fileremove page_info.contest.id %}');</script>
 {% endblock %}
