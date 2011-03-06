@@ -121,7 +121,7 @@ def render_sphinx(rest, oa_map):
     
     def linkrepl(matchobj):
         return '<a class="reference external" href="_images/' + matchobj.group(1) + '">'
-    output = re.sub(r'<a class="reference external" href="([^"]*)">', linkrepl, output)
+    output = re.sub(r'<a class="reference external" href="([^"/]*)">', linkrepl, output)
 
     writer = Blob.create()
     writer.write(output)
