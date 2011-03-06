@@ -22,7 +22,13 @@ def view(request, page_info,id):
     sinfo = Web.get_subpage_info(Subpage(int(id)))
     content = fill_image_links(sinfo.html, 'Subpage', id, 'content_files')
     can_edit = sinfo.subpage.contest and sinfo.is_admin
-    return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : sinfo.subpage, 'content' : content, 'can_edit' : can_edit})
+
+    dfiles = []
+    for dfile in sinfo.subpage.content_files_get_list():
+        # TODO(kalq): Add checking for is_blob
+        if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')):
+            dfiles.append(dfile.name)
+    return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : sinfo.subpage, 'content' : content, 'can_edit' : can_edit, 'attachments' : dfiles})
 
 @contest_view
 def create(request, page_info):
