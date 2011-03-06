@@ -24,11 +24,13 @@
 <table id="files">
     {% for dfile in attachments %}
     <tr> 
-        <td>{{ dfile }}</td>
+        <td><a href="{% url download_group 'download' 'Subpage' subpage.id 'content_files' dfile dfile %}">{{ dfile }}</a></td>
         <td>
         <form class="remove_existing">
             <input name="rfile" value="{{ dfile }}" type="hidden">
-            <button type="submit">Cancel</button>
+            <button class="ui-state-default ui-corner-all" type="submit">
+                <span class="ui-icon ui-icon-trash"></span>
+            </button>
         </form>
         </td>
     </tr>
