@@ -49,15 +49,24 @@ def edit(request, page_info,id):
         form = ContestSubpageEditForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data
-            for ufile in glob.glob(fid):
-                subpage.content_files_set_blob_path(ufile, os.path.join(fid, ufile))
+            fid = request.POST["fid"]
+            for rfile in request.POST:
+                if rfile.startswith('rfile'):
+                    subpage.content_files_delete(request.POST[rfile])
+            for ufile in glob.glob(os.path.join(fid, '*')):
+                subpage.content_files_set_blob_path(os.path.basename(ufile), ufile)
             subpage.modify(SubpageStruct(name=data["name"],content=data["content"],is_public=data["is_public"]))
             return HttpResponseRedirect(reverse('contest_subpage',args=[page_info.contest.id, subpage.id]))
     else:
         form = ContestSubpageEditForm(initial={'name' : subpage.name, 'content' : subpage.content, 'is_public' : subpage.is_public})
-#        for f in subpage.content_files_get_list():
+        dfiles = []
+        for dfile in subpage.content_files_get_list():
+            if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')):
+                dfiles.append(dfile.name)
 #            f.name, f.is_blob, equals('_html'), equals('_pdf'), startswith('_img_')
-    return render_to_response('subpage_edit.html',{'page_info' : page_info, 'form' : form, 'subpage' : subpage})
+        temp_directory = tempfile.mkdtemp()
+        fid = temp_directory #TODO(kalq): Create a hash instead of full pathname
+    return render_to_response('subpage_edit.html',{'page_info' : page_info, 'form' : form, 'subpage' : subpage, 'attachments' : dfiles, 'fid' : fid})
 
 @contest_view
 def delete(request, page_info,id):
