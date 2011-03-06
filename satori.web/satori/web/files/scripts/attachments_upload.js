@@ -44,7 +44,7 @@ function createFileUploadInstance(fid, remove_url) {
                     return;
                 }
                 if (files[index].size > 10000000) {
-                    handler.uploadRow.find('.file_upload_progress').html(' FILE TOO BIG!');
+                    handler.uploadRow.find('.file_upload_progress').html(' FILE IS TOO BIG!');
                     setTimeout(function () {
                         handler.removeNode(handler.uploadRow);
                     }, 5000);
@@ -65,7 +65,9 @@ function createFileUploadInstance(fid, remove_url) {
             },
             buildDownloadRow: function (file) {
                 return $('<tr><td>' + file.name + '<\/td>' + 
-                        '<td><form><button type="submit">Cancel<\/button><\/form><\/td><\/tr>');
+                        '<td><form><button class="ui-state-default ui-corner-all" type="submit">'+
+                        '<span class="ui-icon ui-icon-trash"><\/span>'+
+                        '<\/button><\/form><\/td><\/tr>');
             },
             onAbort: function (event, files, index, xhr, handler) {
                 handler.removeNode(handler.uploadRow);
