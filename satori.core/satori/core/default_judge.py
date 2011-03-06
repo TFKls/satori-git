@@ -153,7 +153,6 @@ else:
 
 communicate('CREATEJAIL', {'path': options.jail, 'template': options.template})
 
-
 #COMPILE
 communicate('GETSUBMITBLOB', {'name': 'content', 'path': os.path.join(options.jail, options.directory, source_file)})
 compile_run = ["runner", "--quiet",
@@ -167,8 +166,6 @@ compile_run = ["runner", "--quiet",
       "--cgroup=/compile",
       "--cgroup-memory="+str(options.compile_memory),
       "--cgroup-cputime="+str(options.compile_time),
-      "--max-memory="+str(options.compile_memory),
-      "--max-cputime="+str(options.compile_time),
       "--max-realtime="+str(options.compile_time),
       "--stdout=/compile.log", "--trunc-stdout",
       "--stderr=__STDOUT__",
@@ -179,7 +176,6 @@ communicate('SETBLOB', {'name': 'compile_log', 'path': '/compile.log'})
 if ret:
     communicate('SETSTRING', {'name': 'status', 'value': 'CME'})
     sys.exit(0)
-
 
 #RUN
 communicate('GETTESTBLOB', {'name': 'input', 'path': '/tmp/data.in'})
@@ -194,15 +190,12 @@ execute_run = ["runner",
       "--cgroup=/execute",
       "--cgroup-memory="+str(memory_limit),
       "--cgroup-cputime="+str(time_limit),
-      "--max-memory="+str(memory_limit),
-      "--max-cputime="+str(time_limit),
       "--max-realtime="+str(int(1.5*time_limit)),
       "--max-threads=1",
       "--max-files=4",
       "--stdin=/tmp/data.in",
       "--stdout=/tmp/data.out", "--trunc-stdout",
       "--stderr=/dev/null",
-      "--memlock",
       "--priority=30"]
 execute_run += [ os.path.join('/', options.directory, exec_file) ]
 res = subprocess.Popen(execute_run, stdout = subprocess.PIPE).communicate()[0];
@@ -212,9 +205,9 @@ for line in res.splitlines()[1:]:
     key = line.split(':')[0].strip().lower()
     value = u':'.join(line.split(':')[1:]).strip()
     stats[key] = value
-communicate('SETSTRING', {'name': 'execute_time_real', 'value': str(float(stats['time'])/1000)})
-communicate('SETSTRING', {'name': 'execute_time_cpu', 'value': str(float(stats['cpu'])/1000)})
-communicate('SETSTRING', {'name': 'execute_memory', 'value': str(int(stats['memory']))})
+communicate('SETSTRING', {'name': 'execute_time_real', 'value': str(float(stats['time'])/1000)+'s'})
+communicate('SETSTRING', {'name': 'execute_time_cpu', 'value': str(float(stats['cpu'])/1000)+'s'})
+communicate('SETSTRING', {'name': 'execute_memory', 'value': str(int(stats['memory']))+'B'})
 if ret != "OK":
     communicate('SETSTRING', {'name': 'status', 'value': ret})
     sys.exit(0)
@@ -226,7 +219,7 @@ if has_checker:
     os.chmod("/tmp/checker.x",0755)
     checker = ["/tmp/checker.x", "/tmp/data.in", "/tmp/data.hint", "/tmp/data.out"]
 else:
-    checker = ["/usr/bin/diff", "-q", "-w", "/tmp/data.hint", "/tmp/data.out"]
+    checker = ["/usr/bin/diff", "-q", "-w", "-B", "/tmp/data.hint", "/tmp/data.out"]
 
 check_run = ["runner",
       "--quiet",
@@ -240,11 +233,7 @@ check_run = ["runner",
       "--cgroup=/check",
       "--cgroup-memory="+str(options.checker_memory),
       "--cgroup-cputime="+str(options.checker_time),
-      "--max-memory="+str(options.checker_memory),
-      "--max-cputime="+str(options.checker_time),
       "--max-realtime="+str(options.checker_time),
-      "--max-threads=1",
-      "--max-files=7",
       "--stdout=/check.log", "--trunc-stdout",
       "--stderr=__STDOUT__",
       "--priority=30"]
