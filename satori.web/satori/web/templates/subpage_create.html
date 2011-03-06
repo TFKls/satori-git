@@ -24,62 +24,6 @@
     <div>Attachments</div>
 </form>
 <table id="files"></table>
-<script>
-/*global $ */
-$(function () {
-    var notCompletedCounter = 0;
-    $('#file_upload').fileUploadUI({
-        uploadTable: $('#files'),
-        downloadTable: $('#files'),
-        beforeSend: function (event, files, index, xhr, handler, callBack) {
-            if (files[index].size > 10000000) {
-                handler.uploadRow.find('.file_upload_progress').html(' FILE TOO BIG!');
-                setTimeout(function () {
-                    handler.removeNode(handler.uploadRow);
-                }, 5000);
-                return;
-            }
-            $("#create_subpage").attr("disabled", true);
-            notCompletedCounter = notCompletedCounter + files.length;
-            callBack();
-        },
-        buildUploadRow: function (files, index) {
-            return $('<tr><td>' + files[index].name + '<\/td>' +
-                    '<td class="file_upload_progress"><div><\/div><\/td>' +
-                    '<td class="file_upload_cancel">' +
-                    '<button class="ui-state-default ui-corner-all" title="Cancel">' +
-                    '<span class="ui-icon ui-icon-cancel">Cancel<\/span>' +
-                    '<\/button><\/td><\/tr>');
-        },
-        buildDownloadRow: function (file) {
-            return $('<tr><td>' + file.name + '<\/td>' + 
-                    '<td><form><button type="submit">Cancel<\/button><\/form><\/td><\/tr>');
-        },
-        onComplete: function (event, files, index, xhr, handler) {
-            notCompletedCounter = notCompletedCounter - files.length;
-            if (notCompletedCounter == 0) {
-                $("#create_subpage").attr("disabled", false);
-            }
-            handler.downloadRow.find('form').submit(function(event) {
-                event.preventDefault();
-/*                $('#loading').fadeIn();*/
-                $.ajax({
-                    data: {
-                        fid : '{{ fid }}',
-                        filename : files[index].fileName
-                    },
-                    url: '{% url contest_subpage_fileremove page_info.contest.id %}',
-                    type: 'POST',
-                    success: function (data) {
-                        /*$('#loading').fadeOut();*/
-                        handler.downloadRow.remove();
-                    }
-                });
-                return false;
-            });
-        }
-    });
-});
-</script>
-
+<script src="/files/scripts/attachments_upload.js"></script>
+<script>createFileUploadInstance('{{ fid }}', '{% url contest_subpage_fileremove page_info.contest.id %}');</script>
 {% endblock %}
