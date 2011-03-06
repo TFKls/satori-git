@@ -326,3 +326,7 @@ span.signature {
 .subpage_form td {
     width: 100%;
 }
+
+.error_msg {
+    color: red;
+}

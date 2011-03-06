@@ -32,36 +32,51 @@ def view(request, page_info,id):
 
 @contest_view
 def create(request, page_info):
+    fid = None
     if request.method=="POST":
         form = ContestSubpageEditForm(request.POST)
+        fid = request.POST["fid"]
         if form.is_valid():
             data = form.cleaned_data
-            fid = request.POST["fid"]
             subpage = Subpage.create_for_contest(SubpageStruct(is_announcement=False,contest=page_info.contest,name=data["name"],content=''))
             for ufile in glob.glob(os.path.join(fid, '*')):
                 subpage.content_files_set_blob_path(os.path.basename(ufile), ufile)
-            subpage.content = data["content"]
+            try:
+                subpage.content = data["content"]
+            except SphinxException as sphinxException:
+                return render_to_response('subpage_create.html',{'page_info' : page_info, 'form' : form, 'fid' : fid, 'sphinxException' : sphinxException})
             return HttpResponseRedirect(reverse('contest_subpage',args=[page_info.contest.id, subpage.id]))
     else:
         form = ContestSubpageEditForm()
         temp_directory = tempfile.mkdtemp()
+    if fid is None:
         fid = temp_directory #TODO(kalq): Create a hash instead of full pathname
     return render_to_response('subpage_create.html',{'page_info' : page_info, 'form' : form, 'fid' : fid})
 
 @contest_view
 def edit(request, page_info,id):
     subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
+    fid = None
     if request.method=="POST":
         form = ContestSubpageEditForm(request.POST)
+        fid = request.POST["fid"]
         if form.is_valid():
             data = form.cleaned_data
-            fid = request.POST["fid"]
             for rfile in request.POST:
                 if rfile.startswith('rfile'):
                     subpage.content_files_delete(request.POST[rfile])
             for ufile in glob.glob(os.path.join(fid, '*')):
                 subpage.content_files_set_blob_path(os.path.basename(ufile), ufile)
-            subpage.modify(SubpageStruct(name=data["name"],content=data["content"],is_public=data["is_public"]))
+            try:
+                subpage.modify(SubpageStruct(name=data["name"],content=data["content"],is_public=data["is_public"]))
+            except SphinxException as sphinxException:
+                # TODO(kalq): Make this in a cleaner way. Seriously.
+                dfiles = []
+                for dfile in subpage.content_files_get_list():
+                    # TODO(kalq): Add checking for is_blob
+                    if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')):
+                        dfiles.append(dfile.name)
+                return render_to_response('subpage_edit.html',{'page_info' : page_info, 'form' : form, 'subpage' : subpage, 'attachments' : dfiles, 'fid' : fid, 'sphinxException' : sphinxException})
             return HttpResponseRedirect(reverse('contest_subpage',args=[page_info.contest.id, subpage.id]))
     else:
         form = ContestSubpageEditForm(initial={'name' : subpage.name, 'content' : subpage.content, 'is_public' : subpage.is_public})
@@ -71,6 +86,7 @@ def edit(request, page_info,id):
             if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')):
                 dfiles.append(dfile.name)
         temp_directory = tempfile.mkdtemp()
+    if fid is None:
         fid = temp_directory #TODO(kalq): Create a hash instead of full pathname
     return render_to_response('subpage_edit.html',{'page_info' : page_info, 'form' : form, 'subpage' : subpage, 'attachments' : dfiles, 'fid' : fid})
 

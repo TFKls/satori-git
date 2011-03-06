@@ -19,6 +19,12 @@
         <td style="text-align: right">
             <input id="create_subpage" type="submit" value="Create subpage"/></td>
     </tr>
+    {% if sphinxException %}
+    <tr>
+        <th></th>
+        <td colspan="2" class="error_msg">{{ sphinxException }}</td>
+    </tr>
+    {% endif %}
     <tr>
         <th><label for="id_content">Content:</label></th>
         <td colspan="2">{{ form.content }}</td>
