@@ -10,6 +10,7 @@ import satori.metadata.SMetadata;
 import satori.session.SSession;
 import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.Blob;
+import satori.type.STypeException;
 
 class SAttributeData {
 	static Map<String, AnonymousAttribute> convertAttrMap(Map<String, Object> attrs) throws SException {
@@ -74,7 +75,8 @@ class SAttributeData {
 			AnonymousAttribute attr = attrs.get(meta.getName());
 			if (attr == null) continue;
 			Object value = attr.isIs_blob() ? SBlob.createRemote(attr.getFilename(), attr.getValue()) : attr.getValue();
-			value = meta.getType().getFormatted(value);
+            try { value = meta.getType().getFormatted(value); }
+            catch(STypeException ex) { continue; }
 			if (value != null) result.put(meta, value);
 		}
 		return result;
