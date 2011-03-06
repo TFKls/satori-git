@@ -88,6 +88,7 @@ def viewall(request, page_info):
             p['submittable'] = between(pinfo.contestant_role_submit_times,datetime.now())
             p['when_view'] = pinfo.contestant_role_view_times
             p['when_submit'] = pinfo.contestant_role_submit_times
+            p['has_pdf'] = pinfo.has_pdf
         problems.append(p)
     return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin })
 
@@ -96,6 +97,7 @@ class ProblemAddForm(forms.Form):
     title = forms.CharField(required=True)
     suite = forms.ChoiceField(choices=[])
     statement = forms.CharField(widget=forms.Textarea, required=False)
+    pdf = forms.FileField(required=False)
     def __init__(self,data=None,suites=[],*args,**kwargs):
         super(ProblemAddForm,self).__init__(data,*args,**kwargs)
         self.fields["suite"].choices = [[suite.id,suite.name + '(' + suite.description + ')'] for suite in suites]
@@ -110,11 +112,18 @@ def add(request, page_info):
         
             
         if request.method=="POST":
-            form = ProblemAddForm(data=request.POST,suites=suites)
+            form = ProblemAddForm(data=request.POST,files=request.FILES,suites=suites)
             if form.is_valid():
                 data = form.cleaned_data
                 suite = filter(lambda s:s.id==int(data["suite"]),suites)[0]
                 ProblemMapping.create(ProblemMappingStruct(contest=page_info.contest,problem=problem,code=data['code'],title=data['title'], statement=data['statement'],default_test_suite=suite))
+                pdf = form.cleaned_data.get('pdf',None)
+                if pdf:
+                    writer = Blob.create(pdf.size)
+                    writer.write(pdf.read())
+                    phash = writer.close()
+                    mapping.statement_files_set_blob_hash('pdf',phash)
+                    mapping.statement_files_set_blob_hash('_pdf',phash)
                 return HttpResponseRedirect(reverse('contest_problems',args=[page_info.contest.id]))
         else:
             form = ProblemAddForm(suites=suites)
@@ -135,10 +144,17 @@ def edit(request, page_info, id):
     problem = mapping.problem
     suites = TestSuite.filter(TestSuiteStruct(problem=problem))
     if request.method=="POST":
-        form = ProblemAddForm(data=request.POST,suites=suites)
+        form = ProblemAddForm(data=request.POST,files=request.FILES,suites=suites)
         if form.is_valid():
             data = form.cleaned_data
             mapping.modify(ProblemMappingStruct(code=data['code'],title=data['title'],statement=data['statement'],default_test_suite=TestSuite(int(data['suite']))))
+            pdf = form.cleaned_data.get('pdf',None)
+            if pdf:
+                writer = Blob.create(pdf.size)
+                writer.write(pdf.read())
+                phash = writer.close()
+                mapping.statement_files_set_blob_hash('pdf',phash)
+                mapping.statement_files_set_blob_hash('_pdf',phash)
             return HttpResponseRedirect(reverse('contest_problems_view',args=[page_info.contest.id,mapping.id]))
     else:
         form = ProblemAddForm(initial={'code': mapping.code, 'title': mapping.title, 'statement' : mapping.statement, 'suite' : mapping.default_test_suite.id}, suites=suites)

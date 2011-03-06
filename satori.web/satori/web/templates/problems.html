@@ -31,6 +31,14 @@
 {% endif %}
 </td>
 
+<td>
+{% if pinfo.has_pdf %}
+<a href={% url download_group "download" "ProblemMapping" pinfo.problem.id "statement_files" "_pdf" pinfo.problem.code|add:".pdf" %}>
+PDF
+</a>
+{% endif %}
+</td>
+
 <td> 
 {% if pinfo.admin %}
 {% if pinfo.when_view %}
@@ -95,7 +103,7 @@
 </form>
 {% endif %}
 
-{% if page_info.contest.is_admin %}
+{% if page_info.contest_is_admin %}
 <a href="{% url contest_problems_add page_info.contest.id %}">Add new problem</a>
 {% endif %}
 {% endblock %}

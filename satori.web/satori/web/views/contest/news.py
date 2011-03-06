@@ -2,7 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
-from satori.web.utils.shortcuts import text2html
+from satori.web.utils.shortcuts import fill_image_links
 from django import forms
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -18,7 +18,9 @@ class ContestNewsEditForm(forms.Form):
 @contest_view
 def view(request, page_info):
     messages = Web.get_subpage_list_for_contest(page_info.contest,True)
-    messages.sort(key=lambda m : m.subpage.date_created,reverse=True)
+    for m in messages:
+        m.html = fill_image_links(m.html, 'Subpage', m.subpage.id, 'content_files')
+    messages.sort(key=lambda m : m.subpage.date_created, reverse=True)
     return render_to_response('news.html',{'page_info' : page_info, 'messages' : messages })
 
 @contest_view

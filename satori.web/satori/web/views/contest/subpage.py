@@ -5,6 +5,7 @@ import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
+from satori.web.utils.shortcuts import fill_image_links
 from satori.web.utils.shortcuts import render_to_json, text2html
 from django import forms
 from django.http import HttpResponseRedirect
@@ -18,11 +19,11 @@ class ContestSubpageEditForm(forms.Form):
 
 @contest_view
 def view(request, page_info,id):
+    sinfo = Web.get_subpage_info(Subpage(int(id)))
+    content = fill_image_links(sinfo.html, 'Subpage', id, 'content_files')
+    can_edit = sinfo.subpage.contest and sinfo.is_admin
+    return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : sinfo.subpage, 'content' : content, 'can_edit' : can_edit})
     subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
-    name = subpage.name
-    content = subpage.content
-    can_edit = Privilege.demand(subpage,'MANAGE')
-    return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : subpage, 'content' : content, 'can_edit' : can_edit})
 
 @contest_view
 def create(request, page_info):
