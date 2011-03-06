@@ -49,7 +49,7 @@ class Question(Entity):
         Privilege.grant(token_container.token.role, question, 'VIEW')
         return question
 
-    @ExportMethod(DjangoStruct('Question'), [DjangoId('Question'), DjangoStruct('Question')], PCArg('self', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Question'), [DjangoId('Question'), DjangoStruct('Question')], PCArg('self', 'MANAGE'), [CannotSetField, SphinxException])
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'contest', 'problem'])
         self.update_fields(fields, ['answer', 'date_created', 'content'])

@@ -1,4 +1,6 @@
 
+SphinxException = DefineException('SphinxException', 'Sphinx error: {error}', [('error', unicode, False)])
+
 MYPREAMBLE = r'''
 \\pagenumbering{arabic}
 \definecolor{TitleColor}{rgb}{0,0,0}
@@ -93,8 +95,8 @@ def render_sphinx(rest, oa_map):
                 warning=None, 
                 warningiserror=True)
         app.build(None, [indexpath])
-    except SphinxError:
-        raise
+    except SphinxError as e:
+        raise SphinxException(error=str(e))
     except PycodeError:
         raise
 

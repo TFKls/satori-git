@@ -62,7 +62,7 @@ class Entity(models.Model):
             if val is not None:
                 act = getattr(dest, field, None)
                 if val != act:
-                    raise CannotSetField(field=field) 
+                    raise InvalidArgument(name='fields.' + field, reason='modification is not allowed')
 
     def update_fields(self, source, fields):
         return self.static_update_fields(self, source, fields)

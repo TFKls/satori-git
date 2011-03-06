@@ -44,7 +44,7 @@ class ProblemMapping(Entity):
     def __str__(self):
         return self.code+": "+self.title+ " ("+self.contest.name+","+self.problem.name+")"
 
-    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCAnd(PCArgField('fields', 'contest', 'MANAGE'), PCArgField('fields', 'problem', 'MANAGE')), [CannotSetField])
+    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCAnd(PCArgField('fields', 'contest', 'MANAGE'), PCArgField('fields', 'problem', 'MANAGE')), [CannotSetField, SphinxException])
     @staticmethod
     def create(fields):
         problem_mapping = ProblemMapping()
@@ -58,7 +58,7 @@ class ProblemMapping(Entity):
         problem_mapping.statement_files_set_map(render_sphinx(problem_mapping.statement, problem_mapping.statement_files_get_map()))
         return problem_mapping
 
-    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoStruct('ProblemMapping')], PCArgField('fields', 'contest', 'MANAGE'), [CannotSetField, SphinxException])
     @staticmethod
     def create_assignment(fields):
         problem_mapping = ProblemMapping()
@@ -71,7 +71,7 @@ class ProblemMapping(Entity):
         problem_mapping.statement_files_set_map(render_sphinx(problem_mapping.statement, problem_mapping.statement_files_get_map()))
         return problem_mapping
 
-    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('ProblemMapping'), [DjangoId('ProblemMapping'), DjangoStruct('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotSetField, SphinxException])
     def modify(self, fields):
         self.forbid_fields(fields, [ 'id', 'contest', 'problem' ])
         if self.problem == Global.get_instance().assignment:
