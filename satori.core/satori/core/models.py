@@ -10,7 +10,7 @@ from satori.core.export import PCTokenIsUser, PCTokenIsMachine
 from satori.core.export import token_container
 from satori.core.export import Struct, DefineException, TypedList, TypedMap
 from satori.core.export import DjangoId, DjangoStruct, DjangoIdList, DjangoStructList
-from satori.core.export import CannotDeleteObject
+from satori.core.export import CannotDeleteObject, InvalidArgument
 
 
 def _load_models():
@@ -95,5 +95,10 @@ def _load_models():
     satori.core.export.type_helpers.init()
     satori.core.export.types_django.init()
     satori.core.export.token.init()
+
+    glob = globals()
+
+    for ars_struct in satori.core.export.types_django.ars_django_structure.values():
+        glob[ars_struct.name] = ars_struct.get_class()
 
 _load_models()
