@@ -97,7 +97,7 @@ public class STestData {
 	}
 	public static long create(STestReader test) throws SException {
 		Map<String, Object> raw_data = createRemoteAttrMap(test.getInput());
-		raw_data.put("judge", test.getJudge());
+		if (test.getJudge() != null) raw_data.put("judge", test.getJudge().getBlob());
 		createBlobs(raw_data);
 		CreateCommand command = new CreateCommand(createStruct(test), convertAttrMap(raw_data));
 		SThriftClient.call(command);
