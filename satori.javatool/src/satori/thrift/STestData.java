@@ -2,8 +2,8 @@ package satori.thrift;
 
 import static satori.thrift.SAttributeData.convertAttrMap;
 import static satori.thrift.SAttributeData.createBlobs;
-import static satori.thrift.SAttributeData.createFormattedAttrMap;
-import static satori.thrift.SAttributeData.createRawAttrMap;
+import static satori.thrift.SAttributeData.createLocalAttrMap;
+import static satori.thrift.SAttributeData.createRemoteAttrMap;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -42,7 +42,7 @@ public class STestData {
 				input = Collections.emptyMap();
 			} else {
 				judge = SJudgeParser.parseJudge(SBlob.createRemote(judge_attr.getFilename(), judge_attr.getValue()));
-				input = Collections.unmodifiableMap(createFormattedAttrMap(judge.getInputMetadata(), data));
+				input = Collections.unmodifiableMap(createLocalAttrMap(judge.getInputMetadata(), data));
 			}
 		}
 		@Override public SJudge getJudge() { return judge; }
@@ -96,7 +96,7 @@ public class STestData {
 		}
 	}
 	public static long create(STestReader test) throws SException {
-		Map<String, Object> raw_data = createRawAttrMap(test.getInput());
+		Map<String, Object> raw_data = createRemoteAttrMap(test.getInput());
 		raw_data.put("judge", test.getJudge());
 		createBlobs(raw_data);
 		CreateCommand command = new CreateCommand(createStruct(test), convertAttrMap(raw_data));
@@ -119,7 +119,7 @@ public class STestData {
 		}
 	}
 	public static void save(STestReader test) throws SException {
-		Map<String, Object> raw_data = createRawAttrMap(test.getInput());
+		Map<String, Object> raw_data = createRemoteAttrMap(test.getInput());
 		raw_data.put("judge", test.getJudge());
 		createBlobs(raw_data);
 		SThriftClient.call(new SaveCommand(test.getId(), createStruct(test), convertAttrMap(raw_data)));

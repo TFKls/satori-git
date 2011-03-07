@@ -2,8 +2,8 @@ package satori.thrift;
 
 import static satori.thrift.SAttributeData.convertAttrMap;
 import static satori.thrift.SAttributeData.createBlobs;
-import static satori.thrift.SAttributeData.createFormattedAttrMap;
-import static satori.thrift.SAttributeData.createRawAttrMap;
+import static satori.thrift.SAttributeData.createLocalAttrMap;
+import static satori.thrift.SAttributeData.createRemoteAttrMap;
 
 import java.util.Collections;
 import java.util.HashMap;
@@ -27,7 +27,7 @@ public class STemporarySubmitData {
 		private final Map<SOutputMetadata, Object> result;
 		public TemporarySubmitWrap(TemporarySubmitStruct struct, List<SOutputMetadata> meta, Map<String, AnonymousAttribute> data) throws SException {
 			pending = struct.isPending();
-			result = Collections.unmodifiableMap(createFormattedAttrMap(meta, data));
+			result = Collections.unmodifiableMap(createLocalAttrMap(meta, data));
 		}
 		@Override public boolean getPending() { return pending; }
 		@Override public Map<SOutputMetadata, Object> getResult() { return result; }
@@ -70,7 +70,7 @@ public class STemporarySubmitData {
 		SAssert.assertNotNull(submit, "Submit is null");
 		Map<String, Object> submit_data = new HashMap<String, Object>();
 		submit_data.put("content", submit);
-		Map<String, Object> test_data = createRawAttrMap(test.getInput());
+		Map<String, Object> test_data = createRemoteAttrMap(test.getInput());
 		test_data.put("judge", test.getJudge());
 		createBlobs(submit_data);
 		createBlobs(test_data);

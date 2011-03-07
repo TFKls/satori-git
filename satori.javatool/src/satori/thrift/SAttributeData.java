@@ -10,7 +10,6 @@ import satori.metadata.SMetadata;
 import satori.session.SSession;
 import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.Blob;
-import satori.type.STypeException;
 
 class SAttributeData {
 	static Map<String, AnonymousAttribute> convertAttrMap(Map<String, Object> attrs) throws SException {
@@ -60,24 +59,22 @@ class SAttributeData {
 		return command.getResult();
 	}
 	
-	static Map<String, Object> createRawAttrMap(Map<? extends SMetadata, Object> attrs) throws SException {
+	static Map<String, Object> createRemoteAttrMap(Map<? extends SMetadata, Object> attrs) throws SException {
 		Map<String, Object> result = new HashMap<String, Object>();
 		for (Map.Entry<? extends SMetadata, Object> entry : attrs.entrySet()) {
 			String key = entry.getKey().getName();
-			Object value = entry.getKey().getType().getRaw(entry.getValue());
+			Object value = entry.getValue();
 			result.put(key, value);
 		}
 		return result;
 	}
-	static <T extends SMetadata> Map<T, Object> createFormattedAttrMap(List<T> meta_list, Map<String, AnonymousAttribute> attrs) throws SException {
+	static <T extends SMetadata> Map<T, Object> createLocalAttrMap(List<T> meta_list, Map<String, AnonymousAttribute> attrs) throws SException {
 		Map<T, Object> result = new HashMap<T, Object>();
 		for (T meta : meta_list) {
 			AnonymousAttribute attr = attrs.get(meta.getName());
 			if (attr == null) continue;
 			Object value = attr.isIs_blob() ? SBlob.createRemote(attr.getFilename(), attr.getValue()) : attr.getValue();
-            try { value = meta.getType().getFormatted(value); }
-            catch(STypeException ex) { continue; }
-			if (value != null) result.put(meta, value);
+			result.put(meta, value);
 		}
 		return result;
 	}
