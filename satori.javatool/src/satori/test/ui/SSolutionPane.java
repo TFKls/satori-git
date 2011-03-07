@@ -21,10 +21,11 @@ import satori.common.SListener1;
 import satori.common.SView;
 import satori.common.ui.SBlobInputView;
 import satori.common.ui.SBlobOutputView;
-import satori.common.ui.SPaneView;
 import satori.common.ui.SPane;
+import satori.common.ui.SPaneView;
 import satori.common.ui.SStringOutputView;
 import satori.main.SFrame;
+import satori.metadata.SJudge;
 import satori.metadata.SOutputMetadata;
 import satori.test.impl.SBlobOutput;
 import satori.test.impl.SSolution;
@@ -182,7 +183,8 @@ public class SSolutionPane implements SRow {
 		@Override public JComponent getPane() { return pane; }
 		
 		private void fillPane() {
-			for (SOutputMetadata om : result.getTest().getOutputMetadata()) {
+			SJudge judge = result.getTest().getJudge();
+			if (judge != null) for (SOutputMetadata om : judge.getOutputMetadata()) {
 				SPaneView view;
 				if (om.getType() == SBlobType.INSTANCE) view = new SBlobOutputView(new SBlobOutput(om, result));
 				else view = new SStringOutputView(new SStringOutput(om, result));

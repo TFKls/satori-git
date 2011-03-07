@@ -47,6 +47,7 @@ import satori.common.ui.SScrollPane;
 import satori.common.ui.SStringInputView;
 import satori.main.SFrame;
 import satori.metadata.SInputMetadata;
+import satori.metadata.SJudge;
 import satori.problem.impl.STestSuiteImpl;
 import satori.test.STestSnap;
 import satori.test.impl.SBlobInput;
@@ -554,7 +555,8 @@ public class STestPane implements SPane, SList<STestImpl> {
 		@Override public JComponent getPane() { return pane; }
 		
 		private void fillPane() {
-			for (SInputMetadata im : test.getInputMetadata()) {
+			SJudge judge = test.getJudge();
+			if (judge != null) for (SInputMetadata im : judge.getInputMetadata()) {
 				SPaneView view;
 				if (im.getType() == SBlobType.INSTANCE) view = new SBlobInputView(new SBlobInput(im, test));
 				else view = new SStringInputView(new SStringInput(im, test));

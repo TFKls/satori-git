@@ -15,8 +15,8 @@ import satori.common.SListener0;
 import satori.common.SReference;
 import satori.common.SView;
 import satori.metadata.SInputMetadata;
+import satori.metadata.SJudge;
 import satori.metadata.SJudgeParser;
-import satori.metadata.SOutputMetadata;
 import satori.problem.SParentProblem;
 import satori.test.STestReader;
 import satori.test.STestSnap;
@@ -27,9 +27,7 @@ public class STestImpl implements STestReader {
 	private SId id;
 	private SParentProblem problem;
 	private String name;
-	private SBlob judge;
-	private List<SInputMetadata> input_meta;
-	private List<SOutputMetadata> output_meta;
+	private SJudge judge;
 	private Map<SInputMetadata, Object> input;
 	
 	private final SDataStatus status = new SDataStatus();
@@ -45,9 +43,7 @@ public class STestImpl implements STestReader {
 	@Override public long getId() { return id.get(); }
 	@Override public long getProblemId() { return problem.getId(); }
 	@Override public String getName() { return name; }
-	@Override public SBlob getJudge() { return judge; }
-	@Override public List<SInputMetadata> getInputMetadata() { return input_meta; }
-	@Override public List<SOutputMetadata> getOutputMetadata() { return output_meta; }
+	@Override public SJudge getJudge() { return judge; }
 	@Override public Map<SInputMetadata, Object> getInput() { return Collections.unmodifiableMap(input); }
 	public Object getInput(SInputMetadata meta) { return input.get(meta); }
 	public boolean isRemote() { return hasId(); }
@@ -66,8 +62,6 @@ public class STestImpl implements STestReader {
 		self.problem = problem;
 		self.name = snap.getName();
 		self.judge = snap.getJudge();
-		self.input_meta = snap.getInputMetadata();
-		self.output_meta = snap.getOutputMetadata();
 		self.input = new HashMap<SInputMetadata, Object>(snap.getInput());
 		return self;
 	}
@@ -77,8 +71,6 @@ public class STestImpl implements STestReader {
 		self.problem = problem;
 		self.name = "";
 		self.judge = null;
-		self.input_meta = Collections.emptyList();
-		self.output_meta = Collections.emptyList();
 		self.input = Collections.emptyMap();
 		return self;
 	}
@@ -108,22 +100,18 @@ public class STestImpl implements STestReader {
 		this.name = name;
 		notifyModified();
 	}
-	public void setJudge(SBlob judge) throws SException {
-		if (judge == null && this.judge == null) return;
-		if (judge != null && judge.equals(this.judge)) return;
-		this.judge = judge;
-		if (judge != null) {
-			SJudgeParser.Result parse_result = SJudgeParser.parseJudge(judge);
-			input_meta = parse_result.getInputMetadata();
-			output_meta = parse_result.getOutputMetadata();
+	public void setJudge(SBlob blob) throws SException {
+		if (blob == null && judge == null) return;
+		if (blob != null && judge != null && blob.equals(judge.getBlob())) return;
+		if (blob != null) {
+			judge = SJudgeParser.parseJudge(blob);
 			input = new HashMap<SInputMetadata, Object>();
-			for (SInputMetadata meta : input_meta) {
+			for (SInputMetadata meta : judge.getInputMetadata()) {
 				Object def_value = meta.getDefaultValue();
 				if (def_value != null) input.put(meta, def_value);
 			}
 		} else {
-			input_meta = Collections.emptyList();
-			output_meta = Collections.emptyList();
+			judge = null;
 			input = Collections.emptyMap();
 		}
 		notifyModified();
@@ -170,8 +158,6 @@ public class STestImpl implements STestReader {
 		snap.reload();
 		name = snap.getName();
 		judge = snap.getJudge();
-		input_meta = snap.getInputMetadata();
-		output_meta = snap.getOutputMetadata();
 		input = new HashMap<SInputMetadata, Object>(snap.getInput());
 		notifyUpToDate();
 		callDataModifiedListeners();

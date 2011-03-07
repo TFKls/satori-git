@@ -52,6 +52,7 @@ public class STestResult {
 	
 	public void run() throws SException {
 		if (solution.get() == null) return;
+		if (test.getJudge() == null) return;
 		id.set(STemporarySubmitData.create(solution.get(), test));
 		status = Status.PENDING;
 		output = Collections.emptyMap();
@@ -59,7 +60,7 @@ public class STestResult {
 	}
 	public void refresh() throws SException {
 		if (!id.isSet()) return;
-		STemporarySubmitReader source = STemporarySubmitData.load(id.get(), test.getOutputMetadata());
+		STemporarySubmitReader source = STemporarySubmitData.load(id.get(), test.getJudge().getOutputMetadata());
 		if (source.getPending()) {
 			status = Status.PENDING;
 			output = Collections.emptyMap();

@@ -13,8 +13,8 @@ import java.util.Map;
 import satori.blob.SBlob;
 import satori.common.SException;
 import satori.metadata.SInputMetadata;
+import satori.metadata.SJudge;
 import satori.metadata.SJudgeParser;
-import satori.metadata.SOutputMetadata;
 import satori.session.SSession;
 import satori.test.STestBasicReader;
 import satori.test.STestReader;
@@ -32,29 +32,20 @@ public class STestData {
 		@Override public String getName() { return struct.getName(); }
 	}
 	static class TestWrap extends TestBasicWrap implements STestReader {
-		private final SBlob judge;
-		private final List<SInputMetadata> input_meta;
-		private final List<SOutputMetadata> output_meta;
+		private final SJudge judge;
 		private final Map<SInputMetadata, Object> input;
 		public TestWrap(TestStruct struct, Map<String, AnonymousAttribute> data) throws SException {
 			super(struct);
 			AnonymousAttribute judge_attr = data.get("judge");
 			if (judge_attr == null) {
 				judge = null;
-				input_meta = Collections.emptyList();
-				output_meta = Collections.emptyList();
 				input = Collections.emptyMap();
 			} else {
-				judge = SBlob.createRemote(judge_attr.getFilename(), judge_attr.getValue());
-				SJudgeParser.Result parse_result = SJudgeParser.parseJudge(judge);
-				input_meta = parse_result.getInputMetadata();
-				output_meta = parse_result.getOutputMetadata();
-				input = Collections.unmodifiableMap(createFormattedAttrMap(input_meta, data));
+				judge = SJudgeParser.parseJudge(SBlob.createRemote(judge_attr.getFilename(), judge_attr.getValue()));
+				input = Collections.unmodifiableMap(createFormattedAttrMap(judge.getInputMetadata(), data));
 			}
 		}
-		@Override public SBlob getJudge() { return judge; }
-		@Override public List<SInputMetadata> getInputMetadata() { return input_meta; }
-		@Override public List<SOutputMetadata> getOutputMetadata() { return output_meta; }
+		@Override public SJudge getJudge() { return judge; }
 		@Override public Map<SInputMetadata, Object> getInput() { return input; }
 	}
 	

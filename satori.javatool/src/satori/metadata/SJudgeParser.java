@@ -35,17 +35,6 @@ public class SJudgeParser {
 		ParseException(Exception ex) { super(ex); }
 	}
 	
-	public static class Result {
-		private final List<SInputMetadata> input_meta;
-		private final List<SOutputMetadata> output_meta;
-		public Result(List<SInputMetadata> input_meta, List<SOutputMetadata> output_meta) {
-			this.input_meta = input_meta;
-			this.output_meta = output_meta;
-		}
-		public List<SInputMetadata> getInputMetadata() { return input_meta; }
-		public List<SOutputMetadata> getOutputMetadata() { return output_meta; }
-	}
-	
 	private static SInputMetadata parseInputParam(Element node) throws ParseException {
 		String type_str = node.getAttribute("type");
 		if (type_str.isEmpty()) throw new ParseException("Input type undefined");
@@ -98,30 +87,32 @@ public class SJudgeParser {
 		return Collections.unmodifiableList(result);
 	}
 	
-	private static Result parse(Document doc) throws ParseException {
+	private static void parse(Document doc, SJudge judge) throws ParseException {
 		doc.normalizeDocument();
 		Element node = doc.getDocumentElement();
+		judge.setName(node.getAttribute("name"));
 		NodeList input_children = node.getElementsByTagName("input");
 		List<SInputMetadata> input_meta;
 		if (input_children.getLength() == 0) input_meta = Collections.emptyList();
 		else if (input_children.getLength() == 1) input_meta = parseInputs((Element)input_children.item(0));
 		else throw new ParseException("Too many input groups");
 		NodeList output_children = node.getElementsByTagName("output");
+		judge.setInputMetadata(input_meta);
 		List<SOutputMetadata> output_meta;
 		if (output_children.getLength() == 0) output_meta = Collections.emptyList();
 		else if (output_children.getLength() == 1) output_meta = parseOutputs((Element)output_children.item(0));
 		else throw new ParseException("Too many output groups");
-		return new Result(input_meta, output_meta);
+		judge.setOutputMetadata(output_meta);
 	}
-	private static Result parse(String str) throws ParseException {
+	private static void parse(String str, SJudge judge) throws ParseException {
 		InputSource is = new InputSource();
 		is.setCharacterStream(new StringReader(str));
-		try { return parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is)); }
+		try { parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), judge); }
 		catch(IOException ex) { throw new ParseException(ex); }
 		catch(SAXException ex) { throw new ParseException(ex); }
 		catch(ParserConfigurationException ex) { throw new ParseException(ex); }
 	}
-	private static Result parse(File file) throws ParseException {
+	private static void parse(File file, SJudge judge) throws ParseException {
 		StringBuilder xml = new StringBuilder();
 		LineIterator line_iter = null;
 		try {
@@ -133,13 +124,13 @@ public class SJudgeParser {
 		}
 		catch(IOException ex) { throw new ParseException(ex); }
 		finally { LineIterator.closeQuietly(line_iter); }
-		return parse(xml.toString());
+		parse(xml.toString(), judge);
 	}
 	
-	private static Map<String, Result> meta = new HashMap<String, Result>();
+	private static Map<String, SJudge> judges = new HashMap<String, SJudge>();
 	
-	public static Result parseJudge(SBlob judge) throws SException {
-		if (meta.containsKey(judge.getHash())) return meta.get(judge.getHash());
+	public static SJudge parseJudge(SBlob judge) throws SException {
+		if (judges.containsKey(judge.getHash())) return judges.get(judge.getHash());
 		File file = judge.getFile();
 		boolean delete = false;
 		if (file == null) {
@@ -148,9 +139,11 @@ public class SJudgeParser {
 			judge.saveLocal(file);
 			delete = true;
 		}
-		Result result = SJudgeParser.parse(file);
+		SJudge result = new SJudge();
+		result.setBlob(judge);
+		parse(file, result);
 		if (delete) file.delete();
-		meta.put(judge.getHash(), result);
+		judges.put(judge.getHash(), result);
 		return result;
 	}
 }

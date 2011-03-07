@@ -5,23 +5,20 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SListener1;
 import satori.common.SReference;
 import satori.common.SView;
 import satori.metadata.SInputMetadata;
-import satori.metadata.SOutputMetadata;
+import satori.metadata.SJudge;
 import satori.thrift.STestData;
 
 public class STestSnap implements STestReader {
 	private long id;
 	private long problem_id;
 	private String name;
-	private SBlob judge;
-	private List<SInputMetadata> input_meta;
-	private List<SOutputMetadata> output_meta;
+	private SJudge judge;
 	private Map<SInputMetadata, Object> input;
 	private boolean complete;
 	
@@ -33,9 +30,7 @@ public class STestSnap implements STestReader {
 	@Override public long getId() { return id; }
 	@Override public long getProblemId() { return problem_id; }
 	@Override public String getName() { return name; }
-	@Override public SBlob getJudge() { return judge; }
-	@Override public List<SInputMetadata> getInputMetadata() { return input_meta; }
-	@Override public List<SOutputMetadata> getOutputMetadata() { return output_meta; }
+	@Override public SJudge getJudge() { return judge; }
 	@Override public Map<SInputMetadata, Object> getInput() { return Collections.unmodifiableMap(input); }
 	
 	public boolean isComplete() { return complete; }
@@ -48,8 +43,6 @@ public class STestSnap implements STestReader {
 		self.problem_id = source.getProblemId();
 		self.name = source.getName();
 		self.judge = source.getJudge();
-		self.input_meta = source.getInputMetadata();
-		self.output_meta = source.getOutputMetadata();
 		self.input = source.getInput();
 		self.complete = true;
 		return self;
@@ -68,8 +61,6 @@ public class STestSnap implements STestReader {
 		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		name = source.getName();
 		judge = source.getJudge();
-		input_meta = source.getInputMetadata();
-		output_meta = source.getOutputMetadata();
 		input = source.getInput();
 		complete = true;
 		notifyModified();
