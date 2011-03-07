@@ -99,7 +99,7 @@ class Ranking(Entity):
                 raise CannotSetField
             if suite.problem != problem.problem:
                 raise CannotSetField
-            ranking_params = RankingParams.objects().get_or_create(ranking=self, problem=problem)[0]
+            ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
             ranking_params.test_suite=suite
             ranking_params.save()
             ranking_params.params_set_map({})
@@ -110,22 +110,22 @@ class Ranking(Entity):
             if problem.id in set_params:
                 ranking_params = set_params[problem.id]
             else:
-                ranking_params = RankingParams.objects().get_or_create(ranking=self, problem=problem)[0]
+                ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
                 ranking_params.save()
             ranking_params.params_set_map(oa_map)
             set_params[problem.id] = ranking_params
-        for ex_params in self.ranking_params.objects().all():
+        for ex_params in self.ranking_params.all():
             if ex_params.id not in set_params:
                 ex_params.delete()
         self.rejudge()
         return self
 
-    @ExportMethod(TypedMap(DjangoStruct('ProblemMapping'), DjangoStruct('TestSuite')), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
+    @ExportMethod(TypedMap(DjangoId('ProblemMapping'), DjangoStruct('TestSuite')), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def get_problem_test_suites(self):
         ret = {}
         for param in self.ranking_params.all():
             if param.test_suite is not None:
-                ret[param.poblem] = param.test_suite
+                ret[param.problem] = param.test_suite
         return ret
 
     @ExportMethod(NoneType, [DjangoId('Ranking'), TypedMap(DjangoId('ProblemMapping'), DjangoId('TestSuite'))], PCArg('self', 'MANAGE'))
@@ -139,11 +139,11 @@ class Ranking(Entity):
             param.test_suite = suite
             param.save()
 
-    @ExportMethod(TypedMap(DjangoStruct('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
+    @ExportMethod(TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def get_problem_params(self):
         ret = {}
         for param in self.ranking_params.all():
-            ret[param.poblem] = param.params_get_map()
+            ret[param.problem] = param.params_get_map()
         return ret
 
     @ExportMethod(NoneType, [DjangoId('Ranking'), TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute))], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('problem_params', PCEachValue('item', PCRawBlob('item')))))

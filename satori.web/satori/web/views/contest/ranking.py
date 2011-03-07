@@ -54,7 +54,8 @@ def edit(request, page_info, id):
     problems = ProblemMapping.filter(ProblemMappingStruct(contest=contest))
     problems.sort(key=lambda p : p.code)
     suites = ranking.get_problem_test_suites()
-    problem_list = [ [p,suites.get(p,None)] for p in problems ]
+    problem_params = ranking.get_problem_params()
+    problem_list = [ [p,suites.get(p,None),problem_params.get(p,None)] for p in problems ]
     
         
     xml = " ".join([x[2:] for x in filter(lambda line:line.startswith("#@"),aggregators[ranking.aggregator].splitlines())])
@@ -69,10 +70,25 @@ def edit(request, page_info, id):
     else:
         base_form = AddBaseForm(initial={'ranking_name' : ranking.name, 'ranking_is_public' : ranking.is_public})
         form = xmlparams.ParamsForm(paramsdict=general,oamap=ranking.params_get_map())
-        form.is_valid()
-        d = form.fields.__dict__
-    return render_to_response('ranking_edit.html', {'page_info' : page_info, 'base_form' : base_form, 'form' : form, 'problem_list' : problem_list})
+    return render_to_response('ranking_edit.html', {'page_info' : page_info, 'ranking' : ranking, 'base_form' : base_form, 'form' : form, 'problem_list' : problem_list})
+
 
 @contest_view
-def editparams(request, page_info, id):
-    pass
+def editparams(request, page_info, id, problem_id):
+    aggregators = Global.get_aggregators()
+    ranking = Ranking(int(id))
+    contest = page_info.contest
+    problem = ProblemMapping(int(problem_id))
+    params = ranking.get_problem_params()[problem]
+    xml = " ".join([x[2:] for x in filter(lambda line:line.startswith("#@"),aggregators[ranking.aggregator].splitlines())])
+    sections = xmlparams.ParseXML(xml)
+    general = sections['problem']    
+    if request.method=="POST":
+        form = xmlparams.ParamsForm(paramsdict=general,data=request.POST)
+        if form.is_valid():
+            om = general.dict_to_oa_map(form.cleaned_data)
+            ranking.set_problem_params({problem : om.get_map()})
+    else:
+        base_form = AddBaseForm(initial={'ranking_name' : ranking.name, 'ranking_is_public' : ranking.is_public})
+        form = xmlparams.ParamsForm(paramsdict=general,oamap=params)
+    return render_to_response('ranking_editparams.html', {'page_info' : page_info, 'ranking' : ranking, 'form' : form})

@@ -17,7 +17,9 @@
             <tr><td colspan="2">{{ msg.html|safe }}</td></tr>
             {% if msg.is_admin %}
             {% if page_info.contest %}
+                {% if msg.subpage.contest %}
                 <tr><td><a href="{% url contest_news_edit page_info.contest.id msg.subpage.id %}">Edit</a> </td></tr>
+                {% endif %}
             {% else %}
                 <tr><td><a href="{% url news_edit msg.subpage.id %}">Edit</a> </td></tr>
             {% endif %}
