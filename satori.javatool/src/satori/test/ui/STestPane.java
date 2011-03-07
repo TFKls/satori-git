@@ -464,6 +464,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 		
 		private JComponent pane;
 		private JTextField name_field;
+		private JTextField desc_field;
 		
 		public InfoItem(STestImpl test) {
 			this.test = test;
@@ -474,6 +475,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 		@Override public JComponent getPane() { return pane; }
 		
 		private void updateName() { test.setName(name_field.getText()); }
+		private void updateDescription() { test.setDescription(desc_field.getText()); }
 		
 		private void initialize() {
 			pane = new Box(BoxLayout.Y_AXIS);
@@ -487,6 +489,16 @@ public class STestPane implements SPane, SList<STestImpl> {
 				@Override public void focusLost(FocusEvent e) { updateName(); }
 			});
 			pane.add(name_field);
+			desc_field = new JTextField();
+			SDimension.setItemSize(desc_field);
+			desc_field.addActionListener(new ActionListener() {
+				@Override public void actionPerformed(ActionEvent e) { updateDescription(); }
+			});
+			desc_field.addFocusListener(new FocusListener() {
+				@Override public void focusGained(FocusEvent e) {}
+				@Override public void focusLost(FocusEvent e) { updateDescription(); }
+			});
+			pane.add(desc_field);
 			SBlobInputView judge_view = new SBlobInputView(new SJudgeInput(test), new SBlobInputView.BlobLoader() {
 				private Map<String, SBlob> blobs = null;
 				@Override public Map<String, SBlob> getBlobs() throws SException {
@@ -504,6 +516,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 		
 		@Override public void update() {
 			name_field.setText(test.getName());
+			desc_field.setText(test.getDescription());
 		}
 	}
 	
@@ -521,10 +534,13 @@ public class STestPane implements SPane, SList<STestImpl> {
 			pane = new Box(BoxLayout.X_AXIS);
 			JLabel name_label = new JLabel("Name");
 			SDimension.setLabelSize(name_label);
+			JLabel desc_label = new JLabel("Description");
+			SDimension.setLabelSize(desc_label);
 			JLabel judge_label = new JLabel("Judge");
 			SDimension.setLabelSize(judge_label);
 			Box label_box = new Box(BoxLayout.Y_AXIS);
 			label_box.add(name_label);
+			label_box.add(desc_label);
 			label_box.add(judge_label);
 			pane.add(label_box);
 			pane.add(Box.createHorizontalGlue());

@@ -30,6 +30,7 @@ public class STestData {
 		@Override public long getId() { return struct.getId(); }
 		@Override public long getProblemId() { return struct.getProblem(); }
 		@Override public String getName() { return struct.getName(); }
+		@Override public String getDescription() { return struct.getDescription(); }
 	}
 	static class TestWrap extends TestBasicWrap implements STestReader {
 		private final SJudge judge;
@@ -78,6 +79,7 @@ public class STestData {
 		TestStruct struct = new TestStruct();
 		struct.setProblem(test.getProblemId());
 		struct.setName(test.getName());
+		struct.setDescription(test.getDescription());
 		return struct;
 	}
 	

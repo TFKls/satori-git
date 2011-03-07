@@ -6,7 +6,7 @@ import javax.swing.JComponent;
 
 public class SDimension {
 	public static final int height = 20;
-	public static final int labelWidth = 70;
+	public static final int labelWidth = 90;
 	public static final int itemWidth = 111;
 	
 	public static final Dimension labelDim = new Dimension(labelWidth, height);

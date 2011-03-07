@@ -18,6 +18,7 @@ public class STestSnap implements STestReader {
 	private long id;
 	private long problem_id;
 	private String name;
+	private String desc;
 	private SJudge judge;
 	private Map<SInputMetadata, Object> input;
 	private boolean complete;
@@ -30,6 +31,7 @@ public class STestSnap implements STestReader {
 	@Override public long getId() { return id; }
 	@Override public long getProblemId() { return problem_id; }
 	@Override public String getName() { return name; }
+	@Override public String getDescription() { return desc; }
 	@Override public SJudge getJudge() { return judge; }
 	@Override public Map<SInputMetadata, Object> getInput() { return Collections.unmodifiableMap(input); }
 	
@@ -42,6 +44,7 @@ public class STestSnap implements STestReader {
 		self.id = source.getId();
 		self.problem_id = source.getProblemId();
 		self.name = source.getName();
+		self.desc = source.getDescription();
 		self.judge = source.getJudge();
 		self.input = source.getInput();
 		self.complete = true;
@@ -52,6 +55,7 @@ public class STestSnap implements STestReader {
 		self.id = source.getId();
 		self.problem_id = source.getProblemId();
 		self.name = source.getName();
+		self.desc = source.getDescription();
 		self.complete = false;
 		return self;
 	}
@@ -60,6 +64,7 @@ public class STestSnap implements STestReader {
 		SAssert.assertEquals(source.getId(), getId(), "Test ids don't match");
 		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		name = source.getName();
+		desc = source.getDescription();
 		judge = source.getJudge();
 		input = source.getInput();
 		complete = true;
@@ -69,6 +74,7 @@ public class STestSnap implements STestReader {
 		SAssert.assertEquals(source.getId(), getId(), "Test ids don't match");
 		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		name = source.getName();
+		desc = source.getDescription();
 		notifyModified();
 	}
 	public void reload() throws SException { set(STestData.load(id)); }

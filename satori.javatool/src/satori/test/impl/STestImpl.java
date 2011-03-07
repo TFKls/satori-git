@@ -27,6 +27,7 @@ public class STestImpl implements STestReader {
 	private SId id;
 	private SParentProblem problem;
 	private String name;
+	private String desc;
 	private SJudge judge;
 	private Map<SInputMetadata, Object> input;
 	
@@ -43,6 +44,7 @@ public class STestImpl implements STestReader {
 	@Override public long getId() { return id.get(); }
 	@Override public long getProblemId() { return problem.getId(); }
 	@Override public String getName() { return name; }
+	@Override public String getDescription() { return desc; }
 	@Override public SJudge getJudge() { return judge; }
 	@Override public Map<SInputMetadata, Object> getInput() { return Collections.unmodifiableMap(input); }
 	public Object getInput(SInputMetadata meta) { return input.get(meta); }
@@ -61,6 +63,7 @@ public class STestImpl implements STestReader {
 		self.id = new SId(snap.getId());
 		self.problem = problem;
 		self.name = snap.getName();
+		self.desc = snap.getDescription();
 		self.judge = snap.getJudge();
 		self.input = new HashMap<SInputMetadata, Object>(snap.getInput());
 		return self;
@@ -70,6 +73,7 @@ public class STestImpl implements STestReader {
 		self.id = new SId();
 		self.problem = problem;
 		self.name = "";
+		self.desc = "";
 		self.judge = null;
 		self.input = Collections.emptyMap();
 		return self;
@@ -79,6 +83,7 @@ public class STestImpl implements STestReader {
 		SAssert.assertEquals(source.getId(), getId(), "Test ids don't match");
 		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		if (!source.getName().equals(name)) return true;
+		if (!source.getDescription().equals(desc)) return true;
 		if (source.getJudge() == null && judge != null) return true;
 		if (source.getJudge() != null && !source.getJudge().equals(judge)) return true;
 		if (!input.equals(source.getInput())) return true;
@@ -98,6 +103,11 @@ public class STestImpl implements STestReader {
 	public void setName(String name) {
 		if (this.name.equals(name)) return;
 		this.name = name;
+		notifyModified();
+	}
+	public void setDescription(String desc) {
+		if (this.desc.equals(desc)) return;
+		this.desc = desc;
 		notifyModified();
 	}
 	private static SInputMetadata getInputMetadataByName(List<SInputMetadata> list, String name) {
@@ -167,6 +177,7 @@ public class STestImpl implements STestReader {
 		snap.reload();
 		name = snap.getName();
 		judge = snap.getJudge();
+		desc = snap.getDescription();
 		input = new HashMap<SInputMetadata, Object>(snap.getInput());
 		notifyUpToDate();
 		callDataModifiedListeners();
