@@ -28,7 +28,7 @@ def view(request, page_info):
     count1 = (accepted.count+limit-1)/limit
     pending = contest.get_pending_contestants(offset=page2*limit, limit=limit)
     count2 = (pending.count+limit-1)/limit
-    page_params = {'page1' : page1, 'page2' : page2, 'loop1' : range(0,count1), 'loop2' : range(0,count2)}
+    page_params = {'page1' : page1, 'page2' : page2, 'loop1' : range(0,count1), 'loop2' : range(0,count2), 'count1' : count1, 'count2' : count2}
     add_form = ManualAddForm()
     if request.method=="POST":
         if 'accept' in request.POST.keys():
@@ -45,6 +45,5 @@ def view(request, page_info):
             add_form = ManualAddForm(request.POST)
             if add_form.is_valid():
                 Contestant.create(ContestantStruct(contest=contest,accepted=True),[add_form.cleaned_data['user']])
-        accepted = contest.get_contestants(offset=page1*limit,limit=limit)
-        pending = contest.get_pending_contestants(offset=page2*limit, limit=limit)
+        return HttpResponseRedirect(reverse('contestants',args=[contest.id]))
     return render_to_response('contestants.html', {'page_info' : page_info, 'accepted' : accepted, 'pending' : pending, 'add_form' : add_form, 'page_params' : page_params })

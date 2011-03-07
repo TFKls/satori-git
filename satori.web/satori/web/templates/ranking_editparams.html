@@ -1,0 +1,18 @@
+{% extends "templates/index.html" %}
+
+{% block header %}
+{{ form.media }}
+{% endblock %}
+
+
+
+{% block content %}
+
+<form action="" method="POST">
+<table>
+{{ form.as_table }}
+</table>
+<input type="submit"/>
+</form>
+
+{% endblock %}

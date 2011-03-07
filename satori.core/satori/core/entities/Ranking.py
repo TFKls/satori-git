@@ -125,7 +125,7 @@ class Ranking(Entity):
         ret = {}
         for param in self.ranking_params.all():
             if param.test_suite is not None:
-                ret[param.poblem] = param.test_suite
+                ret[param.problem] = param.test_suite
         return ret
 
     @ExportMethod(NoneType, [DjangoId('Ranking'), TypedMap(DjangoId('ProblemMapping'), DjangoId('TestSuite'))], PCArg('self', 'MANAGE'))

@@ -16,17 +16,23 @@
 <input type="submit"/>
 </form>
 
+<h3>Contest problems</h3>
+
 <table>
 <tr>
     <th>Code</th>
     <th>Title</th>
     <th>Suite in ranking</th>
+    <th>Specific parameters</th>
+    <th></th>
 </tr>
-{% for problem, suite in problem_list %}
+{% for problem, suite, params in problem_list %}
 <tr>
     <td>{{problem.code}}</td>
     <td>{{problem.title}}</td>
-    <td>{% if suite %} {{suite.name}} {% else %} Use default ({{problem.default_test_suite.name}}) {% endif %}</td>
+    <td>{% if suite %} {{suite.name}} {% else %} Default ({{problem.default_test_suite.name}}) {% endif %}</td>
+    <td>{% if params %} Yes {% else %} No {% endif %}</td>
+    <td><a href={% url ranking_editparams page_info.contest.id ranking.id problem.id %}>(edit)</a></td>
 </tr>
 {% endfor %}
 </table>

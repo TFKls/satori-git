@@ -16,6 +16,7 @@
 </tr>
 {% endfor %}
 </table>
+{% if page_params.count1 > 1 %}
 <p>
 {% for p in page_params.loop1 %}
 {% if forloop.counter0 == page_params.page1 %}
@@ -25,6 +26,7 @@
 {% endif %}
 {% endfor %}
 </p>
+{% endif %}
 <input type="submit" name="revoke" value="Unaccept selected"/>
 </form>
 
@@ -45,6 +47,7 @@
 </tr>
 {% endfor %}
 </table>
+{% if page_params.count2 > 1 %}
 <p>
 {% for p in page_params.loop2 %}
 {% if forloop.counter0 == page_params.page2 %}
@@ -54,7 +57,7 @@
 {% endif %}
 {% endfor %}
 </p>
-
+{% endif %}
 <input type="submit" name="accept" value="Accept selected"/>
 </form>
 {% endif %}
