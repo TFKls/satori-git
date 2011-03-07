@@ -37,7 +37,7 @@ public class SStringOutputView implements SPaneView {
 	}
 	
 	@Override public void update() {
-		label.setFont(data.get() != null ? set_font : unset_font);
-		label.setText(data.get() != null ? data.get() : data.getDescription());
+		label.setFont(data.getText() != null ? set_font : unset_font);
+		label.setText(data.getText() != null ? data.getText() : data.getDescription());
 	}
 }

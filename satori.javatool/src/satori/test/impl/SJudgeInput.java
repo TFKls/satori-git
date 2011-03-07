@@ -14,6 +14,10 @@ public class SJudgeInput implements SInput<SBlob> {
 		SJudge judge = test.getJudge();
 		return judge != null ? judge.getBlob() : null;
 	}
+	@Override public String getText() {
+		SJudge judge = test.getJudge();
+		return judge != null ? judge.getName() : null;
+	}
 	@Override public String getDescription() { return "Judge file"; }
 	@Override public boolean isValid() { return test.getJudge() != null; }
 	@Override public void set(SBlob data) throws SException { test.setJudge(data); }

@@ -80,7 +80,7 @@ public class SBlobOutputView implements SPaneView {
 	}
 	
 	@Override public void update() {
-		label.setFont(data.get() != null ? set_font : unset_font);
-		label.setText(data.get() != null ? data.get().getName() : data.getDescription());
+		label.setFont(data.getText() != null ? set_font : unset_font);
+		label.setText(data.getText() != null ? data.getText() : data.getDescription());
 	}
 }

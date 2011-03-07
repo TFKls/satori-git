@@ -13,5 +13,6 @@ public class SStringOutput implements SData<String> {
 	}
 	
 	@Override public String get() { return (String)result.getOutput(meta); }
+	@Override public String getText() { return get(); }
 	@Override public String getDescription() { return meta.getDescription(); }
 }
