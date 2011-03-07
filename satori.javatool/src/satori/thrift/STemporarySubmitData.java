@@ -68,10 +68,11 @@ public class STemporarySubmitData {
 	}
 	public static long create(SBlob submit, STestReader test) throws SException {
 		SAssert.assertNotNull(submit, "Submit is null");
+		SAssert.assertNotNull(test.getJudge(), "Judge is null");
 		Map<String, Object> submit_data = new HashMap<String, Object>();
 		submit_data.put("content", submit);
 		Map<String, Object> test_data = createRemoteAttrMap(test.getInput());
-		test_data.put("judge", test.getJudge());
+		test_data.put("judge", test.getJudge().getBlob());
 		createBlobs(submit_data);
 		createBlobs(test_data);
 		CreateCommand command = new CreateCommand(convertAttrMap(submit_data), convertAttrMap(test_data));

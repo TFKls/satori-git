@@ -120,7 +120,7 @@ public class STestData {
 	}
 	public static void save(STestReader test) throws SException {
 		Map<String, Object> raw_data = createRemoteAttrMap(test.getInput());
-		raw_data.put("judge", test.getJudge());
+		if (test.getJudge() != null) raw_data.put("judge", test.getJudge().getBlob());
 		createBlobs(raw_data);
 		SThriftClient.call(new SaveCommand(test.getId(), createStruct(test), convertAttrMap(raw_data)));
 	}
