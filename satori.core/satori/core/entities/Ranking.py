@@ -99,7 +99,7 @@ class Ranking(Entity):
                 raise CannotSetField
             if suite.problem != problem.problem:
                 raise CannotSetField
-            ranking_params = RankingParams.objects().get_or_create(ranking=self, problem=problem)[0]
+            ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
             ranking_params.test_suite=suite
             ranking_params.save()
             ranking_params.params_set_map({})
@@ -110,11 +110,11 @@ class Ranking(Entity):
             if problem.id in set_params:
                 ranking_params = set_params[problem.id]
             else:
-                ranking_params = RankingParams.objects().get_or_create(ranking=self, problem=problem)[0]
+                ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
                 ranking_params.save()
             ranking_params.params_set_map(oa_map)
             set_params[problem.id] = ranking_params
-        for ex_params in self.ranking_params.objects().all():
+        for ex_params in self.ranking_params.all():
             if ex_params.id not in set_params:
                 ex_params.delete()
         self.rejudge()
