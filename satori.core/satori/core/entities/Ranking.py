@@ -143,7 +143,7 @@ class Ranking(Entity):
     def get_problem_params(self):
         ret = {}
         for param in self.ranking_params.all():
-            ret[param.poblem] = param.params_get_map()
+            ret[param.problem] = param.params_get_map()
         return ret
 
     @ExportMethod(NoneType, [DjangoId('Ranking'), TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute))], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('problem_params', PCEachValue('item', PCRawBlob('item')))))
