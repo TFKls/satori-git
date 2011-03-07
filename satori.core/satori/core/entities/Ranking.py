@@ -120,7 +120,7 @@ class Ranking(Entity):
         self.rejudge()
         return self
 
-    @ExportMethod(TypedMap(DjangoStruct('ProblemMapping'), DjangoStruct('TestSuite')), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
+    @ExportMethod(TypedMap(DjangoId('ProblemMapping'), DjangoStruct('TestSuite')), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def get_problem_test_suites(self):
         ret = {}
         for param in self.ranking_params.all():
@@ -139,7 +139,7 @@ class Ranking(Entity):
             param.test_suite = suite
             param.save()
 
-    @ExportMethod(TypedMap(DjangoStruct('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
+    @ExportMethod(TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def get_problem_params(self):
         ret = {}
         for param in self.ranking_params.all():
