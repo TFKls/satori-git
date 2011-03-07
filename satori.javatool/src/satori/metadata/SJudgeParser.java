@@ -6,8 +6,10 @@ import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
@@ -79,12 +81,27 @@ public class SJudgeParser {
 		for (int i = 0; i < children.getLength(); ++i) result.add(parseInputParam((Element)children.item(i)));
 		return Collections.unmodifiableList(result);
 	}
+	private static void verifyInputs(List<SInputMetadata> inputs) throws ParseException {
+		Set<String> names = new HashSet<String>();
+		for (SInputMetadata input : inputs) {
+			if (input.getName().equals("judge")) throw new ParseException("Illegal input name: judge");
+			if (names.contains(input.getName())) throw new ParseException("Duplicate input name: " + input.getName());
+			names.add(input.getName());
+		}
+	}
 	
 	private static List<SOutputMetadata> parseOutputs(Element node) throws ParseException {
 		List<SOutputMetadata> result = new ArrayList<SOutputMetadata>();
 		NodeList children = node.getElementsByTagName("param");
 		for (int i = 0; i < children.getLength(); ++i) result.add(parseOutputParam((Element)children.item(i)));
 		return Collections.unmodifiableList(result);
+	}
+	private static void verifyOutputs(List<SOutputMetadata> outputs) throws ParseException {
+		Set<String> names = new HashSet<String>();
+		for (SOutputMetadata output : outputs) {
+			if (names.contains(output.getName())) throw new ParseException("Duplicate output name: " + output.getName());
+			names.add(output.getName());
+		}
 	}
 	
 	private static void parse(Document doc, SJudge judge) throws ParseException {
@@ -96,12 +113,14 @@ public class SJudgeParser {
 		if (input_children.getLength() == 0) input_meta = Collections.emptyList();
 		else if (input_children.getLength() == 1) input_meta = parseInputs((Element)input_children.item(0));
 		else throw new ParseException("Too many input groups");
+		verifyInputs(input_meta);
 		NodeList output_children = node.getElementsByTagName("output");
 		judge.setInputMetadata(input_meta);
 		List<SOutputMetadata> output_meta;
 		if (output_children.getLength() == 0) output_meta = Collections.emptyList();
 		else if (output_children.getLength() == 1) output_meta = parseOutputs((Element)output_children.item(0));
 		else throw new ParseException("Too many output groups");
+		verifyOutputs(output_meta);
 		judge.setOutputMetadata(output_meta);
 	}
 	private static void parse(String str, SJudge judge) throws ParseException {

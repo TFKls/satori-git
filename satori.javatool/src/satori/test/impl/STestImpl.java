@@ -100,15 +100,24 @@ public class STestImpl implements STestReader {
 		this.name = name;
 		notifyModified();
 	}
+	private static SInputMetadata getInputMetadataByName(List<SInputMetadata> list, String name) {
+		for (SInputMetadata meta : list) if (meta.getName().equals(name)) return meta;
+		return null;
+	}
 	public void setJudge(SBlob blob) throws SException {
 		if (blob == null && judge == null) return;
 		if (blob != null && judge != null && blob.equals(judge.getBlob())) return;
 		if (blob != null) {
+			List<SInputMetadata> old_input_meta = judge != null ? judge.getInputMetadata() : null;
+			Map<SInputMetadata, Object> old_input = input;
 			judge = SJudgeParser.parseJudge(blob);
 			input = new HashMap<SInputMetadata, Object>();
 			for (SInputMetadata meta : judge.getInputMetadata()) {
-				Object def_value = meta.getDefaultValue();
-				if (def_value != null) input.put(meta, def_value);
+				SInputMetadata old_meta = old_input_meta != null ? getInputMetadataByName(old_input_meta, meta.getName()) : null;
+				if (old_meta != null && old_meta.getType() != meta.getType()) old_meta = null;
+				Object value = old_meta != null ? old_input.get(old_meta) : null;
+				if (value == null) value = meta.getDefaultValue();
+				if (value != null) input.put(meta, value);
 			}
 		} else {
 			judge = null;
