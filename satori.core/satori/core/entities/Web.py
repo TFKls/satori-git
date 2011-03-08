@@ -27,7 +27,7 @@ ContestInfo = Struct('ContestInfo', [
     ])
 
 SizedContestantList = Struct('SizedContestantList', [
-    ('contestants', DjangoStructList('Contestant'), False),
+    ('contestants', TypedList(DjangoStruct('Contestant')), False),
     ('count', int, False),
     ])
 
