@@ -2,10 +2,10 @@
     <ul>
         {% if page_info.contest %}
             <li><a href="{% url contest_news page_info.contest.id %}">News</a></li>
-            {% if page_info.contest_viewable_problems_exist %}
             {% for subpage in page_info.subpages %}
                 <li><a href="{% url contest_subpage page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
+            {% if page_info.contest_viewable_problems_exist or page_info.contest_is_admin %}
                 <li><a href="{% url contest_problems page_info.contest.id %}">Problems</a></li>
             {% endif %}
             {% if page_info.contest_submittable_problems_exist %}
