@@ -140,19 +140,19 @@ class Web(object):
     @staticmethod
     def get_accepted_contestants(contest, limit=20, offset=0):
         result = Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role)
-        return SizedContestantList(count=len(result), contestants=result[offset:limit])
+        return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
     def get_pending_contestants(contest, limit=20, offset=0):
         result = Contestant.objects.filter(contest=contest, accepted=False).exclude(parents=contest.admin_role)
-        return SizedContestantList(count=len(result), contestants=result[offset:limit])
+        return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
     def get_contest_admins(contest, limit=20, offset=0):
         result = Contestant.objects.filter(parents=contest.admin_role)
-        return SizedContestantList(count=len(result), contestants=result[offset:limit])
+        return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
 
 

@@ -28,9 +28,6 @@ def view(request, page_info):
     count1 = (accepted.count+limit-1)/limit
     pending = Web.get_pending_contestants(contest=contest,offset=page2*limit, limit=limit)
     count2 = (pending.count+limit-1)/limit
-    c1 = accepted.count
-    c2 = pending.count
-    8/0
     page_params = {'page1' : page1, 'page2' : page2, 'loop1' : range(0,count1), 'loop2' : range(0,count2), 'count1' : count1, 'count2' : count2}
     add_form = ManualAddForm()
     if request.method=="POST":
