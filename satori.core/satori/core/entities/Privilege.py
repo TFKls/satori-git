@@ -9,10 +9,10 @@ from django.db import connection
 from satori.core.dbev   import Events
 from satori.core.models import Entity, Global
 
-PrivilegeTimes = Struct('PrivilegeTimes', (
+PrivilegeTimes = Struct('PrivilegeTimes', [
     ('start_on', datetime, True),
     ('finish_on', datetime, True),
-))
+    ])
 
 @ExportClass(no_inherit=True)
 class Privilege(Entity):
@@ -63,13 +63,21 @@ class Privilege(Entity):
         except Privilege.DoesNotExist:
             pass
 
-    @ExportMethod(PrivilegeTimes, [DjangoId('Role'), DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE'))
+    @ExportMethod(PrivilegeTimes, [DjangoId('Role'), DjangoId('Entity'), unicode], PCOr(PCArg('entity', 'MANAGE'), PCTokenUser('role')))
     @staticmethod
     def get(role, entity, right):
         try:
             return Privilege.objects.get(role=role, entity=entity, right=right)
         except Privilege.DoesNotExist:
             return None
+
+    @ExportMethod(TypedMap(DjangoStruct('Role'), PrivilegeTimes), [DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE'))
+    @staticmethod
+    def list(entity, right):
+        ret = {}
+        for privilege in Privilege.objects.filter(entity=entity, right=right):
+            ret[privilege.role] = privilege
+        return ret
 
     @ExportMethod(bool, [DjangoId('Entity'), unicode], PCPermit())
     @staticmethod
@@ -93,11 +101,16 @@ class Privilege(Entity):
     def global_revoke(role, right):
         Privilege.revoke(role, Global.get_instance(), right)
 
-    @ExportMethod(PrivilegeTimes, [DjangoId('Role'), unicode], PCGlobal('MANAGE_PRIVILEGES'))
+    @ExportMethod(PrivilegeTimes, [DjangoId('Role'), unicode], PCOr(PCGlobal('MANAGE_PRIVILEGES'), PCTokenUser('role')))
     @staticmethod
     def global_get(role, right):
         return Privilege.get(role, Global.get_instance(), right)
 
+    @ExportMethod(TypedMap(DjangoStruct('Role'), PrivilegeTimes), [unicode], PCGlobal('MANAGE_PRIVILEGES'))
+    @staticmethod
+    def global_list(right):
+        return Privilege.list(Global.get_instance(), right)
+    
     @ExportMethod(bool, [unicode], PCPermit())
     @staticmethod
     def global_demand(right):
