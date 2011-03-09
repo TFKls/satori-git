@@ -39,7 +39,7 @@ class AssignmentReporter(ReporterBase):
     def deinit(self):
         status = 'ACC'
         report = ''
-        oa_map = self.test_suite_result.submit.overrides_get_map
+        oa_map = self.test_suite_result.submit.overrides_get_map()
         ostatus = oa_map.get('status', None)
         if ostatus is not None and not ostatus.is_blob:
             status = ostatus.value
