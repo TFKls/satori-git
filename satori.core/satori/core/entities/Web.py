@@ -139,7 +139,7 @@ class Web(object):
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'VIEW'))
     @staticmethod
     def get_accepted_contestants(contest, limit=20, offset=0):
-        result = Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role)[offset:limit]
+        result = Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role)
         return SizedContestantList(count=len(result), contestants=result[offset:limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))

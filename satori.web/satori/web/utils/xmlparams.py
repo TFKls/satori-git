@@ -9,7 +9,6 @@ class ParamsDict(object):
     def __init__(self, xml_node):
         self.fields = []
         for n in xml_node.childNodes:
-            print n.nodeName
             if n.nodeName=="param":
                 d = {}
                 d["type"] = n.getAttribute("type")
@@ -85,6 +84,8 @@ class ParamsForm(forms.Form):
                 val = attr.value
                 if ftype=='datetime':
                     data[name] = datetime.strptime(attr.value,"%Y-%m-%d %H:%M:%S")
+                elif ftype=='bool':
+                    data[name] = (val=='True' or val=='true' or val=='Yes' or val=='yes' or val==1 or val=='1')
                 else:
                     data[name] = attr.value
         super(ParamsForm,self).__init__(initial=data,*args,**kwargs)

@@ -8,7 +8,7 @@ from django.core.urlresolvers import reverse
 from django import forms
 
 class ManualAddForm(forms.Form):
-    user = forms.CharField(required=False, label="Add user manually")
+    user = forms.CharField(required=False, label="Login")
     def clean(self):
         data = self.cleaned_data
         try:
@@ -24,23 +24,32 @@ def view(request, page_info):
     page1 = int(request.GET.get('page1',0))
     page2 = int(request.GET.get('page2',0))
     contest = page_info.contest
-    accepted = contest.get_contestants(offset=page1*limit,limit=limit)
+    accepted = Web.get_accepted_contestants(contest=contest,offset=page1*limit,limit=limit)
     count1 = (accepted.count+limit-1)/limit
-    pending = contest.get_pending_contestants(offset=page2*limit, limit=limit)
+    pending = Web.get_pending_contestants(contest=contest,offset=page2*limit, limit=limit)
     count2 = (pending.count+limit-1)/limit
+    c1 = accepted.count
+    c2 = pending.count
+    8/0
     page_params = {'page1' : page1, 'page2' : page2, 'loop1' : range(0,count1), 'loop2' : range(0,count2), 'count1' : count1, 'count2' : count2}
     add_form = ManualAddForm()
     if request.method=="POST":
         if 'accept' in request.POST.keys():
-            for cinfo in pending.contestants:
-                contestant = cinfo.contestant
+            for contestant in pending.contestants:
                 if 'accept_'+str(contestant.id) in request.POST.keys():
                     contestant.accepted = True
         if 'revoke' in request.POST.keys():
-            for cinfo in accepted.contestants:
-                contestant = cinfo.contestant
+            for contestant in accepted.contestants:
                 if 'revoke_'+str(contestant.id) in request.POST.keys():
                     contestant.accepted = False
+        if 'hide' in request.POST.keys():
+            for contestant in accepted.contestants:
+                if 'revoke_'+str(contestant.id) in request.POST.keys():
+                    contestant.invisible = True        
+        if 'show' in request.POST.keys():
+            for contestant in accepted.contestants:
+                if 'revoke_'+str(contestant.id) in request.POST.keys():
+                    contestant.invisible = False        
         if 'add' in request.POST.keys():
             add_form = ManualAddForm(request.POST)
             if add_form.is_valid():

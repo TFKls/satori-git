@@ -24,7 +24,12 @@
 </td>
 
 <td> 
+{% if problem.statement %}
 <a href="{% url contest_problems_view page_info.contest.id problem.id %}">{{ problem.title }}</a><br/>
+{% else %}
+{{ problem.title }}
+{% endif %}
+
 {% if pinfo.admin %}
 {% if pinfo.visible %} Visible {% endif %}
 {% if pinfo.submittable %} Submittable {% endif %}

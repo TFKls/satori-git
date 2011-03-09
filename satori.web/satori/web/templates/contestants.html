@@ -8,10 +8,15 @@
 {% for cinfo in accepted.contestants %}
 <tr>
     <td>
-        <input type="checkbox" name="revoke_{{cinfo.contestant.id}}"/>
+        <input type="checkbox" name="revoke_{{cinfo.id}}"/>
     </td>
     <td>
-        {{cinfo.contestant.name}}
+        {{cinfo.usernames}}
+    </td>
+    <td>
+        {% if cinfo.invisible %}
+        Invisible
+        {% endif %}
     </td>
 </tr>
 {% endfor %}
@@ -28,6 +33,8 @@
 </p>
 {% endif %}
 <input type="submit" name="revoke" value="Unaccept selected"/>
+<input type="submit" name="hide" value="Hide selected"/>
+<input type="submit" name="show" value="Unhide selected"/>
 </form>
 
 
@@ -39,10 +46,10 @@
 {% for cinfo in pending.contestants %}
 <tr>
     <td>
-        <input type="checkbox" name="accept_{{cinfo.contestant.id}}"/>
+        <input type="checkbox" name="accept_{{cinfo.id}}"/>
     </td>
     <td>
-        {{cinfo.contestant.name}}
+        {{cinfo.name}}
     </td>
 </tr>
 {% endfor %}
@@ -62,6 +69,7 @@
 </form>
 {% endif %}
 
+<h4>Add user manually</h4>
 <form action="" method="POST">{{ add_form }}<input type="submit" name="add" value="Add"/></form>
 
 {% endblock %}

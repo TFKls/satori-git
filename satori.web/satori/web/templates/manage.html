@@ -6,7 +6,7 @@
 <table>
 {{ manage_form.as_table }}
 </table>
-<input type="submit"/>
+<input type="submit" name="params" value="Submit"/>
 </form>
 
 <h4>Subpages</h4>
@@ -26,4 +26,16 @@
 
 <a href="{% url ranking_add page_info.contest.id %}">Add new ranking</a>
 
+<h4>Admins</h4>
+<table>
+{% for name in admins %}
+<tr>
+    <td>{{ name }}</td>
+</tr>
+{% endfor %}
+</table>
+<form action="" method="POST">
+{{ admin_form }}
+<input type="submit" name="addadmin" value="Add admin"/>
+</form>
 {% endblock %}
