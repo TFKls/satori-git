@@ -16,8 +16,7 @@ def view(request, page_info, id):
 
 class AddBaseForm(forms.Form):
     ranking_name = forms.CharField(label="Ranking name", required=True)
-    ranking_is_public = forms.BooleanField(label="Public", required=False)
-
+    ranking_visibility = forms.ChoiceField(label="Ranking visible for", required=True, choices=[['admin','Admins only'],['contestant','Contestants'],['public', 'Everyone']])
 
 @contest_view
 def add(request, page_info):
@@ -53,11 +52,15 @@ def edit(request, page_info, id):
     contest = page_info.contest
     problems = ProblemMapping.filter(ProblemMappingStruct(contest=contest))
     problems.sort(key=lambda p : p.code)
-    suites = ranking.get_problem_test_suites()
-    problem_params = ranking.get_problem_params()
-    problem_list = [ [p,suites.get(p,None),problem_params.get(p,None)] for p in problems ]
-    
-        
+    suites = dict([[k.id, v] for k, v in ranking.get_problem_test_suites().iteritems()])
+    problem_params = dict([[k.id, v] for k, v in ranking.get_problem_params().iteritems()])
+    problem_list = [ [p,suites.get(p.id,None),problem_params.get(p.id,None)] for p in problems ]
+    if ranking.is_public:
+        visibility = 'public'
+    elif Privilege.get(contest.contestant_role,ranking,'VIEW'):
+        visibility = 'contestant'
+    else:
+        visibility = 'admin'        
     xml = " ".join([x[2:] for x in filter(lambda line:line.startswith("#@"),aggregators[ranking.aggregator].splitlines())])
     sections = xmlparams.ParseXML(xml)
     general = sections['general']
@@ -66,9 +69,25 @@ def edit(request, page_info, id):
         form = xmlparams.ParamsForm(paramsdict=general,data=request.POST)
         if base_form.is_valid() and form.is_valid():
             om = general.dict_to_oa_map(form.cleaned_data)
-            ranking.modify_full(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["ranking_name"],aggregator=ranking.aggregator,is_public=base_form.cleaned_data["ranking_is_public"]),om.get_map(), {}, {})
+            newvis = base_form.cleaned_data["ranking_visibility"]
+            public = ranking.is_public
+            if newvis != visibility:
+                if newvis=='public':
+                    Privilege.grant(contest.contestant_role,ranking,'VIEW_FULL')
+                    Privilege.grant(contest.contestant_role,ranking,'VIEW')
+                    public = True
+                elif newvis=='contestant':
+                    Privilege.grant(contest.contestant_role,ranking,'VIEW_FULL')
+                    Privilege.grant(contest.contestant_role,ranking,'VIEW')
+                    public = False
+                else:
+                    Privilege.revoke(contest.contestant_role,ranking,'VIEW_FULL')
+                    Privilege.revoke(contest.contestant_role,ranking,'VIEW')
+                    public = False                    
+            ranking.modify_full(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["ranking_name"],aggregator=ranking.aggregator,is_public=public),om.get_map(), {}, {})
+            
     else:
-        base_form = AddBaseForm(initial={'ranking_name' : ranking.name, 'ranking_is_public' : ranking.is_public})
+        base_form = AddBaseForm(initial={'ranking_name' : ranking.name, 'ranking_visibility' : visibility})
         form = xmlparams.ParamsForm(paramsdict=general,oamap=ranking.params_get_map())
     return render_to_response('ranking_edit.html', {'page_info' : page_info, 'ranking' : ranking, 'base_form' : base_form, 'form' : form, 'problem_list' : problem_list})
 
@@ -78,8 +97,12 @@ def editparams(request, page_info, id, problem_id):
     aggregators = Global.get_aggregators()
     ranking = Ranking(int(id))
     contest = page_info.contest
-    problem = ProblemMapping(int(problem_id))
-    params = ranking.get_problem_params()[problem]
+    problem = ProblemMapping.filter(ProblemMappingStruct(id=int(problem_id)))[0]
+    allparams = ranking.get_problem_params()
+    params = None
+    for k, v in allparams.iteritems():
+        if k.id==int(problem_id):
+            params = v
     xml = " ".join([x[2:] for x in filter(lambda line:line.startswith("#@"),aggregators[ranking.aggregator].splitlines())])
     sections = xmlparams.ParseXML(xml)
     general = sections['problem']    
@@ -89,6 +112,5 @@ def editparams(request, page_info, id, problem_id):
             om = general.dict_to_oa_map(form.cleaned_data)
             ranking.set_problem_params({problem : om.get_map()})
     else:
-        base_form = AddBaseForm(initial={'ranking_name' : ranking.name, 'ranking_is_public' : ranking.is_public})
         form = xmlparams.ParamsForm(paramsdict=general,oamap=params)
     return render_to_response('ranking_editparams.html', {'page_info' : page_info, 'ranking' : ranking, 'form' : form})

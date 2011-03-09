@@ -51,7 +51,16 @@
 {% endif %}
 
 
+{% if create_form %}
+<h4>Add new contest</h4>
+<form action="" method="POST">
+<table>
+{{ create_form.as_table }}
+</table>
+<input type="submit" name="addcontest" value="Add contest"/>
+</form>
 
+{% endif %}
 
 
 
