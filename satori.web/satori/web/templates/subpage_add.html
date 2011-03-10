@@ -6,9 +6,9 @@
 {% block content %}
 
 {% if page_info.contest %}
-<form action={% url contest_subpage_create page_info.contest.id %} method="POST">
+<form action={% url contest_subpage_add page_info.contest.id %} method="POST">
 {% else %}
-<form action={% url subpage_create %} method="POST">
+<form action={% url subpage_add %} method="POST">
 {% endif %}
 
 <input name="fid" value="{{ fid }}" type="hidden">

@@ -20,7 +20,7 @@ class ManualAddForm(forms.Form):
 
 @contest_view
 def view(request, page_info):
-    limit = 10
+    limit = 25
     page1 = int(request.GET.get('page1',0))
     page2 = int(request.GET.get('page2',0))
     contest = page_info.contest

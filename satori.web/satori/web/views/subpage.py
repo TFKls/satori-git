@@ -22,7 +22,7 @@ def view(request, page_info,id):
     return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : sinfo.subpage, 'content' : content, 'can_edit' : can_edit})
 
 @general_view
-def create(request, page_info):
+def add(request, page_info):
     if request.method=="POST":
         form = GlobalSubpageEditForm(request.POST)
         if form.is_valid():
@@ -31,7 +31,7 @@ def create(request, page_info):
             return HttpResponseRedirect(reverse('subpage',args=[subpage.id]))
     else:
         form = GlobalSubpageEditForm()
-    return render_to_response('subpage_create.html',{'page_info' : page_info, 'form' : form})
+    return render_to_response('subpage_add.html',{'page_info' : page_info, 'form' : form})
 
 @general_view
 def edit(request, page_info,id):

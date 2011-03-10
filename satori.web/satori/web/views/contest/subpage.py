@@ -31,7 +31,7 @@ def view(request, page_info,id):
     return render_to_response('subpage.html',{'page_info' : page_info, 'subpage' : sinfo.subpage, 'content' : content, 'can_edit' : can_edit, 'attachments' : dfiles})
 
 @contest_view
-def create(request, page_info):
+def add(request, page_info):
     fid = None
     if request.method=="POST":
         form = ContestSubpageEditForm(request.POST)
@@ -44,14 +44,14 @@ def create(request, page_info):
             try:
                 subpage.content = data["content"]
             except SphinxException as sphinxException:
-                return render_to_response('subpage_create.html',{'page_info' : page_info, 'form' : form, 'fid' : fid, 'sphinxException' : sphinxException})
+                return render_to_response('subpage_add.html',{'page_info' : page_info, 'form' : form, 'fid' : fid, 'sphinxException' : sphinxException})
             return HttpResponseRedirect(reverse('contest_subpage',args=[page_info.contest.id, subpage.id]))
     else:
         form = ContestSubpageEditForm()
         temp_directory = tempfile.mkdtemp()
     if fid is None:
         fid = temp_directory #TODO(kalq): Create a hash instead of full pathname
-    return render_to_response('subpage_create.html',{'page_info' : page_info, 'form' : form, 'fid' : fid})
+    return render_to_response('subpage_add.html',{'page_info' : page_info, 'form' : form, 'fid' : fid})
 
 @contest_view
 def edit(request, page_info,id):
