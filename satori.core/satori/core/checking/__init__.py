@@ -148,7 +148,7 @@ class CheckingMaster(Client2):
             logging.debug('checking master: rejudge test suite result %s: not running', test_suite_result.id)
             test_suite_result = TestSuiteResult.objects.get(id=test_suite_result.id)
             for ranking in self.scheduled_test_suite_results_map.get(test_suite_result, []):
-                self.ranking_rejudged_test_suite_results.setdefault(ranking, set()).add(test_suite_result)
+                self.rankings_to_rejudge.add(ranking)
             test_suite_result.pending = True
             test_suite_result.save()
             self.start_test_suite_result(test_suite_result)
