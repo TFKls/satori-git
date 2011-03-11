@@ -170,7 +170,7 @@ class ACMReporter(ReporterBase):
             self._status = status
 
     def status(self):
-        return True
+        return self._status == 'OK'
 
     def deinit(self):
         logging.debug('ACM Reporter %s: %s', self.test_suite_result.id, self._status)
@@ -181,9 +181,9 @@ class ACMReporter(ReporterBase):
         self.test_suite_result.oa_set_str('status', status)
         self.test_suite_result.status = status
         if self.params.reporter_show_tests:
-            table = RestTable(('Name', 10), ('Status', 10), ('CPU time', 10), ('Message', 30))
+            table = RestTable((10, 'Name'), (10, 'Status'), (10, 'CPU time'), (30, 'Message'))
             report = table.row_separator + table.header_row + table.header_separator
-            for code in self._codes.sorted():
+            for code in sorted(self._codes):
                 report += table.generate_row(self._names[code], self._statuses[code], self._times[code], self._messages[code]) + table.row_separator
         else:
             report = ''
