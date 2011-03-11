@@ -25,7 +25,6 @@ def valid_attachments(subpage):
             dfiles.append(dfile.name)
     return dfiles
 
-
 @contest_view
 def view(request, page_info,id):
     sinfo = Web.get_subpage_info(Subpage(int(id)))
