@@ -7,7 +7,7 @@
 <ul class="headerRightUl">
     {% if page_info.role %}
         <li>Logged in as {{page_info.role.name}}</li>
-        <li><a href="{% url profile %}">Profile</a></li>
+{% comment %}        <li><a href="{% url profile %}">Profile</a></li> {% endcomment %}
         <li><a href="{% url logout %}">Sign out</a></li>
     {% else %}
         <li><a href="{% url register %}">Register</a></li>
