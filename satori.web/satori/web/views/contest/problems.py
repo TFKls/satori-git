@@ -8,7 +8,7 @@ from django.shortcuts import render_to_response
 from django import forms
 from datetime import datetime
 from satori.web.utils.forms import SatoriDateTimeField
-from satori.web.utils.shortcuts import text2html
+from satori.web.utils.shortcuts import text2html,fill_image_links
 
 class ProblemsPublishForm(forms.Form):
     submitstart = SatoriDateTimeField(required=False)
@@ -165,6 +165,7 @@ def edit(request, page_info, id):
 
 @contest_view
 def view(request, page_info, id):
-    mapping = ProblemMapping(int(id))
-    return render_to_response('problems_view.html', {'page_info' : page_info, 'problem' : mapping })
+    problem = Web.get_problem_mapping_info(ProblemMapping(int(id)))
+    content = fill_image_links(problem.html,'ProblemMapping',id, 'statement_files')
+    return render_to_response('problems_view.html', {'page_info' : page_info, 'problem' : problem, 'content' : content })
     
