@@ -5,6 +5,8 @@ from satori.web.utils.decorators import contest_view
 from satori.web.utils import xmlparams
 from satori.web.utils.shortcuts import text2html
 from django.shortcuts import render_to_response
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 from django import forms
 
 
@@ -54,6 +56,7 @@ def add(request, page_info):
                 Privilege.revoke(contest.contestant_role,ranking,'VIEW')
                 public = False                    
             ranking.is_public = public
+            return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,ranking.id]))
     else:
         base_form = AddBaseForm()
         form = xmlparams.ParamsForm(general)
@@ -100,7 +103,7 @@ def edit(request, page_info, id):
                     Privilege.revoke(contest.contestant_role,ranking,'VIEW')
                     public = False                    
             ranking.modify_full(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["ranking_name"],aggregator=ranking.aggregator,is_public=public),om.get_map(), {}, {})
-            
+            return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,id]))
     else:
         base_form = AddBaseForm(initial={'ranking_name' : ranking.name, 'ranking_visibility' : visibility})
         form = xmlparams.ParamsForm(paramsdict=general,oamap=ranking.params_get_map())

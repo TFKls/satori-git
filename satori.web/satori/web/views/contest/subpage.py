@@ -116,10 +116,17 @@ def edit(request, page_info,id):
                                                                  'subpage' : subpage })
             return HttpResponseRedirect(reverse('contest_subpage', args=[page_info.contest.id, subpage.id]))
     else:
+        if subpage.is_public:
+            vis = 'public'
+        elif Privilege.get(contest.contestant_role,subpage,'VIEW'):
+            vis = 'contestant'
+        else:
+            vis = 'admin'
         form = ContestSubpageEditForm(initial={ 'name' : subpage.name,
                                                 'content' : subpage.content,
                                                 'fid' : tempfile.mkdtemp(),
-                                                'is_public' : subpage.is_public })
+                                                'visibility' : vis
+                                                })
     attachments = valid_attachments(subpage)
     return render_to_response('subpage_edit.html', { 'attachments' : attachments, 
                                                      'form' : form,

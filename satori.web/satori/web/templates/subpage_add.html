@@ -19,6 +19,10 @@
         <td style="text-align: right">
             <input id="create_subpage" type="submit" value="Create subpage"/></td>
     </tr>
+    <tr>
+        <th><label for="id_visibility">{{ form.visibility.label }}</label></th>
+        <td colspan="2">{{ form.visibility }}</td>
+    </tr>
     {% if sphinxException %}
     <tr>
         <th></th>
