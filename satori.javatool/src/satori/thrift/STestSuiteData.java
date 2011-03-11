@@ -14,7 +14,8 @@ import java.util.StringTokenizer;
 import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SIdReader;
-import satori.common.SPair;
+import satori.metadata.SParameters;
+import satori.metadata.SParametersParser;
 import satori.problem.STestSuiteBasicReader;
 import satori.problem.STestSuiteReader;
 import satori.session.SSession;
@@ -36,37 +37,37 @@ public class STestSuiteData {
 	}
 	static class TestSuiteWrap extends TestSuiteBasicWrap implements STestSuiteReader {
 		private List<STestBasicReader> tests;
-		private List<SPair<String, String>> dispatchers;
-		private List<SPair<String, String>> accumulators;
-		private List<SPair<String, String>> reporters;
+		private SParameters dispatcher;
+		private List<SParameters> accumulators;
+		private SParameters reporter;
 		public TestSuiteWrap(TestSuiteStruct struct) { super(struct); }
 		public void setTests(List<STestBasicReader> tests) { this.tests = tests; }
-		public void setDispatchers(List<SPair<String, String>> dispatchers) { this.dispatchers = dispatchers; }
-		public void setAccumulators(List<SPair<String, String>> accumulators) { this.accumulators = accumulators; }
-		public void setReporters(List<SPair<String, String>> reporters) { this.reporters = reporters; }
+		public void setDispatcher(SParameters dispatcher) { this.dispatcher = dispatcher; }
+		public void setAccumulators(List<SParameters> accumulators) { this.accumulators = accumulators; }
+		public void setReporter(SParameters reporter) { this.reporter = reporter; }
 		@Override public List<STestBasicReader> getTests() { return tests; }
-		@Override public List<SPair<String, String>> getDispatchers() { return dispatchers; }
-		@Override public List<SPair<String, String>> getAccumulators() { return accumulators; }
-		@Override public List<SPair<String, String>> getReporters() { return reporters; }
+		@Override public SParameters getDispatcher() { return dispatcher; }
+		@Override public List<SParameters> getAccumulators() { return accumulators; }
+		@Override public SParameters getReporter() { return reporter; }
 	}
 
-	private static List<SPair<String, String>> parseDispatchers(String str, Map<String, String> map) throws SException {
+	private static SParameters parseDispatcher(String str, Map<String, String> map) throws SException {
 		if (!map.containsKey(str)) throw new SException("Incorrect dispatcher: " + str);
-		return Collections.singletonList(new SPair<String, String>(str, map.get(str)));
+		return SParametersParser.parseParameters(str, map.get(str));
 	}
-	private static List<SPair<String, String>> parseAccumulators(String str, Map<String, String> map) throws SException {
-		List<SPair<String, String>> result = new ArrayList<SPair<String, String>>();
+	private static List<SParameters> parseAccumulators(String str, Map<String, String> map) throws SException {
+		List<SParameters> result = new ArrayList<SParameters>();
 		StringTokenizer tokenizer = new StringTokenizer(str, ",");
 		while (tokenizer.hasMoreTokens()) {
 			String token = tokenizer.nextToken();
 			if (!map.containsKey(token)) throw new SException("Incorrect accumulator: " + token);
-			result.add(new SPair<String, String>(token, map.get(token)));
+			result.add(SParametersParser.parseParameters(token, map.get(token)));
 		}
 		return Collections.unmodifiableList(result);
 	}
-	private static List<SPair<String, String>> parseReporters(String str, Map<String, String> map) throws SException {
+	private static SParameters parseReporter(String str, Map<String, String> map) throws SException {
 		if (!map.containsKey(str)) throw new SException("Incorrect reporter: " + str);
-		return Collections.singletonList(new SPair<String, String>(str, map.get(str)));
+		return SParametersParser.parseParameters(str, map.get(str));
 	}
 	private static class LoadCommand implements SThriftCommand {
 		private final long id;
@@ -86,18 +87,18 @@ public class STestSuiteData {
 		SThriftClient.call(command);
 		TestSuiteWrap result = new TestSuiteWrap(command.getStruct());
 		result.setTests(createTestList(command.getTests()));
-		result.setDispatchers(parseDispatchers(command.getStruct().getDispatcher(), getDispatchers()));
+		result.setDispatcher(parseDispatcher(command.getStruct().getDispatcher(), getDispatchers()));
 		result.setAccumulators(parseAccumulators(command.getStruct().getAccumulators(), getAccumulators()));
-		result.setReporters(parseReporters(command.getStruct().getReporter(), getReporters()));
+		result.setReporter(parseReporter(command.getStruct().getReporter(), getReporters()));
 		return result;
 	}
 	
-	private static String parseList(List<SPair<String, String>> list) {
+	private static String parseList(List<SParameters> params) {
 		StringBuilder result = null;
-		for (SPair<String, String> p : list) {
+		for (SParameters p : params) {
 			if (result != null) result.append(",");
 			else result = new StringBuilder();
-			result.append(p.first);
+			result.append(p.getName());
 		}
 		return result != null ? result.toString() : "";
 	}
@@ -106,9 +107,9 @@ public class STestSuiteData {
 		struct.setProblem(suite.getProblemId());
 		struct.setName(suite.getName());
 		struct.setDescription(suite.getDescription());
-		struct.setDispatcher(parseList(suite.getDispatchers()));
+		struct.setDispatcher(suite.getDispatcher() != null ? suite.getDispatcher().getName() : "");
 		struct.setAccumulators(parseList(suite.getAccumulators()));
-		struct.setReporter(parseList(suite.getReporters()));
+		struct.setReporter(suite.getReporter() != null ? suite.getReporter().getName() : "");
 		return struct;
 	}
 	private static List<Long> createTestIdList(List<? extends SIdReader> tests) {

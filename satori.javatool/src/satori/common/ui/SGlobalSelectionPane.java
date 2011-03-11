@@ -30,16 +30,18 @@ import satori.common.SException;
 import satori.common.SListener0;
 import satori.common.SPair;
 import satori.main.SFrame;
+import satori.metadata.SParameters;
 
 public class SGlobalSelectionPane implements SPane {
 	public static interface Loader {
-		List<SPair<String, String>> get() throws SException;
-	}
+		List<SPair<String, String>> getList() throws SException;
+		SParameters parse(String name, String content) throws SException;
+	};
 	
 	private final Loader loader;
 	private final boolean multiple;
 	private final SListener0 listener;
-	private List<SPair<String, String>> selection;
+	private List<SParameters> selection;
 	private JComponent pane;
 	private JButton clear_button;
 	private JButton label;
@@ -53,18 +55,30 @@ public class SGlobalSelectionPane implements SPane {
 	}
 	
 	@Override public JComponent getPane() { return pane; }
-	public List<SPair<String, String>> getSelection() { return selection; }
 	
-	public void setSelection(List<SPair<String, String>> selection) {
-		this.selection = selection;
+	public List<SParameters> getSelection() { return selection; }
+	public SParameters getFirstSelected() { return selection.isEmpty() ? null : selection.get(0); }
+	
+	public void setSelection(List<SParameters> params) {
+		selection = params;
 		StringBuilder text = null;
-		for (SPair<String, String> p : selection) {
+		for (SParameters p : params) {
 			if (text != null) text.append(",");
 			else text = new StringBuilder();
-			text.append(p.first);
+			text.append(p.getName());
 		}
 		label.setFont(text != null ? set_font : unset_font);
 		label.setText(text != null ? text.toString() : "Not set");
+	}
+	public void setSelection(SParameters params) {
+		selection = Collections.singletonList(params);
+		label.setFont(params != null ? set_font : unset_font);
+		label.setText(params != null ? params.getName() : "Not set");
+	}
+	public void clearSelection() {
+		selection = Collections.emptyList();
+		label.setFont(unset_font);
+		label.setText("Not set");
 	}
 	
 	private static class LoadDialog {
@@ -118,7 +132,7 @@ public class SGlobalSelectionPane implements SPane {
 		}
 		
 		public List<SPair<String, String>> process() throws SException {
-			List<SPair<String, String>> source = loader.get();
+			List<SPair<String, String>> source = loader.getList();
 			Vector<String> names = new Vector<String>();
 			for (SPair<String, String> p : source) names.add(p.first);
 			list.setListData(names);
@@ -127,7 +141,7 @@ public class SGlobalSelectionPane implements SPane {
 			int[] indices = list.getSelectedIndices();
 			List<SPair<String, String>> result = new ArrayList<SPair<String, String>>();
 			for (int i : indices) result.add(source.get(i));
-			return Collections.unmodifiableList(result);
+			return result;
 		}
 	}
 	
@@ -136,13 +150,15 @@ public class SGlobalSelectionPane implements SPane {
 		try {
 			List<SPair<String, String>> result = dialog.process();
 			if (result == null) return;
-			setSelection(result);
+			List<SParameters> params = new ArrayList<SParameters>();
+			for (SPair<String, String> p : result) params.add(loader.parse(p.first, p.second));
+			setSelection(Collections.unmodifiableList(params));
 			listener.call();
 		}
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
 	private void clear() {
-		setSelection(Collections.<SPair<String, String>>emptyList());
+		clearSelection();
 		listener.call();
 	}
 	

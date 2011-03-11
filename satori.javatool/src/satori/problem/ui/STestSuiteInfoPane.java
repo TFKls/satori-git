@@ -19,6 +19,8 @@ import satori.common.SPair;
 import satori.common.SView;
 import satori.common.ui.SGlobalSelectionPane;
 import satori.common.ui.SPane;
+import satori.metadata.SParameters;
+import satori.metadata.SParametersParser;
 import satori.problem.impl.STestSuiteImpl;
 import satori.thrift.SGlobalData;
 
@@ -39,9 +41,9 @@ public class STestSuiteInfoPane implements SPane, SView {
 	
 	private void updateName() { suite.setName(name_field.getText()); }
 	private void updateDescription() { suite.setDescription(desc_field.getText()); }
-	private void updateDispatchers() { suite.setDispatchers(dispatchers.getSelection()); }
+	private void updateDispatcher() { suite.setDispatcher(dispatchers.getFirstSelected()); }
 	private void updateAccumulators() { suite.setAccumulators(accumulators.getSelection()); }
-	private void updateReporters() { suite.setReporters(reporters.getSelection()); }
+	private void updateReporter() { suite.setReporter(reporters.getFirstSelected()); }
 	
 	private static JComponent setLabelSizes(JComponent comp) {
 		Dimension dim = new Dimension(100, 20);
@@ -85,19 +87,25 @@ public class STestSuiteInfoPane implements SPane, SView {
 		});
 		pane2.add(desc_field);
 		dispatchers = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
-			@Override public List<SPair<String, String>> get() throws SException {
+			@Override public List<SPair<String, String>> getList() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getDispatchers());
 			}
+			@Override public SParameters parse(String name, String content) throws SException {
+				return SParametersParser.parseParameters(name, content);
+			}
 		}, false, new SListener0() {
-			@Override public void call() { updateDispatchers(); }
+			@Override public void call() { updateDispatcher(); }
 		});
 		dispatchers.getPane().setPreferredSize(new Dimension(480, 20));
 		dispatchers.getPane().setMinimumSize(new Dimension(480, 20));
 		dispatchers.getPane().setMaximumSize(new Dimension(480, 20));
 		pane2.add(dispatchers.getPane());
 		accumulators = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
-			@Override public List<SPair<String, String>> get() throws SException {
+			@Override public List<SPair<String, String>> getList() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getAccumulators());
+			}
+			@Override public SParameters parse(String name, String content) throws SException {
+				return SParametersParser.parseParameters(name, content);
 			}
 		}, true, new SListener0() {
 			@Override public void call() { updateAccumulators(); }
@@ -107,11 +115,14 @@ public class STestSuiteInfoPane implements SPane, SView {
 		accumulators.getPane().setMaximumSize(new Dimension(480, 20));
 		pane2.add(accumulators.getPane());
 		reporters = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
-			@Override public List<SPair<String, String>> get() throws SException {
+			@Override public List<SPair<String, String>> getList() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getReporters());
 			}
+			@Override public SParameters parse(String name, String content) throws SException {
+				return SParametersParser.parseParameters(name, content);
+			}
 		}, false, new SListener0() {
-			@Override public void call() { updateReporters(); }
+			@Override public void call() { updateReporter(); }
 		});
 		reporters.getPane().setPreferredSize(new Dimension(480, 20));
 		reporters.getPane().setMinimumSize(new Dimension(480, 20));
@@ -128,8 +139,8 @@ public class STestSuiteInfoPane implements SPane, SView {
 	@Override public void update() {
 		name_field.setText(suite.getName());
 		desc_field.setText(suite.getDescription());
-		dispatchers.setSelection(suite.getDispatchers());
+		dispatchers.setSelection(suite.getDispatcher());
 		accumulators.setSelection(suite.getAccumulators());
-		reporters.setSelection(suite.getReporters());
+		reporters.setSelection(suite.getReporter());
 	}
 }

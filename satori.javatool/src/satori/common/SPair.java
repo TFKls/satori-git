@@ -8,4 +8,15 @@ public class SPair<T1, T2> {
 		this.first = first;
 		this.second = second;
 	}
+	
+	private boolean equalsAux(SPair<?, ?> other) {
+		return first.equals(other.first) && second.equals(other.second);
+	}
+	@Override public boolean equals(Object other) {
+		if (!(other instanceof SPair<?, ?>)) return false;
+		return equalsAux((SPair<?, ?>)other);
+	}
+	@Override public int hashCode() {
+		return first.hashCode() ^ second.hashCode();
+	}
 }

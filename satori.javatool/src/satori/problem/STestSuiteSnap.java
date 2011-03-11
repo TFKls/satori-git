@@ -7,9 +7,9 @@ import java.util.List;
 import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SListener1;
-import satori.common.SPair;
 import satori.common.SReference;
 import satori.common.SView;
+import satori.metadata.SParameters;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
 import satori.thrift.STestSuiteData;
@@ -22,9 +22,9 @@ public class STestSuiteSnap implements STestSuiteReader {
 	private String name;
 	private String desc;
 	private List<STestSnap> tests;
-	private List<SPair<String, String>> dispatchers;
-	private List<SPair<String, String>> accumulators;
-	private List<SPair<String, String>> reporters;
+	private SParameters dispatcher;
+	private List<SParameters> accumulators;
+	private SParameters reporter;
 	
 	private final List<SView> views = new ArrayList<SView>();
 	private final List<SReference> refs = new ArrayList<SReference>();
@@ -38,9 +38,9 @@ public class STestSuiteSnap implements STestSuiteReader {
 	@Override public String getName() { return name; }
 	@Override public String getDescription() { return desc; }
 	@Override public List<STestSnap> getTests() { return Collections.unmodifiableList(tests); }
-	@Override public List<SPair<String, String>> getDispatchers() { return dispatchers; }
-	@Override public List<SPair<String, String>> getAccumulators() { return accumulators; }
-	@Override public List<SPair<String, String>> getReporters() { return reporters; }
+	@Override public SParameters getDispatcher() { return dispatcher; }
+	@Override public List<SParameters> getAccumulators() { return accumulators; }
+	@Override public SParameters getReporter() { return reporter; }
 	
 	public boolean isComplete() { return tests != null; }
 	
@@ -68,9 +68,9 @@ public class STestSuiteSnap implements STestSuiteReader {
 		self.desc = source.getDescription();
 		self.createTestList(source.getTests());
 		self.addTestDeletedListeners();
-		self.dispatchers = source.getDispatchers();
+		self.dispatcher = source.getDispatcher();
 		self.accumulators = source.getAccumulators();
-		self.reporters = source.getReporters();
+		self.reporter = source.getReporter();
 		return self;
 	}
 	public static STestSuiteSnap createBasic(STestList test_list, STestSuiteBasicReader source) {
@@ -81,9 +81,9 @@ public class STestSuiteSnap implements STestSuiteReader {
 		self.name = source.getName();
 		self.desc = source.getDescription();
 		self.tests = null;
-		self.dispatchers = null;
+		self.dispatcher = null;
 		self.accumulators = null;
-		self.reporters = null;
+		self.reporter = null;
 		return self;
 	}
 	
@@ -95,9 +95,9 @@ public class STestSuiteSnap implements STestSuiteReader {
 		if (tests != null) removeTestDeletedListeners();
 		createTestList(source.getTests());
 		addTestDeletedListeners();
-		dispatchers = source.getDispatchers();
+		dispatcher = source.getDispatcher();
 		accumulators = source.getAccumulators();
-		reporters = source.getReporters();
+		reporter = source.getReporter();
 		notifyModified();
 	}
 	public void setBasic(STestSuiteBasicReader source) {

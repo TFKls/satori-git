@@ -2,12 +2,12 @@ package satori.problem;
 
 import java.util.List;
 
-import satori.common.SPair;
+import satori.metadata.SParameters;
 import satori.test.STestBasicReader;
 
 public interface STestSuiteReader extends STestSuiteBasicReader {
 	List<? extends STestBasicReader> getTests();
-	List<SPair<String, String>> getDispatchers();
-	List<SPair<String, String>> getAccumulators();
-	List<SPair<String, String>> getReporters();
+	SParameters getDispatcher();
+	List<SParameters> getAccumulators();
+	SParameters getReporter();
 }
