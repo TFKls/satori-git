@@ -69,7 +69,11 @@
 
 {% endif %}
 
-<h3>Code (<a href="getfile.submit.{{widget.sid}}">download</a>):</h3>
+<h3>Code (<a href="{% url download_group "download" "Submit" widget.sid "data" "content" filename %}">download</a>)</h3>
+{% if widget.code %}
 {{widget.code|safe}}
+{% else %}
+Cannot render this file, please download.
+{% endif %}
 
 {% endblock %}

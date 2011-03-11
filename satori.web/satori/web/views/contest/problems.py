@@ -95,6 +95,7 @@ def viewall(request, page_info):
 class ProblemAddForm(forms.Form):
     code = forms.CharField(required=True)
     title = forms.CharField(required=True)
+    description = forms.CharField(required=False, label='Additional comment')
     suite = forms.ChoiceField(choices=[])
     statement = forms.CharField(widget=forms.Textarea, required=False)
     pdf = forms.FileField(required=False)
@@ -116,7 +117,7 @@ def add(request, page_info):
             if form.is_valid():
                 data = form.cleaned_data
                 suite = filter(lambda s:s.id==int(data["suite"]),suites)[0]
-                mapping = ProblemMapping.create(ProblemMappingStruct(contest=page_info.contest,problem=problem,code=data['code'],title=data['title'], statement=data['statement'],default_test_suite=suite))
+                mapping = ProblemMapping.create(ProblemMappingStruct(contest=page_info.contest,problem=problem,code=data['code'],title=data['title'], statement=data['statement'], description=data['description'], default_test_suite=suite))
                 pdf = form.cleaned_data.get('pdf',None)
                 if pdf:
                     writer = Blob.create(pdf.size)
@@ -147,7 +148,7 @@ def edit(request, page_info, id):
         form = ProblemAddForm(data=request.POST,files=request.FILES,suites=suites)
         if form.is_valid():
             data = form.cleaned_data
-            mapping.modify(ProblemMappingStruct(code=data['code'],title=data['title'],statement=data['statement'],default_test_suite=TestSuite(int(data['suite']))))
+            mapping.modify(ProblemMappingStruct(code=data['code'],title=data['title'],statement=data['statement'],description=data['description'],default_test_suite=TestSuite(int(data['suite']))))
             pdf = form.cleaned_data.get('pdf',None)
             if pdf:
                 writer = Blob.create(pdf.size)
@@ -157,7 +158,7 @@ def edit(request, page_info, id):
                 mapping.statement_files_set_blob_hash('_pdf',phash)
             return HttpResponseRedirect(reverse('contest_problems_view',args=[page_info.contest.id,mapping.id]))
     else:
-        form = ProblemAddForm(initial={'code': mapping.code, 'title': mapping.title, 'statement' : mapping.statement, 'suite' : mapping.default_test_suite.id}, suites=suites)
+        form = ProblemAddForm(initial={'code': mapping.code, 'title': mapping.title, 'statement' : mapping.statement, 'description' : mapping.description, 'suite' : mapping.default_test_suite.id}, suites=suites)
     return render_to_response('problems_add.html', {'page_info': page_info, 'form' : form, 'base' : problem, 'editing' : mapping})
 
 @contest_view

@@ -16,7 +16,7 @@ class ContestSubpageEditForm(forms.Form):
     name = forms.CharField(label="Subpage name")
     fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
-    is_public = forms.BooleanField(label="Show to all visitors", required=False)
+    visibility = forms.ChoiceField(label="Ranking visible for", required=True, choices=[['admin','Admins only'],['contestant','Contestants'],['public', 'Everyone']]) 
 
 def valid_attachments(subpage):
     dfiles = []

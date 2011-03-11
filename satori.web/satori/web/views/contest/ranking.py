@@ -20,6 +20,7 @@ class AddBaseForm(forms.Form):
 
 @contest_view
 def add(request, page_info):
+    contest = page_info.contest
     aggregators = Global.get_aggregators()
 
     class AddSimpleForm(forms.Form):
@@ -37,8 +38,22 @@ def add(request, page_info):
         base_form = AddBaseForm(request.POST)
         form = xmlparams.ParamsForm(paramsdict=general,data=request.POST)
         if base_form.is_valid() and form.is_valid():
-            om = general.dict_to_oa_map(form.cleaned_data)
-            Ranking.create(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["ranking_name"],aggregator=selected,is_public=base_form.cleaned_data["ranking_is_public"]),om.get_map(), {}, {})
+            om = general.dict_to_oa_map(form.cleaned_data)            
+            ranking = Ranking.create(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["ranking_name"],aggregator=selected,is_public=False),om.get_map(), {}, {})
+            newvis = base_form.cleaned_data["ranking_visibility"]
+            if newvis=='public':
+                Privilege.grant(contest.contestant_role,ranking,'VIEW_FULL')
+                Privilege.grant(contest.contestant_role,ranking,'VIEW')
+                public = True
+            elif newvis=='contestant':
+                Privilege.grant(contest.contestant_role,ranking,'VIEW_FULL')
+                Privilege.grant(contest.contestant_role,ranking,'VIEW')
+                public = False
+            else:
+                Privilege.revoke(contest.contestant_role,ranking,'VIEW_FULL')
+                Privilege.revoke(contest.contestant_role,ranking,'VIEW')
+                public = False                    
+            ranking.is_public = public
     else:
         base_form = AddBaseForm()
         form = xmlparams.ParamsForm(general)
