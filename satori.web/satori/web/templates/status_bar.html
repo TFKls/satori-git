@@ -1,0 +1,10 @@
+{% if status_bar %}
+<div class="status_bar">
+{% for message in status_bar.messages %}
+    <div class="{{status_bar.msgclass}}">{{message}}</div>
+{% endfor %}
+{% for error in status_bar.errors %}
+    <div class="{{status_bar.errclass}}">{{error}}</div>
+{% endfor %}
+</div>
+{% endif %}

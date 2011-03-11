@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect
 from django import forms
 
 class RegisterForm(forms.Form):
-    login = forms.CharField(required=True,min_length=5,max_length=23,label="Login")
+    login = forms.CharField(required=True,min_length=3,max_length=24,label="Login",help_text="3-24 characters, only lowercase letters, digits and underscore.")
     firstname = forms.CharField(required=True,label="First name")
     lastname = forms.CharField(required=True,label="Last name")
     email = forms.EmailField(required=True,label="E-mail")
@@ -37,3 +37,11 @@ def view(request, page_info):
     else:
         form = RegisterForm()
     return render_to_response('register.html',{'form' : form})
+
+@general_view
+def activate(request, page_info,code):
+    try:
+        User.activate(code)
+        return HttpResponseRedirect(reverse('login')+"?status=activated")
+    except:
+        return HttpResponseRedirect(reverse('login')+"?status=actfailed")

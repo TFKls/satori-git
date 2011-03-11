@@ -364,6 +364,7 @@ class ACMAggregator(AggregatorBase):
     """
     def position(self,  score=0, time=maxint, name=''):
         return (u'%09d%09d%s' % (maxint - score, time, name))[0:50]
+
     class ACMScore(object):
         class ACMProblemScore(object):
             def __init__(self, score, problem):

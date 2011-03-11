@@ -48,7 +48,7 @@ class Submit(Entity):
         RawEvent().send(Event(type='checking_new_submit', id=submit.id))
         return submit
 
-    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), unicode, unicode, TypedMap(DjangoId('Test'), TypedMap(unicode, AnonymousAttribute))], PCGlobal('ADMIN'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), Binary, unicode, TypedMap(DjangoId('Test'), TypedMap(unicode, AnonymousAttribute))], PCGlobal('ADMIN'), [CannotSetField])
     @staticmethod
     def inject(fields, content, filename, test_results):
         submit = Submit()

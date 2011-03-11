@@ -2,6 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
+from satori.web.utils.forms import StatusBar
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -27,4 +28,15 @@ def view(request, page_info):
                 return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'failed' : True })
     else:
         form = LoginForm()
-    return render_to_response('login.html', {'page_info' : page_info, 'form' : form })
+    status = request.GET.get('status',None)
+    if status:
+        bar = StatusBar()
+    else:
+        bar = None
+    if status=='regok':
+        bar.messages.append('Registration successful, activation link has been sent.')
+    if status=='activated':
+        bar.messages.append('Account activated. You may now login.')
+    if status=='actfailed':
+        bar.errors.append('Activation failed!')
+    return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'status_bar' : bar })
