@@ -11,7 +11,7 @@
 <form action={% url subpage_create %} method="POST">
 {% endif %}
 
-<input name="fid" value="{{ fid }}" type="hidden">
+{{ form.fid }}
 <table class="subpage_form">
     <tr>
         <th><label for="id_name">Subpage name:</label></th>
@@ -31,7 +31,10 @@
     </tr>
     <tr>
         <th></th>
-        <td colspan="2"><b>Quick Hint: </b><i>To include an image into a new document use: ".. image:: image.jpg". To create a link inside a new document use: "`link title &lt;link address&gt;`"</i>
+        <td colspan="2">
+            <b>Quick Hint: </b>
+            <i>To include an image into a new document use: ".. image:: image.jpg".
+               To create a link inside a new document use: "`link title &lt;link address&gt;`"</i>
         </td>
     </tr>
     <tr>
@@ -44,11 +47,11 @@
 <p>Click to select or drag-and-drop multiple files on the upload field:</p>
 <form id="file_upload" action={% url contest_subpage_fileupload page_info.contest.id %} method="POST" enctype="multipart/form-data" class="file_upload">
     <input type="file" name="file" multiple>
-    <input name="fid" value="{{ fid }}" type="hidden">
+    {{ form.fid }}
     <button>Upload</button>
     <div>Attachments</div>
 </form>
 <table id="files"></table>
 <script src="/files/scripts/attachments_upload.js"></script>
-<script>createFileUploadInstance('{{ fid }}', '{% url contest_subpage_fileremove page_info.contest.id %}');</script>
+<script>createFileUploadInstance('{{ form.fid.value }}', '{% url contest_subpage_fileremove page_info.contest.id %}');</script>
 {% endblock %}
