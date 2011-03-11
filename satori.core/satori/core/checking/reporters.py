@@ -151,7 +151,7 @@ class ACMReporter(ReporterBase):
 
     def accumulate(self, test_result):
         test = test_result.test
-        code = TestMapping.objects.filter(test=test, suite= self.test_suite_result.suite)[0].order
+        code = TestMapping.objects.get(test=test, suite=self.test_suite_result.test_suite).order
         status = test_result.oa_get_str('status')
         time = test_result.oa_get_str('execute_time_cpu')
         if time is None:
