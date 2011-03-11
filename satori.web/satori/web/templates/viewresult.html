@@ -36,12 +36,13 @@
 
     {{widget.status}}</td>
 </tr>
-<tr>
-    <td colspan="6">{{widget.details}}</td>
-</tr>
 
 
 </table>
+
+<h4>Checking report</h4>
+{{widget.details|safe}}
+
 
 {% if widget.suites %}
 <h3>Suite results</h3>

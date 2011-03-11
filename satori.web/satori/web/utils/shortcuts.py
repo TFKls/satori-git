@@ -20,5 +20,5 @@ def render_to_json(*args, **kwargs):
     return response
 
 def text2html(text):
-    return publish_parts(text,writer_name='html')['fragment']
+    return '<div class="mainsphinx">'+publish_parts(text,writer_name='html')['fragment']+'</div>'
 
