@@ -16,7 +16,7 @@ def view(request, page_info, id):
     widget["contestant"] = res.contestant
     widget["problem"] = res.problem
     widget["time"] = submit.time
-    widget["details"] = res.details
+    widget["details"] = text2html(res.details)
     widget["status"] = res.status
     widget["isadmin"] = admin
     if admin:

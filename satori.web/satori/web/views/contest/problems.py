@@ -8,6 +8,7 @@ from django.shortcuts import render_to_response
 from django import forms
 from datetime import datetime
 from satori.web.utils.forms import SatoriDateTimeField
+from satori.web.utils.shortcuts import text2html
 
 class ProblemsPublishForm(forms.Form):
     submitstart = SatoriDateTimeField(required=False)
@@ -89,6 +90,7 @@ def viewall(request, page_info):
             p['when_view'] = pinfo.contestant_role_view_times
             p['when_submit'] = pinfo.contestant_role_submit_times
             p['has_pdf'] = pinfo.has_pdf
+            p['description'] = text2html(pinfo.problem_mapping.description)
         problems.append(p)
     return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin })
 

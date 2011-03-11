@@ -15,6 +15,10 @@
         <td>{{ form.name }}</td>
         <td style="text-align: right"><input type="submit" value="Save changes"/></td>
     </tr>
+    <tr>
+        <th><label for="id_visibility">{{ form.visibility.label }}</label></th>
+        <td>{{ form.visibility }}</td>
+    </tr>
     {% if sphinxException %}
     <tr>
         <th></th>
@@ -29,10 +33,6 @@
         <th></th>
         <td colspan="2"><b>Quick Hint: </b><i>To include an image into a new document use: ".. image:: image.jpg". To create a link inside a new document use: "`link title &lt;link address&gt;`"</i>
         </td>
-    </tr>
-    <tr>
-        <th><label for="id_is_public">{{ form.is_public.label }}</label></th>
-        <td>{{ form.is_public }}</td>
     </tr>
 </table>
 </form>
