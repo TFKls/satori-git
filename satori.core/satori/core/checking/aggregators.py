@@ -460,6 +460,14 @@ class ACMAggregator(AggregatorBase):
 
 
 class PointsAggregator(AggregatorBase):
+    """
+#@<aggregator name="Points aggregator">
+#@      <general>
+#@      </general>
+#@      <problem>
+#@      </problem>
+#@</aggregator>
+    """
     def position(self,  score=0, name=''):
         return (u'%09d%s' % (maxint - score, name))[0:50]
     class PointsScore(object):
