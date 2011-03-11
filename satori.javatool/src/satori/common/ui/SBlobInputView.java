@@ -150,6 +150,12 @@ public class SBlobInputView implements SPaneView {
 		try { data.set(SBlob.createLocal(file_chooser.getSelectedFile())); }
 		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
 	}
+	private void editFile() {
+		if (data.get() == null) return;
+		SEditDialog dialog = new SEditDialog();
+		try { data.set(dialog.process(data.get())); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+	}
 	private void saveFile() {
 		if (data.get() == null) return;
 		JFileChooser file_chooser = new JFileChooser();
@@ -205,16 +211,21 @@ public class SBlobInputView implements SPaneView {
 			@Override public void actionPerformed(ActionEvent e) { loadFile(); }
 		});
 		popup.add(loadItem);
-		JMenuItem saveItem = new JMenuItem("Save");
-		saveItem.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { saveFile(); }
+		JMenuItem editItem = new JMenuItem("Edit");
+		editItem.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { editFile(); }
 		});
-		popup.add(saveItem);
+		popup.add(editItem);
 		JMenuItem renameItem = new JMenuItem("Rename");
 		renameItem.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { rename(); }
 		});
 		popup.add(renameItem);
+		JMenuItem saveItem = new JMenuItem("Save");
+		saveItem.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { saveFile(); }
+		});
+		popup.add(saveItem);
 		if (location != null) popup.show(label, location.x, location.y);
 		else popup.show(label, 0, label.getHeight());
 	}

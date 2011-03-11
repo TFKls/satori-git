@@ -5,6 +5,8 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import jsyntaxpane.DefaultSyntaxKit;
+
 import satori.test.ui.SIcons;
 
 public class SatoriTool {
@@ -15,6 +17,7 @@ public class SatoriTool {
 				InputMap im = (InputMap)UIManager.get("Button.focusInputMap");
 				im.put(KeyStroke.getKeyStroke("ENTER"), "pressed");
 				im.put(KeyStroke.getKeyStroke("released ENTER"), "released");
+				DefaultSyntaxKit.initKit();
 				SFrame.get().start();
 			}
 		});

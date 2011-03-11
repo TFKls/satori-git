@@ -36,6 +36,12 @@ public class SBlobOutputView implements SPaneView {
 	
 	@Override public JComponent getPane() { return label; }
 	
+	private void showFile() {
+		if (data.get() == null) return;
+		SEditDialog dialog = new SEditDialog();
+		try { dialog.process(data.get()); }
+		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+	}
 	private void saveFile() {
 		if (data.get() == null) return;
 		JFileChooser file_chooser = new JFileChooser();
@@ -49,6 +55,11 @@ public class SBlobOutputView implements SPaneView {
 	
 	private void showPopup(Point location) {
 		JPopupMenu popup = new JPopupMenu();
+		JMenuItem showItem = new JMenuItem("Show");
+		showItem.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { showFile(); }
+		});
+		popup.add(showItem);
 		JMenuItem saveItem = new JMenuItem("Save");
 		saveItem.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { saveFile(); }
