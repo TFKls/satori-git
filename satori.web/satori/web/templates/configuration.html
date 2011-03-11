@@ -12,5 +12,21 @@
 
 <a href="{% url subpage_add %}">Add new subpage</a>
 
+{% if is_priv_admin %}
+<h4>Problem setters</h4>
+
+<table>
+{% for ps in problem_setters %}
+<tr><td>{{ ps.name }}</td><td><form action="" method="POST"><input type="submit" name="revoke" value="Revoke"><input type="hidden" name="id" value="{{ps.id}}"/></form></td></tr>
+{% endfor %}
+</table>
+
+<h4>Add problem setter:</h4>
+<form action="" method="POST">
+{{ form }} <input type="submit" name="add" value="Add"/>
+</form>
+
+{% endif %}
+
 
 {% endblock %}
