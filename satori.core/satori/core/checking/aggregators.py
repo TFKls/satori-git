@@ -452,7 +452,7 @@ class ACMAggregator(AggregatorBase):
         self.table = RestTable((4, 'Lp.'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
-        self.ranking.footer = ''
+        self.ranking.footer = self.table.header_row + self.table.row_separator
         self.ranking.save()
         
     def get_score(self):
