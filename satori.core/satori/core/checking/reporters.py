@@ -3,6 +3,7 @@ import logging
 from blist import sortedlist
 from satori.core.checking.utils import RestTable
 from satori.core.checking.aggregators import parse_params
+from satori.core.models import TestMapping
 
 class ReporterBase(object):
     def __init__(self, test_suite_result):
@@ -140,6 +141,7 @@ class ACMReporter(ReporterBase):
         self._statuses = {}
         self._times = {}
         self._messages = {}
+        self._names = {}
         self._codes = []
         self._status = 'OK'
         self.test_suite_result.oa_set_str('status', 'QUE')
@@ -155,10 +157,12 @@ class ACMReporter(ReporterBase):
         if time is None:
             time = ''
         message = test_result.oa_get_str('message') or ''
+        name = test_result.test.name
         self._codes.append(code)
         self._statuses[code] = status
         self._times[code] = time
         self._messages[code] = message
+        self._names[code] = name
         logging.debug('ACM Reporter %s: %s += %s', self.test_suite_result.id, self._status, status)
         if status is None:
             status = 'INT'
@@ -177,10 +181,10 @@ class ACMReporter(ReporterBase):
         self.test_suite_result.oa_set_str('status', status)
         self.test_suite_result.status = status
         if self.params.reporter_show_tests:
-            table = RestTable(('Code', 10), ('Status', 10), ('CPU time', 10), ('Message', 30))
+            table = RestTable(('Name', 10), ('Status', 10), ('CPU time', 10), ('Message', 30))
             report = table.row_separator + table.header_row + table.header_separator
             for code in self._codes.sorted():
-                report += table.generate_row(code, self._statuses[code], self._times[code], self._messages[code]) + table.row_separator
+                report += table.generate_row(self._names[code], self._statuses[code], self._times[code], self._messages[code]) + table.row_separator
         else:
             report = ''
         self.test_suite_result.report = report
