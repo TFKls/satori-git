@@ -18,18 +18,22 @@ class ContestSubpageEditForm(forms.Form):
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
     is_public = forms.BooleanField(label="Show to all visitors", required=False)
 
+def valid_attachments(subpage):
+    dfiles = []
+    for dfile in subpage.content_files_get_list():
+        if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')) and dfile.is_blob:
+            dfiles.append(dfile.name)
+    return dfiles
+
+
 @contest_view
 def view(request, page_info,id):
     sinfo = Web.get_subpage_info(Subpage(int(id)))
+    attachments = valid_attachments(sinfo.subpage)
     content = fill_image_links(sinfo.html, 'Subpage', id, 'content_files')
     can_edit = sinfo.subpage.contest and sinfo.is_admin
 
-    dfiles = []
-    for dfile in sinfo.subpage.content_files_get_list():
-        # TODO(kalq): Add checking for is_blob
-        if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')):
-            dfiles.append(dfile.name)
-    return render_to_response('subpage.html', { 'attachments' : dfiles,
+    return render_to_response('subpage.html', { 'attachments' : attachments,
                                                 'can_edit' : can_edit,
                                                 'content' : content,
                                                 'page_info' : page_info, 
@@ -79,13 +83,8 @@ def edit(request, page_info,id):
                                              content=data['content'],
                                              is_public=data['is_public']))
             except SphinxException as sphinxException:
-                # TODO(kalq): Make this in a cleaner way. Seriously.
-                dfiles = []
-                for dfile in subpage.content_files_get_list():
-                    # TODO(kalq): Add checking for is_blob
-                    if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')):
-                        dfiles.append(dfile.name)
-                return render_to_response('subpage_edit.html', { 'attachments' : dfiles,
+                attachments = valid_attachments(subpage)
+                return render_to_response('subpage_edit.html', { 'attachments' : attachments,
                                                                  'form' : form,
                                                                  'page_info' : page_info,
                                                                  'sphinxException' : sphinxException,
@@ -96,12 +95,8 @@ def edit(request, page_info,id):
                                                 'content' : subpage.content,
                                                 'fid' : tempfile.mkdtemp(),
                                                 'is_public' : subpage.is_public })
-        dfiles = []
-        for dfile in subpage.content_files_get_list():
-            # TODO(kalq): Add checking for is_blob
-            if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')):
-                dfiles.append(dfile.name)
-    return render_to_response('subpage_edit.html', { 'attachments' : dfiles, 
+    attachments = valid_attachments(subpage)
+    return render_to_response('subpage_edit.html', { 'attachments' : attachments, 
                                                      'form' : form,
                                                      'page_info' : page_info,
                                                      'subpage' : subpage })
