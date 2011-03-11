@@ -90,7 +90,7 @@ public class SProblemPane implements STabPane, SView {
 	private final SListener0 new_test_listener = new SListener0() {
 		@Override public void call() {
 			STestSuiteImpl suite = STestSuiteImpl.createNewTest(problem);
-			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
+			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, false);
 			suite_pane.getTestPane().add(suite.getTests());
 			suite_pane.open();
 		}
@@ -100,7 +100,7 @@ public class SProblemPane implements STabPane, SView {
 			STestSuiteImpl suite;
 			try { suite = STestSuiteImpl.createNew(snaps, problem); }
 			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
-			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
+			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, false);
 			suite_pane.getTestPane().add(suite.getTests());
 			suite_pane.open();
 		}
@@ -108,7 +108,7 @@ public class SProblemPane implements STabPane, SView {
 	private final SListener0 new_suite_listener = new SListener0() {
 		@Override public void call() {
 			STestSuiteImpl suite = STestSuiteImpl.createNew(problem);
-			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
+			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, true);
 			suite_pane.open();
 		}
 	};
@@ -117,7 +117,7 @@ public class SProblemPane implements STabPane, SView {
 			STestSuiteImpl suite;
 			try { suite = STestSuiteImpl.create(snap, problem); }
 			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
-			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory);
+			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, true);
 			suite_pane.getTestPane().add(suite.getTests());
 			suite_pane.open();
 		}

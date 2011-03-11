@@ -1,8 +1,6 @@
 package satori.problem.ui;
 
 import java.awt.Dimension;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.FocusEvent;
@@ -13,7 +11,6 @@ import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import satori.common.SException;
@@ -46,18 +43,27 @@ public class STestSuiteInfoPane implements SPane, SView {
 	private void updateAccumulators() { suite.setAccumulators(accumulators.getSelection()); }
 	private void updateReporters() { suite.setReporters(reporters.getSelection()); }
 	
+	private static JComponent setLabelSizes(JComponent comp) {
+		Dimension dim = new Dimension(100, 20);
+		comp.setPreferredSize(dim);
+		comp.setMinimumSize(dim);
+		comp.setMaximumSize(dim);
+		return comp;
+	}
 	private void initialize() {
 		pane = new Box(BoxLayout.X_AXIS);
-		pane.setOpaque(true);
-		JPanel pane1 = new JPanel(new GridBagLayout());
-		JPanel pane2 = new JPanel(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
-		c.gridx = 0; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.0; c.weighty = 0.0;
-		pane1.add(new JLabel("Name "), c);
-		pane1.add(new JLabel("Description "), c);
-		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5; c.weighty = 0.0;
+		Box pane1 = new Box(BoxLayout.Y_AXIS);
+		Box pane2 = new Box(BoxLayout.Y_AXIS);
+		pane1.add(setLabelSizes(new JLabel("Name")));
+		pane1.add(setLabelSizes(new JLabel("Description")));
+		pane1.add(setLabelSizes(new JLabel("Dispatcher")));
+		pane1.add(setLabelSizes(new JLabel("Accumulators")));
+		pane1.add(setLabelSizes(new JLabel("Reporter")));
+		pane1.add(Box.createVerticalGlue());
 		name_field = new JTextField();
-		name_field.setPreferredSize(new Dimension(120, 20));
+		name_field.setPreferredSize(new Dimension(480, 20));
+		name_field.setMinimumSize(new Dimension(480, 20));
+		name_field.setMaximumSize(new Dimension(480, 20));
 		name_field.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { updateName(); }
 		});
@@ -65,9 +71,11 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public void focusGained(FocusEvent e) {}
 			@Override public void focusLost(FocusEvent e) { updateName(); }
 		});
-		pane1.add(name_field, c);
+		pane2.add(name_field);
 		desc_field = new JTextField();
-		desc_field.setPreferredSize(new Dimension(120, 20));
+		desc_field.setPreferredSize(new Dimension(480, 20));
+		desc_field.setMinimumSize(new Dimension(480, 20));
+		desc_field.setMaximumSize(new Dimension(480, 20));
 		desc_field.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { updateDescription(); }
 		});
@@ -75,12 +83,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public void focusGained(FocusEvent e) {}
 			@Override public void focusLost(FocusEvent e) { updateDescription(); }
 		});
-		pane1.add(desc_field, c);
-		c.gridx = 0; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.0; c.weighty = 0.0;
-		pane2.add(new JLabel("Dispatcher "), c);
-		pane2.add(new JLabel("Accumulators "), c);
-		pane2.add(new JLabel("Reporter "), c);
-		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 0.5; c.weighty = 0.0;
+		pane2.add(desc_field);
 		dispatchers = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
 			@Override public List<SPair<String, String>> get() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getDispatchers());
@@ -88,9 +91,10 @@ public class STestSuiteInfoPane implements SPane, SView {
 		}, false, new SListener0() {
 			@Override public void call() { updateDispatchers(); }
 		});
-		dispatchers.getPane().setPreferredSize(new Dimension(120, 20));
-		dispatchers.getPane().setMinimumSize(new Dimension(120, 20));
-		pane2.add(dispatchers.getPane(), c);
+		dispatchers.getPane().setPreferredSize(new Dimension(480, 20));
+		dispatchers.getPane().setMinimumSize(new Dimension(480, 20));
+		dispatchers.getPane().setMaximumSize(new Dimension(480, 20));
+		pane2.add(dispatchers.getPane());
 		accumulators = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
 			@Override public List<SPair<String, String>> get() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getAccumulators());
@@ -98,9 +102,10 @@ public class STestSuiteInfoPane implements SPane, SView {
 		}, true, new SListener0() {
 			@Override public void call() { updateAccumulators(); }
 		});
-		accumulators.getPane().setPreferredSize(new Dimension(120, 20));
-		accumulators.getPane().setMinimumSize(new Dimension(120, 20));
-		pane2.add(accumulators.getPane(), c);
+		accumulators.getPane().setPreferredSize(new Dimension(480, 20));
+		accumulators.getPane().setMinimumSize(new Dimension(480, 20));
+		accumulators.getPane().setMaximumSize(new Dimension(480, 20));
+		pane2.add(accumulators.getPane());
 		reporters = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
 			@Override public List<SPair<String, String>> get() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getReporters());
@@ -108,12 +113,15 @@ public class STestSuiteInfoPane implements SPane, SView {
 		}, false, new SListener0() {
 			@Override public void call() { updateReporters(); }
 		});
-		reporters.getPane().setPreferredSize(new Dimension(120, 20));
-		reporters.getPane().setMinimumSize(new Dimension(120, 20));
-		pane2.add(reporters.getPane(), c);
+		reporters.getPane().setPreferredSize(new Dimension(480, 20));
+		reporters.getPane().setMinimumSize(new Dimension(480, 20));
+		reporters.getPane().setMaximumSize(new Dimension(480, 20));
+		pane2.add(reporters.getPane());
+		pane2.add(Box.createVerticalGlue());
 		pane.add(pane1);
 		pane.add(Box.createHorizontalStrut(5));
 		pane.add(pane2);
+		pane.add(Box.createHorizontalGlue());
 		update();
 	}
 	

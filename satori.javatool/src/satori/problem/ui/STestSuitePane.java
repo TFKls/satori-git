@@ -1,16 +1,17 @@
 package satori.problem.ui;
 
+import java.awt.BorderLayout;
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
 
 import satori.common.SException;
 import satori.common.SView;
@@ -26,6 +27,7 @@ public class STestSuitePane implements STabPane, SView {
 	private final STabs parent;
 	private final STestFactory factory;
 	
+	private boolean mode;
 	private STestSuiteInfoPane info_pane;
 	private STestPane test_pane;
 	private SView tab_view;
@@ -33,12 +35,15 @@ public class STestSuitePane implements STabPane, SView {
 	private JPanel main_pane;
 	private JLabel status_label;
 	private JPanel button_pane;
-	private JButton save_button, reload_button, delete_button, close_button;
+	private JButton create_button, save_button, reload_button, delete_button, close_button;
+	private JButton props_button, tests_button, params_button;
+	private JScrollPane scroll_pane;
 	
-	public STestSuitePane(STestSuiteImpl suite, STabs parent, STestFactory factory) {
+	public STestSuitePane(STestSuiteImpl suite, STabs parent, STestFactory factory, boolean mode) {
 		this.suite = suite;
 		this.parent = parent;
 		this.factory = factory;
+		this.mode = mode;
 		initialize();
 	}
 	
@@ -59,7 +64,7 @@ public class STestSuitePane implements STabPane, SView {
 		test_pane.addParentView(tab_view);
 	}
 	@Override public boolean hasUnsavedData() {
-		return suite.isModified() || test_pane.hasUnsavedData();
+		return mode && suite.isModified() || test_pane.hasUnsavedData();
 	}
 	@Override public void close() {
 		test_pane.removeAll();
@@ -89,49 +94,97 @@ public class STestSuitePane implements STabPane, SView {
 		close();
 		parent.closePane(this);
 	}
+	private void createTestSuiteRequest() {
+		if (mode) return;
+		mode = true;
+		button_pane.removeAll();
+		initializeAux();
+		button_pane.revalidate(); button_pane.repaint();
+		update();
+	}
+	private void showPropertiesRequest() {
+		scroll_pane.setBorder(BorderFactory.createTitledBorder("Test suite properties"));
+		scroll_pane.setViewportView(info_pane.getPane());
+	}
+	private void showTestsRequest() {
+		scroll_pane.setBorder(BorderFactory.createTitledBorder("Tests"));
+		scroll_pane.setViewportView(test_pane.getPane());
+	}
+	private void showParametersRequest() {}
 	
+	private void initializeAux() {
+		if (mode) {
+			button_pane.add(props_button);
+			button_pane.add(tests_button);
+			button_pane.add(params_button);
+			button_pane.add(Box.createHorizontalStrut(5));
+			button_pane.add(save_button);
+			button_pane.add(reload_button);
+			button_pane.add(delete_button);
+			button_pane.add(Box.createHorizontalStrut(5));
+			button_pane.add(close_button);
+			showPropertiesRequest();
+		} else {
+			button_pane.add(create_button);
+			button_pane.add(Box.createHorizontalStrut(5));
+			button_pane.add(close_button);
+			showTestsRequest();
+		}
+	}
 	private void initialize() {
 		info_pane = new STestSuiteInfoPane(suite);
 		test_pane = new STestPane(suite, factory);
 		
-		main_pane = new JPanel(new GridBagLayout());
-		GridBagConstraints c = new GridBagConstraints();
-		c.gridx = 0; c.gridy = 0; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 1;
+		main_pane = new JPanel(new BorderLayout());
+		JPanel upper_pane = new JPanel(new BorderLayout());
 		status_label = new JLabel();
-		main_pane.add(status_label, c);
-		c.gridx = 0; c.gridy = 1; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 1;
+		upper_pane.add(status_label, BorderLayout.NORTH);
 		button_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		create_button = new JButton("Create test suite");
+		create_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { createTestSuiteRequest(); }
+		});
 		save_button = new JButton("Save");
 		save_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { saveRequest(); }
 		});
-		button_pane.add(save_button);
 		reload_button = new JButton("Reload");
 		reload_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { reloadRequest(); }
 		});
-		button_pane.add(reload_button);
 		delete_button = new JButton("Delete");
 		delete_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { deleteRequest(); }
 		});
-		button_pane.add(delete_button);
 		close_button = new JButton("Close");
 		close_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { closeRequest(); }
 		});
-		button_pane.add(close_button);
-		main_pane.add(button_pane, c);
-		info_pane.getPane().setBorder(BorderFactory.createTitledBorder("Test suite properties"));
-		c.gridx = 0; c.gridy = 2; c.fill = GridBagConstraints.BOTH; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 1;
-		main_pane.add(info_pane.getPane(), c);
-		test_pane.getPane().setBorder(BorderFactory.createTitledBorder("Tests"));
-		c.gridx = 0; c.gridy = 3; c.fill = GridBagConstraints.BOTH; c.weightx = 1.0; c.weighty = 1.0; c.gridwidth = 1;
-		main_pane.add(test_pane.getPane(), c);
+		props_button = new JButton("Properties");
+		props_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { showPropertiesRequest(); }
+		});
+		tests_button = new JButton("Tests");
+		tests_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { showTestsRequest(); }
+		});
+		params_button = new JButton("Parameters");
+		params_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { showParametersRequest(); }
+		});
+		upper_pane.add(button_pane, BorderLayout.CENTER);
+		main_pane.add(upper_pane, BorderLayout.NORTH);
+		scroll_pane = new JScrollPane();
+		main_pane.add(scroll_pane, BorderLayout.CENTER);
+		initializeAux();
 		update();
 	}
 	
 	@Override public void update() {
+		if (!mode) {
+			status_label.setText("Status: no test suite");
+			return;
+		}
 		reload_button.setEnabled(suite.isRemote());
 		delete_button.setEnabled(suite.isRemote());
 		String status_text = "";
@@ -147,6 +200,6 @@ public class STestSuitePane implements STabPane, SView {
 		}
 		if (status_text.isEmpty()) status_text = "saved";
 		status_label.setText("Status: " + status_text);
-		info_pane.update();
+		info_pane.update(); //TODO: necessary?
 	}
 }

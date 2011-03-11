@@ -1,7 +1,6 @@
 package satori.test.ui;
 
 import java.awt.Color;
-import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -13,7 +12,6 @@ import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
-import javax.swing.JPanel;
 
 import satori.common.SException;
 import satori.common.SListener0;
@@ -85,7 +83,7 @@ public class SSolutionPane implements SRow {
 		@Override public JComponent getPane() { return pane; }
 		
 		private void initialize() {
-			pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+			pane = new Box(BoxLayout.X_AXIS);
 			SDimension.setButtonItemSize(pane);
 			JButton run_button = new JButton(SIcons.runIcon);
 			run_button.setMargin(new Insets(0, 0, 0, 0));
@@ -107,6 +105,7 @@ public class SSolutionPane implements SRow {
 				}
 			});
 			pane.add(refresh_button);
+			pane.add(Box.createHorizontalGlue());
 		}
 	}
 	
@@ -122,7 +121,7 @@ public class SSolutionPane implements SRow {
 		
 		private void initialize() {
 			pane = new Box(BoxLayout.X_AXIS);
-			JPanel label_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+			Box label_pane = new Box(BoxLayout.X_AXIS);
 			SDimension.setButtonLabelSize(label_pane);
 			JButton run_button = new JButton(SIcons.runIcon);
 			run_button.setMargin(new Insets(0, 0, 0, 0));
@@ -144,6 +143,7 @@ public class SSolutionPane implements SRow {
 				}
 			});
 			label_pane.add(refresh_button);
+			label_pane.add(Box.createHorizontalGlue());
 			pane.add(label_pane);
 			pane.add(Box.createHorizontalGlue());
 		}
@@ -194,11 +194,12 @@ public class SSolutionPane implements SRow {
 				view.getPane().setMaximumSize(SDimension.itemDim);
 				pane.add(view.getPane());
 			}
-			pane.add(Box.createVerticalGlue());
+			if (pane.getComponentCount() == 0) pane.add(Box.createHorizontalStrut(SDimension.itemWidth));
 		}
 		private void initialize() {
 			pane = new Box(BoxLayout.Y_AXIS);
 			pane.setOpaque(true);
+			pane.setAlignmentY(0.0f);
 			fillPane();
 			result.getTest().addMetadataModifiedListener(meta_listener);
 			default_color = pane.getBackground();
@@ -236,8 +237,8 @@ public class SSolutionPane implements SRow {
 			JLabel label = new JLabel("Result");
 			SDimension.setLabelSize(label);
 			Box label_box = new Box(BoxLayout.Y_AXIS);
+			label_box.setAlignmentY(0.0f);
 			label_box.add(label);
-			label_box.add(Box.createVerticalGlue());
 			pane.add(label_box);
 			pane.add(Box.createHorizontalGlue());
 		}
@@ -259,7 +260,7 @@ public class SSolutionPane implements SRow {
 	
 	private void initialize() {
 		pane = new Box(BoxLayout.Y_AXIS);
-		JPanel solution_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		Box solution_pane = new Box(BoxLayout.X_AXIS);
 		JLabel solution_label = new JLabel("Solution");
 		SDimension.setButtonLabelSize(solution_label);
 		solution_pane.add(solution_label);
@@ -281,6 +282,7 @@ public class SSolutionPane implements SRow {
 			}
 		});
 		solution_pane.add(remove_button);
+		solution_pane.add(Box.createHorizontalGlue());
 		pane.add(solution_pane);
 		button_row = new ButtonRow();
 		pane.add(button_row.getPane());

@@ -41,9 +41,8 @@ import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SView;
 import satori.common.ui.SBlobInputView;
-import satori.common.ui.SPaneView;
 import satori.common.ui.SPane;
-import satori.common.ui.SScrollPane;
+import satori.common.ui.SPaneView;
 import satori.common.ui.SStringInputView;
 import satori.main.SFrame;
 import satori.metadata.SInputMetadata;
@@ -67,9 +66,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 	private List<STestImpl> tests = new ArrayList<STestImpl>();
 	private List<SView> parent_views = new ArrayList<SView>();
 	
-	private JComponent pane;
-	private JComponent input_pane;
-	private SScrollPane scroll_pane;
+	private JComponent main_pane, pane, input_pane;
 	
 	private SListener1<SSolutionPane> remove_solution_listener = new SListener1<SSolutionPane>() {
 		@Override public void call(SSolutionPane removed_pane) {
@@ -202,7 +199,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 		initialize();
 	}
 	
-	@Override public JComponent getPane() { return scroll_pane.getPane(); }
+	@Override public JComponent getPane() { return main_pane; }
 	
 	@SuppressWarnings("serial")
 	private class Pane extends Box {
@@ -257,7 +254,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 	}
 	private void moveTestRequest(STestImpl test, MouseEvent e) {
 		transfer_handler.setTest(test);
-		transfer_handler.exportAsDrag(scroll_pane.getPane(), e, TransferHandler.MOVE);
+		transfer_handler.exportAsDrag(main_pane, e, TransferHandler.MOVE);
 	}
 	
 //
@@ -276,7 +273,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 		@Override public JComponent getPane() { return pane; }
 		
 		private void initialize() {
-			pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+			pane = new Box(BoxLayout.X_AXIS);
 			SDimension.setButtonItemSize(pane);
 			final JButton move_button = new JButton(SIcons.moveIcon);
 			move_button.setMargin(new Insets(0, 0, 0, 0));
@@ -332,6 +329,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 				}
 			});
 			pane.add(remove_button);
+			pane.add(Box.createHorizontalGlue());
 		}
 	}
 	
@@ -347,7 +345,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 		
 		private void initialize() {
 			pane = new Box(BoxLayout.X_AXIS);
-			JPanel label_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+			Box label_pane = new Box(BoxLayout.X_AXIS);
 			SDimension.setButtonLabelSize(label_pane);
 			JButton save_button = new JButton(SIcons.saveIcon);
 			save_button.setMargin(new Insets(0, 0, 0, 0));
@@ -369,6 +367,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 				}
 			});
 			label_pane.add(reload_button);
+			label_pane.add(Box.createHorizontalGlue());
 			pane.add(label_pane);
 			JButton add_button = new JButton(SIcons.addIcon);
 			add_button.setMargin(new Insets(0, 0, 0, 0));
@@ -582,10 +581,11 @@ public class STestPane implements SPane, SList<STestImpl> {
 				view.getPane().setMaximumSize(SDimension.itemDim);
 				pane.add(view.getPane());
 			}
-			pane.add(Box.createVerticalGlue());
+			if (pane.getComponentCount() == 0) pane.add(Box.createHorizontalStrut(SDimension.itemWidth));
 		}
 		private void initialize() {
 			pane = new Box(BoxLayout.Y_AXIS);
+			pane.setAlignmentY(0.0f);
 			fillPane();
 			test.addMetadataModifiedListener(new SListener0() {
 				@Override public void call() {
@@ -612,8 +612,8 @@ public class STestPane implements SPane, SList<STestImpl> {
 			JLabel label = new JLabel("Data");
 			SDimension.setLabelSize(label);
 			Box label_box = new Box(BoxLayout.Y_AXIS);
+			label_box.setAlignmentY(0.0f);
 			label_box.add(label);
-			label_box.add(Box.createVerticalGlue());
 			pane.add(label_box);
 			pane.add(Box.createHorizontalGlue());
 		}
@@ -670,7 +670,7 @@ public class STestPane implements SPane, SList<STestImpl> {
 		addInputRow(new InfoRow());
 		addInputRow(new DataRow());
 		pane.add(input_pane);
-		JPanel bottom_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		Box bottom_pane = new Box(BoxLayout.X_AXIS);
 		JButton bottom_button = new JButton("Add solution");
 		bottom_button.setMargin(new Insets(0, 0, 0, 0));
 		SDimension.setButtonHeight(bottom_button);
@@ -680,11 +680,12 @@ public class STestPane implements SPane, SList<STestImpl> {
 			}
 		});
 		bottom_pane.add(bottom_button);
+		bottom_pane.add(Box.createHorizontalGlue());
 		pane.add(bottom_pane);
-		scroll_pane = new SScrollPane();
-		scroll_pane.setView(pane);
-		scroll_pane.getPane().setTransferHandler(transfer_handler);
-		try { scroll_pane.getPane().getDropTarget().addDropTargetListener(drop_listener); }
+		main_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		main_pane.add(pane);
+		main_pane.setTransferHandler(transfer_handler);
+		try { main_pane.getDropTarget().addDropTargetListener(drop_listener); }
 		catch(TooManyListenersException ex) {}
 	}
 	
