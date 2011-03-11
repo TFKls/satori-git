@@ -82,6 +82,8 @@ def viewall(request, page_info):
         admin = pinfo.is_admin
         p['problem'] = pinfo.problem_mapping
         p['admin'] = admin
+        p['has_pdf'] = pinfo.has_pdf
+        p['description'] = text2html(pinfo.problem_mapping.description)
         if admin:
             any_admin = True
             p['select'] = form[str(pinfo.problem_mapping.id)]
@@ -89,8 +91,6 @@ def viewall(request, page_info):
             p['submittable'] = between(pinfo.contestant_role_submit_times,datetime.now())
             p['when_view'] = pinfo.contestant_role_view_times
             p['when_submit'] = pinfo.contestant_role_submit_times
-            p['has_pdf'] = pinfo.has_pdf
-            p['description'] = text2html(pinfo.problem_mapping.description)
         problems.append(p)
     return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin })
 
