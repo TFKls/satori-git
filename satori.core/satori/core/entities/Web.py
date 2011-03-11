@@ -93,24 +93,28 @@ class Web(object):
             ret.append(ret_c)
         return ret
 
+    @ExportMethod(ProblemMappingInfo, [DjangoId('ProblemMapping')], PCPermit())
+    def get_problem_mapping_info(problem):
+        ret_p = ProblemMappingInfo()
+        ret_p.problem_mapping = problem
+        ret_p.has_pdf = problem.statement_files_get('_pdf') is not None
+        reader = problem.statement_files_get_blob('_html')
+        if reader:
+            ret_p.html = reader.read()
+            reader.close()
+        ret_p.can_submit = Privilege.demand(problem, 'SUBMIT')
+        ret_p.is_admin = Privilege.demand(problem, 'MANAGE')
+        if ret_p.is_admin:
+            ret_p.contestant_role_view_times = Privilege.get(problem.contest.contestant_role, problem, 'VIEW')
+            ret_p.contestant_role_submit_times = Privilege.get(problem.contest.contestant_role, problem, 'SUBMIT')
+        return ret_p;
+
     @ExportMethod(TypedList(ProblemMappingInfo), [DjangoId('Contest')], PCPermit())
     @staticmethod
     def get_problem_mapping_list(contest):
         ret = []
         for problem in Privilege.where_can(contest.problem_mappings.all(), 'VIEW'):
-            ret_p = ProblemMappingInfo()
-            ret_p.problem_mapping = problem
-            ret_p.has_pdf = problem.statement_files_get('_pdf') is not None
-            reader = problem.statement_files_get_blob('_html')
-            if reader:
-                ret_p.html = reader.read()
-                reader.close()
-            ret_p.can_submit = Privilege.demand(problem, 'SUBMIT')
-            ret_p.is_admin = Privilege.demand(problem, 'MANAGE')
-            if ret_p.is_admin:
-                ret_p.contestant_role_view_times = Privilege.get(contest.contestant_role, problem, 'VIEW')
-                ret_p.contestant_role_submit_times = Privilege.get(contest.contestant_role, problem, 'SUBMIT')
-            ret.append(ret_p)
+            ret.append(Web.get_problem_mapping_info(problem))
         return ret
 
     @ExportMethod(SubpageInfo, [DjangoId('Subpage')], PCPermit())
