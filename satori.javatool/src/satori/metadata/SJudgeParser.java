@@ -146,10 +146,10 @@ public class SJudgeParser {
 		parse(xml.toString(), judge);
 	}
 	
-	private static Map<String, SJudge> judges = new HashMap<String, SJudge>();
+	private static Map<SBlob, SJudge> judges = new HashMap<SBlob, SJudge>();
 	
 	public static SJudge parseJudge(SBlob judge) throws SException {
-		if (judges.containsKey(judge.getHash())) return judges.get(judge.getHash());
+		if (judges.containsKey(judge)) return judges.get(judge);
 		File file = judge.getFile();
 		boolean delete = false;
 		if (file == null) {
@@ -162,7 +162,7 @@ public class SJudgeParser {
 		result.setBlob(judge);
 		parse(file, result);
 		if (delete) file.delete();
-		judges.put(judge.getHash(), result);
+		judges.put(judge, result);
 		return result;
 	}
 }
