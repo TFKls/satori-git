@@ -187,7 +187,7 @@ class ACMReporter(ReporterBase):
         self.test_suite_result.oa_set_str('status', status)
         self.test_suite_result.status = status
         if self.params.reporter_show_tests:
-            table = RestTable((10, 'Test'), (10, 'Status'), (10, 'CPU time'), (30, 'Message'))
+            table = RestTable((20, 'Test'), (10, 'Status'), (10, 'CPU time'), (30, 'Message'))
             report = table.row_separator + table.header_row + table.header_separator
             for code in sorted(self._codes):
                 report += table.generate_row(self._names[code], self._statuses[code], self._times[code], self._messages[code]) + table.row_separator
