@@ -4,6 +4,8 @@ want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
 from django import forms
 from django.shortcuts import render_to_response
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 
 @contest_view
 def view(request, page_info):
@@ -37,6 +39,7 @@ def view(request, page_info):
                 content = data["codefile"].read()
                 filename = data["codefile"].name
             Submit.create(SubmitStruct(problem=problem),content=content,filename=filename)
+            return HttpResponseRedirect(reverse('results',args=[page_info.contest.id]))
     else:
         form = SubmitForm()
     return render_to_response('submit.html', {'page_info' : page_info, 'form' : form})

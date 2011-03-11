@@ -116,7 +116,7 @@ def add(request, page_info):
             if form.is_valid():
                 data = form.cleaned_data
                 suite = filter(lambda s:s.id==int(data["suite"]),suites)[0]
-                ProblemMapping.create(ProblemMappingStruct(contest=page_info.contest,problem=problem,code=data['code'],title=data['title'], statement=data['statement'],default_test_suite=suite))
+                mapping = ProblemMapping.create(ProblemMappingStruct(contest=page_info.contest,problem=problem,code=data['code'],title=data['title'], statement=data['statement'],default_test_suite=suite))
                 pdf = form.cleaned_data.get('pdf',None)
                 if pdf:
                     writer = Blob.create(pdf.size)

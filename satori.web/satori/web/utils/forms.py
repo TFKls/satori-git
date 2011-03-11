@@ -2,6 +2,13 @@ from django import forms
 from datetime import datetime
 
 
+class StatusBar():
+    def __init__(self):
+        self.messages = []
+        self.errors = []
+        self.msgclass = 'bar_message'
+        self.errclass = 'bar_error'
+
 class SatoriSplitDateTime(forms.SplitDateTimeWidget):
     class Media:
         css = { 'all' : ('/files/calendar/css/jquery.datepick.css',) }
