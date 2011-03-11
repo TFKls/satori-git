@@ -170,7 +170,7 @@ class ACMReporter(ReporterBase):
             self._status = status
 
     def status(self):
-        return True
+        return self._status == 'OK'
 
     def deinit(self):
         logging.debug('ACM Reporter %s: %s', self.test_suite_result.id, self._status)
