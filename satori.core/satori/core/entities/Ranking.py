@@ -138,6 +138,7 @@ class Ranking(Entity):
             param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
             param.test_suite = suite
             param.save()
+        self.rejudge()
 
     @ExportMethod(TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def get_problem_params(self):
@@ -154,6 +155,7 @@ class Ranking(Entity):
             param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
             param.save()
             param.params_set_map(oa_map)
+        self.rejudge()
 
     @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def rejudge(self):
