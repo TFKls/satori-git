@@ -17,12 +17,13 @@ def view(request, page_info):
 
     class SubmitForm(forms.Form):
         problem = forms.ChoiceField(submitable,label='Please select problem')
-        code = forms.CharField(required=False,widget=forms.Textarea, label='Paste code')
+#        code = forms.CharField(required=False,widget=forms.Textarea, label='Paste code')
         codefile = forms.FileField(required=False, label='Upload file')
         
         def clean(self):
             data = self.cleaned_data
-            if data["code"]=="" and not data["codefile"]:
+#            if data["code"]=="" and not data["codefile"]:
+            if not data["codefile"]
                 raise forms.ValidationError("No code given!")
             return data
             
@@ -32,9 +33,9 @@ def view(request, page_info):
             data = form.cleaned_data
             pid = int(data["problem"])
             problem = ProblemMapping.filter(ProblemMappingStruct(id=pid))[0]
-            if data["code"]!="":
-                content = data["code"]
-                filename = problem.code
+#            if data["code"]!="":
+#                content = data["code"]
+#                filename = problem.code
             if data["codefile"]:
                 content = data["codefile"].read()
                 filename = data["codefile"].name
