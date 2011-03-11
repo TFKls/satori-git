@@ -33,7 +33,7 @@ class Submit(Entity):
         self.fixup_data()
         super(Submit, self).save(*args, **kwargs)
 
-    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), unicode, unicode], PCArgField('fields', 'problem', 'SUBMIT'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), Binary, unicode], PCArgField('fields', 'problem', 'SUBMIT'), [CannotSetField])
     @staticmethod
     def create(fields, content, filename):
         submit = Submit()

@@ -28,6 +28,7 @@ class ThriftProcessor(TProcessor):
         self.seqid = 0
 
     ATOMIC_TYPE = {
+        ArsBinary:  TType.STRING,
         ArsBoolean: TType.BOOL,
         ArsInt8:    TType.BYTE,
         ArsInt16:   TType.I16,
@@ -63,6 +64,7 @@ class ThriftProcessor(TProcessor):
         return self._ttype(type_.target_type)
 
     ATOMIC_SEND = {
+        ArsBinary:  'writeString',
         ArsBoolean: 'writeBool',
         ArsInt8:    'writeByte',
         ArsInt16:   'writeI16',
@@ -121,6 +123,7 @@ class ThriftProcessor(TProcessor):
         proto.writeSetEnd()
 
     ATOMIC_RECV = {
+        ArsBinary:  'readString',
         ArsBoolean: 'readBool',
         ArsInt8:    'readByte',
         ArsInt16:   'readI16',
@@ -253,6 +256,8 @@ class ThriftProcessor(TProcessor):
         if fastbinary is not None:
             oproto.trans.write(fastbinary.encode_binary(value, self.typeargs(struct)[1]))
         else:
+            # the above code that is not using fastbinary is totally untested and should not be used
+            raise Exception('fastbinary is required')
             self._send(value, struct, oproto)
 
     def recv_struct(self, struct, iproto):
@@ -261,6 +266,8 @@ class ThriftProcessor(TProcessor):
             fastbinary.decode_binary(ret, iproto.trans, self.typeargs(struct)[1])
             return ret
         else:
+            # the above code that is not using fastbinary is totally untested and should not be used
+            raise Exception('fastbinary is required')
             return self._recv(struct, iproto)
 
     def process(self, iproto, oproto):

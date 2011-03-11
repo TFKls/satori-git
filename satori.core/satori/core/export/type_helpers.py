@@ -79,6 +79,10 @@ def DefineException(name, message, fields=[]):
 
     return exception_subclass
 
+class Binary(object):
+    @staticmethod
+    def ars_type():
+        return ArsBinary
 
 python_basic_types = {
     NoneType: ArsVoid,

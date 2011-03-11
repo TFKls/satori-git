@@ -10,6 +10,7 @@ class ThriftWriter(object):
     """
 
     ATOMIC_NAMES = {
+        ArsBinary:  'binary',
         ArsBoolean: 'bool',
         ArsInt8:    'byte',
         ArsInt16:   'i16',
