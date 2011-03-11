@@ -349,7 +349,7 @@ class ACMAggregator(AggregatorBase):
 #@<aggregator name="ACM style aggregator">
 #@      <general>
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
-#@              <param type="bool"     name="show_zero"      description="Hide invisible submits" default="false"/>
+#@              <param type="bool"     name="show_zero"      description="Hide contestants with zero score" default="false"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" default="1200s"/>
