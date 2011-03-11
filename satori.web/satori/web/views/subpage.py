@@ -38,7 +38,7 @@ def view(request, page_info,id):
                                                 'subpage' : sinfo.subpage })
 
 @general_view
-def create(request, page_info):
+def add(request, page_info):
     if request.method=="POST":
         form = GlobalSubpageEditForm(request.POST)
         if form.is_valid():
@@ -52,14 +52,14 @@ def create(request, page_info):
             try:
                 subpage.content = data["content"]
             except SphinxException as sphinxException:
-                return render_to_response('subpage_create.html', { 'form' : form, 
+                return render_to_response('subpage_add.html', { 'form' : form, 
                                                                    'page_info' : page_info,
                                                                    'sphinxException' : sphinxException })
             return HttpResponseRedirect(reverse('subpage',args=[subpage.id]))
     else:
         #TODO(kalq): Create a hash instead of full pathname
         form = GlobalSubpageEditForm(initial={ 'fid' : tempfile.mkdtemp() })
-    return render_to_response('subpage_create.html', { 'form' : form,
+    return render_to_response('subpage_add.html', { 'form' : form,
                                                        'page_info' : page_info })
 
 @general_view
