@@ -42,6 +42,7 @@ ProblemMappingInfo = Struct('ProblemMappingInfo', [
     ('can_submit', bool, False),
     ('is_admin', bool, False),
     ('has_pdf', bool, False),
+    ('html', unicode, False),
     ('contestant_role_view_times', PrivilegeTimes, False),
     ('contestant_role_submit_times', PrivilegeTimes, False),
     ])
@@ -100,6 +101,10 @@ class Web(object):
             ret_p = ProblemMappingInfo()
             ret_p.problem_mapping = problem
             ret_p.has_pdf = problem.statement_files_get('_pdf') is not None
+            reader = problem.statement_files_get_blob('_html')
+            if reader:
+                ret_p.html = reader.read()
+                reader.close()
             ret_p.can_submit = Privilege.demand(problem, 'SUBMIT')
             ret_p.is_admin = Privilege.demand(problem, 'MANAGE')
             if ret_p.is_admin:
