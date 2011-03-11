@@ -23,7 +23,7 @@ def view(request, page_info):
         def clean(self):
             data = self.cleaned_data
 #            if data["code"]=="" and not data["codefile"]:
-            if not data["codefile"]
+            if not data["codefile"]:
                 raise forms.ValidationError("No code given!")
             return data
             
