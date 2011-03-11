@@ -94,6 +94,7 @@ class Web(object):
         return ret
 
     @ExportMethod(ProblemMappingInfo, [DjangoId('ProblemMapping')], PCPermit())
+    @staticmethod
     def get_problem_mapping_info(problem):
         ret_p = ProblemMappingInfo()
         ret_p.problem_mapping = problem
