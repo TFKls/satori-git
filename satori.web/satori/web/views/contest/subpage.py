@@ -14,9 +14,9 @@ from django.shortcuts import render_to_response
 
 class ContestSubpageEditForm(forms.Form):
     name = forms.CharField(label="Subpage name")
+    visibility = forms.ChoiceField(label="Visible for", required=True, choices=[['admin','Admins only'],['contestant','Contestants'],['public', 'Everyone']]) 
     fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
-    is_public = forms.BooleanField(label="Show to all visitors", required=False)
 
 def valid_attachments(subpage):
     dfiles = []
@@ -40,6 +40,7 @@ def view(request, page_info,id):
 
 @contest_view
 def add(request, page_info):
+    contest = page_info.contest
     if request.method=="POST":
         form = ContestSubpageEditForm(request.POST)
         if form.is_valid():
@@ -49,6 +50,18 @@ def add(request, page_info):
                                                                content='',
                                                                contest=page_info.contest,
                                                                name=data['name']))
+                                                               
+            vis = data["visibility"]
+            if vis=='public':
+                Privilege.grant(contest.contestant_role,subpage,'VIEW')
+                subpage.is_public = True
+            elif vis=='contestant':
+                Privilege.grant(contest.contestant_role,subpage,'VIEW')
+                subpage.is_public = False
+            else:
+                Privilege.revoke(contest.contestant_role,subpage,'VIEW')
+                subpage.is_public = False                                                               
+            
             for ufile in glob.glob(os.path.join(fid, '*')):
                 subpage.content_files_set_blob_path(os.path.basename(ufile), ufile)
             try:
@@ -66,6 +79,7 @@ def add(request, page_info):
 
 @contest_view
 def edit(request, page_info,id):
+    contest = page_info.contest
     subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
     if request.method=="POST":
         form = ContestSubpageEditForm(request.POST)
@@ -79,8 +93,20 @@ def edit(request, page_info,id):
                 subpage.content_files_set_blob_path(os.path.basename(ufile), ufile)
             try:
                 subpage.modify(SubpageStruct(name=data['name'],
-                                             content=data['content'],
-                                             is_public=data['is_public']))
+                                             content=data['content']))
+
+                vis = data["visibility"]
+                if vis=='public':
+                    Privilege.grant(contest.contestant_role,subpage,'VIEW')
+                    subpage.is_public = True
+                elif vis=='contestant':
+                    Privilege.grant(contest.contestant_role,subpage,'VIEW')
+                    subpage.is_public = False
+                else:
+                    Privilege.revoke(contest.contestant_role,subpage,'VIEW')
+                    subpage.is_public = False                                                               
+
+
             except SphinxException as sphinxException:
                 attachments = valid_attachments(subpage)
                 return render_to_response('subpage_edit.html', { 'attachments' : attachments,
@@ -90,10 +116,17 @@ def edit(request, page_info,id):
                                                                  'subpage' : subpage })
             return HttpResponseRedirect(reverse('contest_subpage', args=[page_info.contest.id, subpage.id]))
     else:
+        if subpage.is_public:
+            vis = 'public'
+        elif Privilege.get(contest.contestant_role,subpage,'VIEW'):
+            vis = 'contestant'
+        else:
+            vis = 'admin'
         form = ContestSubpageEditForm(initial={ 'name' : subpage.name,
                                                 'content' : subpage.content,
                                                 'fid' : tempfile.mkdtemp(),
-                                                'is_public' : subpage.is_public })
+                                                'visibility' : vis
+                                                })
     attachments = valid_attachments(subpage)
     return render_to_response('subpage_edit.html', { 'attachments' : attachments, 
                                                      'form' : form,

@@ -33,7 +33,7 @@ class Submit(Entity):
         self.fixup_data()
         super(Submit, self).save(*args, **kwargs)
 
-    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), unicode, unicode], PCArgField('fields', 'problem', 'SUBMIT'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), Binary, unicode], PCArgField('fields', 'problem', 'SUBMIT'), [CannotSetField])
     @staticmethod
     def create(fields, content, filename):
         submit = Submit()
@@ -48,7 +48,7 @@ class Submit(Entity):
         RawEvent().send(Event(type='checking_new_submit', id=submit.id))
         return submit
 
-    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), unicode, unicode, TypedMap(DjangoId('Test'), TypedMap(unicode, AnonymousAttribute))], PCGlobal('ADMIN'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Submit'), [DjangoStruct('Submit'), Binary, unicode, TypedMap(DjangoId('Test'), TypedMap(unicode, AnonymousAttribute))], PCGlobal('ADMIN'), [CannotSetField])
     @staticmethod
     def inject(fields, content, filename, test_results):
         submit = Submit()

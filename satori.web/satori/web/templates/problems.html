@@ -29,7 +29,9 @@
 {% else %}
 {{ problem.title }}
 {% endif %}
+</td>
 
+<td>
 {% if pinfo.admin %}
 {% if pinfo.visible %} Visible {% endif %}
 {% if pinfo.submittable %} Submittable {% endif %}
@@ -82,6 +84,11 @@ PDF
 <a href={% url contest_problems_edit page_info.contest.id problem.id %}>Edit problem</a>
 {% endif %}
 </td>
+
+<td>
+{{ pinfo.description|safe }}
+</td>
+
 </tr>
 
 {% endwith %}

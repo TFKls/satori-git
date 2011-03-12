@@ -2,11 +2,14 @@
 import logging
 from blist import sortedlist
 from satori.core.checking.utils import RestTable
+from satori.core.checking.aggregators import parse_params
+from satori.core.models import TestMapping
 
 class ReporterBase(object):
     def __init__(self, test_suite_result):
         super(ReporterBase, self).__init__()
         self.test_suite_result = test_suite_result
+        self.params = parse_params(self.__doc__, 'reporter', 'general', self.test_suite_result.test_suite.params_get_map())
 
     def init(self):
         pass
@@ -39,7 +42,7 @@ class AssignmentReporter(ReporterBase):
     def deinit(self):
         status = 'ACC'
         report = ''
-        oa_map = self.test_suite_result.submit.overrides_get_map
+        oa_map = self.test_suite_result.submit.overrides_get_map()
         ostatus = oa_map.get('status', None)
         if ostatus is not None and not ostatus.is_blob:
             status = ostatus.value
@@ -52,6 +55,12 @@ class AssignmentReporter(ReporterBase):
         self.test_suite_result.oa_set_map(oa_map)
 
 class StatusReporter(ReporterBase):
+    """
+#@<reporter name="Status reporter">
+#@      <general>
+#@      </general>
+#@</reporter>
+    """
     def __init__(self, test_suite_result):
         super(StatusReporter, self).__init__(test_suite_result)
 
@@ -123,7 +132,78 @@ class MultipleStatusReporter(ReporterBase):
         self.test_suite_result.report = report
         self.test_suite_result.save()
 
+class ACMReporter(ReporterBase):
+    """
+#@<reporter name="ACM style reporter">
+#@      <general>
+#@              <param type="bool"     name="reporter_show_tests"     description="Show individual test results" default="true"/>
+#@      </general>
+#@</reporter>
+    """
+    def __init__(self, test_suite_result):
+        super(ACMReporter, self).__init__(test_suite_result)
+
+    def init(self):
+        self._statuses = {}
+        self._times = {}
+        self._messages = {}
+        self._names = {}
+        self._codes = []
+        self._status = 'OK'
+        self.test_suite_result.oa_set_str('status', 'QUE')
+        self.test_suite_result.status = 'QUE'
+        self.test_suite_result.report = ''
+        self.test_suite_result.save()
+
+    def accumulate(self, test_result):
+        test = test_result.test
+        code = TestMapping.objects.get(test=test, suite=self.test_suite_result.test_suite).order
+        status = test_result.oa_get_str('status')
+        time = test_result.oa_get_str('execute_time_cpu')
+        if time is None:
+            time = ''
+        message = test_result.oa_get_str('message') or ''
+        name = test_result.test.name
+        self._codes.append(code)
+        self._statuses[code] = status
+        self._times[code] = time
+        self._messages[code] = message
+        self._names[code] = name
+        logging.debug('ACM Reporter %s: %s += %s', self.test_suite_result.id, self._status, status)
+        if status is None:
+            status = 'INT'
+        if self._status == 'OK' and status != 'OK':
+            self._status = status
+
+    def status(self):
+        return self._status == 'OK'
+
+    def deinit(self):
+        logging.debug('ACM Reporter %s: %s', self.test_suite_result.id, self._status)
+        status = self._status
+        os = self.test_suite_result.submit.overrides_get('status')
+        if os is not None and not os.is_blob:
+            status = os.value
+        self.test_suite_result.oa_set_str('status', status)
+        self.test_suite_result.status = status
+        if self.params.reporter_show_tests:
+            table = RestTable((20, 'Test'), (10, 'Status'), (10, 'CPU time'), (30, 'Message'))
+            report = table.row_separator + table.header_row + table.header_separator
+            for code in sorted(self._codes):
+                report += table.generate_row(self._names[code], self._statuses[code], self._times[code], self._messages[code]) + table.row_separator
+        else:
+            report = ''
+        self.test_suite_result.report = report
+        self.test_suite_result.save()
+
+
 class PointsReporter(ReporterBase):
+    """
+#@<reporter name="Points reporter">
+#@      <general>
+#@      </general>
+#@</reporter>
+    """
     def __init__(self, test_suite_result):
         super(PointsReporter, self).__init__(test_suite_result)
 

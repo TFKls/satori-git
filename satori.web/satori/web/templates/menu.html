@@ -2,54 +2,56 @@
     <ul>
         {% if page_info.contest %}
             <li><a href="{% url contest_news page_info.contest.id %}">News</a></li>
+            
             {% for subpage in page_info.subpages %}
                 <li><a href="{% url contest_subpage page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
+            
             {% if page_info.contest_viewable_problems_exist or page_info.contest_is_admin %}
                 <li><a href="{% url contest_problems page_info.contest.id %}">Problems</a></li>
             {% endif %}
+            
             {% if page_info.contest_submittable_problems_exist %}
                 <li><a href="{% url submit page_info.contest.id %}">Submit</a></li>
             {% endif %}
-            {% for ranking in page_info.rankings %}
-                <li><a href="{% url ranking page_info.contest.id ranking.id %}">{{ranking.name}}</a></li>
-            {% endfor %}
+            
             {% if page_info.contestant %}
                 <li><a href="{% url results page_info.contest.id %}">Results</a></li>
             {% endif %}
+            
             {% comment %}
             {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
                 <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
             {% endif %}
             {% endcomment %}
+            
+            {% for ranking in page_info.rankings %}
+                <li><a href="{% url ranking page_info.contest.id ranking.id %}">{{ranking.name}}</a></li>
+            {% endfor %}
+            
             {% if page_info.contest_is_admin %}
                 <li><a href="{% url contestants page_info.contest.id %}">Contestants</a></li>
                 <li><a href="{% url contest_manage page_info.contest.id %}">Manage contest</a></li>
             {% endif %}
-            {% comment %}
-            {% if page_info.contest_is_admin %}
-                <li><a href="{% url answers page_info.contest.id %}">Answers</a></li>
-                <li><a href="{% url manage_contest_news page_info.contest.id %}">Manage news</a></li>
-                <li><a href="{% url contestants page_info.contest.id %}">Contestants</a></li>
-            {% endif %}
+
             {% if page_info.is_problemsetter %}
-                <li><a href="{% url problem_repository %}">Problem repository</a></li>
+                <li><a href="https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp">Manage problems and tests</a></li>
             {% endif %}
-            {% endcomment %}
-            <li><a href="{% url news %}">Return to main</a></li>
+            
         {% else %}
             <li><a href="{% url news %}">News</a></li>
-            {% for subpage in page_info.subpages %}
-                <li><a href="{% url subpage subpage.id %}">{{subpage.name}}</a></li>
-            {% endfor %}
             <li><a href="{% url select_contest %}">Select contest</a></li>
             {% if page_info.is_admin %}
                 <li><a href="{% url configuration %}">Configuration</a></li>
             {% endif %}
+
             {% if page_info.is_problemsetter %}
-                <li><a href="">Problem repository</a></li>
                 <li><a href="https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp">Manage problems and tests</a></li>
             {% endif %}
+
+            {% for subpage in page_info.subpages %}
+                <li><a href="{% url subpage subpage.id %}">{{subpage.name}}</a></li>
+            {% endfor %}
         {% endif %}
     </ul>
 </div>

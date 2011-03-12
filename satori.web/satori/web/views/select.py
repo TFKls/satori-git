@@ -28,6 +28,7 @@ def view(request, page_info):
         for id in request.POST.keys():
             contest = Contest(int(id))
             contest.join()
+            return HttpResponseRedirect(reverse('select_contest'))
     if can_create and not create_form:
         create_form = CreateForm()
     managed = []

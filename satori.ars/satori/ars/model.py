@@ -98,12 +98,10 @@ ArsInt32 = ArsAtomicType(name='ArsInt32')
 ArsInt64 = ArsAtomicType(name='ArsInt64')
 ArsFloat = ArsAtomicType(name='ArsFloat')
 ArsVoid = ArsAtomicType(name='ArsVoid')
+ArsBinary = ArsAtomicType(name='ArsBinary')
 
 
 class ArsStringType(ArsAtomicType):
-    """An ArsType without (visible) internal structure.
-    """
-
     def __init__(self, name):
         super(ArsStringType, self).__init__(name)
 

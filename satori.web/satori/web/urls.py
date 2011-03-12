@@ -45,6 +45,7 @@ contestpatterns = patterns('',
 
 urlpatterns = patterns('',
     (r'^$', 'satori.web.views.news.view'),
+    url(r'^activate/(?P<code>[0-9a-zA-Z]+)$', 'satori.web.views.register.activate', name='activate'),
     url(r'^configuration$', 'satori.web.views.configuration.view', name='configuration'),
     url(r'^news$', 'satori.web.views.news.view', name='news'),
     url(r'^news/add$', 'satori.web.views.news.add', name='news_add'),

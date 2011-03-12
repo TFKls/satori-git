@@ -1,5 +1,6 @@
 import re
 import os
+from docutils.core import publish_parts
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from satori.web.sphinx.translator import rendertask
@@ -19,5 +20,5 @@ def render_to_json(*args, **kwargs):
     return response
 
 def text2html(text):
-    return rendertask(unicode(text), os.path.join(PROJECT_PATH, 'files/tmp'), 'files/tmp')
+    return '<div class="mainsphinx">'+publish_parts(text,writer_name='html')['fragment']+'</div>'
 

@@ -16,7 +16,7 @@ def view(request, page_info, id):
     widget["contestant"] = res.contestant
     widget["problem"] = res.problem
     widget["time"] = submit.time
-    widget["details"] = res.details
+    widget["details"] = text2html(res.details)
     widget["status"] = res.status
     widget["isadmin"] = admin
     if admin:
@@ -35,7 +35,18 @@ def view(request, page_info, id):
                         d['attr'].append([k,v.value])
                 widget["results"].append(d)                        
         widget["results"].sort(key=lambda r: r['test'].name)
-    rawcode = submit.data_get_blob('content').read(100000)
-    rawcode = unicode(rawcode,'utf8')
-    widget["code"] = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
-    return render_to_response('viewresult.html',{'page_info' : page_info, 'widget' : widget})
+    reader = submit.data_get_blob('content')
+    fullname = reader.filename.rsplit('.',2)
+    if len(fullname)==2:
+        extension = '.'+fullname[1]
+    else:
+        extension = ''
+    filename = str(submit.id)+extension
+    rawcode = reader.read(100000)
+    reader.close()
+    try:
+        rawcode = unicode(rawcode,'utf8')
+        widget["code"] = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
+    except:
+        widget["code"] = None
+    return render_to_response('viewresult.html',{'page_info' : page_info, 'widget' : widget, 'filename' : filename})

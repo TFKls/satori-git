@@ -17,6 +17,7 @@ class GlobalSubpageEditForm(forms.Form):
     fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
     is_public = forms.BooleanField(label="Show in every contest", required=False)
+    
 
 def valid_attachments(subpage):
     dfiles = []
@@ -46,7 +47,8 @@ def add(request, page_info):
             fid = data['fid']
             subpage = Subpage.create_global(SubpageStruct(is_announcement=False,
                                                                content='',
-                                                               name=data['name']))
+                                                               name=data['name'],
+                                                               is_public=data['is_public']))
             for ufile in glob.glob(os.path.join(fid, '*')):
                 subpage.content_files_set_blob_path(os.path.basename(ufile), ufile)
             try:

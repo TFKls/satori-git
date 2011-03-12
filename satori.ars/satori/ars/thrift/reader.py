@@ -44,6 +44,7 @@ def t_error(t):
 lexer = lex.lex(debug=0)
 
 ATOMIC_TYPES = {
+    'binary': ArsBinary,
     'bool': ArsBoolean,
     'byte': ArsInt8,
     'i16': ArsInt16,

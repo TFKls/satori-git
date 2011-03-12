@@ -18,7 +18,7 @@ InvalidPassword = DefineException('InvalidPassword', 'The specified password is 
 def login_ok(login):
     if not login:
         raise InvalidLogin(login=login, reason='is empty')
-    if len(login) < 4:
+    if len(login) < 3:
         raise InvalidLogin(login=login, reason='is too short')
     if len(login) > 24:
         raise InvalidLogin(login=login, reason='is too long')

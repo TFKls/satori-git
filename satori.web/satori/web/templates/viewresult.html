@@ -36,12 +36,13 @@
 
     {{widget.status}}</td>
 </tr>
-<tr>
-    <td colspan="6">{{widget.details}}</td>
-</tr>
 
 
 </table>
+
+<h4>Checking report</h4>
+{{widget.details|safe}}
+
 
 {% if widget.suites %}
 <h3>Suite results</h3>
@@ -69,7 +70,11 @@
 
 {% endif %}
 
-<h3>Code (<a href="getfile.submit.{{widget.sid}}">download</a>):</h3>
-{{widget.code}}
+<h3>Code (<a href="{% url download_group "download" "Submit" widget.sid "data" "content" filename %}">download</a>)</h3>
+{% if widget.code %}
+{{widget.code|safe}}
+{% else %}
+Cannot render this file, please download.
+{% endif %}
 
 {% endblock %}

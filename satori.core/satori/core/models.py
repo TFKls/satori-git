@@ -8,7 +8,7 @@ from satori.core.export import BadAttributeType, Attribute, AnonymousAttribute, 
 from satori.core.export import PCDeny, PCPermit, PCArg, PCArgField, PCGlobal, PCAnd, PCOr, PCEach, PCEachKey, PCEachValue, PCTokenUser, PCRawBlob
 from satori.core.export import PCTokenIsUser, PCTokenIsMachine
 from satori.core.export import token_container
-from satori.core.export import Struct, DefineException, TypedList, TypedMap
+from satori.core.export import Binary, Struct, DefineException, TypedList, TypedMap
 from satori.core.export import DjangoId, DjangoStruct, DjangoIdList, DjangoStructList
 from satori.core.export import CannotDeleteObject, InvalidArgument
 

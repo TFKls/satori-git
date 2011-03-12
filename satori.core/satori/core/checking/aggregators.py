@@ -349,7 +349,7 @@ class ACMAggregator(AggregatorBase):
 #@<aggregator name="ACM style aggregator">
 #@      <general>
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
-#@              <param type="bool"     name="show_zero"      description="Hide invisible submits" default="false"/>
+#@              <param type="bool"     name="show_zero"      description="Hide contestants with zero score" default="false"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" default="1200s"/>
@@ -364,6 +364,7 @@ class ACMAggregator(AggregatorBase):
     """
     def position(self,  score=0, time=maxint, name=''):
         return (u'%09d%09d%s' % (maxint - score, time, name))[0:50]
+
     class ACMScore(object):
         class ACMProblemScore(object):
             def __init__(self, score, problem):
@@ -451,7 +452,7 @@ class ACMAggregator(AggregatorBase):
         self.table = RestTable((4, 'Lp.'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
-        self.ranking.footer = ''
+        self.ranking.footer = self.table.header_row + self.table.row_separator
         self.ranking.save()
         
     def get_score(self):
@@ -459,6 +460,14 @@ class ACMAggregator(AggregatorBase):
 
 
 class PointsAggregator(AggregatorBase):
+    """
+#@<aggregator name="Points aggregator">
+#@      <general>
+#@      </general>
+#@      <problem>
+#@      </problem>
+#@</aggregator>
+    """
     def position(self,  score=0, name=''):
         return (u'%09d%s' % (maxint - score, name))[0:50]
     class PointsScore(object):
