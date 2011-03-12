@@ -180,6 +180,7 @@ public class STestImpl implements STestReader {
 		desc = snap.getDescription();
 		input = new HashMap<SInputMetadata, Object>(snap.getInput());
 		notifyUpToDate();
+		callMetadataModifiedListeners();
 		callDataModifiedListeners();
 	}
 	public void create() throws SException {

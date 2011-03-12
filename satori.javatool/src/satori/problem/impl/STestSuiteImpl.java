@@ -301,6 +301,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		accumulators = snap.getAccumulators();
 		reporter = snap.getReporter();
 		notifyUpToDate();
+		callMetadataModifiedListeners();
 	}
 	public void create() throws SException {
 		SAssert.assertFalse(isRemote(), "Test suite already created");
