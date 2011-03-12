@@ -1,7 +1,7 @@
 package satori.thrift;
 
-import static satori.thrift.SAttributeData.addLocalAttrMap;
-import static satori.thrift.SAttributeData.convertAttrMap;
+import static satori.thrift.SAttributeData.convertAnonymousAttribute;
+import static satori.thrift.SAttributeData.createAnonymousAttribute;
 import static satori.thrift.SGlobalData.getAccumulators;
 import static satori.thrift.SGlobalData.getDispatchers;
 import static satori.thrift.SGlobalData.getReporters;
@@ -61,7 +61,20 @@ public class STestSuiteData {
 		@Override public Map<SInputMetadata, Object> getGeneralParameters() { return general_params; }
 		@Override public Map<SPair<SInputMetadata, Long>, Object> getTestParameters() { return test_params; }
 	}
-
+	
+	private static void fillAnonymousAttributes(String prefix, List<SInputMetadata> meta_list, Map<SInputMetadata, Object> params, Map<String, AnonymousAttribute> result) {
+		for (SInputMetadata meta : meta_list) {
+			Object param = params.get(meta);
+			if (param != null) result.put(prefix + "." + meta.getName(), createAnonymousAttribute(param));
+		}
+	}
+	private static void fillParameters(String prefix, List<SInputMetadata> meta_list, Map<String, AnonymousAttribute> attrs, Map<SInputMetadata, Object> result) throws SException {
+		for (SInputMetadata meta : meta_list) {
+			AnonymousAttribute attr = attrs.get(prefix + "." + meta.getName());
+			if (attr != null) result.put(meta, convertAnonymousAttribute(attr));
+		}
+	}
+	
 	private static SParametersMetadata parseDispatcher(String str, Map<String, String> map) throws SException {
 		if (str.isEmpty()) return null;
 		if (!map.containsKey(str)) throw new SException("Incorrect dispatcher: " + str);
@@ -110,9 +123,9 @@ public class STestSuiteData {
 		result.setAccumulators(accumulators);
 		result.setReporter(reporter);
 		Map<SInputMetadata, Object> general_params = new HashMap<SInputMetadata, Object>();
-		if (dispatcher != null) addLocalAttrMap(dispatcher.getName() + ".", dispatcher.getGeneralParameters(), command.getParameters(), general_params);
-		for (SParametersMetadata accumulator : accumulators) addLocalAttrMap(accumulator.getName() + ".", accumulator.getGeneralParameters(), command.getParameters(), general_params);
-		if (reporter != null) addLocalAttrMap(reporter.getName() + ".", reporter.getGeneralParameters(), command.getParameters(), general_params);
+		if (dispatcher != null) fillParameters(dispatcher.getName(), dispatcher.getGeneralParameters(), command.getParameters(), general_params);
+		for (SParametersMetadata accumulator : accumulators) fillParameters(accumulator.getName(), accumulator.getGeneralParameters(), command.getParameters(), general_params);
+		if (reporter != null) fillParameters(reporter.getName(), reporter.getGeneralParameters(), command.getParameters(), general_params);
 		result.setGeneralParameters(general_params);
 		result.setTestParameters(Collections.<SPair<SInputMetadata, Long>, Object>emptyMap());
 		return result;
@@ -144,20 +157,11 @@ public class STestSuiteData {
 	}
 	private static Map<String, AnonymousAttribute> createParams(STestSuiteReader suite) throws SException {
 		Map<SInputMetadata, Object> params = suite.getGeneralParameters();
-		Map<String, Object> map = new HashMap<String, Object>();
-		if (suite.getDispatcher() != null) {
-			String prefix = suite.getDispatcher().getName() + ".";
-			for (SInputMetadata im : suite.getDispatcher().getGeneralParameters()) map.put(prefix + im.getName(), params.get(im));
-		}
-		for (SParametersMetadata accumulator : suite.getAccumulators()) {
-			String prefix = accumulator.getName() + ".";
-			for (SInputMetadata im : accumulator.getGeneralParameters()) map.put(prefix + im.getName(), params.get(im));
-		}
-		if (suite.getReporter() != null) {
-			String prefix = suite.getReporter().getName() + ".";
-			for (SInputMetadata im : suite.getReporter().getGeneralParameters()) map.put(prefix + im.getName(), params.get(im));
-		}
-		return convertAttrMap(map);
+		Map<String, AnonymousAttribute> result = new HashMap<String, AnonymousAttribute>();
+		if (suite.getDispatcher() != null) fillAnonymousAttributes(suite.getDispatcher().getName(), suite.getDispatcher().getGeneralParameters(), params, result);
+		for (SParametersMetadata accumulator : suite.getAccumulators()) fillAnonymousAttributes(accumulator.getName(), accumulator.getGeneralParameters(), params, result);
+		if (suite.getReporter() != null) fillAnonymousAttributes(suite.getReporter().getName(), suite.getReporter().getGeneralParameters(), params, result);
+		return result;
 	}
 	private static List<Map<String, AnonymousAttribute>> createTestParams(List<? extends SIdReader> tests) {
 		List<Map<String, AnonymousAttribute>> result = new ArrayList<Map<String, AnonymousAttribute>>();

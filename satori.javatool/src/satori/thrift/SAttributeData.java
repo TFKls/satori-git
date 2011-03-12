@@ -5,6 +5,7 @@ import java.util.List;
 import java.util.Map;
 
 import satori.blob.SBlob;
+import satori.common.SAssertException;
 import satori.common.SException;
 import satori.metadata.SMetadata;
 import satori.session.SSession;
@@ -12,6 +13,24 @@ import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.Blob;
 
 class SAttributeData {
+	static AnonymousAttribute createAnonymousAttribute(Object value) {
+		if (value instanceof String) {
+			AnonymousAttribute result = new AnonymousAttribute();
+			result.setIs_blob(false);
+			result.setValue((String)value);
+			return result;
+		} else if (value instanceof SBlob) {
+			AnonymousAttribute result = new AnonymousAttribute();
+			result.setIs_blob(true);
+			result.setFilename(((SBlob)value).getName());
+			result.setValue(((SBlob)value).getHash());
+			return result;
+		} else throw new SAssertException("Invalid attribute class");
+	}
+	static Object convertAnonymousAttribute(AnonymousAttribute attr) {
+		return attr.isIs_blob() ? SBlob.createRemote(attr.getFilename(), attr.getValue()) : attr.getValue();
+	}
+	
 	static Map<String, AnonymousAttribute> convertAttrMap(Map<String, Object> attrs) throws SException {
 		Map<String, AnonymousAttribute> map = new HashMap<String, AnonymousAttribute>();
 		for (Map.Entry<String, Object> entry : attrs.entrySet()) {
@@ -77,14 +96,6 @@ class SAttributeData {
 			result.put(meta, value);
 		}
 		return result;
-	}
-	static <T extends SMetadata> void addLocalAttrMap(String prefix, List<T> meta_list, Map<String, AnonymousAttribute> attrs, Map<T, Object> result) throws SException {
-		for (T meta : meta_list) {
-			AnonymousAttribute attr = attrs.get(prefix + meta.getName());
-			if (attr == null) continue;
-			Object value = attr.isIs_blob() ? SBlob.createRemote(attr.getFilename(), attr.getValue()) : attr.getValue();
-			result.put(meta, value);
-		}
 	}
 	
 	static void createBlobs(Map<String, Object> attrs) throws SException {
