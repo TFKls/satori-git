@@ -105,7 +105,7 @@ public class SParametersPane implements SPane {
 	private void fillPane() {
 		if (suite.getDispatcher() != null) fillPane(suite.getDispatcher().getName(), suite.getDispatcher().getGeneralParameters());
 		for (SParametersMetadata pm : suite.getAccumulators()) fillPane(pm.getName(), pm.getGeneralParameters());
-		if (suite.getDispatcher() != null) fillPane(suite.getReporter().getName(), suite.getReporter().getGeneralParameters());
+		if (suite.getReporter() != null) fillPane(suite.getReporter().getName(), suite.getReporter().getGeneralParameters());
 	}
 	private void initialize() {
 		pane = new Box(BoxLayout.Y_AXIS);

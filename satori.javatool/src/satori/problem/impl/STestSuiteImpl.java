@@ -216,8 +216,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 	public void setDispatcher(SParametersMetadata dispatcher) {
 		if (this.dispatcher == null && dispatcher == null) return;
 		if (this.dispatcher != null && this.dispatcher.equals(dispatcher)) return;
-		for (SInputMetadata im : this.dispatcher.getGeneralParameters()) general_params.remove(im);
-		for (SInputMetadata im : dispatcher.getGeneralParameters()) {
+		if (this.dispatcher != null) for (SInputMetadata im : this.dispatcher.getGeneralParameters()) general_params.remove(im);
+		if (dispatcher != null) for (SInputMetadata im : dispatcher.getGeneralParameters()) {
 			Object value = im.getDefaultValue();
 			if (value != null) general_params.put(im, value);
 		}
@@ -241,8 +241,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 	public void setReporter(SParametersMetadata reporter) {
 		if (this.reporter == null && reporter == null) return;
 		if (this.reporter != null && this.reporter.equals(reporter)) return;
-		for (SInputMetadata im : this.reporter.getGeneralParameters()) general_params.remove(im);
-		for (SInputMetadata im : reporter.getGeneralParameters()) {
+		if (this.reporter != null) for (SInputMetadata im : this.reporter.getGeneralParameters()) general_params.remove(im);
+		if (reporter != null) for (SInputMetadata im : reporter.getGeneralParameters()) {
 			Object value = im.getDefaultValue();
 			if (value != null) general_params.put(im, value);
 		}
