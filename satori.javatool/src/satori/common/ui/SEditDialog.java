@@ -14,10 +14,12 @@ import java.io.OutputStreamWriter;
 
 import javax.swing.JButton;
 import javax.swing.JDialog;
-import javax.swing.JEditorPane;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
-import javax.swing.JScrollPane;
+
+import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
+import org.fife.ui.rsyntaxtextarea.SyntaxConstants;
+import org.fife.ui.rtextarea.RTextScrollPane;
 
 import satori.blob.SBlob;
 import satori.common.SException;
@@ -26,15 +28,18 @@ import satori.main.SFrame;
 public class SEditDialog {
 	private SBlob blob;
 	private JDialog dialog;
-	private JEditorPane edit_pane;
+	private RSyntaxTextArea edit_pane;
 	
 	public SEditDialog() { initialize(); }
 	
 	private void initialize() {
 		dialog = new JDialog(SFrame.get().getFrame(), true);
 		dialog.getContentPane().setLayout(new BorderLayout());
-		edit_pane = new JEditorPane();
-		JScrollPane scroll_pane = new JScrollPane(edit_pane);
+		edit_pane = new RSyntaxTextArea();
+		edit_pane.setClearWhitespaceLinesEnabled(false);
+		edit_pane.setHighlightCurrentLine(false);
+		edit_pane.setTabSize(4);
+		RTextScrollPane scroll_pane = new RTextScrollPane(edit_pane);
 		dialog.getContentPane().add(scroll_pane, BorderLayout.CENTER);
 		JPanel button_pane = new JPanel(new FlowLayout(FlowLayout.CENTER));
 		JButton save = new JButton("Save");
@@ -74,11 +79,11 @@ public class SEditDialog {
 		this.blob = blob;
 		String name = blob.getName();
 		dialog.setTitle(name);
-		if (name.endsWith(".java")) edit_pane.setContentType("text/java");
-		else if (name.endsWith(".c")) edit_pane.setContentType("text/c");
-		else if (name.endsWith(".cpp")) edit_pane.setContentType("text/cpp");
-		else if (name.endsWith(".py")) edit_pane.setContentType("text/python");
-		else edit_pane.setContentType("text/plain");
+		if (name.endsWith(".java")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
+		else if (name.endsWith(".c")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_C);
+		else if (name.endsWith(".cpp")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
+		else if (name.endsWith(".py")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_PYTHON);
+		else edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
 		File file = blob.getFile();
 		boolean delete = false;
 		if (file == null) {
@@ -90,6 +95,7 @@ public class SEditDialog {
 		try { edit_pane.read(new InputStreamReader(new FileInputStream(file)), null); }
 		catch(IOException ex) { throw new SException(ex); }
 		finally { if (delete) file.delete(); }
+		edit_pane.discardAllEdits();
 		dialog.setVisible(true);
 		return this.blob;
 	}
