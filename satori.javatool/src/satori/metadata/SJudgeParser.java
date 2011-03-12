@@ -153,15 +153,15 @@ public class SJudgeParser {
 		File file = judge.getFile();
 		boolean delete = false;
 		if (file == null) {
-			try { file = File.createTempFile("judge", null); }
+			try { file = File.createTempFile("satori", null); }
 			catch(IOException ex) { throw new SException(ex); }
 			judge.saveLocal(file);
 			delete = true;
 		}
 		SJudge result = new SJudge();
 		result.setBlob(judge);
-		parse(file, result);
-		if (delete) file.delete();
+		try { parse(file, result); }
+		finally { if (delete) file.delete(); }
 		judges.put(judge, result);
 		return result;
 	}
