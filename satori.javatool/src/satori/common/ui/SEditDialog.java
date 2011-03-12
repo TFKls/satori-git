@@ -5,6 +5,7 @@ import java.awt.Dimension;
 import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
@@ -92,9 +93,10 @@ public class SEditDialog {
 			blob.saveLocal(file);
 			delete = true;
 		}
-		try { edit_pane.read(new InputStreamReader(new FileInputStream(file)), null); }
+		try { edit_pane.read(new BufferedReader(new InputStreamReader(new FileInputStream(file))), null); }
 		catch(IOException ex) { throw new SException(ex); }
 		finally { if (delete) file.delete(); }
+		edit_pane.setCaretPosition(0);
 		edit_pane.discardAllEdits();
 		dialog.setVisible(true);
 		return this.blob;
