@@ -1,12 +1,12 @@
 package satori.problem.ui;
 
 import java.awt.BorderLayout;
-import java.awt.FlowLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.BorderFactory;
 import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -33,9 +33,9 @@ public class STestSuitePane implements STabPane, SView {
 	private SParametersPane params_pane;
 	private SView tab_view;
 	
-	private JPanel main_pane;
+	private JComponent main_pane;
 	private JLabel status_label;
-	private JPanel button_pane;
+	private JComponent button_pane;
 	private JButton create_button, save_button, reload_button, delete_button, close_button;
 	private JButton props_button, tests_button, params_button;
 	private JScrollPane scroll_pane;
@@ -141,10 +141,12 @@ public class STestSuitePane implements STabPane, SView {
 		params_pane = new SParametersPane(suite);
 		
 		main_pane = new JPanel(new BorderLayout());
-		JPanel upper_pane = new JPanel(new BorderLayout());
+		Box upper_pane = new Box(BoxLayout.Y_AXIS);
 		status_label = new JLabel();
-		upper_pane.add(status_label, BorderLayout.NORTH);
-		button_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		status_label.setAlignmentX(0.0f);
+		upper_pane.add(status_label);
+		button_pane = new Box(BoxLayout.X_AXIS);
+		button_pane.setAlignmentX(0.0f);
 		create_button = new JButton("Create test suite");
 		create_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { createTestSuiteRequest(); }

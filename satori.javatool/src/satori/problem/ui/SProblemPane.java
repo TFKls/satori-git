@@ -1,7 +1,6 @@
 package satori.problem.ui;
 
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
@@ -9,6 +8,8 @@ import java.awt.event.ActionListener;
 import java.util.List;
 
 import javax.swing.BorderFactory;
+import javax.swing.Box;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
@@ -50,9 +51,9 @@ public class SProblemPane implements STabPane, SView {
 	};
 	
 	private JScrollPane scroll_pane;
-	private JPanel main_pane;
+	private JComponent main_pane;
 	private JLabel status_label;
-	private JPanel button_pane;
+	private JComponent button_pane;
 	private JButton save_button, reload_button, delete_button, close_button;
 	
 	private SProblemPane(SProblemImpl problem, STabs parent) {
@@ -155,7 +156,7 @@ public class SProblemPane implements STabPane, SView {
 		status_label = new JLabel();
 		main_pane.add(status_label, c);
 		c.gridx = 0; c.gridy = 1; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 2;
-		button_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		button_pane = new Box(BoxLayout.X_AXIS);
 		save_button = new JButton("Save");
 		save_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { saveRequest(); }
@@ -171,11 +172,13 @@ public class SProblemPane implements STabPane, SView {
 			@Override public void actionPerformed(ActionEvent e) { deleteRequest(); }
 		});
 		button_pane.add(delete_button);
+		button_pane.add(Box.createHorizontalStrut(5));
 		close_button = new JButton("Close");
 		close_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { closeRequest(); }
 		});
 		button_pane.add(close_button);
+		button_pane.add(Box.createHorizontalGlue());
 		main_pane.add(button_pane, c);
 		info_pane.getPane().setBorder(BorderFactory.createTitledBorder("Problem properties"));
 		c.gridx = 0; c.gridy = 2; c.fill = GridBagConstraints.BOTH; c.weightx = 1.0; c.weighty = 0.0; c.gridwidth = 2;
