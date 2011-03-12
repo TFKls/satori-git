@@ -78,6 +78,14 @@ class SAttributeData {
 		}
 		return result;
 	}
+	static <T extends SMetadata> void addLocalAttrMap(String prefix, List<T> meta_list, Map<String, AnonymousAttribute> attrs, Map<T, Object> result) throws SException {
+		for (T meta : meta_list) {
+			AnonymousAttribute attr = attrs.get(prefix + meta.getName());
+			if (attr == null) continue;
+			Object value = attr.isIs_blob() ? SBlob.createRemote(attr.getFilename(), attr.getValue()) : attr.getValue();
+			result.put(meta, value);
+		}
+	}
 	
 	static void createBlobs(Map<String, Object> attrs) throws SException {
 		for (Object value : attrs.values()) {

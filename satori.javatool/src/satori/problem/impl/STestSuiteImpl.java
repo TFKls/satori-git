@@ -4,15 +4,19 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import satori.common.SAssert;
 import satori.common.SDataStatus;
 import satori.common.SException;
 import satori.common.SId;
 import satori.common.SIdReader;
+import satori.common.SListener0;
+import satori.common.SPair;
 import satori.common.SReference;
 import satori.common.SView;
-import satori.metadata.SParameters;
+import satori.metadata.SInputMetadata;
+import satori.metadata.SParametersMetadata;
 import satori.problem.SParentProblem;
 import satori.problem.STestSuiteReader;
 import satori.problem.STestSuiteSnap;
@@ -27,12 +31,15 @@ public class STestSuiteImpl implements STestSuiteReader {
 	private String name;
 	private String desc;
 	private List<STestImpl> tests;
-	private SParameters dispatcher;
-	private List<SParameters> accumulators;
-	private SParameters reporter;
+	private SParametersMetadata dispatcher;
+	private List<SParametersMetadata> accumulators;
+	private SParametersMetadata reporter;
+	private Map<SInputMetadata, Object> general_params;
+	private Map<SPair<SInputMetadata, Long>, Object> test_params;
 	
 	private final SDataStatus status = new SDataStatus();
 	private final List<SView> views = new ArrayList<SView>();
+	private final List<SListener0> metadata_modified_listeners = new ArrayList<SListener0>();
 	private final SReference reference = new SReference() {
 		@Override public void notifyModified() { snapModified(); }
 		@Override public void notifyDeleted() { snapDeleted(); }
@@ -45,9 +52,13 @@ public class STestSuiteImpl implements STestSuiteReader {
 	@Override public String getName() { return name; }
 	@Override public String getDescription() { return desc; }
 	@Override public List<STestImpl> getTests() { return Collections.unmodifiableList(tests); }
-	@Override public SParameters getDispatcher() { return dispatcher; }
-	@Override public List<SParameters> getAccumulators() { return accumulators; }
-	@Override public SParameters getReporter() { return reporter; }
+	@Override public SParametersMetadata getDispatcher() { return dispatcher; }
+	@Override public List<SParametersMetadata> getAccumulators() { return accumulators; }
+	@Override public SParametersMetadata getReporter() { return reporter; }
+	@Override public Map<SInputMetadata, Object> getGeneralParameters() { return Collections.unmodifiableMap(general_params); }
+	public Object getGeneralParameter(SInputMetadata meta) { return general_params.get(meta); }
+	@Override public Map<SPair<SInputMetadata, Long>, Object> getTestParameters() { return Collections.unmodifiableMap(test_params); }
+	public Object getTestParameter(SInputMetadata meta, long test) { return test_params.get(new SPair<SInputMetadata, Long>(meta, test)); }
 	public boolean isRemote() { return hasId(); }
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
@@ -78,6 +89,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.dispatcher = snap.getDispatcher();
 		self.accumulators = snap.getAccumulators();
 		self.reporter = snap.getReporter();
+		self.general_params = snap.getGeneralParameters();
+		self.test_params = snap.getTestParameters();
 		return self;
 	}
 	public static STestSuiteImpl createNew(SParentProblem problem) {
@@ -90,6 +103,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.dispatcher = null;
 		self.accumulators = Collections.emptyList();
 		self.reporter = null;
+		self.general_params = Collections.emptyMap();
+		self.test_params = Collections.emptyMap();
 		return self;
 	}
 	public static STestSuiteImpl createNew(List<STestSnap> tests, SParentProblem problem) throws SException {
@@ -102,6 +117,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.dispatcher = null;
 		self.accumulators = Collections.emptyList();
 		self.reporter = null;
+		self.general_params = Collections.emptyMap();
+		self.test_params = Collections.emptyMap();
 		return self;
 	}
 	public static STestSuiteImpl createNewTest(SParentProblem problem) {
@@ -115,6 +132,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.dispatcher = null;
 		self.accumulators = Collections.emptyList();
 		self.reporter = null;
+		self.general_params = Collections.emptyMap();
+		self.test_params = Collections.emptyMap();
 		return self;
 	}
 	
@@ -139,6 +158,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		if (!source.getAccumulators().equals(accumulators)) return true;
 		if (source.getReporter() == null && reporter != null) return true;
 		if (source.getReporter() != null && !source.getReporter().equals(reporter)) return true;
+		if (!source.getGeneralParameters().equals(general_params)) return true;
+		if (!source.getTestParameters().equals(test_params)) return true;
 		return false;
 	}
 	
@@ -192,21 +213,59 @@ public class STestSuiteImpl implements STestSuiteReader {
 		notifyModified();
 	}
 	
-	public void setDispatcher(SParameters dispatcher) {
+	public void setDispatcher(SParametersMetadata dispatcher) {
 		if (this.dispatcher == null && dispatcher == null) return;
 		if (this.dispatcher != null && this.dispatcher.equals(dispatcher)) return;
+		for (SInputMetadata im : this.dispatcher.getGeneralParameters()) general_params.remove(im);
+		for (SInputMetadata im : dispatcher.getGeneralParameters()) {
+			Object value = im.getDefaultValue();
+			if (value != null) general_params.put(im, value);
+		}
 		this.dispatcher = dispatcher;
 		notifyModified();
+		callMetadataModifiedListeners();
 	}
-	public void setAccumulators(List<SParameters> accumulators) {
+	public void setAccumulators(List<SParametersMetadata> accumulators) {
 		if (this.accumulators.equals(accumulators)) return;
+		for (SParametersMetadata pm : this.accumulators) if (!accumulators.contains(pm))
+			for (SInputMetadata im : pm.getGeneralParameters()) general_params.remove(im);
+		for (SParametersMetadata pm : accumulators) if (!this.accumulators.contains(pm))
+			for (SInputMetadata im : pm.getGeneralParameters()) {
+				Object value = im.getDefaultValue();
+				if (value != null) general_params.put(im, value);
+			}
 		this.accumulators = accumulators;
 		notifyModified();
+		callMetadataModifiedListeners();
 	}
-	public void setReporter(SParameters reporter) {
+	public void setReporter(SParametersMetadata reporter) {
 		if (this.reporter == null && reporter == null) return;
 		if (this.reporter != null && this.reporter.equals(reporter)) return;
+		for (SInputMetadata im : this.reporter.getGeneralParameters()) general_params.remove(im);
+		for (SInputMetadata im : reporter.getGeneralParameters()) {
+			Object value = im.getDefaultValue();
+			if (value != null) general_params.put(im, value);
+		}
 		this.reporter = reporter;
+		notifyModified();
+		callMetadataModifiedListeners();
+	}
+	
+	public void setGeneralParameter(SInputMetadata meta, Object value) {
+		Object old_value = general_params.get(meta);
+		if (value == null && old_value == null) return;
+		if (value != null && value.equals(old_value)) return;
+		if (value != null) general_params.put(meta, value);
+		else general_params.remove(meta);
+		notifyModified();
+	}
+	public void setTestParameter(SInputMetadata meta, long test, Object value) {
+		SPair<SInputMetadata, Long> key = new SPair<SInputMetadata, Long>(meta, test);
+		Object old_value = test_params.get(key);
+		if (value == null && old_value == null) return;
+		if (value != null && value.equals(old_value)) return;
+		if (value != null) test_params.put(key, value);
+		else test_params.remove(key);
 		notifyModified();
 	}
 	
@@ -222,6 +281,10 @@ public class STestSuiteImpl implements STestSuiteReader {
 		status.markUpToDate();
 		updateViews();
 	}
+	
+	public void addMetadataModifiedListener(SListener0 listener) { metadata_modified_listeners.add(listener); }
+	public void removeMetadataModifiedListener(SListener0 listener) { metadata_modified_listeners.remove(listener); }
+	private void callMetadataModifiedListeners() { for (SListener0 listener : metadata_modified_listeners) listener.call(); }
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }

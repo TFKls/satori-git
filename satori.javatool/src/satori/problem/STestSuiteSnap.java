@@ -3,13 +3,16 @@ package satori.problem;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SListener1;
+import satori.common.SPair;
 import satori.common.SReference;
 import satori.common.SView;
-import satori.metadata.SParameters;
+import satori.metadata.SInputMetadata;
+import satori.metadata.SParametersMetadata;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
 import satori.thrift.STestSuiteData;
@@ -22,9 +25,11 @@ public class STestSuiteSnap implements STestSuiteReader {
 	private String name;
 	private String desc;
 	private List<STestSnap> tests;
-	private SParameters dispatcher;
-	private List<SParameters> accumulators;
-	private SParameters reporter;
+	private SParametersMetadata dispatcher;
+	private List<SParametersMetadata> accumulators;
+	private SParametersMetadata reporter;
+	private Map<SInputMetadata, Object> general_params;
+	private Map<SPair<SInputMetadata, Long>, Object> test_params;
 	
 	private final List<SView> views = new ArrayList<SView>();
 	private final List<SReference> refs = new ArrayList<SReference>();
@@ -38,9 +43,11 @@ public class STestSuiteSnap implements STestSuiteReader {
 	@Override public String getName() { return name; }
 	@Override public String getDescription() { return desc; }
 	@Override public List<STestSnap> getTests() { return Collections.unmodifiableList(tests); }
-	@Override public SParameters getDispatcher() { return dispatcher; }
-	@Override public List<SParameters> getAccumulators() { return accumulators; }
-	@Override public SParameters getReporter() { return reporter; }
+	@Override public SParametersMetadata getDispatcher() { return dispatcher; }
+	@Override public List<SParametersMetadata> getAccumulators() { return accumulators; }
+	@Override public SParametersMetadata getReporter() { return reporter; }
+	@Override public Map<SInputMetadata, Object> getGeneralParameters() { return general_params; }
+	@Override public Map<SPair<SInputMetadata, Long>, Object> getTestParameters() { return test_params; }
 	
 	public boolean isComplete() { return tests != null; }
 	
@@ -71,6 +78,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 		self.dispatcher = source.getDispatcher();
 		self.accumulators = source.getAccumulators();
 		self.reporter = source.getReporter();
+		self.general_params = source.getGeneralParameters();
+		self.test_params = source.getTestParameters();
 		return self;
 	}
 	public static STestSuiteSnap createBasic(STestList test_list, STestSuiteBasicReader source) {
@@ -84,6 +93,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 		self.dispatcher = null;
 		self.accumulators = null;
 		self.reporter = null;
+		self.general_params = null;
+		self.test_params = null;
 		return self;
 	}
 	
@@ -98,6 +109,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 		dispatcher = source.getDispatcher();
 		accumulators = source.getAccumulators();
 		reporter = source.getReporter();
+		general_params = source.getGeneralParameters();
+		test_params = source.getTestParameters();
 		notifyModified();
 	}
 	public void setBasic(STestSuiteBasicReader source) {

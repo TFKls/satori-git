@@ -374,6 +374,6 @@ public class SBlobInputView implements SPaneView {
 	@Override public void update() {
 		pane.setBackground(data.isValid() ? default_color : Color.YELLOW);
 		label.setFont(data.getText() != null ? set_font : unset_font);
-		label.setText(data.getText() != null ? data.getText() : data.getDescription());
+		label.setText(data.getText() != null ? data.getText() : data.getDescription() != null ? data.getDescription() : "Not set");
 	}
 }

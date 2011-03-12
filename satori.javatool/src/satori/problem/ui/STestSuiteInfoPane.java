@@ -19,7 +19,7 @@ import satori.common.SPair;
 import satori.common.SView;
 import satori.common.ui.SGlobalSelectionPane;
 import satori.common.ui.SPane;
-import satori.metadata.SParameters;
+import satori.metadata.SParametersMetadata;
 import satori.metadata.SParametersParser;
 import satori.problem.impl.STestSuiteImpl;
 import satori.thrift.SGlobalData;
@@ -90,7 +90,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public List<SPair<String, String>> getList() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getDispatchers());
 			}
-			@Override public SParameters parse(String name, String content) throws SException {
+			@Override public SParametersMetadata parse(String name, String content) throws SException {
 				return SParametersParser.parseParameters(name, content);
 			}
 		}, false, new SListener0() {
@@ -104,7 +104,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public List<SPair<String, String>> getList() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getAccumulators());
 			}
-			@Override public SParameters parse(String name, String content) throws SException {
+			@Override public SParametersMetadata parse(String name, String content) throws SException {
 				return SParametersParser.parseParameters(name, content);
 			}
 		}, true, new SListener0() {
@@ -118,7 +118,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public List<SPair<String, String>> getList() throws SException {
 				return SGlobalData.convertToList(SGlobalData.getReporters());
 			}
-			@Override public SParameters parse(String name, String content) throws SException {
+			@Override public SParametersMetadata parse(String name, String content) throws SException {
 				return SParametersParser.parseParameters(name, content);
 			}
 		}, false, new SListener0() {

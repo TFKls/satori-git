@@ -30,18 +30,18 @@ import satori.common.SException;
 import satori.common.SListener0;
 import satori.common.SPair;
 import satori.main.SFrame;
-import satori.metadata.SParameters;
+import satori.metadata.SParametersMetadata;
 
 public class SGlobalSelectionPane implements SPane {
 	public static interface Loader {
 		List<SPair<String, String>> getList() throws SException;
-		SParameters parse(String name, String content) throws SException;
+		SParametersMetadata parse(String name, String content) throws SException;
 	};
 	
 	private final Loader loader;
 	private final boolean multiple;
 	private final SListener0 listener;
-	private List<SParameters> selection;
+	private List<SParametersMetadata> selection;
 	private JComponent pane;
 	private JButton clear_button;
 	private JButton label;
@@ -56,13 +56,13 @@ public class SGlobalSelectionPane implements SPane {
 	
 	@Override public JComponent getPane() { return pane; }
 	
-	public List<SParameters> getSelection() { return selection; }
-	public SParameters getFirstSelected() { return selection.isEmpty() ? null : selection.get(0); }
+	public List<SParametersMetadata> getSelection() { return selection; }
+	public SParametersMetadata getFirstSelected() { return selection.isEmpty() ? null : selection.get(0); }
 	
-	public void setSelection(List<SParameters> params) {
+	public void setSelection(List<SParametersMetadata> params) {
 		selection = params;
 		StringBuilder text = null;
-		for (SParameters p : params) {
+		for (SParametersMetadata p : params) {
 			if (text != null) text.append(",");
 			else text = new StringBuilder();
 			text.append(p.getName());
@@ -70,7 +70,7 @@ public class SGlobalSelectionPane implements SPane {
 		label.setFont(text != null ? set_font : unset_font);
 		label.setText(text != null ? text.toString() : "Not set");
 	}
-	public void setSelection(SParameters params) {
+	public void setSelection(SParametersMetadata params) {
 		selection = Collections.singletonList(params);
 		label.setFont(params != null ? set_font : unset_font);
 		label.setText(params != null ? params.getName() : "Not set");
@@ -150,7 +150,7 @@ public class SGlobalSelectionPane implements SPane {
 		try {
 			List<SPair<String, String>> result = dialog.process();
 			if (result == null) return;
-			List<SParameters> params = new ArrayList<SParameters>();
+			List<SParametersMetadata> params = new ArrayList<SParametersMetadata>();
 			for (SPair<String, String> p : result) params.add(loader.parse(p.first, p.second));
 			setSelection(Collections.unmodifiableList(params));
 			listener.call();

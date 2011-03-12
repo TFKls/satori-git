@@ -30,6 +30,7 @@ public class STestSuitePane implements STabPane, SView {
 	private boolean mode;
 	private STestSuiteInfoPane info_pane;
 	private STestPane test_pane;
+	private SParametersPane params_pane;
 	private SView tab_view;
 	
 	private JPanel main_pane;
@@ -110,7 +111,10 @@ public class STestSuitePane implements STabPane, SView {
 		scroll_pane.setBorder(BorderFactory.createTitledBorder("Tests"));
 		scroll_pane.setViewportView(test_pane.getPane());
 	}
-	private void showParametersRequest() {}
+	private void showParametersRequest() {
+		scroll_pane.setBorder(BorderFactory.createTitledBorder("Parameters"));
+		scroll_pane.setViewportView(params_pane.getPane());
+	}
 	
 	private void initializeAux() {
 		if (mode) {
@@ -134,6 +138,7 @@ public class STestSuitePane implements STabPane, SView {
 	private void initialize() {
 		info_pane = new STestSuiteInfoPane(suite);
 		test_pane = new STestPane(suite, factory);
+		params_pane = new SParametersPane(suite);
 		
 		main_pane = new JPanel(new BorderLayout());
 		JPanel upper_pane = new JPanel(new BorderLayout());

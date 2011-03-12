@@ -23,6 +23,7 @@ import org.xml.sax.SAXException;
 import satori.common.SException;
 import satori.common.SPair;
 import satori.type.SBlobType;
+import satori.type.SBoolType;
 import satori.type.SSizeType;
 import satori.type.STextType;
 import satori.type.STimeType;
@@ -42,6 +43,7 @@ public class SParametersParser {
 		if (type_str.equals("text")) type = STextType.INSTANCE;
 		else if (type_str.equals("time")) type = STimeType.INSTANCE;
 		else if (type_str.equals("size")) type = SSizeType.INSTANCE;
+		else if (type_str.equals("bool")) type = SBoolType.INSTANCE;
 		else if (type_str.equals("blob")) type = SBlobType.INSTANCE;
 		else throw new ParseException("Unsupported parameter type: " + type_str);
 		String name = node.getAttribute("name");
@@ -49,7 +51,7 @@ public class SParametersParser {
 		String desc = node.getAttribute("description");
 		if (desc.isEmpty()) throw new ParseException("Parameter description undefined");
 		String required = node.getAttribute("required");
-		if (required.isEmpty()) throw new ParseException("Parameter required mode undefined");
+		if (required.isEmpty()) required = "false";//throw new ParseException("Parameter required mode undefined");
 		if (!required.equals("true") && !required.equals("false")) throw new ParseException("Invalid parameter required mode: " + required); 
 		String def_value = node.getAttribute("default");
 		if (def_value.isEmpty()) def_value = null;
@@ -71,7 +73,7 @@ public class SParametersParser {
 		}
 	}
 	
-	private static void parse(Document doc, SParameters params) throws ParseException {
+	private static void parse(Document doc, SParametersMetadata params) throws ParseException {
 		doc.normalizeDocument();
 		Element node = doc.getDocumentElement();
 		NodeList general_children = node.getElementsByTagName("general");
@@ -83,7 +85,7 @@ public class SParametersParser {
 		params.setGeneralParameters(general_meta);
 		params.setTestParameters(Collections.<SInputMetadata>emptyList());
 	}
-	private static void parse(String str, SParameters params) throws ParseException {
+	private static void parse(String str, SParametersMetadata params) throws ParseException {
 		if (str.isEmpty()) {
 			params.setGeneralParameters(Collections.<SInputMetadata>emptyList());
 			params.setTestParameters(Collections.<SInputMetadata>emptyList());
@@ -96,7 +98,7 @@ public class SParametersParser {
 		catch(SAXException ex) { throw new ParseException(ex); }
 		catch(ParserConfigurationException ex) { throw new ParseException(ex); }
 	}
-	private static void parseLines(String str, SParameters params) throws ParseException {
+	private static void parseLines(String str, SParametersMetadata params) throws ParseException {
 		StringBuilder xml = new StringBuilder();
 		LineIterator line_iter = new LineIterator(new StringReader(str));
 		while (line_iter.hasNext()) {
@@ -107,12 +109,12 @@ public class SParametersParser {
 		parse(xml.toString(), params);
 	}
 	
-	private static Map<SPair<String, String>, SParameters> params = new HashMap<SPair<String, String>, SParameters>();
+	private static Map<SPair<String, String>, SParametersMetadata> params = new HashMap<SPair<String, String>, SParametersMetadata>();
 	
-	public static SParameters parseParameters(String name, String str) throws ParseException {
+	public static SParametersMetadata parseParameters(String name, String str) throws ParseException {
 		SPair<String, String> key = new SPair<String, String>(name, str);
 		if (params.containsKey(key)) return params.get(key);
-		SParameters result = new SParameters();
+		SParametersMetadata result = new SParametersMetadata();
 		result.setName(name);
 		parseLines(str, result);
 		params.put(key, result);

@@ -2,7 +2,7 @@ package satori.metadata;
 
 import java.util.List;
 
-public class SParameters {
+public class SParametersMetadata {
 	private String name;
 	private List<SInputMetadata> general_params;
 	private List<SInputMetadata> test_params;
