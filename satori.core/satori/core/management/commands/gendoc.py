@@ -18,6 +18,7 @@ from sphinx.util.nodes import make_refnode
 
 
 atomic_type_names = {
+    ArsBinary:  'binary',
     ArsBoolean: 'bool',
     ArsInt8:    'byte',
     ArsInt16:   'i16',
