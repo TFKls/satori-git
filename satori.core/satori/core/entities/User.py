@@ -73,10 +73,11 @@ class User(Role):
             self.forbid_fields(fields, ['id', 'name'])
             changed = self.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code'])
         else:
-            self.forbid_fields(fields, ['id', 'name', 'login', 'confirmed', 'activated', 'activation_code'])
+            self.forbid_fields(fields, ['id', 'name', 'login', 'confirmed', 'activated', 'activation_code', 'email'])
             if self.confirmed:
                 self.forbid_fields(fields, ['firstname', 'lastname'])
-            changed = self.update_fields(fields, ['email'])
+            else:
+                self.update_fields(fields, ['firstname', 'lastname'])
         self.save()
         if 'firstname' in changed or 'lastname' in changed:
             for c in Contestant.objects.filter(children=self):
