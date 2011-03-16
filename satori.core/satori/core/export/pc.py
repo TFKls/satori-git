@@ -1,5 +1,9 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 from token import token_container
+from satori.core.export.type_helpers import DefineException
+
+AccessDenied = DefineException('AccessDenied', 'You don\'t have rights to call this procedure')
+
 
 class PCDeny(object):
     def __call__(__pc__self, **kwargs):

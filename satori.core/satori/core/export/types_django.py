@@ -7,6 +7,7 @@ import inspect
 from satori.ars.model import *
 
 from satori.core.export.type_helpers import DefineException, ArsDeferredStructure, python_to_ars_type
+from satori.core.export.pc import AccessDenied
 
 ArgumentNotFound = DefineException('ArgumentNotFound', 'The specified argument cannot be found: model={model}, id={id}',
     [('model', unicode, False), ('id', long, False)])
@@ -70,7 +71,8 @@ class ArsDjangoId(ArsTypeAlias):
         try:
             return Privilege.where_can(self.model.objects.all(), 'VIEW').get(id=value)
         except self.model.DoesNotExist:
-            raise ArgumentNotFound(model=self.model.__name__, id=value)
+            raise AccessDenied()
+#            raise ArgumentNotFound(model=self.model.__name__, id=value)
 
 
 class DjangoId(object):

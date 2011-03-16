@@ -10,14 +10,12 @@ from satori.ars.model import *
 
 from satori.core.export.docstring    import trim_docstring
 from satori.core.export.oa           import BadAttributeType, Attribute, AnonymousAttribute, AttributeGroupField, DefaultAttributeGroupField
-from satori.core.export.pc           import PCDeny, PCPermit, PCArg, PCArgField, PCGlobal, PCAnd, PCOr, PCEach, PCEachKey, PCEachValue, PCTokenUser, PCRawBlob, PCTokenIsUser, PCTokenIsMachine
+from satori.core.export.pc           import AccessDenied, PCDeny, PCPermit, PCArg, PCArgField, PCGlobal, PCAnd, PCOr, PCEach, PCEachKey, PCEachValue, PCTokenUser, PCRawBlob, PCTokenIsUser, PCTokenIsMachine
 from satori.core.export.token        import token_container, TokenInvalid, TokenExpired
 from satori.core.export.type_helpers import Binary, Struct, DefineException, TypedList, TypedMap, python_to_ars_type
 from satori.core.export.types_django import ArgumentNotFound, CannotReturnObject, CannotDeleteObject, generate_django_types, ars_django_structure
 from satori.core.export.types_django import DjangoId, DjangoStruct, DjangoIdList, DjangoStructList
 
-
-AccessDenied = DefineException('AccessDenied', 'You don\'t have rights to call this procedure')
 
 InvalidArgument = DefineException('InvalidArgument', 'The specified argument is invalid: name={name}, reason={reason}',
     [('name', unicode, False), ('reason', unicode, False)])
