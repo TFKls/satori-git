@@ -236,4 +236,5 @@ class Web(object):
                 ret_ts[ts] = ts.oa_get_map()
             ret.test_results = ret_ts
             ret.test_suite_results = ret_tsr
+        return ret
 
