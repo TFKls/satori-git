@@ -702,7 +702,7 @@ class MarksAggregator(AggregatorBase):
 
         self.sorted_problems = [p.id for p in sorted(self.problem_cache.values(), key=attrgetter('code'))]
         columns = [(4, 'Lp.'), (32, 'Name')]
-        if params.show_marks:
+        if self.params.show_marks:
             columns += [(16, 'Mark')]
         columns += [(8, 'Score'), (16, 'Tasks')]
         self.group_score = {}
