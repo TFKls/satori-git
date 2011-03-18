@@ -670,11 +670,17 @@ class MarksAggregator(AggregatorBase):
         super(MarksAggregator, self).init()
 
         try:
-            self.params.group_points = yaml.load(self.params.group_points)
+            self.params.group_points = {}
+            gp = yaml.load(self.params.group_points)
+            for g,p in gp.iteritems():
+                self.params.group_points[unicode(g)] = float(p)
         except:
             self.params.group_points = {}
         try:
-            self.params.points_mark = yaml.load(self.params.points_mark)
+            self.params.points_mark = {}
+            pm = yaml.load(self.params.points_mark)
+            for p,(l,u) in pm.iteritems():
+                self.params.points_mark[float(p)] = (float(l), float(u))
         except:
             self.params.points_mark = {}
 
