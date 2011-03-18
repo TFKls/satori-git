@@ -44,6 +44,15 @@ class UnwrapBase(object):
         super(UnwrapBase, self).__init__()
         self._id = _id
         self._struct = _struct
+    
+    def __eq__(self, other):
+        return (issubclass(other, self.__class__) or issubclass(self, other.__class__)) and self.id == other._id
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
+
+    def __hash__(self):
+        return hash(self._id)
 
 
 class StubCodeLoader(object):
