@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import logging
 from satori.core.models import PrivilegeTimes
 
 PageInfo = Struct('PageInfo', [
@@ -225,7 +226,7 @@ class Web(object):
             results=ret
             )
         for x in connection.queries:
-            print x['time'], x['sql']
+            logging.debug('SQL %s: %s', x['time'], x['sql'])
         return ret
             
     @ExportMethod(ResultInfo, [DjangoId('Submit')], PCArg('submit', 'OBSERVE'))
