@@ -26,7 +26,7 @@ class TestSuiteResult(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(TestSuiteResult, cls).inherit_rights()
-        cls._inherit_add(inherits, 'VIEW', '', 'REJUDGE')
+        cls._inherit_add(inherits, 'VIEW', 'id', 'REJUDGE')
         cls._inherit_add(inherits, 'REJUDGE', 'submit', 'MANAGE')
         return inherits
 
