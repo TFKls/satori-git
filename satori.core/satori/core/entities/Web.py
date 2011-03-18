@@ -196,6 +196,8 @@ class Web(object):
 
     @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
     def get_results(contest, contestant=None, problem=None, limit=20, offset=0):
+        from django.db import connection
+        connection.queries = []
         if contestant:
             contestant_list = Contestant.objects.filter(id=contestant.id)
         else:
@@ -218,10 +220,13 @@ class Web(object):
             ret_r.status = submit.get_test_suite_status()
             ret_r.report = submit.get_test_suite_report()
             ret.append(ret_r)
-        return SizedResultList(
+        ret = SizedResultList(
             count=len(q),
             results=ret
             )
+        for x in connection.queries:
+            print x['time'], x['sql']
+        return ret
             
     @ExportMethod(ResultInfo, [DjangoId('Submit')], PCArg('submit', 'OBSERVE'))
     def get_result_details(submit):
