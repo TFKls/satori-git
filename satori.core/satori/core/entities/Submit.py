@@ -26,6 +26,7 @@ class Submit(Entity):
         inherits = super(Submit, cls).inherit_rights()
         cls._inherit_add(inherits, 'VIEW', 'id', 'OBSERVE')
         cls._inherit_add(inherits, 'OBSERVE', 'contestant', 'OBSERVE')
+        cls._inherit_add(inherits, 'MANAGE', 'contestant', 'MANAGE')
         return inherits
 
     def save(self, *args, **kwargs):
