@@ -25,6 +25,17 @@
             {% endif %}
             {% endif %}
     </table>
+
+    {% if can_edit %}
+    <h5>Attachments</h5>
+    <table>
+        {% for afile in attachments %}
+        <tr><td>
+            <a href="{% url download_group 'download' 'Subpage' subpage.id 'content_files' afile afile  %}">{{ afile }}</a>
+        </td></tr>
+        {% endfor %}
+    </table>
+    {% endif %}
 </div>
 {% endfor %}
 

@@ -39,11 +39,7 @@
 
 <h4>Attachments</h4>
 <p>Click to select or drag-and-drop multiple files on the upload field:</p>
-{% if page_info.contest %}
-<form id="file_upload" action={% url contest_subpage_fileupload page_info.contest.id %} method="POST" enctype="multipart/form-data" class="file_upload">
-{% else %}
-<form id="file_upload" action={% url subpage_fileupload %} method="POST" enctype="multipart/form-data" class="file_upload">
-{% endif %}
+<form id="file_upload" action={% url fileupload %} method="POST" enctype="multipart/form-data" class="file_upload">
     <input type="file" name="file" multiple>
     {{ form.fid }}
     <button>Upload</button>
@@ -66,9 +62,5 @@
     {% endfor %}
 </table>
 <script src="/files/scripts/attachments_upload.js"></script>
-{% if page_info.contest %}
-<script>createFileUploadInstance('{{ form.fid.value }}', '{% url contest_subpage_fileremove page_info.contest.id %}');</script>
-{% else %}
-<script>createFileUploadInstance('{{ form.fid.value }}', '{% url subpage_fileremove %}');</script>
-{% endif %}
+<script>createFileUploadInstance('{{ fid }}', '{% url fileremove %}');</script>
 {% endblock %}

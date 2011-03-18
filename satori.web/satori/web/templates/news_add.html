@@ -1,27 +1,20 @@
 {% extends "templates/index.html" %}
 
-{% block header %}
-{% endblock %}
-
 {% block content %}
 
 {% if page_info.contest %}
-<form action={% url contest_subpage_add page_info.contest.id %} method="POST">
+<form action={% url contest_news_add page_info.contest.id %} method="POST">
 {% else %}
-<form action={% url subpage_add %} method="POST">
+<form action={% url news_add %} method="POST">
 {% endif %}
 
 {{ form.fid }}
-<table class="subpage_form">
+<table class="news_form">
     <tr>
         <th><label for="id_name">{{ form.name.label }}</label></th>
         <td>{{ form.name }}</td>
         <td style="text-align: right">
-            <input id="create_subpage" type="submit" value="Create subpage"/></td>
-    </tr>
-    <tr>
-        <th><label for="id_visibility">{{ form.visibility.label }}</label></th>
-        <td colspan="2">{{ form.visibility }}</td>
+            <input id="create_news" type="submit" value="Create news"/></td>
     </tr>
     {% if sphinxException %}
     <tr>

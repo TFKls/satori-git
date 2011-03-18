@@ -18,7 +18,6 @@ class GlobalSubpageEditForm(forms.Form):
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
     is_public = forms.BooleanField(label="Show in every contest", required=False)
     
-
 def valid_attachments(subpage):
     dfiles = []
     for dfile in subpage.content_files_get_list():
@@ -54,18 +53,21 @@ def add(request, page_info):
             try:
                 subpage.content = data["content"]
             except SphinxException as sphinxException:
-                return render_to_response('subpage_add.html', { 'form' : form, 
-                                                                   'page_info' : page_info,
-                                                                   'sphinxException' : sphinxException })
+                return render_to_response('subpage_add.html', { 'fid' : fid,
+                                                                'form' : form, 
+                                                                'page_info' : page_info,
+                                                                'sphinxException' : sphinxException })
             return HttpResponseRedirect(reverse('subpage',args=[subpage.id]))
     else:
         #TODO(kalq): Create a hash instead of full pathname
-        form = GlobalSubpageEditForm(initial={ 'fid' : tempfile.mkdtemp() })
-    return render_to_response('subpage_add.html', { 'form' : form,
-                                                       'page_info' : page_info })
+        fid = tempfile.mkdtemp()
+        form = GlobalSubpageEditForm(initial={ 'fid' : fid })
+    return render_to_response('subpage_add.html', { 'fid' : fid,
+                                                    'form' : form,
+                                                    'page_info' : page_info })
 
 @general_view
-def edit(request, page_info,id):
+def edit(request, page_info, id):
     subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
     if request.method=="POST":
         form = GlobalSubpageEditForm(request.POST)
@@ -84,55 +86,21 @@ def edit(request, page_info,id):
             except SphinxException as sphinxException:
                 attachments = valid_attachments(subpage)
                 return render_to_response('subpage_edit.html', { 'attachments' : attachments,
+                                                                 'fid' : fid,
                                                                  'form' : form,
                                                                  'page_info' : page_info,
                                                                  'sphinxException' : sphinxException,
                                                                  'subpage' : subpage })
             return HttpResponseRedirect(reverse('subpage',args=[subpage.id]))
     else:
+        fid = tempfile.mkdtemp()
         form = GlobalSubpageEditForm(initial={ 'name' : subpage.name,
                                                'content' : subpage.content,
-                                               'fid' : tempfile.mkdtemp(),
+                                               'fid' : fid,
                                                'is_public' : subpage.is_public })
     attachments = valid_attachments(subpage)
     return render_to_response('subpage_edit.html', { 'attachments' : attachments, 
+                                                     'fid' : fid,
                                                      'form' : form,
                                                      'page_info' : page_info,
                                                      'subpage' : subpage })
-
-class GlobalSubpageUploadForm(forms.Form):
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
-    file = forms.FileField(required=True)
-
-@general_view
-def fileupload(request, page_info):
-    if request.method=="POST":
-        form = GlobalSubpageUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            data = form.cleaned_data
-            fid, ufile = data['fid'], data['file']
-            #TODO(kalq): add some error handling if directory doesn't exist
-            f = open(os.path.join(fid, ufile.name), 'w')
-            f.write(ufile.read())
-            f.close()
-            return render_to_json('json/global_fileupload.json', {'page_info' : page_info, 'name' : ufile.name})
-        #TODO(kalq): return error code
-    # TODO(kalq): return 404
-
-class GlobalSubpageRemoveForm(forms.Form):
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
-    filename = forms.CharField(required=True)
-
-# This function is used only to delete temporary files - (those that aren't inside core yet).
-@general_view
-def fileremove(request, page_info):
-    if request.method=="POST":
-        form = GlobalSubpageRemoveForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            fid, rfile = data['fid'], data['filename']
-            # TODO(kalq): Add some exception handling here.
-            os.remove(os.path.join(fid, rfile))
-            return render_to_json('json/global_fileremove.json', {'page_info' : page_info, 'name' : rfile})
-        #TODO(kalq): return error code
-    # TODO(kalq): return 404

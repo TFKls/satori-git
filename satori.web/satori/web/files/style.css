@@ -327,6 +327,41 @@ span.signature {
     width: 100%;
 }
 
+.news_form {
+    width: 100%;
+}
+
+.news_form textarea {
+    width: 100%;
+}
+
+.news_form th {
+    white-space: nowrap;
+    text-align: left;
+}
+
+.news_form td {
+    width: 100%;
+}
+
+
 .error_msg {
     color: red;
+}
+
+.problems_table {
+    width: 100%;
+}
+
+.problems_table th {
+    text-align: left;
+    padding: 5px;
+}
+
+.full_td {
+    width: 100%;
+}
+
+.other_td {
+    white-space: nowrap;
 }

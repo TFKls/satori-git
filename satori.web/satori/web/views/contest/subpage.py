@@ -67,15 +67,18 @@ def add(request, page_info):
             try:
                 subpage.content = data["content"]
             except SphinxException as sphinxException:
-                return render_to_response('subpage_add.html', { 'form' : form, 
-                                                                   'page_info' : page_info,
-                                                                   'sphinxException' : sphinxException })
+                return render_to_response('subpage_add.html', { 'fid' : fid,
+                                                                'form' : form, 
+                                                                'page_info' : page_info,
+                                                                'sphinxException' : sphinxException })
             return HttpResponseRedirect(reverse('contest_subpage', args=[page_info.contest.id, subpage.id]))
     else:
         #TODO(kalq): Create a hash instead of full pathname
-        form = ContestSubpageEditForm(initial={ 'fid' : tempfile.mkdtemp() })
-    return render_to_response('subpage_add.html', { 'form' : form,
-                                                       'page_info' : page_info })
+        fid = tempfile.mkdtemp()
+        form = ContestSubpageEditForm(initial={ 'fid' : fid })
+    return render_to_response('subpage_add.html', { 'fid' : fid,
+                                                    'form' : form,
+                                                    'page_info' : page_info })
 
 @contest_view
 def edit(request, page_info,id):
@@ -110,6 +113,7 @@ def edit(request, page_info,id):
             except SphinxException as sphinxException:
                 attachments = valid_attachments(subpage)
                 return render_to_response('subpage_edit.html', { 'attachments' : attachments,
+                                                                 'fid' : fid,
                                                                  'form' : form,
                                                                  'page_info' : page_info,
                                                                  'sphinxException' : sphinxException,
@@ -122,13 +126,15 @@ def edit(request, page_info,id):
             vis = 'contestant'
         else:
             vis = 'admin'
+        fid = tempfile.mkdtemp()
         form = ContestSubpageEditForm(initial={ 'name' : subpage.name,
                                                 'content' : subpage.content,
-                                                'fid' : tempfile.mkdtemp(),
+                                                'fid' : fid,
                                                 'visibility' : vis
                                                 })
     attachments = valid_attachments(subpage)
     return render_to_response('subpage_edit.html', { 'attachments' : attachments, 
+                                                     'fid' : fid,
                                                      'form' : form,
                                                      'page_info' : page_info,
                                                      'subpage' : subpage })
@@ -140,40 +146,3 @@ def edit(request, page_info,id):
 #    name = subpage.name
 #    content = subpage.content
 #    return render_to_response('subpage.html',{'page_info' : page_info, 'name' : name, 'content' : content})
-
-class ContestSubpageUploadForm(forms.Form):
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
-    file = forms.FileField(required=True)
-
-@contest_view
-def fileupload(request, page_info):
-    if request.method=="POST":
-        form = ContestSubpageUploadForm(request.POST, request.FILES)
-        if form.is_valid():
-            data = form.cleaned_data
-            fid, ufile = data['fid'], data['file']
-            #TODO(kalq): add some error handling if directory doesn't exist
-            f = open(os.path.join(fid, ufile.name), 'w')
-            f.write(ufile.read())
-            f.close()
-            return render_to_json('json/contest_fileupload.json', {'page_info' : page_info, 'name' : ufile.name})
-        #TODO(kalq): return error code
-    # TODO(kalq): return 404
-
-class ContestSubpageRemoveForm(forms.Form):
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
-    filename = forms.CharField(required=True)
-
-# This function is used only to delete temporary files - (those that aren't inside core yet).
-@contest_view
-def fileremove(request, page_info):
-    if request.method=="POST":
-        form = ContestSubpageRemoveForm(request.POST)
-        if form.is_valid():
-            data = form.cleaned_data
-            fid, rfile = data['fid'], data['filename']
-            # TODO(kalq): Add some exception handling here.
-            os.remove(os.path.join(fid, rfile))
-            return render_to_json('json/contest_fileremove.json', {'page_info' : page_info, 'name' : rfile})
-        #TODO(kalq): return error code
-    # TODO(kalq): return 404
