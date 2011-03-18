@@ -589,6 +589,8 @@ class MarksAggregator(AggregatorBase):
                 return score
             dif = total_seconds(time - start_descent)
             des = total_seconds(descent)
+            if des <= 0:
+                return score
             return (1.0 - dif/des) * score
 
         def update(self):
