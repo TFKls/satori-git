@@ -115,7 +115,7 @@ class Ranking(Entity):
             ranking_params.params_set_map(oa_map)
             set_params[problem.id] = ranking_params
         for ex_params in self.ranking_params.all():
-            if ex_params.id not in set_params:
+            if ex_params.problem.id not in set_params:
                 ex_params.delete()
         self.rejudge()
         return self
