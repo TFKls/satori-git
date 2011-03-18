@@ -259,7 +259,7 @@ class Web(object):
                 ret_tr.test_result = tr
                 ret_tr.attributes = tr.oa_get_map()
                 ret_trs.append(ret_tr)
-            ret.test_results = ret_tsrs
-            ret.test_suite_results = ret_trs
+            ret.test_suite_results = ret_tsrs
+            ret.test_results = ret_trs
         return ret
 
