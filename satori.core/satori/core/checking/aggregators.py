@@ -553,23 +553,22 @@ class MarksAggregator(AggregatorBase):
 #@<aggregator name="Marks aggregator">
 #@      <general>
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
-#@              <param type="float"    name="max_score"      description="Default score for each problem" default="1"/>
+#@              <param type="float"    name="max_score"      description="Maximum score for each problem" default="1"/>
 #@              <param type="float"    name="min_score"      description="Minimum score for each problem" default="-1"/>
-#@              <param type="datetime" name="time_start"     description="Submission start time"/>
-#@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
+#@              <param type="datetime" name="time_stop"      description="Ignore submits after"/>
 #@              <param type="int"      name="max_stars"      description="Maximal number of stars" default="4"/>
 #@              <param type="text"     name="group_points"   description="Number of points for each problem group"/>
 #@              <param type="text"     name="points_mark"    description="Marks for points ranges"/>
+#@              <param type="bool"     name="show_marks"     description="Show marks" default="true"/>
 #@              <param type="datetime" name="time_start_descent"       description="Descent start time"/>
 #@              <param type="time"     name="time_descent"   description="Descent to zero time"/>
 #@      </general>
 #@      <problem>
 #@              <param type="bool"     name="show"           description="Show column for this problem" default="true"/>
 #@              <param type="bool"     name="obligatory"     description="Problem is obligatory" default="1"/>
-#@              <param type="float"    name="max_score"      description="Score for problem" default="1"/>
+#@              <param type="float"    name="max_score"      description="Maximum score for problem" default="1"/>
 #@              <param type="float"    name="min_score"      description="Minimum score for problem" default="-1"/>
-#@              <param type="datetime" name="time_start"     description="Submission start time"/>
-#@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
+#@              <param type="datetime" name="time_stop"      description="Ignore submits after"/>
 #@              <param type="datetime" name="time_start_descent"       description="Descent start time"/>
 #@              <param type="time"     name="time_descent"   description="Descent to zero time"/>
 #@      </problem>
@@ -640,7 +639,10 @@ class MarksAggregator(AggregatorBase):
 
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
                 
-                columns = ['', contestant_name, str(mark), str(score), problems]
+                columns = ['', contestant_name]
+                if self.aggregator.params.show_marks:
+                    columns += [ str(mark) ]
+                columns += [str(score), problems]
                 pi=0
                 for pid in self.aggregator.sorted_problems:
                     params = self.aggregator.problem_params[pid]
@@ -687,8 +689,6 @@ class MarksAggregator(AggregatorBase):
             self.params.points_mark = {}
 
         for pid, params in self.problem_params.iteritems():
-            if params.time_start is None:
-                params.time_start = self.params.time_start
             if params.time_stop is None:
                 params.time_stop = self.params.time_stop
             if params.time_start_descent is None:
@@ -701,7 +701,10 @@ class MarksAggregator(AggregatorBase):
                 params.min_score = self.params.min_score
 
         self.sorted_problems = [p.id for p in sorted(self.problem_cache.values(), key=attrgetter('code'))]
-        columns = [(4, 'Lp.'), (32, 'Name'), (16, 'Mark'), (8, 'Score'), (16, 'Tasks')]
+        columns = [(4, 'Lp.'), (32, 'Name')]
+        if params.show_marks:
+            columns += [(16, 'Mark')]
+        columns += [(8, 'Score'), (16, 'Tasks')]
         self.group_score = {}
         for pid in self.sorted_problems:
             problem = self.problem_cache[pid]
