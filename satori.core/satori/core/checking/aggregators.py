@@ -552,6 +552,8 @@ class MarksAggregator(AggregatorBase):
 #@<aggregator name="Marks aggregator">
 #@      <general>
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
+#@              <param type="float"    name="max_score"      description="Default score for each problem" default="1"/>
+#@              <param type="float"    name="min_score"      description="Minimum score for each problem" default="-1"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="int"      name="max_stars"      description="Maximal number of stars" default="4"/>
@@ -559,17 +561,16 @@ class MarksAggregator(AggregatorBase):
 #@              <param type="text"     name="points_mark"    description="Marks for points ranges"/>
 #@              <param type="datetime" name="time_start_descent"       description="Descent start time"/>
 #@              <param type="time"     name="time_descent"   description="Descent to zero time"/>
-#@              <param type="bool"     name="below_zero"     description="Score goes below zero" default="1"/>
 #@      </general>
 #@      <problem>
 #@              <param type="bool"     name="show"           description="Show column for this problem" default="true"/>
-#@              <param type="float"    name="score"          description="Problem Score" default="1"/>
 #@              <param type="bool"     name="obligatory"     description="Problem is obligatory" default="1"/>
+#@              <param type="float"    name="max_score"      description="Problem Score" default="1"/>
+#@              <param type="float"    name="min_score"      description="Problem Score" default="-1"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="datetime" name="time_start_descent"       description="Descent start time"/>
 #@              <param type="time"     name="time_descent"   description="Descent to zero time"/>
-#@              <param type="bool"     name="below_zero"     description="Score goes below zero" default="1"/>
 #@      </problem>
 #@</aggregator>
     """
@@ -590,61 +591,70 @@ class MarksAggregator(AggregatorBase):
             return (1.0 - dif/des) * score
 
         def update(self):
-            all_ok = True
-            points = []
-            for pid in self.aggregator.sorted_problems:
-                problem = self.aggregator.problem_cache[pid]
-                g_count = self.aggregator.group_count[problem.group]
-                params = self.aggregator.problem_params[pid]
-                maxscore = params.score
-                #TODO: Change maxscore based on g_count and group_points
-                score = None
-                if pid in self.scores:
-                    if self.scores[pid].ok:
-                        score = maxscore
-                        solve_time = self.aggregator.submit_cache[self.scores[pid].ok_submit].time
-                        if params.time_start_descent is not None and params.time_descent is not None:
-                            score = self.timed_score(score, solve_time, params.time_start_descent, params.time_descent)
-                        if not params.below_zero and score < 0:
-                            score = 0
-                        if not params.obligatory and score < 0:
-                            score = 0
+            if self.hidden:
+                self.ranking_entry.row = ''
+                self.ranking_entry.individual = ''
+                self.ranking_entry.position = self.aggregator.position()
+                self.ranking_entry.save()
+            else:
+                all_ok = True
+                points = []
+                for pid in self.aggregator.sorted_problems:
+                    problem = self.aggregator.problem_cache[pid]
+                    g_score = self.aggregator.group_score[problem.group]
+                    params = self.aggregator.problem_params[pid]
+                    maxscore = params.max_score
+                    minscore = params.min_score
+                    if problem.group in self.aggregator.params.group_points:
+                        maxscore *= float(self.aggregator.params.group_points[problem.group]) / g_score
+                        minscore *= float(self.aggregator.params.group_points[problem.group]) / g_score
+                    score = None
+                    if pid in self.scores:
+                        if self.scores[pid].ok:
+                            score = maxscore
+                            solve_time = self.aggregator.submit_cache[self.scores[pid].ok_submit].time
+                            if params.time_start_descent is not None and params.time_descent is not None:
+                                score = self.timed_score(score, solve_time, params.time_start_descent, params.time_descent)
+                            if minscore is not None and score < minscore:
+                                score = minscore
+                        else:
+                            if params.obligatory:
+                                all_ok = False
                     else:
                         if params.obligatory:
                             all_ok = False
+                    points.append(score)
+                problems = ' '.join([s.get_str() for s in sorted([s for s in self.scores.values() if s.ok], key=attrgetter('ok_time'))])
+                score = sum([p for p in points if p is not None], 0.0)
+                if not all_ok:
+                    mark = 'FAIL'
                 else:
-                    if params.obligatory:
-                        all_ok = False
+                    mark = 'UNK (' + str(score) + ')'
 
-                points.append(score)
+                for mrk, (lower, upper) in self.aggregator.params.points_mark:
+                    if score >= lower and score < upper:
+                        mark = mrk
 
-
-            problems = ' '.join([s.get_str() for s in sorted([s for s in self.scores.values() if s.ok], key=attrgetter('ok_time'))])
-            score = sum([p for p in points if p is not None], 0.0)
-            if not all_ok:
-                mark = 'FAIL'
-            #TODO: Mark based on score and points_score
-
-            contestant_name = self.aggregator.table.escape(self.contestant.name)
-            
-            columns = ['', contestant_name, str(mark), str(score), problems]
-            pi=0
-            for pid in self.aggregator.sorted_problems:
-                params = self.aggregator.problem_params[pid]
-                if params.show:
-                    if points[pi] is None:
-                        if params.obligatory:
-                            columns += [ 'F' ]
+                contestant_name = self.aggregator.table.escape(self.contestant.name)
+                
+                columns = ['', contestant_name, str(mark), str(score), problems]
+                pi=0
+                for pid in self.aggregator.sorted_problems:
+                    params = self.aggregator.problem_params[pid]
+                    if params.show:
+                        if points[pi] is None:
+                            if params.obligatory:
+                                columns += [ 'F' ]
+                            else:
+                                columns += [ '-' ]
                         else:
-                            columns += [ '-' ]
-                    else:
-                        columns += [ '%.2f'%points[pi] ]
-                pi += 1
+                            columns += [ '%.2f'%points[pi] ]
+                    pi += 1
 
-            self.ranking_entry.row = self.aggregator.table.generate_row(*columns) + self.aggregator.table.row_separator
-            self.ranking_entry.individual = ''
-            self.ranking_entry.position = self.aggregator.position(self.contestant.name)
-            self.ranking_entry.save()
+                self.ranking_entry.row = self.aggregator.table.generate_row(*columns) + self.aggregator.table.row_separator
+                self.ranking_entry.individual = ''
+                self.ranking_entry.position = self.aggregator.position(self.contestant.name)
+                self.ranking_entry.save()
 
         def aggregate(self, result):
             submit = self.aggregator.submit_cache[result.submit_id]
@@ -657,6 +667,16 @@ class MarksAggregator(AggregatorBase):
 
     def init(self):
         super(MarksAggregator, self).init()
+
+        try:
+            self.params.group_points = yaml.load(self.params.group_points)
+        except:
+            self.params.group_points = {}
+        try:
+            self.params.points_mark = yaml.load(self.params.points_mark)
+        except:
+            self.params.points_mark = {}
+
         for pid, params in self.problem_params.iteritems():
             if params.time_start is None:
                 params.time_start = self.params.time_start
@@ -666,17 +686,19 @@ class MarksAggregator(AggregatorBase):
                 params.time_start_descent = self.params.time_start_descent
             if params.time_descent is None:
                 params.time_descent = self.params.time_descent
-            if params.below_zero is None:
-                params.below_zero = self.params.below_zero
+            if params.max_score is None:
+                params.max_score = self.params.max_score
+            if params.min_score is None:
+                params.min_score = self.params.min_score
 
         self.sorted_problems = [p.id for p in sorted(self.problem_cache.values(), key=attrgetter('code'))]
         columns = [(4, 'Lp.'), (32, 'Name'), (16, 'Mark'), (8, 'Score'), (16, 'Tasks')]
-        self.group_count = {}
+        self.group_score = {}
         for pid in self.sorted_problems:
+            problem = self.problem_cache[pid]
             if self.problem_params[pid].show:
-                problem = self.problem_cache[pid]
                 columns += [(16, problem.code)]
-                self.group_count[problem.group] = self.group_count.get(problem.group, 0) + 1
+            self.group_score[problem.group] = self.group_score.get(problem.group, 0) + self.problem_params[pid].max_score
 
         self.table = RestTable(*columns)
         
