@@ -47,6 +47,18 @@ ProblemMappingInfo = Struct('ProblemMappingInfo', [
     ('contestant_role_submit_times', PrivilegeTimes, False),
     ])
 
+TestResultInfo = Struct('TestResultInfo', [
+    ('test', DjangoStruct('Test'), False),
+    ('test_result', DjangoStruct('TestResult'), False),
+    ('attributes', TypedMap(unicode, AnonymousAttribute)),
+    ]
+
+TestSuiteResultInfo = Struct('TestResultInfo', [
+    ('test_suite', DjangoStruct('TestSuite'), False),
+    ('test_suite_result', DjangoStruct('TestSuiteResult'), False),
+    ('attributes', TypedMap(unicode, AnonymousAttribute)),
+    ]
+
 ResultInfo = Struct('ResultInfo', [
     ('submit', DjangoStruct('Submit'), False),
     ('contestant', DjangoStruct('Contestant'), False),
@@ -55,8 +67,8 @@ ResultInfo = Struct('ResultInfo', [
     ('report', unicode, False),
     ('data', unicode, False),
     ('data_filename', unicode, False),
-    ('test_results', TypedMap(DjangoStruct('TestResult'), TypedMap(unicode, AnonymousAttribute)), False),
-    ('test_suite_results', TypedMap(DjangoStruct('TestSuiteResult'), TypedMap(unicode, AnonymousAttribute)), False),
+    ('test_results', TypedList(TestResultInfo), False),
+    ('test_suite_results', TypedList(TestSuiteResultInfo), False),
     ])
 
 SizedResultList = Struct('SizedResultList', [
@@ -228,13 +240,21 @@ class Web(object):
         except:
             ret.data = None
         if Privilege.demand(submit, 'MANAGE'):
-            ret_tsr = {}
+            ret_tsrs = []
             for tsr in TestSuiteResult.objects.filter(submit=submit):
-                ret_tsr[tsr] = tsr.oa_get_map()
-            ret_ts = {}
-            for ts in TestResult.objects.filter(submit=submit):
-                ret_ts[ts] = ts.oa_get_map()
-            ret.test_results = ret_ts
-            ret.test_suite_results = ret_tsr
+                ret_tsr = TestSuiteResultInfo()
+                ret_tsr.test_suite = tsr.test_suite
+                ret_tsr.test_suite_result = tsr
+                ret_tsr.attributes = tsr.oa_get_map()
+                ret_tsrs.append(ret_tsr)
+            ret_trs = []
+            for tr in TestResult.objects.filter(submit=submit):
+                ret_tr = TestResultInfo()
+                ret_tr.test = tr.test
+                ret_tr.test_result = tr
+                ret_tr.attributes = tr.oa_get_map()
+                ret_trs.append(ret_tr)
+            ret.test_results = ret_tsrs
+            ret.test_suite_results = ret_trs
         return ret
 
