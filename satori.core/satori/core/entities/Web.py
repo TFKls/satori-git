@@ -223,10 +223,10 @@ class Web(object):
             ret.data = None
         if Privilege.demand(submit, 'MANAGE'):
             ret_tsr = {}
-            for tsr in TestSuiteResult.filter(submit=submit):
+            for tsr in TestSuiteResult.objects.filter(submit=submit):
                 ret_tsr[tsr] = tsr.oa_get_map()
             ret_ts = {}
-            for ts in TestResult.filter(submit=submit):
+            for ts in TestResult.objects.filter(submit=submit):
                 ret_ts[ts] = ts.oa_get_map()
             ret.test_results = ret_tr
             ret.test_suite_results = ret_tsr
