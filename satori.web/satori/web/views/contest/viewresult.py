@@ -20,9 +20,11 @@ def view(request, page_info, id):
     widget["status"] = res.status
     widget["isadmin"] = admin
     widget["suites"] = res.test_suite_results
-    widget["suites"].sort(key=lambda r: r.test_suite.name)
+    if widget["suites"]:
+        widget["suites"].sort(key=lambda r: r.test_suite.name)
     widget["results"] = res.test_results
-    widget["results"].sort(key=lambda r: r.test.name)
+    if widget["results"]:
+        widget["results"].sort(key=lambda r: r.test.name)
     fullname = res.data_filename.rsplit('.',2)
     if len(fullname)==2:
         extension = '.'+fullname[1]
