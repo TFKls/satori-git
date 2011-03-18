@@ -47,6 +47,24 @@ ProblemMappingInfo = Struct('ProblemMappingInfo', [
     ('contestant_role_submit_times', PrivilegeTimes, False),
     ])
 
+ResultInfo = Struct('ResultInfo', [
+    ('submit', DjangoStruct('Submit'), False),
+    ('contestant', DjangoStruct('Contestant'), False),
+    ('problem_mapping', DjangoStruct('ProblemMapping'), False),
+    ('status', unicode, False),
+    ('report', unicode, False),
+    ('data', unicode, False),
+    ('data_filename', unicode, False),
+    ('test_results', TypedMap(DjangoStruct('TestResult'), TypedMap(unicode, AnonymousAttribute)), False),
+    ('test_suite_results', TypedMap(DjangoStruct('TestSuiteResult'), TypedMap(unicode, AnonymousAttribute)), False),
+    ])
+
+SizedResultList = Struct('SizedResultList', [
+    ('results', TypedList(ResultInfo), False),
+    ('count', int, False),
+    ])
+
+
 @ExportClass
 class Web(object):
 
@@ -164,5 +182,52 @@ class Web(object):
         result = Contestant.objects.filter(parents=contest.admin_role)
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
-
+    @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
+    def get_results(contest, contestant=None, problem=None, limit=20, offset=0):
+        if contestant:
+            q = Submit.objects.filter(contestant=contestant)
+        else:
+            q = Submit.objects.filter(contestant__contest=contest)
+        if problem:
+            q = q.filter(problem=problem)
+        q = Privilege.where_can(q, 'OBSERVE')
+        ret = []
+        for submit in q.order_by('-id')[offset:offset+limit]:
+            ret_r = ResultInfo()
+            ret_r.submit = submit
+            ret_r.contestant = submit.contestant
+            ret_r.problem_mapping = submit.problem
+            ret_r.status = submit.get_test_suite_status()
+            ret_r.report = submit.get_test_suite_report()
+            ret.append(ret_r)
+        return SizedResultList(
+            count=len(q),
+            results=ret
+            )
+            
+    @ExportMethod(ResultInfo, [DjangoId('Submit')], PCArg('submit', 'OBSERVE'))
+    def get_result_details(submit):
+        ret = ResultInfo()
+        ret.submit = submit
+        ret.contestant = submit.contestant
+        ret.problem_mapping = submit.problem
+        ret.status = submit.get_test_suite_status()
+        ret.report = submit.get_test_suite_report()
+        reader = submit.data_get_blob('content')
+        data = reader.read(min(100000, reader.length))
+        ret.data_filename = reader.filename
+        reader.close()
+        try:
+            ret.data = unicode(data, 'utf8')
+        except:
+            ret.data = None
+        if Privilege.demand(submit, 'MANAGE'):
+            ret_tsr = {}
+            for tsr in TestSuiteResult.filter(submit=submit):
+                ret_tsr[tsr] = tsr.oa_get_map()
+            ret_ts = {}
+            for ts in TestResult.filter(submit=submit):
+                ret_ts[ts] = ts.oa_get_map()
+            ret.test_results = ret_tr
+            ret.test_suite_results = ret_tsr
 
