@@ -1,6 +1,7 @@
 {% extends "templates/index.html" %}
 
 {% block content %}
-<h4>Error: {{ message }}</h4>
+<h2>Error: {{ message }}</h2>
 <p>{{ info }}</p>
+{{ detail|safe }}
 {% endblock %}

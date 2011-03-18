@@ -1,9 +1,12 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import traceback
+import sys
+from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
 from django.shortcuts import render_to_response
 from satori.client.common import want_import
+from django.views.debug import ExceptionReporter
 want_import(globals(), '*')
 
 def contest_view(func):
@@ -45,7 +48,25 @@ def contest_view(func):
             return res
         except Exception as e:
             traceback.print_exc()
-            res = render_to_response('error.html', { 'page_info' : page_info, 'message': 'Internal server error', 'info': 'The server encountered an internal error.' })
+            if settings.DEBUG:
+                reporter = ExceptionReporter(request, *sys.exc_info())
+                detail = reporter.get_traceback_html()
+                detail2 = []
+                in_style = False
+                for line in detail.split('\n'):
+                    if line.startswith('  </style'):
+                        in_style = False
+                    if line == '    #summary { background: #ffc; }':
+                        line = '    #summary { background: #eee; }'
+                    if in_style:
+                        line = '  #content ' + line
+                    if line.startswith('  <style'):
+                        in_style = True
+                    detail2.append(line)
+                detail = '\n'.join(detail2)
+            else:
+                detail = ''
+            res = render_to_response('error.html', { 'page_info' : page_info, 'message': 'Internal server error', 'info': 'The server encountered an internal error.', 'detail': detail })
             res.status_code = 500
             return res
     return wrapped_contest_view
