@@ -69,10 +69,13 @@ class ArsDjangoId(ArsTypeAlias):
 
     def do_convert_from_ars(self, value):
         try:
-            return Privilege.where_can(self.model.objects.all(), 'VIEW').get(id=value)
+            ret = Privilege.select_can(self.model.objects.all(), 'VIEW').get(id=value)
         except self.model.DoesNotExist:
-            raise AccessDenied()
-#            raise ArgumentNotFound(model=self.model.__name__, id=value)
+            raise ArgumentNotFound(model=self.model.__name__, id=value)
+        else:
+            if not ret._can_VIEW:
+                raise AccessDenied()
+            return ret
 
 
 class DjangoId(object):
