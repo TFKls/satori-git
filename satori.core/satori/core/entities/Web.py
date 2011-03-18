@@ -185,12 +185,18 @@ class Web(object):
     @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
     def get_results(contest, contestant=None, problem=None, limit=20, offset=0):
         if contestant:
-            q = Submit.objects.filter(contestant=contestant)
+            contestant_list = Contestant.objects.filter(id=contestant.id)
         else:
-            q = Submit.objects.filter(contestant__contest=contest)
+            contestant_list = Contestant.objects.filter(contest=contest)
+        contestant_list = list(Privilege.where_can(contestant_list, 'OBSERVE'))
+        q = Submit.objects.filter(contestant__in=contestant_list)
+#        if contestant:
+#            q = Submit.objects.filter(contestant=contestant)
+#        else:
+#            q = Submit.objects.filter(contestant__contest=contest)
         if problem:
             q = q.filter(problem=problem)
-        q = Privilege.where_can(q, 'OBSERVE')
+#        q = Privilege.where_can(q, 'OBSERVE')
         ret = []
         for submit in q.order_by('-id')[offset:offset+limit]:
             ret_r = ResultInfo()
@@ -228,6 +234,6 @@ class Web(object):
             ret_ts = {}
             for ts in TestResult.objects.filter(submit=submit):
                 ret_ts[ts] = ts.oa_get_map()
-            ret.test_results = ret_tr
+            ret.test_results = ret_ts
             ret.test_suite_results = ret_tsr
 
