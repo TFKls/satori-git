@@ -50,14 +50,14 @@ ProblemMappingInfo = Struct('ProblemMappingInfo', [
 TestResultInfo = Struct('TestResultInfo', [
     ('test', DjangoStruct('Test'), False),
     ('test_result', DjangoStruct('TestResult'), False),
-    ('attributes', TypedMap(unicode, AnonymousAttribute)),
-    ]
+    ('attributes', TypedMap(unicode, AnonymousAttribute), False),
+    ])
 
-TestSuiteResultInfo = Struct('TestResultInfo', [
+TestSuiteResultInfo = Struct('TestSuiteResultInfo', [
     ('test_suite', DjangoStruct('TestSuite'), False),
     ('test_suite_result', DjangoStruct('TestSuiteResult'), False),
-    ('attributes', TypedMap(unicode, AnonymousAttribute)),
-    ]
+    ('attributes', TypedMap(unicode, AnonymousAttribute), False),
+    ])
 
 ResultInfo = Struct('ResultInfo', [
     ('submit', DjangoStruct('Submit'), False),
