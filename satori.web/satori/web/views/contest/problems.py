@@ -81,6 +81,7 @@ def viewall(request, page_info):
         form = ProblemsPublishForm(problem_list=problem_list)
     problems = []
     any_admin = False
+    groups = {}
     for pinfo in problem_list:
         p = {}
         admin = pinfo.is_admin
@@ -88,6 +89,9 @@ def viewall(request, page_info):
         p['admin'] = admin
         p['has_pdf'] = pinfo.has_pdf
         p['description'] = text2html(pinfo.problem_mapping.description)
+        g = pinfo.problem_mapping.group
+        if not g in groups.keys():
+            groups[g] = []
         if admin:
             any_admin = True
             p['select'] = form[str(pinfo.problem_mapping.id)]
@@ -95,13 +99,15 @@ def viewall(request, page_info):
             p['submittable'] = between(pinfo.contestant_role_submit_times,datetime.now())
             p['when_view'] = pinfo.contestant_role_view_times
             p['when_submit'] = pinfo.contestant_role_submit_times
-        problems.append(p)
-    return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin })
+            
+        groups[g].append(p)
+    return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin, 'groups' : groups })
 
 class ProblemAddForm(forms.Form):
     code = forms.CharField(required=True)
     title = forms.CharField(required=True)
     description = forms.CharField(required=False, label='Additional comment')
+    group = forms.CharField(required=False)
     suite = forms.ChoiceField(choices=[])
     statement = forms.CharField(widget=forms.Textarea, required=False)
     pdf = forms.FileField(required=False)
@@ -128,6 +134,7 @@ def add(request, page_info):
                                                                      problem=problem,
                                                                      code=data['code'],
                                                                      title=data['title'],
+                                                                     group=data['group'],
                                                                      statement='',
                                                                      description=data['description'],
                                                                      default_test_suite=suite))
@@ -186,6 +193,7 @@ def edit(request, page_info, id):
                 mapping.modify(ProblemMappingStruct(code=data['code'],
                                                     title=data['title'],
                                                     statement=data['statement'],
+                                                    group=data['group'],
                                                     description=data['description'],
                                                     default_test_suite=TestSuite(int(data['suite']))))
             except SphinxException as sphinxException:
@@ -204,13 +212,14 @@ def edit(request, page_info, id):
                 phash = writer.close()
                 mapping.statement_files_set_blob_hash('pdf',phash)
                 mapping.statement_files_set_blob_hash('_pdf',phash)
-            return HttpResponseRedirect(reverse('contest_problems_view', args=[page_info.contest.id,mapping.id]))
+            return HttpResponseRedirect(reverse('contest_problems', args=[page_info.contest.id]))
     else:
         fid = tempfile.mkdtemp()
         form = ProblemAddForm(initial={ 'code' : mapping.code,
                                         'title' : mapping.title,
                                         'statement' : mapping.statement,
                                         'description' : mapping.description,
+                                        'group' : mapping.group,
                                         'fid' : fid,
                                         'suite' : mapping.default_test_suite.id }, suites=suites)
     attachments = valid_attachments(mapping.statement_files_get_list())

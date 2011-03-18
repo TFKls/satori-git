@@ -9,9 +9,15 @@
 {% block content %}
 
 <form action="{% url contest_problems page_info.contest.id %}" method="POST">
-<table>
 
-{% for pinfo in problems %}
+{% for group,problemlist in groups.iteritems %}
+
+{% if group %}
+<h5>{{ group }}:</h5>
+{% endif %}
+
+<table>
+{% for pinfo in problemlist %}
 {% with pinfo.problem as problem %}
 <tr>
 
@@ -94,6 +100,7 @@ PDF
 {% endwith %}
 {% endfor %}
 </table>
+{% endfor %}
 
 {% if any_admin %}
 <h4>Mass edit</h4>

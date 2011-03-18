@@ -129,6 +129,14 @@ def editparams(request, page_info, id, problem_id):
         if form.is_valid():
             om = general.dict_to_oa_map(form.cleaned_data)
             ranking.set_problem_params({problem : om.get_map()})
+            ranking.rejudge()
+            return HttpResponseRedirect(reverse('ranking_edit',args=[page_info.contest.id,ranking.id]))
     else:
         form = xmlparams.ParamsForm(paramsdict=general,oamap=params)
     return render_to_response('ranking_editparams.html', {'page_info' : page_info, 'ranking' : ranking, 'form' : form})
+    
+@contest_view
+def rejudge(request, page_info, id):
+    ranking = Ranking(int(id))
+    ranking.rejudge()
+    return HttpResponseRedirect(reverse('contest_manage',args=[page_info.contest.id]))

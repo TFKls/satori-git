@@ -10,11 +10,11 @@ from django.core.urlresolvers import reverse
 @contest_view
 def view(request, page_info):
     contest = page_info.contest
-    submitable = []
+    submitable = [["",'Select a problem']]
     for problem in ProblemMapping.filter(ProblemMappingStruct(contest=contest)):
         if Privilege.demand(problem,"SUBMIT"):
             submitable.append((problem.id, problem.code+": "+problem.title))
-
+    submitable.sort(key=lambda p: p[0])
     class SubmitForm(forms.Form):
         problem = forms.ChoiceField(submitable,label='Please select problem')
 #        code = forms.CharField(required=False,widget=forms.Textarea, label='Paste code')

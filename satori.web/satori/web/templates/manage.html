@@ -21,7 +21,7 @@
 
 <h4>Rankings</h4>
 {% for s in page_info.rankings %}
-<p>{{ s.name }} (<a href="{% url ranking_edit page_info.contest.id s.id %}">edit</a>)</p>
+<p>{{ s.name }} (<a href="{% url ranking_edit page_info.contest.id s.id %}">edit</a>) (<a href="{% url ranking_rejudge page_info.contest.id s.id %}">rejudge</a>)</p>
 {% endfor %}
 
 <a href="{% url ranking_add page_info.contest.id %}">Add new ranking</a>

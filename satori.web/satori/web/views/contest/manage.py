@@ -52,6 +52,7 @@ def view(request, page_info):
             try:
                 user = User.filter(UserStruct(login=admin_form.cleaned_data["username"]))[0]
                 contest.add_admin(user)
+                return HttpResponseRedirect(reverse('contest_manage',args=[page_info.contest.id]))
             except:
                 admin_form._errors['username'] = ['Adding failed!']
         return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
