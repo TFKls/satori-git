@@ -17,7 +17,7 @@ class ProblemMapping(Entity):
     code               = models.CharField(max_length=16)
     title              = models.CharField(max_length=64)
     description        = models.TextField(blank=True)
-    group              = models.CharField(max_length=16, blank=True, default='')
+    group              = models.CharField(max_length=64, blank=True, default='')
     override_fields    = models.TextField(blank=True, default='')
     default_test_suite = models.ForeignKey('TestSuite', related_name='problem_mappings+')
 
