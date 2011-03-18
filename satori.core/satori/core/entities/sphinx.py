@@ -75,7 +75,8 @@ def render_sphinx(rest, oa_map):
             reader.close()
             dest.close()
         else:
-            to_delete.append(name)
+            if name != '_pdf':
+                to_delete.append(name)
 
     for name in to_delete:
         del oa_map[name]
