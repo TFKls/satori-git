@@ -4,6 +4,7 @@ import sys
 from django.conf import settings
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
+from django.utils.http import urlquote
 from django.shortcuts import render_to_response
 from satori.client.common import want_import
 from django.views.debug import ExceptionReporter
@@ -25,16 +26,18 @@ def contest_view(func):
                     raise
             else:
                 page_info = Web.get_page_info()
+            page_info.url = urlquote(request.path)
             res = func(request, page_info, **kwargs)
             if request.COOKIES.get('satori_token', '') != token_container.get_token():
                 res.set_cookie('satori_token', token_container.get_token())
             return res
         except (TokenInvalid, TokenExpired):
-            token_container.set_token('')
-            return HttpResponseRedirect(reverse('login'))
+            res = HttpResponseRedirect(reverse('login')+'?redir='+urlquote(request.path))
+            res.set_cookie('satori_token', '')
+            return res
         except AccessDenied:
             if page_info and not page_info.role:
-                return HttpResponseRedirect(reverse('login'))
+                return HttpResponseRedirect(reverse('login')+'?redir='+urlquote(request.path))
             if request.method == 'POST':
                 info = 'You don\'t have rights to perform the requested action.'
             else:

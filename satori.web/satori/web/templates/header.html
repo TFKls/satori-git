@@ -11,6 +11,6 @@
         <li><a href="{% url logout %}">Sign out</a></li>
     {% else %}
         <li><a href="{% url register %}">Register</a></li>
-        <li><a href="{% url login %}">Sign in</a></li>
+        <li><a href="{% url login %}?redir={{ page_info.url }}">Sign in</a></li>
     {% endif %}
 </ul>

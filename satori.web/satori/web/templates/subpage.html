@@ -1,19 +1,19 @@
 {% extends "templates/index.html" %}
 
 {% block content %}
-<h4>{{subpage.name}}</h4>
 <p>
 {% if can_edit %}
 {% if page_info.contest %}
-<a href="{% url contest_subpage_edit page_info.contest.id subpage.id %}">Edit</a>
+<a href="{% url contest_subpage_edit page_info.contest.id subpage.id %}">(edit subpage)</a>
 {% else %}
-<a href="{% url subpage_edit subpage.id %}">Edit</a>
+<a href="{% url subpage_edit subpage.id %}">(edit subpage)</a>
 {% endif %}
 {% endif %}
 </p>
 
 {{content|safe}}
 
+{% comment %}
 {% if can_edit %}
 <h4>Attachments</h4>
 <table>
@@ -24,6 +24,7 @@
     {% endfor %}
 </table>
 {% endif %}
+{% endcomment %}
 
 
 {% endblock %}
