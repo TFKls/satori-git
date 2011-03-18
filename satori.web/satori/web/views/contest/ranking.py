@@ -70,8 +70,10 @@ def edit(request, page_info, id):
     contest = page_info.contest
     problems = ProblemMapping.filter(ProblemMappingStruct(contest=contest))
     problems.sort(key=lambda p : p.code)
-    suites = dict([[k.id, v] for k, v in ranking.get_problem_test_suites().iteritems()])
-    problem_params = dict([[k.id, v] for k, v in ranking.get_problem_params().iteritems()])
+    suites_raw = ranking.get_problem_test_suites()
+    params_raw = ranking.get_problem_params()
+    suites = dict([[k.id, v] for k, v in suites_raw.iteritems()])
+    problem_params = dict([[k.id, v] for k, v in params_raw.iteritems()])
     problem_list = [ [p,suites.get(p.id,None),problem_params.get(p.id,None)] for p in problems ]
     if ranking.is_public:
         visibility = 'public'
@@ -102,7 +104,7 @@ def edit(request, page_info, id):
                     Privilege.revoke(contest.contestant_role,ranking,'VIEW_FULL')
                     Privilege.revoke(contest.contestant_role,ranking,'VIEW')
                     public = False                    
-            ranking.modify_full(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["ranking_name"],aggregator=ranking.aggregator,is_public=public),om.get_map(), {}, {})
+            ranking.modify_full(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["ranking_name"],aggregator=ranking.aggregator,is_public=public),om.get_map(), suites_raw, params_raw)
             return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,id]))
     else:
         base_form = AddBaseForm(initial={'ranking_name' : ranking.name, 'ranking_visibility' : visibility})
