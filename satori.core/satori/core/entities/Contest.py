@@ -28,7 +28,7 @@ ContestantsToRender = Struct('ContestantsToRender', (
     ('count', int, True),
     ('contestants', TypedList(ContestantToRender), True),
 ))
-AlreadyRegistered = DefineException('AlreadyRegisteres', 'The specified user \'{login}\' is already registered',
+AlreadyRegistered = DefineException('AlreadyRegistered', 'The specified user \'{login}\' is already registered',
     [('login', unicode, False)])
 
 @ExportModel
