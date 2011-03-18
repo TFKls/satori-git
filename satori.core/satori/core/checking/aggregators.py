@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 import logging
+import yaml
 from blist import blist, sortedset, sortedlist
 from collections import deque
 from copy import deepcopy
