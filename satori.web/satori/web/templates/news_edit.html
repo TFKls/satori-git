@@ -36,31 +36,5 @@
     </tr>
 </table>
 </form>
-
-<h4>Attachments</h4>
-<p>Click to select or drag-and-drop multiple files on the upload field:</p>
-<form id="file_upload" action={% url fileupload %} method="POST" enctype="multipart/form-data" class="file_upload">
-    <input type="file" name="file" multiple>
-    {{ form.fid }}
-    <button>Upload</button>
-    <div>Add new files</div>
-</form>
-
-<table id="files">
-    {% for dfile in attachments %}
-    <tr> 
-        <td><a href="{% url download_group 'download' 'Subpage' message.id 'content_files' dfile dfile %}">{{ dfile }}</a></td>
-        <td>
-        <form class="remove_existing">
-            <input name="rfile" value="{{ dfile }}" type="hidden">
-            <button class="ui-state-default ui-corner-all" type="submit">
-                <span class="ui-icon ui-icon-trash"></span>
-            </button>
-        </form>
-        </td>
-    </tr>
-    {% endfor %}
-</table>
-<script src="/files/scripts/attachments_upload.js"></script>
-<script>createFileUploadInstance('{{ fid }}', '{% url fileremove %}');</script>
+{% include "templates/attachments_edit.html" %}
 {% endblock %}

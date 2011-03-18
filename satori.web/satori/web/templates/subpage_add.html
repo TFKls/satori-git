@@ -47,15 +47,5 @@
     </tr>
 </table>
 </form>
-<h4>Attachments</h4>
-<p>Click to select or drag-and-drop multiple files on the upload field:</p>
-<form id="file_upload" action={% url fileupload %} method="POST" enctype="multipart/form-data" class="file_upload">
-    <input type="file" name="file" multiple>
-    {{ form.fid }}
-    <button>Upload</button>
-    <div>Attachments</div>
-</form>
-<table id="files"></table>
-<script src="/files/scripts/attachments_upload.js"></script>
-<script>createFileUploadInstance('{{ fid }}', '{% url fileremove %}');</script>
+{% include "templates/attachments_add.html" %}
 {% endblock %}
