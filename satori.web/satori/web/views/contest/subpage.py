@@ -5,6 +5,7 @@ import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
+from satori.web.utils.files import valid_attachments
 from satori.web.utils.shortcuts import fill_image_links
 from satori.web.utils.shortcuts import render_to_json, text2html
 from django import forms
@@ -17,13 +18,6 @@ class ContestSubpageEditForm(forms.Form):
     visibility = forms.ChoiceField(label="Visible for", required=True, choices=[['admin','Admins only'],['contestant','Contestants'],['public', 'Everyone']]) 
     fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
-
-def valid_attachments(subpage):
-    dfiles = []
-    for dfile in subpage.content_files_get_list():
-        if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')) and dfile.is_blob:
-            dfiles.append(dfile.name)
-    return dfiles
 
 @contest_view
 def view(request, page_info,id):

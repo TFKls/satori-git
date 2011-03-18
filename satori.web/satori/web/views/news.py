@@ -5,6 +5,7 @@ import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
+from satori.web.utils.files import valid_attachments
 from satori.web.utils.shortcuts import text2html, fill_image_links, render_to_json
 from django import forms
 from django.http import HttpResponseRedirect
@@ -17,13 +18,6 @@ class NewsEditForm(forms.Form):
     content = forms.CharField(required=False,widget=forms.Textarea, label="Content")
     is_sticky = forms.BooleanField(label="Always at the top", required=False)
     is_public = forms.BooleanField(label="Show in every contest", required=False)
-
-def valid_attachments(message):
-    dfiles = []
-    for dfile in message.content_files_get_list():
-        if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')) and dfile.is_blob:
-            dfiles.append(dfile.name)
-    return dfiles
 
 @general_view
 def view(request, page_info):

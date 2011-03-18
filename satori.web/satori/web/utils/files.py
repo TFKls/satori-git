@@ -45,3 +45,10 @@ def fileremove(request, page_info):
             return render_to_json('json/global_fileremove.json', {'page_info' : page_info, 'name' : rfile})
         #TODO(kalq): return error code
     # TODO(kalq): return 404
+
+def valid_attachments(document):
+    dfiles = []
+    for dfile in document.content_files_get_list():
+        if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')) and dfile.is_blob:
+            dfiles.append(dfile.name)
+    return dfiles

@@ -5,6 +5,7 @@ import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
+from satori.web.utils.files import valid_attachments
 from satori.web.utils.shortcuts import fill_image_links
 from django import forms
 from django.http import HttpResponseRedirect
@@ -17,13 +18,6 @@ class ContestNewsEditForm(forms.Form):
     fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
     is_sticky = forms.BooleanField(label="Always at the top", required=False)
     is_public = forms.BooleanField(label="Show to all visitors", required=False)
-
-def valid_attachments(message):
-    dfiles = []
-    for dfile in message.content_files_get_list():
-        if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')) and dfile.is_blob:
-            dfiles.append(dfile.name)
-    return dfiles
 
 @contest_view
 def view(request, page_info):

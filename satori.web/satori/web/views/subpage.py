@@ -5,6 +5,7 @@ import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
+from satori.web.utils.files import valid_attachments
 from satori.web.utils.shortcuts import fill_image_links
 from satori.web.utils.shortcuts import render_to_json, text2html
 from django import forms
@@ -18,13 +19,6 @@ class GlobalSubpageEditForm(forms.Form):
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
     is_public = forms.BooleanField(label="Show in every contest", required=False)
     
-def valid_attachments(subpage):
-    dfiles = []
-    for dfile in subpage.content_files_get_list():
-        if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')) and dfile.is_blob:
-            dfiles.append(dfile.name)
-    return dfiles
-
 @general_view
 def view(request, page_info,id):
     sinfo = Web.get_subpage_info(Subpage(int(id)))
