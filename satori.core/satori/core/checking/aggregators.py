@@ -566,8 +566,8 @@ class MarksAggregator(AggregatorBase):
 #@      <problem>
 #@              <param type="bool"     name="show"           description="Show column for this problem" default="true"/>
 #@              <param type="bool"     name="obligatory"     description="Problem is obligatory" default="1"/>
-#@              <param type="float"    name="max_score"      description="Problem Score" default="1"/>
-#@              <param type="float"    name="min_score"      description="Problem Score" default="-1"/>
+#@              <param type="float"    name="max_score"      description="Score for problem" default="1"/>
+#@              <param type="float"    name="min_score"      description="Minimum score for problem" default="-1"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="datetime" name="time_start_descent"       description="Descent start time"/>
@@ -632,7 +632,7 @@ class MarksAggregator(AggregatorBase):
                 if not all_ok:
                     mark = 'FAIL'
                 else:
-                    mark = 'UNK (' + str(score) + ')'
+                    mark = 'UNK (' + '%.2f'%(score,) + ')'
 
                 for mrk, (lower, upper) in self.aggregator.params.points_mark:
                     if score >= lower and score < upper:
@@ -651,7 +651,7 @@ class MarksAggregator(AggregatorBase):
                             else:
                                 columns += [ '-' ]
                         else:
-                            columns += [ '%.2f'%points[pi] ]
+                            columns += [ '%.2f'%(points[pi],) ]
                     pi += 1
 
                 self.ranking_entry.row = self.aggregator.table.generate_row(*columns) + self.aggregator.table.row_separator
