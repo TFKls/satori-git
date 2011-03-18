@@ -22,7 +22,7 @@ class GlobalSubpageEditForm(forms.Form):
 @general_view
 def view(request, page_info,id):
     sinfo = Web.get_subpage_info(Subpage(int(id)))
-    attachments = valid_attachments(sinfo.subpage)
+    attachments = valid_attachments(sinfo.subpage.content_files_get_list())
     content = fill_image_links(sinfo.html, 'Subpage', id, 'content_files')
     can_edit = sinfo.is_admin
     return render_to_response('subpage.html', { 'attachments' : attachments,
@@ -78,7 +78,7 @@ def edit(request, page_info, id):
                                              content=data['content'],
                                              is_public=data['is_public']))
             except SphinxException as sphinxException:
-                attachments = valid_attachments(subpage)
+                attachments = valid_attachments(subpage.content_files_get_list())
                 return render_to_response('subpage_edit.html', { 'attachments' : attachments,
                                                                  'fid' : fid,
                                                                  'form' : form,
@@ -92,7 +92,7 @@ def edit(request, page_info, id):
                                                'content' : subpage.content,
                                                'fid' : fid,
                                                'is_public' : subpage.is_public })
-    attachments = valid_attachments(subpage)
+    attachments = valid_attachments(subpage.content_files_get_list())
     return render_to_response('subpage_edit.html', { 'attachments' : attachments, 
                                                      'fid' : fid,
                                                      'form' : form,

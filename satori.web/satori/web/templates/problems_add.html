@@ -1,32 +1,34 @@
 {% extends "templates/index.html" %}
 
 {% block content %}
-{% if base %}
-{% if editing %}
-<p>Editing problem {{ editing.code }} - {{ editing.title }}</p>
-{% endif %}
-<p>Based on problem {{ base.name }} ({{base.description}}).</p>
-{% if editing %}
-<form enctype="multipart/form-data" action="{% url contest_problems_edit page_info.contest.id editing.id %}" method="POST">
-{% else %}
-<form enctype="multipart/form-data" action="{% url contest_problems_add page_info.contest.id %}?preid={{base.id}}" method="POST">
-{% endif %}
-<table>
-{{ form.as_table }}
-</table>
-{% if editing %}
-<input type="submit" value="Change problem"/>
-{% else %}
-<input type="submit" value="Add problem"/>
-{% endif %}
-</form>
-{% else %}
-<form action="{% url contest_problems_add page_info.contest.id %}" method="GET">
-<table>
-{{ form.as_table }}
-</table>
-<input type="submit" value="Choose"/>
-</form>
-{% endif %}
-
+    {% if base %}
+        {% if editing %}
+            <p>Editing problem {{ editing.code }} - {{ editing.title }}</p>
+        {% endif %}
+        <p>Based on problem {{ base.name }} ({{base.description}}).</p>
+        {% if editing %}
+            <form enctype="multipart/form-data" action="{% url contest_problems_edit page_info.contest.id editing.id %}" method="POST">
+        {% else %}
+            <form enctype="multipart/form-data" action="{% url contest_problems_add page_info.contest.id %}?preid={{base.id}}" method="POST">
+        {% endif %}
+        <table>
+            {{ form.as_table }}
+        </table>
+        {% if editing %}
+            <input type="submit" value="Change problem"/>
+            </form>
+            {% include "templates/attachments_edit.html" %}
+        {% else %}
+            <input type="submit" value="Add problem"/>
+            </form>
+            {% include "templates/attachments_add.html" %}
+        {% endif %}
+    {% else %}
+        <form action="{% url contest_problems_add page_info.contest.id %}" method="GET">
+        <table>
+            {{ form.as_table }}
+        </table>
+        <input type="submit" value="Choose"/>
+        </form>
+    {% endif %}
 {% endblock %}

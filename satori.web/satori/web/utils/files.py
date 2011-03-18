@@ -46,9 +46,9 @@ def fileremove(request, page_info):
         #TODO(kalq): return error code
     # TODO(kalq): return 404
 
-def valid_attachments(document):
+def valid_attachments(attachments):
     dfiles = []
-    for dfile in document.content_files_get_list():
+    for dfile in attachments:
         if not (dfile.name == '_html' or dfile.name == '_pdf' or dfile.name.startswith('_img_')) and dfile.is_blob:
             dfiles.append(dfile.name)
     return dfiles

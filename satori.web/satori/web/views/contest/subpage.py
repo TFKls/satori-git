@@ -22,7 +22,7 @@ class ContestSubpageEditForm(forms.Form):
 @contest_view
 def view(request, page_info,id):
     sinfo = Web.get_subpage_info(Subpage(int(id)))
-    attachments = valid_attachments(sinfo.subpage)
+    attachments = valid_attachments(sinfo.subpage.content_files_get_list())
     content = fill_image_links(sinfo.html, 'Subpage', id, 'content_files')
     can_edit = sinfo.subpage.contest and sinfo.is_admin
 
@@ -105,7 +105,7 @@ def edit(request, page_info,id):
 
 
             except SphinxException as sphinxException:
-                attachments = valid_attachments(subpage)
+                attachments = valid_attachments(subpage.content_files_get_list())
                 return render_to_response('subpage_edit.html', { 'attachments' : attachments,
                                                                  'fid' : fid,
                                                                  'form' : form,
@@ -126,7 +126,7 @@ def edit(request, page_info,id):
                                                 'fid' : fid,
                                                 'visibility' : vis
                                                 })
-    attachments = valid_attachments(subpage)
+    attachments = valid_attachments(subpage.content_files_get_list())
     return render_to_response('subpage_edit.html', { 'attachments' : attachments, 
                                                      'fid' : fid,
                                                      'form' : form,

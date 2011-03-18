@@ -81,7 +81,7 @@ def edit(request, page_info,id):
                                              is_sticky=['is_sticky'],
                                              is_public=data['is_public']))
             except SphinxException as sphinxException:
-                attachments = valid_attachments(subpage)
+                attachments = valid_attachments(message.content_files_get_list())
                 return render_to_response('news_edit.html', { 'attachments' : attachments,
                                                               'fid' : fid,
                                                               'form' : form,
@@ -96,7 +96,7 @@ def edit(request, page_info,id):
                                       'fid' : tempfile.mkdtemp(),
                                       'is_public' : message.is_public,
                                       'is_sticky' : message.is_sticky})
-    attachments = valid_attachments(message)
+    attachments = valid_attachments(message.content_files_get_list())
     return render_to_response('news_edit.html', { 'attachments' : attachments,
                                                   'fid' : fid,
                                                   'form' : form,

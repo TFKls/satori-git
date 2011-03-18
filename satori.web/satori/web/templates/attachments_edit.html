@@ -10,7 +10,11 @@
 <table id="files">
     {% for dfile in attachments %}
     <tr> 
-        <td><a href="{% url download_group 'download' 'Subpage' subpage.id 'content_files' dfile dfile %}">{{ dfile }}</a></td>
+        {% if editing %}
+            <td><a href="{% url download_group 'download' 'ProblemMapping' editing.id 'statement_files' dfile dfile %}">{{ dfile }}</a></td>
+        {% else %}
+            <td><a href="{% url download_group 'download' 'Subpage' subpage.id 'content_files' dfile dfile %}">{{ dfile }}</a></td>
+        {% endif %}
         <td>
         <form class="remove_existing">
             <input name="rfile" value="{{ dfile }}" type="hidden">

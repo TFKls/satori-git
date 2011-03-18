@@ -1,4 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+import glob
+import os
+import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
@@ -7,6 +10,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django import forms
 from datetime import datetime
+from satori.web.utils.files import valid_attachments
 from satori.web.utils.forms import SatoriDateTimeField
 from satori.web.utils.shortcuts import text2html,fill_image_links
 
@@ -101,6 +105,7 @@ class ProblemAddForm(forms.Form):
     suite = forms.ChoiceField(choices=[])
     statement = forms.CharField(widget=forms.Textarea, required=False)
     pdf = forms.FileField(required=False)
+    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
     def __init__(self,data=None,suites=[],*args,**kwargs):
         super(ProblemAddForm,self).__init__(data,*args,**kwargs)
         self.fields["suite"].choices = [[suite.id,suite.name + '(' + suite.description + ')'] for suite in suites]
@@ -112,14 +117,20 @@ def add(request, page_info):
         preid = request.GET["preid"]
         problem = Problem(int(preid))
         suites = TestSuite.filter(TestSuiteStruct(problem=problem))
-        
             
         if request.method=="POST":
             form = ProblemAddForm(data=request.POST,files=request.FILES,suites=suites)
             if form.is_valid():
                 data = form.cleaned_data
+                fid = data['fid']
                 suite = filter(lambda s:s.id==int(data["suite"]),suites)[0]
-                mapping = ProblemMapping.create(ProblemMappingStruct(contest=page_info.contest,problem=problem,code=data['code'],title=data['title'], statement=data['statement'], description=data['description'], default_test_suite=suite))
+                mapping = ProblemMapping.create(ProblemMappingStruct(contest=page_info.contest,
+                                                                     problem=problem,
+                                                                     code=data['code'],
+                                                                     title=data['title'],
+                                                                     statement='',
+                                                                     description=data['description'],
+                                                                     default_test_suite=suite))
                 pdf = form.cleaned_data.get('pdf',None)
                 if pdf:
                     writer = Blob.create(pdf.size)
@@ -127,10 +138,25 @@ def add(request, page_info):
                     phash = writer.close()
                     mapping.statement_files_set_blob_hash('pdf',phash)
                     mapping.statement_files_set_blob_hash('_pdf',phash)
-                return HttpResponseRedirect(reverse('contest_problems',args=[page_info.contest.id]))
+
+                for ufile in glob.glob(os.path.join(fid, '*')):
+                    mapping.statement_files_set_blob_path(os.path.basename(ufile), ufile)
+                try:
+                    mapping.statement = data['statement']
+                except SphinxException as sphinxException:
+                    return render_to_response('problems_add.html', { 'fid' : fid,
+                                                                     'form' : form, 
+                                                                     'page_info' : page_info,
+                                                                     'sphinxException' : sphinxException })
+                return HttpResponseRedirect(reverse('contest_problems', args=[page_info.contest.id]))
         else:
-            form = ProblemAddForm(suites=suites)
-            return render_to_response('problems_add.html', {'page_info' : page_info, 'form' : form, 'base' : problem } )
+            #TODO(kalq): Create a hash instead of full pathname
+            fid = tempfile.mkdtemp()
+            form = ProblemAddForm(suites=suites, initial={ 'fid' : fid })
+            return render_to_response('problems_add.html', { 'page_info' : page_info,
+                                                             'fid' : fid,
+                                                             'form' : form,
+                                                             'base' : problem } )
     else:
         problems = Problem.filter()
         choices = [[problem.id, problem.name + '(' + problem.description + ')'] for problem in problems]
@@ -150,7 +176,27 @@ def edit(request, page_info, id):
         form = ProblemAddForm(data=request.POST,files=request.FILES,suites=suites)
         if form.is_valid():
             data = form.cleaned_data
-            mapping.modify(ProblemMappingStruct(code=data['code'],title=data['title'],statement=data['statement'],description=data['description'],default_test_suite=TestSuite(int(data['suite']))))
+            fid = data['fid']
+            for rfile in request.POST:
+                if rfile.startswith('rfile'):
+                    mapping.statement_files_delete(request.POST[rfile])
+            for ufile in glob.glob(os.path.join(fid, '*')):
+                mapping.statement_files_set_blob_path(os.path.basename(ufile), ufile)
+            try:
+                mapping.modify(ProblemMappingStruct(code=data['code'],
+                                                    title=data['title'],
+                                                    statement=data['statement'],
+                                                    description=data['description'],
+                                                    default_test_suite=TestSuite(int(data['suite']))))
+            except SphinxException as sphinxException:
+                attachments = valid_attachments(mapping.statement_files_get_list())
+                return render_to_response('problems_add.html', { 'attachments' : attachments,
+                                                                 'fid' : fid,
+                                                                 'form' : form,
+                                                                 'page_info' : page_info,
+                                                                 'sphinxException' : sphinxException,
+                                                                 'base' : problem,
+                                                                 'editing' : mapping })
             pdf = form.cleaned_data.get('pdf',None)
             if pdf:
                 writer = Blob.create(pdf.size)
@@ -158,10 +204,22 @@ def edit(request, page_info, id):
                 phash = writer.close()
                 mapping.statement_files_set_blob_hash('pdf',phash)
                 mapping.statement_files_set_blob_hash('_pdf',phash)
-            return HttpResponseRedirect(reverse('contest_problems_view',args=[page_info.contest.id,mapping.id]))
+            return HttpResponseRedirect(reverse('contest_problems_view', args=[page_info.contest.id,mapping.id]))
     else:
-        form = ProblemAddForm(initial={'code': mapping.code, 'title': mapping.title, 'statement' : mapping.statement, 'description' : mapping.description, 'suite' : mapping.default_test_suite.id}, suites=suites)
-    return render_to_response('problems_add.html', {'page_info': page_info, 'form' : form, 'base' : problem, 'editing' : mapping})
+        fid = tempfile.mkdtemp()
+        form = ProblemAddForm(initial={ 'code' : mapping.code,
+                                        'title' : mapping.title,
+                                        'statement' : mapping.statement,
+                                        'description' : mapping.description,
+                                        'fid' : fid,
+                                        'suite' : mapping.default_test_suite.id }, suites=suites)
+    attachments = valid_attachments(mapping.statement_files_get_list())
+    return render_to_response('problems_add.html', { 'attachments' : attachments,
+                                                     'page_info' : page_info,
+                                                     'fid' : fid,
+                                                     'form' : form,
+                                                     'base' : problem,
+                                                     'editing' : mapping })
 
 @contest_view
 def view(request, page_info, id):
