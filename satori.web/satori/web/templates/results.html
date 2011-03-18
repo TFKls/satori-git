@@ -32,10 +32,10 @@
 <tr>
     <td><a href="{% url view_result page_info.contest.id s.submit.id %}">{{s.submit.id}}</a></td>
 {% if page_info.contest_is_admin %}   
-     <td>{{s.contestant}}</td>
+     <td>{{s.contestant.name}}</td>
 {% endif %}
-    <td>{{s.problem}}</td>
-    <td>{{s.submit.time}}</td>
+    <td>{{s.problem_mapping.code}}</td>
+    <td>{{s.submit.time|date:"Y-m-d, H:i:s"}}</td>
 
 <td class={% switch s.status %}
                 {% case "QUE" %} "staQUE"
@@ -56,9 +56,9 @@
 </tr>
 
 {% comment %}
-{% if s.showdetails %}
+{% if s.report %}
 <tr>
-    <td colspan="6">{{s.details}}</td>
+    <td colspan="6">{{s.submit.details}}</td>
 </tr>
 {% endif %}
 {% endcomment %}

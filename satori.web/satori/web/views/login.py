@@ -22,7 +22,11 @@ def view(request, page_info):
             try:
                 token = User.authenticate(login=login,password=password)
                 token_container.set_token(token)
-                return HttpResponseRedirect(reverse('news'))
+                redir = request.GET.get('redir',None)
+                if redir and redir[:8]!='/logout' and redir[:8]!='/login':
+                    return HttpResponseRedirect(redir)
+                else:
+                    return HttpResponseRedirect(reverse('news'))
             except:
                 form.errors['__all__']= 'Login failed!'
                 return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'failed' : True })

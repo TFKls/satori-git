@@ -17,9 +17,9 @@
 </tr>
 <tr>
     <td>{{widget.sid}}</td>
-    <td>{{widget.contestant}}</td>
-    <td>{{widget.problem}}</td>
-    <td>{{widget.time}}</td>
+    <td>{{widget.contestant.name}}</td>
+    <td>{{widget.problem.code}}</td>
+    <td>{{widget.time|date:"Y-m-d, H:i:s"}}</td>
 
 <td class={% switch widget.status %}
                 {% case "QUE" %} "staQUE"
@@ -40,35 +40,45 @@
 
 </table>
 
-<h4>Checking report</h4>
+<h3>Checking report</h4>
 {{widget.details|safe}}
 
 
 {% if widget.suites %}
 <h3>Suite results</h3>
 
-<table class="tlist">
-{% for s in widget.suites %}
-<tr>
-    <td>{{s.test_suite.name}}</td><td>{{s.test_suite.description}}</td><td>{{s.status}}</td>
-</tr>
+{% for result in widget.suites %}
+<h4>Suite: {{result.test_suite.name}}</h4>
+{% for key, attr in result.attributes.iteritems %}
+{% if not attr.is_blob %}
+{{ key }} : {{ attr.value}}
+{% else %}
+{{ key }} : <a href="{% url download "download" "TestSuiteResult" result.test_suite_result.id key attr.filename %}">({{ attr.filename }})</a>
+{% endif %}
+</br>
 {% endfor %}
-</table>
+{% endfor %}
+
 {% endif %}
 
 {% if widget.results %}
 <h3>Test results</h3>
 
-{% for t in widget.results %}
-<strong>Test {{ t.test.name}} ({{ t.test.description }})</strong>
-<table>
-{% for k,v in t.attr %}
-<tr><td>{{ k }}</td><td>{{ v }}</td></tr>
+{% for result in widget.results %}
+<h4>Test: {{result.test.name}}</h4>
+{% for key, attr in result.attributes.iteritems %}
+{% if not attr.is_blob %}
+{{ key }} : {{ attr.value}}
+{% else %}
+{{ key }} : <a href="{% url download "download" "TestResult" result.test_result.id key attr.filename %}">({{ attr.filename }})</a>
+{% endif %}
+<br/>
 {% endfor %}
-</table>
 {% endfor %}
 
 {% endif %}
+
+
 
 <h3>Code (<a href="{% url download_group "download" "Submit" widget.sid "data" "content" filename %}">download</a>)</h3>
 {% if widget.code %}

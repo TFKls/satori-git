@@ -8,7 +8,7 @@ from django import forms
 @contest_view
 def view(request, page_info):
     max_contestants=500
-    limit = 20
+    limit = 30
     contest = page_info.contest
     if not page_info.contest_is_admin:
         results=contest.get_results(contestant=page_info.contestant, limit=1000).results
@@ -40,9 +40,9 @@ def view(request, page_info):
     else:
         problem = Problem(int(pid))
     if cid=='all':
-        results_aux = contest.get_all_results(problem=problem,limit=limit,offset=page*limit)
+        results_aux = Web.get_results(contest=contest,problem=problem,contestant=None,limit=limit,offset=page*limit)
     else:
-        results_aux = contest.get_results(problem=problem,contestant=Contestant(int(cid)),limit=limit,offset=page*limit)
+        results_aux =Web.get_results(contest=contest,problem=problem,contestant=Contestant(int(cid)),limit=limit,offset=page*limit)
     results = results_aux.results
     rescount = results_aux.count
     pagecount = (rescount+limit-1)/limit
