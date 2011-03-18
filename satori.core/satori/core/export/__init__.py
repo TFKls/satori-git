@@ -30,7 +30,7 @@ global_exception_types.append(TokenExpired)
 global_exception_types.append(AccessDenied)
 global_exception_types.append(ArgumentNotFound)
 global_exception_types.append(CannotReturnObject)
-#global_exception_types.append(InvalidArgument)
+global_exception_types.append(InvalidArgument)
 
 
 def ExportModel(cls):
