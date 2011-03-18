@@ -23,7 +23,14 @@ class TestSuiteResult(Entity):
     class ExportMeta(object):
         fields = [('submit', 'VIEW'), ('test_suite', 'VIEW'), ('pending', 'VIEW'), ('status', 'VIEW'), ('report', 'VIEW')]
 
-    @ExportMethod(NoneType, [DjangoId('TestSuiteResult')], PCArg('self', 'MANAGE'))
+    @classmethod
+    def inherit_rights(cls):
+        inherits = super(TestSuiteResult, cls).inherit_rights()
+        cls._inherit_add(inherits, 'VIEW', '', 'REJUDGE')
+        cls._inherit_add(inherits, 'REJUDGE', 'submit', 'MANAGE')
+        return inherits
+
+    @ExportMethod(NoneType, [DjangoId('TestSuiteResult')], PCArg('self', 'REJUDGE'))
     def rejudge(self):
         RawEvent().send(Event(type='checking_rejudge_test_suite_result', id=self.id))
 

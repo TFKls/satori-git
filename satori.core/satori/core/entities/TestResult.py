@@ -25,10 +25,11 @@ class TestResult(Entity):
     @classmethod
     def inherit_rights(cls):
         inherits = super(TestResult, cls).inherit_rights()
-        cls._inherit_add(inherits, 'VIEW', '', 'JUDGE')
+        cls._inherit_add(inherits, 'VIEW', '', 'REJUDGE')
+        cls._inherit_add(inherits, 'REJUDGE', 'submit', 'MANAGE')
         return inherits
 
-    @ExportMethod(NoneType, [DjangoId('TestResult')], PCArg('self', 'MANAGE'))
+    @ExportMethod(NoneType, [DjangoId('TestResult')], PCArg('self', 'REJUDGE'))
     def rejudge(self):
         RawEvent().send(Event(type='checking_rejudge_test_result', id=self.id))
 
