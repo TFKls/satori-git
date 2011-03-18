@@ -644,7 +644,7 @@ class MarksAggregator(AggregatorBase):
                 columns = ['', contestant_name]
                 if self.aggregator.params.show_marks:
                     columns += [ str(mark) ]
-                columns += [str(score), problems]
+                columns += ['%.2f'%(score,), problems]
                 pi=0
                 for pid in self.aggregator.sorted_problems:
                     params = self.aggregator.problem_params[pid]
@@ -653,7 +653,7 @@ class MarksAggregator(AggregatorBase):
                             if params.obligatory:
                                 columns += [ 'F' ]
                             else:
-                                columns += [ '-' ]
+                                columns += [ '\\-' ]
                         else:
                             columns += [ '%.2f'%(points[pi],) ]
                     pi += 1
