@@ -11,7 +11,7 @@ def view(request, page_info):
     limit = 30
     contest = page_info.contest
     if not page_info.contest_is_admin:
-        results=contest.get_results(contestant=page_info.contestant, limit=1000).results
+        results=Web.get_results(contest=contest,limit=1000).results
         return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results})
     contestants = contest.get_contestants(offset=0,limit=max_contestants).contestants
     contestant_choices = [[cinfo.contestant.id,cinfo.name] for cinfo in contestants]
