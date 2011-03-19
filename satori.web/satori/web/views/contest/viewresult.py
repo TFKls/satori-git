@@ -32,6 +32,6 @@ def view(request, page_info, id):
         extension = ''
     filename = id+extension
     rawcode = res.data
-    if rawcode!="":
+    if rawcode and rawcode!="":
         widget["code"] = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
     return render_to_response('viewresult.html',{'page_info' : page_info, 'widget' : widget, 'filename' : filename})
