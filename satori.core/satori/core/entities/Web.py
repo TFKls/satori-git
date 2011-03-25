@@ -203,7 +203,7 @@ class Web(object):
         else:
             contestant_list = Contestant.objects.filter(contest=contest)
         contestant_list = list(Privilege.where_can(contestant_list, 'OBSERVE'))
-        q = Submit.objects.filter(contestant__in=contestant_list)
+        q = Submit.objects.filter(contestant__in=contestant_list).order_by('-id')
 #        if contestant:
 #            q = Submit.objects.filter(contestant=contestant)
 #        else:
@@ -211,16 +211,14 @@ class Web(object):
         if problem:
             q = q.filter(problem=problem)
 #        q = Privilege.where_can(q, 'OBSERVE')
-        q2 = q.order_by('-id')[offset:offset+limit]
         contestant_dict = {}
-#        for c in q2.values_list('contestant', flat=True):
-        for c in Privilege.select_struct_can(Contestant.objects.filter(id__in=q2.values_list('contestant', flat=True))):
+        for c in Privilege.select_struct_can(Contestant.objects.filter(id__in=q[offset:offset+limit].values_list('contestant', flat=True))):
             contestant_dict[c.id] = c
         problem_dict = {}
-        for p in Privilege.select_struct_can(ProblemMapping.objects.filter(id__in=q2.values_list('problem', flat=True))):
+        for p in Privilege.select_struct_can(ProblemMapping.objects.filter(id__in=q[offset:offset+limit].values_list('problem', flat=True))):
             problem_dict[p.id] = p
         ret = []
-        for submit in Privilege.select_struct_can(q).order_by('-id')[offset:offset+limit]:
+        for submit in Privilege.select_struct_can(q)[offset:offset+limit]:
             ret_r = ResultInfo()
             ret_r.submit = submit
             ret_r.contestant = contestant_dict[submit.contestant_id]
