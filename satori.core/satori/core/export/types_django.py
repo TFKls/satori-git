@@ -3,6 +3,7 @@
 from   datetime  import datetime
 from   django.db import models
 import inspect
+import logging
 
 from satori.ars.model import *
 
@@ -126,6 +127,7 @@ class ArsDjangoStructure(ArsDeferredStructure):
 
         for field in self.fields.items:
             if hasattr(ret, field.name) and field.type.needs_conversion():
+                logging.debug('field %s', field.name)
                 if isinstance(field.type, ArsDjangoId):
                     if getattr(ret, field.name + '_id') is None:
                         delattr(ret, field.name)
