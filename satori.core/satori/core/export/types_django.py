@@ -130,6 +130,7 @@ class ArsDjangoStructure(ArsDeferredStructure):
                     if getattr(ret, field.name + '_id') is None:
                         delattr(ret, field.name)
                     else:
+                        logging.debug('field %s type %s', field.name, type(getattr(ret, field.name + '_id')))
                         setattr(ret, field.name, getattr(ret, field.name + '_id'))
                 else:
                     setattr(ret, field.name, field.type.convert_to_ars(getattr(ret, field.name)))
