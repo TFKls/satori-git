@@ -3,7 +3,6 @@
 from   datetime  import datetime
 from   django.db import models
 import inspect
-import logging
 
 from satori.ars.model import *
 
@@ -119,25 +118,23 @@ class ArsDjangoStructure(ArsDeferredStructure):
 
         for (field_name, field_permission) in self.django_fields:
             if Privilege.demand(value, field_permission):
-                setattr(ret, field_name, getattr(value, field_name))
+                field_type = self.fields[field_name].type
+                if field_type.needs_conversion():
+                    if isinstance(field_type, ArsDjangoId):
+                        setattr(ret, field_name, getattr(value, field_name + '_id'))
+                    else:
+                        setattr(ret, field_name, field_type.convert_to_ars(getattr(value, field_name)))
+                else:
+                    setattr(ret, field_name, getattr(value, field_name))
 
         for (field_name, field_type, field_permission) in self.django_extra_fields:
             if Privilege.demand(value, field_permission):
-                setattr(ret, field_name, getattr(value, field_name))
-
-        for field in self.fields.items:
-            if hasattr(ret, field.name) and field.type.needs_conversion():
-                logging.debug('field %s', field.name)
-                if isinstance(field.type, ArsDjangoId):
-                    if getattr(ret, field.name + '_id') is None:
-                        delattr(ret, field.name)
-                    else:
-                        logging.debug('field %s type %s', field.name, type(getattr(ret, field.name + '_id')))
-                        setattr(ret, field.name, getattr(ret, field.name + '_id'))
+                if field_type.needs_conversion():
+                    setattr(ret, field_name, field_type.convert_to_ars(getattr(value, field_name)))
                 else:
-                    setattr(ret, field.name, field.type.convert_to_ars(getattr(ret, field.name)))
+                    setattr(ret, field_name, getattr(value, field_name))
 
-            return ret
+        return ret
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoStructure, self).do_convert_from_ars(value)
