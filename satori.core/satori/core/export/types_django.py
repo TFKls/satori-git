@@ -127,7 +127,10 @@ class ArsDjangoStructure(ArsDeferredStructure):
         for field in self.fields.items:
             if hasattr(ret, field.name) and field.type.needs_conversion():
                 if isinstance(field.type, DjangoId):
-                    setattr(ret, field.name, getattr(ret, field.name + '_id'))
+                    if getattr(ret, field.name + '_id') is None:
+                        delattr(ret, field.name)
+                    else:
+                        setattr(ret, field.name, getattr(ret, field.name + '_id'))
                 else:
                     setattr(ret, field.name, field.type.convert_to_ars(getattr(ret, field.name)))
 
