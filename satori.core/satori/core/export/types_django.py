@@ -62,8 +62,9 @@ class ArsDjangoId(ArsTypeAlias):
         return True
 
     def do_convert_to_ars(self, value):
-        if not Privilege.demand(value, 'VIEW'):
-            raise CannotReturnObject()
+#        # decided not to enforce
+#        if not Privilege.demand(value, 'VIEW'):
+#            raise CannotReturnObject()
 
         return value.id
 
@@ -123,7 +124,14 @@ class ArsDjangoStructure(ArsDeferredStructure):
             if Privilege.demand(value, field_permission):
                 setattr(ret, field_name, getattr(value, field_name))
 
-        return super(ArsDjangoStructure, self).do_convert_to_ars(ret)
+        for field in self.fields.items:
+            if hasattr(ret, field.name) and field.type.needs_conversion():
+                   if isinstance(field.type, DjangoId):
+                           setattr(ret, field.name, getattr(ret, field.name + '_id'))
+                       else:
+                    setattr(ret, field.name, field.type.convert_to_ars(getattr(ret, field.name)))
+
+           return ret
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoStructure, self).do_convert_from_ars(value)
