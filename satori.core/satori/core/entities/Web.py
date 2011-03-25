@@ -145,7 +145,7 @@ class Web(object):
     @staticmethod
     def get_problem_mapping_list(contest):
         ret = []
-        for problem in Privilege.where_can(contest.problem_mappings.all(), 'VIEW'):
+        for problem in Privilege.select_struct_can(Privilege.where_can(contest.problem_mappings.all(), 'VIEW')):
             ret.append(Web.get_problem_mapping_info(problem))
         return ret
 
@@ -180,19 +180,19 @@ class Web(object):
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'VIEW'))
     @staticmethod
     def get_accepted_contestants(contest, limit=20, offset=0):
-        result = Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role)
+        result = Privilege.select_struct_can(Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role))
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
     def get_pending_contestants(contest, limit=20, offset=0):
-        result = Contestant.objects.filter(contest=contest, accepted=False).exclude(parents=contest.admin_role)
+        result = Privilege.select_struct_can(Contestant.objects.filter(contest=contest, accepted=False).exclude(parents=contest.admin_role))
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
     def get_contest_admins(contest, limit=20, offset=0):
-        result = Contestant.objects.filter(parents=contest.admin_role)
+        result = Privilege.select_struct_can(Contestant.objects.filter(parents=contest.admin_role))
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
@@ -211,12 +211,20 @@ class Web(object):
         if problem:
             q = q.filter(problem=problem)
 #        q = Privilege.where_can(q, 'OBSERVE')
+        q2 = q.order_by('-id')[offset:offset+limit]
+        contestant_dict = {}
+#        for c in q2.values_list('contestant', flat=True):
+        for c in Privilege.select_struct_can(Contestant.objects.filter(id__in=q2.values_list('contestant', flat=True))):
+            contestant_dict[c.id] = c
+        problem_dict = {}
+        for p in Privilege.select_struct_can(ProblemMapping.objects.filter(id__in=q2.values_list('problem', flat=True))):
+            problem_dict[p.id] = p
         ret = []
-        for submit in q.order_by('-id')[offset:offset+limit]:
+        for submit in Privilege.select_struct_can(q).order_by('-id')[offset:offset+limit]:
             ret_r = ResultInfo()
             ret_r.submit = submit
-            ret_r.contestant = submit.contestant
-            ret_r.problem_mapping = submit.problem
+            ret_r.contestant = contestant_dict[submit.contestant_id]
+            ret_r.problem_mapping = problem_dict[submit.problem_id]
             ret_r.status = submit.get_test_suite_status()
             ret_r.report = submit.get_test_suite_report()
             ret.append(ret_r)
