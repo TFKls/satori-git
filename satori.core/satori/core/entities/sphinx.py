@@ -26,6 +26,7 @@ config_overrides = {
     'release' : '1',
     'exclude_patterns' : ['_build'],
     'pygments_style' : 'sphinx',
+    'pngmath_use_preview' : True,
 
 #    'html_theme' : 'default',
 #    'html_theme_path' : [os.path.join(CORE_PATH, 'sphinx_templates')],
