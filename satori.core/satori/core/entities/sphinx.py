@@ -7,10 +7,7 @@ MYPREAMBLE = r'''
 \definecolor{InnerLinkColor}{rgb}{0,0,0}
 '''
 
-PREAMBLE = r'''
-\usepackage{amsmath}
-\usepackage{polski}
-'''
+PREAMBLE = r'\usepackage{amsmath} \usepackage{polski}'
 
 import re
 import sys, os, shutil
