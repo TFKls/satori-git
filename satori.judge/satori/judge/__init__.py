@@ -101,7 +101,7 @@ def judge_loop():
             time.sleep(options.retry_time)
 
 def judge_initialize():
-    for res in [ resource.RLIMIT_CPU, resource.RLIMIT_FSIZE, resource.RLIMIT_DATA, resource.RLIMIT_STACK, resource.RLIMIT_RSS, resource.RLIMIT_NPROC, resource.RLIMIT_NOFILE, resource.RLIMIT_OFILE, resource.RLIMIT_MEMLOCK, resource.RLIMIT_VMEM, resource.RLIMIT_AS ]:
+    for res in [ resource.RLIMIT_CPU, resource.RLIMIT_FSIZE, resource.RLIMIT_DATA, resource.RLIMIT_STACK, resource.RLIMIT_RSS, resource.RLIMIT_NPROC, resource.RLIMIT_MEMLOCK, resource.RLIMIT_AS ]:
         resource.setrlimit(res, (-1,-1))
     subprocess.check_call(['iptables', '-P', 'INPUT', 'ACCEPT'])
     subprocess.check_call(['iptables', '-F', 'INPUT'])
