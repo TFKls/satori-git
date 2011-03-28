@@ -8,6 +8,7 @@ from django.utils.http import urlquote
 from django.shortcuts import render_to_response
 from satori.client.common import want_import
 from django.views.debug import ExceptionReporter
+from thrift.transport.TTransport import TTransportException
 want_import(globals(), '*')
 
 def contest_view(func):
@@ -48,6 +49,10 @@ def contest_view(func):
         except ArgumentNotFound:
             res = render_to_response('error.html', { 'page_info' : page_info, 'message': 'Object not found', 'info': 'The requested object does not exist.' })
             res.status_code = 404
+            return res
+        except TTransportException:
+            res = render_to_response('error.html', { 'page_info' : page_info, 'message': 'Server error', 'info': 'Communication with the core server failed.' })
+            res.status_code = 500
             return res
         except Exception as e:
             traceback.print_exc()
