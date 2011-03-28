@@ -97,6 +97,7 @@ def render_sphinx(rest, oa_map):
                 warningiserror=True)
         app.build(None, [indexpath])
     except SphinxError as e:
+        logging.exception('Sphinx error')
         raise SphinxException(error=str(e))
     except PycodeError:
         raise
