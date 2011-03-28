@@ -7,6 +7,11 @@ MYPREAMBLE = r'''
 \definecolor{InnerLinkColor}{rgb}{0,0,0}
 '''
 
+PREAMBLE = r'''
+\usepackage{amsmath}
+\usepackage{polski}
+'''
+
 import re
 import sys, os, shutil
 from tempfile import mkdtemp
@@ -27,6 +32,7 @@ config_overrides = {
     'exclude_patterns' : ['_build'],
     'pygments_style' : 'sphinx',
     'pngmath_use_preview' : True,
+    'pngmath_latex_preamble' : PREAMBLE,
 
 #    'html_theme' : 'default',
 #    'html_theme_path' : [os.path.join(CORE_PATH, 'sphinx_templates')],
