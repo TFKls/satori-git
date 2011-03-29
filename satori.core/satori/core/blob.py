@@ -7,10 +7,14 @@ from satori.core.sec import Token
 import satori.core.models
 from satori.core.models import AttributeGroup, Blob, OpenAttribute, Privilege
 from satori.core.export import token_container
+from satori.ars.server import server_info
 
 def server(request, model, id, name, group):
     if request.method not in ['GET', 'PUT']:
         return HttpResponseNotAllowed(['GET', 'PUT'])
+            
+    server_info.client_ip = request.META['REMOTE_ADDR']
+    server_info.client_port = 0
 
     if isinstance(model, unicode):
         model = model.encode('utf-8')
@@ -110,6 +114,9 @@ def server_put(request, entity, name, group):
 def download(request, hash):
     if request.method not in ['GET']:
         return HttpResponseNotAllowed(['GET'])
+    
+    server_info.client_ip = request.META['REMOTE_ADDR']
+    server_info.client_port = 0
 
     if isinstance(hash, unicode):
         hash = hash.encode('utf-8')
@@ -143,6 +150,9 @@ def download(request, hash):
 def upload(request):
     if request.method not in ['PUT']:
         return HttpResponseNotAllowed(['PUT'])
+
+    server_info.client_ip = request.META['REMOTE_ADDR']
+    server_info.client_port = 0
 
     try:
         token_container.check_set_token_str(request.COOKIES.get('satori_token', ''))
