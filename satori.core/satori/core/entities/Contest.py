@@ -108,6 +108,7 @@ class Contest(Entity):
         contest.admin_role = Role.create(fields=RoleStruct(name='Administrator of ' + contest.name))
         contest.save()
         contest.add_admin(token_container.token.user)
+        Global.get_instance().contest_admins.add_member(contest.admin_role)
         Privilege.grant(contest.admin_role, contest, 'MANAGE')
         Privilege.grant(contest.admin_role, contest.admin_role, 'MANAGE')
         Privilege.grant(contest.admin_role, contest.contestant_role, 'MANAGE')

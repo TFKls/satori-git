@@ -11,6 +11,7 @@ class Global(Entity):
     """
     guardian         = models.IntegerField(unique=True)
 
+    contest_admins   = models.ForeignKey('Role', related_name='+')
     anonymous        = models.ForeignKey('Role', related_name='+')
     authenticated    = models.ForeignKey('Role', related_name='+')
     zero             = models.ForeignKey('Role', related_name='+')
@@ -23,7 +24,7 @@ class Global(Entity):
     generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
 
     class ExportMeta(object):
-        fields = [('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
+        fields = [('contest_admins', 'VIEW'), ('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -48,6 +49,9 @@ class Global(Entity):
 
     @staticmethod
     def create():
+        contest_admins = Role(name='CONTEST ADMINS')
+        contest_admins.save()
+
         zero = Role(name='ZERO')
         zero.save()
 
@@ -64,12 +68,16 @@ class Global(Entity):
         assignment_suite = TestSuite(problem=assignment, name='ASSIGNMENT', description='Dummy test suite for assignments', dispatcher='SerialDispatcher', reporter='AssignmentReporter', accumulators='')
         assignment_suite.save()
 
+        Privilege.grant(anonymous, contest_admins, 'VIEW')
         Privilege.grant(anonymous, authenticated, 'VIEW')
         Privilege.grant(anonymous, anonymous, 'VIEW')
         Privilege.grant(anonymous, zero, 'VIEW')
         Privilege.grant(anonymous, assignment, 'VIEW')
 
+        Privilege.global_grant(contest_admins, 'MANAGE_PROBLEMS')
+
         g = Global()
+        g.contest_admins = contest_admins
         g.zero = zero
         g.authenticated = authenticated
         g.anonymous = anonymous
