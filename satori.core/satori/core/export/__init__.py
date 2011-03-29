@@ -15,7 +15,6 @@ from satori.core.export.token        import token_container, TokenInvalid, Token
 from satori.core.export.type_helpers import Binary, Struct, DefineException, TypedList, TypedMap, python_to_ars_type
 from satori.core.export.types_django import ArgumentNotFound, CannotReturnObject, CannotDeleteObject, generate_django_types, ars_django_structure
 from satori.core.export.types_django import DjangoId, DjangoStruct, DjangoIdList, DjangoStructList
-from django.db import connection
 
 
 InvalidArgument = DefineException('InvalidArgument', 'The specified argument is invalid: name={name}, reason={reason}',
@@ -138,8 +137,6 @@ class ExportMethod(object):
             transaction.enter_transaction_management()
             transaction.managed(True)
 
-            connection.queries = []
-
             try:
                 token_container.check_set_token_str(kwargs.pop('token', ''))
                 
@@ -169,9 +166,6 @@ class ExportMethod(object):
 
                 raise exception, None, sys.exc_info()[2]
             else:
-                for c in connection.queries:
-                    print c['time'], c['sql']
-
                 return ret
 
 

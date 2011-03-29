@@ -11,7 +11,7 @@ class Global(Entity):
     """
     guardian         = models.IntegerField(unique=True)
 
-    #contest_admins   = models.ForeignKey('Role', related_name='+')
+    contest_admins   = models.ForeignKey('Role', related_name='+')
     anonymous        = models.ForeignKey('Role', related_name='+')
     authenticated    = models.ForeignKey('Role', related_name='+')
     zero             = models.ForeignKey('Role', related_name='+')
@@ -24,7 +24,7 @@ class Global(Entity):
     generators       = AttributeGroupField(PCArg('self', 'ADMIN'), PCArg('self', 'ADMIN'), '')
 
     class ExportMeta(object):
-        fields = [ ('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
+        fields = [('contest_admins', 'VIEW'), ('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
