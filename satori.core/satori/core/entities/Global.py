@@ -74,8 +74,6 @@ class Global(Entity):
         Privilege.grant(anonymous, zero, 'VIEW')
         Privilege.grant(anonymous, assignment, 'VIEW')
 
-        Privilege.global_grant(contest_admins, 'MANAGE_PROBLEMS')
-
         g = Global()
         g.contest_admins = contest_admins
         g.zero = zero
@@ -84,6 +82,7 @@ class Global(Entity):
         g.assignment = assignment
         g.save()
         Privilege.grant(authenticated, g, 'VIEW')
+        Privilege.global_grant(contest_admins, 'MANAGE_PROBLEMS')
 
         return g        
 
