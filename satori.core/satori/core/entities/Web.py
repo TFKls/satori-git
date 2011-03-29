@@ -85,8 +85,12 @@ class Web(object):
     @staticmethod
     def get_page_info(contest=None):
         ret = PageInfo()
-        ret.role = Security.whoami()
-        ret.user = Security.whoami_user()
+        lock_contest = Contest.get_current_lock()
+        if lock_contest:
+            ret.role = lock_contest.find_contestant(Security.whoami())
+        else:
+            ret.role = Security.whoami()
+            ret.user = Security.whoami_user()
         ret.is_admin = Privilege.global_demand('ADMIN')
         ret.is_problemsetter = Privilege.global_demand('MANAGE_PROBLEMS')
         if contest:
