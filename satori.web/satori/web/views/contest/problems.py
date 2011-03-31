@@ -172,7 +172,7 @@ def add(request, page_info):
             preid = forms.ChoiceField(choices=choices,label='Use problem')
         
         form = ProblemPreAddForm()
-        return render_to_response('problems_add.html', { 'page_info' : page_info, 'form' : form } )
+    return render_to_response('problems_add.html', { 'page_info' : page_info, 'form' : form } )
         
 @contest_view
 def edit(request, page_info, id):

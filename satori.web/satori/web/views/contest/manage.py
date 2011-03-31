@@ -12,6 +12,7 @@ class ManageForm(forms.Form):
     description = forms.CharField(required=False)
     viewing = forms.ChoiceField(label='Contest visible for',choices=[['none','Contestants only'],['auth','Logged users'],['anonym','Everyone']])
     joining = forms.ChoiceField(label='Joining method',choices=[['none','None (only admin-adding)'],['apply','Application'],['free','Free']])
+    questions = forms.BooleanField(label='Questions allowed',required=False)
 
 class AdminForm(forms.Form):
     username = forms.CharField(required=True)
@@ -41,8 +42,9 @@ def view(request, page_info):
     contest = page_info.contest
     status = get_status(contest)
     admins = [c.usernames for c in Web.get_contest_admins(contest=contest,offset=0,limit=500).contestants]
+    questions = Privilege.get(contest.contestant_role,contest,'ASK_QUESTIONS')
     if request.method!="POST":
-        manage_form = ManageForm(initial={'viewing' : status.viewing, 'joining' : status.joining, 'name' : contest.name, 'description' : contest.description})
+        manage_form = ManageForm(initial={'viewing' : status.viewing, 'joining' : status.joining, 'name' : contest.name, 'description' : contest.description, 'questions' : questions})
         admin_form = AdminForm()
         return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
     if "addadmin" in request.POST.keys():
@@ -64,6 +66,10 @@ def view(request, page_info):
     joining = manage_form.cleaned_data['joining']
     contest.name = manage_form.cleaned_data['name']
     contest.description = manage_form.cleaned_data['description']
+    if manage_form.cleaned_data['questions']:
+        Privilege.grant(contest.contestant_role,contest,'ASK_QUESTIONS')
+    else:
+        Privilege.revoke(contest.contestant_role,contest,'ASK_QUESTIONS')    
     if status.viewing!=viewing:
         Privilege.revoke(status.auth,contest,'VIEW')
         Privilege.revoke(status.anonym,contest,'VIEW')

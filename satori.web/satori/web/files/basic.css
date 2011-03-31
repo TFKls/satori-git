@@ -218,6 +218,15 @@
     border: 0;
     border-collapse: collapse
     }
+
+.mainsphinx table.docutils tr:nth-child(even) {
+    background-color : #F8F8F8;
+    }
+
+.mainsphinx table.docutils tr:nth-child(odd) {
+    background-color : #E8E8E8;
+    }
+
 .mainsphinx table.docutils td, .mainsphinx table.docutils th {
     padding: 1px 8px 1px 5px;
     border-top: 0;
