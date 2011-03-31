@@ -46,7 +46,7 @@ class UnwrapBase(object):
         self._struct = _struct
     
     def __eq__(self, other):
-        return (issubclass(other, self.__class__) or issubclass(self, other.__class__)) and self.id == other._id
+        return (isinstance(other, self.__class__) or isinstance(self, other.__class__)) and self.id == other._id
 
     def __ne__(self, other):
         return not self.__eq__(other)
