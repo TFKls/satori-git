@@ -94,7 +94,7 @@ class ParallelDispatcher(DispatcherBase):
             self.accumulate(result)
             if not self.status():
                 self.finish()
-        if not self.to_check:
+        if not self.to_check_id:
             self.finish()
 
 dispatchers = {}
