@@ -1,0 +1,48 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+{% if page_info.contest_can_ask_questions %}
+<a href="{% url ask_question page_info.contest.id %}">Ask a question</a>
+{% endif %}
+
+<h3>Questions</h3>
+{% for q,public in questions %}
+{% if public %}
+<div class="question_public">
+{% else %}
+<div class="question_private">
+{% endif %}
+<div class="question_header">
+  {% if page_info.contest_is_admin %}
+  Asked by: {{ q.inquirer.name }}<br/>
+  {% endif %}
+  {% if q.problem %}
+    Problem {{ q.problem.code }}
+  {% else %}
+    General
+  {% endif %}
+</div>
+<div class="question_content">
+  {{ q.content }}
+</div>
+{% if q.answer %}
+<div class="question_answer">
+  {{ q.answer }}
+</div>
+{% if page_info.contest_is_admin %}
+<a href="{% url answer_question page_info.contest.id q.id %}">Edit</a>
+{% endif %}
+
+{% else %}
+{% if page_info.contest_is_admin %}
+<a href="{% url answer_question page_info.contest.id q.id %}">Answer</a>
+{% endif %}
+{% endif %}
+
+</div>
+{% endfor %}
+
+
+
+{% endblock %}

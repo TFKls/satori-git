@@ -19,11 +19,9 @@
                 <li><a href="{% url results page_info.contest.id %}">Results</a></li>
             {% endif %}
             
-            {% comment %}
             {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
                 <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
             {% endif %}
-            {% endcomment %}
             
             {% for ranking in page_info.rankings %}
                 <li><a href="{% url ranking page_info.contest.id ranking.id %}">{{ranking.name}}</a></li>

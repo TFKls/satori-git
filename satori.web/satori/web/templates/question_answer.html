@@ -1,0 +1,13 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+<form action="" method="POST">
+
+<table>
+{{ form.as_table }}
+</table>
+<input type="submit" value="Answer" name="answer"/>
+<input type="submit" value="Copy as public question" name="make_public"/>
+</form>
+
+{% endblock %}
