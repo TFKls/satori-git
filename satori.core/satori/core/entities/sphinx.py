@@ -115,7 +115,7 @@ def confToFile(filePath):
 
 
 def render_sphinx(rest, oa_map):
-    if not rest:
+    if not rest.strip():
         to_delete = []
         for name in oa_map:
             oa = oa_map[name]
