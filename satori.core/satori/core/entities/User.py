@@ -35,6 +35,7 @@ class User(Role):
         login_ok(self.login)
         email_ok(self.email)
         self.name = u' '.join([self.firstname, self.lastname])
+        self.sort_field = u' '.join([self.lastname, self.firstname])
         if User.objects.filter(login=self.login).exclude(id=self.id):
             raise InvalidLogin(login=self.login, reason='is already used')
         super(User, self).save(*args, **kwargs)
@@ -43,7 +44,7 @@ class User(Role):
     @staticmethod
     def create(fields):
         user = User()
-        user.forbid_fields(fields, ['id', 'name'])
+        user.forbid_fields(fields, ['id', 'name', 'sort_field'])
         modified = user.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code'])
         if not 'activation_code' in modified:
             user.activation_code = ''.join([random.choice(string.letters + string.digits) for i in range(16)])
@@ -70,10 +71,10 @@ class User(Role):
     @ExportMethod(DjangoStruct('User'), [DjangoId('User'), DjangoStruct('User')], PCArg('self', 'EDIT'), [CannotSetField, InvalidLogin, InvalidEmail])
     def modify(self, fields):
         if Privilege.demand(self, 'MANAGE'):
-            self.forbid_fields(fields, ['id', 'name'])
+            self.forbid_fields(fields, ['id', 'name', 'sort_field'])
             changed = self.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code'])
         else:
-            self.forbid_fields(fields, ['id', 'name', 'login', 'confirmed', 'activated', 'activation_code', 'email'])
+            self.forbid_fields(fields, ['id', 'name', 'sort_field', 'login', 'confirmed', 'activated', 'activation_code', 'email'])
             if self.confirmed:
                 self.forbid_fields(fields, ['firstname', 'lastname'])
             else:

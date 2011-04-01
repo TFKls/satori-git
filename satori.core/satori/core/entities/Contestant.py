@@ -12,7 +12,6 @@ class Contestant(Role):
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_contestant')
 
     usernames   = models.CharField(max_length=256)
-    sort_field  = models.CharField(max_length=256)
     contest     = models.ForeignKey('Contest', related_name='contestants')
     accepted    = models.BooleanField(default=True)
     invisible   = models.BooleanField(default=False)
@@ -25,7 +24,7 @@ class Contestant(Role):
         unique_together = (('contest', 'login'),)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW'), ('sort_field', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -50,11 +49,11 @@ class Contestant(Role):
     @staticmethod
     def create(fields, user_list):
         contestant = Contestant()
-        contestant.forbid_fields(fields, ['usernames', 'sort_field'])
+        contestant.forbid_fields(fields, ['id', 'usernames', 'sort_field'])
         contestant.usernames = ''
         contestant.sort_field = ''
-        contestant.name = ''
         modified = contestant.update_fields(fields, ['name', 'contest', 'accepted', 'invisible', 'login'])
+        contestant.sort_field = contestant.name
         contestant.save()
         Privilege.grant(contestant, contestant, 'EDIT')
         for user in user_list:
@@ -72,6 +71,8 @@ class Contestant(Role):
         self.forbid_fields(fields, ['id', 'usernames', 'sort_field', 'contest'])
         modified = self.update_fields(fields, ['name', 'accepted', 'invisible', 'login'])
         self.save()
+        if 'name' in modified:
+            self.sort_field = self.name
         if 'accepted' in modified:
             if self.accepted:
                 self.contest.contestant_role.add_member(self)
@@ -81,19 +82,16 @@ class Contestant(Role):
         return self
 
     def update_usernames(self):
-        name = u', '.join([x.name for x in self.get_members()])
+        name = u', '.join(sorted([x.name for x in self.get_members()]))
+        sort_field = u', '.join(sorted([x.sort_field for x in self.get_members()]))
         if len(name) > 250:
             name = name[0:247] + '...'
+        if len(sort_field) > 250:
+            sort_field = sort_field[0:247] + '...'
         if self.name == self.usernames:
             self.name = name
+            self.sort_field = sort_field
         self.usernames = name;
-        sort_fields = []
-        for x in self.get_members():
-            sf = x.name
-            for u in User.objects.filter(id=x.id):
-                sf = u.lastname + ' ' + u.firstname
-            sort_fields.append(sf)
-        self.sort_field = u','.join(sorted(sort_fields))
         self.save()
         self.contest.changed_contestants()
         return self

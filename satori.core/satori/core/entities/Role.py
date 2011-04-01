@@ -14,10 +14,11 @@ class Role(Entity):
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_role')
 
     name          = models.CharField(max_length=256)
+    sort_field    = models.CharField(max_length=256)
     children      = models.ManyToManyField('self', related_name='parents', through='RoleMapping', symmetrical=False)
 
     class ExportMeta(object):
-        fields = [('name', 'VIEW')]
+        fields = [('name', 'VIEW'), ('sort_field', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -33,8 +34,9 @@ class Role(Entity):
     @staticmethod
     def create(fields, children=[]):
         role = Role()
-        role.forbid_fields(fields, ['id'])
+        role.forbid_fields(fields, ['id', 'sort_field'])
         role.update_fields(fields, ['name'])
+        role.sort_field = role.name
         role.save()
         for child in children:
             role.add_member(child)
@@ -44,8 +46,9 @@ class Role(Entity):
     @ExportMethod(DjangoStruct('Role'), [DjangoId('Role'), DjangoStruct('Role')], PCArg('self', 'EDIT'), [CannotSetField])
     def modify(self, fields):
         if self.model == 'core.role':
-            self.forbid_fields(fields, ['id'])
+            self.forbid_fields(fields, ['id', 'sort_field'])
             self.update_fields(fields, ['name'])
+            self.sort_field = self.name
         else:
             self.forbid_fields(fields, ['id', 'name'])
         self.save()
