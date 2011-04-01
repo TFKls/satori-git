@@ -102,6 +102,10 @@ class ProblemMapping(Entity):
                 submit.save()
             submit.overrides_set_map(result)
             submit.rejudge_test_suite_results()
+    
+    def default_test_suite_changed(self):
+        RawEvent().send(Event(type='checking_default_test_suite_changed', id=self.id))
+
 
 class ProblemMappingEvents(Events):
     model = ProblemMapping
