@@ -9,7 +9,15 @@ class ReporterBase(object):
     def __init__(self, test_suite_result):
         super(ReporterBase, self).__init__()
         self.test_suite_result = test_suite_result
-        self.params = parse_params(self.__doc__, 'reporter', 'general', self.test_suite_result.test_suite.params_get_map())
+        params_map = self.test_suite_result.test_suite.params_get_map()
+        new_params_map = {}
+        for param_name in params_map:
+            if param_name.startswith(self.__class__.__name__ + '.'):
+                new_params_map[param_name[len(self.__class__.__name__) + 1:]] = params_map[param_name]
+                logging.debug("A %s %s", param_name, param_name[len(self.__class__.__name__) + 1:])
+            else:
+                logging.debug("B %s", param_name)
+        self.params = parse_params(self.__doc__, 'reporter', 'general', new_params_map)
 
     def init(self):
         pass
@@ -136,7 +144,7 @@ class ACMReporter(ReporterBase):
     """
 #@<reporter name="ACM style reporter">
 #@      <general>
-#@              <param type="bool"     name="reporter_show_tests"     description="Show individual test results" default="true"/>
+#@              <param type="bool"     name="show_tests"     description="Show individual test results" default="true"/>
 #@      </general>
 #@</reporter>
     """
@@ -186,7 +194,7 @@ class ACMReporter(ReporterBase):
             status = os.value
         self.test_suite_result.oa_set_str('status', status)
         self.test_suite_result.status = status
-        if self.params.reporter_show_tests:
+        if self.params.show_tests:
             table = RestTable((20, 'Test'), (10, 'Status'), (10, 'CPU time'), (30, 'Message'))
             report = table.row_separator + table.header_row + table.header_separator
             for code in sorted(self._codes):
