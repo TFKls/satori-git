@@ -306,7 +306,7 @@ class AggregatorBase(object):
 
         new_contestants = set()
         old_contestants = set(self.scores.keys())
-        for c in Contestant.objects.filter(contest__id=self.ranking.contest_id):
+        for c in Contestant.objects.filter(contest__id=self.ranking.contest_id, accepted=True):
             new_contestants.add(c.id)
 
             if not c.id in self.scores:
@@ -660,7 +660,7 @@ class MarksAggregator(AggregatorBase):
 
                 self.ranking_entry.row = self.aggregator.table.generate_row(*columns) + self.aggregator.table.row_separator
                 self.ranking_entry.individual = ''
-                self.ranking_entry.position = self.aggregator.position(self.contestant.name)
+                self.ranking_entry.position = self.aggregator.position(self.contestant.sort_field)
                 self.ranking_entry.save()
 
         def aggregate(self, result):
