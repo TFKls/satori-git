@@ -42,6 +42,11 @@
             {% if page_info.is_admin %}
                 <li><a href="{% url configuration %}">Configuration</a></li>
             {% endif %}
+            
+            {% if page_info.user %}
+                <li><a href="{% url changepass %}">Change password</a></li>
+            {% endif %}
+            
 
             {% if page_info.is_problemsetter %}
                 <li><a href="https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp">Manage problems and tests</a></li>
