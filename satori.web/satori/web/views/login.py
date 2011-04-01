@@ -44,3 +44,36 @@ def view(request, page_info):
     if status=='actfailed':
         bar.errors.append('Activation failed!')
     return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'status_bar' : bar })
+
+
+class ChangePassForm(forms.Form):
+    oldpass = forms.CharField(label="Old password:",required=True,widget=forms.PasswordInput)
+    newpass = forms.CharField(label="New password:",required=True,widget=forms.PasswordInput)
+    confirm = forms.CharField(label="Confirm password:",required=True,widget=forms.PasswordInput)
+    def clean(self):
+        data = self.cleaned_data
+        if data["newpass"]!=data["confirm"]:
+            raise forms.ValidationError('Passwords do not match!')
+            del data["newpass"]
+            del data["confirm"]
+        return data
+
+@general_view
+def changepass(request, page_info):
+    user = page_info.user
+    bar = StatusBar()
+    if request.method=="POST":
+        form = ChangePassForm(request.POST)
+        if form.is_valid():
+            try:
+                data = form.cleaned_data
+                user.change_password(data['oldpass'],data['newpass'])
+                form = ChangePassForm()
+                bar.messages.append('Password changed.')
+            except LoginFailed:
+                bar.errors.append('Login failed!')
+            except InvalidPassword:
+                bar.errors.append('Invalid pasword!')
+    else:
+        form = ChangePassForm()
+    return render_to_response('changepass.html', {'page_info' : page_info, 'status_bar' : bar, 'form' : form}) 
