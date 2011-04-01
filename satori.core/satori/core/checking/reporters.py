@@ -14,9 +14,6 @@ class ReporterBase(object):
         for param_name in params_map:
             if param_name.startswith(self.__class__.__name__ + '.'):
                 new_params_map[param_name[len(self.__class__.__name__) + 1:]] = params_map[param_name]
-                logging.debug("A %s %s", param_name, param_name[len(self.__class__.__name__) + 1:])
-            else:
-                logging.debug("B %s", param_name)
         self.params = parse_params(self.__doc__, 'reporter', 'general', new_params_map)
 
     def init(self):
