@@ -78,5 +78,5 @@ def answer(request, page_info, id):
     else:
         form = AnswerForm(initial={'content' : question.content, 'answer' : question.answer})
     
-    return render_to_response('question_answer.html', { 'page_info' : page_info, 'form' : form })
+    return render_to_response('question_answer.html', { 'page_info' : page_info, 'form' : form, 'question' : question })
     
