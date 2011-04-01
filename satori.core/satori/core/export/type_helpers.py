@@ -72,7 +72,7 @@ def DefineException(name, message, fields=[]):
     exception_class = ars_exception.get_class()
 
     def __init__(self, **kwargs):
-        kwargs['message'] = message.format(**kwargs)
+        kwargs['message'] = unicode(message).format(**kwargs)
         super(exception_subclass, self).__init__(**kwargs)
 
     exception_subclass = type(name, (exception_class,), {'__init__': __init__})
