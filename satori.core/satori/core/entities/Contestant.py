@@ -12,6 +12,7 @@ class Contestant(Role):
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_contestant')
 
     usernames   = models.CharField(max_length=256)
+    sort_field  = models.CharField(max_length=256)
     contest     = models.ForeignKey('Contest', related_name='contestants')
     accepted    = models.BooleanField(default=True)
     invisible   = models.BooleanField(default=False)
@@ -24,7 +25,7 @@ class Contestant(Role):
         unique_together = (('contest', 'login'),)
 
     class ExportMeta(object):
-        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW')]
+        fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW'), ('sort_field', 'VIEW')]
 
     @classmethod
     def inherit_rights(cls):
@@ -49,8 +50,9 @@ class Contestant(Role):
     @staticmethod
     def create(fields, user_list):
         contestant = Contestant()
-        contestant.forbid_fields(fields, ['usernames'])
+        contestant.forbid_fields(fields, ['usernames', 'sort_field'])
         contestant.usernames = ''
+        contestant.sort_field = ''
         contestant.name = ''
         modified = contestant.update_fields(fields, ['name', 'contest', 'accepted', 'invisible', 'login'])
         contestant.save()
@@ -67,7 +69,7 @@ class Contestant(Role):
 
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contestant'), DjangoStruct('Contestant')], PCArg('self', 'MANAGE'), [InvalidLogin, InvalidPassword, CannotSetField])
     def modify(self, fields):
-        self.forbid_fields(fields, ['id', 'usernames', 'contest'])
+        self.forbid_fields(fields, ['id', 'usernames', 'sort_field', 'contest'])
         modified = self.update_fields(fields, ['name', 'accepted', 'invisible', 'login'])
         self.save()
         if 'accepted' in modified:
@@ -85,6 +87,13 @@ class Contestant(Role):
         if self.name == self.usernames:
             self.name = name
         self.usernames = name;
+        sort_fields = []
+        for x in self.get_members():
+            sf = x.name
+            for u in User.objects.filter(id=x.id):
+                sf = u.lastname + ' ' + u.firstname
+            sort_fields.append(sf)
+        self.sort_field = u','.join(sorted(sort_fields))
         self.save()
         self.contest.changed_contestants()
         return self
