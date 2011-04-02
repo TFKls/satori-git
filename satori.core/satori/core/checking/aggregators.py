@@ -568,6 +568,7 @@ class MarksAggregator(AggregatorBase):
 #@              <param type="time"     name="time_descent"   description="Descent to zero time"/>
 #@      </general>
 #@      <problem>
+#@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
 #@              <param type="bool"     name="show"           description="Show column for this problem" default="true"/>
 #@              <param type="bool"     name="obligatory"     description="Problem is obligatory" default="1"/>
 #@              <param type="float"    name="max_score"      description="Maximum score for problem" default="1"/>
