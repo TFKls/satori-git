@@ -17,6 +17,7 @@ def view(request, page_info):
         else:
             public = (q.inquirer != page_info.contestant)
         questions.append([q,public])
+        questions.sort(lambda p:p[0].date_created,reverse=True)
     return render_to_response('questions.html', {'page_info' : page_info, 'questions' : questions})
 
 
