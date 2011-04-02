@@ -350,13 +350,14 @@ class ACMAggregator(AggregatorBase):
 #@<aggregator name="ACM style aggregator">
 #@      <general>
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
-#@              <param type="bool"     name="show_zero"      description="Hide contestants with zero score" default="false"/>
+#@              <param type="bool"     name="show_zero"      description="Hide contestants with zero score" default="true"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" default="1200s"/>
 #@              <param type="int"      name="max_stars"      description="Maximal number of stars" default="4"/>
 #@      </general>
 #@      <problem>
+#@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
 #@              <param type="float"    name="score"          description="Score" default="1"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
@@ -382,6 +383,8 @@ class ACMAggregator(AggregatorBase):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') == 'OK'
                 if self.params.time_stop and time > self.params.time_stop:
+                    return
+                if self.params.ignore:
                     return
                 if ok:
                     self.ok = True
