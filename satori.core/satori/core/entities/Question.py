@@ -46,7 +46,7 @@ class Question(Entity):
             role = token_container.token.role
         question.inquirer = role
         question.save()
-        Privilege.grant(token_container.token.role, question, 'VIEW')
+        Privilege.grant(role, question, 'VIEW')
         return question
 
     @ExportMethod(DjangoStruct('Question'), [DjangoId('Question'), DjangoStruct('Question')], PCArg('self', 'MANAGE'), [CannotSetField, SphinxException])
