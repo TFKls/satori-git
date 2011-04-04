@@ -70,8 +70,8 @@ def create_admin(app, created_models, verbosity, **kwargs):
   </input>
 </profile>
 """
-    global = Global.get_instance()
-    global.profile_fields = profile_xml
-    global.save()
+    globe = Global.get_instance()
+    globe.profile_fields = profile_xml
+    globe.save()
 
 post_syncdb.connect(create_admin)
