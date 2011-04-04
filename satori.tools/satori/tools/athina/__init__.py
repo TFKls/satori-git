@@ -229,7 +229,7 @@ def athina_import():
         lastname = ' '.join(user['name'].split()[1:])
         user['object'] = Creator('User', login=options.name + '_' + user['login']).fields(firstname=firstname, lastname=lastname)()
         user['object'].set_password(user['password'])
-        user['contestant'] = Creator('Contestant', contest=contest, name=user['object'].login).additional(user_list=[user['object']])()
+        user['contestant'] = Creator('Contestant', contest=contest, login=user['login']).additional(user_list=[user['object']])()
         user['contestant'].set_password(user['password'])
 
     for name, problem in sorted(problems.iteritems()):
