@@ -34,8 +34,8 @@ class User(Role):
         self.fixup_profile()
         login_ok(self.login)
         email_ok(self.email)
-        self.name = u' '.join([self.firstname, self.lastname])
-        self.sort_field = u' '.join([self.lastname, self.firstname])
+        self.name = u' '.join([self.firstname, self.lastname]).strip()
+        self.sort_field = u' '.join([self.lastname, self.firstname]).strip()
         if User.objects.filter(login=self.login).exclude(id=self.id):
             raise InvalidLogin(login=self.login, reason='is already used')
         super(User, self).save(*args, **kwargs)

@@ -1,5 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from operator import attrgetter
+
 from django.db import models
 
 from satori.core.dbev   import Events
@@ -53,6 +55,7 @@ class Contestant(Role):
         contestant.usernames = ''
         contestant.sort_field = ''
         modified = contestant.update_fields(fields, ['name', 'contest', 'accepted', 'invisible', 'login'])
+        contestant.name = contestant.name.strip()
         contestant.sort_field = contestant.name
         contestant.save()
         Privilege.grant(contestant, contestant, 'EDIT')
@@ -72,6 +75,7 @@ class Contestant(Role):
         modified = self.update_fields(fields, ['name', 'accepted', 'invisible', 'login'])
         self.save()
         if 'name' in modified:
+            self.name = self.name.strip()
             self.sort_field = self.name
         if 'accepted' in modified:
             if self.accepted:
@@ -82,8 +86,8 @@ class Contestant(Role):
         return self
 
     def update_usernames(self):
-        name = u', '.join(sorted([x.name for x in self.get_members()]))
-        sort_field = u', '.join(sorted([x.sort_field for x in self.get_members()]))
+        name = u', '.join([x.name for x in sorted(self.get_members(), key=attrgetter('sort_field'))]).strip()
+        sort_field = u', '.join([x.sort_field for x in sorted(self.get_members(), key=attrgetter('sort_field'))]).strip()
         if len(name) > 250:
             name = name[0:247] + '...'
         if len(sort_field) > 250:

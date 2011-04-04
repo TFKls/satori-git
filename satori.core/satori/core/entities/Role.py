@@ -36,6 +36,7 @@ class Role(Entity):
         role = Role()
         role.forbid_fields(fields, ['id', 'sort_field'])
         role.update_fields(fields, ['name'])
+        role.name = role.name.strip()
         role.sort_field = role.name
         role.save()
         for child in children:
@@ -48,6 +49,7 @@ class Role(Entity):
         if self.model == 'core.role':
             self.forbid_fields(fields, ['id', 'sort_field'])
             self.update_fields(fields, ['name'])
+            self.name = self.name.strip()
             self.sort_field = self.name
         else:
             self.forbid_fields(fields, ['id', 'name'])
