@@ -36,6 +36,8 @@ class Machine(Role):
         machine = Machine()
         machine.forbid_fields(fields, ['id'])
         machine.update_fields(fields, ['name', 'login', 'address', 'netmask'])
+        machine.name = machine.name.strip()
+        machine.sort_field = machine.name
         machine.save()
         return machine
 
@@ -43,6 +45,8 @@ class Machine(Role):
     def modify(self, fields):
         self.forbid_fields(fields, ['id'])
         self.update_fields(fields, ['name', 'login', 'address', 'netmask'])
+        self.name = self.name.strip()
+        self.sort_field = self.name
         self.save()
         return self
 
