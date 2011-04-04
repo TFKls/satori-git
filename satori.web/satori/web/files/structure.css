@@ -90,6 +90,7 @@ body{
 
 #content {
     margin: 1em;
+    overflow-x : auto;
 }
 
 .logos {
