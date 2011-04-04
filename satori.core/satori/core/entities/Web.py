@@ -185,19 +185,19 @@ class Web(object):
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'VIEW'))
     @staticmethod
     def get_accepted_contestants(contest, limit=20, offset=0):
-        result = Privilege.select_struct_can(Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role))
+        result = Privilege.select_struct_can(Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role).order_by('sort_field'))
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
     def get_pending_contestants(contest, limit=20, offset=0):
-        result = Privilege.select_struct_can(Contestant.objects.filter(contest=contest, accepted=False).exclude(parents=contest.admin_role))
+        result = Privilege.select_struct_can(Contestant.objects.filter(contest=contest, accepted=False).exclude(parents=contest.admin_role).order_by('sort_field'))
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
     def get_contest_admins(contest, limit=20, offset=0):
-        result = Privilege.select_struct_can(Contestant.objects.filter(parents=contest.admin_role))
+        result = Privilege.select_struct_can(Contestant.objects.filter(parents=contest.admin_role).order_by('sort_field'))
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
@@ -206,7 +206,7 @@ class Web(object):
         if contestant:
             contestant_list = Contestant.objects.filter(id=contestant.id)
         else:
-            contestant_list = Contestant.objects.filter(contest=contest)
+            contestant_list = Contestant.objects.filter(contest=contest).order_by('sort_field')
         contestant_list = list(Privilege.where_can(contestant_list, 'OBSERVE'))
         q = Submit.objects.filter(contestant__in=contestant_list).order_by('-id')
 #        if contestant:

@@ -7,27 +7,6 @@ from satori.core.dbev  import Events
 
 from satori.core.models import Entity
 
-ResultToRender = Struct('ResultToRender', (
-    ('submit', DjangoStruct('Submit'), True),
-    ('problem', unicode, True),
-    ('contestant', unicode, True),
-    ('status', unicode, True),
-    ('details', unicode, True),
-))
-ResultsToRender = Struct('ResultsToRender', (
-    ('count', int, True),
-    ('results', TypedList(ResultToRender), True),
-))
-ContestantToRender = Struct('ContestantToRender', (
-    ('contestant', DjangoStruct('Contestant'), True),
-    ('name', unicode, True),
-    ('members', TypedList(DjangoStruct('User')), True),
-    ('admin', bool, True),
-))
-ContestantsToRender = Struct('ContestantsToRender', (
-    ('count', int, True),
-    ('contestants', TypedList(ContestantToRender), True),
-))
 AlreadyRegistered = DefineException('AlreadyRegistered', 'The specified user \'{login}\' is already registered',
     [('login', unicode, False)])
 
@@ -171,73 +150,6 @@ class Contest(Entity):
         if contestant is not None:
             self.admin_role.delete_member(contestant)
             contestant.modify(fields=ContestantStruct(invisible=False))
-
-    @staticmethod
-    def submit_to_result_to_render(submit):
-        return ResultToRender(
-            submit=submit,
-            problem=submit.problem.code,
-            contestant=submit.contestant.usernames,
-            status=submit.get_test_suite_status(),
-            details=submit.get_test_suite_report()
-            )
-
-    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('ProblemMapping'), int, int], PCPermit())
-    def get_all_results(self, problem=None, limit=20, offset=0):
-        res = []
-        q = Privilege.where_can(Submit.objects.filter(contestant__contest=self), 'OBSERVE')
-        if problem:
-            q = q.filter(problem=problem)
-        for submit in q.order_by('-id')[offset:offset+limit]:
-            res.append(Contest.submit_to_result_to_render(submit))
-        return ResultsToRender(
-            count=len(q),
-            results=res
-            )
-
-    @ExportMethod(ResultsToRender, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
-    def get_results(self, contestant, problem=None, limit=20, offset=0):
-        res = []
-        q = Privilege.where_can(Submit.objects.filter(contestant=contestant), 'OBSERVE')
-        if problem:
-            q = q.filter(problem=problem)
-        for submit in q.order_by('-id')[offset:offset+limit]:
-            res.append(Contest.submit_to_result_to_render(submit))
-        return ResultsToRender(
-            count=len(q),
-            results=res
-            )
-
-    @staticmethod
-    def contestant_to_contestant_to_render(contestant):
-        return ContestantToRender(
-            contestant=contestant,
-            name=contestant.usernames,
-            members=contestant.get_member_users(),
-            admin=any([Privilege.get(member, contestant.contest, 'MANAGE') for member in contestant.get_member_users()]),
-            )
-
-    @ExportMethod(ContestantsToRender, [DjangoId('Contest'), int, int], PCArg('self', 'VIEW'))
-    def get_contestants(self, limit=20, offset=0):
-        res = []
-        q = Contestant.objects.filter(contest=self, accepted=True)
-        for contestant in q.order_by('name')[offset:offset+limit]:
-            res.append(Contest.contestant_to_contestant_to_render(contestant))
-        return ContestantsToRender(
-            count=len(q),
-            contestants=res
-            )
-
-    @ExportMethod(ContestantsToRender, [DjangoId('Contest'), int, int], PCArg('self', 'MANAGE'))
-    def get_pending_contestants(self, limit=20, offset=0):
-        res = []
-        q = Contestant.objects.filter(contest=self, accepted=False)
-        for contestant in q.order_by('name')[offset:offset+limit]:
-            res.append(Contest.contestant_to_contestant_to_render(contestant))
-        return ContestantsToRender(
-            count=len(q),
-            contestants=res
-            )
 
 class ContestEvents(Events):
     model = Contest
