@@ -103,10 +103,6 @@ class Submit(Entity):
             return None
         return test_suite_result.report
 
-    @ExportMethod(ResultToRender, [DjangoId('Submit')], PCArg('self', 'OBSERVE'))
-    def get_result(self):
-        return self.problem.contest.submit_to_result_to_render(self)
-    
     @ExportMethod(NoneType, [DjangoId('Submit')], PCArg('self', 'MANAGE'))
     def rejudge_test_results(self):
         RawEvent().send(Event(type='checking_rejudge_submit_test_results', id=self.id))
