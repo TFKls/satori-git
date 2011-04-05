@@ -28,9 +28,9 @@
 
 <h4>Admins</h4>
 <table>
-{% for name in admins %}
+{% for a in admins %}
 <tr>
-    <td>{{ name }}</td>
+    <td>{{ a.name }}</td><td><form action="" method="POST"><input type="hidden" name="adminid" value="{{a.id}}"/><input type="submit" name="revokeadmin" value="Revoke"/></form></td>
 </tr>
 {% endfor %}
 </table>

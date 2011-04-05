@@ -39,6 +39,7 @@
 
 <td class={% switch s.status %}
                 {% case "QUE" %} "staQUE"
+                {% case "CME" %} "staCME"
                 {% case "ACC" %} "staACC"
                 {% case "OK" %} "staOK"
                 {% case "TLE" %} "staTLE"
@@ -49,8 +50,13 @@
                 {% case "CMP" %} "staCMP"
                 {% else %} ""
            {% endswitch %}> 
-
-    {{s.status}}</td>
+{% if not s.status %}
+  Waiting
+{% else %}
+    {{s.status}}
+{% endif %}
+    
+</td>
     
 {% comment %}    <td><a href="{{s.link}}" class="showhidelink">Show/hide details</a></td> {% endcomment %}
 </tr>

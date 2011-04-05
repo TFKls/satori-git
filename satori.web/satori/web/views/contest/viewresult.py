@@ -3,6 +3,8 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
 from django.shortcuts import render_to_response
+from django.http import HttpResponseRedirect
+from django.core.urlresolvers import reverse
 from satori.web.utils.shortcuts import text2html
 
 @contest_view
@@ -35,3 +37,11 @@ def view(request, page_info, id):
     if rawcode and rawcode!="":
         widget["code"] = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
     return render_to_response('viewresult.html',{'page_info' : page_info, 'widget' : widget, 'filename' : filename})
+
+
+@contest_view
+def override(request, page_info, id):
+    submit = Submit(int(id))
+    contest = page_info.contest
+    submit.rejudge_test_results()
+    return HttpResponseRedirect(reverse('view_result',args=[contest.id,id]))

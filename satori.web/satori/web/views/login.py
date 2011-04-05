@@ -3,6 +3,7 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
 from satori.web.utils.forms import StatusBar
+from satori.web.utils import xmlparams
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -59,10 +60,16 @@ class ChangePassForm(forms.Form):
         return data
 
 @general_view
-def changepass(request, page_info):
+def profile(request, page_info):
     user = page_info.user
+    xml = Global.get_instance().profile_fields
+    params = xmlparams.ParseXML(xml)['input']
+    form = ChangePassForm()
+    profile_form = xmlparams.ParamsForm(paramsdict=params,oamap=user.profile_get_map())
+    if request.method!="POST":
+        return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form}) 
     bar = StatusBar()
-    if request.method=="POST":
+    if 'changepass' in request.POST.keys():
         form = ChangePassForm(request.POST)
         if form.is_valid():
             try:
@@ -74,6 +81,12 @@ def changepass(request, page_info):
                 bar.errors.append('Login failed!')
             except InvalidPassword:
                 bar.errors.append('Invalid pasword!')
-    else:
-        form = ChangePassForm()
-    return render_to_response('changepass.html', {'page_info' : page_info, 'status_bar' : bar, 'form' : form}) 
+            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form}) 
+    if 'update' in request.POST.keys():
+        profile_form = xmlparams.ParamsForm(paramsdict=params, data=request.POST)
+        if profile_form.is_valid():
+            om = params.dict_to_oa_map(profile_form.cleaned_data)
+            d = om.get_map().__dict__
+            user.profile_set_map(om.get_map())
+            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form}) 
+    return render_to_response('changepass.html', {'page_info' : page_info, 'status_bar' : bar, 'password_form' : form, 'profile_form' : profile_form}) 

@@ -15,7 +15,7 @@
                 <li><a href="{% url submit page_info.contest.id %}">Submit</a></li>
             {% endif %}
             
-            {% if page_info.contestant %}
+            {% if page_info.contestant or page_info.contest_is_admin %}
                 <li><a href="{% url results page_info.contest.id %}">Results</a></li>
             {% endif %}
             
@@ -44,7 +44,7 @@
             {% endif %}
             
             {% if page_info.user %}
-                <li><a href="{% url changepass %}">Change password</a></li>
+                <li><a href="{% url profile %}">User profile</a></li>
             {% endif %}
             
 

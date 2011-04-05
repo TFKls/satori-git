@@ -41,7 +41,7 @@ def get_status(contest):
 def view(request, page_info):
     contest = page_info.contest
     status = get_status(contest)
-    admins = [c.usernames for c in Web.get_contest_admins(contest=contest,offset=0,limit=500).contestants]
+    admins =  Web.get_contest_admins(contest=contest,offset=0,limit=500).contestants
     questions = Privilege.get(contest.contestant_role,contest,'ASK_QUESTIONS')
     if request.method!="POST":
         manage_form = ManageForm(initial={'viewing' : status.viewing, 'joining' : status.joining, 'name' : contest.name, 'description' : contest.description, 'questions' : questions})
@@ -57,7 +57,11 @@ def view(request, page_info):
                 return HttpResponseRedirect(reverse('contest_manage',args=[page_info.contest.id]))
             except:
                 admin_form._errors['username'] = ['Adding failed!']
-        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
+        return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
+    if "revokeadmin" in request.POST.keys():
+        user = Role(int(request.POST['adminid']))
+        contest.delete_admin(user)
+        return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
     admin_form = AdminForm()
     manage_form = ManageForm(request.POST)
     if not manage_form.is_valid():

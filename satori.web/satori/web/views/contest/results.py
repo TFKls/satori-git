@@ -13,7 +13,7 @@ def view(request, page_info):
     if not page_info.contest_is_admin:
         results=Web.get_results(contest=contest,limit=1000).results
         return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results})
-    contestant_choices = [[c.id,c.name] for c in Web.get_accepted_contestants(contest=contest,limit=max_contestants).contestants]
+    contestant_choices = [[c.id,c.name] for c in Web.get_accepted_contestants(contest=contest,limit=max_contestants).contestants+Web.get_contest_admins(contest=contest,limit=max_contestants).contestants]
     contestant_choices.append(["all","All results"])
     problems = Web.get_problem_mapping_list(contest=contest)
     problem_choices = [[pinfo.problem_mapping.id,pinfo.problem_mapping.code + ' - ' + pinfo.problem_mapping.title] for pinfo in problems]

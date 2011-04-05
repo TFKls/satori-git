@@ -1,7 +1,7 @@
 <ul class="headerLeftUl">
     <li><a href="{% url news %}">Main page</a></li>
     {% if page_info.contest %}
-        <li>Selected contest {{page_info.contest.name}}</li>
+        <li>Selected contest {{page_info.contest.name}} (<a href="{% url select_contest %}">change</a>)</li>
     {% endif %}
 </ul>
 <ul class="headerRightUl">
