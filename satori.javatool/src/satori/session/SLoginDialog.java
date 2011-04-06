@@ -15,8 +15,8 @@ import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 import javax.swing.JTextField;
 
-import satori.common.SException;
 import satori.main.SFrame;
+import satori.task.STaskException;
 
 public class SLoginDialog {
 	private JDialog dialog;
@@ -76,15 +76,16 @@ public class SLoginDialog {
 		dialog.getContentPane().add(button_pane, BorderLayout.SOUTH);
 		dialog.pack();
 		dialog.setLocationRelativeTo(SFrame.get().getFrame());
+		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 	}
 	
-	private void process() throws SException {
+	private void process() throws STaskException {
 		dialog.setVisible(true);
 		if (!confirmed) return;
 		SSession.login(username.getText(), new String(password.getPassword()));
 	}
 	
-	public static void show() throws SException {
+	public static void show() throws STaskException {
 		SLoginDialog self = new SLoginDialog();
 		self.process();
 	}

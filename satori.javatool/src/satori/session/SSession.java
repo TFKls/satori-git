@@ -2,21 +2,24 @@ package satori.session;
 
 import satori.common.SException;
 import satori.config.SConfig;
+import satori.task.STask;
+import satori.task.STaskException;
+import satori.task.STaskLogger;
+import satori.task.STaskManager;
 import satori.thrift.SThriftClient;
-import satori.thrift.SThriftCommand;
 import satori.thrift.gen.User;
 
 public class SSession {
-	private String host;
-	private int thrift_port;
-	private int blobs_port;
-	private String username;
-	private String password;
-	private String token;
+	private volatile String host;
+	private volatile int thrift_port;
+	private volatile int blobs_port;
+	private volatile String username;
+	private volatile String password;
+	private volatile String token;
 	
-	private static SSession instance = null;
+	private static volatile SSession instance = null;
 	
-	public static void connect() throws SException {
+	private static void connect() throws SException {
 		instance = new SSession();
 		instance.host = SConfig.getHost();
 		instance.thrift_port = SConfig.getThriftPort();
@@ -26,27 +29,49 @@ public class SSession {
 		instance.token = "";
 		SThriftClient.setUpProtocol();
 	}
-	public static void disconnect() {
+	private static void disconnect() {
 		SThriftClient.closeProtocol();
 		instance = null;
 	}
 	
-	private static class LoginCommand implements SThriftCommand {
+	private static class LoginTask implements STask {
 		private final String username, password;
-		public LoginCommand(String username, String password) {
+		public LoginTask(String username, String password) {
 			this.username = username;
 			this.password = password;
 		}
-		@Override public void call() throws Exception {
+		@Override public void run(STaskLogger logger) throws Throwable {
+			logger.log("Creating session...");
+			connect();
+			logger.log("Logging in...");
 			User.Iface iface = new User.Client(SThriftClient.getProtocol());
 			instance.token = iface.User_authenticate("", username, password);
+			instance.username = username;
+			instance.password = password;
 		}
 	}
-	public static void login(String username, String password) throws SException {
-		connect();
-		SThriftClient.call(new LoginCommand(username, password));
-		instance.username = username;
-		instance.password = password;
+	public static void login(String username, String password) throws STaskException {
+		STaskManager.execute(new LoginTask(username, password));
+	}
+	
+	private static class AnonymousLoginTask implements STask {
+		@Override public void run(STaskLogger logger) throws Throwable {
+			logger.log("Creating session...");
+			connect();
+		}
+	}
+	public static void anonymousLogin() throws STaskException {
+		STaskManager.execute(new AnonymousLoginTask());
+	}
+	
+	private static class LogoutTask implements STask {
+		@Override public void run(STaskLogger logger) throws Throwable {
+			logger.log("Closing session...");
+			disconnect();
+		}
+	}
+	public static void logout() throws STaskException {
+		STaskManager.execute(new LogoutTask());
 	}
 	
 	public static boolean isConnected() { return instance != null; }

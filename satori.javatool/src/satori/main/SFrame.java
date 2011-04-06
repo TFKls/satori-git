@@ -20,6 +20,7 @@ import satori.config.SConfigDialog;
 import satori.problem.ui.SProblemListPane;
 import satori.session.SLoginDialog;
 import satori.session.SSession;
+import satori.task.STaskException;
 
 public class SFrame {
 	private STabbedPane tabs = new STabbedPane();
@@ -42,16 +43,17 @@ public class SFrame {
 	
 	private void loginRequest() {
 		try { SLoginDialog.show(); }
-		catch(SException ex) { showErrorDialog(ex); return; }
+		catch(STaskException ex) { return; }
 		updateSession();
 	}
 	private void anonymousLoginRequest() {
-		try { SSession.connect(); }
-		catch(SException ex) { showErrorDialog(ex); return; }
+		try { SSession.anonymousLogin(); }
+		catch(STaskException ex) { return; }
 		updateSession();
 	}
 	private void logoutRequest() {
-		SSession.disconnect();
+		try { SSession.logout(); }
+		catch(STaskException ex) { return; }
 		updateSession();
 	}
 	private void configRequest() {
