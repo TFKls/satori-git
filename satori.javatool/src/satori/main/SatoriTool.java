@@ -15,6 +15,7 @@ public class SatoriTool {
 				InputMap im = (InputMap)UIManager.get("Button.focusInputMap");
 				im.put(KeyStroke.getKeyStroke("ENTER"), "pressed");
 				im.put(KeyStroke.getKeyStroke("released ENTER"), "released");
+				SFrame.setInstance();
 				SFrame.get().start();
 			}
 		});

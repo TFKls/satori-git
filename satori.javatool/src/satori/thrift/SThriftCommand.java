@@ -1,5 +1,5 @@
 package satori.thrift;
 
-public interface SThriftCommand {
+@Deprecated public interface SThriftCommand {
 	public void call() throws Exception;
 }

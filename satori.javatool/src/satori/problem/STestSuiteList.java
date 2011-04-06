@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import satori.common.SException;
-import satori.common.SList;
+import satori.common.SListView;
 import satori.thrift.STestSuiteData;
 
 public class STestSuiteList {
@@ -14,7 +14,7 @@ public class STestSuiteList {
 	private final STestList test_list;
 	
 	private Map<Long, STestSuiteSnap> suites = null;
-	private List<SList<STestSuiteSnap>> panes = new ArrayList<SList<STestSuiteSnap>>();
+	private List<SListView<STestSuiteSnap>> panes = new ArrayList<SListView<STestSuiteSnap>>();
 	
 	public long getProblemId() { return problem_id; }
 	public STestList getTestList() { return test_list; }
@@ -37,18 +37,18 @@ public class STestSuiteList {
 	
 	public void addTestSuite(STestSuiteSnap suite) {
 		suites.put(suite.getId(), suite);
-		for (SList<STestSuiteSnap> pane : panes) pane.add(suite);
+		for (SListView<STestSuiteSnap> pane : panes) pane.add(suite);
 	}
 	public void removeTestSuite(STestSuiteSnap suite) {
-		for (SList<STestSuiteSnap> pane : panes) pane.remove(suite);
+		for (SListView<STestSuiteSnap> pane : panes) pane.remove(suite);
 		suites.remove(suite.getId());
 	}
 	
-	public void addPane(SList<STestSuiteSnap> pane) {
+	public void addPane(SListView<STestSuiteSnap> pane) {
 		panes.add(pane);
 		pane.add(suites.values());
 	}
-	public void removePane(SList<STestSuiteSnap> pane) {
+	public void removePane(SListView<STestSuiteSnap> pane) {
 		pane.removeAll();
 		panes.remove(pane);
 	}
@@ -61,15 +61,15 @@ public class STestSuiteList {
 			else current = STestSuiteSnap.createBasic(test_list, ts);
 			new_suites.put(current.getId(), current);
 		}
-		for (SList<STestSuiteSnap> pane : panes) pane.removeAll();
+		for (SListView<STestSuiteSnap> pane : panes) pane.removeAll();
 		if (suites != null) for (long id : suites.keySet()) {
 			if (!new_suites.containsKey(id)) suites.get(id).notifyDeleted();
 		}
 		suites = new_suites;
-		for (SList<STestSuiteSnap> pane : panes) pane.add(suites.values());
+		for (SListView<STestSuiteSnap> pane : panes) pane.add(suites.values());
 	}
 	public void delete() {
-		for (SList<STestSuiteSnap> pane : panes) pane.removeAll();
+		for (SListView<STestSuiteSnap> pane : panes) pane.removeAll();
 		for (STestSuiteSnap ts : suites.values()) ts.notifyDeleted();
 	}
 }

@@ -4,12 +4,12 @@ import java.util.HashMap;
 import java.util.Map;
 
 import satori.common.SException;
-import satori.common.SList;
+import satori.common.SListView;
 import satori.thrift.SProblemData;
 
 public class SProblemList {
 	private Map<Long, SProblemSnap> problems = null;
-	private SList<SProblemSnap> pane = null;
+	private SListView<SProblemSnap> pane = null;
 	
 	private SProblemList() {}
 	
@@ -23,13 +23,13 @@ public class SProblemList {
 	}
 	
 	public boolean hasPane() { return pane != null; }
-	public void setPane(SList<SProblemSnap> new_pane) {
+	public void setPane(SListView<SProblemSnap> new_pane) {
 		if (pane != null) pane.removeAll();
 		pane = new_pane;
 		if (pane != null) pane.add(problems.values());
 	}
 	
-	public void load() throws SException {
+	public void reload() throws SException {
 		Map<Long, SProblemSnap> new_problems = new HashMap<Long, SProblemSnap>();
 		for (SProblemReader problem : SProblemData.list()) {
 			SProblemSnap current = problems != null ? problems.get(problem.getId()) : null;
@@ -49,7 +49,7 @@ public class SProblemList {
 	
 	public static SProblemList get() throws SException {
 		if (instance == null) instance = new SProblemList();
-		instance.load();
+		instance.reload();
 		return instance;
 	}
 }
