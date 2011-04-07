@@ -46,6 +46,9 @@ BLOB_DIR = os.path.join(BASE_DIR, 'tmp', 'blob')
 LOG_FILE = os.path.join(BASE_DIR, 'tmp', 'server.log')
 PID_FILE = os.path.join(BASE_DIR, 'tmp', 'server.pid')
 
+USE_SSL = False
+SSL_CERTIFICATE = ''
+
 if getpass.getuser() == 'gutowski':
     EVENT_PORT = 39888
     THRIFT_PORT = 39889
@@ -54,6 +57,8 @@ if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     EVENT_PORT = 37888
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
+    USE_SSL = True
+    SSL_CERTIFICATE = '/home/mwrobel/satori/ssl/server.pem'
 if getpass.getuser() == 'duraj':
     EVENT_PORT = 36888
     THRIFT_PORT = 36889
