@@ -1,5 +1,11 @@
 package satori.thrift;
 
+import java.io.IOException;
+import java.net.Socket;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
+
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
@@ -17,9 +23,14 @@ public class SThriftClient {
 	public static void setUpProtocol() throws SException {
 		if (transport != null) transport.close();
 		SSession.ensureConnected();
-		transport = new TFramedTransport(new TSocket(SSession.getHost(), SSession.getThriftPort()));
-		try { transport.open(); }
+		SocketFactory socket_factory = SSLSocketFactory.getDefault();
+		Socket socket;
+		try { socket = socket_factory.createSocket(SSession.getHost(), SSession.getThriftPort()); }
+		catch(IOException ex) { throw new SException(ex); }
+		try { transport = new TFramedTransport(new TSocket(socket)); }
 		catch(TException ex) { throw new SException(ex); }
+		/*try { transport.open(); }
+		catch(TException ex) { throw new SException(ex); }*/
 		protocol = new TBinaryProtocol(transport);
 	}
 	public static void closeProtocol() {

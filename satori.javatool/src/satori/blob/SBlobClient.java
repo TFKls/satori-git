@@ -78,12 +78,12 @@ public class SBlobClient {
 	
 	public static String putBlob(File file) throws SException {
 		SSession.ensureConnected();
-		String address = "http://" + SSession.getHost() + ":" + SSession.getBlobsPort() + "/blob/upload";
+		String address = "https://" + SSession.getHost() + ":" + SSession.getBlobsPort() + "/blob/upload";
 		return putBlob(address, file);
 	}
 	public static void getBlob(String hash, File file) throws SException {
 		SSession.ensureConnected();
-		String address = "http://" + SSession.getHost() + ":" + SSession.getBlobsPort() + "/blob/download/" + hash;
+		String address = "https://" + SSession.getHost() + ":" + SSession.getBlobsPort() + "/blob/download/" + hash;
 		getBlobAux(address, file);
 	}
 }
