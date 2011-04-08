@@ -79,13 +79,13 @@ public class SBlobClient {
 	public static String putBlob(File file) throws SException {
 		SSession session = SSession.get();
 		if (session == null) throw new SException("Not logged in");
-		String address = "http://" + session.getHost() + ":" + session.getBlobsPort() + "/blob/upload";
+		String address = "https://" + session.getHost() + ":" + session.getBlobsPort() + "/blob/upload";
 		return putBlob(address, file);
 	}
 	public static void getBlob(String hash, File file) throws SException {
 		SSession session = SSession.get();
 		if (session == null) throw new SException("Not logged in");
-		String address = "http://" + session.getHost() + ":" + session.getBlobsPort() + "/blob/download/" + hash;
+		String address = "https://" + session.getHost() + ":" + session.getBlobsPort() + "/blob/download/" + hash;
 		getBlobAux(address, file);
 	}
 }

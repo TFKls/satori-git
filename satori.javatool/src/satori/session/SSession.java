@@ -1,7 +1,12 @@
 package satori.session;
 
+import java.io.IOException;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.List;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SSLSocketFactory;
 
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
@@ -34,9 +39,10 @@ public class SSession {
 	public String getUsername() { return username; }
 	public String getPassword() { return password; }
 	
-	private void createProtocol() throws TException {
-		transport = new TFramedTransport(new TSocket(host, thrift_port));
-		transport.open();
+	private void createProtocol() throws IOException, TException {
+		SocketFactory socket_factory = SSLSocketFactory.getDefault();
+		Socket socket = socket_factory.createSocket(host, thrift_port);
+		transport = new TFramedTransport(new TSocket(socket));
 		protocol = new TBinaryProtocol(transport);
 	}
 	private void closeProtocol() { transport.close(); }

@@ -6,7 +6,7 @@ import os
 import shutil
 import sys
 import urllib
-from httplib import HTTPConnection
+from httplib import HTTPConnection, HTTPSConnection
 from StringIO import StringIO
 from types import FunctionType
 
@@ -15,6 +15,7 @@ from thrift.transport.TSocket import TSocket
 from satori.client.common import setup_api
 from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 from satori.ars.thrift import ThriftClient, ThriftReader
+from satori.ars.thrift.TSSLSocket import TSSLSocket
 from satori.objects import Argument, Signature, ArgumentMode
 from unwrap import unwrap_interface
 from oa_map import get_oa_map
@@ -23,9 +24,13 @@ from token_container import token_container
 client_host = ''
 client_port = 0
 blob_port = 0
+ssl = True
 
 def transport_factory():
-    return TSocket(host=client_host, port=client_port)
+    if ssl:
+        return TSSLSocket(host=client_host, port=client_port, validate=False)
+    else:
+        return TSocket(host=client_host, port=client_port)
 
 @Argument('transport_factory', type=FunctionType)
 def bootstrap_thrift_client(transport_factory):
@@ -61,7 +66,11 @@ class BlobWriter(object):
         headers['Content-length'] = str(length)
         headers['Filename'] = urllib.quote(filename)
 
-        self.con = HTTPConnection(client_host, blob_port)
+        if ssl:
+            self.con = HTTPSConnection(client_host, blob_port)
+        else:
+            self.con = HTTPConnection(client_host, blob_port)
+
         try:
             self.con.request('PUT', url, '', headers)
         except:
@@ -100,7 +109,13 @@ class BlobReader(object):
         headers['Content-length'] = '0'
 
         try:
-            self.con = HTTPConnection(client_host, blob_port)
+            self.con = None
+
+            if ssl:
+                self.con = HTTPSConnection(client_host, blob_port)
+            else:
+                self.con = HTTPConnection(client_host, blob_port)
+
             self.con.request('GET', url, '', headers)
 
             self.res = self.con.getresponse()
@@ -109,7 +124,8 @@ class BlobReader(object):
             self.length = int(self.res.getheader('Content-length'))
             self.filename = urllib.unquote(self.res.getheader('Filename', ''))
         except:
-            self.con.close()
+            if self.con:
+                self.con.close()
             raise
 
     def read(self, len):
@@ -123,11 +139,12 @@ class BlobReader(object):
     def close(self):
         self.con.close()
 
-def setup(host, thrift_port, blob_port_):
-    global client_host, client_port, blob_port
+def setup(host, thrift_port, blob_port_, ssl_):
+    global client_host, client_port, blob_port, ssl
     client_host = host
     client_port = thrift_port
     blob_port = blob_port_
+    ssl = ssl_
 
     print 'Bootstrapping client...'
 

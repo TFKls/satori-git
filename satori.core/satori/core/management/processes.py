@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from   cherrypy.wsgiserver import CherryPyWSGIServer
+from   cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter
 from   datetime    import datetime
 from   django.conf import settings
 from   django.core.handlers.wsgi import WSGIHandler
@@ -19,6 +20,7 @@ from   thrift.transport.TSocket import TServerSocket
 from   thrift.server.TServer    import TThreadedServer
 
 from satori.ars.thrift    import ThriftServer
+from satori.ars.thrift.TSSLSocket import TSSLServerSocket
 from satori.core.api      import ars_interface
 from satori.core.checking import CheckingMaster
 from satori.core.dbev.notifier              import run_notifier
@@ -69,7 +71,11 @@ class ThriftServerProcess(SatoriProcess):
         super(ThriftServerProcess, self).__init__('thrift server')
 
     def do_run(self):
-        server = ThriftServer(TThreadedServer, TServerSocket(port=settings.THRIFT_PORT), ars_interface)
+        if settings.USE_SSL:
+            socket = TSSLServerSocket(port=settings.THRIFT_PORT, certfile=settings.SSL_CERTIFICATE)
+        else:
+            socket = TServerSocket(port=settings.THRIFT_PORT)
+        server = ThriftServer(TThreadedServer, socket, ars_interface)
         server.run()
 
 
@@ -82,6 +88,8 @@ class BlobServerProcess(SatoriProcess):
 
     def do_run(self):
         self.server = CherryPyWSGIServer((settings.BLOB_HOST, settings.BLOB_PORT), WSGIHandler())
+        if settings.USE_SSL:
+            self.server.ssl_adapter = BuiltinSSLAdapter(certificate=settings.SSL_CERTIFICATE, private_key=settings.SSL_CERTIFICATE)
         self.server.start()
 
 

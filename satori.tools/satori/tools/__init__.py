@@ -15,10 +15,12 @@ options.add_option('-s', '--section', dest='section', help='section from configu
 options.add_option('-H', '--host', dest='host', help='Satori host in format host_name:thrift_port:blob_port')
 options.add_option('-u', '--username', dest='username', help='user name (or "-" to skip authentication)')
 options.add_option('-m', '--machine', dest='machine', help='machine name (or "-" to skip authentication)')
+options.add_option('-S', '--ssl', dest='ssl', help='use SSL', action='store_true')
 
 class AuthSetup:
     def __init__(self):
         self.clear()
+
     def clear(self):
         self.section = None
         self.hostname = None
@@ -27,6 +29,8 @@ class AuthSetup:
         self.username = None
         self.machine = None
         self.password = None
+        self.ssl = False
+
     def setup(self):
         if not self.hostname:
             raise RuntimeError('Satori host name not specified in config file or arguments')
@@ -34,8 +38,9 @@ class AuthSetup:
             raise RuntimeError('Satori Thrift port number not specified in config file or arguments')
         if not self.blob_port:
             raise RuntimeError('Satori blob port number not specified in config file or arguments')
-        print 'Connecting to: {0}:{1}:{2}'.format(self.hostname, self.thrift_port, self.blob_port)
-        remote.setup(self.hostname, self.thrift_port, self.blob_port)
+        print 'Connecting to: {0}:{1}:{2}{3}'.format(self.hostname, self.thrift_port, self.blob_port, ' (SSL)' if self.ssl else '')
+        remote.setup(self.hostname, self.thrift_port, self.blob_port, self.ssl)
+
     def authenticate(self):
         if self.machine:
             print 'Machine name: {0}'.format(self.machine)
@@ -103,6 +108,9 @@ def setup():
         if config.has_option(auth_setup.section, 'password'):
             auth_setup.password = config.get(auth_setup.section, 'password')
 
+        if config.has_option(auth_setup.section, 'ssl'):
+            auth_setup.ssl = config.getboolean(auth_setup.section, 'ssl')
+
     if options.options.host:
         (auth_setup.hostname, auth_setup.thrift_port, auth_setup.blob_port) = options.options.host.split(':')
         auth_setup.thrift_port = int(auth_setup.thrift_port)
@@ -113,6 +121,9 @@ def setup():
 
     if options.options.machine:
         auth_setup.machine = options.options.machine
+
+    if options.options.ssl:
+        auth_setup.ssl = True
 
     auth_setup.setup()
 

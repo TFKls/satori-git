@@ -3,7 +3,7 @@ from django.conf.urls.defaults import *
 from django.conf import settings
 
 from satori.client.common import remote
-remote.setup(settings.THRIFT_HOST, settings.THRIFT_PORT, settings.BLOB_PORT)
+remote.setup(settings.THRIFT_HOST, settings.THRIFT_PORT, settings.BLOB_PORT, settings.USE_SSL)
 
 import os
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
