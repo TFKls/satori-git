@@ -42,7 +42,7 @@ public class SSession {
 	public String getPassword() { return password; }
 	
 	private void createProtocol() throws Exception {
-		SSLContext context = SSLContext.getInstance("SSL");
+		SSLContext context = SSLContext.getInstance("TLSv1");
 		context.init(null, new TrustManager[] {
 			new X509TrustManager() {
 				@Override public X509Certificate[] getAcceptedIssuers() { return null; }
