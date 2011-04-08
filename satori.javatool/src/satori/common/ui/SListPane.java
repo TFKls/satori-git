@@ -122,7 +122,7 @@ public class SListPane<T extends SModel> extends JList {
 			pane.setBackground(comp.getBackground());
 			pane.setBorder(comp.getBorder());
 			for (int i = 0; i < columns.size(); ++i) {
-				JLabel label = (JLabel)comp.getComponent(i);
+				JLabel label = (JLabel)pane.getComponent(i);
 				label.setForeground(comp.getForeground());
 				label.setFont(comp.getFont());
 				label.setText(columns.get(i).get(item));
