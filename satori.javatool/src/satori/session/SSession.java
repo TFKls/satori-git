@@ -1,14 +1,16 @@
 package satori.session;
 
-import java.io.IOException;
 import java.net.Socket;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
 import javax.net.SocketFactory;
-import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
-import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
@@ -39,8 +41,16 @@ public class SSession {
 	public String getUsername() { return username; }
 	public String getPassword() { return password; }
 	
-	private void createProtocol() throws IOException, TException {
-		SocketFactory socket_factory = SSLSocketFactory.getDefault();
+	private void createProtocol() throws Exception {
+		SSLContext context = SSLContext.getInstance("SSL");
+		context.init(null, new TrustManager[] {
+			new X509TrustManager() {
+				@Override public X509Certificate[] getAcceptedIssuers() { return null; }
+				@Override public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+				@Override public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+			}
+		}, new SecureRandom());
+		SocketFactory socket_factory = context.getSocketFactory();
 		Socket socket = socket_factory.createSocket(host, thrift_port);
 		transport = new TFramedTransport(new TSocket(socket));
 		protocol = new TBinaryProtocol(transport);
