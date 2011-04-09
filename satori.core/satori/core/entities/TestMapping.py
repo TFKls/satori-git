@@ -12,8 +12,8 @@ class TestMapping(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testmapping')
 
-    suite         = models.ForeignKey('TestSuite', related_name='test_mappings+')
-    test          = models.ForeignKey('Test', related_name='test_mappings+')
+    suite         = models.ForeignKey('TestSuite', related_name='test_mappings+', on_delete=models.CASCADE)
+    test          = models.ForeignKey('Test', related_name='test_mappings+', on_delete=models.PROTECT)
     order         = models.IntegerField()
 
     params        = AttributeGroupField(PCArg('self', 'MANAGE'), PCDeny(), '')

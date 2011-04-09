@@ -11,7 +11,7 @@ class TestSuite(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testsuite')
 
-    problem       = models.ForeignKey('Problem', related_name='test_suites')
+    problem       = models.ForeignKey('Problem', related_name='test_suites', on_delete=models.CASCADE)
     name          = models.CharField(max_length=64)
     description   = models.TextField(blank=True, default="")
     tests         = models.ManyToManyField('Test', through='TestMapping', related_name='test_suites')

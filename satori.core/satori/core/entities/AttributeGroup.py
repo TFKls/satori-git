@@ -9,6 +9,7 @@ class AttributeGroup(Entity):
     """Model. Open attribute group.
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_attribute_group')
+    enclosing_entity = models.ForeignKey('Entity', related_name='+', null=True, on_delete=models.CASCADE)
 
 class AttributeGroupEvents(Events):
     model = AttributeGroup

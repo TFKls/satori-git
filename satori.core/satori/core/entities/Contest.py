@@ -26,8 +26,8 @@ class Contest(Entity):
     name            = models.CharField(max_length=64, unique=True)
     description     = models.TextField(blank=True, default="")
     problems        = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
-    contestant_role = models.ForeignKey('Role', related_name='contest_contestants+')
-    admin_role      = models.ForeignKey('Role', related_name='contest_admins+')
+    contestant_role = models.ForeignKey('Role', related_name='contest_contestants+', on_delete=models.PROTECT)
+    admin_role      = models.ForeignKey('Role', related_name='contest_admins+', on_delete=models.PROTECT)
     archived        = models.BooleanField(default=False)
 
     lock_start   = models.DateTimeField(null=True)

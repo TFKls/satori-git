@@ -11,7 +11,7 @@ class Ranking(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_ranking')
 
-    contest       = models.ForeignKey('Contest', related_name='rankings')
+    contest       = models.ForeignKey('Contest', related_name='rankings', on_delete=models.CASCADE)
     name          = models.CharField(max_length=64)
     aggregator    = models.CharField(max_length=128)
     header        = models.TextField()

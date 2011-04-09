@@ -7,7 +7,7 @@ from satori.core.dbev import Events
 class OpenAttribute(models.Model):
     """Model. Base for all kinds of open attributes.
     """
-    entity   = models.ForeignKey('Entity', related_name='attributes')
+    entity   = models.ForeignKey('Entity', related_name='attributes', on_delete=models.CASCADE)
     name     = models.CharField(max_length=64)
     is_blob  = models.BooleanField()
     value    = models.TextField()

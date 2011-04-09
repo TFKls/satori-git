@@ -14,7 +14,7 @@ class Contestant(Role):
     parent_role = models.OneToOneField(Role, parent_link=True, related_name='cast_contestant')
 
     usernames   = models.CharField(max_length=256)
-    contest     = models.ForeignKey('Contest', related_name='contestants')
+    contest     = models.ForeignKey('Contest', related_name='contestants', on_delete=models.CASCADE)
     accepted    = models.BooleanField(default=True)
     invisible   = models.BooleanField(default=False)
     login       = models.CharField(max_length=64, null=True)

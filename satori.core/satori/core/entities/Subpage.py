@@ -11,7 +11,7 @@ class Subpage(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_subpage')
     
-    contest       = models.ForeignKey('Contest', related_name='subpages', null=True)
+    contest       = models.ForeignKey('Contest', related_name='subpages', null=True, on_delete=models.CASCADE)
     is_public     = models.BooleanField(default=True)
     is_sticky     = models.BooleanField(default=False)
     is_announcement = models.BooleanField(default=False)

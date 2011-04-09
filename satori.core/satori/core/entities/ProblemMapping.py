@@ -12,14 +12,14 @@ class ProblemMapping(Entity):
     """
     parent_entity      = models.OneToOneField(Entity, parent_link=True, related_name='cast_problemmapping')
 
-    contest            = models.ForeignKey('Contest', related_name='problem_mappings')
-    problem            = models.ForeignKey('Problem', related_name='problem_mappings+')
+    contest            = models.ForeignKey('Contest', related_name='problem_mappings', on_delete=models.CASCADE)
+    problem            = models.ForeignKey('Problem', related_name='problem_mappings+', on_delete=models.PROTECT)
     code               = models.CharField(max_length=16)
     title              = models.CharField(max_length=64)
     description        = models.TextField(blank=True)
     group              = models.CharField(max_length=64, blank=True, default='')
     override_fields    = models.TextField(blank=True, default='')
-    default_test_suite = models.ForeignKey('TestSuite', related_name='problem_mappings+')
+    default_test_suite = models.ForeignKey('TestSuite', related_name='problem_mappings+', on_delete=models.PROTECT)
 
     statement          = models.TextField(blank=True, default="")
     statement_files    = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')

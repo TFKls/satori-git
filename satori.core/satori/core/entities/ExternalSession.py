@@ -11,7 +11,7 @@ ExternalSessionFailed = DefineException('ExternalSessionFailed', 'External sessi
 class ExternalSession(models.Model):
     """
     """
-    session     = models.ForeignKey('Session', related_name='external_sessions')
+    session     = models.ForeignKey('Session', related_name='external_sessions', on_delete=models.CASCADE)
     external_id = models.CharField(max_length=64)
 
     @ExportMethod(datetime, [unicode], PCPermit(), [ExternalSessionFailed])

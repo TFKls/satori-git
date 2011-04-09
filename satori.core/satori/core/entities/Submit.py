@@ -11,8 +11,8 @@ class Submit(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_submit')
 
-    contestant    = models.ForeignKey('Contestant', related_name='submits')
-    problem       = models.ForeignKey('ProblemMapping', related_name='submits')
+    contestant    = models.ForeignKey('Contestant', related_name='submits', on_delete=models.PROTECT)
+    problem       = models.ForeignKey('ProblemMapping', related_name='submits', on_delete=models.PROTECT)
     time          = models.DateTimeField(auto_now_add=True)
 
     data          = AttributeGroupField(PCArg('self', 'VIEW'), PCDeny(), '')

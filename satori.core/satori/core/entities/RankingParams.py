@@ -11,9 +11,9 @@ class RankingParams(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_rankingparams')
 
-    ranking       = models.ForeignKey('Ranking', related_name='ranking_params')
-    problem       = models.ForeignKey('ProblemMapping', related_name='ranking_params+')
-    test_suite    = models.ForeignKey('TestSuite', related_name='ranking_params+', null=True)
+    ranking       = models.ForeignKey('Ranking', related_name='ranking_params', on_delete=models.CASCADE)
+    problem       = models.ForeignKey('ProblemMapping', related_name='ranking_params+', on_delete=models.CASCADE)
+    test_suite    = models.ForeignKey('TestSuite', related_name='ranking_params+', null=True, on_delete=models.PROTECT)
 
     params        = AttributeGroupField(PCArg('self', 'MANAGE'), PCDeny(), '')
 

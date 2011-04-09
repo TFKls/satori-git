@@ -1,6 +1,8 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from django.db import models
+from django.db.models.signals import post_save
+from django.dispatch import receiver
 import sys
 
 from satori.core.export.docstring    import trim_docstring
@@ -28,12 +30,13 @@ AnonymousAttribute = Struct('AnonymousAttribute', (
 
 code_attributegroup_fixup = """
 def fixup_{1}(self):
-    try:
-        x = self.{1}
-    except AttributeGroup.DoesNotExist:
-        {1} = AttributeGroup()
-        {1}.save()
-        self.{1} = {1}
+    pass
+#    try:
+#        x = self.{1}
+#    except AttributeGroup.DoesNotExist:
+#        {1} = AttributeGroup()
+#        {1}.save()
+#        self.{1} = {1}
 """
 
 
@@ -175,13 +178,16 @@ class DefaultAttributeGroupField(object):
         docstrings_to_append.append((cls, name, self.doc))
 
 
-class AttributeGroupField(object):
+class AttributeGroupField(models.OneToOneField):
     def __init__(self, pc_read, pc_write, doc):
+        super(AttributeGroupField, self).__init__('AttributeGroup', related_name='+', on_delete=models.CASCADE)
         self.doc = doc
         self.pc_read = pc_read
         self.pc_write = pc_write
 
     def contribute_to_class(self, cls, name):
+        super(AttributeGroupField, self).contribute_to_class(cls, name)
+        
         global_dict = sys.modules['satori.core.models'].__dict__
         local_dict = {'pc_read': self.pc_read, 'pc_write': self.pc_write}
 
@@ -194,12 +200,42 @@ class AttributeGroupField(object):
         for (meth_name, meth) in local_dict.items():
             setattr(cls, meth_name, meth)
         
-        models.OneToOneField('AttributeGroup', related_name='group_{0}_{1}'.format(cls.__name__, name)).contribute_to_class(cls, name)
-        
         docstrings_to_append.append((cls, name, self.doc))
+
+        @receiver(post_save, sender=cls, weak=False)
+        def update_refs(sender, instance, created, **kwargs):
+            if created:
+                oag = getattr(instance, self.name)
+                oag.enclosing_entity = instance
+                oag.save()
+
+    def pre_save(self, model_instance, add):
+        if add:
+            ag = AttributeGroup()
+            ag.save()
+            setattr(model_instance, self.name, ag)
+        return super(AttributeGroupField, self).pre_save(model_instance, add)
+
+# bad, because installed after post_syncdb signal:
+
+#    def post_create_sql(self, style, table_name):
+#        trigger = """
+#CREATE FUNCTION fixup_oagroup_{0}_{1}() RETURNS trigger AS $$
+#    BEGIN
+#        UPDATE core_attributegroup SET enclosing_entity_id = NEW.{2} WHERE parent_entity_id = NEW.{1};
+#        RETURN NEW;
+#    END;
+#$$ LANGUAGE plpgsql;
+#
+#CREATE TRIGGER fixup_oagroup_{0}_{1} AFTER INSERT ON {0} FOR EACH ROW EXECUTE PROCEDURE fixup_oagroup_{0}_{1}();
+#""".format(table_name, self.column, self.model._meta.pk.column)
+#        return [trigger]
 
 
 def init():
+    global AttributeGroup
+    from satori.core.models import AttributeGroup
+
     for (cls, name, docstring) in docstrings_to_append:
         doc = trim_docstring(cls.__doc__)
         if doc:

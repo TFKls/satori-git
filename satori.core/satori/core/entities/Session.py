@@ -13,7 +13,7 @@ class Session(models.Model):
     deadline        = models.DateTimeField()
     first_activity  = models.DateTimeField()
     last_activity   = models.DateTimeField()
-    role            = models.ForeignKey('Role', related_name='sessions', null=True)
+    role            = models.ForeignKey('Role', related_name='sessions', null=True, on_delete=models.CASCADE)
     auth            = models.CharField(max_length=16, null=True)
 
     TIMEOUT         = timedelta(hours = 10)

@@ -11,12 +11,12 @@ class Global(Entity):
     """
     guardian         = models.IntegerField(unique=True)
 
-    contest_admins   = models.ForeignKey('Role', related_name='+')
-    anonymous        = models.ForeignKey('Role', related_name='+')
-    authenticated    = models.ForeignKey('Role', related_name='+')
-    zero             = models.ForeignKey('Role', related_name='+')
+    contest_admins   = models.ForeignKey('Role', related_name='+', on_delete=models.PROTECT)
+    anonymous        = models.ForeignKey('Role', related_name='+', on_delete=models.PROTECT)
+    authenticated    = models.ForeignKey('Role', related_name='+', on_delete=models.PROTECT)
+    zero             = models.ForeignKey('Role', related_name='+', on_delete=models.PROTECT)
 
-    assignment       = models.ForeignKey('Problem', related_name='+')
+    assignment       = models.ForeignKey('Problem', related_name='+', on_delete=models.PROTECT)
 
     profile_fields   = models.TextField(blank=True, default="")
 

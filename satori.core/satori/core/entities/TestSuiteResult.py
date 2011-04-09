@@ -11,8 +11,8 @@ class TestSuiteResult(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_testsuiteresult')
 
-    submit        = models.ForeignKey('Submit', related_name='test_suite_results')
-    test_suite    = models.ForeignKey('TestSuite', related_name='test_suite_results')
+    submit        = models.ForeignKey('Submit', related_name='test_suite_results', on_delete=models.CASCADE)
+    test_suite    = models.ForeignKey('TestSuite', related_name='test_suite_results', on_delete=models.CASCADE)
     pending       = models.BooleanField(default=True)
     status        = models.CharField(max_length=64)
     report        = models.TextField()

@@ -11,7 +11,7 @@ class Test(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_test')
 
-    problem       = models.ForeignKey('Problem', related_name='tests')
+    problem       = models.ForeignKey('Problem', related_name='tests', on_delete=models.CASCADE)
     name          = models.CharField(max_length=64)
     description   = models.TextField(blank=True, default='')
     environment   = models.CharField(max_length=64)

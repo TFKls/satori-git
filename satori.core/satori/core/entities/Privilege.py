@@ -20,8 +20,8 @@ class Privilege(Entity):
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_privilege')
 
-    role          = models.ForeignKey('Role', related_name='privileges')
-    entity        = models.ForeignKey('Entity', related_name='privileged')
+    role          = models.ForeignKey('Role', related_name='privileges', on_delete=models.CASCADE)
+    entity        = models.ForeignKey('Entity', related_name='privileged', on_delete=models.CASCADE)
     right         = models.CharField(max_length=64)
     start_on      = models.DateTimeField(null=True)
     finish_on     = models.DateTimeField(null=True)

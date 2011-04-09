@@ -42,7 +42,7 @@ class ExternalIdentity(Entity):
     provider = models.CharField(max_length=512)
     identity = models.CharField(max_length=512, unique=True)
 
-    user     = models.ForeignKey('User', related_name='authorized_identities')
+    user     = models.ForeignKey('User', related_name='authorized_identities', on_delete=models.CASCADE)
 
     email    = models.CharField(max_length=64, null=True)
     name     = models.CharField(max_length=64, null=True)
