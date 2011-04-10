@@ -132,7 +132,7 @@ public class STestData {
 		public DeleteCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			Test.Iface iface = new Test.Client(SThriftClient.getProtocol());
-			iface.Entity_delete(SSession.getToken(), id);
+			iface.Test_delete(SSession.getToken(), id);
 		}
 	}
 	public static void delete(long id) throws SException {

@@ -76,7 +76,7 @@ public class SProblemData {
 		public DeleteCommand(long id) { this.id = id; }
 		@Override public void call() throws Exception {
 			Problem.Iface iface = new Problem.Client(SThriftClient.getProtocol());
-			iface.Entity_delete(SSession.getToken(), id);
+			iface.Problem_delete(SSession.getToken(), id);
 		}
 	}
 	public static void delete(long id) throws SException {
