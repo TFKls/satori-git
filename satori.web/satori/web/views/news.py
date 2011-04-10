@@ -15,7 +15,7 @@ from django.shortcuts import render_to_response
 class NewsEditForm(forms.Form):
     name = forms.CharField(label="Message title")
     fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
-    content = forms.CharField(required=False,widget=forms.Textarea, label="Content")
+    content = forms.CharField(required=True,widget=forms.Textarea, label="Content")
     is_sticky = forms.BooleanField(label="Always at the top", required=False)
     is_public = forms.BooleanField(label="Show in every contest", required=False)
 
@@ -25,7 +25,7 @@ def view(request, page_info):
     for m in messages:
         #TODO(kalq): Check this - subpage looks strange here
         #TODO(kalq): Add attachments here
-        m.html = fill_image_links(m.html, 'Subpage', m.subpage.id, 'content_files')
+        m.html = fill_image_links(unicode(m.html), 'Subpage', m.subpage.id, 'content_files')
     messages.sort(key=lambda m : [m.subpage.is_sticky, m.subpage.date_created], reverse=True)
     return render_to_response('news.html', { 'page_info' : page_info, 
                                              'messages' : messages })
@@ -66,6 +66,9 @@ def add(request, page_info):
 def edit(request, page_info,id):
     message = Subpage.filter(SubpageStruct(id=int(id)))[0]
     if request.method=="POST":
+        if 'delete' in request.POST.keys():
+            message.delete()
+            return HttpResponseRedirect(reverse('news'))
         form = NewsEditForm(request.POST)
         if form.is_valid():
             data = form.cleaned_data

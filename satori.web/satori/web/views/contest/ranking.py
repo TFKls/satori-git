@@ -85,6 +85,9 @@ def edit(request, page_info, id):
     sections = xmlparams.ParseXML(xml)
     general = sections['general']
     if request.method=="POST":
+        if 'delete' in request.POST.keys():
+            ranking.delete()
+            return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
         base_form = AddBaseForm(request.POST)
         form = xmlparams.ParamsForm(paramsdict=general,data=request.POST)
         if base_form.is_valid() and form.is_valid():

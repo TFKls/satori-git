@@ -23,7 +23,7 @@ class ContestSubpageEditForm(forms.Form):
 def view(request, page_info,id):
     sinfo = Web.get_subpage_info(Subpage(int(id)))
     attachments = valid_attachments(sinfo.subpage.content_files_get_list())
-    content = fill_image_links(sinfo.html, 'Subpage', id, 'content_files')
+    content = fill_image_links(unicode(sinfo.html), 'Subpage', id, 'content_files')
     can_edit = sinfo.subpage.contest and sinfo.is_admin
 
     return render_to_response('subpage.html', { 'attachments' : attachments,
@@ -81,6 +81,9 @@ def edit(request, page_info,id):
     if request.method=="POST":
         form = ContestSubpageEditForm(request.POST)
         if form.is_valid():
+            if 'delete' in request.POST.keys():
+                subpage.delete()
+                return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
             data = form.cleaned_data
             fid = data['fid']
             for rfile in request.POST:

@@ -24,7 +24,6 @@ DATABASE_HOST = ''             # Set to empty string for localhost. Not used wit
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
 USE_SSL = True
-
 THRIFT_HOST = 'random.tcs.uj.edu.pl'
 THRIFT_PORT = 38889
 BLOB_PORT = 38887
