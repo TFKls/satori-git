@@ -39,6 +39,13 @@ class TemporarySubmit(Entity):
         Privilege.grant(token_container.token.role, ts, 'MANAGE')
         RawEvent().send(Event(type='checking_new_temporary_submit', id=ts.id))
         return ts
+        
+    @ExportMethod(NoneType, [DjangoId('TemporarySubmit')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        try:
+            super(TemporarySubmit, self).delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
 
 class TemporarySubmitEvents(Events):
     model = TemporarySubmit

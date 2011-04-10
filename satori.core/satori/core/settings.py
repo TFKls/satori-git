@@ -57,7 +57,7 @@ if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     EVENT_PORT = 37888
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
-#    USE_SSL = True
+    USE_SSL = True
     SSL_CERTIFICATE = '/home/mwrobel/satori/ssl/server.pem'
 if getpass.getuser() == 'duraj':
     EVENT_PORT = 36888

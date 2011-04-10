@@ -61,13 +61,11 @@ class Test(Entity):
         self.rejudge()
         return self
 
-    #@ExportMethod(NoneType, [DjangoId('Test')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    @ExportMethod(NoneType, [DjangoId('Test')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):
-        logging.error('test deleted') #TODO: Waiting for non-cascading deletes in django
-        self.privileges.all().delete()
         try:
             super(Test, self).delete()
-        except DatabaseError:
+        except models.ProtectedError as e:
             raise CannotDeleteObject()
 
     @ExportMethod(NoneType, [DjangoId('Test')], PCArg('self', 'MANAGE'))

@@ -42,17 +42,6 @@ def ExportModel(cls):
 
     cls.get_struct = get_struct
 
-#    @ExportMethod(DjangoStruct(cls), [DjangoId(cls), DjangoStruct(cls)], PCArg('self', 'MANAGE'))
-#    def set_struct(self, arg_struct):
-#        for (field_name, field_permission) in ars_django_structure[cls].django_fields:
-#            if field_name != 'id':
-#                if hasattr(arg_struct, field_name) and (getattr(arg_struct, field_name) is not None):
-#                    setattr(self, field_name, getattr(arg_struct, field_name))
-#        self.save()
-#        return self
-
-#    cls.set_struct = set_struct
-
     @ExportMethod(DjangoStructList(cls), [DjangoStruct(cls)], PCPermit())
     @staticmethod
     def filter(arg_struct=None):
@@ -71,29 +60,6 @@ def ExportModel(cls):
         return queryset
 
     cls.filter = filter
-
-#    if not 'create' in cls.__dict__:
-#        @ExportMethod(DjangoStruct(cls), [DjangoStruct(cls)], PCPermit())
-#        @staticmethod
-#        def create(arg_struct):
-#            kwargs = {}
-#            for (field_name, field_permission) in ars_django_structure[cls].django_fields:
-#                if hasattr(arg_struct, field_name) and (getattr(arg_struct, field_name) is not None):
-#                    kwargs[field_name] = getattr(arg_struct, field_name)
-#            obj = cls(**kwargs)
-#            obj.save()
-#            if token_container.token.user:
-#                Privilege.grant(token_container.token.user, obj, 'MANAGE')
-#            return obj
-#
-#        cls.create = create
-
-    if not 'delete' in cls.__dict__:
-        @ExportMethod(NoneType, [DjangoId(cls)], PCArg('self', 'MANAGE'))
-        def delete(self):
-            super(cls, self).delete()
-
-        cls.delete = delete
 
     return ExportClass(cls)
 

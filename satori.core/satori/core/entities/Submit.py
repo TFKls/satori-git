@@ -68,6 +68,13 @@ class Submit(Entity):
             tr.oa_set_map(result)
         RawEvent().send(Event(type='checking_new_submit', id=submit.id))
         return submit
+        
+    @ExportMethod(NoneType, [DjangoId('Submit')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        try:
+            super(Submit, self).delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
 
     @ExportMethod(NoneType, [DjangoId('Submit'), TypedMap(unicode, AnonymousAttribute)], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('overrides', PCRawBlob('item'))))
     def override(self, overrides):

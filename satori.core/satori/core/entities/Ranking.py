@@ -119,6 +119,13 @@ class Ranking(Entity):
                 ex_params.delete()
         self.rejudge()
         return self
+ 
+    @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        try:
+            super(Ranking, self).delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
 
     @ExportMethod(TypedMap(DjangoId('ProblemMapping'), DjangoStruct('TestSuite')), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def get_problem_test_suites(self):

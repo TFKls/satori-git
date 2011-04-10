@@ -55,15 +55,15 @@ class Role(Entity):
             self.forbid_fields(fields, ['id', 'name'])
         self.save()
         return self
-
-    #@ExportMethod(NoneType, [DjangoId('Role')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+        
+    @ExportMethod(NoneType, [DjangoId('Role')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):
-        logging.error('role deleted') #TODO: Waiting for non-cascading deletes in django
-        self.privileges.all().delete()
-        self.children.all().delete()
         try:
+            parent_contestants = list(Contestant.objects.filter(children=self))
             super(Role, self).delete()
-        except DatabaseError:
+            for contestant in parent_contestants:
+                contestant.update_usernames()
+        except models.ProtectedError as e:
             raise CannotDeleteObject()
 
     @ExportMethod(DjangoStructList('Role'), [DjangoId('Role')], PCArg('self', 'VIEW'))

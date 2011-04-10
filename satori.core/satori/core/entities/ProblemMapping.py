@@ -13,7 +13,7 @@ class ProblemMapping(Entity):
     parent_entity      = models.OneToOneField(Entity, parent_link=True, related_name='cast_problemmapping')
 
     contest            = models.ForeignKey('Contest', related_name='problem_mappings', on_delete=models.CASCADE)
-    problem            = models.ForeignKey('Problem', related_name='problem_mappings+', on_delete=models.PROTECT)
+    problem            = models.ForeignKey('Problem', related_name='problem_mappings', on_delete=models.PROTECT)
     code               = models.CharField(max_length=16)
     title              = models.CharField(max_length=64)
     description        = models.TextField(blank=True)
@@ -87,6 +87,13 @@ class ProblemMapping(Entity):
             self.default_test_suite_changed()
         self.statement_files_set_map(render_sphinx(self.statement, self.statement_files_get_map()))
         return self
+        
+    @ExportMethod(NoneType, [DjangoId('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        try:
+            super(ProblemMapping, self).delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
 
     @ExportMethod(NoneType, [DjangoId('ProblemMapping'), TypedMap(DjangoId('Contestant'), TypedMap(unicode, AnonymousAttribute))], PCArg('self', 'MANAGE'), [])
     def judge_assignment(self, results):

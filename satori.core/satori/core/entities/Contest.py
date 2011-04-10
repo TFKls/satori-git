@@ -106,6 +106,17 @@ class Contest(Entity):
         self.changed()
         return self
 
+    @ExportMethod(NoneType, [DjangoId('Contest')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        try:
+            admin_role = self.admin_role
+            contestant_role = self.contestant_role
+            super(Contest, self).delete()
+            admin_role.delete()
+            contestant_role.delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
+
     @ExportMethod(NoneType, [DjangoId('Contest')], PCArg('self', 'MANAGE'))
     def disable_lock(self):
         self.lock_start = None

@@ -45,15 +45,19 @@ class Problem(Entity):
         self.save()
         return self
 
-    #@ExportMethod(NoneType, [DjangoId('Problem')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    @ExportMethod(NoneType, [DjangoId('Problem')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):
-        logging.error('problem deleted') #TODO: Waiting for non-cascading deletes in django
-        for test in self.tests.all():
-            test.delete()
-        self.privileges.all().delete()
         try:
+            # should be done with cascading, but currently will not work
+            for pm in self.problem_mappings.all():
+                pm.delete()
+            for ts in self.test_suites.all():
+                ts.delete()
+            for t in self.tests.all():
+                t.delete()
+
             super(Problem, self).delete()
-        except DatabaseError:
+        except models.ProtectedError as e:
             raise CannotDeleteObject()
 
 class ProblemEvents(Events):

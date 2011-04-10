@@ -68,14 +68,12 @@ class Subpage(Entity):
         self.save()
         self.content_files_set_map(render_sphinx(self.content, self.content_files_get_map()))
         return self
-
-    #@ExportMethod(NoneType, [DjangoId('Subpage')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+        
+    @ExportMethod(NoneType, [DjangoId('Subpage')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):
-        logging.error('subpage deleted') #TODO: Waiting for non-cascading deletes in django
-        self.privileges.all().delete()
         try:
             super(Subpage, self).delete()
-        except DatabaseError:
+        except models.ProtectedError as e:
             raise CannotDeleteObject()
 
     @ExportMethod(DjangoStructList('Subpage'), [bool], PCPermit())

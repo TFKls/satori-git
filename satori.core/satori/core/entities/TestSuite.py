@@ -95,6 +95,13 @@ class TestSuite(Entity):
         self.rejudge()
         return self
 
+    @ExportMethod(NoneType, [DjangoId('TestSuite')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        try:
+            super(TestSuite, self).delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
+
     @ExportMethod(DjangoStructList('Test'), [DjangoId('TestSuite')], PCArg('self', 'MANAGE'))
     def get_tests(self):
         return self.tests.all().extra(order_by=['core_testmapping.order'])

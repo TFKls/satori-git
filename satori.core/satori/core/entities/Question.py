@@ -57,6 +57,14 @@ class Question(Entity):
         if self.answer is not None:
             self.answer_files_set_map(render_sphinx(self.answer, self.answer_files_get_map()))
         return self
+ 
+    @ExportMethod(NoneType, [DjangoId('Question')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
+    def delete(self):
+        try:
+            super(Question, self).delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
+
 
 class QuestionEvents(Events):
     model = Question
