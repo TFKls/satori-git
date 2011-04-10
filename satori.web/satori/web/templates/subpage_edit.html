@@ -13,7 +13,8 @@
     <tr>
         <th><label for="id_name">{{ form.name.label }}</label></th>
         <td>{{ form.name }}</td>
-        <td style="text-align: right"><input type="submit" value="Save changes"/></td>
+        <td style="text-align: right"><input type="submit" name="save" value="Save changes"/></td>
+        <td style="text-align: right"><input type="submit" name="delete" value="Delete subpage"/></td>
     </tr>
     <tr>
         <th><label for="id_visibility">{{ form.visibility.label }}</label></th>
@@ -22,16 +23,16 @@
     {% if sphinxException %}
     <tr>
         <th></th>
-        <td colspan="2" class="error_msg"><pre>{{ sphinxException }}</pre></td>
+        <td colspan="3" class="error_msg"><pre>{{ sphinxException }}</pre></td>
     </tr>
     {% endif %}
     <tr>
         <th><label for="id_content">{{ form.content.label }}</label></th>
-        <td colspan="2">{{ form.content }}</td>
+        <td colspan="3">{{ form.content }}</td>
     </tr>
     <tr>
         <th></th>
-        <td colspan="2"><b>Quick Hint: </b><i>To include an image into a new document use: ".. image:: image.jpg". To create a link inside a new document use: "`link title &lt;link address&gt;`"</i>
+        <td colspan="3"><b>Quick Hint: </b><i>To include an image into a new document use: ".. image:: image.jpg". To create a link inside a new document use: "`link title &lt;link address&gt;`"</i>
         </td>
     </tr>
 </table>

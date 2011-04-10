@@ -2,6 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
+from satori.web.utils.forms import StatusBar
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -30,11 +31,20 @@ def view(request, page_info):
     count2 = (pending.count+limit-1)/limit
     page_params = {'page1' : page1, 'page2' : page2, 'loop1' : range(0,count1), 'loop2' : range(0,count2), 'count1' : count1, 'count2' : count2}
     add_form = ManualAddForm()
+    bar = None
     if request.method=="POST":
         if 'accept' in request.POST.keys():
             for contestant in pending.contestants:
                 if 'accept_'+str(contestant.id) in request.POST.keys():
                     contestant.accepted = True
+        if 'dismiss' in request.POST.keys():
+            for contestant in pending.contestants:
+                if 'accept_'+str(contestant.id) in request.POST.keys():
+                    try:
+                        contestant.delete()
+                    except CannotDeleteObject:
+                        bar = StatusBar()
+                        bar.errors.append('Cannot delete '+contestant.name+' - submits may be present')
         if 'revoke' in request.POST.keys():
             for contestant in accepted.contestants:
                 if 'revoke_'+str(contestant.id) in request.POST.keys():
@@ -52,4 +62,4 @@ def view(request, page_info):
             if add_form.is_valid():
                 Contestant.create(ContestantStruct(contest=contest,accepted=True),[add_form.cleaned_data['user']])
         return HttpResponseRedirect(reverse('contestants',args=[contest.id]))
-    return render_to_response('contestants.html', {'page_info' : page_info, 'accepted' : accepted, 'pending' : pending, 'add_form' : add_form, 'page_params' : page_params })
+    return render_to_response('contestants.html', {'page_info' : page_info, 'accepted' : accepted, 'pending' : pending, 'add_form' : add_form, 'page_params' : page_params, 'status_bar' : bar })
