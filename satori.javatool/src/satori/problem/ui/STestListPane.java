@@ -11,87 +11,84 @@ import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
-import javax.swing.AbstractListModel;
 import javax.swing.JButton;
 import javax.swing.JComponent;
-import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.TransferHandler;
 
-import satori.common.SList;
 import satori.common.SListener0;
 import satori.common.SListener1;
-import satori.common.SView;
+import satori.common.ui.SListPane;
 import satori.common.ui.SPane;
 import satori.problem.STestList;
 import satori.test.STestSnap;
 import satori.test.ui.STestSnapTransfer;
 
 public class STestListPane implements SPane, SListener1<STestList> {
-	@SuppressWarnings("serial")
-	private static class ListModel extends AbstractListModel implements SView {
-		private List<STestSnap> list = new ArrayList<STestSnap>();
-		private Comparator<STestSnap> comparator = new Comparator<STestSnap>() {
-			@Override public int compare(STestSnap t1, STestSnap t2) {
-				return t1.getName().compareTo(t2.getName());
-			}
-		};
-		
-		public STestSnap getItem(int index) { return list.get(index); }
-		public List<STestSnap> getItems() { return Collections.unmodifiableList(list); }
-		
-		public void addItem(STestSnap test) { list.add(test); }
-		public void removeItem(STestSnap test) { list.remove(test); }
-		public void removeAllItems() { list.clear(); }
-		
-		@Override public void update() {
-			Collections.sort(list, comparator);
-			fireContentsChanged(this, 0, list.isEmpty() ? 0 : list.size()-1);
-		}
-		public void updateAfterAdd() {
-			Collections.sort(list, comparator);
-			fireIntervalAdded(this, 0, list.isEmpty() ? 0 : list.size()-1);
-		}
-		public void updateAfterRemove() { fireIntervalRemoved(this, 0, list.isEmpty() ? 0 : list.size()-1); }
-		
-		@Override public String getElementAt(int index) {
-			String name = list.get(index).getName();
-			return name.isEmpty() ? "(Test)" : name;
-		}
-		@Override public int getSize() { return list.size(); }
-	}
-	
 	private final SListener0 new_listener;
 	private final SListener1<List<STestSnap>> open_listener;
 	
 	private STestList test_list = null;
-	private ListModel list_model = new ListModel();
 	
-	private JPanel main_pane;
-	private JPanel button_pane;
-	private JButton new_button, open_button;
-	private JList list;
-	private JScrollPane list_pane;
+	private final JButton new_button, open_button;
+	private final SListPane<STestSnap> list;
+	private final JComponent pane;
 	
 	public STestListPane(SListener0 new_listener, SListener1<List<STestSnap>> open_listener) {
 		this.new_listener = new_listener;
 		this.open_listener = open_listener;
-		initialize();
+		new_button = new JButton("New");
+		new_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { newRequest(); }
+		});
+		open_button = new JButton("Open");
+		open_button.addActionListener(new ActionListener() {
+			@Override public void actionPerformed(ActionEvent e) { openRequest(); }
+		});
+		JComponent button_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+		button_pane.add(new_button);
+		button_pane.add(open_button);
+		list = new SListPane<STestSnap>(new Comparator<STestSnap>() {
+			@Override public int compare(STestSnap t1, STestSnap t2) {
+				return t1.getName().compareTo(t2.getName());
+			}
+		}, true);
+		list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		list.addColumn(new SListPane.Column<STestSnap>() {
+			@Override public String get(STestSnap test) {
+				String name = test.getName();
+				return name.isEmpty() ? "(Test)" : name;
+			}
+		}, 1.0f);
+		MouseAdapter mouse_listener = new MouseAdapter() {
+			@Override public void mouseClicked(MouseEvent e) {
+				if (e.getClickCount() == 2) { e.consume(); openRequest(); }
+			}
+			@Override public void mouseDragged(MouseEvent e) {
+				if (list.isSelectionEmpty()) return;
+				list.getTransferHandler().exportAsDrag(list, e, TransferHandler.COPY);
+			}
+		};
+		list.addMouseListener(mouse_listener);
+		list.addMouseMotionListener(mouse_listener);
+		list.setTransferHandler(new TestTransferHandler());
+		pane = new JPanel(new BorderLayout());
+		pane.add(button_pane, BorderLayout.NORTH);
+		pane.add(new JScrollPane(list), BorderLayout.CENTER);
 	}
 	
-	@Override public JComponent getPane() { return main_pane; }
+	@Override public JComponent getPane() { return pane; }
 	
 	private void newRequest() { new_listener.call(); }
 	private void openRequest() {
 		if (list.isSelectionEmpty()) return;
 		List<STestSnap> snaps = new ArrayList<STestSnap>();
-		for (int index : list.getSelectedIndices()) snaps.add(list_model.getItem(index));
+		for (int index : list.getSelectedIndices()) snaps.add(list.getItem(index));
 		open_listener.call(snaps);
 	}
 	
@@ -117,77 +114,16 @@ public class STestListPane implements SPane, SListener1<STestList> {
 		@Override public boolean importData(TransferSupport support) { return false; }
 		@Override protected Transferable createTransferable(JComponent c) {
 			STestSnapTransfer tests = new STestSnapTransfer();
-			for (int index : list.getSelectedIndices()) tests.add(list_model.getItem(index));
+			for (int index : list.getSelectedIndices()) tests.add(list.getItem(index));
 			return new TestTransferable(tests);
 		}
 		@Override public int getSourceActions(JComponent c) { return COPY; }
 		@Override protected void exportDone(JComponent source, Transferable data, int action) {}
 	}
 	
-	private void initialize() {
-		main_pane = new JPanel(new BorderLayout());
-		button_pane = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
-		new_button = new JButton("New");
-		new_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { newRequest(); }
-		});
-		button_pane.add(new_button);
-		open_button = new JButton("Open");
-		open_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { openRequest(); }
-		});
-		button_pane.add(open_button);
-		main_pane.add(button_pane, BorderLayout.NORTH);
-		list = new JList(list_model);
-		list.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
-		MouseAdapter mouse_listener = new MouseAdapter() {
-			@Override public void mouseClicked(MouseEvent e) {
-				if (e.getClickCount() == 2) { e.consume(); openRequest(); }
-			}
-			@Override public void mouseDragged(MouseEvent e) {
-				if (list.isSelectionEmpty()) return;
-				list.getTransferHandler().exportAsDrag(list, e, TransferHandler.COPY);
-			}
-		};
-		list.addMouseListener(mouse_listener);
-		list.addMouseMotionListener(mouse_listener);
-		list.setTransferHandler(new TestTransferHandler());
-		list_pane = new JScrollPane(list);
-		main_pane.add(list_pane, BorderLayout.CENTER);
-	}
-	
-	private SList<STestSnap> list_listener = new SList<STestSnap>() {
-		@Override public void add(STestSnap test) {
-			list.clearSelection();
-			list_model.addItem(test);
-			test.addView(list_model);
-			list_model.updateAfterAdd();
-		}
-		@Override public void add(Iterable<STestSnap> tests) {
-			list.clearSelection();
-			for (STestSnap t : tests) {
-				list_model.addItem(t);
-				t.addView(list_model);
-			}
-			list_model.updateAfterAdd();
-		}
-		@Override public void remove(STestSnap test) {
-			list.clearSelection();
-			test.removeView(list_model);
-			list_model.removeItem(test);
-			list_model.updateAfterRemove();
-		}
-		@Override public void removeAll() {
-			list.clearSelection();
-			for (STestSnap t : list_model.getItems()) t.removeView(list_model);
-			list_model.removeAllItems();
-			list_model.updateAfterRemove();
-		}
-	};
-	
 	@Override public void call(STestList test_list) {
-		if (this.test_list != null) this.test_list.removePane(list_listener);
+		if (this.test_list != null) this.test_list.removePane(list.getListView());
 		this.test_list = test_list;
-		if (this.test_list != null) this.test_list.addPane(list_listener);
+		if (this.test_list != null) this.test_list.addPane(list.getListView());
 	}
 }

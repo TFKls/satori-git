@@ -4,12 +4,11 @@ import java.util.ArrayList;
 import java.util.List;
 
 import satori.common.SAssert;
-import satori.common.SException;
+import satori.common.SModel;
 import satori.common.SReference;
 import satori.common.SView;
-import satori.thrift.SProblemData;
 
-public class SProblemSnap implements SProblemReader {
+public class SProblemSnap implements SProblemReader, SModel {
 	private long id;
 	private String name;
 	private String desc;
@@ -44,10 +43,9 @@ public class SProblemSnap implements SProblemReader {
 		desc = source.getDescription();
 		notifyModified();
 	}
-	public void reload() throws SException {
-		set(SProblemData.load(id));
-		if (test_list != null) test_list.reload();
-		if (suite_list != null) suite_list.reload();
+	public void createLists() {
+		if (test_list == null) test_list = STestList.createNew(id);
+		if (suite_list == null) suite_list = STestSuiteList.createNew(id, test_list);
 	}
 	
 	private void notifyModified() {
@@ -62,14 +60,10 @@ public class SProblemSnap implements SProblemReader {
 		for (SReference ref : refs) ref.notifyDeleted();
 	}
 	
-	public void addView(SView view) { views.add(view); }
-	public void removeView(SView view) { views.remove(view); }
+	@Override public void addView(SView view) { views.add(view); }
+	@Override public void removeView(SView view) { views.remove(view); }
 	
-	public void addReference(SReference ref) throws SException {
-		if (test_list == null) test_list = STestList.createRemote(id);
-		if (suite_list == null) suite_list = STestSuiteList.createRemote(id, test_list);
-		refs.add(ref);
-	}
+	public void addReference(SReference ref) { refs.add(ref); }
 	public void removeReference(SReference ref) {
 		refs.remove(ref);
 		if (refs.isEmpty()) {

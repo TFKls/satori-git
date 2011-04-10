@@ -3,10 +3,10 @@ package satori.config;
 import java.util.prefs.Preferences;
 
 public class SConfig {
-	private static String host = "satori.tcs.uj.edu.pl";
-	private static int thrift_port = 2889;
-	private static int blobs_port = 2887;
-	private static boolean has_config = false;
+	private static volatile String host = "satori.tcs.uj.edu.pl";
+	private static volatile int thrift_port = 2889;
+	private static volatile int blobs_port = 2887;
+	private static volatile boolean has_config = false;
 	
 	public static String getHost() { return host; }
 	public static int getThriftPort() { return thrift_port; }

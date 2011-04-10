@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.Map;
 
 import satori.common.SException;
-import satori.common.SList;
+import satori.common.SListView;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
 import satori.thrift.STestData;
@@ -15,17 +15,17 @@ public class STestList {
 	private final long problem_id;
 	
 	private Map<Long, STestSnap> tests = null;
-	private List<SList<STestSnap>> panes = new ArrayList<SList<STestSnap>>();
+	private List<SListView<STestSnap>> panes = new ArrayList<SListView<STestSnap>>();
 	
 	public long getProblemId() { return problem_id; }
 	
 	private STestList(long problem_id) { this.problem_id = problem_id; }
 	
-	public static STestList createRemote(long problem_id) throws SException {
+	/*public static STestList createRemote(long problem_id) throws SException {
 		STestList self = new STestList(problem_id);
 		self.reload();
 		return self;
-	}
+	}*/
 	public static STestList createNew(long problem_id) {
 		STestList self = new STestList(problem_id);
 		self.tests = new HashMap<Long, STestSnap>();
@@ -34,10 +34,10 @@ public class STestList {
 	
 	public void addTest(STestSnap test) {
 		tests.put(test.getId(), test);
-		for (SList<STestSnap> pane : panes) pane.add(test);
+		for (SListView<STestSnap> pane : panes) pane.add(test);
 	}
 	public void removeTest(STestSnap test) {
-		for (SList<STestSnap> pane : panes) pane.remove(test);
+		for (SListView<STestSnap> pane : panes) pane.remove(test);
 		tests.remove(test.getId());
 	}
 	
@@ -49,11 +49,11 @@ public class STestList {
 		return result;
 	}
 	
-	public void addPane(SList<STestSnap> pane) {
+	public void addPane(SListView<STestSnap> pane) {
 		panes.add(pane);
 		pane.add(tests.values());
 	}
-	public void removePane(SList<STestSnap> pane) {
+	public void removePane(SListView<STestSnap> pane) {
 		pane.removeAll();
 		panes.remove(pane);
 	}
@@ -66,15 +66,15 @@ public class STestList {
 			else current = STestSnap.createBasic(t);
 			new_tests.put(current.getId(), current);
 		}
-		for (SList<STestSnap> pane : panes) pane.removeAll();
+		for (SListView<STestSnap> pane : panes) pane.removeAll();
 		if (tests != null) for (long id : tests.keySet()) {
 			if (!new_tests.containsKey(id)) tests.get(id).notifyDeleted();
 		}
 		tests = new_tests;
-		for (SList<STestSnap> pane : panes) pane.add(tests.values());
+		for (SListView<STestSnap> pane : panes) pane.add(tests.values());
 	}
 	public void delete() {
-		for (SList<STestSnap> pane : panes) pane.removeAll();
+		for (SListView<STestSnap> pane : panes) pane.removeAll();
 		for (STestSnap t : tests.values()) t.notifyDeleted();
 	}
 }

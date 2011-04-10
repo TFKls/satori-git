@@ -8,13 +8,14 @@ import java.util.Map;
 import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SListener1;
+import satori.common.SModel;
 import satori.common.SReference;
 import satori.common.SView;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SJudge;
 import satori.thrift.STestData;
 
-public class STestSnap implements STestReader {
+public class STestSnap implements STestReader, SModel {
 	private long id;
 	private long problem_id;
 	private String name;
@@ -88,8 +89,8 @@ public class STestSnap implements STestReader {
 		for (SReference ref : refs) ref.notifyDeleted();
 	}
 	
-	public void addView(SView view) { views.add(view); }
-	public void removeView(SView view) { views.remove(view); }
+	@Override public void addView(SView view) { views.add(view); }
+	@Override public void removeView(SView view) { views.remove(view); }
 	
 	public void addDeletedListener(SListener1<STestSnap> listener) { deleted_listeners.add(listener); }
 	public void removeDeletedListener(SListener1<STestSnap> listener) { deleted_listeners.remove(listener); }

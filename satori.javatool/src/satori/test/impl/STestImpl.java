@@ -70,7 +70,7 @@ public class STestImpl implements STestReader {
 	}
 	public static STestImpl createNew(SParentProblem problem) {
 		STestImpl self = new STestImpl();
-		self.id = new SId();
+		self.id = SId.unset();
 		self.problem = problem;
 		self.name = "";
 		self.desc = "";
@@ -96,7 +96,7 @@ public class STestImpl implements STestReader {
 	}
 	private void snapDeleted() {
 		snap = null;
-		id.clear();
+		id = SId.unset();
 		notifyOutdated();
 	}
 	
@@ -185,7 +185,7 @@ public class STestImpl implements STestReader {
 	}
 	public void create() throws SException {
 		SAssert.assertFalse(isRemote(), "Test already created");
-		id.set(STestData.create(this));
+		id = new SId(STestData.create(this));
 		notifyUpToDate();
 		snap = STestSnap.create(this);
 		snap.addReference(reference);

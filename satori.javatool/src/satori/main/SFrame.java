@@ -13,7 +13,9 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
+import satori.common.SAssert;
 import satori.common.SException;
+import satori.common.SView;
 import satori.common.ui.STabbedPane;
 import satori.config.SConfig;
 import satori.config.SConfigDialog;
@@ -31,14 +33,20 @@ public class SFrame {
 	private JMenuItem problems_button;
 	private JLabel session_label;
 	
-	private SFrame() { initialize(); }
+	private SFrame() {
+		initialize();
+		SSession.addView(new SView() {
+			@Override public void update() { updateSession(); }
+		});
+	}
 	
 	public JFrame getFrame() { return frame; }
 	
 	private void updateSession() {
-		if (!SSession.isConnected()) { session_label.setText("Session: disconnected"); return; }
-		String login = SSession.hasLogin() ? SSession.getLogin() : "<anonymous>";
-		session_label.setText("Session: " + login + "@" + SSession.getHost());
+		SSession session = SSession.get();
+		if (session == null) { session_label.setText("Session: disconnected"); return; }
+		String username = session.getUsername() != null ? session.getUsername() : "<anonymous>";
+		session_label.setText("Session: " + username + "@" + session.getHost());
 	}
 	
 	private void loginRequest() {
@@ -136,9 +144,11 @@ public class SFrame {
 	
 	private static SFrame instance = null;
 	
-	public static SFrame get() {
-		if (instance == null) instance = new SFrame();
-		return instance;
+	public static SFrame get() { return instance; }
+	
+	public static void setInstance() {
+		SAssert.assertNull(instance, "Multiple frame instance");
+		instance = new SFrame();
 	}
 	
 	public static void showErrorDialog(String message) {

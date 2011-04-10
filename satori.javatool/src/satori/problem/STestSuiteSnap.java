@@ -8,6 +8,7 @@ import java.util.Map;
 import satori.common.SAssert;
 import satori.common.SException;
 import satori.common.SListener1;
+import satori.common.SModel;
 import satori.common.SPair;
 import satori.common.SReference;
 import satori.common.SView;
@@ -17,7 +18,7 @@ import satori.test.STestBasicReader;
 import satori.test.STestSnap;
 import satori.thrift.STestSuiteData;
 
-public class STestSuiteSnap implements STestSuiteReader {
+public class STestSuiteSnap implements STestSuiteReader, SModel {
 	private final STestList test_list;
 	
 	private long id;
@@ -136,8 +137,8 @@ public class STestSuiteSnap implements STestSuiteReader {
 		for (SReference ref : refs) ref.notifyDeleted();
 	}
 	
-	public void addView(SView view) { views.add(view); }
-	public void removeView(SView view) { views.remove(view); }
+	@Override public void addView(SView view) { views.add(view); }
+	@Override public void removeView(SView view) { views.remove(view); }
 	
 	public void addReference(SReference ref) { refs.add(ref); }
 	public void removeReference(SReference ref) { refs.remove(ref); }

@@ -31,6 +31,7 @@ public class SLoginDialog {
 	}
 	
 	private void initialize() {
+		SSession session = SSession.get();
 		dialog = new JDialog(SFrame.get().getFrame(), "Login", true);
 		dialog.getContentPane().setLayout(new BorderLayout());
 		field_pane = new JPanel();
@@ -40,7 +41,7 @@ public class SLoginDialog {
 		field_pane.add(new JLabel("User: "), c);
 		field_pane.add(new JLabel("Password: "), c);
 		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0;
-		username = new JTextField(SSession.getLogin());
+		username = new JTextField(session != null ? session.getUsername() : null);
 		username.setPreferredSize(new Dimension(200, username.getPreferredSize().height));
 		username.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
@@ -56,7 +57,7 @@ public class SLoginDialog {
 				dialog.setVisible(false);
 			}
 		};
-		password = new JPasswordField(SSession.getPassword());
+		password = new JPasswordField(session != null ? session.getPassword() : null);
 		password.setPreferredSize(new Dimension(200, password.getPreferredSize().height));
 		password.addActionListener(confirm_listener);
 		field_pane.add(password, c);

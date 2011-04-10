@@ -16,7 +16,7 @@ import satori.thrift.STemporarySubmitData;
 public class STestResult {
 	public static enum Status { NOT_TESTED, PENDING, FINISHED };
 	
-	private SId id = new SId();
+	private SId id = SId.unset();
 	private final SSolution solution;
 	private final STestImpl test;
 	
@@ -40,7 +40,7 @@ public class STestResult {
 	public Object getOutput(SOutputMetadata meta) { return output.get(meta); }
 	
 	private void clear() {
-		id.clear();
+		id = SId.unset();
 		status = Status.NOT_TESTED;
 		output = Collections.emptyMap();
 		updateViews();
@@ -53,7 +53,7 @@ public class STestResult {
 	public void run() throws SException {
 		if (solution.get() == null) return;
 		if (test.getJudge() == null) return;
-		id.set(STemporarySubmitData.create(solution.get(), test));
+		id = new SId(STemporarySubmitData.create(solution.get(), test));
 		status = Status.PENDING;
 		output = Collections.emptyMap();
 		updateViews();

@@ -36,7 +36,7 @@ import javax.swing.TransferHandler;
 
 import satori.blob.SBlob;
 import satori.common.SException;
-import satori.common.SList;
+import satori.common.SListView;
 import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SView;
@@ -58,7 +58,7 @@ import satori.test.impl.STestImpl;
 import satori.thrift.SGlobalData;
 import satori.type.SBlobType;
 
-public class STestPane implements SPane, SList<STestImpl> {
+public class STestPane implements SPane, SListView<STestImpl> {
 	private final STestSuiteImpl suite;
 	private final STestFactory factory;
 	

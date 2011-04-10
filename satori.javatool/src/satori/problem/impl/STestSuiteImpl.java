@@ -95,7 +95,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	}
 	public static STestSuiteImpl createNew(SParentProblem problem) {
 		STestSuiteImpl self = new STestSuiteImpl();
-		self.id = new SId();
+		self.id = SId.unset();
 		self.problem = problem;
 		self.name = "";
 		self.desc = "";
@@ -109,7 +109,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	}
 	public static STestSuiteImpl createNew(List<STestSnap> tests, SParentProblem problem) throws SException {
 		STestSuiteImpl self = new STestSuiteImpl();
-		self.id = new SId();
+		self.id = SId.unset();
 		self.problem = problem;
 		self.name = "";
 		self.desc = "";
@@ -123,7 +123,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	}
 	public static STestSuiteImpl createNewTest(SParentProblem problem) {
 		STestSuiteImpl self = new STestSuiteImpl();
-		self.id = new SId();
+		self.id = SId.unset();
 		self.problem = problem;
 		self.name = "";
 		self.desc = "";
@@ -169,7 +169,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	}
 	private void snapDeleted() {
 		snap = null;
-		id.clear();
+		id = SId.unset();
 		notifyOutdated();
 	}
 	
@@ -305,7 +305,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	}
 	public void create() throws SException {
 		SAssert.assertFalse(isRemote(), "Test suite already created");
-		id.set(STestSuiteData.create(this));
+		id = new SId(STestSuiteData.create(this));
 		notifyUpToDate();
 		snap = STestSuiteSnap.create(problem.getTestList(), this);
 		snap.addReference(reference);
