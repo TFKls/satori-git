@@ -48,6 +48,6 @@ public class STemporarySubmitData {
 		createBlobs(test_data);
 		STaskManager.log("Creating temporary submit...");
 		TemporarySubmit.Iface iface = new TemporarySubmit.Client(SSession.getProtocol());
-		return iface.TemporarySubmit_create(SSession.getToken(), convertAttrMap(submit_data), convertAttrMap(test_data)).getId();
+		return iface.TemporarySubmit_create(SSession.getToken(), convertAttrMap(test_data), convertAttrMap(submit_data)).getId();
 	}
 }
