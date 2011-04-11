@@ -2,6 +2,7 @@ package satori.problem.impl;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
@@ -105,8 +106,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.dispatcher = null;
 		self.accumulators = Collections.emptyList();
 		self.reporter = null;
-		self.general_params = Collections.emptyMap();
-		self.test_params = Collections.emptyMap();
+		self.general_params = new HashMap<SInputMetadata, Object>();
+		self.test_params = new HashMap<SPair<SInputMetadata, Long>, Object>();
 		return self;
 	}
 	public static STestSuiteImpl createNew(List<STestSnap> tests, SParentProblem problem) throws STaskException {
@@ -119,8 +120,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.dispatcher = null;
 		self.accumulators = Collections.emptyList();
 		self.reporter = null;
-		self.general_params = Collections.emptyMap();
-		self.test_params = Collections.emptyMap();
+		self.general_params = new HashMap<SInputMetadata, Object>();
+		self.test_params = new HashMap<SPair<SInputMetadata, Long>, Object>();
 		return self;
 	}
 	public static STestSuiteImpl createNewTest(SParentProblem problem) {
@@ -134,8 +135,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.dispatcher = null;
 		self.accumulators = Collections.emptyList();
 		self.reporter = null;
-		self.general_params = Collections.emptyMap();
-		self.test_params = Collections.emptyMap();
+		self.general_params = new HashMap<SInputMetadata, Object>();
+		self.test_params = new HashMap<SPair<SInputMetadata, Long>, Object>();
 		return self;
 	}
 	
