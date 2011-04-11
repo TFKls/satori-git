@@ -1,6 +1,7 @@
 package satori.common.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Container;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
@@ -39,17 +40,19 @@ public class SGlobalSelectionPane implements SPane {
 	};
 	
 	private final Loader loader;
-	private final boolean multiple;
+	private final boolean multiple, empty;
 	private final SListener0 listener;
 	private List<SParametersMetadata> selection;
 	private JComponent pane;
 	private JButton clear_button;
 	private JButton label;
 	private Font set_font, unset_font;
+	private Color default_color;
 	
-	public SGlobalSelectionPane(Loader loader, boolean multiple, SListener0 listener) {
+	public SGlobalSelectionPane(Loader loader, boolean multiple, boolean empty, SListener0 listener) {
 		this.loader = loader;
 		this.multiple = multiple;
+		this.empty = empty;
 		this.listener = listener;
 		initialize();
 	}
@@ -67,16 +70,20 @@ public class SGlobalSelectionPane implements SPane {
 			else text = new StringBuilder();
 			text.append(p.getName());
 		}
+		pane.setBackground(text != null || empty ? default_color : Color.YELLOW);
 		label.setFont(text != null ? set_font : unset_font);
 		label.setText(text != null ? text.toString() : "Not set");
 	}
 	public void setSelection(SParametersMetadata params) {
-		selection = Collections.singletonList(params);
+		if (params != null) selection = Collections.singletonList(params);
+		else selection = Collections.emptyList();
+		pane.setBackground(params != null || empty ? default_color : Color.YELLOW);
 		label.setFont(params != null ? set_font : unset_font);
 		label.setText(params != null ? params.getName() : "Not set");
 	}
 	public void clearSelection() {
 		selection = Collections.emptyList();
+		pane.setBackground(empty ? default_color : Color.YELLOW);
 		label.setFont(unset_font);
 		label.setText("Not set");
 	}
@@ -191,5 +198,6 @@ public class SGlobalSelectionPane implements SPane {
 		pane.add(label);
 		set_font = label.getFont().deriveFont(Font.PLAIN);
 		unset_font = label.getFont().deriveFont(Font.ITALIC);
+		default_color = pane.getBackground();
 	}
 }

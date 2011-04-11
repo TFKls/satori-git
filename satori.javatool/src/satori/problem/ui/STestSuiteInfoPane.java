@@ -93,7 +93,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public SParametersMetadata parse(String name, String content) throws STaskException {
 				return SParametersParser.parseParameters(name, content);
 			}
-		}, false, new SListener0() {
+		}, false, false, new SListener0() {
 			@Override public void call() { updateDispatcher(); }
 		});
 		dispatchers.getPane().setPreferredSize(new Dimension(480, 20));
@@ -107,7 +107,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public SParametersMetadata parse(String name, String content) throws STaskException {
 				return SParametersParser.parseParameters(name, content);
 			}
-		}, true, new SListener0() {
+		}, true, true, new SListener0() {
 			@Override public void call() { updateAccumulators(); }
 		});
 		accumulators.getPane().setPreferredSize(new Dimension(480, 20));
@@ -121,7 +121,7 @@ public class STestSuiteInfoPane implements SPane, SView {
 			@Override public SParametersMetadata parse(String name, String content) throws STaskException {
 				return SParametersParser.parseParameters(name, content);
 			}
-		}, false, new SListener0() {
+		}, false, false, new SListener0() {
 			@Override public void call() { updateReporter(); }
 		});
 		reporters.getPane().setPreferredSize(new Dimension(480, 20));
