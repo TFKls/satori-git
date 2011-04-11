@@ -260,6 +260,7 @@ class CheckingMaster(Client2):
                 e.test_result_id = test_result.id
             else:
                 e.test_result_id = None
+            global serial
             e.serial = serial
             logging.debug('Check queue: dequeue by %s: %s (%s)', event.tester_id, e, serial)
             serial = serial + 1
