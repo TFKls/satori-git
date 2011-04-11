@@ -11,6 +11,23 @@ from tempfile import mkdtemp
 from sphinx.application import Sphinx
 from sphinx.errors import PycodeError, SphinxError
 
+
+# HACK
+
+def do_hack():
+    import sphinx.writers.latex
+
+    class NewLatexTranslator(sphinx.writers.latex.LaTeXTranslator):
+        def visit_reference(self, node):
+            self.context.append('')
+
+    sphinx.writers.latex.LaTeXTranslator = NewLatexTranslator
+
+do_hack()
+
+# HACK END
+
+
 CORE_PATH = os.path.abspath(os.path.split(__file__)[0])
 
 config_overrides = {
