@@ -107,6 +107,14 @@ public class SBlobInputView implements SPaneView {
 			list_pane.setPreferredSize(new Dimension(200, 100));
 			dialog.getContentPane().add(list_pane, BorderLayout.CENTER);			
 			JPanel button_pane = new JPanel(new FlowLayout(FlowLayout.CENTER));
+			JButton confirm = new JButton("OK");
+			confirm.addActionListener(new ActionListener() {
+				@Override public void actionPerformed(ActionEvent e) {
+					confirmed = true;
+					dialog.setVisible(false);
+				}
+			});
+			button_pane.add(confirm);
 			JButton cancel = new JButton("Cancel");
 			cancel.addActionListener(new ActionListener() {
 				@Override public void actionPerformed(ActionEvent e) {
