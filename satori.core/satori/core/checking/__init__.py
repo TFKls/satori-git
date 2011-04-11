@@ -261,7 +261,7 @@ class CheckingMaster(Client2):
             else:
                 e.test_result_id = None
             global serial
-            e.serial = serial
+            e.Aserial = serial
             logging.debug('Check queue: dequeue by %s: %s (%s)', event.tester_id, e, serial)
             serial = serial + 1
             self.send(e)
