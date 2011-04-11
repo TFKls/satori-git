@@ -21,11 +21,11 @@
             {% endif %}
         </table>
         {% if editing %}
-            <input type="submit" value="Change problem"/>
+            <input class="button" type="submit" value="Change problem"/>
             </form>
             {% include "templates/attachments_edit.html" %}
         {% else %}
-            <input type="submit" value="Add problem"/>
+            <input class="button" type="submit" value="Add problem"/>
             </form>
             {% include "templates/attachments_add.html" %}
         {% endif %}
@@ -34,7 +34,7 @@
         <table>
             {{ form.as_table }}
         </table>
-        <input type="submit" value="Choose"/>
+        <input class="button" type="submit" value="Choose"/>
         </form>
     {% endif %}
 {% endblock %}

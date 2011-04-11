@@ -46,10 +46,14 @@ def add(request, page_info):
             try:
                 message.content = data['content']
             except SphinxException as sphinxException:
+                message.delete()
                 return render_to_response('news_add.html', { 'form' : form,
                                                              'fid' : fid,
                                                              'page_info' : page_info,
                                                              'sphinxException' : sphinxException })
+            except e:
+                message.delete()
+                raise e
             return HttpResponseRedirect(reverse('contest_news',args=[page_info.contest.id]))
     else:
         #TODO(kalq): Create a hash instead of full pathname

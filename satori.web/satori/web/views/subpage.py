@@ -47,10 +47,14 @@ def add(request, page_info):
             try:
                 subpage.content = data["content"]
             except SphinxException as sphinxException:
+                subpage.delete()
                 return render_to_response('subpage_add.html', { 'fid' : fid,
                                                                 'form' : form, 
                                                                 'page_info' : page_info,
                                                                 'sphinxException' : sphinxException })
+            except e:
+                subpage.delete()
+                raise e
             return HttpResponseRedirect(reverse('subpage',args=[subpage.id]))
     else:
         #TODO(kalq): Create a hash instead of full pathname

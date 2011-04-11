@@ -7,7 +7,7 @@
 <h3>Submit {{widget.sid}}</h4>
 
 
-<table class="tlist">
+<table class="results">
 <tr>
     <th>#</th>
     <th>User</th>
@@ -30,7 +30,7 @@
                 {% case "RTE" %} "staRTE"
                 {% case "MEM" %} "staMEM"
                 {% case "REJ" %} "staREJ"
-                {% case "CMP" %} "staCMP"
+                {% case "CME" %} "staCME"
                 {% else %} ""
            {% endswitch %}>
 
@@ -82,8 +82,10 @@
 <h3>Actions</h3>
 
 <form action="{% url submit_override page_info.contest.id widget.sid %}" method="POST">
-    <input type="submit" name="rejudge" value="Rejudge submit"/>
-</form>
+    <input class="button" type="submit" name="rejudge" value="Rejudge submit"/>
+    <a class="button" href="{% url submit_override page_info.contest.id widget.sid %}">Override result</a>
+    <input class="button" type="submit" name="revert" value="Revert override"/>
+</form><br/>
 
 {% endif %}
 

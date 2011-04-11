@@ -2,28 +2,32 @@
 
 {% block content %}
 {% if page_info.contest_is_admin %}
-<a href="{% url contest_news_add page_info.contest.id %}">Add news</a>
+<a class="button" href="{% url contest_news_add page_info.contest.id %}">Add news</a>
 {% endif %}
 
 {% if not page_info.contest and page_info.is_admin %}
-<a href="{% url news_add %}">Add global news</a>
+<a class="button" href="{% url news_add %}">Add global news</a>
 {% endif %}
 
 
 {% for msg in messages %}
 <div class = "newsmsg bDots">
-    <table class="tlist">
-            <tr><td><h4>{{ msg.subpage.name }}</h4></td><td style="text-align: right"><span class="signature">{{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}</span></td></tr>
-            <tr><td colspan="2">{{ msg.html|safe }}</td></tr>
+    <table class="message">
+            <tr><td><h4>{{ msg.subpage.name }}</h4></td><td style="text-align: right"><span class="signature">{{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}</span></td>
+            <td>
             {% if msg.is_admin %}
             {% if page_info.contest %}
                 {% if msg.subpage.contest %}
-                <tr><td><a href="{% url contest_news_edit page_info.contest.id msg.subpage.id %}">Edit</a> </td></tr>
+                <a class="smallbutton" href="{% url contest_news_edit page_info.contest.id msg.subpage.id %}">Edit</a> 
                 {% endif %}
             {% else %}
-                <tr><td><a href="{% url news_edit msg.subpage.id %}">Edit</a> </td></tr>
+                <a class="smallbutton" href="{% url news_edit msg.subpage.id %}">Edit</a>
             {% endif %}
             {% endif %}
+            </td>
+            
+            </tr>
+            <tr><td colspan="3">{{ msg.html|safe }}</td></tr>
     </table>
 
     {% if can_edit %}

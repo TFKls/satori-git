@@ -31,12 +31,12 @@
   {{ q.answer }}
 </div>
 {% if page_info.contest_is_admin %}
-<a href="{% url answer_question page_info.contest.id q.id %}">Edit</a>
+<a class="button" href="{% url answer_question page_info.contest.id q.id %}">Edit</a>
 {% endif %}
 
 {% else %}
 {% if page_info.contest_is_admin %}
-<a href="{% url answer_question page_info.contest.id q.id %}">Answer</a>
+<a class="button" href="{% url answer_question page_info.contest.id q.id %}">Answer</a>
 {% endif %}
 {% endif %}
 

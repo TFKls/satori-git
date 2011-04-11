@@ -128,6 +128,46 @@ body {
 	font-family: Arial, Sans-Serif;
 }
 
+
+.button
+{
+    font-size :  small;
+    display : inline-block;
+    color : black;
+    padding : 0.3em 1em;
+    text-decoration : none;
+    background-color : #F0F0F0;
+    border : solid 1px black;
+    margin : 0;
+}
+
+
+.button:hover
+{
+    background-color : #E0E0E0;
+}
+
+
+.smallbutton
+{
+    font-size :  smaller;
+    display : inline-block;
+    color : black;
+    padding : 0.1em 0.6em;
+    text-decoration : none;
+    background-color : #F0F0F0;
+    border : solid 1px black;
+    margin : 0;
+}
+
+
+.smallbutton:hover
+{
+    background-color : #E0E0E0;
+}
+
+
+
 .logos {
     text-align: center;
 }
@@ -191,14 +231,6 @@ body {
 }
 
 
-table.tlist {
-    width: 100%;
-}
-
-table.tlist th{
-    background-color: #BBBBBB;
-}
-
 .staOK {
     background-color: #66EE66;
 }
@@ -227,7 +259,7 @@ table.tlist th{
     background-color: #BB0000;
 }
 
-.staCMP {
+.staCME {
     background-color: #FF9933;
 }
 
@@ -333,4 +365,29 @@ span.signature {
 
 .other_td {
     white-space: nowrap;
+}
+
+table.results
+{
+    width : 100%;
+}
+
+table.results tr:nth-child(2n+2)
+{
+    background-color : #F8F8F8;
+}
+
+table.results tr:nth-child(2n+1)
+{
+    background-color : #E8E8E8;
+}
+
+table.results th
+{
+    background-color : #C8C8C8;
+}
+
+table.message
+{
+    width : 100%;
 }

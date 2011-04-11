@@ -14,17 +14,10 @@ def view(request, page_info):
         results=Web.get_results(contest=contest,limit=1000).results
         return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results})
     contestant_choices = [[c.id,c.name] for c in Web.get_accepted_contestants(contest=contest,limit=max_contestants).contestants+Web.get_contest_admins(contest=contest,limit=max_contestants).contestants]
-    contestant_choices.append(["all","All results"])
+    contestant_choices = [["all","All results"]]+contestant_choices
     problems = Web.get_problem_mapping_list(contest=contest)
     problem_choices = [[pinfo.problem_mapping.id,pinfo.problem_mapping.code + ' - ' + pinfo.problem_mapping.title] for pinfo in problems]
-    problem_choices.append(["all","All problems"])
-    def key(c):
-        if c[0]=="all":
-             return None
-        else:
-             return c[1]
-    contestant_choices.sort(key=key)
-    problem_choices.sort(key=key)
+    problem_choices = [["all","All problems"]]+problem_choices
     
     class ShowResultsForm(forms.Form):
         contestant = forms.ChoiceField(choices=contestant_choices, required=False)

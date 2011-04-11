@@ -6,36 +6,43 @@
 <table>
 {{ manage_form.as_table }}
 </table>
-<input type="submit" name="params" value="Submit"/>
+<input class="button" type="submit" name="params" value="Submit"/>
 </form>
 
 <h4>Subpages</h4>
+<table>
 {% for s in page_info.subpages %}
+<tr>
 {% if s.contest %}
-<p>{{ s.name }} (<a href="{% url contest_subpage_edit page_info.contest.id s.id %}">edit</a>)</p>
+<td>{{ s.name }}</td><td><a class="smallbutton" href="{% url contest_subpage_edit page_info.contest.id s.id %}">edit</a></td>
 {% endif %}
+</tr>
 {% endfor %}
+</table>
 
-<a href="{% url contest_subpage_add page_info.contest.id %}">Add new subpage</a>
+<a class="button" href="{% url contest_subpage_add page_info.contest.id %}">Add new subpage</a>
 
 
 <h4>Rankings</h4>
+<table>
 {% for s in page_info.rankings %}
-<p>{{ s.name }} (<a href="{% url ranking_edit page_info.contest.id s.id %}">edit</a>) (<a href="{% url ranking_rejudge page_info.contest.id s.id %}">rejudge</a>)</p>
+<tr>
+<td>{{ s.name }} </td><td><a class="smallbutton" href="{% url ranking_edit page_info.contest.id s.id %}">edit</a></td><td> <a class="smallbutton" href="{% url ranking_rejudge page_info.contest.id s.id %}">rejudge</a></td>
+</tr>
 {% endfor %}
-
-<a href="{% url ranking_add page_info.contest.id %}">Add new ranking</a>
+</table>
+<a class="button" href="{% url ranking_add page_info.contest.id %}">Add new ranking</a>
 
 <h4>Admins</h4>
 <table>
 {% for a in admins %}
 <tr>
-    <td>{{ a.name }}</td><td><form action="" method="POST"><input type="hidden" name="adminid" value="{{a.id}}"/><input type="submit" name="revokeadmin" value="Revoke"/></form></td>
+    <td>{{ a.name }}</td><td><form action="" method="POST"><input type="hidden" name="adminid" value="{{a.id}}"/><input type="submit" class="smallbutton" name="revokeadmin" value="Revoke"/></form></td>
 </tr>
 {% endfor %}
 </table>
 <form action="" method="POST">
 {{ admin_form }}
-<input type="submit" name="addadmin" value="Add admin"/>
+<input class="button" type="submit" name="addadmin" value="Add admin"/>
 </form>
 {% endblock %}

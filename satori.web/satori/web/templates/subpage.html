@@ -4,9 +4,9 @@
 <p>
 {% if can_edit %}
 {% if page_info.contest %}
-<a href="{% url contest_subpage_edit page_info.contest.id subpage.id %}">(edit subpage)</a>
+<a class="button" href="{% url contest_subpage_edit page_info.contest.id subpage.id %}">(edit subpage)</a>
 {% else %}
-<a href="{% url subpage_edit subpage.id %}">(edit subpage)</a>
+<a class="button" href="{% url subpage_edit subpage.id %}">(edit subpage)</a>
 {% endif %}
 {% endif %}
 </p>

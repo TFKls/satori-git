@@ -33,9 +33,9 @@
 {% endfor %}
 </p>
 {% endif %}
-<input type="submit" name="revoke" value="Unaccept selected"/>
-<input type="submit" name="hide" value="Hide selected"/>
-<input type="submit" name="show" value="Unhide selected"/>
+<input class="button" type="submit" name="revoke" value="Unaccept selected"/>
+<input class="button" type="submit" name="hide" value="Hide selected"/>
+<input class="button" type="submit" name="show" value="Unhide selected"/>
 </form>
 
 
@@ -67,12 +67,12 @@
 {% endfor %}
 </p>
 {% endif %}
-<input type="submit" name="accept" value="Accept selected"/>
-<input type="submit" name="dismiss" value="Dismiss selected"/>
+<input class="button" type="submit" name="accept" value="Accept selected"/>
+<input class="button" type="submit" name="dismiss" value="Dismiss selected"/>
 </form>
 {% endif %}
 
 <h4>Add user manually</h4>
-<form action="" method="POST">{{ add_form }}<input type="submit" name="add" value="Add"/></form>
+<form action="" method="POST">{{ add_form }}<input class="button" type="submit" name="add" value="Add"/></form>
 
 {% endblock %}
