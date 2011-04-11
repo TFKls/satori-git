@@ -48,11 +48,12 @@ public class SEditDialog {
 		JButton save = new JButton("Save");
 		save.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
-				File file = blob.getFile();
+				File file = blob != null ? blob.getFile() : null;
 				if (file == null) file = saveAs();
 				if (file == null) return;
 				try { blob = createPane(file); }
-				catch(STaskException ex) {}
+				catch(STaskException ex) { return; }
+				dialog.setTitle(file.getName());
 			}
 		});
 		button_pane.add(save);
@@ -73,7 +74,7 @@ public class SEditDialog {
 	
 	private File saveAs() {
 		JFileChooser file_chooser = new JFileChooser();
-		String name = blob.getName();
+		String name = blob != null ? blob.getName() : null;
 		if (name != null && !name.isEmpty()) file_chooser.setSelectedFile(new File(file_chooser.getCurrentDirectory(), name));
 		int ret = file_chooser.showDialog(SFrame.get().getFrame(), "Save");
 		if (ret != JFileChooser.APPROVE_OPTION) return null;
@@ -103,14 +104,14 @@ public class SEditDialog {
 	
 	public SBlob process(SBlob blob) throws STaskException {
 		this.blob = blob;
-		String name = blob.getName();
+		String name = blob != null ? blob.getName() : "No name";
 		dialog.setTitle(name);
 		if (name.endsWith(".java")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
 		else if (name.endsWith(".c")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_C);
 		else if (name.endsWith(".cpp")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
 		else if (name.endsWith(".py")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_PYTHON);
 		else edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
-		loadPane();
+		if (blob != null) loadPane();
 		edit_pane.setCaretPosition(0);
 		edit_pane.discardAllEdits();
 		dialog.setVisible(true);

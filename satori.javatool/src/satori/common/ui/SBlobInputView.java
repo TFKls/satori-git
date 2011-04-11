@@ -151,7 +151,6 @@ public class SBlobInputView implements SPaneView {
 		catch(STaskException ex) {}
 	}
 	private void editFile() {
-		if (data.get() == null) return;
 		SEditDialog dialog = new SEditDialog();
 		try { data.set(dialog.process(data.get())); }
 		catch(STaskException ex) {}
