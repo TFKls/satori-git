@@ -15,6 +15,8 @@ import javax.swing.JButton;
 import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JPanel;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 
 import org.apache.commons.io.IOUtils;
 import org.fife.ui.rsyntaxtextarea.RSyntaxTextArea;
@@ -32,6 +34,7 @@ public class SEditDialog {
 	private SBlob blob;
 	private JDialog dialog;
 	private RSyntaxTextArea edit_pane;
+	private boolean modified = true;
 	
 	public SEditDialog() { initialize(); }
 	
@@ -42,6 +45,11 @@ public class SEditDialog {
 		edit_pane.setClearWhitespaceLinesEnabled(false);
 		edit_pane.setHighlightCurrentLine(false);
 		edit_pane.setTabSize(4);
+		edit_pane.getDocument().addDocumentListener(new DocumentListener() {
+			@Override public void changedUpdate(DocumentEvent e) { setModified(true); }
+			@Override public void insertUpdate(DocumentEvent e) { setModified(true); }
+			@Override public void removeUpdate(DocumentEvent e) { setModified(true); }
+		});
 		RTextScrollPane scroll_pane = new RTextScrollPane(edit_pane);
 		dialog.getContentPane().add(scroll_pane, BorderLayout.CENTER);
 		JPanel button_pane = new JPanel(new FlowLayout(FlowLayout.CENTER));
@@ -53,14 +61,14 @@ public class SEditDialog {
 				if (file == null) return;
 				try { blob = createPane(file); }
 				catch(STaskException ex) { return; }
-				dialog.setTitle(file.getName());
+				setModified(false);
 			}
 		});
 		button_pane.add(save);
 		JButton close = new JButton("Close");
 		close.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
-				//TODO: check if modified
+				if (modified && !SFrame.showWarningDialog("Unsaved changes will be lost.")) return;
 				dialog.setVisible(false);
 			}
 		});
@@ -72,6 +80,13 @@ public class SEditDialog {
 		dialog.setLocationRelativeTo(SFrame.get().getFrame());
 	}
 	
+	private void setModified(boolean modified) {
+		if (modified == this.modified) return;
+		this.modified = modified;
+		String title = blob != null ? blob.getName() : "No name";
+		if (modified) title += "*";
+		dialog.setTitle(title);
+	}
 	private File saveAs() {
 		JFileChooser file_chooser = new JFileChooser();
 		String name = blob != null ? blob.getName() : null;
@@ -104,8 +119,7 @@ public class SEditDialog {
 	
 	public SBlob process(SBlob blob) throws STaskException {
 		this.blob = blob;
-		String name = blob != null ? blob.getName() : "No name";
-		dialog.setTitle(name);
+		String name = blob != null ? blob.getName() : "";
 		if (name.endsWith(".java")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
 		else if (name.endsWith(".c")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_C);
 		else if (name.endsWith(".cpp")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
@@ -114,6 +128,7 @@ public class SEditDialog {
 		if (blob != null) loadPane();
 		edit_pane.setCaretPosition(0);
 		edit_pane.discardAllEdits();
+		setModified(false);
 		dialog.setVisible(true);
 		return this.blob;
 	}
