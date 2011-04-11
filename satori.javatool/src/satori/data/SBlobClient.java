@@ -26,7 +26,11 @@ import satori.session.SSession;
 import satori.task.STaskManager;
 
 public class SBlobClient {
-	private static HttpsURLConnection createSSLConnection(String address) throws Exception {
+	private static HttpURLConnection createUnsecureConnection(String address) throws Exception {
+		URL url = new URL("http://" + address);
+		return (HttpURLConnection)url.openConnection();
+	}
+	private static HttpsURLConnection createSecureConnection(String address) throws Exception {
 		SSLContext context = SSLContext.getInstance("SSL");
 		context.init(null, new TrustManager[] { new X509TrustManager() {
 			@Override public X509Certificate[] getAcceptedIssuers() { return null; }
@@ -34,7 +38,7 @@ public class SBlobClient {
 			@Override public void checkServerTrusted(X509Certificate[] certs, String authType) {}
 		} }, new SecureRandom());
 		SSLSocketFactory socket_factory = context.getSocketFactory();
-		URL url = new URL(address);
+		URL url = new URL("https://" + address);
 		HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
 		connection.setSSLSocketFactory(socket_factory);
 		connection.setHostnameVerifier(new HostnameVerifier() {
@@ -42,19 +46,18 @@ public class SBlobClient {
 		});
 		return connection;
 	}
-	private static String getUploadAddress() throws Exception {
+	private static HttpURLConnection createConnection(String path) throws Exception {
 		SSession session = SSession.get();
 		if (session == null) throw new Exception("Not logged in");
-		return "https://" + session.getHost() + ":" + session.getBlobsPort() + "/blob/upload";
+		String address = session.getHost() + ":" + session.getBlobsPort() + path;
+		if (session.getUseSSL()) return createSecureConnection(address);
+		else return createUnsecureConnection(address);
 	}
-	private static String getDownloadAddress(String hash) throws Exception {
-		SSession session = SSession.get();
-		if (session == null) throw new Exception("Not logged in");
-		return "https://" + session.getHost() + ":" + session.getBlobsPort() + "/blob/download/" + hash;
-	}
+	private static String getUploadPath() { return "/blob/upload"; }
+	private static String getDownloadPath(String hash) { return "/blob/download/" + hash; }
 	
 	private static HttpURLConnection putBlobSetup(File file) throws Exception {
-		HttpURLConnection connection = createSSLConnection(getUploadAddress());
+		HttpURLConnection connection = createConnection(getUploadPath());
 		connection.setDoOutput(true);
 		connection.setUseCaches(false);
 		connection.setRequestMethod("PUT");
@@ -64,7 +67,7 @@ public class SBlobClient {
 		return connection;
 	}
 	private static HttpURLConnection getBlobSetup(String hash) throws Exception {
-		HttpURLConnection connection = createSSLConnection(getDownloadAddress(hash));
+		HttpURLConnection connection = createConnection(getDownloadPath(hash));
 		connection.setUseCaches(false);
 		connection.setRequestMethod("GET");
 		connection.setRequestProperty("Cookie", "satori_token=" + SSession.getToken());

@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JDialog;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
@@ -20,6 +21,7 @@ public class SConfigDialog {
 	private JDialog dialog;
 	private JPanel field_pane, button_pane;
 	private JTextField host, thrift_port, blobs_port;
+	private JCheckBox use_ssl;
 	private JButton confirm, cancel;
 	private boolean confirmed = false;
 	
@@ -56,6 +58,9 @@ public class SConfigDialog {
 		blobs_port.setPreferredSize(new Dimension(75, blobs_port.getPreferredSize().height));
 		blobs_port.addActionListener(confirm_listener);
 		field_pane.add(blobs_port, c);
+		use_ssl = new JCheckBox("Use SSL", SConfig.getUseSSL());
+		use_ssl.setPreferredSize(new Dimension(75, use_ssl.getPreferredSize().height));
+		field_pane.add(use_ssl, c);
 		dialog.getContentPane().add(field_pane, BorderLayout.CENTER);
 		button_pane = new JPanel();
 		button_pane.setLayout(new FlowLayout(FlowLayout.CENTER));
@@ -77,7 +82,11 @@ public class SConfigDialog {
 	private void process() {
 		dialog.setVisible(true);
 		if (!confirmed) return;
-		SConfig.save(host.getText(), Integer.valueOf(thrift_port.getText()), Integer.valueOf(blobs_port.getText()));
+		SConfig.setHost(host.getText());
+		SConfig.setThriftPort(Integer.valueOf(thrift_port.getText()));
+		SConfig.setBlobsPort(Integer.valueOf(blobs_port.getText()));
+		SConfig.setUseSSL(use_ssl.isSelected());
+		SConfig.save();
 	}
 	
 	public static void show() {

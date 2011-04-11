@@ -1,5 +1,6 @@
 package satori.session;
 
+import java.net.Socket;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -28,6 +29,7 @@ public class SSession {
 	private final String host = SConfig.getHost();
 	private final int thrift_port = SConfig.getThriftPort();
 	private final int blobs_port = SConfig.getBlobsPort();
+	private final boolean use_ssl = SConfig.getUseSSL();
 	private String username = null;
 	private String password = null;
 	private String token = "";
@@ -36,10 +38,14 @@ public class SSession {
 	
 	public String getHost() { return host; }
 	public int getBlobsPort() { return blobs_port; }
+	public boolean getUseSSL() { return use_ssl; }
 	public String getUsername() { return username; }
 	public String getPassword() { return password; }
 	
-	private void createProtocol() throws Exception {
+	private Socket createUnsecureSocket() throws Exception {
+		return new Socket(host, thrift_port);
+	}
+	private Socket createSecureSocket() throws Exception {
 		SSLContext context = SSLContext.getInstance("TLSv1");
 		context.init(null, new TrustManager[] { new X509TrustManager() {
 			@Override public X509Certificate[] getAcceptedIssuers() { return null; }
@@ -49,6 +55,10 @@ public class SSession {
 		SSLSocketFactory socket_factory = context.getSocketFactory();
 		SSLSocket socket = (SSLSocket)socket_factory.createSocket(host, thrift_port);
 		socket.setEnabledProtocols(new String[] { "TLSv1" });
+		return socket;
+	}
+	private void createProtocol() throws Exception {
+		Socket socket = use_ssl ? createSecureSocket() : createUnsecureSocket();
 		transport = new TFramedTransport(new TSocket(socket));
 		protocol = new TBinaryProtocol(transport);
 	}
