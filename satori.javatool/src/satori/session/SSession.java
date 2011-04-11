@@ -96,11 +96,13 @@ public class SSession {
 	
 	public static void login(String username, String password) throws STaskException {
 		if (instance != null) instance.closeProtocol();
+		instance = null;
 		try { STaskManager.execute(new LoginTask(username, password)); }
 		finally { updateViews(); }
 	}
 	public static void anonymousLogin() throws STaskException {
 		if (instance != null) instance.closeProtocol();
+		instance = null;
 		try { STaskManager.execute(new AnonymousLoginTask()); }
 		finally { updateViews(); }
 	}
