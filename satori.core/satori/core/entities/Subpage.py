@@ -23,7 +23,6 @@ class Subpage(Entity):
     content_files = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class Meta:                                                # pylint: disable-msg=C0111
-        unique_together = (('contest', 'name'),)
         ordering        = ('order',)
 
     class ExportMeta(object):
