@@ -5,9 +5,9 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -41,14 +41,12 @@ public class SSession {
 	
 	private void createProtocol() throws Exception {
 		SSLContext context = SSLContext.getInstance("TLSv1");
-		context.init(null, new TrustManager[] {
-			new X509TrustManager() {
-				@Override public X509Certificate[] getAcceptedIssuers() { return null; }
-				@Override public void checkClientTrusted(X509Certificate[] certs, String authType) {}
-				@Override public void checkServerTrusted(X509Certificate[] certs, String authType) {}
-			}
-		}, new SecureRandom());
-		SocketFactory socket_factory = context.getSocketFactory();
+		context.init(null, new TrustManager[] { new X509TrustManager() {
+			@Override public X509Certificate[] getAcceptedIssuers() { return null; }
+			@Override public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+			@Override public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+		} }, new SecureRandom());
+		SSLSocketFactory socket_factory = context.getSocketFactory();
 		SSLSocket socket = (SSLSocket)socket_factory.createSocket(host, thrift_port);
 		socket.setEnabledProtocols(new String[] { "TLSv1" });
 		transport = new TFramedTransport(new TSocket(socket));

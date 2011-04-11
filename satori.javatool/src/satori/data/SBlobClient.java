@@ -9,6 +9,16 @@ import java.io.StringWriter;
 import java.io.Writer;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.SecureRandom;
+import java.security.cert.X509Certificate;
+
+import javax.net.ssl.HostnameVerifier;
+import javax.net.ssl.HttpsURLConnection;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSession;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.io.IOUtils;
 
@@ -16,6 +26,22 @@ import satori.session.SSession;
 import satori.task.STaskManager;
 
 public class SBlobClient {
+	private static HttpsURLConnection createSSLConnection(String address) throws Exception {
+		SSLContext context = SSLContext.getInstance("SSL");
+		context.init(null, new TrustManager[] { new X509TrustManager() {
+			@Override public X509Certificate[] getAcceptedIssuers() { return null; }
+			@Override public void checkClientTrusted(X509Certificate[] certs, String authType) {}
+			@Override public void checkServerTrusted(X509Certificate[] certs, String authType) {}
+		} }, new SecureRandom());
+		SSLSocketFactory socket_factory = context.getSocketFactory();
+		URL url = new URL(address);
+		HttpsURLConnection connection = (HttpsURLConnection)url.openConnection();
+		connection.setSSLSocketFactory(socket_factory);
+		connection.setHostnameVerifier(new HostnameVerifier() {
+			@Override public boolean verify(String hostname, SSLSession session) { return true; }
+		});
+		return connection;
+	}
 	private static String getUploadAddress() throws Exception {
 		SSession session = SSession.get();
 		if (session == null) throw new Exception("Not logged in");
@@ -28,8 +54,7 @@ public class SBlobClient {
 	}
 	
 	private static HttpURLConnection putBlobSetup(File file) throws Exception {
-		URL url = new URL(getUploadAddress());
-		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		HttpURLConnection connection = createSSLConnection(getUploadAddress());
 		connection.setDoOutput(true);
 		connection.setUseCaches(false);
 		connection.setRequestMethod("PUT");
@@ -39,8 +64,7 @@ public class SBlobClient {
 		return connection;
 	}
 	private static HttpURLConnection getBlobSetup(String hash) throws Exception {
-		URL url = new URL(getDownloadAddress(hash));
-		HttpURLConnection connection = (HttpURLConnection)url.openConnection();
+		HttpURLConnection connection = createSSLConnection(getDownloadAddress(hash));
 		connection.setUseCaches(false);
 		connection.setRequestMethod("GET");
 		connection.setRequestProperty("Cookie", "satori_token=" + SSession.getToken());
