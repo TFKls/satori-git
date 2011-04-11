@@ -91,7 +91,7 @@ public class STaskManager {
 			thread = new Thread(new Runnable() {
 				@Override public void run() {
 					try { runTask(); }
-					catch(Throwable t) { finishFailure(t.getMessage()); return; }
+					catch(Throwable t) { finishFailure(t.toString()); return; }
 					finishSuccess();
 				}
 			});
