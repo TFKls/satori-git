@@ -6,7 +6,7 @@ public class SConfig {
 	private static volatile String host = "satori.tcs.uj.edu.pl";
 	private static volatile int thrift_port = 2889;
 	private static volatile int blobs_port = 2887;
-	private static volatile boolean use_ssl = false;
+	private static volatile boolean use_ssl = true;
 	private static volatile boolean has_config = false;
 	
 	public static String getHost() { return host; }
