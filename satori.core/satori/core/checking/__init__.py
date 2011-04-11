@@ -11,6 +11,8 @@ from satori.events import Event, Client2
 from dispatchers import dispatchers
 from aggregators import aggregators
 
+serial = 1
+
 class CheckingMaster(Client2):
     queue = 'checking_master_queue'
 
@@ -258,7 +260,9 @@ class CheckingMaster(Client2):
                 e.test_result_id = test_result.id
             else:
                 e.test_result_id = None
-            logging.debug('Check queue: dequeue by %s: %s', event.tester_id, e)
+            e.serial = serial
+            logging.debug('Check queue: dequeue by %s: %s (%s)', event.tester_id, e, serial)
+            serial = serial + 1
             self.send(e)
 
         self.do_work()
