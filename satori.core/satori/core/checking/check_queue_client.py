@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 import os
 import logging
+import time
 from django.conf import settings
 from threading import local, current_thread
 from multiprocessing import current_process
@@ -12,7 +13,7 @@ class CheckQueueClient(local):
         self.pid = current_process().pid
         self.tid = current_thread().ident
         logging.info('Starting check queue client connection for pid %s tid %s', self.pid, self.tid)
-        self.tag = str(self.pid) + '_' + str(self.tid)
+        self.tag = str(self.pid) + '_' + str(self.tid) + '_' + str(time.time())
         self.queue = 'check_queue_client_' + self.tag
         self.connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
         self.connection.send(Attach(self.queue))
