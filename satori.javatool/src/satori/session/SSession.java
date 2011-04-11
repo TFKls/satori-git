@@ -83,26 +83,21 @@ public class SSession {
 			instance = session;
 		}
 	}
-	private static class LogoutTask implements STask {
-		@Override public void run() throws Exception {
-			SSession session = instance;
-			instance = null;
-			STaskManager.log("Disconnecting from server...");
-			session.closeProtocol();
-		}
-	}
 	
 	public static void login(String username, String password) throws STaskException {
+		if (instance != null) instance.closeProtocol();
 		try { STaskManager.execute(new LoginTask(username, password)); }
 		finally { updateViews(); }
 	}
 	public static void anonymousLogin() throws STaskException {
+		if (instance != null) instance.closeProtocol();
 		try { STaskManager.execute(new AnonymousLoginTask()); }
 		finally { updateViews(); }
 	}
 	public static void logout() throws STaskException {
-		try { STaskManager.execute(new LogoutTask()); }
-		finally { updateViews(); }
+		if (instance != null) instance.closeProtocol();
+		instance = null;
+		updateViews();
 	}
 	
 	public static SSession get() { return instance; }
