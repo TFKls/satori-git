@@ -276,30 +276,33 @@ body {
   color : red;
 }
 
-div.scrollbar {
-    width : 100%;
-    text-align : center;
-    font-size : large;
+
+div.wheel
+{
+    width : 90%;
+    margin : 1em;
+    padding : 0.3em;
+    background-color : #E8E8E8;
 }
 
-div.scrollbar a {
+.wheelsel
+{
+    padding : 0.3em;
+    color : black;
+    background-color : #E0B0A0;    
+    text-decoration : none;
+    font-weight : bold;
+    display : inline-block;
+}
+
+.wheelitem
+{
+    padding : 0.3em;
     color : black;
     text-decoration : none;
-    font-size : large;
+    font-weight : bold;
+    display : inline-block;
 }
-
-div.scrollbar a:hover {
-    color : black;
-    text-decoration : none;
-    font-size : large;
-}
-
-div.scrollbar a:visited {
-    color : black;
-    text-decoration : none;
-    font-size : large;
-}
-
 
 td.formexplain {
     font-size : x-small;
@@ -386,6 +389,47 @@ table.results th
 {
     background-color : #C8C8C8;
 }
+
+
+table.contestants
+{
+    width : 100%;
+    cellspacing : 0;
+    cellpadding : 0;
+    empty-cells : show;
+    border-collapse : collapse;
+}
+
+table.contestants tr:nth-child(2n)
+{
+    background-color : #F8F8F8;
+}
+
+table.contestants tr:nth-child(2n+1)
+{
+    background-color : #E8E8E8;
+}
+
+table.contestants tr td
+{
+  margin : 1px;
+  border : 1px 0px;
+  border-color : white;
+  padding : 2px;
+}
+
+table.contestants tr td.box
+{
+    width : 3em;
+    text-align : center;
+}
+
+
+table.results th
+{
+    background-color : #C8C8C8;
+}
+
 
 table.message
 {

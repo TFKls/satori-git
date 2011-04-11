@@ -5,10 +5,10 @@
 {% if accepted.contestants %}
 <h4>Accepted contestants</h4>
 <form action="" method="POST"/>
-<table>
+<table class="contestants">
 {% for cinfo in accepted.contestants %}
 <tr>
-    <td>
+    <td class="box">
         <input type="checkbox" name="revoke_{{cinfo.id}}"/>
     </td>
     <td>
@@ -23,19 +23,21 @@
 {% endfor %}
 </table>
 {% if page_params.count1 > 1 %}
-<p>
+<div class="wheel">
 {% for p in page_params.loop1 %}
 {% if forloop.counter0 == page_params.page1 %}
-{{ p }}
+<span class="wheelsel">{{ p }}</span>
 {% else %}
-<a href="?page1={{p}}&page2={{page_params.page2}}">{{p}}</a>&nbsp;
+<a class="wheelitem" href="?page1={{p}}&page2={{page_params.page2}}">{{p}}</a>&nbsp;
 {% endif %}
 {% endfor %}
-</p>
+</div>
 {% endif %}
+<p>
 <input class="button" type="submit" name="revoke" value="Unaccept selected"/>
 <input class="button" type="submit" name="hide" value="Hide selected"/>
 <input class="button" type="submit" name="show" value="Unhide selected"/>
+</p>
 </form>
 
 
@@ -44,10 +46,10 @@
 {% if pending.contestants %}
 <h4>Pending contestants</h4>
 <form action="" method="POST"/>
-<table>
+<table class="contestants">
 {% for cinfo in pending.contestants %}
 <tr>
-    <td>
+    <td class="box">
         <input type="checkbox" name="accept_{{cinfo.id}}"/>
     </td>
     <td>
@@ -57,15 +59,15 @@
 {% endfor %}
 </table>
 {% if page_params.count2 > 1 %}
-<p>
+<div class="wheel">
 {% for p in page_params.loop2 %}
 {% if forloop.counter0 == page_params.page2 %}
-{{ p }}
+<span class="wheelsel">{{ p }}</span>
 {% else %}
-<a href="?page1={{page_params.page1}}&page2={{p}}">{{p}}</a>&nbsp;
+<a class="wheelitem" href="?page1={{page_params.page1}}&page2={{p}}">{{p}}</a>&nbsp;
 {% endif %}
 {% endfor %}
-</p>
+</div>
 {% endif %}
 <input class="button" type="submit" name="accept" value="Accept selected"/>
 <input class="button" type="submit" name="dismiss" value="Dismiss selected"/>
