@@ -8,6 +8,7 @@ import java.util.List;
 
 import javax.net.SocketFactory;
 import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLSocket;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
 
@@ -51,7 +52,8 @@ public class SSession {
 			}
 		}, new SecureRandom());
 		SocketFactory socket_factory = context.getSocketFactory();
-		Socket socket = socket_factory.createSocket(host, thrift_port);
+		SSLSocket socket = (SSLSocket)socket_factory.createSocket(host, thrift_port);
+		socket.setEnabledProtocols(new String[] { "TLSv1" });
 		transport = new TFramedTransport(new TSocket(socket));
 		protocol = new TBinaryProtocol(transport);
 	}
