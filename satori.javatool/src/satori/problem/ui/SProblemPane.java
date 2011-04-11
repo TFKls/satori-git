@@ -16,7 +16,6 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import satori.common.SException;
 import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SView;
@@ -27,6 +26,7 @@ import satori.main.SFrame;
 import satori.problem.STestSuiteSnap;
 import satori.problem.impl.SProblemImpl;
 import satori.problem.impl.STestSuiteImpl;
+import satori.task.STaskException;
 import satori.test.STestSnap;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
@@ -42,7 +42,7 @@ public class SProblemPane implements STabPane, SView {
 	private SView tab_view;
 	
 	private final STestFactory test_factory = new STestFactory() {
-		@Override public STestImpl create(STestSnap snap) throws SException {
+		@Override public STestImpl create(STestSnap snap) throws STaskException {
 			return STestImpl.create(snap, problem);
 		}
 		@Override public STestImpl createNew() {
@@ -100,7 +100,7 @@ public class SProblemPane implements STabPane, SView {
 		@Override public void call(List<STestSnap> snaps) {
 			STestSuiteImpl suite;
 			try { suite = STestSuiteImpl.createNew(snaps, problem); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+			catch(STaskException ex) { return; }
 			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, false);
 			suite_pane.getTestPane().add(suite.getTests());
 			suite_pane.open();
@@ -117,7 +117,7 @@ public class SProblemPane implements STabPane, SView {
 		@Override public void call(STestSuiteSnap snap) {
 			STestSuiteImpl suite;
 			try { suite = STestSuiteImpl.create(snap, problem); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+			catch(STaskException ex) { return; }
 			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, true);
 			suite_pane.getTestPane().add(suite.getTests());
 			suite_pane.open();
@@ -126,17 +126,17 @@ public class SProblemPane implements STabPane, SView {
 	
 	private void saveRequest() {
 		try { if (problem.isRemote()) problem.save(); else problem.create(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void reloadRequest() {
 		if (!problem.isRemote()) return;
 		try { problem.reload(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void deleteRequest() {
 		if (!problem.isRemote() || !SFrame.showWarningDialog("The problem will be deleted.")) return;
 		try { problem.delete(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void closeRequest() {
 		if (hasUnsavedData() && !SFrame.showWarningDialog("This tab contains unsaved data.")) return;

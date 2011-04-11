@@ -1,7 +1,7 @@
 package satori.test.impl;
 
-import satori.blob.SBlob;
 import satori.common.SInput;
+import satori.data.SBlob;
 import satori.metadata.SInputMetadata;
 
 public class SBlobInput implements SInput<SBlob> {

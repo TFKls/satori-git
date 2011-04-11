@@ -1,14 +1,13 @@
-package satori.thrift;
+package satori.data;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import satori.blob.SBlob;
 import satori.common.SAssertException;
-import satori.common.SException;
 import satori.metadata.SMetadata;
 import satori.session.SSession;
+import satori.task.STaskManager;
 import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.Blob;
 
@@ -31,7 +30,7 @@ class SAttributeData {
 		return attr.isIs_blob() ? SBlob.createRemote(attr.getFilename(), attr.getValue()) : attr.getValue();
 	}
 	
-	static Map<String, AnonymousAttribute> convertAttrMap(Map<String, Object> attrs) throws SException {
+	static Map<String, AnonymousAttribute> convertAttrMap(Map<String, Object> attrs) {
 		Map<String, AnonymousAttribute> map = new HashMap<String, AnonymousAttribute>();
 		for (Map.Entry<String, Object> entry : attrs.entrySet()) {
 			if (entry.getValue() instanceof String) {
@@ -62,23 +61,13 @@ class SAttributeData {
 		return result;
 	}
 	
-	private static class ExistsCommand implements SThriftCommand {
-		private final String hash;
-		private boolean result;
-		public ExistsCommand(String hash) { this.hash = hash; }
-		public boolean getResult() { return result; }
-		@Override public void call() throws Exception {
-			Blob.Iface iface = new Blob.Client(SThriftClient.getProtocol());
-			result = iface.Blob_exists(SSession.getToken(), hash);
-		}
-	}
-	private static boolean checkBlobExists(SBlob blob) throws SException {
-		ExistsCommand command = new ExistsCommand(blob.getHash());
-		SThriftClient.call(command);
-		return command.getResult();
+	private static boolean checkBlobExists(SBlob blob) throws Exception {
+		STaskManager.log("Checking blob existence...");
+		Blob.Iface iface = new Blob.Client(SSession.getProtocol());
+		return iface.Blob_exists(SSession.getToken(), blob.getHash());
 	}
 	
-	static Map<String, Object> createRemoteAttrMap(Map<? extends SMetadata, Object> attrs) throws SException {
+	static Map<String, Object> createRemoteAttrMap(Map<? extends SMetadata, Object> attrs) {
 		Map<String, Object> result = new HashMap<String, Object>();
 		for (Map.Entry<? extends SMetadata, Object> entry : attrs.entrySet()) {
 			String key = entry.getKey().getName();
@@ -87,7 +76,7 @@ class SAttributeData {
 		}
 		return result;
 	}
-	static <T extends SMetadata> Map<T, Object> createLocalAttrMap(List<T> meta_list, Map<String, AnonymousAttribute> attrs) throws SException {
+	static <T extends SMetadata> Map<T, Object> createLocalAttrMap(List<T> meta_list, Map<String, AnonymousAttribute> attrs) {
 		Map<T, Object> result = new HashMap<T, Object>();
 		for (T meta : meta_list) {
 			AnonymousAttribute attr = attrs.get(meta.getName());
@@ -98,11 +87,11 @@ class SAttributeData {
 		return result;
 	}
 	
-	static void createBlobs(Map<String, Object> attrs) throws SException {
+	static void createBlobs(Map<String, Object> attrs) throws Exception {
 		for (Object value : attrs.values()) {
 			if (!(value instanceof SBlob)) continue;
 			SBlob blob = (SBlob)value;
-			if (!checkBlobExists(blob)) blob.saveRemote();
+			if (!checkBlobExists(blob)) blob.saveRemoteTask();
 		}
 	}
 }

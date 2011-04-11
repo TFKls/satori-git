@@ -1,11 +1,14 @@
 package satori.problem;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-import satori.common.SException;
 import satori.common.SListView;
-import satori.thrift.SProblemData;
+import satori.data.SProblemData;
+import satori.task.STask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
 
 public class SProblemList {
 	private Map<Long, SProblemSnap> problems = null;
@@ -29,9 +32,17 @@ public class SProblemList {
 		if (pane != null) pane.add(problems.values());
 	}
 	
-	public void reload() throws SException {
+	private class LoadTask implements STask {
+		public List<SProblemReader> problems;
+		@Override public void run() throws Exception {
+			problems = SProblemData.list();
+		}
+	}
+	public void reload() throws STaskException {
+		LoadTask task = new LoadTask();
+		STaskManager.execute(task);
 		Map<Long, SProblemSnap> new_problems = new HashMap<Long, SProblemSnap>();
-		for (SProblemReader problem : SProblemData.list()) {
+		for (SProblemReader problem : task.problems) {
 			SProblemSnap current = problems != null ? problems.get(problem.getId()) : null;
 			if (current != null) current.set(problem);
 			else current = SProblemSnap.create(problem);
@@ -47,7 +58,7 @@ public class SProblemList {
 	
 	private static SProblemList instance = null;
 	
-	public static SProblemList get() throws SException {
+	public static SProblemList get() throws STaskException {
 		if (instance == null) instance = new SProblemList();
 		instance.reload();
 		return instance;

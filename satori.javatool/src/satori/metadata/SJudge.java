@@ -2,7 +2,7 @@ package satori.metadata;
 
 import java.util.List;
 
-import satori.blob.SBlob;
+import satori.data.SBlob;
 
 public class SJudge {
 	private SBlob blob;

@@ -1,6 +1,6 @@
 package satori.metadata;
 
-import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -11,17 +11,17 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
 import org.apache.commons.io.LineIterator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import satori.common.SException;
 import satori.common.SPair;
+import satori.task.SResultTask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
 import satori.type.SBlobType;
 import satori.type.SBoolType;
 import satori.type.SSizeType;
@@ -31,9 +31,8 @@ import satori.type.SType;
 
 public class SParametersParser {
 	@SuppressWarnings("serial")
-	public static class ParseException extends SException {
-		ParseException(String msg) { super(msg); }
-		ParseException(Exception ex) { super(ex); }
+	private static class ParseException extends Exception {
+		public ParseException(String message) { super(message); }
 	}
 	
 	private static SInputMetadata parseParam(Element node) throws ParseException {
@@ -85,7 +84,7 @@ public class SParametersParser {
 		params.setGeneralParameters(general_meta);
 		params.setTestParameters(Collections.<SInputMetadata>emptyList());
 	}
-	private static void parse(String str, SParametersMetadata params) throws ParseException {
+	private static void parse(String str, SParametersMetadata params) throws Exception {
 		if (str.isEmpty()) {
 			params.setGeneralParameters(Collections.<SInputMetadata>emptyList());
 			params.setTestParameters(Collections.<SInputMetadata>emptyList());
@@ -93,30 +92,41 @@ public class SParametersParser {
 		}
 		InputSource is = new InputSource();
 		is.setCharacterStream(new StringReader(str));
-		try { parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), params); }
-		catch(IOException ex) { throw new ParseException(ex); }
-		catch(SAXException ex) { throw new ParseException(ex); }
-		catch(ParserConfigurationException ex) { throw new ParseException(ex); }
+		parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), params);
 	}
-	private static void parseLines(String str, SParametersMetadata params) throws ParseException {
+	private static void parseLines(Reader reader, SParametersMetadata params) throws Exception {
 		StringBuilder xml = new StringBuilder();
-		LineIterator line_iter = new LineIterator(new StringReader(str));
+		LineIterator line_iter = new LineIterator(reader);
 		while (line_iter.hasNext()) {
 			String line = line_iter.next();
 			if (line.startsWith("#@")) xml.append(line.substring(2));
 		}
-		line_iter.close();
 		parse(xml.toString(), params);
+	}
+	
+	private static SParametersMetadata parseParametersAux(String name, String str) throws Exception {
+		STaskManager.log("Parsing parameters...");
+		SParametersMetadata result = new SParametersMetadata();
+		result.setName(name);
+		parseLines(new StringReader(str), result);
+		return result;
 	}
 	
 	private static Map<SPair<String, String>, SParametersMetadata> params = new HashMap<SPair<String, String>, SParametersMetadata>();
 	
-	public static SParametersMetadata parseParameters(String name, String str) throws ParseException {
+	public static SParametersMetadata parseParametersTask(String name, String str) throws Exception {
 		SPair<String, String> key = new SPair<String, String>(name, str);
 		if (params.containsKey(key)) return params.get(key);
-		SParametersMetadata result = new SParametersMetadata();
-		result.setName(name);
-		parseLines(str, result);
+		SParametersMetadata result = parseParametersAux(name, str);
+		params.put(key, result);
+		return result;
+	}
+	public static SParametersMetadata parseParameters(final String name, final String str) throws STaskException {
+		SPair<String, String> key = new SPair<String, String>(name, str);
+		if (params.containsKey(key)) return params.get(key);
+		SParametersMetadata result = STaskManager.execute(new SResultTask<SParametersMetadata>() {
+			@Override public SParametersMetadata run() throws Exception { return parseParametersAux(name, str); }
+		});
 		params.put(key, result);
 		return result;
 	}

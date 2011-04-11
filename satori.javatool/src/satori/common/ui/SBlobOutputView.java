@@ -18,10 +18,10 @@ import javax.swing.JMenuItem;
 import javax.swing.JPopupMenu;
 import javax.swing.SwingConstants;
 
-import satori.blob.SBlob;
 import satori.common.SData;
-import satori.common.SException;
+import satori.data.SBlob;
 import satori.main.SFrame;
+import satori.task.STaskException;
 
 public class SBlobOutputView implements SPaneView {
 	private final SData<SBlob> data;
@@ -40,7 +40,7 @@ public class SBlobOutputView implements SPaneView {
 		if (data.get() == null) return;
 		SEditDialog dialog = new SEditDialog();
 		try { dialog.process(data.get()); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void saveFile() {
 		if (data.get() == null) return;
@@ -50,7 +50,7 @@ public class SBlobOutputView implements SPaneView {
 		int ret = file_chooser.showDialog(SFrame.get().getFrame(), "Save");
 		if (ret != JFileChooser.APPROVE_OPTION) return;
 		try { data.get().saveLocal(file_chooser.getSelectedFile()); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	
 	private void showPopup(Point location) {

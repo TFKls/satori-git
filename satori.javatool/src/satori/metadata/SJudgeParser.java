@@ -1,7 +1,7 @@
 package satori.metadata;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.Reader;
 import java.io.StringReader;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -12,18 +12,18 @@ import java.util.Map;
 import java.util.Set;
 
 import javax.xml.parsers.DocumentBuilderFactory;
-import javax.xml.parsers.ParserConfigurationException;
 
-import org.apache.commons.io.FileUtils;
+import org.apache.commons.io.IOUtils;
 import org.apache.commons.io.LineIterator;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
 import org.w3c.dom.NodeList;
 import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
 
-import satori.blob.SBlob;
-import satori.common.SException;
+import satori.data.SBlob;
+import satori.task.SResultTask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
 import satori.type.SBlobType;
 import satori.type.SSizeType;
 import satori.type.STextType;
@@ -32,9 +32,8 @@ import satori.type.SType;
 
 public class SJudgeParser {
 	@SuppressWarnings("serial")
-	public static class ParseException extends SException {
-		ParseException(String msg) { super(msg); }
-		ParseException(Exception ex) { super(ex); }
+	private static class ParseException extends Exception {
+		public ParseException(String message) { super(message); }
 	}
 	
 	private static SInputMetadata parseInputParam(Element node) throws ParseException {
@@ -123,45 +122,44 @@ public class SJudgeParser {
 		verifyOutputs(output_meta);
 		judge.setOutputMetadata(output_meta);
 	}
-	private static void parse(String str, SJudge judge) throws ParseException {
+	private static void parse(String str, SJudge judge) throws Exception {
 		InputSource is = new InputSource();
 		is.setCharacterStream(new StringReader(str));
-		try { parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), judge); }
-		catch(IOException ex) { throw new ParseException(ex); }
-		catch(SAXException ex) { throw new ParseException(ex); }
-		catch(ParserConfigurationException ex) { throw new ParseException(ex); }
+		parse(DocumentBuilderFactory.newInstance().newDocumentBuilder().parse(is), judge);
 	}
-	private static void parse(File file, SJudge judge) throws ParseException {
+	private static void parse(Reader reader, SJudge judge) throws Exception {
 		StringBuilder xml = new StringBuilder();
-		LineIterator line_iter = null;
-		try {
-			line_iter = FileUtils.lineIterator(file);
-			while (line_iter.hasNext()) {
-				String line = line_iter.next();
-				if (line.startsWith("#@")) xml.append(line.substring(2));
-			}
+		LineIterator line_iter = new LineIterator(reader);
+		while (line_iter.hasNext()) {
+			String line = line_iter.next();
+			if (line.startsWith("#@")) xml.append(line.substring(2));
 		}
-		catch(IOException ex) { throw new ParseException(ex); }
-		finally { LineIterator.closeQuietly(line_iter); }
 		parse(xml.toString(), judge);
+	}
+	
+	private static SJudge parseJudgeAux(SBlob judge) throws Exception {
+		SJudge result = new SJudge();
+		result.setBlob(judge);
+		STaskManager.log(judge.getFile() != null ? "Parsing local judge file..." : "Loading and parsing judge blob...");
+		Reader reader = new InputStreamReader(judge.getStreamTask());
+		try { parse(reader, result); }
+		finally { IOUtils.closeQuietly(reader); }
+		return result;
 	}
 	
 	private static Map<SBlob, SJudge> judges = new HashMap<SBlob, SJudge>();
 	
-	public static SJudge parseJudge(SBlob judge) throws SException {
+	public static SJudge parseJudgeTask(SBlob judge) throws Exception {
 		if (judges.containsKey(judge)) return judges.get(judge);
-		File file = judge.getFile();
-		boolean delete = false;
-		if (file == null) {
-			try { file = File.createTempFile("satori", null); }
-			catch(IOException ex) { throw new SException(ex); }
-			judge.saveLocal(file);
-			delete = true;
-		}
-		SJudge result = new SJudge();
-		result.setBlob(judge);
-		try { parse(file, result); }
-		finally { if (delete) file.delete(); }
+		SJudge result = parseJudgeAux(judge);
+		judges.put(judge, result);
+		return result;
+	}
+	public static SJudge parseJudge(final SBlob judge) throws STaskException {
+		if (judges.containsKey(judge)) return judges.get(judge);
+		SJudge result = STaskManager.execute(new SResultTask<SJudge>() {
+			@Override public SJudge run() throws Exception { return parseJudgeAux(judge); }
+		});
 		judges.put(judge, result);
 		return result;
 	}

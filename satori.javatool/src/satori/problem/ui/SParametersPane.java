@@ -8,13 +8,13 @@ import javax.swing.BoxLayout;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import satori.blob.SBlob;
 import satori.common.SInput;
 import satori.common.SListener0;
 import satori.common.ui.SBlobInputView;
 import satori.common.ui.SPane;
 import satori.common.ui.SPaneView;
 import satori.common.ui.SStringInputView;
+import satori.data.SBlob;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SParametersMetadata;
 import satori.problem.impl.STestSuiteImpl;

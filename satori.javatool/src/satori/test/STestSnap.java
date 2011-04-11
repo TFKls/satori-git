@@ -6,14 +6,16 @@ import java.util.List;
 import java.util.Map;
 
 import satori.common.SAssert;
-import satori.common.SException;
 import satori.common.SListener1;
 import satori.common.SModel;
 import satori.common.SReference;
 import satori.common.SView;
+import satori.data.STestData;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SJudge;
-import satori.thrift.STestData;
+import satori.task.STask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
 
 public class STestSnap implements STestReader, SModel {
 	private long id;
@@ -78,7 +80,18 @@ public class STestSnap implements STestReader, SModel {
 		desc = source.getDescription();
 		notifyModified();
 	}
-	public void reload() throws SException { set(STestData.load(id)); }
+	
+	private class LoadTask implements STask {
+		public STestReader test;
+		@Override public void run() throws Exception {
+			test = STestData.load(getId());
+		}
+	}
+	public void reload() throws STaskException {
+		LoadTask task = new LoadTask();
+		STaskManager.execute(task);
+		set(task.test);
+	}
 	
 	private void notifyModified() {
 		for (SView view : views) view.update();

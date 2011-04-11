@@ -26,9 +26,8 @@ import javax.swing.JTextField;
 import javax.swing.SwingConstants;
 import javax.swing.TransferHandler;
 
-import satori.common.SException;
 import satori.common.SInput;
-import satori.main.SFrame;
+import satori.task.STaskException;
 
 public class SStringInputView implements SPaneView {
 	private final SInput<String> data;
@@ -61,7 +60,7 @@ public class SStringInputView implements SPaneView {
 		if (!edit_mode) return;
 		String new_data = field.getText().isEmpty() ? null : field.getText();
 		try { data.set(new_data); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) { return; }
 		edit_mode = false;
 		label.setVisible(true);
 		if (focus) label.requestFocus();
@@ -76,7 +75,7 @@ public class SStringInputView implements SPaneView {
 	}
 	private void clear() {
 		try { data.set(null); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	
 	@SuppressWarnings("serial")
@@ -97,7 +96,7 @@ public class SStringInputView implements SPaneView {
 			catch (Exception e) { return false; }
 			if (object != null && object.isEmpty()) object = null;
 			try { data.set(object); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
+			catch(STaskException ex) { return false; }
 			return true;
 		}
 		@Override protected Transferable createTransferable(JComponent c) { return new StringSelection(data.get()); }

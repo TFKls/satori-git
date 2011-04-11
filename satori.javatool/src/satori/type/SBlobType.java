@@ -1,7 +1,7 @@
 package satori.type;
 
-import satori.blob.SBlob;
 import satori.common.SAssert;
+import satori.data.SBlob;
 
 public enum SBlobType implements SType {
 	INSTANCE;

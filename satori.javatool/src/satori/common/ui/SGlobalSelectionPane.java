@@ -26,16 +26,16 @@ import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 
-import satori.common.SException;
 import satori.common.SListener0;
 import satori.common.SPair;
 import satori.main.SFrame;
 import satori.metadata.SParametersMetadata;
+import satori.task.STaskException;
 
 public class SGlobalSelectionPane implements SPane {
 	public static interface Loader {
-		List<SPair<String, String>> getList() throws SException;
-		SParametersMetadata parse(String name, String content) throws SException;
+		List<SPair<String, String>> getList() throws STaskException;
+		SParametersMetadata parse(String name, String content) throws STaskException;
 	};
 	
 	private final Loader loader;
@@ -131,7 +131,7 @@ public class SGlobalSelectionPane implements SPane {
 			dialog.setLocationRelativeTo(SFrame.get().getFrame());
 		}
 		
-		public List<SPair<String, String>> process() throws SException {
+		public List<SPair<String, String>> process() throws STaskException {
 			List<SPair<String, String>> source = loader.getList();
 			Vector<String> names = new Vector<String>();
 			for (SPair<String, String> p : source) names.add(p.first);
@@ -155,7 +155,7 @@ public class SGlobalSelectionPane implements SPane {
 			setSelection(Collections.unmodifiableList(params));
 			listener.call();
 		}
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void clear() {
 		clearSelection();

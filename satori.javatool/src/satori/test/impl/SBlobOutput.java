@@ -1,7 +1,7 @@
 package satori.test.impl;
 
-import satori.blob.SBlob;
 import satori.common.SData;
+import satori.data.SBlob;
 import satori.metadata.SOutputMetadata;
 
 public class SBlobOutput implements SData<SBlob> {

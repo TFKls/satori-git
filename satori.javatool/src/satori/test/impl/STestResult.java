@@ -5,13 +5,15 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
-import satori.common.SException;
 import satori.common.SId;
 import satori.common.SListener0;
 import satori.common.SView;
+import satori.data.STemporarySubmitData;
 import satori.metadata.SOutputMetadata;
+import satori.task.STask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
 import satori.test.STemporarySubmitReader;
-import satori.thrift.STemporarySubmitData;
 
 public class STestResult {
 	public static enum Status { NOT_TESTED, PENDING, FINISHED };
@@ -50,26 +52,39 @@ public class STestResult {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { for (SView view : views) view.update(); }
 	
-	public void run() throws SException {
+	public void run() throws STaskException {
 		if (solution.get() == null) return;
 		if (test.getJudge() == null) return;
-		id = new SId(STemporarySubmitData.create(solution.get(), test));
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				id = new SId(STemporarySubmitData.create(solution.get(), test));
+			}
+		});
 		status = Status.PENDING;
 		output = Collections.emptyMap();
 		updateViews();
 	}
-	public void refresh() throws SException {
+	
+	private class LoadTask implements STask {
+		public STemporarySubmitReader submit;
+		@Override public void run() throws Exception {
+			submit = STemporarySubmitData.load(id.get(), test.getJudge().getOutputMetadata());
+		}
+	}
+	public void refresh() throws STaskException {
 		if (!id.isSet()) return;
-		STemporarySubmitReader source = STemporarySubmitData.load(id.get(), test.getJudge().getOutputMetadata());
-		if (source.getPending()) {
+		LoadTask task = new LoadTask();
+		STaskManager.execute(task);
+		if (task.submit.getPending()) {
 			status = Status.PENDING;
 			output = Collections.emptyMap();
 		} else {
 			status = Status.FINISHED;
-			output = source.getResult();
+			output = task.submit.getResult();
 		}
 		updateViews();
 	}
+	
 	public void close() {
 		test.removeDataModifiedListener(clear_listener);
 		solution.removeModifiedListener(clear_listener);

@@ -6,21 +6,23 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import satori.blob.SBlob;
 import satori.common.SAssert;
 import satori.common.SDataStatus;
-import satori.common.SException;
 import satori.common.SId;
 import satori.common.SListener0;
 import satori.common.SReference;
 import satori.common.SView;
+import satori.data.SBlob;
+import satori.data.STestData;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SJudge;
 import satori.metadata.SJudgeParser;
 import satori.problem.SParentProblem;
+import satori.task.STask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
 import satori.test.STestReader;
 import satori.test.STestSnap;
-import satori.thrift.STestData;
 
 public class STestImpl implements STestReader {
 	private STestSnap snap = null;
@@ -55,7 +57,7 @@ public class STestImpl implements STestReader {
 	
 	private STestImpl() {}
 	
-	public static STestImpl create(STestSnap snap, SParentProblem problem) throws SException {
+	public static STestImpl create(STestSnap snap, SParentProblem problem) throws STaskException {
 		if (!snap.isComplete()) snap.reload();
 		STestImpl self = new STestImpl();
 		self.snap = snap;
@@ -114,7 +116,7 @@ public class STestImpl implements STestReader {
 		for (SInputMetadata meta : list) if (meta.getName().equals(name)) return meta;
 		return null;
 	}
-	public void setJudge(SBlob blob) throws SException {
+	public void setJudge(SBlob blob) throws STaskException {
 		if (blob == null && judge == null) return;
 		if (blob != null && judge != null && blob.equals(judge.getBlob())) return;
 		if (blob != null) {
@@ -172,8 +174,7 @@ public class STestImpl implements STestReader {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { for (SView view : views) view.update(); }
 	
-	public void reload() throws SException {
-		SAssert.assertTrue(isRemote(), "Test not remote");
+	public void reload() throws STaskException {
 		snap.reload();
 		name = snap.getName();
 		judge = snap.getJudge();
@@ -183,26 +184,36 @@ public class STestImpl implements STestReader {
 		callMetadataModifiedListeners();
 		callDataModifiedListeners();
 	}
-	public void create() throws SException {
-		SAssert.assertFalse(isRemote(), "Test already created");
-		id = new SId(STestData.create(this));
+	public void create() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				id = new SId(STestData.create(STestImpl.this));
+			}
+		});
 		notifyUpToDate();
 		snap = STestSnap.create(this);
 		snap.addReference(reference);
 		problem.getTestList().addTest(snap);
 	}
-	public void save() throws SException {
-		SAssert.assertTrue(isRemote(), "Test not remote");
-		STestData.save(this);
+	public void save() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				STestData.save(STestImpl.this);
+			}
+		});
 		notifyUpToDate();
 		snap.set(this);
 	}
-	public void delete() throws SException {
-		SAssert.assertTrue(isRemote(), "Test not remote");
-		STestData.delete(getId());
+	public void delete() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				STestData.delete(getId());
+			}
+		});
 		problem.getTestList().removeTest(snap);
 		snap.notifyDeleted(); //calls snapDeleted
 	}
+	
 	public void close() {
 		if (snap == null) return;
 		snap.removeReference(reference);

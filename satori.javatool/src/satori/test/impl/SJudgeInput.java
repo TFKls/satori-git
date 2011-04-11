@@ -1,9 +1,9 @@
 package satori.test.impl;
 
-import satori.blob.SBlob;
-import satori.common.SException;
 import satori.common.SInput;
+import satori.data.SBlob;
 import satori.metadata.SJudge;
+import satori.task.STaskException;
 
 public class SJudgeInput implements SInput<SBlob> {
 	private final STestImpl test;
@@ -20,5 +20,5 @@ public class SJudgeInput implements SInput<SBlob> {
 	}
 	@Override public String getDescription() { return "Judge file"; }
 	@Override public boolean isValid() { return test.getJudge() != null; }
-	@Override public void set(SBlob data) throws SException { test.setJudge(data); }
+	@Override public void set(SBlob data) throws STaskException { test.setJudge(data); }
 }

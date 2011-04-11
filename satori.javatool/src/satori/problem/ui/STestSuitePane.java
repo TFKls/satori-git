@@ -13,12 +13,12 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 
-import satori.common.SException;
 import satori.common.SView;
 import satori.common.ui.STabPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
 import satori.problem.impl.STestSuiteImpl;
+import satori.task.STaskException;
 import satori.test.impl.STestFactory;
 import satori.test.ui.STestPane;
 
@@ -76,19 +76,19 @@ public class STestSuitePane implements STabPane, SView {
 		if (!suite.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
 		if (!suite.hasNonremoteTests()) { SFrame.showErrorDialog("Cannot save: some tests do not exist remotely"); return; }
 		try { if (suite.isRemote()) suite.save(); else suite.create(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void reloadRequest() {
 		if (!suite.isRemote()) return;
 		try { suite.reload(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) { return; }
 		test_pane.removeAll();
 		test_pane.add(suite.getTests());
 	}
 	private void deleteRequest() {
 		if (!suite.isRemote() || !SFrame.showWarningDialog("The test suite will be deleted.")) return;
 		try { suite.delete(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void closeRequest() {
 		if (hasUnsavedData() && !SFrame.showWarningDialog("This tab contains unsaved data.")) return;

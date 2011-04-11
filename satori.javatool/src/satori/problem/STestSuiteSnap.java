@@ -6,17 +6,19 @@ import java.util.List;
 import java.util.Map;
 
 import satori.common.SAssert;
-import satori.common.SException;
 import satori.common.SListener1;
 import satori.common.SModel;
 import satori.common.SPair;
 import satori.common.SReference;
 import satori.common.SView;
+import satori.data.STestSuiteData;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SParametersMetadata;
+import satori.task.STask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
-import satori.thrift.STestSuiteData;
 
 public class STestSuiteSnap implements STestSuiteReader, SModel {
 	private final STestList test_list;
@@ -121,7 +123,18 @@ public class STestSuiteSnap implements STestSuiteReader, SModel {
 		desc = source.getDescription();
 		notifyModified();
 	}
-	public void reload() throws SException { set(STestSuiteData.load(id)); }
+	
+	private class LoadTask implements STask {
+		public STestSuiteReader suite;
+		@Override public void run() throws Exception {
+			suite = STestSuiteData.load(getId());
+		}
+	}
+	public void reload() throws STaskException {
+		LoadTask task = new LoadTask();
+		STaskManager.execute(task);
+		set(task.suite);
+	}
 	
 	private void testDeleted(STestSnap test) {
 		tests.remove(test);

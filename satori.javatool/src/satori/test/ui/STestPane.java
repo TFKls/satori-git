@@ -34,8 +34,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.TransferHandler;
 
-import satori.blob.SBlob;
-import satori.common.SException;
 import satori.common.SListView;
 import satori.common.SListener0;
 import satori.common.SListener1;
@@ -44,10 +42,13 @@ import satori.common.ui.SBlobInputView;
 import satori.common.ui.SPane;
 import satori.common.ui.SPaneView;
 import satori.common.ui.SStringInputView;
+import satori.data.SBlob;
+import satori.data.SGlobal;
 import satori.main.SFrame;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SJudge;
 import satori.problem.impl.STestSuiteImpl;
+import satori.task.STaskException;
 import satori.test.STestSnap;
 import satori.test.impl.SBlobInput;
 import satori.test.impl.SJudgeInput;
@@ -55,7 +56,6 @@ import satori.test.impl.SSolution;
 import satori.test.impl.SStringInput;
 import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
-import satori.thrift.SGlobalData;
 import satori.type.SBlobType;
 
 public class STestPane implements SPane, SListView<STestImpl> {
@@ -155,7 +155,7 @@ public class STestPane implements SPane, SListView<STestImpl> {
 				for (STestSnap snap : data.get()) {
 					if (suite.hasTest(snap.getId())) continue;
 					try { new_tests.add(factory.create(snap)); }
-					catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
+					catch(STaskException ex) { return false; }
 				}
 				int index = getDropIndex(support.getDropLocation().getDropPoint());
 				int cur_index = index;
@@ -220,32 +220,32 @@ public class STestPane implements SPane, SListView<STestImpl> {
 	private void saveTestRequest(STestImpl test) {
 		if (!test.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
 		try { if (test.isRemote()) test.save(); else test.create(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void saveAllTestsRequest() {
 		if (!suite.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
 		for (STestImpl test : suite.getTests()) {
 			try { if (test.isRemote()) test.save(); else test.create(); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+			catch(STaskException ex) { return; }
 		}
 	}
 	private void reloadTestRequest(STestImpl test) {
 		if (!test.isRemote()) return;
 		try { test.reload(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void reloadAllTestsRequest() {
 		for (STestImpl test : suite.getTests()) {
 			if (!test.isRemote()) continue;
 			try { test.reload(); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+			catch(STaskException ex) { return; }
 		}
 	}
 	private void deleteTestRequest(STestImpl test) {
 		if (!test.isRemote()) return;
 		if (!SFrame.showWarningDialog("The test will be deleted.")) return;
 		try { test.delete(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void removeTestRequest(STestImpl test) {
 		if (test.isModified() && !SFrame.showWarningDialog("The test contains unsaved data.")) return;
@@ -500,8 +500,8 @@ public class STestPane implements SPane, SListView<STestImpl> {
 			pane.add(desc_field);
 			SBlobInputView judge_view = new SBlobInputView(new SJudgeInput(test), new SBlobInputView.BlobLoader() {
 				private Map<String, SBlob> blobs = null;
-				@Override public Map<String, SBlob> getBlobs() throws SException {
-					if (blobs == null) blobs = SGlobalData.getJudges();
+				@Override public Map<String, SBlob> getBlobs() throws STaskException {
+					if (blobs == null) blobs = SGlobal.getJudges();
 					return blobs;
 				}
 			});

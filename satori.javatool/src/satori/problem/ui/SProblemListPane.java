@@ -14,14 +14,13 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.ListSelectionModel;
 
-import satori.common.SException;
 import satori.common.ui.SListPane;
 import satori.common.ui.STabPane;
 import satori.common.ui.STabs;
-import satori.main.SFrame;
 import satori.problem.SProblemList;
 import satori.problem.SProblemSnap;
 import satori.problem.impl.SProblemImpl;
+import satori.task.STaskException;
 
 public class SProblemListPane implements STabPane {
 	private final SProblemList problem_list;
@@ -86,13 +85,13 @@ public class SProblemListPane implements STabPane {
 		if (index == -1) return;
 		SProblemSnap snap = list.getItem(index);
 		SProblemImpl problem = SProblemImpl.createRemote(problem_list, snap);
-		SProblemPane.open(problem, parent);
 		try { problem.reload(); }
-		catch(SException ex) { SFrame.showErrorDialog("Cannot load problem: operation in progress"); }
+		catch(STaskException ex) { problem.close(); return; }
+		SProblemPane.open(problem, parent);
 	}
 	private void reloadRequest() {
 		try { problem_list.reload(); }
-		catch(SException ex) { SFrame.showErrorDialog("Cannot reload problem list: operation in progress"); }
+		catch(STaskException ex) {}
 	}
 	private void closeRequest() {
 		close();
@@ -101,7 +100,7 @@ public class SProblemListPane implements STabPane {
 	
 	private static SProblemListPane instance = null;
 	
-	public static SProblemListPane get(STabs parent) throws SException {
+	public static SProblemListPane get(STabs parent) throws STaskException {
 		if (instance == null) instance = new SProblemListPane(SProblemList.get(), parent);
 		if (!instance.problem_list.hasPane()) instance.problem_list.setPane(instance.list.getListView());
 		return instance;

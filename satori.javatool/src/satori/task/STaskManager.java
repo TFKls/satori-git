@@ -13,11 +13,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
-import satori.main.SFrame;
-
 public class STaskManager {
-	private static class Monitor implements STaskLogger {
-		private final STask task;
+	private static abstract class AbstractMonitor {
 		private final JDialog dialog;
 		private final JTextArea log_area;
 		private final JButton abort_button, close_button;
@@ -26,8 +23,7 @@ public class STaskManager {
 		private Thread thread;
 		private boolean success;
 		
-		public Monitor(STask task, JFrame frame) {
-			this.task = task;
+		protected AbstractMonitor(JFrame frame) {
 			dialog = new JDialog(frame, "Progress", true);
 			dialog.getContentPane().setLayout(new BorderLayout());
 			log_area = new JTextArea();
@@ -64,11 +60,12 @@ public class STaskManager {
 			close_button.setEnabled(true);
 		}
 		private synchronized void closeDialog() {
+			monitor = null;
 			dialog.setVisible(false);
 			dialog.dispose();
 		}
 		
-		@Override public synchronized void log(String message) {
+		public synchronized void log(String message) {
 			log.append(message + "\n");
 			SwingUtilities.invokeLater(new Runnable() {
 				@Override public void run() { updateLog(); }
@@ -90,10 +87,10 @@ public class STaskManager {
 				@Override public void run() { updateAfterFailure(); }
 			});
 		}
-		private synchronized void runTask() {
+		private synchronized void runThread() {
 			thread = new Thread(new Runnable() {
 				@Override public void run() {
-					try { task.run(Monitor.this); }
+					try { runTask(); }
 					catch(Throwable t) { finishFailure(t.getMessage()); return; }
 					finishSuccess();
 				}
@@ -105,13 +102,47 @@ public class STaskManager {
 		}
 		
 		public void execute() throws STaskException {
-			runTask();
+			runThread();
 			dialog.setVisible(true);
 			checkSuccess();
 		}
+		
+		protected abstract void runTask() throws Exception;
 	}
 	
-	public static void execute(STask task) throws STaskException {
-		new Monitor(task, SFrame.get().getFrame()).execute();
+	private static class Monitor extends AbstractMonitor {
+		private final STask task;
+		public Monitor(JFrame frame, STask task) {
+			super(frame);
+			this.task = task;
+		}
+		@Override protected void runTask() throws Exception { task.run(); }
 	}
+	private static class ResultMonitor<T> extends AbstractMonitor {
+		private final SResultTask<T> task;
+		private T result;
+		public ResultMonitor(JFrame frame, SResultTask<T> task) {
+			super(frame);
+			this.task = task;
+		}
+		public T getResult() { return result; }
+		@Override protected void runTask() throws Exception { result = task.run(); }
+	}
+	
+	private static volatile AbstractMonitor monitor = null;
+	private static JFrame frame = null;
+	
+	public static void log(String message) { monitor.log(message); }
+	public static void execute(STask task) throws STaskException {
+		monitor = new Monitor(frame, task);
+		monitor.execute();
+	}
+	public static <T> T execute(SResultTask<T> task) throws STaskException {
+		ResultMonitor<T> mon = new ResultMonitor<T>(frame, task);
+		monitor = mon;
+		monitor.execute();
+		return mon.getResult();
+	}
+	
+	public static void setFrame(JFrame frame) { STaskManager.frame = frame; }
 }

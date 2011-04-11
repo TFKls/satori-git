@@ -5,26 +5,32 @@ import java.util.List;
 
 import satori.common.SAssert;
 import satori.common.SDataStatus;
-import satori.common.SException;
 import satori.common.SId;
 import satori.common.SListener1;
 import satori.common.SReference;
 import satori.common.SView;
+import satori.data.SProblemData;
+import satori.data.STestData;
+import satori.data.STestSuiteData;
 import satori.problem.SParentProblem;
 import satori.problem.SProblemList;
 import satori.problem.SProblemReader;
 import satori.problem.SProblemSnap;
 import satori.problem.STestList;
+import satori.problem.STestSuiteBasicReader;
 import satori.problem.STestSuiteList;
-import satori.thrift.SProblemData;
+import satori.task.STask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
+import satori.test.STestBasicReader;
 
 public class SProblemImpl implements SProblemReader, SParentProblem {
 	private final SProblemList problem_list;
 	
 	private SProblemSnap snap = null;
-	private volatile SId id = SId.unset();
-	private volatile String name = "";
-	private volatile String desc = "";
+	private SId id = SId.unset();
+	private String name = "";
+	private String desc = "";
 	
 	private final SDataStatus status = new SDataStatus();
 	private final List<SView> views = new ArrayList<SView>();
@@ -43,8 +49,8 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	public boolean isModified() { return status.isModified(); }
 	public boolean isOutdated() { return status.isOutdated(); }
 	
-	@Override public synchronized STestList getTestList() { return snap.getTestList(); }
-	@Override public synchronized STestSuiteList getTestSuiteList() { return snap.getTestSuiteList(); }
+	@Override public STestList getTestList() { return snap.getTestList(); }
+	@Override public STestSuiteList getTestSuiteList() { return snap.getTestSuiteList(); }
 	
 	private SProblemImpl(SProblemList problem_list) {
 		this.problem_list = problem_list;
@@ -62,7 +68,6 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		return self;
 	}
 	
-	// To be called from synchronized methods
 	private boolean check(SProblemReader source) {
 		SAssert.assertEquals(source.getId(), getId(), "Problem ids don't match");
 		if (!source.getName().equals(name)) return true;
@@ -70,11 +75,11 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		return false;
 	}
 	
-	private synchronized void snapModified() {
+	private void snapModified() {
 		if (!check(snap)) return;
 		notifyOutdated();
 	}
-	private synchronized void snapDeleted() {
+	private void snapDeleted() {
 		id = SId.unset();
 		notifyOutdated();
 		snap = null;
@@ -113,46 +118,69 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		if (snap != null) listener.call(snap.getTestSuiteList());
 	}
 	
-	public synchronized void close() {
+	public void close() {
 		if (snap == null) return;
 		snap.removeReference(reference);
-		test_list_listener.call(null);
-		suite_list_listener.call(null);
+		if (test_list_listener != null) test_list_listener.call(null);
+		if (suite_list_listener != null) suite_list_listener.call(null);
 	}
 	
 	public void addView(SView view) { views.add(view); }
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { for (SView view : views) view.update(); }
 	
-	public void reload() throws SException {
-		SProblemReader source = SProblemData.load(id.get());
-		name = source.getName();
-		desc = source.getDescription();
+	private class LoadTask implements STask {
+		public SProblemReader problem;
+		public List<STestBasicReader> tests;
+		public List<STestSuiteBasicReader> suites;
+		@Override public void run() throws Exception {
+			problem = SProblemData.load(getId());
+			tests = STestData.list(getId());
+			suites = STestSuiteData.list(getId());
+		}
+	}
+	public void reload() throws STaskException {
+		LoadTask task = new LoadTask();
+		STaskManager.execute(task);
+		name = task.problem.getName();
+		desc = task.problem.getDescription();
 		status.markUpToDate();
 		updateViews();
 		snap.set(this);
 		snap.createLists();
-		snap.getTestList().reload();
-		snap.getTestSuiteList().reload();
+		snap.getTestList().load(task.tests);
+		snap.getTestSuiteList().load(task.suites);
 	}
-	public void create() throws SException {
-		id = new SId(SProblemData.create(this));
+	public void create() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				id = new SId(SProblemData.create(SProblemImpl.this));
+			}
+		});
 		status.markUpToDate();
 		updateViews();
-		snap = SProblemSnap.create(SProblemImpl.this);
+		snap = SProblemSnap.create(this);
 		snap.addReference(reference);
 		test_list_listener.call(snap.getTestList());
 		suite_list_listener.call(snap.getTestSuiteList());
 		problem_list.addProblem(snap);
 	}
-	public void save() throws SException {
-		SProblemData.save(SProblemImpl.this);
+	public void save() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				SProblemData.save(SProblemImpl.this);
+			}
+		});
 		status.markUpToDate();
 		updateViews();
 		snap.set(this);
 	}
-	public void delete() throws SException {
-		SProblemData.delete(getId());
+	public void delete() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				SProblemData.delete(getId());
+			}
+		});
 		problem_list.removeProblem(snap);
 		snap.notifyDeleted(); //calls snapDeleted
 	}

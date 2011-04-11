@@ -5,11 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import satori.common.SException;
 import satori.common.SListView;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
-import satori.thrift.STestData;
 
 public class STestList {
 	private final long problem_id;
@@ -21,11 +19,6 @@ public class STestList {
 	
 	private STestList(long problem_id) { this.problem_id = problem_id; }
 	
-	/*public static STestList createRemote(long problem_id) throws SException {
-		STestList self = new STestList(problem_id);
-		self.reload();
-		return self;
-	}*/
 	public static STestList createNew(long problem_id) {
 		STestList self = new STestList(problem_id);
 		self.tests = new HashMap<Long, STestSnap>();
@@ -58,9 +51,9 @@ public class STestList {
 		panes.remove(pane);
 	}
 	
-	public void reload() throws SException {
+	public void load(List<STestBasicReader> list) {
 		Map<Long, STestSnap> new_tests = new HashMap<Long, STestSnap>();
-		for (STestBasicReader t : STestData.list(problem_id)) {
+		for (STestBasicReader t : list) {
 			STestSnap current = tests != null ? tests.get(t.getId()) : null;
 			if (current != null) current.setBasic(t);
 			else current = STestSnap.createBasic(t);

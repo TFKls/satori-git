@@ -3,10 +3,10 @@ package satori.test.impl;
 import java.util.ArrayList;
 import java.util.List;
 
-import satori.blob.SBlob;
 import satori.common.SInput;
 import satori.common.SListener0;
 import satori.common.SView;
+import satori.data.SBlob;
 
 public class SSolution implements SInput<SBlob> {
 	private SBlob blob;

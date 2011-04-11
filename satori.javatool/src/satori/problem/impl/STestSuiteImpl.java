@@ -8,21 +8,23 @@ import java.util.Map;
 
 import satori.common.SAssert;
 import satori.common.SDataStatus;
-import satori.common.SException;
 import satori.common.SId;
 import satori.common.SIdReader;
 import satori.common.SListener0;
 import satori.common.SPair;
 import satori.common.SReference;
 import satori.common.SView;
+import satori.data.STestSuiteData;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SParametersMetadata;
 import satori.problem.SParentProblem;
 import satori.problem.STestSuiteReader;
 import satori.problem.STestSuiteSnap;
+import satori.task.STask;
+import satori.task.STaskException;
+import satori.task.STaskManager;
 import satori.test.STestSnap;
 import satori.test.impl.STestImpl;
-import satori.thrift.STestSuiteData;
 
 public class STestSuiteImpl implements STestSuiteReader {
 	private STestSuiteSnap snap = null;
@@ -70,13 +72,13 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	private STestSuiteImpl() {}
 	
-	private List<STestImpl> createTestList(List<STestSnap> source) throws SException {
+	private List<STestImpl> createTestList(List<STestSnap> source) throws STaskException {
 		List<STestImpl> tests = new ArrayList<STestImpl>();
 		for (STestSnap snap : source) tests.add(STestImpl.create(snap, problem));
 		return tests;
 	}
 	
-	public static STestSuiteImpl create(STestSuiteSnap snap, SParentProblem problem) throws SException {
+	public static STestSuiteImpl create(STestSuiteSnap snap, SParentProblem problem) throws STaskException {
 		if (!snap.isComplete()) snap.reload();
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.snap = snap;
@@ -107,7 +109,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.test_params = Collections.emptyMap();
 		return self;
 	}
-	public static STestSuiteImpl createNew(List<STestSnap> tests, SParentProblem problem) throws SException {
+	public static STestSuiteImpl createNew(List<STestSnap> tests, SParentProblem problem) throws STaskException {
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.id = SId.unset();
 		self.problem = problem;
@@ -290,10 +292,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { for (SView view : views) view.update(); }
 	
-	public void reload() throws SException {
-		SAssert.assertTrue(isRemote(), "Test suite not remote");
-		snap.reload(); //calls snapModified
-		List<STestImpl> new_tests = createTestList(snap.getTests());
+	public void reload() throws STaskException {
+		snap.reload(); //calls snapModified //TODO
+		List<STestImpl> new_tests = createTestList(snap.getTests()); //TODO
 		name = snap.getName();
 		desc = snap.getDescription();
 		tests = new_tests;
@@ -303,26 +304,36 @@ public class STestSuiteImpl implements STestSuiteReader {
 		notifyUpToDate();
 		callMetadataModifiedListeners();
 	}
-	public void create() throws SException {
-		SAssert.assertFalse(isRemote(), "Test suite already created");
-		id = new SId(STestSuiteData.create(this));
+	public void create() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				id = new SId(STestSuiteData.create(STestSuiteImpl.this));
+			}
+		});
 		notifyUpToDate();
 		snap = STestSuiteSnap.create(problem.getTestList(), this);
 		snap.addReference(reference);
 		problem.getTestSuiteList().addTestSuite(snap);
 	}
-	public void save() throws SException {
-		SAssert.assertTrue(isRemote(), "Test suite not remote");
-		STestSuiteData.save(this);
+	public void save() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				STestSuiteData.save(STestSuiteImpl.this);
+			}
+		});
 		notifyUpToDate();
 		snap.set(this);
 	}
-	public void delete() throws SException {
-		SAssert.assertTrue(isRemote(), "Test suite not remote");
-		STestSuiteData.delete(getId());
+	public void delete() throws STaskException {
+		STaskManager.execute(new STask() {
+			@Override public void run() throws Exception {
+				STestSuiteData.delete(getId());
+			}
+		});
 		problem.getTestSuiteList().removeTestSuite(snap);
 		snap.notifyDeleted(); //calls snapDeleted
 	}
+	
 	public void close() {
 		if (snap == null) return;
 		snap.removeReference(reference);

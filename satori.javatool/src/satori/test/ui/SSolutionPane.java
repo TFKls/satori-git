@@ -13,7 +13,6 @@ import javax.swing.JButton;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 
-import satori.common.SException;
 import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SView;
@@ -22,9 +21,9 @@ import satori.common.ui.SBlobOutputView;
 import satori.common.ui.SPane;
 import satori.common.ui.SPaneView;
 import satori.common.ui.SStringOutputView;
-import satori.main.SFrame;
 import satori.metadata.SJudge;
 import satori.metadata.SOutputMetadata;
+import satori.task.STaskException;
 import satori.test.impl.SBlobOutput;
 import satori.test.impl.SSolution;
 import satori.test.impl.SStringOutput;
@@ -52,19 +51,19 @@ public class SSolutionPane implements SRow {
 	
 	private void runRequest(STestResult result) {
 		try { result.run(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void runAllRequest() {
 		try { for (STestResult result : results) result.run(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); }
+		catch(STaskException ex) {}
 	}
 	private void refreshRequest(STestResult result) {
 		try { result.refresh(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void refreshAllRequest() {
 		try { for (STestResult result : results) result.refresh(); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); }
+		catch(STaskException ex) {}
 	}
 	
 //

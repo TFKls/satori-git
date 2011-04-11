@@ -45,14 +45,14 @@ import javax.swing.ListSelectionModel;
 import javax.swing.SwingConstants;
 import javax.swing.TransferHandler;
 
-import satori.blob.SBlob;
-import satori.common.SException;
 import satori.common.SInput;
+import satori.data.SBlob;
 import satori.main.SFrame;
+import satori.task.STaskException;
 
 public class SBlobInputView implements SPaneView {
 	public static interface BlobLoader {
-		Map<String, SBlob> getBlobs() throws SException;
+		Map<String, SBlob> getBlobs() throws STaskException;
 	}
 	
 	private final SInput<SBlob> data;
@@ -119,7 +119,7 @@ public class SBlobInputView implements SPaneView {
 			dialog.setLocationRelativeTo(SFrame.get().getFrame());
 		}
 		
-		public SBlob process() throws SException {
+		public SBlob process() throws STaskException {
 			Map<String, SBlob> blobs = blob_loader.getBlobs();
 			Vector<String> names = new Vector<String>(blobs.keySet());
 			Collections.sort(names);
@@ -140,7 +140,7 @@ public class SBlobInputView implements SPaneView {
 			if (blob == null) return;
 			data.set(blob);
 		}
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void loadFile() {
 		JFileChooser file_chooser = new JFileChooser();
@@ -148,13 +148,13 @@ public class SBlobInputView implements SPaneView {
 		int ret = file_chooser.showDialog(SFrame.get().getFrame(), "Load");
 		if (ret != JFileChooser.APPROVE_OPTION) return;
 		try { data.set(SBlob.createLocal(file_chooser.getSelectedFile())); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void editFile() {
 		if (data.get() == null) return;
 		SEditDialog dialog = new SEditDialog();
 		try { data.set(dialog.process(data.get())); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void saveFile() {
 		if (data.get() == null) return;
@@ -164,7 +164,7 @@ public class SBlobInputView implements SPaneView {
 		int ret = file_chooser.showDialog(SFrame.get().getFrame(), "Save");
 		if (ret != JFileChooser.APPROVE_OPTION) return;
 		try { data.get().saveLocal(file_chooser.getSelectedFile()); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	private void rename() {
 		if (edit_mode || data.get() == null) return;
@@ -179,7 +179,7 @@ public class SBlobInputView implements SPaneView {
 		if (!edit_mode) return;
 		SBlob new_data = data.get().rename(field.getText());
 		try { data.set(new_data); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) { return; }
 		edit_mode = false;
 		label.setVisible(true);
 		if (focus) label.requestFocus();
@@ -194,7 +194,7 @@ public class SBlobInputView implements SPaneView {
 	}
 	private void clear() {
 		try { data.set(null); }
-		catch(SException ex) { SFrame.showErrorDialog(ex); return; }
+		catch(STaskException ex) {}
 	}
 	
 	private void showPopup(Point location) {
@@ -292,7 +292,7 @@ public class SBlobInputView implements SPaneView {
 				try { object = (SBlob)t.getTransferData(sFileFlavor); }
 				catch(Exception ex) { return false; }
 				try { data.set(object); }
-				catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
+				catch(STaskException ex) { return false; }
 				return true;
 			}
 			List<File> file_list = null;
@@ -305,7 +305,7 @@ public class SBlobInputView implements SPaneView {
 			catch(Exception ex) { return false; }
 			if (file_list == null || file_list.size() != 1) return false;
 			try { data.set(SBlob.createLocal(file_list.get(0))); }
-			catch(SException ex) { SFrame.showErrorDialog(ex); return false; }
+			catch(STaskException ex) { return false; }
 			return true;
 		}
 		@Override protected Transferable createTransferable(JComponent c) { return new SFileTransferable(data.get()); }

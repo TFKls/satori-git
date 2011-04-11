@@ -5,6 +5,7 @@ import javax.swing.KeyStroke;
 import javax.swing.SwingUtilities;
 import javax.swing.UIManager;
 
+import satori.task.STaskManager;
 import satori.test.ui.SIcons;
 
 public class SatoriTool {
@@ -16,6 +17,7 @@ public class SatoriTool {
 				im.put(KeyStroke.getKeyStroke("ENTER"), "pressed");
 				im.put(KeyStroke.getKeyStroke("released ENTER"), "released");
 				SFrame.setInstance();
+				STaskManager.setFrame(SFrame.get().getFrame());
 				SFrame.get().start();
 			}
 		});

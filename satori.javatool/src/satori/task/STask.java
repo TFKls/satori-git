@@ -1,5 +1,5 @@
 package satori.task;
 
 public interface STask {
-	void run(STaskLogger logger) throws Throwable;
+	void run() throws Exception;
 }

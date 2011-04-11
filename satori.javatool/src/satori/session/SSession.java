@@ -1,6 +1,5 @@
 package satori.session;
 
-import java.net.Socket;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.ArrayList;
@@ -18,12 +17,10 @@ import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
 import org.apache.thrift.transport.TTransport;
 
-import satori.common.SException;
 import satori.common.SView;
 import satori.config.SConfig;
 import satori.task.STask;
 import satori.task.STaskException;
-import satori.task.STaskLogger;
 import satori.task.STaskManager;
 import satori.thrift.gen.User;
 
@@ -68,11 +65,11 @@ public class SSession {
 			this.username = username;
 			this.password = password;
 		}
-		@Override public void run(STaskLogger logger) throws Throwable {
+		@Override public void run() throws Exception {
 			SSession session = new SSession();
-			logger.log("Connecting to server...");
+			STaskManager.log("Connecting to server...");
 			session.createProtocol();
-			logger.log("Logging in to server...");
+			STaskManager.log("Logging in to server...");
 			User.Iface iface = new User.Client(session.protocol);
 			session.token = iface.User_authenticate("", username, password);
 			session.username = username;
@@ -81,18 +78,18 @@ public class SSession {
 		}
 	}
 	private static class AnonymousLoginTask implements STask {
-		@Override public void run(STaskLogger logger) throws Throwable {
+		@Override public void run() throws Exception {
 			SSession session = new SSession();
-			logger.log("Connecting to server...");
+			STaskManager.log("Connecting to server...");
 			session.createProtocol();
 			instance = session;
 		}
 	}
 	private static class LogoutTask implements STask {
-		@Override public void run(STaskLogger logger) throws Throwable {
+		@Override public void run() throws Exception {
 			SSession session = instance;
 			instance = null;
-			logger.log("Disconnecting from server...");
+			STaskManager.log("Disconnecting from server...");
 			session.closeProtocol();
 		}
 	}
@@ -112,14 +109,14 @@ public class SSession {
 	
 	public static SSession get() { return instance; }
 	
-	public static String getToken() throws SException {
+	public static String getToken() throws Exception {
 		SSession session = instance;
-		if (session == null) throw new SException("Not logged in");
+		if (session == null) throw new Exception("Not logged in");
 		return session.token;
 	}
-	public static TProtocol getProtocol() throws SException {
+	public static TProtocol getProtocol() throws Exception {
 		SSession session = instance;
-		if (session == null) throw new SException("Not logged in");
+		if (session == null) throw new Exception("Not logged in");
 		return session.protocol;
 	}
 	

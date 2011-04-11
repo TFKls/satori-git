@@ -1,7 +1,7 @@
-package satori.common;
+/*package satori.common;
 
 @SuppressWarnings("serial")
 public class SException extends Exception {
-	public SException(String msg) { super(msg); }
-	public SException(Exception ex) { super(ex); }
-}
+	protected SException(String message) { super(message); }
+	protected SException(Throwable t) { super(t); }
+}*/

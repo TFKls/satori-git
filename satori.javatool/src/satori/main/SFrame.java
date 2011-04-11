@@ -14,7 +14,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JOptionPane;
 
 import satori.common.SAssert;
-import satori.common.SException;
 import satori.common.SView;
 import satori.common.ui.STabbedPane;
 import satori.config.SConfig;
@@ -70,7 +69,7 @@ public class SFrame {
 	private void problemsRequest() {
 		SProblemListPane pane;
 		try { pane = SProblemListPane.get(tabs); }
-		catch(SException ex) { showErrorDialog(ex); return; }
+		catch(STaskException ex) { return; }
 		tabs.openPane("Problems", pane);
 	}
 	private void closeRequest() {
@@ -91,39 +90,29 @@ public class SFrame {
 		session_menu = new JMenu("Session");
 		login_button = new JMenuItem("Login...");
 		login_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				loginRequest();
-			}
+			@Override public void actionPerformed(ActionEvent e) { loginRequest(); }
 		});
 		session_menu.add(login_button);
 		anonymous_button = new JMenuItem("Anonymous login");
 		anonymous_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				anonymousLoginRequest();
-			}
+			@Override public void actionPerformed(ActionEvent e) { anonymousLoginRequest(); }
 		});
 		session_menu.add(anonymous_button);
 		logout_button = new JMenuItem("Logout");
 		logout_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				logoutRequest();
-			}
+			@Override public void actionPerformed(ActionEvent e) { logoutRequest(); }
 		});
 		session_menu.add(logout_button);
 		config_button = new JMenuItem("Server configuration...");
 		config_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				configRequest();
-			}
+			@Override public void actionPerformed(ActionEvent e) { configRequest(); }
 		});
 		session_menu.add(config_button);
 		menu_bar.add(session_menu);
 		open_menu = new JMenu("Open");
 		problems_button = new JMenuItem("Problems");
 		problems_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) {
-				problemsRequest();
-			}
+			@Override public void actionPerformed(ActionEvent e) { problemsRequest(); }
 		});
 		open_menu.add(problems_button);
 		menu_bar.add(open_menu);
@@ -154,9 +143,9 @@ public class SFrame {
 	public static void showErrorDialog(String message) {
 		JOptionPane.showMessageDialog(get().frame, message, "Error", JOptionPane.ERROR_MESSAGE);
 	}
-	public static void showErrorDialog(SException ex) {
-		showErrorDialog(ex.getMessage());
-	}
+	/*public static void showErrorDialog(Throwable t) {
+		showErrorDialog(t.getMessage());
+	}*/
 	public static boolean showWarningDialog(String message) {
 		Object[] options = { "Continue", "Cancel" };
 		return JOptionPane.showOptionDialog(get().frame, message, "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, options, options[0]) == JOptionPane.OK_OPTION;
