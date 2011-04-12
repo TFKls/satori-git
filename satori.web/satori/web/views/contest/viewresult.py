@@ -46,15 +46,6 @@ def override(request, page_info, id):
     contest = page_info.contest
     res = Web.get_result_details(submit=submit)
     report = text2html(res.report)
-    fullname = res.data_filename.rsplit('.',2)
-    if len(fullname)==2:
-        extension = '.'+fullname[1]
-    else:
-        extension = ''
-    filename = id+extension
-    rawcode = res.data
-    if rawcode and rawcode!="":
-        code = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
 
     if request.method=='POST' and 'rejudge' in request.POST.keys():
         submit.rejudge_test_results()
@@ -80,7 +71,7 @@ def override(request, page_info, id):
             return HttpResponseRedirect(reverse('view_result',args=[contest.id,submit.id]))
     else:
         form = OverrideForm(initial={'status' : res.status, 'comment' : '(override by '+page_info.user.name+', original status: '+res.status+')'})
-        fullname = res.data_filename.rsplit('.',2)
+    fullname = res.data_filename.rsplit('.',2)
     if len(fullname)==2:
         extension = '.'+fullname[1]
     else:
@@ -89,4 +80,6 @@ def override(request, page_info, id):
     rawcode = res.data
     if rawcode and rawcode!="":
         code = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
+    else:
+        code = None
     return render_to_response('result_override.html',{'page_info' : page_info, 'form' : form, 'submit' : res, 'filename': filename, 'code' : code, 'report' : report})
