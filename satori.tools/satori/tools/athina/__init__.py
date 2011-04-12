@@ -195,7 +195,7 @@ def athina_import():
                 timelimit = get_path(dir, str(t) + '.tle')
                 if os.path.exists(timelimit):
                     with open(timelimit, 'r') as f:
-                        timelimit = int(f.readline())
+                        timelimit = timedelta(seconds=float(f.readline())*0.01)
                 else:
                     timelimit = None
                 tests[t] = {
@@ -203,7 +203,7 @@ def athina_import():
                     'input'     : input,
                     'output'    : output,
                     'memlimit'  : memlimit,
-                    'timelimit' : timedelta(seconds=float(timelimit)*0.01),
+                    'timelimit' : timelimit,
                 }
             problems[dir] = {
                 'problem'   : dir,
@@ -229,7 +229,7 @@ def athina_import():
         lastname = ' '.join(user['name'].split()[1:])
         user['object'] = Creator('User', login=options.name + '_' + user['login']).fields(firstname=firstname, lastname=lastname)()
         user['object'].set_password(user['password'])
-        user['contestant'] = Creator('Contestant', contest=contest, login=user['login']).additional(user_list=[user['object']])()
+        user['contestant'] = Creator('Contestant', contest=contest, login=user['object'].login).additional(user_list=[user['object']])()
         user['contestant'].set_password(user['password'])
 
     for name, problem in sorted(problems.iteritems()):
@@ -302,22 +302,22 @@ def athina_import_testsuite():
         checker = None
     tests = [] 
     for t in range(testcount):
-        input = get_path(dir, str(t) + '.in')
+        input = get_path(str(t) + '.in')
         if not os.path.exists(input):
             input = None
-        output = get_path(dir, str(t) + '.out')
+        output = get_path(str(t) + '.out')
         if not os.path.exists(output):
             output = None
-        memlimit = get_path(dir, str(t) + '.mem')
+        memlimit = get_path(str(t) + '.mem')
         if os.path.exists(memlimit):
             with open(memlimit, 'r') as f:
                 memlimit = int(f.readline())
         else:
             memlimit = None
-        timelimit = get_path(dir, str(t) + '.tle')
+        timelimit = get_path(str(t) + '.tle')
         if os.path.exists(timelimit):
             with open(timelimit, 'r') as f:
-                timelimit = int(f.readline())
+                timelimit = timedelta(seconds=float(f.readline())*0.01)
         else:
             timelimit = None
 
