@@ -155,9 +155,10 @@ namespace runner {
                 void GroupLimits(const std::string&, const Limits&);
                 struct Stats
                 {
-                    long utime, stime, memory;
+                    long time, utime, stime, memory;
                     Stats()
-                        : utime(0)
+                        : time(0)
+                        , utime(0)
                         , stime(0)
                         , memory(0)
                     {
@@ -227,9 +228,42 @@ namespace runner {
 		void ms_timespec(long, timespec&);
 		long miliseconds(const timeval&);
 		long miliseconds(const timespec&);
-		std::pair<long, long> miliseconds(const rusage&);
-		std::pair<long, long> miliseconds(const ProcStats&);
-		std::pair<long, long> miliseconds(const Controller::Stats&);
+		struct CpuTimes
+        {
+            long user, system, time;
+            CpuTimes(long _user, long _system)
+                : user(_user)
+                , system(_system)
+            {
+                time = user + system;
+            }
+            CpuTimes(long _user, long _system, long _time)
+                : user(_user)
+                , system(_system)
+                , time(_time)
+            {}
+            bool operator<= (const CpuTimes& o) const
+            {
+                return user <= o.user && system <= o.system && time <= o.time;
+            }
+            CpuTimes& operator+= (const CpuTimes& o)
+            {
+                user += o.user;
+                system += o.system;
+                time += o.time;
+                return *this;
+            }
+            CpuTimes operator-= (const CpuTimes& o)
+            {
+                user -= o.user;
+                system -= o.system;
+                time -= o.time;
+                return *this;
+            }
+        };
+		CpuTimes miliseconds(const rusage&);
+		CpuTimes miliseconds(const ProcStats&);
+		CpuTimes miliseconds(const Controller::Stats&);
 
 		class Runner
 		{
@@ -261,8 +295,8 @@ namespace runner {
 				std::set<int> offspring;
 				bool after_exec;
 				long start_time;
-				std::pair<long, long> before_exec_time;
-				std::pair<long, long> dead_pids_time;
+				CpuTimes before_exec_time;
+				CpuTimes dead_pids_time;
 				long inside_syscall;
 
 			public:

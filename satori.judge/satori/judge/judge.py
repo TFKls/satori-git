@@ -433,6 +433,8 @@ class JailRun(Object):
             def cmd_QUERYCG(self, input):
                 path = self.cgroup_path(input['group'])
                 output = {}
+                with open(os.path.join(path, 'cpuacct.usage'), 'r') as f:
+                    output['cpu'] = f.readline().strip()
                 with open(os.path.join(path, 'cpuacct.stat'), 'r') as f:
                     _, output['cpu.user'] = f.readline().split()
                     _, output['cpu.system'] = f.readline().split()
