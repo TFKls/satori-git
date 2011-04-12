@@ -13,6 +13,7 @@ setup(name='satori.tools',
     entry_points='''
         [console_scripts]
         satori.athina_import = satori.tools.athina:athina_import
+        satori.athina_import_testsuite = satori.tools.athina:athina_import_testsuite
         satori.console = satori.tools.console:main
     ''',
 )
