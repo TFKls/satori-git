@@ -301,7 +301,7 @@ def athina_import_testsuite():
     else:
         checker = None
     judge = get_path('judge')
-    if not os.path.exist(judge):
+    if not os.path.exists(judge):
     	raise Exception('judge missing')
     tests = [] 
     for t in range(testcount):
