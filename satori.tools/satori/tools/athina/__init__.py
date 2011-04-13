@@ -287,7 +287,7 @@ def athina_import_testsuite():
     problem = Problem.filter(ProblemStruct(name=unicode(args[0])))[0]
     base_dir = unicode(args[1])
     if not os.path.exists(os.path.join(base_dir, 'testcount')):
-        raise parser.error('provided path is invalid')
+    	raise Exception('provided path is invalid')
 
     def get_path(*args):
         return os.path.join(base_dir, *args)
@@ -300,6 +300,9 @@ def athina_import_testsuite():
         checker = get_path('checker')
     else:
         checker = None
+    judge = get_path('judge')
+    if not os.path.exist(judge):
+    	raise Exception('judge missing')
     tests = [] 
     for t in range(testcount):
         input = get_path(str(t) + '.in')
@@ -322,6 +325,7 @@ def athina_import_testsuite():
             timelimit = None
 
         oa = OaMap()
+        oa.set_blob_path('judge', judge)
         if checker != None:
             oa.set_blob_path('checker', checker)
         if input != None:
