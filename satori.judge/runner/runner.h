@@ -222,6 +222,7 @@ namespace runner {
         };
 
 		void Debug(const char*, ...);
+		void Warning(const char*, ...);
 		void Fail(const char*, ...);
 
 		void ms_timeval(long, timeval&);
@@ -295,7 +296,6 @@ namespace runner {
 				std::set<int> offspring;
 				bool after_exec;
 				long start_time;
-				CpuTimes before_exec_time;
 				CpuTimes dead_pids_time;
 				long inside_syscall;
 
@@ -394,7 +394,6 @@ namespace runner {
 					  , offspring()
 					  , after_exec(false)
 					  , start_time(0)
-					  , before_exec_time(0,0)
 					  , dead_pids_time(0,0)
 					  , debug_file("")
 					  , dir("")

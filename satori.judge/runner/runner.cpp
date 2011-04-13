@@ -475,6 +475,13 @@ void Debug(const char* format, ...)
     Logger::Debug(format, args);
     va_end(args);
 }
+void Warning(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    Logger::Warning(format, args);
+    va_end(args);
+}
 void Fail(const char* format, ...)
 {
     int err = errno;
@@ -822,7 +829,6 @@ bool Runner::check_times()
         Fail("clock_gettime(CLOCK_REALTIME) failed");
     long realtimesofar = miliseconds(ts) - start_time;
     CpuTimes proctimesofar = dead_pids_time;
-    proctimesofar -= before_exec_time;
     long curmemory = 0;
     for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
     {
@@ -1313,18 +1319,14 @@ void Runner::process_child(long epid)
                     case __NR_execve:
                         if(!after_exec)
                         {
-                            timespec ts;
-                            before_exec_time = miliseconds(usage);
-                            if (clock_gettime(CLOCK_REALTIME, &ts))
-                                Fail("clock_gettime(CLOCK_REALTIME) failed");
-                            start_time = miliseconds(ts);
+                            Debug("First exec reached");
+                            after_exec = true;
                         }
                         else if (ptrace_safe)
                         {
                             result.SetStatus(Result::RES_IO);
                             Stop();
                         }
-                        after_exec = true;
                     case __NR_exit:
                         break;
                     case __NR_read:
@@ -1435,11 +1437,31 @@ void Runner::Run()
     if (ptrace_safe)
         ptrace = true;
     if (user == "" && thread_count > 0)
-        Debug("BEWARE! 'thread_count' sets limits for user, not for process group!");
+        Warning("BEWARE! 'thread_count' sets limits for user, not for process group!");
     if (child > 0)
         Fail("run failed");
     if (pipe(pipefd))
         Fail("pipe failed");
+    if (cgroup_memory > 0 && memory_space <= 0)
+    {
+        memory_space = cgroup_memory;
+        Debug("Setting memory limit to cgroup memory limit");
+    }
+    if (cgroup_time > 0 && cpu_time <= 0)
+    {
+        cpu_time = cgroup_time;
+        Debug("Setting time limit to cgroup time limit");
+    }
+    if (cgroup_user_time > 0 && user_time <= 0)
+    {
+        user_time = cgroup_user_time;
+        Debug("Setting user time limit to cgroup user time limit");
+    }
+    if (cgroup_system_time > 0 && system_time <= 0)
+    {
+        system_time = cgroup_system_time;
+        Debug("Setting system time limit to cgroup system time limit");
+    }
     after_exec = false;
 
     unsigned long flags = SIGCHLD;
