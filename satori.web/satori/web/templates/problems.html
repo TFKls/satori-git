@@ -19,40 +19,42 @@
 <table class="problems_table">
 {% for pinfo in problemlist %}
 {% with pinfo.problem as problem %}
-<tr>
+<tr class="problem_row">
 
-<td>
+<td class="box">
 {{pinfo.select}}
 </td>
 
-<td>
+<td class="code">
  {{ problem.code }} 
 </td>
 
-<td> 
+<td class="title"> 
 {% if problem.statement %}
-<a href="{% url contest_problems_view page_info.contest.id problem.id %}">{{ problem.title }}</a><br/>
+<a class="problemtitle" href="{% url contest_problems_view page_info.contest.id problem.id %}">{{ problem.title }}</a><br/>
 {% else %}
 {{ problem.title }}
 {% endif %}
 </td>
 
-<td>
-{% if pinfo.admin %}
-{% if pinfo.visible %} Visible {% endif %}
-{% if pinfo.submittable %} Submittable {% endif %}
-{% endif %}
-</td>
-
-<td>
+<td class="has_pdf">
 {% if pinfo.has_pdf %}
-<a href={% url download_group "download" "ProblemMapping" pinfo.problem.id "statement_files" "_pdf" pinfo.problem.code|add:".pdf" %}>
+<a class="button" href={% url download_group "download" "ProblemMapping" pinfo.problem.id "statement_files" "_pdf" pinfo.problem.code|add:".pdf" %}>
 PDF
 </a>
 {% endif %}
 </td>
 
-<td> 
+
+<td class="visible">
+{% if pinfo.admin %}
+{% if pinfo.visible %} Visible <br/>{% endif %}
+{% if pinfo.submittable %} Submittable {% endif %}
+{% endif %}
+</td>
+
+
+<td class="times"> 
 {% if pinfo.admin %}
 {% if pinfo.when_view %}
 
@@ -68,7 +70,7 @@ PDF
 {% endif %}
 </td>
 
-<td> 
+<td class="times"> 
 {% if pinfo.admin %}
 {% if pinfo.when_submit %}
 
@@ -85,21 +87,26 @@ PDF
 </td>
 
 
-<td>
+<td class="edit">
 {% if pinfo.admin %}
 <a class="smallbutton" href={% url contest_problems_edit page_info.contest.id problem.id %}>Edit problem</a>
 {% endif %}
 </td>
 
-<td>
+</tr>
+{% if pinfo.description %}
+<tr class="comment_row"/>
+<td colspan="8" class="comment">
 {{ pinfo.description|safe }}
 </td>
-
 </tr>
+{% endif %}
 
 {% endwith %}
 {% endfor %}
 </table>
+
+
 {% endfor %}
 
 {% if any_admin %}
