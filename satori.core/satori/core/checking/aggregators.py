@@ -130,7 +130,7 @@ class ACMAggregator(AggregatorBase):
 
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
-                ok = result.oa_get_str('status') == 'OK'
+                ok = result.oa_get_str('status') in ['OK', 'ACC']
                 if self.params.time_stop and time > self.params.time_stop:
                     return
                 if self.params.ignore:
@@ -313,12 +313,14 @@ class MarksAggregator(AggregatorBase):
 #@              <param type="text"     name="group_points"   description="Number of points for each problem group"/>
 #@              <param type="text"     name="points_mark"    description="Marks for points ranges"/>
 #@              <param type="bool"     name="show_marks"     description="Show marks" default="true"/>
+#@              <param type="bool"     name="show_max_score" description="Show maximum possible score" default="false"/>
 #@              <param type="datetime" name="time_start_descent"       description="Descent start time"/>
 #@              <param type="time"     name="time_descent"   description="Descent to zero time"/>
 #@      </general>
 #@      <problem>
 #@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
 #@              <param type="bool"     name="show"           description="Show column for this problem" default="true"/>
+#@              <param type="bool"     name="show_max_score" description="Show maximum possible score" default="false"/>
 #@              <param type="bool"     name="obligatory"     description="Problem is obligatory" default="1"/>
 #@              <param type="float"    name="max_score"      description="Maximum score for problem" default="1"/>
 #@              <param type="float"    name="min_score"      description="Minimum score for problem" default="-1"/>
@@ -356,6 +358,7 @@ class MarksAggregator(AggregatorBase):
             else:
                 all_ok = True
                 points = []
+                mpoints = []
                 for pid in self.aggregator.sorted_problems:
                     problem = self.aggregator.problem_cache[pid]
                     g_score = self.aggregator.group_score[problem.group]
@@ -366,6 +369,11 @@ class MarksAggregator(AggregatorBase):
                         maxscore *= float(self.aggregator.params.group_points[problem.group]) / g_score
                         minscore *= float(self.aggregator.params.group_points[problem.group]) / g_score
                     score = None
+                    mscore = maxscore
+                    if params.time_start_descent is not None and params.time_descent is not None:
+                        mscore = self.timed_score(mscore, datetime.now(), params.time_start_descent, params.time_descent)
+                    if minscore is not None and mscore < minscore:
+                        mscore = minscore
                     if pid in self.scores:
                         if self.scores[pid].ok:
                             score = maxscore
@@ -381,8 +389,10 @@ class MarksAggregator(AggregatorBase):
                         if params.obligatory:
                             all_ok = False
                     points.append(score)
+                    mpoints.append(mscore)
                 problems = ' '.join([s.get_str() for s in sorted([s for s in self.scores.values() if s.ok], key=attrgetter('ok_time'))])
                 score = sum([p for p in points if p is not None], 0.0)
+                mscore = sum([p for p in mpoints if p is not None], 0.0)
                 if not all_ok:
                     mark = 'FAIL'
                 else:
@@ -397,16 +407,23 @@ class MarksAggregator(AggregatorBase):
                 columns = ['', contestant_name]
                 if self.aggregator.params.show_marks:
                     columns += [ str(mark) ]
-                columns += ['%.2f'%(score,), problems]
+                column = '%.2f'%(score,)
+                if self.params.show_max_score:
+                    column += ' (%.2f)'%(mscore)
+
+                columns += [column, problems]
                 pi=0
                 for pid in self.aggregator.sorted_problems:
                     params = self.aggregator.problem_params[pid]
                     if params.show:
                         if points[pi] is None:
                             if params.obligatory:
-                                columns += [ 'F' ]
+                                column = 'F'
                             else:
-                                columns += [ '\\-' ]
+                                column = '\\-'
+                            if params.show_max_score:
+                                column += ' (%.2f)'%(mpoints[pi])
+                            columns += [ column ]
                         else:
                             columns += [ '%.2f'%(points[pi],) ]
                     pi += 1
@@ -456,6 +473,8 @@ class MarksAggregator(AggregatorBase):
                 params.max_score = self.params.max_score
             if params.min_score is None:
                 params.min_score = self.params.min_score
+            if params.show_max_score is None:
+                params.show_max_score = self.params.show_max_score
 
         self.sorted_problems = [p.id for p in sorted(self.problem_cache.values(), key=attrgetter('code'))]
         columns = [(4, 'Lp.'), (32, 'Name')]
