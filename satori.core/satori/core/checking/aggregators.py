@@ -408,9 +408,8 @@ class MarksAggregator(AggregatorBase):
                 if self.aggregator.params.show_marks:
                     columns += [ str(mark) ]
                 column = '%.2f'%(score,)
-                if self.params.show_max_score:
+                if self.aggregator.params.show_max_score:
                     column += ' (%.2f)'%(mscore)
-
                 columns += [column, problems]
                 pi=0
                 for pid in self.aggregator.sorted_problems:
