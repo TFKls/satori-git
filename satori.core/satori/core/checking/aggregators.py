@@ -388,6 +388,8 @@ class MarksAggregator(AggregatorBase):
                     else:
                         if params.obligatory:
                             all_ok = False
+                    if score is not None and score > mscore:
+                        mscore = score
                     points.append(score)
                     mpoints.append(mscore)
                 problems = ' '.join([s.get_str() for s in sorted([s for s in self.scores.values() if s.ok], key=attrgetter('ok_time'))])
@@ -409,7 +411,7 @@ class MarksAggregator(AggregatorBase):
                     columns += [ str(mark) ]
                 column = '%.2f'%(score,)
                 if self.aggregator.params.show_max_score:
-                    column += ' (%.2f)'%(mscore)
+                    column += ' (%.2f)'%(mscore,)
                 columns += [column, problems]
                 pi=0
                 for pid in self.aggregator.sorted_problems:
