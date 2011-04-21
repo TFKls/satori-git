@@ -39,6 +39,8 @@
 #include <linux/fs.h>
 #include <linux/limits.h>
 
+#include <asm/param.h>
+
 #include <curl/curl.h>
 #include <yaml.h>
 
@@ -473,6 +475,13 @@ void Debug(const char* format, ...)
     Logger::Debug(format, args);
     va_end(args);
 }
+void Warning(const char* format, ...)
+{
+    va_list args;
+    va_start(args, format);
+    Logger::Warning(format, args);
+    va_end(args);
+}
 void Fail(const char* format, ...)
 {
     int err = errno;
@@ -547,18 +556,18 @@ void ms_timespec(long ms, timespec& ts)
     ts.tv_sec = ms/1000;
     ts.tv_nsec = (ms%1000)*1000000;
 }
-pair<long, long> miliseconds(const rusage& usage)
+CpuTimes miliseconds(const rusage& usage)
 {
-    return make_pair(miliseconds(usage.ru_utime), miliseconds(usage.ru_stime));
+    return CpuTimes(miliseconds(usage.ru_utime), miliseconds(usage.ru_stime));
 };
-pair<long, long> miliseconds(const ProcStats& stat)
+CpuTimes miliseconds(const ProcStats& stat)
 {
-    return make_pair(stat.utime*1000/sysconf(_SC_CLK_TCK), stat.stime*1000/sysconf(_SC_CLK_TCK));
+    return CpuTimes(stat.utime*1000/sysconf(_SC_CLK_TCK), stat.stime*1000/sysconf(_SC_CLK_TCK));
 };
-pair<long, long> miliseconds(const Controller::Stats& stat)
+CpuTimes miliseconds(const Controller::Stats& stat)
 {
-    const long CGROUP_CPU_CLK_TCK = 100;
-    return make_pair(stat.utime*1000/CGROUP_CPU_CLK_TCK, stat.stime*1000/CGROUP_CPU_CLK_TCK);
+    const long CGROUP_CPU_CLK_TCK = HZ;
+    return CpuTimes(stat.utime*1000/CGROUP_CPU_CLK_TCK, stat.stime*1000/CGROUP_CPU_CLK_TCK, stat.time/1000000);
 };
 bool Runner::milisleep(long ms)
 {
@@ -805,6 +814,7 @@ Controller::Stats Controller::GroupStats(const string& cgroup)
     CheckOK("QUERYCG", output);
     Stats s;
     s.memory = atol(output["memory"].c_str());
+    s.time = atol(output["cpu"].c_str());
     s.utime = atol(output["cpu.user"].c_str());
     s.stime = atol(output["cpu.system"].c_str());
     return s;
@@ -818,9 +828,7 @@ bool Runner::check_times()
     if (clock_gettime(CLOCK_REALTIME, &ts))
         Fail("clock_gettime(CLOCK_REALTIME) failed");
     long realtimesofar = miliseconds(ts) - start_time;
-    pair<long, long> proctimesofar = dead_pids_time;
-    proctimesofar.first -= before_exec_time.first;
-    proctimesofar.second -= before_exec_time.second;
+    CpuTimes proctimesofar = dead_pids_time;
     long curmemory = 0;
     for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
     {
@@ -829,18 +837,13 @@ bool Runner::check_times()
         proctimesofar += miliseconds(usage.ru_utime);
         */
         ProcStats stat(*i);
-        proctimesofar.first += miliseconds(stat).first;
-        proctimesofar.second += miliseconds(stat).second;
+        proctimesofar += miliseconds(stat);
         curmemory += stat.mem_size;
     }
-    if (proctimesofar.first < 0 || proctimesofar.second < 0)
+    if (proctimesofar.user < 0 || proctimesofar.system < 0 || proctimesofar.time < 0)
     {
-        ProcStats stat(*offspring.begin());
-        Debug("CPU time below zero: (%ld,%ld) = (%ld,%ld) - (%ld,%ld) + (%ld,%ld)", proctimesofar.first, proctimesofar.second, dead_pids_time.first, dead_pids_time.second, before_exec_time.first, before_exec_time.second, miliseconds(stat).first, miliseconds(stat).second);
-        if (proctimesofar.first < 0)
-            proctimesofar.first = 0;
-        if (proctimesofar.second < 0)
-            proctimesofar.second = 0;
+        Debug("CPU time below zero: (%ld + %ld = %ld)", proctimesofar.user, proctimesofar.system, proctimesofar.time);
+        proctimesofar = CpuTimes(0,0);
     }
     if (realtimesofar < 0)
     {
@@ -848,9 +851,9 @@ bool Runner::check_times()
         realtimesofar = 0;
     }
     result.real_time = realtimesofar;
-    result.cpu_time = proctimesofar.first + proctimesofar.second;
-    result.user_time = proctimesofar.first;
-    result.system_time = proctimesofar.second;
+    result.cpu_time = proctimesofar.time;
+    result.user_time = proctimesofar.user;
+    result.system_time = proctimesofar.system;
     result.memory = max((long)result.memory, curmemory);
     if ((cpu_time > 0 && cpu_time < (long)result.cpu_time) ||
             (real_time > 0 && real_time < (long)result.real_time) ||
@@ -873,10 +876,10 @@ bool Runner::check_cgroup()
     {
         Controller::Stats stats = controller->GroupStats(cgroup);
         result.cgroup_memory = stats.memory;
-        pair<long, long> cgtime = miliseconds(stats);
-        result.cgroup_time = cgtime.first + cgtime.second;
-        result.cgroup_user_time = cgtime.first;
-        result.cgroup_system_time = cgtime.second;
+        CpuTimes cgtime = miliseconds(stats);
+        result.cgroup_time = cgtime.time;
+        result.cgroup_user_time = cgtime.user;
+        result.cgroup_system_time = cgtime.system;
         if ((cgroup_time > 0 && cgroup_time < (long)result.cgroup_time) ||
                 (cgroup_user_time > 0 && cgroup_user_time < (long)result.cgroup_user_time) ||
                 (cgroup_system_time > 0 && cgroup_system_time < (long)result.cgroup_system_time))
@@ -1316,18 +1319,14 @@ void Runner::process_child(long epid)
                     case __NR_execve:
                         if(!after_exec)
                         {
-                            timespec ts;
-                            before_exec_time = miliseconds(usage);
-                            if (clock_gettime(CLOCK_REALTIME, &ts))
-                                Fail("clock_gettime(CLOCK_REALTIME) failed");
-                            start_time = miliseconds(ts);
+                            Debug("First exec reached");
+                            after_exec = true;
                         }
                         else if (ptrace_safe)
                         {
                             result.SetStatus(Result::RES_IO);
                             Stop();
                         }
-                        after_exec = true;
                     case __NR_exit:
                         break;
                     case __NR_read:
@@ -1381,8 +1380,7 @@ void Runner::process_child(long epid)
             int s = WSTOPSIG(status);
             Debug("Signaled %d (%d)", (int)p, s);
         }
-        dead_pids_time.first += miliseconds(usage).first;
-        dead_pids_time.second += miliseconds(usage).second;
+        dead_pids_time = miliseconds(usage);
         offspring.erase(p);
         Unregister(p);
         if (p == child)
@@ -1439,11 +1437,31 @@ void Runner::Run()
     if (ptrace_safe)
         ptrace = true;
     if (user == "" && thread_count > 0)
-        Debug("BEWARE! 'thread_count' sets limits for user, not for process group!");
+        Warning("BEWARE! 'thread_count' sets limits for user, not for process group!");
     if (child > 0)
         Fail("run failed");
     if (pipe(pipefd))
         Fail("pipe failed");
+    if (cgroup_memory > 0 && memory_space <= 0)
+    {
+        memory_space = cgroup_memory;
+        Debug("Setting memory limit to cgroup memory limit");
+    }
+    if (cgroup_time > 0 && cpu_time <= 0)
+    {
+        cpu_time = cgroup_time;
+        Debug("Setting time limit to cgroup time limit");
+    }
+    if (cgroup_user_time > 0 && user_time <= 0)
+    {
+        user_time = cgroup_user_time;
+        Debug("Setting user time limit to cgroup user time limit");
+    }
+    if (cgroup_system_time > 0 && system_time <= 0)
+    {
+        system_time = cgroup_system_time;
+        Debug("Setting system time limit to cgroup system time limit");
+    }
     after_exec = false;
 
     unsigned long flags = SIGCHLD;

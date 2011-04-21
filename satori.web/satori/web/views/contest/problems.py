@@ -88,7 +88,8 @@ def viewall(request, page_info):
         p['problem'] = pinfo.problem_mapping
         p['admin'] = admin
         p['has_pdf'] = pinfo.has_pdf
-        p['description'] = text2html(pinfo.problem_mapping.description)
+        if pinfo.problem_mapping.description and pinfo.problem_mapping.description!="":
+            p['description'] = text2html(pinfo.problem_mapping.description)
         g = pinfo.problem_mapping.group
         if not g in groups.keys():
             groups[g] = []

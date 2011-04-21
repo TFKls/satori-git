@@ -195,7 +195,7 @@ def athina_import():
                 timelimit = get_path(dir, str(t) + '.tle')
                 if os.path.exists(timelimit):
                     with open(timelimit, 'r') as f:
-                        timelimit = int(f.readline())
+                        timelimit = timedelta(seconds=float(f.readline())*0.01)
                 else:
                     timelimit = None
                 tests[t] = {
@@ -203,7 +203,7 @@ def athina_import():
                     'input'     : input,
                     'output'    : output,
                     'memlimit'  : memlimit,
-                    'timelimit' : timedelta(seconds=float(timelimit)*0.01),
+                    'timelimit' : timelimit,
                 }
             problems[dir] = {
                 'problem'   : dir,
@@ -229,7 +229,7 @@ def athina_import():
         lastname = ' '.join(user['name'].split()[1:])
         user['object'] = Creator('User', login=options.name + '_' + user['login']).fields(firstname=firstname, lastname=lastname)()
         user['object'].set_password(user['password'])
-        user['contestant'] = Creator('Contestant', contest=contest, login=user['login']).additional(user_list=[user['object']])()
+        user['contestant'] = Creator('Contestant', contest=contest, login=user['object'].login).additional(user_list=[user['object']])()
         user['contestant'].set_password(user['password'])
 
     for name, problem in sorted(problems.iteritems()):
@@ -269,9 +269,6 @@ def athina_import():
     admin_ranking = Creator('Ranking', contest=contest, name='Admin Ranking').fields(is_public=False, aggregator='ACMAggregator').additional(params=params.get_map(), problem_test_suites={}, problem_params={})()
     for id, submit in sorted(submits.iteritems()):
         user = users[submit['user']]
-#        token_container.set_token(User.authenticate(options.name + '_' + user['login'], user['password']))
-#        submit['object'] = Creator('Submit', problem=problems[submit['problem']]['mapping']).additional(filename=submit['filename'], content=submit['data']).create()
-#        token_container.set_token(mytoken)
         test_results = {}
         problem = problems[submit['problem']]
         for num, test in problem['tests'].iteritems():
@@ -281,3 +278,64 @@ def athina_import():
                 oa.set_str('execute_time_cpu', unicode(submit['test_results'][num]['time']))
                 test_results[test['object']] = oa.get_map()
         submit['object'] = Creator('Submit', contestant=user['contestant'], time=submit['time'], problem=problems[submit['problem']]['mapping']).additional(filename=submit['filename'], content=submit['data'], test_results=test_results).function('inject')()
+
+def athina_import_testsuite():
+    from satori.tools import options, setup
+    (options, args) = setup()
+    if len(args) != 2:
+        parser.error('incorrect number of arguments')
+    problem = Problem.filter(ProblemStruct(name=unicode(args[0])))[0]
+    base_dir = unicode(args[1])
+    if not os.path.exists(os.path.join(base_dir, 'testcount')):
+    	raise Exception('provided path is invalid')
+
+    def get_path(*args):
+        return os.path.join(base_dir, *args)
+
+    with open(get_path('testcount')) as f:
+        testcount = int(f.readline()) + 1
+    with open(get_path('sizelimit')) as f:
+        sizelimit = int(f.readline())
+    if os.path.exists(get_path('checker')):
+        checker = get_path('checker')
+    else:
+        checker = None
+    judge = get_path('judge')
+    if not os.path.exists(judge):
+    	raise Exception('judge missing')
+    tests = [] 
+    for t in range(testcount):
+        input = get_path(str(t) + '.in')
+        if not os.path.exists(input):
+            input = None
+        output = get_path(str(t) + '.out')
+        if not os.path.exists(output):
+            output = None
+        memlimit = get_path(str(t) + '.mem')
+        if os.path.exists(memlimit):
+            with open(memlimit, 'r') as f:
+                memlimit = int(f.readline())
+        else:
+            memlimit = None
+        timelimit = get_path(str(t) + '.tle')
+        if os.path.exists(timelimit):
+            with open(timelimit, 'r') as f:
+                timelimit = timedelta(seconds=float(f.readline())*0.01)
+        else:
+            timelimit = None
+
+        oa = OaMap()
+        oa.set_blob_path('judge', judge)
+        if checker != None:
+            oa.set_blob_path('checker', checker)
+        if input != None:
+            oa.set_blob_path('input', input)
+        if output != None:
+            oa.set_blob_path('hint', output)
+        if memlimit != None:
+            oa.set_str('memory', str(memlimit)+'B')
+        if timelimit != None:
+            oa.set_str('time', str(seconds(timelimit))+'s')
+        tests.append(Creator('Test', problem=problem, name=problem.name + '_import_' + str(t)).additional(data=oa.get_map())())
+    params = OaMap()
+    testsuite = Creator('TestSuite', problem=problem, name=problem.name + '_import').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
