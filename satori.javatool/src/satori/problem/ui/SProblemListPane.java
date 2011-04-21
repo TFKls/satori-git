@@ -84,9 +84,9 @@ public class SProblemListPane implements STabPane {
 		int index = list.getSelectedIndex();
 		if (index == -1) return;
 		SProblemSnap snap = list.getItem(index);
-		SProblemImpl problem = SProblemImpl.createRemote(problem_list, snap);
-		try { problem.reload(); }
-		catch(STaskException ex) { problem.close(); return; }
+		SProblemImpl problem;
+		try { problem = SProblemImpl.createRemote(problem_list, snap); }
+		catch(STaskException ex) { return; }
 		SProblemPane.open(problem, parent);
 	}
 	private void reloadRequest() {

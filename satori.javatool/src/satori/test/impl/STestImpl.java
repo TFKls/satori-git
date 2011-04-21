@@ -18,6 +18,7 @@ import satori.metadata.SInputMetadata;
 import satori.metadata.SJudge;
 import satori.metadata.SJudgeParser;
 import satori.problem.SParentProblem;
+import satori.task.SResultTask;
 import satori.task.STask;
 import satori.task.STaskException;
 import satori.task.STaskManager;
@@ -25,13 +26,14 @@ import satori.test.STestReader;
 import satori.test.STestSnap;
 
 public class STestImpl implements STestReader {
+	private final SParentProblem problem;
+	
 	private STestSnap snap = null;
-	private SId id;
-	private SParentProblem problem;
-	private String name;
-	private String desc;
-	private SJudge judge;
-	private Map<SInputMetadata, Object> input;
+	private SId id = SId.unset();
+	private String name = "";
+	private String desc = "";
+	private SJudge judge = null;
+	private Map<SInputMetadata, Object> input = Collections.emptyMap();
 	
 	private final SDataStatus status = new SDataStatus();
 	private final List<SListener0> data_modified_listeners = new ArrayList<SListener0>();
@@ -55,29 +57,19 @@ public class STestImpl implements STestReader {
 	public boolean isOutdated() { return status.isOutdated(); }
 	public boolean isProblemRemote() { return problem.hasId(); }
 	
-	private STestImpl() {}
+	private STestImpl(SParentProblem problem) {
+		this.problem = problem;
+	}
 	
-	public static STestImpl create(STestSnap snap, SParentProblem problem) throws STaskException {
-		if (!snap.isComplete()) snap.reload();
-		STestImpl self = new STestImpl();
+	public static STestImpl createNew(SParentProblem problem) {
+		return new STestImpl(problem);
+	}
+	public static STestImpl createRemote(SParentProblem problem, STestSnap snap) throws STaskException {
+		STestImpl self = new STestImpl(problem);
 		self.snap = snap;
 		self.snap.addReference(self.reference);
 		self.id = new SId(snap.getId());
-		self.problem = problem;
-		self.name = snap.getName();
-		self.desc = snap.getDescription();
-		self.judge = snap.getJudge();
-		self.input = new HashMap<SInputMetadata, Object>(snap.getInput());
-		return self;
-	}
-	public static STestImpl createNew(SParentProblem problem) {
-		STestImpl self = new STestImpl();
-		self.id = SId.unset();
-		self.problem = problem;
-		self.name = "";
-		self.desc = "";
-		self.judge = null;
-		self.input = Collections.emptyMap();
+		self.reload();
 		return self;
 	}
 	
@@ -175,19 +167,24 @@ public class STestImpl implements STestReader {
 	private void updateViews() { for (SView view : views) view.update(); }
 	
 	public void reload() throws STaskException {
-		snap.reload();
-		name = snap.getName();
-		judge = snap.getJudge();
-		desc = snap.getDescription();
-		input = new HashMap<SInputMetadata, Object>(snap.getInput());
+		STestReader source = STaskManager.execute(new SResultTask<STestReader>() {
+			@Override public STestReader run() throws Exception {
+				return STestData.load(getId());
+			}
+		});
+		name = source.getName();
+		judge = source.getJudge();
+		desc = source.getDescription();
+		input = new HashMap<SInputMetadata, Object>(source.getInput());
 		notifyUpToDate();
 		callMetadataModifiedListeners();
 		callDataModifiedListeners();
+		snap.set(this);
 	}
 	public void create() throws STaskException {
-		STaskManager.execute(new STask() {
-			@Override public void run() throws Exception {
-				id = new SId(STestData.create(STestImpl.this));
+		id = STaskManager.execute(new SResultTask<SId>() {
+			@Override public SId run() throws Exception {
+				return new SId(STestData.create(STestImpl.this));
 			}
 		});
 		notifyUpToDate();

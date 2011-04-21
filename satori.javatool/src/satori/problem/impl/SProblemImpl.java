@@ -19,6 +19,7 @@ import satori.problem.SProblemSnap;
 import satori.problem.STestList;
 import satori.problem.STestSuiteBasicReader;
 import satori.problem.STestSuiteList;
+import satori.task.SResultTask;
 import satori.task.STask;
 import satori.task.STaskException;
 import satori.task.STaskManager;
@@ -59,12 +60,12 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	public static SProblemImpl createNew(SProblemList problem_list) {
 		return new SProblemImpl(problem_list);
 	}
-	public static SProblemImpl createRemote(SProblemList problem_list, SProblemSnap snap) {
+	public static SProblemImpl createRemote(SProblemList problem_list, SProblemSnap snap) throws STaskException {
 		SProblemImpl self = new SProblemImpl(problem_list);
 		self.snap = snap;
 		snap.addReference(self.reference);
 		self.id = new SId(snap.getId());
-		self.status.markOutdated();
+		self.reload();
 		return self;
 	}
 	
@@ -106,6 +107,10 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		status.markOutdated();
 		updateViews();
 	}
+	private void notifyUpToDate() {
+		status.markUpToDate();
+		updateViews();
+	}
 	
 	public void setTestListListener(SListener1<STestList> listener) {
 		SAssert.assertNull(test_list_listener, "Test list listener already set");
@@ -129,36 +134,43 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { for (SView view : views) view.update(); }
 	
-	private class LoadTask implements STask {
-		public SProblemReader problem;
-		public List<STestBasicReader> tests;
-		public List<STestSuiteBasicReader> suites;
-		@Override public void run() throws Exception {
-			problem = SProblemData.load(getId());
-			tests = STestData.list(getId());
-			suites = STestSuiteData.list(getId());
+	private static class FullProblem {
+		private final SProblemReader problem;
+		private final List<STestBasicReader> tests;
+		private final List<STestSuiteBasicReader> suites;
+		public SProblemReader getProblem() { return problem; }
+		public List<STestBasicReader> getTests() { return tests; }
+		public List<STestSuiteBasicReader> getTestSuites() { return suites; }
+		public FullProblem(SProblemReader problem, List<STestBasicReader> tests, List<STestSuiteBasicReader> suites) {
+			this.problem = problem;
+			this.tests = tests;
+			this.suites = suites;
 		}
 	}
 	public void reload() throws STaskException {
-		LoadTask task = new LoadTask();
-		STaskManager.execute(task);
-		name = task.problem.getName();
-		desc = task.problem.getDescription();
-		status.markUpToDate();
-		updateViews();
-		snap.set(this);
-		snap.createLists();
-		snap.getTestList().load(task.tests);
-		snap.getTestSuiteList().load(task.suites);
-	}
-	public void create() throws STaskException {
-		STaskManager.execute(new STask() {
-			@Override public void run() throws Exception {
-				id = new SId(SProblemData.create(SProblemImpl.this));
+		FullProblem source = STaskManager.execute(new SResultTask<FullProblem>() {
+			@Override public FullProblem run() throws Exception {
+				SProblemReader problem = SProblemData.load(getId());
+				List<STestBasicReader> tests = STestData.list(getId());
+				List<STestSuiteBasicReader> suites = STestSuiteData.list(getId());
+				return new FullProblem(problem, tests, suites);
 			}
 		});
-		status.markUpToDate();
-		updateViews();
+		name = source.getProblem().getName();
+		desc = source.getProblem().getDescription();
+		notifyUpToDate();
+		snap.set(this);
+		snap.createLists();
+		snap.getTestList().load(source.getTests());
+		snap.getTestSuiteList().load(source.getTestSuites());
+	}
+	public void create() throws STaskException {
+		id = STaskManager.execute(new SResultTask<SId>() {
+			@Override public SId run() throws Exception {
+				 return new SId(SProblemData.create(SProblemImpl.this));
+			}
+		});
+		notifyUpToDate();
 		snap = SProblemSnap.create(this);
 		snap.addReference(reference);
 		test_list_listener.call(snap.getTestList());
@@ -171,8 +183,7 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 				SProblemData.save(SProblemImpl.this);
 			}
 		});
-		status.markUpToDate();
-		updateViews();
+		notifyUpToDate();
 		snap.set(this);
 	}
 	public void delete() throws STaskException {

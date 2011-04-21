@@ -43,7 +43,7 @@ public class SProblemPane implements STabPane, SView {
 	
 	private final STestFactory test_factory = new STestFactory() {
 		@Override public STestImpl create(STestSnap snap) throws STaskException {
-			return STestImpl.create(snap, problem);
+			return STestImpl.createRemote(problem, snap);
 		}
 		@Override public STestImpl createNew() {
 			return STestImpl.createNew(problem);

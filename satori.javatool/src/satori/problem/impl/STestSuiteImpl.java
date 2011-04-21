@@ -75,7 +75,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	private List<STestImpl> createTestList(List<STestSnap> source) throws STaskException {
 		List<STestImpl> tests = new ArrayList<STestImpl>();
-		for (STestSnap snap : source) tests.add(STestImpl.create(snap, problem));
+		for (STestSnap snap : source) tests.add(STestImpl.createRemote(problem, snap));
 		return tests;
 	}
 	
