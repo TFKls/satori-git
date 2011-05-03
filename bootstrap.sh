@@ -8,6 +8,7 @@
 #
 
 aptitude install python-virtualenv python-dev libpq-dev libyaml-dev libcap-dev
+unset PYTHONPATH
 virtualenv --no-site-packages .
 ln -s python bin/python2.6
 source bin/activate
