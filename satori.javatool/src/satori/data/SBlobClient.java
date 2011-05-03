@@ -62,8 +62,9 @@ public class SBlobClient {
 		connection.setUseCaches(false);
 		connection.setRequestMethod("PUT");
 		connection.setRequestProperty("Cookie", "satori_token=" + SSession.getToken());
-		connection.setRequestProperty("Content-length", String.valueOf(file.length()));
 		connection.setRequestProperty("Filename", file.getName());
+		if (file.length() > Integer.MAX_VALUE) throw new Exception("Cannot handle blobs bigger than " + Integer.MAX_VALUE + "B");
+		connection.setFixedLengthStreamingMode((int)file.length());
 		return connection;
 	}
 	private static HttpURLConnection getBlobSetup(String hash) throws Exception {
@@ -71,7 +72,6 @@ public class SBlobClient {
 		connection.setUseCaches(false);
 		connection.setRequestMethod("GET");
 		connection.setRequestProperty("Cookie", "satori_token=" + SSession.getToken());
-		connection.setRequestProperty("Content-length", "0");
 		return connection;
 	}
 	private static void checkResponse(HttpURLConnection connection) throws Exception {
