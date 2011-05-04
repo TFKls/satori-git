@@ -22,6 +22,7 @@ setup(name='satori.core',
         'setproctitle',
         'cherrypy >= 3.2',
         'ipaddr',
+        'gdata',
     ],
     entry_points='''
         [console_scripts]

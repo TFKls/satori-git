@@ -9,8 +9,10 @@
 
 cd "$(dirname "$(readlink -f "$0")")"
 aptitude -y install python-virtualenv python-dev libpq-dev libyaml-dev libcap-dev make
+unset PYTHONPATH
 virtualenv --no-site-packages .
-ln -s python bin/python2.6
+PVER=$(python --version 2>&1 |sed -e "s|^.*\\s\([0-9]\+\\.[0-9]\+\).*$|\1|")
+ln -s python "bin/python${PVER}"
 source bin/activate
 easy_install zc.buildout
 easy_install -U distribute
