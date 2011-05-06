@@ -333,6 +333,10 @@ span.signature {
     text-align: left;
 }
 
+.wiki_form td {
+    width: 100%;
+}
+
 .error_msg {
     color: red;
 }
