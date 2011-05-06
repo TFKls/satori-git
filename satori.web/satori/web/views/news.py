@@ -15,7 +15,7 @@ from django.shortcuts import render_to_response
 class NewsEditForm(forms.Form):
     name = forms.CharField(label="Message title")
     fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
-    content = forms.CharField(required=True,widget=forms.Textarea, label="Content")
+    content = forms.CharField(widget=forms.Textarea, label="Content")
     is_sticky = forms.BooleanField(label="Always at the top", required=False)
     is_public = forms.BooleanField(label="Show in every contest", required=False)
 
@@ -58,6 +58,9 @@ def add(request, page_info):
                 message.delete()
                 raise e
             return HttpResponseRedirect(reverse('news'))
+        else:
+            #TODO(kalq): Find out why sometimes valid forms land here.
+            fid = form.data['fid'] if 'fid' in form.data else tempfile.mkdtemp()
     else:
         #TODO(kalq): Create a hash instead of full pathname
         fid = tempfile.mkdtemp()
