@@ -333,6 +333,7 @@ span.signature {
 
 .news_form {
     width: 100%;
+    margin: -4px;
 }
 
 .news_form textarea {
@@ -348,6 +349,10 @@ span.signature {
     width: 100%;
 }
 
+.wiki_button {
+    float: right;
+    margin: 2px;
+}
 
 .error_msg {
     color: red;
