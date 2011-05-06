@@ -314,44 +314,23 @@ span.signature {
   font-size : smaller;
 }
 
-.subpage_form {
-    width: 100%;
+.wiki_button {
+    float: right;
+    margin: 2px;
 }
 
-.subpage_form textarea {
-    width: 100%;
-}
-
-.subpage_form th {
-    white-space: nowrap;
-    text-align: left;
-}
-
-.subpage_form td {
-    width: 100%;
-}
-
-.news_form {
+.wiki_form {
     width: 100%;
     margin: -4px;
 }
 
-.news_form textarea {
+.wiki_form textarea {
     width: 100%;
 }
 
-.news_form th {
+.wiki_form th {
     white-space: nowrap;
     text-align: left;
-}
-
-.news_form td {
-    width: 100%;
-}
-
-.wiki_button {
-    float: right;
-    margin: 2px;
 }
 
 .error_msg {

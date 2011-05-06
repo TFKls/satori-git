@@ -9,32 +9,11 @@
 {% endif %}
 
 {{ form.fid }}
-<table class="subpage_form">
-    <tr>
-        <th><label for="id_name">{{ form.name.label }}</label></th>
-        <td>{{ form.name }}</td>
-        <td style="text-align: right"><input type="submit" name="save" value="Save changes"/></td>
-        <td style="text-align: right"><input type="submit" name="delete" value="Delete subpage"/></td>
-    </tr>
-    <tr>
-        <th><label for="id_visibility">{{ form.visibility.label }}</label></th>
-        <td>{{ form.visibility }}</td>
-    </tr>
-    {% if sphinxException %}
-    <tr>
-        <th></th>
-        <td colspan="3" class="error_msg"><pre>{{ sphinxException }}</pre></td>
-    </tr>
-    {% endif %}
-    <tr>
-        <th><label for="id_content">{{ form.content.label }}</label></th>
-        <td colspan="3">{{ form.content }}</td>
-    </tr>
-    <tr>
-        <th></th>
-        <td colspan="3"><b>Quick Hint: </b><i>To include an image into a new document use: ".. image:: image.jpg". To create a link inside a new document use: "`link title &lt;link address&gt;`"</i>
-        </td>
-    </tr>
+<input class="button wiki_button" type="submit" name="save" value="Save"/>
+<input class="button wiki_button" type="submit" name="delete" value="Delete"/>
+<h3>Edit subpage</h3>
+<table class="wiki_form">
+    {{ form.as_table }}
 </table>
 </form>
 {% include "templates/attachments_edit.html" %}
