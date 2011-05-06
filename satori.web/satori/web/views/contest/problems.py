@@ -152,10 +152,10 @@ def add(request, page_info):
                 try:
                     mapping.statement = data['statement']
                 except SphinxException as sphinxException:
+                    form._errors['statement'] = form.error_class([sphinxException])
                     return render_to_response('problems_add.html', { 'fid' : fid,
                                                                      'form' : form, 
-                                                                     'page_info' : page_info,
-                                                                     'sphinxException' : sphinxException })
+                                                                     'page_info' : page_info })
                 return HttpResponseRedirect(reverse('contest_problems', args=[page_info.contest.id]))
         else:
             #TODO(kalq): Create a hash instead of full pathname
@@ -199,11 +199,11 @@ def edit(request, page_info, id):
                                                     default_test_suite=TestSuite(int(data['suite']))))
             except SphinxException as sphinxException:
                 attachments = valid_attachments(mapping.statement_files_get_list())
+                form._errors['statement'] = form.error_class([sphinxException])
                 return render_to_response('problems_add.html', { 'attachments' : attachments,
                                                                  'fid' : fid,
                                                                  'form' : form,
                                                                  'page_info' : page_info,
-                                                                 'sphinxException' : sphinxException,
                                                                  'base' : problem,
                                                                  'editing' : mapping })
             pdf = form.cleaned_data.get('pdf',None)

@@ -47,10 +47,10 @@ def add(request, page_info):
                 message.content = data['content']
             except SphinxException as sphinxException:
                 message.delete()
+                form._errors['content'] = form.error_class([sphinxException])
                 return render_to_response('news_add.html', { 'form' : form,
                                                              'fid' : fid,
-                                                             'page_info' : page_info,
-                                                             'sphinxException' : sphinxException })
+                                                             'page_info' : page_info })
             except e:
                 message.delete()
                 raise e
@@ -86,12 +86,12 @@ def edit(request, page_info,id):
                                              is_public=data['is_public']))
             except SphinxException as sphinxException:
                 attachments = valid_attachments(message.content_files_get_list())
+                form._errors['content'] = form.error_class([sphinxException])
                 return render_to_response('news_edit.html', { 'attachments' : attachments,
                                                               'fid' : fid,
                                                               'form' : form,
                                                               'message' : message, 
-                                                              'page_info' : page_info,
-                                                              'sphinxException' : sphinxException })
+                                                              'page_info' : page_info })
             return HttpResponseRedirect(reverse('contest_news',args=[page_info.contest.id]))
     else:
         fid = tempfile.mkdtemp()

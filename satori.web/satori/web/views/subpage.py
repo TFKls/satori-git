@@ -48,10 +48,10 @@ def add(request, page_info):
                 subpage.content = data["content"]
             except SphinxException as sphinxException:
                 subpage.delete()
+                form._errors['content'] = form.error_class([sphinxException])
                 return render_to_response('subpage_add.html', { 'fid' : fid,
                                                                 'form' : form, 
-                                                                'page_info' : page_info,
-                                                                'sphinxException' : sphinxException })
+                                                                'page_info' : page_info })
             except e:
                 subpage.delete()
                 raise e
@@ -86,11 +86,11 @@ def edit(request, page_info, id):
                                              is_public=data['is_public']))
             except SphinxException as sphinxException:
                 attachments = valid_attachments(subpage.content_files_get_list())
+                form._errors['content'] = form.error_class([sphinxException])
                 return render_to_response('subpage_edit.html', { 'attachments' : attachments,
                                                                  'fid' : fid,
                                                                  'form' : form,
                                                                  'page_info' : page_info,
-                                                                 'sphinxException' : sphinxException,
                                                                  'subpage' : subpage })
             return HttpResponseRedirect(reverse('subpage',args=[subpage.id]))
     else:
