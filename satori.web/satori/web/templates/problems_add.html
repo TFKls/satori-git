@@ -13,12 +13,6 @@
         {% endif %}
         <table>
             {{ form.as_table }}
-            {% if sphinxException %}
-            <tr>
-                <th></th>
-                <td colspan="2" class="error_msg"><pre>{{ sphinxException }}</pre></td>
-            </tr>
-            {% endif %}
         </table>
         {% if editing %}
             <input class="button" type="submit" value="Change problem"/>
