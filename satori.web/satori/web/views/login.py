@@ -62,6 +62,7 @@ class ChangePassForm(forms.Form):
 @general_view
 def profile(request, page_info):
     user = page_info.user
+    a = Global.get_instance().profile_fields
     parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
     form = ChangePassForm()
     profile_form = xmlparams.ParamsForm2(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
@@ -85,6 +86,6 @@ def profile(request, page_info):
         profile_form = xmlparams.ParamsForm2(paramsdict=params, data=request.POST)
         if profile_form.is_valid():
 #            om = params.dict_to_oa_map(profile_form.cleaned_data)
-            user.profile_set_map(parser.write_oa_map()
+            user.profile_set_map(parser.write_oa_map(form.cleaned_data))
             return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form})
     return render_to_response('changepass.html', {'page_info' : page_info, 'status_bar' : bar, 'password_form' : form, 'profile_form' : profile_form}) 
