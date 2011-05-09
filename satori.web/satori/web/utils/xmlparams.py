@@ -4,6 +4,7 @@ from datetime import datetime
 from xml.dom import minidom
 from django import forms
 from satori.web.utils import forms as satoriforms
+from satori.tools.params import *
 
 class ParamsDict(object):
     def __init__(self, xml_node):
@@ -96,3 +97,26 @@ class ParamsForm(forms.Form):
             else:
                 req = f['required']
             self.fields[f['name']] = ftype(label=f['description'],required=req,initial=f['default'])
+
+
+class ParamsForm2(forms.Form):
+    fieldtypes = {
+                    OaTypeText  : forms.CharField,
+                    OaTypeSize  : forms.CharField,
+                    OaTypeTime  : satoriforms.SatoriTimedeltaField,
+                    OaTypeInteger   : forms.IntegerField,
+                    OaTypeFloat : forms.FloatField,
+                    OaTypeDatetime  : satoriforms.SatoriDateTimeField,
+                    OaTypeBoolean  : forms.BooleanField,
+#                    OaTypeBlob  : forms.FileField 
+                 }
+    def __init__(self,parser,*args,**kwargs):
+        super(ParamsForm2,self).__init__(*args,**kwargs)
+        for f in parser.params:
+            ftype = ParamsForm2.fieldtypes[f.type_]
+            if f.type_=='bool':
+                req = False
+            else:
+                req = f.required
+            self.fields[f.name] = ftype(label=f.description,required=req)
+    
