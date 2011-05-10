@@ -1040,8 +1040,8 @@ void Runner::run_child()
     if (cgroup != "" && controller)
     {
         Controller::Limits limits;
-        if (cgroup_memory > 0)
-            limits.memory = cgroup_memory;
+        //if (cgroup_memory > 0)
+        //    limits.memory = cgroup_memory;
         controller->GroupLimits(cgroup, limits);
         controller->GroupJoin(cgroup);
     }
@@ -1442,11 +1442,11 @@ void Runner::Run()
         Fail("run failed");
     if (pipe(pipefd))
         Fail("pipe failed");
-    if (cgroup_memory > 0 && memory_space <= 0)
-    {
-        memory_space = cgroup_memory;
-        Debug("Setting memory limit to cgroup memory limit");
-    }
+    //if (cgroup_memory > 0 && memory_space <= 0)
+    //{
+    //    memory_space = cgroup_memory;
+    //    Debug("Setting memory limit to cgroup memory limit");
+    //}
     if (cgroup_time > 0 && cpu_time <= 0)
     {
         cpu_time = cgroup_time;
