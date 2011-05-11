@@ -34,7 +34,6 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.TransferHandler;
 
-import satori.common.SListView;
 import satori.common.SListener0;
 import satori.common.SListener1;
 import satori.common.SView;
@@ -47,23 +46,24 @@ import satori.data.SGlobal;
 import satori.main.SFrame;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SJudge;
-import satori.problem.impl.STestSuiteImpl;
+import satori.problem.SParentProblem;
 import satori.task.STaskException;
 import satori.test.STestSnap;
 import satori.test.impl.SBlobInput;
 import satori.test.impl.SJudgeInput;
 import satori.test.impl.SSolution;
 import satori.test.impl.SStringInput;
-import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
+import satori.test.impl.STestSuiteBase;
 import satori.type.SBlobType;
 
-public class STestPane implements SPane, SListView<STestImpl> {
-	private final STestSuiteImpl suite;
-	private final STestFactory factory;
+public class STestPane implements SPane {
+	private final SParentProblem problem;
+	private final STestSuiteBase base;
+	
+	public STestSuiteBase getBase() { return base; }
 	
 	private List<SSolutionPane> solution_panes = new ArrayList<SSolutionPane>();
-	private List<STestImpl> tests = new ArrayList<STestImpl>();
 	private List<SView> parent_views = new ArrayList<SView>();
 	
 	private JComponent main_pane, pane, input_pane;
@@ -81,7 +81,7 @@ public class STestPane implements SPane, SListView<STestImpl> {
 	private int getDropIndex(Point location) {
 		int index = (int)Math.round((location.getX() - SDimension.labelWidth) / SDimension.itemWidth);
 		if (index < 0) index = 0;
-		if (index > tests.size()) index = tests.size();
+		if (index > base.getSize()) index = base.getSize();
 		return index;
 	}
 	private void indicateDrop(Point location) {
@@ -103,9 +103,7 @@ public class STestPane implements SPane, SListView<STestImpl> {
 		private final STestTransfer data;
 		public MoveTestTransferable(STestTransfer data) { this.data = data; }
 		@Override public DataFlavor[] getTransferDataFlavors() {
-			DataFlavor[] flavors = new DataFlavor[1];
-			flavors[0] = STestTransfer.flavor;
-			return flavors;
+			return new DataFlavor[] { STestTransfer.flavor };
 		}
 		@Override public boolean isDataFlavorSupported(DataFlavor flavor) {
 			return flavor.match(STestTransfer.flavor);
@@ -136,7 +134,7 @@ public class STestPane implements SPane, SListView<STestImpl> {
 				try { data = (STestTransfer)t.getTransferData(STestTransfer.flavor); }
 				catch(UnsupportedFlavorException ex) { return false; }
 				catch(IOException ex) { return false; }
-				if (data.getTestSuite() != suite) return false;
+				if (data.getTestSuite() != base) return false;
 				accept_drop = true;
 				return true;
 			}
@@ -153,14 +151,12 @@ public class STestPane implements SPane, SListView<STestImpl> {
 				catch(IOException ex) { return false; }
 				List<STestImpl> new_tests = new ArrayList<STestImpl>();
 				for (STestSnap snap : data.get()) {
-					if (suite.hasTest(snap.getId())) continue;
-					try { new_tests.add(factory.create(snap)); }
+					if (hasTest(snap.getId())) continue;
+					try { new_tests.add(STestImpl.createRemote(problem, snap)); }
 					catch(STaskException ex) { return false; }
 				}
 				int index = getDropIndex(support.getDropLocation().getDropPoint());
-				int cur_index = index;
-				for (STestImpl test : new_tests) suite.addTest(test, cur_index++);
-				add(new_tests, index);
+				base.addTests(new_tests, index);
 				return true;
 			}
 			if (support.isDataFlavorSupported(STestTransfer.flavor)) {
@@ -168,17 +164,16 @@ public class STestPane implements SPane, SListView<STestImpl> {
 				try { data = (STestTransfer)t.getTransferData(STestTransfer.flavor); }
 				catch(UnsupportedFlavorException ex) { return false; }
 				catch(IOException ex) { return false; }
-				if (data.getTestSuite() != suite) return false;
+				if (data.getTestSuite() != base) return false;
 				STestImpl test = data.getTest();
 				int index = getDropIndex(support.getDropLocation().getDropPoint());
-				suite.moveTest(test, index);
-				move(test, index);
+				base.moveTest(test, index);
 				return true;
 			}
 			return false;
 		}
 		@Override protected Transferable createTransferable(JComponent c) {
-			return new MoveTestTransferable(new STestTransfer(test, suite));
+			return new MoveTestTransferable(new STestTransfer(test, base));
 		}
 		@Override public int getSourceActions(JComponent c) { return MOVE; }
 		@Override protected void exportDone(JComponent source, Transferable data, int action) {}
@@ -193,10 +188,11 @@ public class STestPane implements SPane, SListView<STestImpl> {
 		@Override public void dropActionChanged(DropTargetDragEvent e) { indicateDrop(e.getLocation()); }
 	};
 	
-	public STestPane(STestSuiteImpl suite, STestFactory factory) {
-		this.suite = suite;
-		this.factory = factory;
+	public STestPane(SParentProblem problem, STestSuiteBase base) {
+		this.problem = problem;
+		this.base = base;
 		initialize();
+		this.base.setListView(list_view);
 	}
 	
 	@Override public JComponent getPane() { return main_pane; }
@@ -213,9 +209,8 @@ public class STestPane implements SPane, SListView<STestImpl> {
 	}
 	
 	private void addNewTestRequest() {
-		STestImpl test = factory.createNew();
-		suite.addTest(test);
-		add(test);
+		STestImpl test = STestImpl.createNew(problem);
+		base.addTest(test, base.getSize());
 	}
 	private void saveTestRequest(STestImpl test) {
 		if (!test.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
@@ -223,8 +218,8 @@ public class STestPane implements SPane, SListView<STestImpl> {
 		catch(STaskException ex) {}
 	}
 	private void saveAllTestsRequest() {
-		if (!suite.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
-		for (STestImpl test : suite.getTests()) {
+		if (!problem.hasId()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
+		for (STestImpl test : base.getTests()) {
 			try { if (test.isRemote()) test.save(); else test.create(); }
 			catch(STaskException ex) { return; }
 		}
@@ -235,7 +230,7 @@ public class STestPane implements SPane, SListView<STestImpl> {
 		catch(STaskException ex) {}
 	}
 	private void reloadAllTestsRequest() {
-		for (STestImpl test : suite.getTests()) {
+		for (STestImpl test : base.getTests()) {
 			if (!test.isRemote()) continue;
 			try { test.reload(); }
 			catch(STaskException ex) { return; }
@@ -249,8 +244,8 @@ public class STestPane implements SPane, SListView<STestImpl> {
 	}
 	private void removeTestRequest(STestImpl test) {
 		if (test.isModified() && !SFrame.showWarningDialog("The test contains unsaved data.")) return;
-		remove(test);
-		suite.removeTest(test);
+		test.close();
+		base.removeTest(test);
 	}
 	private void moveTestRequest(STestImpl test, MouseEvent e) {
 		transfer_handler.setTest(test);
@@ -652,11 +647,11 @@ public class STestPane implements SPane, SListView<STestImpl> {
 		pane.add(new_pane.getPane(), solution_panes.size()+1);
 		solution_panes.add(new_pane);
 		int index = 0;
-		for (STestImpl test : tests) new_pane.addColumn(test, index++);
+		for (STestImpl test : base.getTests()) new_pane.addColumn(test, index++);
 		pane.revalidate(); pane.repaint();
 	}
 	private void removeSolutionPane(SSolutionPane removed_pane) {
-		for (int index = tests.size()-1; index >= 0; --index) removed_pane.removeColumn(index);
+		for (int index = base.getSize()-1; index >= 0; --index) removed_pane.removeColumn(index);
 		pane.remove(solution_panes.indexOf(removed_pane)+1);
 		solution_panes.remove(removed_pane);
 		pane.revalidate(); pane.repaint();
@@ -698,60 +693,53 @@ public class STestPane implements SPane, SListView<STestImpl> {
 		for (SRow pane : solution_panes) pane.removeColumn(index);
 	}
 	
-	@Override public void add(STestImpl test) {
-		int index = tests.size();
-		tests.add(test);
-		addParentViews(test);
-		addColumn(test, index);
-		pane.revalidate(); pane.repaint();
-	}
-	public void add(Iterable<STestImpl> tests, int index) {
-		for (STestImpl test : tests) {
-			this.tests.add(index, test);
-			addParentViews(test);
-			addColumn(test, index++);
-		}
-		pane.revalidate(); pane.repaint();
-	}
-	@Override public void add(Iterable<STestImpl> tests) {
-		add(tests, this.tests.size());
-	}
-	@Override public void remove(STestImpl test) {
-		test.close();
-		removeColumn(tests.indexOf(test));
-		tests.remove(test);
-		pane.revalidate(); pane.repaint();
-	}
-	@Override public void removeAll() {
-		for (STestImpl test : tests) test.close();
-		for (int i = tests.size()-1; i >= 0; --i) removeColumn(i);
-		tests.clear();
-		pane.revalidate(); pane.repaint();
-	}
-	public void move(STestImpl test, int index) {
-		int old_index = tests.indexOf(test);
-		removeColumn(old_index);
-		tests.remove(test);
-		if (old_index < index) --index;
-		tests.add(index, test);
-		addColumn(test, index);
-		pane.revalidate(); pane.repaint();
-	}
-	
-	public boolean hasUnsavedData() {
-		for (STestImpl test : tests) if (test.isModified()) return true;
+	private boolean hasTest(long id) {
+		for (STestImpl test : base.getTests()) if (test.hasId() && test.getId() == id) return true;
 		return false;
 	}
 	
+	private STestSuiteBase.View list_view = new STestSuiteBase.View() {
+		@Override public void add(STestImpl test, int index) {
+			addParentViews(test);
+			addColumn(test, index);
+			pane.revalidate(); pane.repaint();
+		}
+		@Override public void add(Iterable<STestImpl> tests, int index) {
+			for (STestImpl test : tests) {
+				addParentViews(test);
+				addColumn(test, index++);
+			}
+			pane.revalidate(); pane.repaint();
+		}
+		@Override public void remove(STestImpl test, int index) {
+			removeParentViews(test);
+			removeColumn(index);
+			pane.revalidate(); pane.repaint();
+		}
+		@Override public void removeAll() {
+			for (STestImpl test : base.getTests()) removeParentViews(test);
+			for (int i = base.getSize()-1; i >= 0; --i) removeColumn(i);
+			pane.revalidate(); pane.repaint();
+		}
+		@Override public void move(STestImpl test, int old_index, int new_index) {
+			removeColumn(old_index);
+			addColumn(test, old_index < new_index ? new_index-1 : new_index);
+			pane.revalidate(); pane.repaint();
+		}
+	};
+	
 	public void addParentView(SView view) {
-		for (STestImpl test : tests) test.addView(view);
+		for (STestImpl test : base.getTests()) test.addView(view);
 		parent_views.add(view);
 	}
 	public void removeParentView(SView view) {
 		parent_views.remove(view);
-		for (STestImpl test : tests) test.removeView(view);
+		for (STestImpl test : base.getTests()) test.removeView(view);
 	}
 	private void addParentViews(STestImpl test) {
 		for (SView view : parent_views) test.addView(view);
+	}
+	private void removeParentViews(STestImpl test) {
+		for (SView view : parent_views) test.removeView(view);
 	}
 }
