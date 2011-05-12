@@ -24,8 +24,8 @@ import satori.problem.STestSuiteSnap;
 import satori.task.STask;
 import satori.task.STaskException;
 import satori.task.STaskManager;
-import satori.test.STestSnap;
 import satori.test.impl.STestImpl;
+import satori.test.impl.STestSuiteBase;
 
 public class STestSuiteImpl implements STestSuiteReader {
 	private STestSuiteSnap snap = null;
@@ -33,7 +33,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 	private SParentProblem problem;
 	private String name;
 	private String desc;
-	private List<STestImpl> tests;
+	private STestSuiteBase base;
 	private SParametersMetadata dispatcher;
 	private List<SParametersMetadata> accumulators;
 	private SParametersMetadata reporter;
@@ -47,6 +47,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 		@Override public void notifyModified() { snapModified(); }
 		@Override public void notifyDeleted() { snapDeleted(); }
 	};
+	private final SListener0 base_modified_listener = new SListener0() {
+		@Override public void call() { notifyModified(); }
+	};
 	
 	public STestSuiteSnap getSnap() { return snap; }
 	@Override public boolean hasId() { return id.isSet(); }
@@ -54,7 +57,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 	@Override public long getProblemId() { return problem.getId(); }
 	@Override public String getName() { return name; }
 	@Override public String getDescription() { return desc; }
-	@Override public List<STestImpl> getTests() { return Collections.unmodifiableList(tests); }
+	public STestSuiteBase getBase() { return base; }
+	@Override public List<STestImpl> getTests() { return base.getTests(); }
 	@Override public SParametersMetadata getDispatcher() { return dispatcher; }
 	@Override public List<SParametersMetadata> getAccumulators() { return accumulators; }
 	@Override public SParametersMetadata getReporter() { return reporter; }
@@ -73,12 +77,6 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	private STestSuiteImpl() {}
 	
-	private List<STestImpl> createTestList(List<STestSnap> source) throws STaskException {
-		List<STestImpl> tests = new ArrayList<STestImpl>();
-		for (STestSnap snap : source) tests.add(STestImpl.createRemote(problem, snap));
-		return tests;
-	}
-	
 	public static STestSuiteImpl create(STestSuiteSnap snap, SParentProblem problem) throws STaskException {
 		if (!snap.isComplete()) snap.reload();
 		STestSuiteImpl self = new STestSuiteImpl();
@@ -88,7 +86,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.problem = problem;
 		self.name = snap.getName();
 		self.desc = snap.getDescription();
-		self.tests = self.createTestList(snap.getTests());
+		self.base = STestSuiteBase.create(problem, snap.getTests());
 		self.dispatcher = snap.getDispatcher();
 		self.accumulators = snap.getAccumulators();
 		self.reporter = snap.getReporter();
@@ -96,42 +94,14 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.test_params = snap.getTestParameters();
 		return self;
 	}
-	public static STestSuiteImpl createNew(SParentProblem problem) {
+	public static STestSuiteImpl createNew(SParentProblem problem, STestSuiteBase base) {
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.id = SId.unset();
 		self.problem = problem;
 		self.name = "";
 		self.desc = "";
-		self.tests = new ArrayList<STestImpl>();
-		self.dispatcher = null;
-		self.accumulators = Collections.emptyList();
-		self.reporter = null;
-		self.general_params = new HashMap<SInputMetadata, Object>();
-		self.test_params = new HashMap<SPair<SInputMetadata, Long>, Object>();
-		return self;
-	}
-	public static STestSuiteImpl createNew(List<STestSnap> tests, SParentProblem problem) throws STaskException {
-		STestSuiteImpl self = new STestSuiteImpl();
-		self.id = SId.unset();
-		self.problem = problem;
-		self.name = "";
-		self.desc = "";
-		self.tests = self.createTestList(tests);
-		self.dispatcher = null;
-		self.accumulators = Collections.emptyList();
-		self.reporter = null;
-		self.general_params = new HashMap<SInputMetadata, Object>();
-		self.test_params = new HashMap<SPair<SInputMetadata, Long>, Object>();
-		return self;
-	}
-	public static STestSuiteImpl createNewTest(SParentProblem problem) {
-		STestSuiteImpl self = new STestSuiteImpl();
-		self.id = SId.unset();
-		self.problem = problem;
-		self.name = "";
-		self.desc = "";
-		self.tests = new ArrayList<STestImpl>();
-		self.tests.add(STestImpl.createNew(problem));
+		self.base = base;
+		base.setModifiedListener(self.base_modified_listener);
 		self.dispatcher = null;
 		self.accumulators = Collections.emptyList();
 		self.reporter = null;
@@ -140,9 +110,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 		return self;
 	}
 	
-	private boolean checkTestLists(List<? extends SIdReader> list1) {
+	private boolean checkTestList(List<? extends SIdReader> list1) {
 		Iterator<? extends SIdReader> iter1 = list1.iterator();
-		Iterator<? extends SIdReader> iter2 = tests.iterator();
+		Iterator<? extends SIdReader> iter2 = base.getTests().iterator();
 		while (iter1.hasNext() && iter2.hasNext()) {
 			SIdReader test = iter2.next();
 			if (!test.hasId() || test.getId() != iter1.next().getId()) return true;
@@ -155,7 +125,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		SAssert.assertEquals(source.getProblemId(), getProblemId(), "Problem ids don't match");
 		if (!source.getName().equals(name)) return true;
 		if (!source.getDescription().equals(desc)) return true;
-		if (checkTestLists(source.getTests())) return true;
+		if (checkTestList(source.getTests())) return true;
 		if (source.getDispatcher() == null && dispatcher != null) return true;
 		if (source.getDispatcher() != null && !source.getDispatcher().equals(dispatcher)) return true;
 		if (!source.getAccumulators().equals(accumulators)) return true;
@@ -187,7 +157,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		notifyModified();
 	}
 	
-	public boolean hasTest(long id) {
+	/*public boolean hasTest(long id) {
 		for (SIdReader test : tests) if (test.hasId() && test.getId() == id) return true;
 		return false;
 	}
@@ -214,7 +184,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		if (old_index < index) --index;
 		tests.add(index, test);
 		notifyModified();
-	}
+	}*/
 	
 	public void setDispatcher(SParametersMetadata dispatcher) {
 		if (this.dispatcher == null && dispatcher == null) return;
@@ -295,10 +265,11 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	public void reload() throws STaskException {
 		snap.reload(); //calls snapModified //TODO
-		List<STestImpl> new_tests = createTestList(snap.getTests()); //TODO
+		List<STestImpl> new_tests = STestSuiteBase.createTestList(problem, snap.getTests()); //TODO
 		name = snap.getName();
 		desc = snap.getDescription();
-		tests = new_tests;
+		base.closeTests();
+		base.setTestList(new_tests);
 		dispatcher = snap.getDispatcher();
 		accumulators = snap.getAccumulators();
 		reporter = snap.getReporter();

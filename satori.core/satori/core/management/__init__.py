@@ -62,13 +62,13 @@ def create_admin(app, created_models, verbosity, **kwargs):
         shutil.copyfileobj(default_judge, blob)
     blob.close()
 
-    print 'Setting default profile fields'
+    print 'Setting default profile fields...'
     profile_xml = """
-<profile>
-  <input>
-    <param name="affiliation" description="Affiliation" type="text" required="true"/>
-  </input>
-</profile>
+#@<profile>
+#@  <input>
+#@    <param name="affiliation" description="Affiliation" type="text" required="true"/>
+#@  </input>
+#@</profile>
 """
     globe = Global.get_instance()
     globe.profile_fields = profile_xml

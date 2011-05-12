@@ -119,6 +119,18 @@ class Ranking(Entity):
                 ex_params.delete()
         self.rejudge()
         return self
+
+    @ExportMethod(NoneType, [DjangoId('Ranking'), DjangoId('ProblemMapping'), DjangoId('TestSuite'), TypedMap(unicode, AnonymousAttribute)], PCArg('self', 'MANAGE'))
+    def modify_problem(self, problem, test_suite, params):
+        if problem.contest != self.contest:
+            raise CannotSetField
+        if test_suite is not None and test_suite.problem != problem.problem:
+            raise CannotSetField
+        param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
+        param.test_suite = suite
+        param.save()
+        param.params_set_map(params)
+        self.rejudge()
  
     @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):
@@ -135,34 +147,12 @@ class Ranking(Entity):
                 ret[param.problem] = param.test_suite
         return ret
 
-    @ExportMethod(NoneType, [DjangoId('Ranking'), TypedMap(DjangoId('ProblemMapping'), DjangoId('TestSuite'))], PCArg('self', 'MANAGE'))
-    def set_problem_test_suites(self, problem_test_suites):
-        for problem, suite in problem_test_suites.items():
-            if problem.contest != self.contest:
-                raise CannotSetField
-            if suite.problem != problem.problem:
-                raise CannotSetField
-            param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
-            param.test_suite = suite
-            param.save()
-        self.rejudge()
-
     @ExportMethod(TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute)), [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def get_problem_params(self):
         ret = {}
         for param in self.ranking_params.all():
             ret[param.problem] = param.params_get_map()
         return ret
-
-    @ExportMethod(NoneType, [DjangoId('Ranking'), TypedMap(DjangoId('ProblemMapping'), TypedMap(unicode, AnonymousAttribute))], PCAnd(PCArg('self', 'MANAGE'), PCEachValue('problem_params', PCEachValue('item', PCRawBlob('item')))))
-    def set_problem_params(self, problem_params):
-        for problem, oa_map in problem_params.items():
-            if problem.contest != self.contest:
-                raise CannotSetField
-            param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
-            param.save()
-            param.params_set_map(oa_map)
-        self.rejudge()
 
     @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def rejudge(self):

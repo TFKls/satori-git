@@ -5,6 +5,8 @@ import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import javax.swing.BorderFactory;
@@ -28,8 +30,8 @@ import satori.problem.impl.SProblemImpl;
 import satori.problem.impl.STestSuiteImpl;
 import satori.task.STaskException;
 import satori.test.STestSnap;
-import satori.test.impl.STestFactory;
 import satori.test.impl.STestImpl;
+import satori.test.impl.STestSuiteBase;
 
 public class SProblemPane implements STabPane, SView {
 	private final SProblemImpl problem;
@@ -40,15 +42,6 @@ public class SProblemPane implements STabPane, SView {
 	private STestListPane test_list_pane;
 	private STestSuiteListPane suite_list_pane;
 	private SView tab_view;
-	
-	private final STestFactory test_factory = new STestFactory() {
-		@Override public STestImpl create(STestSnap snap) throws STaskException {
-			return STestImpl.createRemote(problem, snap);
-		}
-		@Override public STestImpl createNew() {
-			return STestImpl.createNew(problem);
-		}
-	};
 	
 	private JScrollPane scroll_pane;
 	private JComponent main_pane;
@@ -90,27 +83,24 @@ public class SProblemPane implements STabPane, SView {
 	
 	private final SListener0 new_test_listener = new SListener0() {
 		@Override public void call() {
-			STestSuiteImpl suite = STestSuiteImpl.createNewTest(problem);
-			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, false);
-			suite_pane.getTestPane().add(suite.getTests());
-			suite_pane.open();
+			List<STestImpl> tests = Collections.singletonList(STestImpl.createNew(problem));
+			STestSuitePane.openTests(tabs, problem, STestSuiteBase.createNew(tests));
 		}
 	};
 	private final SListener1<List<STestSnap>> open_tests_listener = new SListener1<List<STestSnap>>() {
 		@Override public void call(List<STestSnap> snaps) {
-			STestSuiteImpl suite;
-			try { suite = STestSuiteImpl.createNew(snaps, problem); }
-			catch(STaskException ex) { return; }
-			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, false);
-			suite_pane.getTestPane().add(suite.getTests());
-			suite_pane.open();
+			List<STestImpl> tests = new ArrayList<STestImpl>();
+			for (STestSnap snap : snaps) {
+				try { tests.add(STestImpl.createRemote(problem, snap)); }
+				catch(STaskException ex) { return; }
+			}
+			STestSuitePane.openTests(tabs, problem, STestSuiteBase.createNew(tests));
 		}
 	};
 	private final SListener0 new_suite_listener = new SListener0() {
 		@Override public void call() {
-			STestSuiteImpl suite = STestSuiteImpl.createNew(problem);
-			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, true);
-			suite_pane.open();
+			STestSuiteImpl suite = STestSuiteImpl.createNew(problem, STestSuiteBase.createNew());
+			STestSuitePane.openTestSuite(tabs, problem, suite);
 		}
 	};
 	private final SListener1<STestSuiteSnap> open_suite_listener = new SListener1<STestSuiteSnap>() {
@@ -118,9 +108,7 @@ public class SProblemPane implements STabPane, SView {
 			STestSuiteImpl suite;
 			try { suite = STestSuiteImpl.create(snap, problem); }
 			catch(STaskException ex) { return; }
-			STestSuitePane suite_pane = new STestSuitePane(suite, tabs, test_factory, true);
-			suite_pane.getTestPane().add(suite.getTests());
-			suite_pane.open();
+			STestSuitePane.openTestSuite(tabs, problem, suite);
 		}
 	};
 	

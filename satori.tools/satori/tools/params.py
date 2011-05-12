@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
-
+import math
 from xml.dom import minidom
 from datetime import datetime, timedelta
 
@@ -99,14 +99,15 @@ class OaTypeTime(OaType):
     def _to_unicode(cls, value):
         large = OaTypeTime.large
         value = total_seconds(value)
-        res = u''
+        res = []
         for mul, suf in reversed(large):
             if value > mul:
-                cnt = math.floor(value/mul)
-                res += unicode(cnt)+suf
+                cnt = int(math.floor(value/mul))
+                res.append(unicode(cnt)+suf)
                 value -= cnt*mul
-        res += unicode(value) + 's'
-        return res
+        if value or not res:
+            res.append(unicode(value) + 's')
+        return ' '.join(res)
     @classmethod
     def _from_unicode(cls, value):
         scales = OaTypeTime.scales
@@ -227,53 +228,58 @@ class OaTypedParser(object):
         for param in ele.getElementsByTagNameNS('*', 'param'):
             params.append(OaParam.from_dom(param))
         return OaTypedParser(params)
-    def read_oa_map(self, oa_map):
+    def read_oa_map(self, oa_map, use_default=True, check_required=True):
         result = Namespace()
         for param in self.params:
-            value = param.default
+            if use_default:
+                value = param.default
+            else:
+            	value = None
             if param.name in oa_map:
                 value = param.from_unicode(oa_map[param.name].value)
-            if param.required and value is None:
+            if check_required and param.required and value is None:
                 raise ValueError
             result[param.name] = value
         return result
     def write_oa_map(self, dct):
         result = {}
         for param in self.params:
-            if param.name in dct:
+            if param.name in dct and dct[param.name] is not None:
                 oa = Namespace()
                 oa['is_blob'] = False
-                os['value'] = param.to_unicode(dct[param.name])
+                oa['value'] = param.to_unicode(dct[param.name])
                 result[param.name] = oa
             else:
                 if param.required and param.default is None:
                     raise ValueError
         return result
 
-def parse_params(description, section, subsection, oa_map):
-    result = Namespace()
+def parser_from_xml(description, section=None, subsection=None):
     if not description:
-        return result
+        return None
     xml = minidom.parseString(u' '.join([line[2:] for line in description.splitlines() if line[0:2] == '#@']))
     if not xml:
+        return None
+    if section is not None:
+        xml = xml.getElementsByTagNameNS('*', section)[0]
+        if not xml:
+            return None
+    if subsection is not None:
+        xml = xml.getElementsByTagNameNS('*', subsection)[0]
+        if not xml:
+            return None
+    return OaTypedParser.from_dom(xml)
+
+def parse_params(description, section, subsection, oa_map):
+    result = Namespace()
+    parser = parser_from_xml(description, section, subsection)
+    if not parser:
         return result
-    xml = xml.getElementsByTagNameNS('*', section)
-    if not xml:
-        return result
-    xml = xml[0].getElementsByTagNameNS('*', subsection)
-    parser = OaTypedParser.from_dom(xml[0])
     return parser.read_oa_map(oa_map)
 
 def set_params(description, section, subsection, data):
     result = {}
-    if not description:
+    parser = parser_from_xml(description, section, subsection)
+    if not parser:
         return result
-    xml = minidom.parseString(u' '.join([line[2:] for line in description.splitlines() if line[0:2] == '#@']))
-    if not xml:
-        return result
-    xml = xml.getElementsByTagNameNS('*', section)
-    if not xml:
-        return result
-    xml = xml[0].getElementsByTagNameNS('*', subsection)
-    parser = OaTypedParser.from_dom(xml[0])
     return parser.write_oa_map(data)

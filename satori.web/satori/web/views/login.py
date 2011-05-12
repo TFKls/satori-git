@@ -62,12 +62,12 @@ class ChangePassForm(forms.Form):
 @general_view
 def profile(request, page_info):
     user = page_info.user
-    xml = Global.get_instance().profile_fields
-    params = xmlparams.ParseXML(xml)['input']
+    a = Global.get_instance().profile_fields
+    parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
     form = ChangePassForm()
-    profile_form = xmlparams.ParamsForm(paramsdict=params,oamap=user.profile_get_map())
+    profile_form = xmlparams.ParamsForm2(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
     if request.method!="POST":
-        return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form}) 
+        return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form})
     bar = StatusBar()
     if 'changepass' in request.POST.keys():
         form = ChangePassForm(request.POST)
@@ -83,10 +83,9 @@ def profile(request, page_info):
                 bar.errors.append('Invalid pasword!')
             return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form}) 
     if 'update' in request.POST.keys():
-        profile_form = xmlparams.ParamsForm(paramsdict=params, data=request.POST)
+        profile_form = xmlparams.ParamsForm2(paramsdict=params, data=request.POST)
         if profile_form.is_valid():
-            om = params.dict_to_oa_map(profile_form.cleaned_data)
-            d = om.get_map().__dict__
-            user.profile_set_map(om.get_map())
-            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form}) 
+#            om = params.dict_to_oa_map(profile_form.cleaned_data)
+            user.profile_set_map(parser.write_oa_map(form.cleaned_data))
+            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form})
     return render_to_response('changepass.html', {'page_info' : page_info, 'status_bar' : bar, 'password_form' : form, 'profile_form' : profile_form}) 

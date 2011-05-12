@@ -17,17 +17,17 @@ import satori.common.SView;
 import satori.common.ui.STabPane;
 import satori.common.ui.STabs;
 import satori.main.SFrame;
+import satori.problem.SParentProblem;
 import satori.problem.impl.STestSuiteImpl;
 import satori.task.STaskException;
-import satori.test.impl.STestFactory;
+import satori.test.impl.STestSuiteBase;
 import satori.test.ui.STestPane;
 
 public class STestSuitePane implements STabPane, SView {
-	private final STestSuiteImpl suite;
 	private final STabs parent;
-	private final STestFactory factory;
+	private final SParentProblem problem;
+	private STestSuiteImpl suite = null;
 	
-	private boolean mode;
 	private STestSuiteInfoPane info_pane;
 	private STestPane test_pane;
 	private SParametersPane params_pane;
@@ -40,36 +40,49 @@ public class STestSuitePane implements STabPane, SView {
 	private JButton props_button, tests_button, params_button;
 	private JScrollPane scroll_pane;
 	
-	public STestSuitePane(STestSuiteImpl suite, STabs parent, STestFactory factory, boolean mode) {
-		this.suite = suite;
-		this.parent = parent;
-		this.factory = factory;
-		this.mode = mode;
-		initialize();
-	}
-	
 	@Override public JComponent getPane() { return main_pane; }
 	public STestPane getTestPane() { return test_pane; }
 	
-	private static class TabModel implements STabs.TabModel {
-		private final STestSuiteImpl suite;
-		public TabModel(STestSuiteImpl suite) { this.suite = suite; }
+	private STestSuitePane(STabs parent, SParentProblem problem) {
+		this.parent = parent;
+		this.problem = problem;
+	}
+	
+	private class TabModel implements STabs.TabModel {
 		@Override public String getTitle() {
-			return suite.getName().isEmpty() ? "(Tests)" : suite.getName();
+			if (suite == null) return "(Tests)";
+			else return suite.getName().isEmpty() ? "(Test suite)" : suite.getName();
 		}
 	}
-	public void open() {
+	private void openTestsAux(STestSuiteBase base) {
+		test_pane = new STestPane(problem, base);
+		initialize();
+		tab_view = parent.openPane(new TabModel(), this);
+		test_pane.addParentView(tab_view);
+	}
+	private void openTestSuiteAux(STestSuiteImpl suite) {
+		this.suite = suite;
+		info_pane = new STestSuiteInfoPane(suite);
+		test_pane = new STestPane(problem, suite.getBase());
+		params_pane = new SParametersPane(suite);
+		initialize();
 		suite.addView(this);
-		tab_view = parent.openPane(new TabModel(suite), this);
+		tab_view = parent.openPane(new TabModel(), this);
 		suite.addView(tab_view);
 		test_pane.addParentView(tab_view);
 	}
+	public static void openTests(STabs parent, SParentProblem problem, STestSuiteBase base) {
+		new STestSuitePane(parent, problem).openTestsAux(base);
+	}
+	public static void openTestSuite(STabs parent, SParentProblem problem, STestSuiteImpl suite) {
+		new STestSuitePane(parent, problem).openTestSuiteAux(suite);
+	}
 	@Override public boolean hasUnsavedData() {
-		return mode && suite.isModified() || test_pane.hasUnsavedData();
+		return suite != null && suite.isModified() || test_pane.getBase().hasModifiedTests();
 	}
 	@Override public void close() {
-		test_pane.removeAll();
-		suite.close();
+		test_pane.getBase().closeTests();
+		if (suite != null) suite.close();
 	}
 	
 	private void saveRequest() {
@@ -82,8 +95,6 @@ public class STestSuitePane implements STabPane, SView {
 		if (!suite.isRemote()) return;
 		try { suite.reload(); }
 		catch(STaskException ex) { return; }
-		test_pane.removeAll();
-		test_pane.add(suite.getTests());
 	}
 	private void deleteRequest() {
 		if (!suite.isRemote() || !SFrame.showWarningDialog("The test suite will be deleted.")) return;
@@ -96,12 +107,17 @@ public class STestSuitePane implements STabPane, SView {
 		parent.closePane(this);
 	}
 	private void createTestSuiteRequest() {
-		if (mode) return;
-		mode = true;
+		if (suite != null) return;
+		suite = STestSuiteImpl.createNew(problem, test_pane.getBase());
+		suite.addView(this);
+		suite.addView(tab_view);
+		info_pane = new STestSuiteInfoPane(suite);
+		params_pane = new SParametersPane(suite);
 		button_pane.removeAll();
 		initializeAux();
 		button_pane.revalidate(); button_pane.repaint();
 		update();
+		tab_view.update();
 	}
 	private void showPropertiesRequest() {
 		scroll_pane.setBorder(BorderFactory.createTitledBorder("Test suite properties"));
@@ -117,7 +133,7 @@ public class STestSuitePane implements STabPane, SView {
 	}
 	
 	private void initializeAux() {
-		if (mode) {
+		if (suite != null) {
 			button_pane.add(props_button);
 			button_pane.add(tests_button);
 			button_pane.add(params_button);
@@ -136,10 +152,6 @@ public class STestSuitePane implements STabPane, SView {
 		}
 	}
 	private void initialize() {
-		info_pane = new STestSuiteInfoPane(suite);
-		test_pane = new STestPane(suite, factory);
-		params_pane = new SParametersPane(suite);
-		
 		main_pane = new JPanel(new BorderLayout());
 		Box upper_pane = new Box(BoxLayout.Y_AXIS);
 		status_label = new JLabel();
@@ -188,7 +200,7 @@ public class STestSuitePane implements STabPane, SView {
 	}
 	
 	@Override public void update() {
-		if (!mode) {
+		if (suite == null) {
 			status_label.setText("Status: no test suite");
 			return;
 		}
