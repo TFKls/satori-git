@@ -85,7 +85,7 @@ class Submit(Entity):
     def get_test_suite_results(self, test_suite=None):
         if test_suite is None:
             test_suite = self.problem.default_test_suite
-        return TestResult.objects.filter(submit=self, test__testsuite=test_suite)
+        return TestResult.objects.filter(submit=self, test__test_suites=test_suite)
             
     @ExportMethod(DjangoStruct('TestSuiteResult'), [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
     def get_test_suite_result(self, test_suite=None):
