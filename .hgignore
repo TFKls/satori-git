@@ -15,5 +15,4 @@ syntax: regexp
 tmp/*
 satori.javatool/bin/*
 satori.javatool/lib/*
-\.orig$
 syncdb.sh
