@@ -82,7 +82,7 @@ def edit(request, page_info,id):
             try:
                 message.modify(SubpageStruct(name=data['name'],
                                              content=data['content'],
-                                             is_sticky=['is_sticky'],
+                                             is_sticky=data['is_sticky'],
                                              is_public=data['is_public']))
             except SphinxException as sphinxException:
                 attachments = valid_attachments(message.content_files_get_list())

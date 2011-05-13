@@ -94,6 +94,7 @@ class Ranking(Entity):
         self.save()
         self.params_set_map(params)
         set_params = {}
+#TODO: Simplify. Loop over problems in contest
         for problem,suite in problem_test_suites.items():
             if problem.contest != self.contest:
                 raise CannotSetField
@@ -111,6 +112,7 @@ class Ranking(Entity):
                 ranking_params = set_params[problem.id]
             else:
                 ranking_params = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
+                ranking_params.test_suite=None
                 ranking_params.save()
             ranking_params.params_set_map(oa_map)
             set_params[problem.id] = ranking_params
@@ -120,14 +122,14 @@ class Ranking(Entity):
         self.rejudge()
         return self
 
-    @ExportMethod(NoneType, [DjangoId('Ranking'), DjangoId('ProblemMapping'), DjangoId('TestSuite'), TypedMap(unicode, AnonymousAttribute)], PCArg('self', 'MANAGE'))
-    def modify_problem(self, problem, test_suite, params):
+    @ExportMethod(NoneType, [DjangoId('Ranking'), DjangoId('ProblemMapping'), DjangoId('TestSuite'), TypedMap(unicode, AnonymousAttribute)], PCArg('self', 'MANAGE'), [CannotSetField])
+    def modify_problem(self, problem, test_suite=None, params={}):
         if problem.contest != self.contest:
             raise CannotSetField
         if test_suite is not None and test_suite.problem != problem.problem:
             raise CannotSetField
         param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
-        param.test_suite = suite
+        param.test_suite = test_suite
         param.save()
         param.params_set_map(params)
         self.rejudge()
