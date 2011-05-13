@@ -37,7 +37,7 @@ def add(request, page_info):
     parser = params.parser_from_xml(description=aggregators[selected],section='aggregator',subsection='general')
     if request.method=="POST":
         base_form = AddBaseForm(request.POST)
-        form = xmlparams.ParamsForm2(parser=parser,data=request.POST)
+        form = xmlparams.ParamsForm(parser=parser,data=request.POST)
         if base_form.is_valid() and form.is_valid():
             ranking = Ranking.create(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["ranking_name"],aggregator=selected,is_public=False),parser.write_oa_map(form.cleaned_data), {}, {})
             newvis = base_form.cleaned_data["ranking_visibility"]
@@ -57,7 +57,7 @@ def add(request, page_info):
             return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,ranking.id]))
     else:
         base_form = AddBaseForm()
-        form = xmlparams.ParamsForm2(parser=parser,initial=parser.read_oa_map({},check_required=False))
+        form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map({},check_required=False))
     return render_to_response('ranking_add.html', {'page_info' : page_info, 'base_form' : base_form, 'form' : form, 'selected' : selected})
 
 
@@ -85,7 +85,7 @@ def edit(request, page_info, id):
             ranking.delete()
             return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
         base_form = AddBaseForm(request.POST)
-        form = xmlparams.ParamsForm2(parser=parser,data=request.POST)
+        form = xmlparams.ParamsForm(parser=parser,data=request.POST)
         if base_form.is_valid() and form.is_valid():
             newvis = base_form.cleaned_data["ranking_visibility"]
             public = ranking.is_public
@@ -106,8 +106,9 @@ def edit(request, page_info, id):
             return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,id]))
     else:
         base_form = AddBaseForm(initial={'ranking_name' : ranking.name, 'ranking_visibility' : visibility})
-        form = xmlparams.ParamsForm2(parser=parser,initial=parser.read_oa_map(ranking.params_get_map(),check_required=False))
+        form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(ranking.params_get_map(),check_required=False))
     return render_to_response('ranking_edit.html', {'page_info' : page_info, 'ranking' : ranking, 'base_form' : base_form, 'form' : form, 'problem_list' : problem_list})
+
 
 
 @contest_view
@@ -115,22 +116,42 @@ def editparams(request, page_info, id, problem_id):
     aggregators = Global.get_aggregators()
     ranking = Ranking(int(id))
     contest = page_info.contest
-    problem = ProblemMapping.filter(ProblemMappingStruct(id=int(problem_id)))[0]
+    problem = ProblemMapping(int(problem_id))
     allparams = ranking.get_problem_params()
+    allsuites = ranking.get_problem_test_suites()
     problem_params = {}
     for k, v in allparams.iteritems():
         if k.id==int(problem_id):
             problem_params = v
+    current_suite = None
+    for k, v in allsuites.iteritems():
+        if k.id==int(problem_id):
+            current_suite = v
+    
+    class ParamsBaseForm(forms.Form):
+        suite = forms.ChoiceField(choices=[[0,'Use default']]+[[s.id,s.name] for s in TestSuite.filter(TestSuiteStruct(problem=problem.problem))],label='Test suite')
+    suiteid=0
+    if current_suite:
+        suiteid = current_suite.id
     parser = params.parser_from_xml(description=aggregators[ranking.aggregator],section='aggregator',subsection='problem')
     if request.method=="POST":
-        form = xmlparams.ParamsForm2(parser=parser,data=request.POST)
-        if form.is_valid():
-            ranking.set_problem_params({problem : parser.write_oa_map(form.cleaned_data)})
+        base_form = ParamsBaseForm(data=request.POST)
+        form = xmlparams.ParamsForm(parser=parser,data=request.POST)
+        if base_form.is_valid() and form.is_valid():            
+            data = base_form.cleaned_data
+            if int(base_form.cleaned_data['suite'])==0:
+                newsuite = None
+            else:
+                newsuite = TestSuite(int(base_form.cleaned_data['suite']))
+#            ranking.set_problem_test_suites({problem : newsuite})
+#            ranking.set_problem_params({problem : parser.write_oa_map(form.cleaned_data)})
+            ranking.modify_problem(problem=problem,test_suite=newsuite,params=parser.write_oa_map(form.cleaned_data))
             ranking.rejudge()
             return HttpResponseRedirect(reverse('ranking_edit',args=[page_info.contest.id,ranking.id]))
     else:
-        form = xmlparams.ParamsForm2(parser=parser,initial=parser.read_oa_map(problem_params,check_required=False))
-    return render_to_response('ranking_editparams.html', {'page_info' : page_info, 'ranking' : ranking, 'form' : form})
+        base_form = ParamsBaseForm(initial={'suite' : suiteid})
+        form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(problem_params,check_required=False))
+    return render_to_response('ranking_editparams.html', {'page_info' : page_info, 'ranking' : ranking, 'form' : form, 'base_form' : base_form})
     
 @contest_view
 def rejudge(request, page_info, id):
