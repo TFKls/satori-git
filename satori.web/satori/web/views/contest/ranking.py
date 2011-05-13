@@ -135,6 +135,10 @@ def editparams(request, page_info, id, problem_id):
         suiteid = current_suite.id
     parser = params.parser_from_xml(description=aggregators[ranking.aggregator],section='aggregator',subsection='problem')
     if request.method=="POST":
+        if 'erase' in request.POST.keys():
+            ranking.modify_problem(problem=problem,test_suite=None,params={})
+            ranking.rejudge()
+            return HttpResponseRedirect(reverse('ranking_edit',args=[page_info.contest.id,ranking.id]))
         base_form = ParamsBaseForm(data=request.POST)
         form = xmlparams.ParamsForm(parser=parser,data=request.POST)
         if base_form.is_valid() and form.is_valid():            
