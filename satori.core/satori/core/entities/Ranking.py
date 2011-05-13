@@ -128,10 +128,18 @@ class Ranking(Entity):
             raise CannotSetField
         if test_suite is not None and test_suite.problem != problem.problem:
             raise CannotSetField
-        param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
-        param.test_suite = test_suite
-        param.save()
-        param.params_set_map(params)
+        if test_suite is None and params == {}:
+            try:
+                param = self.ranking_params.get(problem=problem)
+            except RankingParams.DoesNotExist:
+                pass
+            else:
+                param.delete()
+        else:
+            param = RankingParams.objects.get_or_create(ranking=self, problem=problem)[0]
+            param.test_suite = test_suite
+            param.save()
+            param.params_set_map(params)
         self.rejudge()
  
     @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
