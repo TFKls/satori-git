@@ -16,6 +16,7 @@ ln -s python "bin/python${PVER}"
 ln -s python "bin/python2.6"
 source bin/activate
 easy_install zc.buildout
+rm local/lib/python*/site-packages/zc.buildout-*.egg/zc/buildout/easy_install.pyc
 patch local/lib/python*/site-packages/zc.buildout-*.egg/zc/buildout/easy_install.py <<EOF
 --- easy_install.py     2011-09-29 15:05:18.802287546 +0000
 +++ easy_install.py2    2011-09-29 15:22:54.182076890 +0000
@@ -48,7 +49,6 @@ patch local/lib/python*/site-packages/zc.buildout-*.egg/zc/buildout/easy_install
          return version
  
 EOF
-easy_install zc.buildout
 easy_install -U distribute
 mkdir -p src/python var/{buildout,cache}
 buildout
