@@ -48,6 +48,7 @@ patch local/lib/python*/site-packages/zc.buildout-*.egg/zc/buildout/easy_install
          return version
  
 EOF
+easy_install zc.buildout
 easy_install -U distribute
 mkdir -p src/python var/{buildout,cache}
 buildout
