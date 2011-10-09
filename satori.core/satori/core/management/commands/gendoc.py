@@ -11,6 +11,8 @@ from satori.ars.model import *
 
 from docutils import nodes
 from sphinx import addnodes
+from sphinx.builders import BUILTIN_BUILDERS
+from sphinx.builders.html import PickleHTMLBuilder
 from sphinx.domains import Domain, ObjType, BUILTIN_DOMAINS 
 from sphinx.directives import ObjectDescription
 from sphinx.roles import XRefRole
@@ -317,6 +319,13 @@ class ArsDomain(Domain):
 
 BUILTIN_DOMAINS['ars'] = ArsDomain
 
+class GlobalTocPickleHTMLBuilder(PickleHTMLBuilder):
+    def get_doc_context(self, docname, body, metatags):
+        res = super(GlobalTocPickleHTMLBuilder, self).get_doc_context(docname, body, metatags)
+        res['toc'] = self.render_partial(self.env.get_toctree_for(docname, self, True))['fragment']
+        return res
+
+BUILTIN_BUILDERS['global_pickle'] = GlobalTocPickleHTMLBuilder
 
 def prepare_doc(obj, indent):
     doc = obj.__dict__.get('__doc__', None)
@@ -644,7 +653,7 @@ class Command(BaseCommand):
             },
         }
 
-        app = Sphinx(srcdir, None, destdir, os.path.join(destdir, '.doctrees'), 'html',
+        app = Sphinx(srcdir, None, destdir, os.path.join(destdir, '.doctrees'), 'global_pickle',
                      conf, sys.stdout, sys.stderr, True, False, [])
 
         app.build(True, [])
