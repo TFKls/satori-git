@@ -48,9 +48,11 @@ def view(request, page_info):
 
 
 class ChangePassForm(forms.Form):
-    oldpass = forms.CharField(label="Old password:",required=True,widget=forms.PasswordInput)
-    newpass = forms.CharField(label="New password:",required=True,widget=forms.PasswordInput)
-    confirm = forms.CharField(label="Confirm password:",required=True,widget=forms.PasswordInput)
+    firstname = forms.CharField(label="First name:",required=False)
+    lastname = forms.CharField(label="Last name:",required=False)
+    oldpass = forms.CharField(label="Old password:",required=False,widget=forms.PasswordInput)
+    newpass = forms.CharField(label="New password:",required=False,widget=forms.PasswordInput)
+    confirm = forms.CharField(label="Confirm password:",required=False,widget=forms.PasswordInput)
     def clean(self):
         data = self.cleaned_data
         if data["newpass"]!=data["confirm"]:
@@ -64,7 +66,7 @@ def profile(request, page_info):
     user = page_info.user
     a = Global.get_instance().profile_fields
     parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
-    form = ChangePassForm()
+    form = ChangePassForm(data={'firstname' : user.firstname, 'lastname' : user.lastname})
     profile_form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
     if request.method!="POST":
         return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form})
@@ -74,9 +76,11 @@ def profile(request, page_info):
         if form.is_valid():
             try:
                 data = form.cleaned_data
-                user.change_password(data['oldpass'],data['newpass'])
+                if data['oldpass']:
+                    user.change_password(data['oldpass'],data['newpass'])
+                    bar.messages.append('Password changed.')
+                user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
                 form = ChangePassForm()
-                bar.messages.append('Password changed.')
             except LoginFailed:
                 bar.errors.append('Login failed!')
             except InvalidPassword:

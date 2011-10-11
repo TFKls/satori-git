@@ -70,6 +70,7 @@ class User(Role):
 
     @ExportMethod(DjangoStruct('User'), [DjangoId('User'), DjangoStruct('User')], PCArg('self', 'EDIT'), [CannotSetField, InvalidLogin, InvalidEmail])
     def modify(self, fields):
+        changed = []
         if Privilege.demand(self, 'MANAGE'):
             self.forbid_fields(fields, ['id', 'name', 'sort_field'])
             changed = self.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code'])
@@ -78,7 +79,7 @@ class User(Role):
             if self.confirmed:
                 self.forbid_fields(fields, ['firstname', 'lastname'])
             else:
-                self.update_fields(fields, ['firstname', 'lastname'])
+                change = self.update_fields(fields, ['firstname', 'lastname'])
         self.save()
         if 'firstname' in changed or 'lastname' in changed:
             for c in Contestant.objects.filter(children=self):
