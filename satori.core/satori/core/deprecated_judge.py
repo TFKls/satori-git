@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#@<checker name="Old judge with binary checker">
+#@<checker name="Judge with binary checker (deprecated)">
 #@      <input>
 #@              <param type="time" name="time" description="Time limit" required="true" default="10s"/>
 #@              <param type="size" name="memory" description="Memory limit" required="true" default="256MB"/>
