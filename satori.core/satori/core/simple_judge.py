@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#@<checker name="Old judge with binary checker">
+#@<checker name="Simple judge">
 #@      <input>
 #@              <param type="time" name="time" description="Time limit" required="true" default="10s"/>
 #@              <param type="size" name="memory" description="Memory limit" required="true" default="256MB"/>
 #@              <param type="blob" name="input" description="Input file" required="true"/>
 #@              <param type="blob" name="hint" description="Output/hint file" required="false"/>
-#@              <param type="blob" name="checker" description="Checker executable" required="false"/>
+#@              <param type="blob" name="checker" description="Checker" required="false"/>
 #@      </input>
 #@      <output>
 #@              <param type="text" name="status" description="Status"/>
@@ -105,11 +105,11 @@ memory_limit = parse_memory(test.get('memory')['value'])
 
 if fileext == 'c':
     source_file = 'solution.c'
-    compiler  = [ '/usr/bin/gcc', '-static', '-O2', '-Wall', 'solution.c', '-lm', '-osolution.x', '-include', 'stdio.h', '-include', 'stdlib.h', '-include', 'string.h']
+    compiler  = [ '/usr/bin/gcc', '-static', '-O2', '-Wall', 'solution.c', '-lm', '-osolution.x']
 elif fileext in ['cpp', 'cc', 'cxx']:
     fileext = 'cpp'
     source_file = 'solution.cpp'
-    compiler  = [ '/usr/bin/g++', '-static', '-O2', '-Wall', 'solution.cpp', '-osolution.x', '-include', 'cstdio', '-include', 'cstdlib', '-include', 'cstring']
+    compiler  = [ '/usr/bin/g++', '-static', '-O2', '-Wall', 'solution.cpp', '-osolution.x']
 elif fileext in ['pas', 'p', 'pp']:
     fileext = 'pas'
     source_file = 'solution.pas'
@@ -180,17 +180,45 @@ if ret != 'OK':
     communicate('SETSTRING', {'name': 'status', 'value': ret})
     sys.exit(0)
 
+has_checker = 'checker' in test
+
+#COMPILE CHECKER
+if has_checker:
+    communicate('GETTESTBLOB', {'name': 'checker', 'path': '/tmp/checker.cpp'})
+    checker_compiler  = [ '/usr/bin/g++', '-static', '-O2', 'checker.cpp', '-ochecker.x']
+    checker_compile_run = ['runner', '--quiet',
+          '--root=/',
+          '--work-dir=/tmp',
+          '--env=simple',
+          '--setuid=runner',
+          '--setgid=runner',
+          '--control-host='+options.host,
+          '--control-port='+str(options.port),
+          '--cgroup=/compile_checker',
+          '--cgroup-memory='+str(compile_memory),
+          '--cgroup-cputime='+str(compile_time),
+          '--max-realtime='+str(compile_time),
+          '--max-stack='+str(compile_stack),
+          '--stdout=/tmp/check.log', '--trunc-stdout',
+          '--stderr=__STDOUT__',
+          '--stdout=/dev/null',
+          '--stderr=/dev/null',
+          '--priority=30']
+    checker_compile_run += checker_compiler
+    ret = subprocess.call(checker_compile_run)
+    if ret != 0:
+        communicate('SETBLOB', {'name': 'check_log', 'path': '/tmp/check.log'})
+        communicate('SETSTRING', {'name': 'status', 'value': 'INT'})
+        sys.exit(0)
 
 #CHECK OUTPUT
 has_hint = 'hint' in test
-has_checker = 'checker' in test
 if has_hint:
     communicate('GETTESTBLOB', {'name': 'hint', 'path': '/tmp/data.hint'})
     hint_file = '/tmp/data.hint'
 else:
     hint_file = '/dev/null'
 if has_checker:
-    communicate('GETTESTBLOB', {'name': 'checker', 'path': '/tmp/checker.x'})
     checker = ['/tmp/checker.x', '/tmp/data.in', hint_file, '/tmp/data.out']
 else:
     checker = ['/usr/bin/diff', '-q', '-w', '-B', hint_file, '/tmp/data.out']
@@ -206,9 +234,11 @@ checker_run = ['runner', '--quiet',
       '--cgroup-memory='+str(check_memory),
       '--cgroup-cputime='+str(check_time),
       '--max-realtime='+str(check_time),
-      '--stdout=/tmp/check.log', '--trunc-stdout',
+      '--stdout=/tmp/check.log',
       '--stderr=__STDOUT__',
       '--priority=30']
+if not has_checker:
+    checker_run += ['--trunc-stdout']
 checker_run += checker
 ret = subprocess.call(checker_run)
 communicate('SETBLOB', {'name': 'check_log', 'path': '/tmp/check.log'})
