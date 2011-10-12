@@ -59,6 +59,7 @@ public class SSession {
 	}
 	private void createProtocol() throws Exception {
 		Socket socket = use_ssl ? createSecureSocket() : createUnsecureSocket();
+		socket.setSoTimeout(1000);
 		transport = new TFramedTransport(new TSocket(socket));
 		protocol = new TBinaryProtocol(transport);
 	}
