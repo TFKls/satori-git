@@ -94,7 +94,7 @@ public class STestSuitePane implements STabPane, SView {
 	private void reloadRequest() {
 		if (!suite.isRemote()) return;
 		try { suite.reload(); }
-		catch(STaskException ex) { return; }
+		catch(STaskException ex) {}
 	}
 	private void deleteRequest() {
 		if (!suite.isRemote() || !SFrame.showWarningDialog("The test suite will be deleted.")) return;

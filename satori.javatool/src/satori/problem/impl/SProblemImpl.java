@@ -160,7 +160,7 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		desc = source.getProblem().getDescription();
 		notifyUpToDate();
 		snap.set(this);
-		snap.createLists();
+		//snap.createLists(); //TODO: what the hell is this?
 		snap.getTestList().load(source.getTests());
 		snap.getTestSuiteList().load(source.getTestSuites());
 	}
