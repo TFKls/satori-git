@@ -2,13 +2,15 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 
-#@<checker name="Simple judge">
+#@<checker name="Judge with input generation">
 #@      <input>
 #@              <param type="time" name="time" description="Time limit" required="true" default="10s"/>
 #@              <param type="size" name="memory" description="Memory limit" required="true" default="256MB"/>
-#@              <param type="blob" name="input" description="Input file" required="true"/>
-#@              <param type="blob" name="hint" description="Output/hint file" required="false"/>
+#@              <param type="blob" name="generator_spec" description="Input specification" required="false"/>
+#@              <param type="blob" name="generator" description="Input generetor" required="true"/>
+#@              <param type="blob" name="hinter" description="Hint generetor" required="false"/>
 #@              <param type="blob" name="checker" description="Checker" required="false"/>
+#@              <param type="text" name="languages" description="comma-separated list of accepted languages (c,cpp,pas)" required="false"/>
 #@      </input>
 #@      <output>
 #@              <param type="text" name="status" description="Status"/>
@@ -16,6 +18,8 @@
 #@              <param type="time" name="execute_time_real" description="Execution time"/>
 #@              <param type="time" name="execute_time_cpu" description="Execution CPU time"/>
 #@              <param type="size" name="execute_memory" description="Execution memory"/>
+#@              <param type="blob" name="generate_log" description="Input generation log"/>
+#@              <param type="blob" name="hint_generate_log" description="Hint generation log"/>
 #@              <param type="blob" name="check_log" description="Checking log"/>
 #@      </output>
 #@</checker>
@@ -79,6 +83,8 @@ parser.add_option('-P', '--control-port', dest='port', default=8765, action='sto
 compile_time = 20*1000
 compile_memory = 1024*1024*1024
 compile_stack = 64*1024*1024
+generate_time = 60*1000
+generate_memory = 1024*1024*1024
 check_time = 60*1000
 check_memory = 1024*1024*1024
 
@@ -145,8 +151,61 @@ if ret != 0:
     communicate('SETSTRING', {'name': 'status', 'value': 'CME'})
     sys.exit(0)
 
+#COMPILE INPUT GENERATOR
+communicate('GETTESTBLOB', {'name': 'generator', 'path': '/tmp/generator.cpp'})
+generator_compiler = [ '/usr/bin/g++', '-static', '-O2', 'generator.cpp', '-ogenerator.x']
+generator_compile_run = ['runner', '--quiet',
+      '--root=/',
+      '--work-dir=/tmp',
+      '--env=simple',
+      '--setuid=runner',
+      '--setgid=runner',
+      '--control-host='+options.host,
+      '--control-port='+str(options.port),
+      '--cgroup=/compile_generator',
+      '--cgroup-memory='+str(compile_memory),
+      '--cgroup-cputime='+str(compile_time),
+      '--max-realtime='+str(compile_time),
+      '--max-stack='+str(compile_stack),
+      '--stdout=/tmp/generate.log', '--trunc-stdout',
+      '--stderr=__STDOUT__',
+      '--priority=30']
+generator_compile_run += generator_compiler
+ret = subprocess.call(generator_compile_run)
+if ret != 0:
+    communicate('SETBLOB', {'name': 'generate_log', 'path': '/tmp/generate.log'})
+    communicate('SETSTRING', {'name': 'status', 'value': 'INT'})
+    sys.exit(0)
+
+#GENERATE INPUT
+generator = ['/tmp/generator.x']
+has_spec  = 'generator_spec' in test
+if has_spec:
+    communicate('GETTESTBLOB', {'name': 'generator_spec', 'path': '/tmp/data.spec'})
+    generator += ['/tmp/data.spec']
+generator_run = ['runner', '--quiet',
+      '--root=/',
+      '--work-dir=/tmp',
+      '--env=simple',
+      '--setuid=runner',
+      '--setgid=runner',
+      '--control-host='+options.host,
+      '--control-port='+str(options.port),
+      '--cgroup=/generate',
+      '--cgroup-memory='+str(generate_memory),
+      '--cgroup-cputime='+str(generate_time),
+      '--max-realtime='+str(generate_time),
+      '--stdout=/tmp/data.in', '--trunc-stdout',
+      '--stderr=/tmp/generate.log',
+      '--priority=30']
+generator_run += generator
+ret = subprocess.call(generator_run)
+communicate('SETBLOB', {'name': 'generate_log', 'path': '/tmp/generate.log'})
+if ret != 0:
+    communicate('SETSTRING', {'name': 'status', 'value': 'INT'})
+    sys.exit(0)
+
 #RUN SOLUTION
-communicate('GETTESTBLOB', {'name': 'input', 'path': '/tmp/data.in'})
 execute_run = ['runner',
       '--root=/jail',
       '--work-dir=/runner',
@@ -180,6 +239,63 @@ if ret != 'OK':
     communicate('SETSTRING', {'name': 'status', 'value': ret})
     sys.exit(0)
 
+has_hinter = 'hinter' in test
+
+#COMPILE HINT GENERATOR
+if has_hinter:
+    communicate('GETTESTBLOB', {'name': 'hinter', 'path': '/tmp/hinter.cpp'})
+    hinter_compiler  = [ '/usr/bin/g++', '-static', '-O2', 'hinter.cpp', '-ohinter.x']
+    hinter_compile_run = ['runner', '--quiet',
+          '--root=/',
+          '--work-dir=/tmp',
+          '--env=simple',
+          '--setuid=runner',
+          '--setgid=runner',
+          '--control-host='+options.host,
+          '--control-port='+str(options.port),
+          '--cgroup=/compile_checker',
+          '--cgroup-memory='+str(compile_memory),
+          '--cgroup-cputime='+str(compile_time),
+          '--max-realtime='+str(compile_time),
+          '--max-stack='+str(compile_stack),
+          '--stdout=/tmp/hint_generate.log', '--trunc-stdout',
+          '--stderr=__STDOUT__',
+          '--stdout=/dev/null',
+          '--stderr=/dev/null',
+          '--priority=30']
+    hinter_compile_run += hinter_compiler
+    ret = subprocess.call(hinter_compile_run)
+    if ret != 0:
+        communicate('SETBLOB', {'name': 'hint_generate_log', 'path': '/tmp/hint_generate.log'})
+        communicate('SETSTRING', {'name': 'status', 'value': 'INT'})
+        sys.exit(0)
+
+#GENERATE HINT
+if has_hinter:
+    hinter = ['/tmp/hinter.x']
+    hinter_run = ['runner', '--quiet',
+          '--root=/',
+          '--work-dir=/tmp',
+          '--env=simple',
+          '--setuid=runner',
+          '--setgid=runner',
+          '--control-host='+options.host,
+          '--control-port='+str(options.port),
+          '--cgroup=/generate',
+          '--cgroup-memory='+str(generate_memory),
+          '--cgroup-cputime='+str(generate_time),
+          '--max-realtime='+str(generate_time),
+          '--stdin=/tmp/data.in',
+          '--stdout=/tmp/data.hint', '--trunc-stdout',
+          '--stderr=/tmp/hint_generate.log',
+          '--priority=30']
+    hinter_run += hinter
+    ret = subprocess.call(hinter_run)
+    communicate('SETBLOB', {'name': 'hint_generate_log', 'path': '/tmp/hint_generate.log'})
+    if ret != 0:
+        communicate('SETSTRING', {'name': 'status', 'value': 'INT'})
+        sys.exit(0)
+
 has_checker = 'checker' in test
 
 #COMPILE CHECKER
@@ -212,9 +328,7 @@ if has_checker:
         sys.exit(0)
 
 #CHECK OUTPUT
-has_hint = 'hint' in test
-if has_hint:
-    communicate('GETTESTBLOB', {'name': 'hint', 'path': '/tmp/data.hint'})
+if has_hinter:
     hint_file = '/tmp/data.hint'
 else:
     hint_file = '/dev/null'
@@ -245,5 +359,11 @@ communicate('SETBLOB', {'name': 'check_log', 'path': '/tmp/check.log'})
 if ret != 0:
     communicate('SETSTRING', {'name': 'status', 'value': 'ANS'})
     sys.exit(0)
+
+has_languages = 'languages' in test
+if has_languages:
+	languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
+    if fileext not in languages:
+        communicate('SETSTRING', {'name': 'status', 'value': 'LANG'})
 
 communicate('SETSTRING', {'name': 'status', 'value': 'OK'})

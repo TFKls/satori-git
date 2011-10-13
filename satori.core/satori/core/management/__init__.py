@@ -54,13 +54,16 @@ def create_admin(app, created_models, verbosity, **kwargs):
         checker.set_password(password)
         Privilege.global_grant(checker, 'JUDGE')
 
-    print 'Registering default judge'
+    print 'Registering default judges'
     
-    default_judge_src = os.path.join(os.path.split(__file__)[0], '..', 'default_judge.py')
-    blob = Global.get_instance().judges_set_blob('default_judge', 'judge.py')
-    with open(default_judge_src) as default_judge:
-        shutil.copyfileobj(default_judge, blob)
-    blob.close()
+    judges_dir = os.path.join(os.path.split(__file__)[0], '..', 'judges')
+    for judge in [ os.psth.join(judges_dir, entry) for entry in os.listdir(judges_dir) if os.path.isfile(os.path.join(judges_dir, entry)) ]:
+        if judge[-3:] == '.py':
+            name = os.path.basename(judge)[:-3]
+            blob = Global.get_instance().judges_set_blob(name, 'judge.py')
+            with open(judge) as judge_file:
+                shutil.copyfileobj(judge_file, blob)
+            blob.close()
 
     print 'Setting default profile fields...'
     profile_xml = """
