@@ -9,7 +9,7 @@
 #@              <param type="blob" name="input" description="Input file" required="true"/>
 #@              <param type="blob" name="hint" description="Output/hint file" required="false"/>
 #@              <param type="blob" name="checker" description="Checker" required="false"/>
-#@              <param type="text" name="languages" description="Accepted languages" required="false" default="c,cpp,pas"/>
+#@              <param type="text" name="languages" description="Accepted languages (c,cpp,pas)" required="false"/>
 #@      </input>
 #@      <output>
 #@              <param type="text" name="status" description="Status"/>
