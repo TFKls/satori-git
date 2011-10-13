@@ -57,7 +57,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     print 'Registering default judges'
     
     judges_dir = os.path.join(os.path.split(__file__)[0], '..', 'judges')
-    for judge in [ os.psth.join(judges_dir, entry) for entry in os.listdir(judges_dir) if os.path.isfile(os.path.join(judges_dir, entry)) ]:
+    for judge in [ os.path.join(judges_dir, entry) for entry in os.listdir(judges_dir) if os.path.isfile(os.path.join(judges_dir, entry)) ]:
         if judge[-3:] == '.py':
             name = os.path.basename(judge)[:-3]
             blob = Global.get_instance().judges_set_blob(name, 'judge.py')

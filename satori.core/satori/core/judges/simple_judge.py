@@ -9,7 +9,7 @@
 #@              <param type="blob" name="input" description="Input file" required="true"/>
 #@              <param type="blob" name="hint" description="Output/hint file" required="false"/>
 #@              <param type="blob" name="checker" description="Checker" required="false"/>
-#@              <param type="text" name="languages" description="comma-separated list of accepted languages (c,cpp,pas)" required="false"/>
+#@              <param type="text" name="languages" description="Accepted languages (c,cpp,pas)" required="false"/>
 #@      </input>
 #@      <output>
 #@              <param type="text" name="status" description="Status"/>
@@ -249,7 +249,7 @@ if ret != 0:
 
 has_languages = 'languages' in test
 if has_languages:
-	languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
+    languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
     if fileext not in languages:
         communicate('SETSTRING', {'name': 'status', 'value': 'LANG'})
 

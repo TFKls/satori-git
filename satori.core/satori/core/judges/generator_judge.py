@@ -10,7 +10,7 @@
 #@              <param type="blob" name="generator" description="Input generetor" required="true"/>
 #@              <param type="blob" name="hinter" description="Hint generetor" required="false"/>
 #@              <param type="blob" name="checker" description="Checker" required="false"/>
-#@              <param type="text" name="languages" description="comma-separated list of accepted languages (c,cpp,pas)" required="false"/>
+#@              <param type="text" name="languages" description="Accepted languages (c,cpp,pas)" required="false"/>
 #@      </input>
 #@      <output>
 #@              <param type="text" name="status" description="Status"/>
@@ -178,11 +178,12 @@ if ret != 0:
     sys.exit(0)
 
 #GENERATE INPUT
-generator = ['/tmp/generator.x']
-has_spec  = 'generator_spec' in test
-if has_spec:
+has_generator_spec  = 'generator_spec' in test
+if has_generator_spec:
     communicate('GETTESTBLOB', {'name': 'generator_spec', 'path': '/tmp/data.spec'})
-    generator += ['/tmp/data.spec']
+    generator_spec_file = '/tmp/data.spec'
+else:
+    generator_spec_file = '/dev/null'
 generator_run = ['runner', '--quiet',
       '--root=/',
       '--work-dir=/tmp',
@@ -195,10 +196,11 @@ generator_run = ['runner', '--quiet',
       '--cgroup-memory='+str(generate_memory),
       '--cgroup-cputime='+str(generate_time),
       '--max-realtime='+str(generate_time),
+      '--stdin='+generator_spec_file,
       '--stdout=/tmp/data.in', '--trunc-stdout',
       '--stderr=/tmp/generate.log',
       '--priority=30']
-generator_run += generator
+generator_run += ['/tmp/generator.x']
 ret = subprocess.call(generator_run)
 communicate('SETBLOB', {'name': 'generate_log', 'path': '/tmp/generate.log'})
 if ret != 0:
@@ -362,7 +364,7 @@ if ret != 0:
 
 has_languages = 'languages' in test
 if has_languages:
-	languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
+    languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
     if fileext not in languages:
         communicate('SETSTRING', {'name': 'status', 'value': 'LANG'})
 
