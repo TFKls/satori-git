@@ -181,7 +181,6 @@ if ret != 'OK':
     communicate('SETSTRING', {'name': 'status', 'value': ret})
     sys.exit(0)
 
-
 #CHECK OUTPUT
 has_hint = 'hint' in test
 has_checker = 'checker' in test
@@ -219,7 +218,7 @@ if ret != 0:
 
 has_languages = 'languages' in test
 if has_languages:
-        languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
+    languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
     if fileext not in languages:
         communicate('SETSTRING', {'name': 'status', 'value': 'LANG'})
 

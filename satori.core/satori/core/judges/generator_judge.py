@@ -182,7 +182,7 @@ has_generator_spec  = 'generator_spec' in test
 if has_generator_spec:
     communicate('GETTESTBLOB', {'name': 'generator_spec', 'path': '/tmp/data.spec'})
     generator_spec_file = '/tmp/data.spec'
-else
+else:
     generator_spec_file = '/dev/null'
 generator_run = ['runner', '--quiet',
       '--root=/',
@@ -364,7 +364,7 @@ if ret != 0:
 
 has_languages = 'languages' in test
 if has_languages:
-        languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
+    languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
     if fileext not in languages:
         communicate('SETSTRING', {'name': 'status', 'value': 'LANG'})
 
