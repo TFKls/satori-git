@@ -1,13 +1,11 @@
 package satori.main;
 
-import java.awt.BorderLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -32,7 +30,6 @@ public class SFrame {
 	private JMenu session_menu, open_menu;
 	private JMenuItem login_button, logout_button, config_button;
 	private JMenuItem problems_button;
-	private JLabel session_label;
 	
 	private SFrame() {
 		initialize();
@@ -44,9 +41,11 @@ public class SFrame {
 	public JFrame getFrame() { return frame; }
 	
 	private void updateSession() {
+		String host = SConfig.getHost();
+		if (host == null || host.isEmpty()) { session_menu.setText("Session"); return; }
 		String username = SSession.getUsername();
-		if (username == null) username = "<anonymous>";
-		session_label.setText("Session: " + username + "@" + SConfig.getHost());
+		if (username != null) host = username + "@" + host;
+		session_menu.setText("Session (" + host + ")");
 	}
 	
 	private void loginRequest() { SLoginDialog.show(); }
@@ -69,13 +68,11 @@ public class SFrame {
 	private void initialize() {
 		frame = new JFrame("Satori Tool");
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-		frame.getContentPane().setLayout(new BorderLayout());
-		frame.getContentPane().add(tabs.getPane(), BorderLayout.CENTER);
-		session_label = new JLabel();
-		frame.getContentPane().add(session_label, BorderLayout.NORTH);
+		frame.setContentPane(tabs.getPane());
 		
 		JMenuBar menu_bar = new JMenuBar();
-		session_menu = new JMenu("Session");
+		session_menu = new JMenu();
+		updateSession();
 		login_button = new JMenuItem("Login...");
 		login_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { loginRequest(); }
