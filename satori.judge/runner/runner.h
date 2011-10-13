@@ -225,6 +225,9 @@ namespace runner {
 		void Warning(const char*, ...);
 		void Fail(const char*, ...);
 
+        int  total_write(int, const void*, size_t);
+        int  total_read(int, void*, size_t);
+        int  cat_open(const char*, int, int);
 		void ms_timeval(long, timeval&);
 		void ms_timespec(long, timespec&);
 		long miliseconds(const timeval&);

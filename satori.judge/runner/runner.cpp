@@ -896,6 +896,86 @@ bool Runner::check_cgroup()
     return true;
 }
 
+int total_write(int fd, const void* buf, size_t cnt) {
+    while (cnt>0) {
+        ssize_t w = write(fd, buf, cnt);
+        if (w < 0)
+            return w;
+        buf = ((char*)buf)+w;
+        cnt -= w;
+    }
+    return 0;
+}
+int total_read(int fd, void* buf, size_t cnt) {
+    while (cnt>0) {
+        ssize_t r = read(fd, buf, cnt);
+        if (r < 0)
+            return r;
+        buf = ((char*)buf)+r;
+        cnt -= r;
+    }
+    return 0;
+}
+
+int cat_open(const char* path, int oflag, int mode) {
+    int catpipe[2];
+    int ctrlpipe[2];
+    if (pipe(catpipe))
+        Fail("pipe failed");
+    if (pipe(ctrlpipe))
+        Fail("pipe failed");
+    int f = fork();
+    if (f<0)
+        Fail("fork failed");
+    if (f==0) {
+        close(ctrlpipe[0]);
+        close(catpipe[1]);
+
+        f = fork();
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+        if (f > 0)
+            exit(0);
+        umask(0);
+        f = setsid();
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+        f = chdir("/");
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+        for (int f=getdtablesize(); f >= 0; f--)
+            if (f!=ctrlpipe[1] && f!=catpipe[0])
+                close(f);
+
+        int fd = open(path, oflag, mode);
+        total_write(ctrlpipe[1], &fd, sizeof(fd));
+        close(ctrlpipe[1]);
+        if (fd < 0)
+            exit(1);
+        char buf[4096];
+        while (true) {
+            int r = read(catpipe[0], buf, 4096);
+            if (r < 0)
+                exit(0);
+            total_write(fd, buf, r);
+        }
+    }
+    close(ctrlpipe[1]);
+    close(catpipe[0]);
+    total_read(ctrlpipe[0], &f, sizeof(f));
+    close(ctrlpipe[0]);
+    if (f<0)
+        Fail("cat_open failed");
+    return catpipe[1];
+}
+
+
 void Runner::run_child()
 {
     // Synchronize myself to run after my parent has registered me in runners
@@ -951,11 +1031,11 @@ void Runner::run_child()
     int fi=-1, fo=-1, fe=-1;
     if ((input != "") && ((fi = open(input.c_str(), O_RDONLY)) < 0))
         Fail("open('%s') failed", input.c_str());
-    if ((output != "") && ((fo = open(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
+    if ((output != "") && ((fo = cat_open(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
         Fail("open('%s') failed", output.c_str());
     if (error_to_output)
         fe = fo;
-    else if ((error != "") && ((fe = open(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
+    else if ((error != "") && ((fe = cat_open(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
         Fail("open('%s') failed", error.c_str());
     setresgid(rgid, egid, sgid);
     setresuid(ruid, euid, suid);
