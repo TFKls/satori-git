@@ -28,7 +28,6 @@ public class SSession {
 	private String username = null;
 	private String password = null;
 	private String token = "";
-	private String host = null;
 	
 	private static Socket createUnsecureSocket() throws Exception {
 		return new Socket(SConfig.getHost(), SConfig.getThriftPort());
@@ -71,7 +70,6 @@ public class SSession {
 			session.token = iface.User_authenticate("", username, password);
 			session.username = username;
 			session.password = password;
-			session.host = SConfig.getHost();
 			instance = session;
 		}
 	}
@@ -92,7 +90,6 @@ public class SSession {
 	public static String getToken() { return instance.token; }
 	public static String getUsername() { return instance.username; }
 	public static String getPassword() { return instance.password; }	
-	public static String getHost() { return instance.host; }
 	
 	public static void addView(SView view) { views.add(view); }
 	public static void removeView(SView view) { views.remove(view); }

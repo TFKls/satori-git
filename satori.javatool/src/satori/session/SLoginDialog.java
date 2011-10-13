@@ -81,18 +81,17 @@ public class SLoginDialog {
 		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 	}
 	
-	private boolean process() {
+	private void process() {
 		dialog.setVisible(true);
-		if (!confirmed) return false;
+		if (!confirmed) return;
 		STaskHandler handler = STaskManager.getHandler();
 		try { SSession.login(handler, username.getText(), new String(password.getPassword())); }
-		catch(STaskException ex) { return false; }
+		catch(STaskException ex) {}
 		finally { handler.close(); }
-		return true;
 	}
 	
-	public static boolean show() {
+	public static void show() {
 		SLoginDialog self = new SLoginDialog();
-		return self.process();
+		self.process();
 	}
 }

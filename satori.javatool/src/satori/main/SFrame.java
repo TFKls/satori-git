@@ -45,21 +45,13 @@ public class SFrame {
 	
 	private void updateSession() {
 		String username = SSession.getUsername();
-		if (username == null) session_label.setText("Session: not logged in");
-		else session_label.setText("Session: " + username + "@" + SSession.getHost());
+		if (username == null) username = "<anonymous>";
+		session_label.setText("Session: " + username + "@" + SConfig.getHost());
 	}
 	
-	private void loginRequest() {
-		if (!SLoginDialog.show()) return;
-		updateSession();
-	}
-	private void logoutRequest() {
-		SSession.logout();
-		updateSession();
-	}
-	private void configRequest() {
-		SConfigDialog.show();
-	}
+	private void loginRequest() { SLoginDialog.show(); }
+	private void logoutRequest() { SSession.logout(); }
+	private void configRequest() { SConfigDialog.show(); }
 	private void problemsRequest() {
 		SProblemListPane pane;
 		STaskHandler handler = STaskManager.getHandler();
@@ -134,9 +126,6 @@ public class SFrame {
 	public static void showErrorDialog(String message) {
 		JOptionPane.showMessageDialog(get().frame, message, "Error", JOptionPane.ERROR_MESSAGE);
 	}
-	/*public static void showErrorDialog(Throwable t) {
-		showErrorDialog(t.getMessage());
-	}*/
 	public static boolean showWarningDialog(String message) {
 		Object[] options = { "Continue", "Cancel" };
 		return JOptionPane.showOptionDialog(get().frame, message, "Warning", JOptionPane.WARNING_MESSAGE, JOptionPane.OK_CANCEL_OPTION, null, options, options[0]) == JOptionPane.OK_OPTION;
