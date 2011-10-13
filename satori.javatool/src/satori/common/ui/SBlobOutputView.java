@@ -22,6 +22,8 @@ import satori.common.SData;
 import satori.data.SBlob;
 import satori.main.SFrame;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 
 public class SBlobOutputView implements SPaneView {
 	private final SData<SBlob> data;
@@ -38,9 +40,7 @@ public class SBlobOutputView implements SPaneView {
 	
 	private void showFile() {
 		if (data.get() == null) return;
-		SEditDialog dialog = new SEditDialog();
-		try { dialog.process(data.get()); }
-		catch(STaskException ex) {}
+		new SEditDialog().process(data.get());
 	}
 	private void saveFile() {
 		if (data.get() == null) return;
@@ -49,8 +49,10 @@ public class SBlobOutputView implements SPaneView {
 		if (name != null && !name.isEmpty()) file_chooser.setSelectedFile(new File(file_chooser.getCurrentDirectory(), name));
 		int ret = file_chooser.showDialog(SFrame.get().getFrame(), "Save");
 		if (ret != JFileChooser.APPROVE_OPTION) return;
-		try { data.get().saveLocal(file_chooser.getSelectedFile()); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { data.get().saveLocal(handler, file_chooser.getSelectedFile()); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	
 	private void showPopup(Point location) {

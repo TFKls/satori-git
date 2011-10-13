@@ -16,36 +16,24 @@ import org.apache.thrift.protocol.TBinaryProtocol;
 import org.apache.thrift.protocol.TProtocol;
 import org.apache.thrift.transport.TFramedTransport;
 import org.apache.thrift.transport.TSocket;
-import org.apache.thrift.transport.TTransport;
 
 import satori.common.SView;
 import satori.config.SConfig;
 import satori.task.STask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.thrift.gen.User;
 
 public class SSession {
-	private final String host = SConfig.getHost();
-	private final int thrift_port = SConfig.getThriftPort();
-	private final int blobs_port = SConfig.getBlobsPort();
-	private final boolean use_ssl = SConfig.getUseSSL();
 	private String username = null;
 	private String password = null;
 	private String token = "";
-	private TTransport transport = null;
-	private TProtocol protocol = null;
+	private String host = null;
 	
-	public String getHost() { return host; }
-	public int getBlobsPort() { return blobs_port; }
-	public boolean getUseSSL() { return use_ssl; }
-	public String getUsername() { return username; }
-	public String getPassword() { return password; }
-	
-	private Socket createUnsecureSocket() throws Exception {
-		return new Socket(host, thrift_port);
+	private static Socket createUnsecureSocket() throws Exception {
+		return new Socket(SConfig.getHost(), SConfig.getThriftPort());
 	}
-	private Socket createSecureSocket() throws Exception {
+	private static Socket createSecureSocket() throws Exception {
 		SSLContext context = SSLContext.getInstance("TLSv1");
 		context.init(null, new TrustManager[] { new X509TrustManager() {
 			@Override public X509Certificate[] getAcceptedIssuers() { return null; }
@@ -53,78 +41,58 @@ public class SSession {
 			@Override public void checkServerTrusted(X509Certificate[] certs, String authType) {}
 		} }, new SecureRandom());
 		SSLSocketFactory socket_factory = context.getSocketFactory();
-		SSLSocket socket = (SSLSocket)socket_factory.createSocket(host, thrift_port);
+		SSLSocket socket = (SSLSocket)socket_factory.createSocket(SConfig.getHost(), SConfig.getThriftPort());
 		socket.setEnabledProtocols(new String[] { "TLSv1" });
 		return socket;
 	}
-	private void createProtocol() throws Exception {
-		Socket socket = use_ssl ? createSecureSocket() : createUnsecureSocket();
+	public static TProtocol getProtocol(STaskHandler handler) throws Exception {
+		handler.log("Connecting to server...");
+		Socket socket = SConfig.getUseSSL() ? createSecureSocket() : createUnsecureSocket();
 		socket.setSoTimeout(10000);
-		transport = new TFramedTransport(new TSocket(socket));
-		protocol = new TBinaryProtocol(transport);
+		return new TBinaryProtocol(new TFramedTransport(new TSocket(socket)));
 	}
-	private void closeProtocol() { transport.close(); }
+	public static void closeProtocol(TProtocol protocol) { protocol.getTransport().close(); }
 	
-	private static volatile SSession instance = null;
+	private static volatile SSession instance = new SSession();
 	private static final List<SView> views = new ArrayList<SView>();
 	
 	private static class LoginTask implements STask {
+		private final STaskHandler handler;
 		private final String username, password;
-		public LoginTask(String username, String password) {
+		public LoginTask(STaskHandler handler, String username, String password) {
+			this.handler = handler;
 			this.username = username;
 			this.password = password;
 		}
 		@Override public void run() throws Exception {
 			SSession session = new SSession();
-			STaskManager.log("Connecting to server...");
-			session.createProtocol();
-			STaskManager.log("Logging in to server...");
-			User.Iface iface = new User.Client(session.protocol);
+			handler.log("Logging in to server...");
+			User.Iface iface = new User.Client(handler.getProtocol());
 			session.token = iface.User_authenticate("", username, password);
 			session.username = username;
 			session.password = password;
-			instance = session;
-		}
-	}
-	private static class AnonymousLoginTask implements STask {
-		@Override public void run() throws Exception {
-			SSession session = new SSession();
-			STaskManager.log("Connecting to server...");
-			session.createProtocol();
+			session.host = SConfig.getHost();
 			instance = session;
 		}
 	}
 	
-	public static void login(String username, String password) throws STaskException {
-		if (instance != null) instance.closeProtocol();
-		instance = null;
-		try { STaskManager.execute(new LoginTask(username, password)); }
-		finally { updateViews(); }
+	public static void login(STaskHandler handler, String username, String password) throws STaskException {
+		handler.execute(new LoginTask(handler, username, password));
+		updateViews();
 	}
-	public static void anonymousLogin() throws STaskException {
-		if (instance != null) instance.closeProtocol();
-		instance = null;
-		try { STaskManager.execute(new AnonymousLoginTask()); }
-		finally { updateViews(); }
+	public static void anonymousLogin(STaskHandler handler) {
+		instance = new SSession();
+		updateViews();
 	}
-	public static void logout() throws STaskException {
-		if (instance != null) instance.closeProtocol();
-		instance = null;
+	public static void logout() {
+		instance = new SSession();
 		updateViews();
 	}
 	
-	public static SSession get() { return instance; }
-	
-	public static String getToken() throws Exception {
-		SSession session = instance;
-		if (session == null) throw new Exception("Not logged in");
-		return session.token;
-	}
-	public static TProtocol getProtocol() throws Exception {
-		SSession session = instance;
-		if (session == null) throw new Exception("Not logged in");
-		return session.protocol;
-	}
+	public static String getToken() { return instance.token; }
+	public static String getUsername() { return instance.username; }
+	public static String getPassword() { return instance.password; }	
+	public static String getHost() { return instance.host; }
 	
 	public static void addView(SView view) { views.add(view); }
 	public static void removeView(SView view) { views.remove(view); }

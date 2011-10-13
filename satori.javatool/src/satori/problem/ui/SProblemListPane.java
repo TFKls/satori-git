@@ -21,6 +21,8 @@ import satori.problem.SProblemList;
 import satori.problem.SProblemSnap;
 import satori.problem.impl.SProblemImpl;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 
 public class SProblemListPane implements STabPane {
 	private final SProblemList problem_list;
@@ -85,13 +87,17 @@ public class SProblemListPane implements STabPane {
 		if (index == -1) return;
 		SProblemSnap snap = list.getItem(index);
 		SProblemImpl problem;
-		try { problem = SProblemImpl.createRemote(problem_list, snap); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { problem = SProblemImpl.createRemote(handler, problem_list, snap); }
 		catch(STaskException ex) { return; }
+		finally { handler.close(); }
 		SProblemPane.open(problem, parent);
 	}
 	private void reloadRequest() {
-		try { problem_list.reload(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { problem_list.reload(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void closeRequest() {
 		close();
@@ -100,8 +106,8 @@ public class SProblemListPane implements STabPane {
 	
 	private static SProblemListPane instance = null;
 	
-	public static SProblemListPane get(STabs parent) throws STaskException {
-		if (instance == null) instance = new SProblemListPane(SProblemList.get(), parent);
+	public static SProblemListPane get(STaskHandler handler, STabs parent) throws STaskException {
+		if (instance == null) instance = new SProblemListPane(SProblemList.get(handler), parent);
 		if (!instance.problem_list.hasPane()) instance.problem_list.setPane(instance.list.getListView());
 		return instance;
 	}

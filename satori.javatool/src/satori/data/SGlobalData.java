@@ -10,30 +10,30 @@ import java.util.Map;
 
 import satori.common.SPair;
 import satori.session.SSession;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.thrift.gen.Global;
 
 class SGlobalData {
-	static Map<String, SBlob> getJudges() throws Exception {
-		STaskManager.log("Loading judges...");
-		Global.Iface iface = new Global.Client(SSession.getProtocol());
+	static Map<String, SBlob> getJudges(STaskHandler handler) throws Exception {
+		handler.log("Loading judges...");
+		Global.Iface iface = new Global.Client(handler.getProtocol());
 		long id = iface.Global_get_instance(SSession.getToken()).getId();
 		return Collections.unmodifiableMap(getBlobAttrMap(iface.Global_judges_get_map(SSession.getToken(), id)));
 	}
 	
-	static Map<String, String> getDispatchers() throws Exception {
-		STaskManager.log("Loading dispatchers...");
-		Global.Iface iface = new Global.Client(SSession.getProtocol());
+	static Map<String, String> getDispatchers(STaskHandler handler) throws Exception {
+		handler.log("Loading dispatchers...");
+		Global.Iface iface = new Global.Client(handler.getProtocol());
 		return iface.Global_get_dispatchers(SSession.getToken());
 	}
-	static Map<String, String> getAccumulators() throws Exception {
-		STaskManager.log("Loading accumulators...");
-		Global.Iface iface = new Global.Client(SSession.getProtocol());
+	static Map<String, String> getAccumulators(STaskHandler handler) throws Exception {
+		handler.log("Loading accumulators...");
+		Global.Iface iface = new Global.Client(handler.getProtocol());
 		return iface.Global_get_accumulators(SSession.getToken());
 	}
-	static Map<String, String> getReporters() throws Exception {
-		STaskManager.log("Loading reporters...");
-		Global.Iface iface = new Global.Client(SSession.getProtocol());
+	static Map<String, String> getReporters(STaskHandler handler) throws Exception {
+		handler.log("Loading reporters...");
+		Global.Iface iface = new Global.Client(handler.getProtocol());
 		return iface.Global_get_reporters(SSession.getToken());
 	}
 	

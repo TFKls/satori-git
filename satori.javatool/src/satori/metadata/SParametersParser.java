@@ -21,7 +21,7 @@ import org.xml.sax.InputSource;
 import satori.common.SPair;
 import satori.task.SResultTask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.type.SBlobType;
 import satori.type.SBoolType;
 import satori.type.SSizeType;
@@ -104,8 +104,8 @@ public class SParametersParser {
 		parse(xml.toString(), params);
 	}
 	
-	private static SParametersMetadata parseParametersAux(String name, String str) throws Exception {
-		STaskManager.log("Parsing parameters...");
+	private static SParametersMetadata parseParametersAux(STaskHandler handler, String name, String str) throws Exception {
+		handler.log("Parsing parameters...");
 		SParametersMetadata result = new SParametersMetadata();
 		result.setName(name);
 		parseLines(new StringReader(str), result);
@@ -114,18 +114,18 @@ public class SParametersParser {
 	
 	private static Map<SPair<String, String>, SParametersMetadata> params = new HashMap<SPair<String, String>, SParametersMetadata>();
 	
-	public static SParametersMetadata parseParametersTask(String name, String str) throws Exception {
+	public static SParametersMetadata parseParametersTask(STaskHandler handler, String name, String str) throws Exception {
 		SPair<String, String> key = new SPair<String, String>(name, str);
 		if (params.containsKey(key)) return params.get(key);
-		SParametersMetadata result = parseParametersAux(name, str);
+		SParametersMetadata result = parseParametersAux(handler, name, str);
 		params.put(key, result);
 		return result;
 	}
-	public static SParametersMetadata parseParameters(final String name, final String str) throws STaskException {
+	public static SParametersMetadata parseParameters(final STaskHandler handler, final String name, final String str) throws STaskException {
 		SPair<String, String> key = new SPair<String, String>(name, str);
 		if (params.containsKey(key)) return params.get(key);
-		SParametersMetadata result = STaskManager.execute(new SResultTask<SParametersMetadata>() {
-			@Override public SParametersMetadata run() throws Exception { return parseParametersAux(name, str); }
+		SParametersMetadata result = handler.execute(new SResultTask<SParametersMetadata>() {
+			@Override public SParametersMetadata run() throws Exception { return parseParametersAux(handler, name, str); }
 		});
 		params.put(key, result);
 		return result;

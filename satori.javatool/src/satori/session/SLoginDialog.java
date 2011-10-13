@@ -17,6 +17,8 @@ import javax.swing.JTextField;
 
 import satori.main.SFrame;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 
 public class SLoginDialog {
 	private JDialog dialog;
@@ -31,7 +33,6 @@ public class SLoginDialog {
 	}
 	
 	private void initialize() {
-		SSession session = SSession.get();
 		dialog = new JDialog(SFrame.get().getFrame(), "Login", true);
 		dialog.getContentPane().setLayout(new BorderLayout());
 		field_pane = new JPanel();
@@ -41,7 +42,7 @@ public class SLoginDialog {
 		field_pane.add(new JLabel("User: "), c);
 		field_pane.add(new JLabel("Password: "), c);
 		c.gridx = 1; c.gridy = GridBagConstraints.RELATIVE; c.fill = GridBagConstraints.HORIZONTAL; c.weightx = 1.0; c.weighty = 0.0;
-		username = new JTextField(session != null ? session.getUsername() : null);
+		username = new JTextField(SSession.getUsername());
 		username.setPreferredSize(new Dimension(200, username.getPreferredSize().height));
 		username.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) {
@@ -57,7 +58,7 @@ public class SLoginDialog {
 				dialog.setVisible(false);
 			}
 		};
-		password = new JPasswordField(session != null ? session.getPassword() : null);
+		password = new JPasswordField(SSession.getPassword());
 		password.setPreferredSize(new Dimension(200, password.getPreferredSize().height));
 		password.addActionListener(confirm_listener);
 		field_pane.add(password, c);
@@ -80,14 +81,18 @@ public class SLoginDialog {
 		dialog.setDefaultCloseOperation(JDialog.DO_NOTHING_ON_CLOSE);
 	}
 	
-	private void process() throws STaskException {
+	private boolean process() {
 		dialog.setVisible(true);
-		if (!confirmed) return;
-		SSession.login(username.getText(), new String(password.getPassword()));
+		if (!confirmed) return false;
+		STaskHandler handler = STaskManager.getHandler();
+		try { SSession.login(handler, username.getText(), new String(password.getPassword())); }
+		catch(STaskException ex) { return false; }
+		finally { handler.close(); }
+		return true;
 	}
 	
-	public static void show() throws STaskException {
+	public static boolean show() {
 		SLoginDialog self = new SLoginDialog();
-		self.process();
+		return self.process();
 	}
 }

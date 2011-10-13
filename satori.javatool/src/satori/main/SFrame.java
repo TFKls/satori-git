@@ -22,13 +22,15 @@ import satori.problem.ui.SProblemListPane;
 import satori.session.SLoginDialog;
 import satori.session.SSession;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 
 public class SFrame {
 	private STabbedPane tabs = new STabbedPane();
 	
 	private JFrame frame;
 	private JMenu session_menu, open_menu;
-	private JMenuItem login_button, anonymous_button, logout_button, config_button;
+	private JMenuItem login_button, logout_button, config_button;
 	private JMenuItem problems_button;
 	private JLabel session_label;
 	
@@ -42,25 +44,17 @@ public class SFrame {
 	public JFrame getFrame() { return frame; }
 	
 	private void updateSession() {
-		SSession session = SSession.get();
-		if (session == null) { session_label.setText("Session: disconnected"); return; }
-		String username = session.getUsername() != null ? session.getUsername() : "<anonymous>";
-		session_label.setText("Session: " + username + "@" + session.getHost());
+		String username = SSession.getUsername();
+		if (username == null) session_label.setText("Session: not logged in");
+		else session_label.setText("Session: " + username + "@" + SSession.getHost());
 	}
 	
 	private void loginRequest() {
-		try { SLoginDialog.show(); }
-		catch(STaskException ex) { return; }
-		updateSession();
-	}
-	private void anonymousLoginRequest() {
-		try { SSession.anonymousLogin(); }
-		catch(STaskException ex) { return; }
+		if (!SLoginDialog.show()) return;
 		updateSession();
 	}
 	private void logoutRequest() {
-		try { SSession.logout(); }
-		catch(STaskException ex) { return; }
+		SSession.logout();
 		updateSession();
 	}
 	private void configRequest() {
@@ -68,8 +62,10 @@ public class SFrame {
 	}
 	private void problemsRequest() {
 		SProblemListPane pane;
-		try { pane = SProblemListPane.get(tabs); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { pane = SProblemListPane.get(handler, tabs); }
 		catch(STaskException ex) { return; }
+		finally { handler.close(); }
 		tabs.openPane("Problems", pane);
 	}
 	private void closeRequest() {
@@ -93,11 +89,6 @@ public class SFrame {
 			@Override public void actionPerformed(ActionEvent e) { loginRequest(); }
 		});
 		session_menu.add(login_button);
-		anonymous_button = new JMenuItem("Anonymous login");
-		anonymous_button.addActionListener(new ActionListener() {
-			@Override public void actionPerformed(ActionEvent e) { anonymousLoginRequest(); }
-		});
-		session_menu.add(anonymous_button);
 		logout_button = new JMenuItem("Logout");
 		logout_button.addActionListener(new ActionListener() {
 			@Override public void actionPerformed(ActionEvent e) { logoutRequest(); }

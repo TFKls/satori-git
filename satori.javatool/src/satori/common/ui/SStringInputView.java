@@ -28,6 +28,8 @@ import javax.swing.TransferHandler;
 
 import satori.common.SInput;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 
 public class SStringInputView implements SPaneView {
 	private final SInput<String> data;
@@ -59,8 +61,10 @@ public class SStringInputView implements SPaneView {
 	private void editDone(boolean focus) {
 		if (!edit_mode) return;
 		String new_data = field.getText().isEmpty() ? null : field.getText();
-		try { data.set(new_data); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { data.set(handler, new_data); }
 		catch(STaskException ex) { return; }
+		finally { handler.close(); }
 		edit_mode = false;
 		label.setVisible(true);
 		if (focus) label.requestFocus();
@@ -74,8 +78,10 @@ public class SStringInputView implements SPaneView {
 		field.setVisible(false);
 	}
 	private void clear() {
-		try { data.set(null); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { data.set(handler, null); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	
 	@SuppressWarnings("serial")
@@ -95,8 +101,10 @@ public class SStringInputView implements SPaneView {
 			try { object = (String)t.getTransferData(DataFlavor.stringFlavor); }
 			catch (Exception e) { return false; }
 			if (object != null && object.isEmpty()) object = null;
-			try { data.set(object); }
+			STaskHandler handler = STaskManager.getHandler();
+			try { data.set(handler, object); }
 			catch(STaskException ex) { return false; }
+			finally { handler.close(); }
 			return true;
 		}
 		@Override protected Transferable createTransferable(JComponent c) { return new StringSelection(data.get()); }

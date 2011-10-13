@@ -23,6 +23,7 @@ import satori.metadata.SParametersMetadata;
 import satori.metadata.SParametersParser;
 import satori.problem.impl.STestSuiteImpl;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
 
 public class STestSuiteInfoPane implements SPane, SView {
 	private final STestSuiteImpl suite;
@@ -87,11 +88,11 @@ public class STestSuiteInfoPane implements SPane, SView {
 		});
 		pane2.add(desc_field);
 		dispatchers = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
-			@Override public List<SPair<String, String>> getList() throws STaskException {
-				return SGlobal.getDispatchers();
+			@Override public List<SPair<String, String>> getList(STaskHandler handler) throws STaskException {
+				return SGlobal.getDispatchers(handler);
 			}
-			@Override public SParametersMetadata parse(String name, String content) throws STaskException {
-				return SParametersParser.parseParameters(name, content);
+			@Override public SParametersMetadata parse(STaskHandler handler, String name, String content) throws STaskException {
+				return SParametersParser.parseParameters(handler, name, content);
 			}
 		}, false, false, new SListener0() {
 			@Override public void call() { updateDispatcher(); }
@@ -101,11 +102,11 @@ public class STestSuiteInfoPane implements SPane, SView {
 		dispatchers.getPane().setMaximumSize(new Dimension(480, 20));
 		pane2.add(dispatchers.getPane());
 		accumulators = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
-			@Override public List<SPair<String, String>> getList() throws STaskException {
-				return SGlobal.getAccumulators();
+			@Override public List<SPair<String, String>> getList(STaskHandler handler) throws STaskException {
+				return SGlobal.getAccumulators(handler);
 			}
-			@Override public SParametersMetadata parse(String name, String content) throws STaskException {
-				return SParametersParser.parseParameters(name, content);
+			@Override public SParametersMetadata parse(STaskHandler handler, String name, String content) throws STaskException {
+				return SParametersParser.parseParameters(handler, name, content);
 			}
 		}, true, true, new SListener0() {
 			@Override public void call() { updateAccumulators(); }
@@ -115,11 +116,11 @@ public class STestSuiteInfoPane implements SPane, SView {
 		accumulators.getPane().setMaximumSize(new Dimension(480, 20));
 		pane2.add(accumulators.getPane());
 		reporters = new SGlobalSelectionPane(new SGlobalSelectionPane.Loader() {
-			@Override public List<SPair<String, String>> getList() throws STaskException {
-				return SGlobal.getReporters();
+			@Override public List<SPair<String, String>> getList(STaskHandler handler) throws STaskException {
+				return SGlobal.getReporters(handler);
 			}
-			@Override public SParametersMetadata parse(String name, String content) throws STaskException {
-				return SParametersParser.parseParameters(name, content);
+			@Override public SParametersMetadata parse(STaskHandler handler, String name, String content) throws STaskException {
+				return SParametersParser.parseParameters(handler, name, content);
 			}
 		}, false, false, new SListener0() {
 			@Override public void call() { updateReporter(); }

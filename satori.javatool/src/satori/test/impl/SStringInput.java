@@ -2,6 +2,7 @@ package satori.test.impl;
 
 import satori.common.SInput;
 import satori.metadata.SInputMetadata;
+import satori.task.STaskHandler;
 
 public class SStringInput implements SInput<String> {
 	private final SInputMetadata meta;
@@ -19,5 +20,5 @@ public class SStringInput implements SInput<String> {
 		String data = get();
 		return data != null ? meta.getType().isValid(data) : !meta.isRequired();
 	}
-	@Override public void set(String data) { test.setInput(meta, data); }
+	@Override public void set(STaskHandler handler, String data) { test.setInput(meta, data); }
 }
