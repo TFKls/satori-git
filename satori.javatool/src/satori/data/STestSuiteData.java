@@ -24,7 +24,7 @@ import satori.metadata.SParametersParser;
 import satori.problem.STestSuiteBasicReader;
 import satori.problem.STestSuiteReader;
 import satori.session.SSession;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.test.STestBasicReader;
 import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.TestSuite;
@@ -81,35 +81,35 @@ public class STestSuiteData {
 		}
 	}
 	
-	private static SParametersMetadata parseDispatcher(String str, Map<String, String> map) throws Exception {
+	private static SParametersMetadata parseDispatcher(STaskHandler handler, String str, Map<String, String> map) throws Exception {
 		if (str.isEmpty()) return null;
 		if (!map.containsKey(str)) throw new Exception("Incorrect dispatcher: " + str);
-		return SParametersParser.parseParametersTask(str, map.get(str));
+		return SParametersParser.parseParametersTask(handler, str, map.get(str));
 	}
-	private static List<SParametersMetadata> parseAccumulators(String str, Map<String, String> map) throws Exception {
+	private static List<SParametersMetadata> parseAccumulators(STaskHandler handler, String str, Map<String, String> map) throws Exception {
 		List<SParametersMetadata> result = new ArrayList<SParametersMetadata>();
 		StringTokenizer tokenizer = new StringTokenizer(str, ",");
 		while (tokenizer.hasMoreTokens()) {
 			String token = tokenizer.nextToken();
 			if (!map.containsKey(token)) throw new Exception("Incorrect accumulator: " + token);
-			result.add(SParametersParser.parseParametersTask(token, map.get(token)));
+			result.add(SParametersParser.parseParametersTask(handler, token, map.get(token)));
 		}
 		return Collections.unmodifiableList(result);
 	}
-	private static SParametersMetadata parseReporter(String str, Map<String, String> map) throws Exception {
+	private static SParametersMetadata parseReporter(STaskHandler handler, String str, Map<String, String> map) throws Exception {
 		if (str.isEmpty()) return null;
 		if (!map.containsKey(str)) throw new Exception("Incorrect reporter: " + str);
-		return SParametersParser.parseParametersTask(str, map.get(str));
+		return SParametersParser.parseParametersTask(handler, str, map.get(str));
 	}
-	public static STestSuiteReader load(long id) throws Exception {
-		STaskManager.log("Loading test suite...");
-		TestSuite.Iface iface = new TestSuite.Client(SSession.getProtocol());
+	public static STestSuiteReader load(STaskHandler handler, long id) throws Exception {
+		handler.log("Loading test suite...");
+		TestSuite.Iface iface = new TestSuite.Client(handler.getProtocol());
 		TestSuiteStruct struct = iface.TestSuite_get_struct(SSession.getToken(), id);
 		TestSuiteWrap result = new TestSuiteWrap(struct);
 		result.setTests(new TestListWrap(iface.TestSuite_get_tests(SSession.getToken(), id)));
-		SParametersMetadata dispatcher = parseDispatcher(struct.getDispatcher(), getDispatchers());
-		List<SParametersMetadata> accumulators = parseAccumulators(struct.getAccumulators(), getAccumulators());
-		SParametersMetadata reporter = parseReporter(struct.getReporter(), getReporters());
+		SParametersMetadata dispatcher = parseDispatcher(handler, struct.getDispatcher(), getDispatchers(handler));
+		List<SParametersMetadata> accumulators = parseAccumulators(handler, struct.getAccumulators(), getAccumulators(handler));
+		SParametersMetadata reporter = parseReporter(handler, struct.getReporter(), getReporters(handler));
 		result.setDispatcher(dispatcher);
 		result.setAccumulators(accumulators);
 		result.setReporter(reporter);
@@ -161,26 +161,26 @@ public class STestSuiteData {
 		return result;
 	}
 	
-	public static long create(STestSuiteReader suite) throws Exception {
+	public static long create(STaskHandler handler, STestSuiteReader suite) throws Exception {
 		SAssert.assertNotNull(suite.getTests(), "List of tests is null");
-		STaskManager.log("Creating test suite...");
-		TestSuite.Iface iface = new TestSuite.Client(SSession.getProtocol());
+		handler.log("Creating test suite...");
+		TestSuite.Iface iface = new TestSuite.Client(handler.getProtocol());
 		return iface.TestSuite_create(SSession.getToken(), createStruct(suite), createParams(suite), createTestIdList(suite.getTests()), createTestParams(suite.getTests())).getId();
 	}
-	public static void save(STestSuiteReader suite) throws Exception {
+	public static void save(STaskHandler handler, STestSuiteReader suite) throws Exception {
 		SAssert.assertNotNull(suite.getTests(), "List of tests is null");
-		STaskManager.log("Saving test suite...");
-		TestSuite.Iface iface = new TestSuite.Client(SSession.getProtocol());
+		handler.log("Saving test suite...");
+		TestSuite.Iface iface = new TestSuite.Client(handler.getProtocol());
 		iface.TestSuite_modify_full(SSession.getToken(), suite.getId(), createStruct(suite), createParams(suite), createTestIdList(suite.getTests()), createTestParams(suite.getTests()));
 	}
-	public static void delete(long id) throws Exception {
-		STaskManager.log("Deleting test suite...");
-		TestSuite.Iface iface = new TestSuite.Client(SSession.getProtocol());
+	public static void delete(STaskHandler handler, long id) throws Exception {
+		handler.log("Deleting test suite...");
+		TestSuite.Iface iface = new TestSuite.Client(handler.getProtocol());
 		iface.TestSuite_delete(SSession.getToken(), id);
 	}
-	public static List<STestSuiteBasicReader> list(long problem_id) throws Exception {
-		STaskManager.log("Loading test suite list...");
-		TestSuite.Iface iface = new TestSuite.Client(SSession.getProtocol());
+	public static List<STestSuiteBasicReader> list(STaskHandler handler, long problem_id) throws Exception {
+		handler.log("Loading test suite list...");
+		TestSuite.Iface iface = new TestSuite.Client(handler.getProtocol());
 		TestSuiteStruct filter = new TestSuiteStruct();
 		filter.setProblem(problem_id);
 		return new TestSuiteListWrap(iface.TestSuite_filter(SSession.getToken(), filter));

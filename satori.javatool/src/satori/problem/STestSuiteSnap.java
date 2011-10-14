@@ -14,9 +14,9 @@ import satori.common.SView;
 import satori.data.STestSuiteData;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SParametersMetadata;
-import satori.task.STask;
+import satori.task.SResultTask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.test.STestBasicReader;
 import satori.test.STestSnap;
 
@@ -124,16 +124,12 @@ public class STestSuiteSnap implements STestSuiteReader, SModel {
 		notifyModified();
 	}
 	
-	private class LoadTask implements STask {
-		public STestSuiteReader suite;
-		@Override public void run() throws Exception {
-			suite = STestSuiteData.load(getId());
-		}
-	}
-	public void reload() throws STaskException {
-		LoadTask task = new LoadTask();
-		STaskManager.execute(task);
-		set(task.suite);
+	public void reload(final STaskHandler handler) throws STaskException {
+		set(handler.execute(new SResultTask<STestSuiteReader>() {
+			@Override public STestSuiteReader run() throws Exception {
+				return STestSuiteData.load(handler, getId());
+			}
+		}));
 	}
 	
 	private void testDeleted(STestSnap test) {

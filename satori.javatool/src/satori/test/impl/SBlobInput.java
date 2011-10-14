@@ -3,6 +3,7 @@ package satori.test.impl;
 import satori.common.SInput;
 import satori.data.SBlob;
 import satori.metadata.SInputMetadata;
+import satori.task.STaskHandler;
 
 public class SBlobInput implements SInput<SBlob> {
 	private final SInputMetadata meta;
@@ -23,5 +24,5 @@ public class SBlobInput implements SInput<SBlob> {
 		SBlob data = get();
 		return data != null ? meta.getType().isValid(data) : !meta.isRequired();
 	}
-	@Override public void set(SBlob data) { test.setInput(meta, data); }
+	@Override public void set(STaskHandler handler, SBlob data) { test.setInput(meta, data); }
 }

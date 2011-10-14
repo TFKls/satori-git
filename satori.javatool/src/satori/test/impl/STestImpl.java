@@ -21,7 +21,7 @@ import satori.problem.SParentProblem;
 import satori.task.SResultTask;
 import satori.task.STask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.test.STestReader;
 import satori.test.STestSnap;
 
@@ -64,12 +64,12 @@ public class STestImpl implements STestReader {
 	public static STestImpl createNew(SParentProblem problem) {
 		return new STestImpl(problem);
 	}
-	public static STestImpl createRemote(SParentProblem problem, STestSnap snap) throws STaskException {
+	public static STestImpl createRemote(STaskHandler handler, SParentProblem problem, STestSnap snap) throws STaskException {
 		STestImpl self = new STestImpl(problem);
 		self.snap = snap;
 		self.snap.addReference(self.reference);
 		self.id = new SId(snap.getId());
-		self.reload();
+		self.reload(handler);
 		return self;
 	}
 	
@@ -108,13 +108,13 @@ public class STestImpl implements STestReader {
 		for (SInputMetadata meta : list) if (meta.getName().equals(name)) return meta;
 		return null;
 	}
-	public void setJudge(SBlob blob) throws STaskException {
+	public void setJudge(STaskHandler handler, SBlob blob) throws STaskException {
 		if (blob == null && judge == null) return;
 		if (blob != null && judge != null && blob.equals(judge.getBlob())) return;
 		if (blob != null) {
 			List<SInputMetadata> old_input_meta = judge != null ? judge.getInputMetadata() : null;
 			Map<SInputMetadata, Object> old_input = input;
-			judge = SJudgeParser.parseJudge(blob);
+			judge = SJudgeParser.parseJudge(handler, blob);
 			input = new HashMap<SInputMetadata, Object>();
 			for (SInputMetadata meta : judge.getInputMetadata()) {
 				SInputMetadata old_meta = old_input_meta != null ? getInputMetadataByName(old_input_meta, meta.getName()) : null;
@@ -166,10 +166,10 @@ public class STestImpl implements STestReader {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { for (SView view : views) view.update(); }
 	
-	public void reload() throws STaskException {
-		STestReader source = STaskManager.execute(new SResultTask<STestReader>() {
+	public void reload(final STaskHandler handler) throws STaskException {
+		STestReader source = handler.execute(new SResultTask<STestReader>() {
 			@Override public STestReader run() throws Exception {
-				return STestData.load(getId());
+				return STestData.load(handler, getId());
 			}
 		});
 		name = source.getName();
@@ -181,10 +181,10 @@ public class STestImpl implements STestReader {
 		callDataModifiedListeners();
 		snap.set(this);
 	}
-	public void create() throws STaskException {
-		id = STaskManager.execute(new SResultTask<SId>() {
+	public void create(final STaskHandler handler) throws STaskException {
+		id = handler.execute(new SResultTask<SId>() {
 			@Override public SId run() throws Exception {
-				return new SId(STestData.create(STestImpl.this));
+				return new SId(STestData.create(handler, STestImpl.this));
 			}
 		});
 		notifyUpToDate();
@@ -192,19 +192,19 @@ public class STestImpl implements STestReader {
 		snap.addReference(reference);
 		problem.getTestList().addTest(snap);
 	}
-	public void save() throws STaskException {
-		STaskManager.execute(new STask() {
+	public void save(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				STestData.save(STestImpl.this);
+				STestData.save(handler, STestImpl.this);
 			}
 		});
 		notifyUpToDate();
 		snap.set(this);
 	}
-	public void delete() throws STaskException {
-		STaskManager.execute(new STask() {
+	public void delete(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				STestData.delete(getId());
+				STestData.delete(handler, getId());
 			}
 		});
 		problem.getTestList().removeTest(snap);

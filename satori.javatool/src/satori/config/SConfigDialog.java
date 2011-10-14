@@ -16,6 +16,7 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 import satori.main.SFrame;
+import satori.session.SSession;
 
 public class SConfigDialog {
 	private JDialog dialog;
@@ -86,6 +87,7 @@ public class SConfigDialog {
 		SConfig.setThriftPort(Integer.valueOf(thrift_port.getText()));
 		SConfig.setBlobsPort(Integer.valueOf(blobs_port.getText()));
 		SConfig.setUseSSL(use_ssl.isSelected());
+		SSession.logout();
 		SConfig.save();
 	}
 	

@@ -7,7 +7,7 @@ import java.util.Map;
 import satori.common.SAssertException;
 import satori.metadata.SMetadata;
 import satori.session.SSession;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.thrift.gen.AnonymousAttribute;
 import satori.thrift.gen.Blob;
 
@@ -61,9 +61,9 @@ class SAttributeData {
 		return result;
 	}
 	
-	private static boolean checkBlobExists(SBlob blob) throws Exception {
-		STaskManager.log("Checking blob existence...");
-		Blob.Iface iface = new Blob.Client(SSession.getProtocol());
+	private static boolean checkBlobExists(STaskHandler handler, SBlob blob) throws Exception {
+		handler.log("Checking blob existence...");
+		Blob.Iface iface = new Blob.Client(handler.getProtocol());
 		return iface.Blob_exists(SSession.getToken(), blob.getHash());
 	}
 	
@@ -87,11 +87,11 @@ class SAttributeData {
 		return result;
 	}
 	
-	static void createBlobs(Map<String, Object> attrs) throws Exception {
+	static void createBlobs(STaskHandler handler, Map<String, Object> attrs) throws Exception {
 		for (Object value : attrs.values()) {
 			if (!(value instanceof SBlob)) continue;
 			SBlob blob = (SBlob)value;
-			if (!checkBlobExists(blob)) blob.saveRemoteTask();
+			if (!checkBlobExists(handler, blob)) blob.saveRemoteTask(handler);
 		}
 	}
 }

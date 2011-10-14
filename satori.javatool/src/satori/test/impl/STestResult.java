@@ -10,9 +10,10 @@ import satori.common.SListener0;
 import satori.common.SView;
 import satori.data.STemporarySubmitData;
 import satori.metadata.SOutputMetadata;
+import satori.task.SResultTask;
 import satori.task.STask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.test.STemporarySubmitReader;
 
 public class STestResult {
@@ -52,12 +53,12 @@ public class STestResult {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { for (SView view : views) view.update(); }
 	
-	public void run() throws STaskException {
+	public void run(final STaskHandler handler) throws STaskException {
 		if (solution.get() == null) return;
 		if (test.getJudge() == null) return;
-		STaskManager.execute(new STask() {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				id = new SId(STemporarySubmitData.create(solution.get(), test));
+				id = new SId(STemporarySubmitData.create(handler, solution.get(), test));
 			}
 		});
 		status = Status.PENDING;
@@ -65,22 +66,19 @@ public class STestResult {
 		updateViews();
 	}
 	
-	private class LoadTask implements STask {
-		public STemporarySubmitReader submit;
-		@Override public void run() throws Exception {
-			submit = STemporarySubmitData.load(id.get(), test.getJudge().getOutputMetadata());
-		}
-	}
-	public void refresh() throws STaskException {
+	public void refresh(final STaskHandler handler) throws STaskException {
 		if (!id.isSet()) return;
-		LoadTask task = new LoadTask();
-		STaskManager.execute(task);
-		if (task.submit.getPending()) {
+		STemporarySubmitReader submit = handler.execute(new SResultTask<STemporarySubmitReader>() {
+			@Override public STemporarySubmitReader run() throws Exception {
+				return STemporarySubmitData.load(handler, id.get(), test.getJudge().getOutputMetadata());
+			}
+		});
+		if (submit.getPending()) {
 			status = Status.PENDING;
 			output = Collections.emptyMap();
 		} else {
 			status = Status.FINISHED;
-			output = task.submit.getResult();
+			output = submit.getResult();
 		}
 		updateViews();
 	}

@@ -22,8 +22,9 @@ import javax.net.ssl.X509TrustManager;
 
 import org.apache.commons.io.IOUtils;
 
+import satori.config.SConfig;
 import satori.session.SSession;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 
 public class SBlobClient {
 	private static HttpURLConnection createUnsecureConnection(String address) throws Exception {
@@ -47,10 +48,8 @@ public class SBlobClient {
 		return connection;
 	}
 	private static HttpURLConnection createConnection(String path) throws Exception {
-		SSession session = SSession.get();
-		if (session == null) throw new Exception("Not logged in");
-		String address = session.getHost() + ":" + session.getBlobsPort() + path;
-		if (session.getUseSSL()) return createSecureConnection(address);
+		String address = SConfig.getHost() + ":" + SConfig.getBlobsPort() + path;
+		if (SConfig.getUseSSL()) return createSecureConnection(address);
 		else return createUnsecureConnection(address);
 	}
 	private static String getUploadPath() { return "/blob/upload"; }
@@ -102,8 +101,8 @@ public class SBlobClient {
 		} finally { IOUtils.closeQuietly(in); }
 	}
 	
-	public static String putBlob(File file) throws Exception {
-		STaskManager.log("Saving blob...");
+	public static String putBlob(STaskHandler handler, File file) throws Exception {
+		handler.log("Saving blob...");
 		HttpURLConnection connection = putBlobSetup(file);
 		putBlob(connection, file);
 		checkResponse(connection);
@@ -115,8 +114,8 @@ public class SBlobClient {
 		checkResponse(connection);
 		return connection.getInputStream();
 	}
-	public static void getBlob(String hash, File file) throws Exception {
-		STaskManager.log("Loading blob...");
+	public static void getBlob(STaskHandler handler, String hash, File file) throws Exception {
+		handler.log("Loading blob...");
 		HttpURLConnection connection = getBlobSetup(hash);
 		checkResponse(connection);
 		getBlob(connection, file);

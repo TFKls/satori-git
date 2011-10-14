@@ -43,10 +43,10 @@ public class SProblemSnap implements SProblemReader, SModel {
 		desc = source.getDescription();
 		notifyModified();
 	}
-	public void createLists() {
+	/*public void createLists() {
 		if (test_list == null) test_list = STestList.createNew(id);
 		if (suite_list == null) suite_list = STestSuiteList.createNew(id, test_list);
-	}
+	}*/
 	
 	private void notifyModified() {
 		for (SView view : views) view.update();
@@ -63,7 +63,11 @@ public class SProblemSnap implements SProblemReader, SModel {
 	@Override public void addView(SView view) { views.add(view); }
 	@Override public void removeView(SView view) { views.remove(view); }
 	
-	public void addReference(SReference ref) { refs.add(ref); }
+	public void addReference(SReference ref) {
+		if (test_list == null) test_list = STestList.createNew(id);
+		if (suite_list == null) suite_list = STestSuiteList.createNew(id, test_list);
+		refs.add(ref);
+	}
 	public void removeReference(SReference ref) {
 		refs.remove(ref);
 		if (refs.isEmpty()) {

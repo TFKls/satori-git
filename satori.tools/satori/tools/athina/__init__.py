@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import logging
 import os
 import re
 import shutil
@@ -75,10 +76,12 @@ def athina_import():
         help='Test environment name')
     (options, args) = setup()
     if len(args) != 1:
-        parser.error('incorrect number of arguments')
+        logging.error('incorrect number of arguments')
+        sys.exit(1)
     base_dir = unicode(args[0])
     if not os.path.exists(os.path.join(base_dir, 'server', 'contest', 'users')):
-        raise parser.error('provided path is invalid')
+        logging.error('provided path is invalid')
+        sys.exit(1)
 
     def get_path(*args):
         return os.path.join(base_dir, 'server', 'contest', *args)
@@ -283,11 +286,13 @@ def athina_import_testsuite():
     from satori.tools import options, setup
     (options, args) = setup()
     if len(args) != 2:
-        parser.error('incorrect number of arguments')
+        logging.error('incorrect number of arguments')
+        sys.exit(1)
     problem = Problem.filter(ProblemStruct(name=unicode(args[0])))[0]
     base_dir = unicode(args[1])
     if not os.path.exists(os.path.join(base_dir, 'testcount')):
-    	raise Exception('provided path is invalid')
+        logging.error('provided path is invalid')
+        sys.exit(1)
 
     def get_path(*args):
         return os.path.join(base_dir, *args)

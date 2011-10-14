@@ -23,7 +23,7 @@ import satori.problem.STestSuiteReader;
 import satori.problem.STestSuiteSnap;
 import satori.task.STask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.test.impl.STestImpl;
 import satori.test.impl.STestSuiteBase;
 
@@ -77,8 +77,8 @@ public class STestSuiteImpl implements STestSuiteReader {
 	
 	private STestSuiteImpl() {}
 	
-	public static STestSuiteImpl create(STestSuiteSnap snap, SParentProblem problem) throws STaskException {
-		if (!snap.isComplete()) snap.reload();
+	public static STestSuiteImpl create(STaskHandler handler, STestSuiteSnap snap, SParentProblem problem) throws STaskException {
+		if (!snap.isComplete()) snap.reload(handler);
 		STestSuiteImpl self = new STestSuiteImpl();
 		self.snap = snap;
 		self.snap.addReference(self.reference);
@@ -86,7 +86,7 @@ public class STestSuiteImpl implements STestSuiteReader {
 		self.problem = problem;
 		self.name = snap.getName();
 		self.desc = snap.getDescription();
-		self.base = STestSuiteBase.create(problem, snap.getTests());
+		self.base = STestSuiteBase.create(handler, problem, snap.getTests());
 		self.dispatcher = snap.getDispatcher();
 		self.accumulators = snap.getAccumulators();
 		self.reporter = snap.getReporter();
@@ -263,9 +263,9 @@ public class STestSuiteImpl implements STestSuiteReader {
 	public void removeView(SView view) { views.remove(view); }
 	private void updateViews() { for (SView view : views) view.update(); }
 	
-	public void reload() throws STaskException {
-		snap.reload(); //calls snapModified //TODO
-		List<STestImpl> new_tests = STestSuiteBase.createTestList(problem, snap.getTests()); //TODO
+	public void reload(STaskHandler handler) throws STaskException {
+		snap.reload(handler); //calls snapModified //TODO
+		List<STestImpl> new_tests = STestSuiteBase.createTestList(handler, problem, snap.getTests()); //TODO
 		name = snap.getName();
 		desc = snap.getDescription();
 		base.closeTests();
@@ -276,10 +276,10 @@ public class STestSuiteImpl implements STestSuiteReader {
 		notifyUpToDate();
 		callMetadataModifiedListeners();
 	}
-	public void create() throws STaskException {
-		STaskManager.execute(new STask() {
+	public void create(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				id = new SId(STestSuiteData.create(STestSuiteImpl.this));
+				id = new SId(STestSuiteData.create(handler, STestSuiteImpl.this));
 			}
 		});
 		notifyUpToDate();
@@ -287,19 +287,19 @@ public class STestSuiteImpl implements STestSuiteReader {
 		snap.addReference(reference);
 		problem.getTestSuiteList().addTestSuite(snap);
 	}
-	public void save() throws STaskException {
-		STaskManager.execute(new STask() {
+	public void save(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				STestSuiteData.save(STestSuiteImpl.this);
+				STestSuiteData.save(handler, STestSuiteImpl.this);
 			}
 		});
 		notifyUpToDate();
 		snap.set(this);
 	}
-	public void delete() throws STaskException {
-		STaskManager.execute(new STask() {
+	public void delete(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				STestSuiteData.delete(getId());
+				STestSuiteData.delete(handler, getId());
 			}
 		});
 		problem.getTestSuiteList().removeTestSuite(snap);

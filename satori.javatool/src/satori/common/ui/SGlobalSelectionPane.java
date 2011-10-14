@@ -32,11 +32,13 @@ import satori.common.SPair;
 import satori.main.SFrame;
 import satori.metadata.SParametersMetadata;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 
 public class SGlobalSelectionPane implements SPane {
 	public static interface Loader {
-		List<SPair<String, String>> getList() throws STaskException;
-		SParametersMetadata parse(String name, String content) throws STaskException;
+		List<SPair<String, String>> getList(STaskHandler handler) throws STaskException;
+		SParametersMetadata parse(STaskHandler handler, String name, String content) throws STaskException;
 	};
 	
 	private final Loader loader;
@@ -139,7 +141,10 @@ public class SGlobalSelectionPane implements SPane {
 		}
 		
 		public List<SPair<String, String>> process() throws STaskException {
-			List<SPair<String, String>> source = loader.getList();
+			List<SPair<String, String>> source;
+			STaskHandler handler = STaskManager.getHandler();
+			try { source = loader.getList(handler); }
+			finally { handler.close(); }
 			Vector<String> names = new Vector<String>();
 			for (SPair<String, String> p : source) names.add(p.first);
 			list.setListData(names);
@@ -154,15 +159,17 @@ public class SGlobalSelectionPane implements SPane {
 	
 	private void load() {
 		LoadDialog dialog = new LoadDialog(loader, multiple);
+		STaskHandler handler = STaskManager.getHandler();
 		try {
 			List<SPair<String, String>> result = dialog.process();
 			if (result == null) return;
 			List<SParametersMetadata> params = new ArrayList<SParametersMetadata>();
-			for (SPair<String, String> p : result) params.add(loader.parse(p.first, p.second));
+			for (SPair<String, String> p : result) params.add(loader.parse(handler, p.first, p.second));
 			setSelection(Collections.unmodifiableList(params));
 			listener.call();
 		}
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void clear() {
 		clearSelection();

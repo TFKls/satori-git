@@ -23,7 +23,7 @@ import org.xml.sax.InputSource;
 import satori.data.SBlob;
 import satori.task.SResultTask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.type.SBlobType;
 import satori.type.SSizeType;
 import satori.type.STextType;
@@ -137,10 +137,10 @@ public class SJudgeParser {
 		parse(xml.toString(), judge);
 	}
 	
-	private static SJudge parseJudgeAux(SBlob judge) throws Exception {
+	private static SJudge parseJudgeAux(STaskHandler handler, SBlob judge) throws Exception {
 		SJudge result = new SJudge();
 		result.setBlob(judge);
-		STaskManager.log(judge.getFile() != null ? "Parsing local judge file..." : "Loading and parsing judge blob...");
+		handler.log(judge.getFile() != null ? "Parsing local judge file..." : "Loading and parsing judge blob...");
 		Reader reader = new InputStreamReader(judge.getStreamTask());
 		try { parse(reader, result); }
 		finally { IOUtils.closeQuietly(reader); }
@@ -149,16 +149,16 @@ public class SJudgeParser {
 	
 	private static Map<SBlob, SJudge> judges = new HashMap<SBlob, SJudge>();
 	
-	public static SJudge parseJudgeTask(SBlob judge) throws Exception {
+	public static SJudge parseJudgeTask(STaskHandler handler, SBlob judge) throws Exception {
 		if (judges.containsKey(judge)) return judges.get(judge);
-		SJudge result = parseJudgeAux(judge);
+		SJudge result = parseJudgeAux(handler, judge);
 		judges.put(judge, result);
 		return result;
 	}
-	public static SJudge parseJudge(final SBlob judge) throws STaskException {
+	public static SJudge parseJudge(final STaskHandler handler, final SBlob judge) throws STaskException {
 		if (judges.containsKey(judge)) return judges.get(judge);
-		SJudge result = STaskManager.execute(new SResultTask<SJudge>() {
-			@Override public SJudge run() throws Exception { return parseJudgeAux(judge); }
+		SJudge result = handler.execute(new SResultTask<SJudge>() {
+			@Override public SJudge run() throws Exception { return parseJudgeAux(handler, judge); }
 		});
 		judges.put(judge, result);
 		return result;
