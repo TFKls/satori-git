@@ -5,7 +5,7 @@
 \NeedsTeXFormat{LaTeX2e}[1995/12/01]
 \ProvidesClass{sphinxarticle}[2009/06/02 Document class (Sphinx Article)]
 
-\LoadClass[english, 12pt, a4paper, notitlepage]{article}
+\LoadClass[english, 11pt, a4paper, notitlepage]{article}
 
 \renewcommand{\tableofcontents}{
 }  
