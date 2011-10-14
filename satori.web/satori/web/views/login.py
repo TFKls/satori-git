@@ -62,8 +62,11 @@ class ChangePassForm(forms.Form):
         return data
 
 @general_view
-def profile(request, page_info):
-    user = page_info.user
+def profile(request, page_info, id = None):
+    if id==None:
+        user = page_info.user
+    else:
+        user = User(int(id))
     a = Global.get_instance().profile_fields
     parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
     form = ChangePassForm(data={'firstname' : user.firstname, 'lastname' : user.lastname})
@@ -76,16 +79,23 @@ def profile(request, page_info):
         if form.is_valid():
             try:
                 data = form.cleaned_data
+                if id != None and data['newpass']:
+                    if data['newpass']==data['confirm']:
+                        user.set_password(data['newpass'])
+                        bar.messages.append('Password changed.')
+                    else:
+                        bar.errors.append('Passwords do not match!')
                 if data['oldpass']:
                     user.change_password(data['oldpass'],data['newpass'])
                     bar.messages.append('Password changed.')
-                user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
-                form = ChangePassForm()
+                if user.firstname!=data['firstname'] or user.lastname!=data['lastname']:
+                    user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
+                    bar.messages.append('Personal data changed.')
             except LoginFailed:
                 bar.errors.append('Login failed!')
             except InvalidPassword:
                 bar.errors.append('Invalid pasword!')
-            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form}) 
+            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form,'status_bar' : bar}) 
     if 'update' in request.POST.keys():
         profile_form = xmlparams.ParamsForm(parser=parser, data=request.POST)
         if profile_form.is_valid():

@@ -41,7 +41,7 @@
             <li><a href="{% url select_contest %}">Select contest</a></li>
             {% if page_info.is_admin %}
                 <li><a href="{% url configuration %}">Configuration</a></li>
-{% comment %}                <!-- <li><a href="{% url users %}">Users</a></li> --> {% endcomment %}
+                <li><a href="{% url users %}">Users</a></li>
             {% endif %}
             
             {% if page_info.user %}
