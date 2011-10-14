@@ -35,6 +35,8 @@
 \cfoot{}
 \lfoot{\sf \small \@title} %
 
+\hyphenpenalty=100000
+
 \newcommand{\logo}{   \begin{tabular}{@{}ll}
                         \vspace{-1,45cm}%położenie loga ASD
                          \PDFleftlogo %
