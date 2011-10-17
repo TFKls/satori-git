@@ -56,19 +56,19 @@ def profile(request, page_info, id = None):
         user = User(int(id))
 
     user_admin = page_info.is_admin
-#    change_allowed = user_admin or not user.confirmed
+    change_allowed = user_admin or not user.confirmed
     class ChangePassForm(forms.Form):
-#        if change_allowed:
-        firstname = forms.CharField(label="First name:",required=False)
-        lastname = forms.CharField(label="Last name:",required=False)
-#        else:
-#            firstname = forms.CharField(label="First name:",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}))
-#            lastname = forms.CharField(label="Last name:",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}))        
+        if change_allowed:
+            firstname = forms.CharField(label="First name:",required=False)
+            lastname = forms.CharField(label="Last name:",required=False)
+        else:
+            firstname = forms.CharField(label="First name:",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}))
+            lastname = forms.CharField(label="Last name:",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}),help_text='This is a confirmed account - identity is locked.')        
         oldpass = forms.CharField(label="Old password:",required=False,widget=forms.PasswordInput)
         newpass = forms.CharField(label="New password:",required=False,widget=forms.PasswordInput)
         confirm = forms.CharField(label="Confirm password:",required=False,widget=forms.PasswordInput)
-#        if user_admin:
-#            lock_user = forms.BooleanField(label="Lock user:",required=False)
+        if user_admin:
+            lock_user = forms.BooleanField(label="Lock user:",required=False)
         def clean(self):
             data = self.cleaned_data
             if data["newpass"]!=data["confirm"]:
@@ -79,7 +79,7 @@ def profile(request, page_info, id = None):
         
     a = Global.get_instance().profile_fields
     parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
-    form = ChangePassForm(data={'firstname' : user.firstname, 'lastname' : user.lastname})
+    form = ChangePassForm(data={'firstname' : user.firstname, 'lastname' : user.lastname,'lock_user' : user.confirmed})
     profile_form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
     if request.method!="POST":
         return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form})
@@ -101,12 +101,12 @@ def profile(request, page_info, id = None):
                 if user.firstname!=data['firstname'] or user.lastname!=data['lastname']:
                     user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
                     bar.messages.append('Personal data changed.')
-#                if user_admin and data.has_key('lock_user') and not user.confirmed:
-#                    user.modify(UserStruct(confirmed=True))
-#                    bar.messages.append('User identity locked.');
-#                if user_admin and not data.has_key('lock_user') and user.confirmed:
-#                    user.modify(UserStruct(confirmed=False))
-#                    bar.messages.append('User identity unlocked.');
+                if user_admin and data['lock_user'] and not user.confirmed:
+                    user.modify(UserStruct(confirmed=True))
+                    bar.messages.append('User identity locked.');
+                if user_admin and not data['lock_user'] and user.confirmed:
+                    user.modify(UserStruct(confirmed=False))
+                    bar.messages.append('User identity unlocked.');
             except LoginFailed:
                 bar.errors.append('Login failed!')
             except InvalidPassword:

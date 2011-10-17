@@ -1,0 +1,25 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+{% if edit_form %}
+<h4>Edit user</h4>
+<form action="" method="POST">
+<table>
+{{ edit_form.as_table }}
+</table>
+<input class="button" type="submit" name="edit user" value="Edit user"/>
+</form>
+{% endif %}
+
+<h4>All users</h4>
+<table>
+{% for user in user_list %}
+<tr>
+<td>{{user.login}}</td><td>{{user.firstname}}</td><td>{{user.lastname}}</td>
+</tr>
+{% endfor %}
+</table>
+
+
+{% endblock %}
