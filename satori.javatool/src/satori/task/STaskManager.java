@@ -13,6 +13,10 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.SwingUtilities;
 
+import org.apache.thrift.protocol.TProtocol;
+
+import satori.session.SSession;
+
 public class STaskManager {
 	private static abstract class AbstractMonitor {
 		private final JDialog dialog;
@@ -132,17 +136,32 @@ public class STaskManager {
 	private static volatile AbstractMonitor monitor = null;
 	private static JFrame frame = null;
 	
-	public static void log(String message) { monitor.log(message); }
-	public static void execute(STask task) throws STaskException {
-		monitor = new Monitor(frame, task);
-		monitor.execute();
+	private static class Handler implements STaskHandler {
+		private TProtocol protocol = null;
+		
+		@Override public TProtocol getProtocol() throws Exception {
+			if (protocol == null) protocol = SSession.getProtocol(this);
+			return protocol;
+		}
+		
+		@Override public void log(String message) { monitor.log(message); }
+		@Override public void execute(STask task) throws STaskException {
+			monitor = new Monitor(frame, task);
+			monitor.execute();
+		}
+		@Override public <T> T execute(SResultTask<T> task) throws STaskException {
+			ResultMonitor<T> mon = new ResultMonitor<T>(frame, task);
+			monitor = mon;
+			monitor.execute();
+			return mon.getResult();
+		}
+		
+		@Override public void close() {
+			if (protocol != null) SSession.closeProtocol(protocol);
+		}
 	}
-	public static <T> T execute(SResultTask<T> task) throws STaskException {
-		ResultMonitor<T> mon = new ResultMonitor<T>(frame, task);
-		monitor = mon;
-		monitor.execute();
-		return mon.getResult();
-	}
+	
+	public static STaskHandler getHandler() { return new Handler(); }
 	
 	public static void setFrame(JFrame frame) { STaskManager.frame = frame; }
 }

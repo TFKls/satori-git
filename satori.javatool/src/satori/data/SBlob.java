@@ -13,7 +13,7 @@ import org.apache.commons.io.IOUtils;
 import satori.task.SResultTask;
 import satori.task.STask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 
 public class SBlob {
 	private String name;
@@ -55,21 +55,21 @@ public class SBlob {
 		return self;
 	}
 	
-	private static String computeHashTask(File file) throws Exception {
-		STaskManager.log("Computing hash code...");
+	private static String computeHashTask(STaskHandler handler, File file) throws Exception {
+		handler.log("Computing hash code...");
 		byte[] bin_hash = DigestUtils.sha384(new FileInputStream(file));
 		return Base64.encodeBase64URLSafeString(bin_hash);
 	}
-	public static SBlob createLocalTask(File file) throws Exception {
+	public static SBlob createLocalTask(STaskHandler handler, File file) throws Exception {
 		SBlob self = new SBlob();
 		self.name = file.getName();
-		self.hash = computeHashTask(file);
+		self.hash = computeHashTask(handler, file);
 		self.file = file;
 		return self;
 	}
-	public static SBlob createLocal(final File file) throws STaskException {
-		return STaskManager.execute(new SResultTask<SBlob>() {
-			@Override public SBlob run() throws Exception { return createLocalTask(file); }
+	public static SBlob createLocal(final STaskHandler handler, final File file) throws STaskException {
+		return handler.execute(new SResultTask<SBlob>() {
+			@Override public SBlob run() throws Exception { return createLocalTask(handler, file); }
 		});
 	}
 	
@@ -87,8 +87,8 @@ public class SBlob {
 		return result;
 	}
 	
-	private static void copyTask(File src, File dst) throws Exception {
-		STaskManager.log("Copying local file...");
+	private static void copyTask(STaskHandler handler, File src, File dst) throws Exception {
+		handler.log("Copying local file...");
 		InputStream in = new FileInputStream(src);
 		try {
 			OutputStream out = new FileOutputStream(dst);
@@ -97,25 +97,25 @@ public class SBlob {
 		} finally { IOUtils.closeQuietly(in); }
 	}
 	
-	public void saveLocalTask(File dst) throws Exception {
+	public void saveLocalTask(STaskHandler handler, File dst) throws Exception {
 		if (dst.equals(file)) return;
-		if (file != null) copyTask(file, dst);
-		else SBlobClient.getBlob(hash, dst);
+		if (file != null) copyTask(handler, file, dst);
+		else SBlobClient.getBlob(handler, hash, dst);
 	}
-	public void saveRemoteTask() throws Exception {
-		String remote_hash = SBlobClient.putBlob(file);
+	public void saveRemoteTask(STaskHandler handler) throws Exception {
+		String remote_hash = SBlobClient.putBlob(handler, file);
 		if (!remote_hash.equals(hash)) throw new Exception("Hash codes don't match. Load the local file again");
 	}
 	
-	public void saveLocal(final File dst) throws STaskException {
+	public void saveLocal(final STaskHandler handler, final File dst) throws STaskException {
 		if (dst.equals(file)) return;
-		STaskManager.execute(new STask() {
-			@Override public void run() throws Exception {  saveLocalTask(dst); }
+		handler.execute(new STask() {
+			@Override public void run() throws Exception {  saveLocalTask(handler, dst); }
 		});
 	}
-	public void saveRemote() throws STaskException {
-		STaskManager.execute(new STask() {
-			@Override public void run() throws Exception { saveRemoteTask(); }
+	public void saveRemote(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
+			@Override public void run() throws Exception { saveRemoteTask(handler); }
 		});
 	}
 }

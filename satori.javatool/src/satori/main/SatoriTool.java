@@ -10,6 +10,7 @@ import satori.test.ui.SIcons;
 
 public class SatoriTool {
 	public static void main(String[] args) {
+		Thread.setDefaultUncaughtExceptionHandler(new SUncaughtExceptionHandler());
 		SIcons.loadResources(SatoriTool.class.getClassLoader());
 		SwingUtilities.invokeLater(new Runnable() {
 			@Override public void run() {

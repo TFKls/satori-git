@@ -6,9 +6,9 @@ import java.util.Map;
 
 import satori.common.SListView;
 import satori.data.SProblemData;
-import satori.task.STask;
+import satori.task.SResultTask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 
 public class SProblemList {
 	private Map<Long, SProblemSnap> problems = null;
@@ -32,17 +32,14 @@ public class SProblemList {
 		if (pane != null) pane.add(problems.values());
 	}
 	
-	private class LoadTask implements STask {
-		public List<SProblemReader> problems;
-		@Override public void run() throws Exception {
-			problems = SProblemData.list();
-		}
-	}
-	public void reload() throws STaskException {
-		LoadTask task = new LoadTask();
-		STaskManager.execute(task);
+	public void reload(final STaskHandler handler) throws STaskException {
+		List<SProblemReader> list = handler.execute(new SResultTask<List<SProblemReader>>() {
+			@Override public List<SProblemReader> run() throws Exception {
+				return SProblemData.list(handler);
+			}
+		});
 		Map<Long, SProblemSnap> new_problems = new HashMap<Long, SProblemSnap>();
-		for (SProblemReader problem : task.problems) {
+		for (SProblemReader problem : list) {
 			SProblemSnap current = problems != null ? problems.get(problem.getId()) : null;
 			if (current != null) current.set(problem);
 			else current = SProblemSnap.create(problem);
@@ -58,9 +55,9 @@ public class SProblemList {
 	
 	private static SProblemList instance = null;
 	
-	public static SProblemList get() throws STaskException {
+	public static SProblemList get(STaskHandler handler) throws STaskException {
 		if (instance == null) instance = new SProblemList();
-		instance.reload();
+		instance.reload(handler);
 		return instance;
 	}
 }

@@ -48,6 +48,8 @@ import satori.metadata.SInputMetadata;
 import satori.metadata.SJudge;
 import satori.problem.SParentProblem;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 import satori.test.STestSnap;
 import satori.test.impl.SBlobInput;
 import satori.test.impl.SJudgeInput;
@@ -150,11 +152,13 @@ public class STestPane implements SPane {
 				catch(UnsupportedFlavorException ex) { return false; }
 				catch(IOException ex) { return false; }
 				List<STestImpl> new_tests = new ArrayList<STestImpl>();
-				for (STestSnap snap : data.get()) {
+				STaskHandler handler = STaskManager.getHandler();
+				try { for (STestSnap snap : data.get()) {
 					if (hasTest(snap.getId())) continue;
-					try { new_tests.add(STestImpl.createRemote(problem, snap)); }
+					try { new_tests.add(STestImpl.createRemote(handler, problem, snap)); }
 					catch(STaskException ex) { return false; }
-				}
+				} }
+				finally { handler.close(); }
 				int index = getDropIndex(support.getDropLocation().getDropPoint());
 				base.addTests(new_tests, index);
 				return true;
@@ -214,33 +218,43 @@ public class STestPane implements SPane {
 	}
 	private void saveTestRequest(STestImpl test) {
 		if (!test.isProblemRemote()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
-		try { if (test.isRemote()) test.save(); else test.create(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { if (test.isRemote()) test.save(handler); else test.create(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void saveAllTestsRequest() {
 		if (!problem.hasId()) { SFrame.showErrorDialog("Cannot save: the problem does not exist remotely"); return; }
-		for (STestImpl test : base.getTests()) {
-			try { if (test.isRemote()) test.save(); else test.create(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { for (STestImpl test : base.getTests()) {
+			try { if (test.isRemote()) test.save(handler); else test.create(handler); }
 			catch(STaskException ex) { return; }
-		}
+		} }
+		finally { handler.close(); }
 	}
 	private void reloadTestRequest(STestImpl test) {
 		if (!test.isRemote()) return;
-		try { test.reload(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { test.reload(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void reloadAllTestsRequest() {
-		for (STestImpl test : base.getTests()) {
+		STaskHandler handler = STaskManager.getHandler();
+		try { for (STestImpl test : base.getTests()) {
 			if (!test.isRemote()) continue;
-			try { test.reload(); }
+			try { test.reload(handler); }
 			catch(STaskException ex) { return; }
-		}
+		} }
+		finally { handler.close(); }
 	}
 	private void deleteTestRequest(STestImpl test) {
 		if (!test.isRemote()) return;
 		if (!SFrame.showWarningDialog("The test will be deleted.")) return;
-		try { test.delete(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { test.delete(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void removeTestRequest(STestImpl test) {
 		if (test.isModified() && !SFrame.showWarningDialog("The test contains unsaved data.")) return;
@@ -495,8 +509,8 @@ public class STestPane implements SPane {
 			pane.add(desc_field);
 			SBlobInputView judge_view = new SBlobInputView(new SJudgeInput(test), new SBlobInputView.BlobLoader() {
 				private Map<String, SBlob> blobs = null;
-				@Override public Map<String, SBlob> getBlobs() throws STaskException {
-					if (blobs == null) blobs = SGlobal.getJudges();
+				@Override public Map<String, SBlob> getBlobs(STaskHandler handler) throws STaskException {
+					if (blobs == null) blobs = SGlobal.getJudges(handler);
 					return blobs;
 				}
 			});

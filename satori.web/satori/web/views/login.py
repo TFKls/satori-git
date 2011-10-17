@@ -47,26 +47,39 @@ def view(request, page_info):
     return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'status_bar' : bar })
 
 
-class ChangePassForm(forms.Form):
-    firstname = forms.CharField(label="First name:",required=False)
-    lastname = forms.CharField(label="Last name:",required=False)
-    oldpass = forms.CharField(label="Old password:",required=False,widget=forms.PasswordInput)
-    newpass = forms.CharField(label="New password:",required=False,widget=forms.PasswordInput)
-    confirm = forms.CharField(label="Confirm password:",required=False,widget=forms.PasswordInput)
-    def clean(self):
-        data = self.cleaned_data
-        if data["newpass"]!=data["confirm"]:
-            raise forms.ValidationError('Passwords do not match!')
-            del data["newpass"]
-            del data["confirm"]
-        return data
-
 @general_view
-def profile(request, page_info):
-    user = page_info.user
+def profile(request, page_info, id = None):
+
+    if id==None:
+        user = page_info.user
+    else:
+        user = User(int(id))
+
+    user_admin = page_info.is_admin
+    change_allowed = user_admin or not user.confirmed
+    class ChangePassForm(forms.Form):
+        if change_allowed:
+            firstname = forms.CharField(label="First name:",required=False)
+            lastname = forms.CharField(label="Last name:",required=False)
+        else:
+            firstname = forms.CharField(label="First name:",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}))
+            lastname = forms.CharField(label="Last name:",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}),help_text='This is a confirmed account - identity is locked.')        
+        oldpass = forms.CharField(label="Old password:",required=False,widget=forms.PasswordInput)
+        newpass = forms.CharField(label="New password:",required=False,widget=forms.PasswordInput)
+        confirm = forms.CharField(label="Confirm password:",required=False,widget=forms.PasswordInput)
+        if user_admin:
+            lock_user = forms.BooleanField(label="Lock user:",required=False)
+        def clean(self):
+            data = self.cleaned_data
+            if data["newpass"]!=data["confirm"]:
+                raise forms.ValidationError('Passwords do not match!')
+                del data["newpass"]
+                del data["confirm"]
+            return data
+        
     a = Global.get_instance().profile_fields
     parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
-    form = ChangePassForm(data={'firstname' : user.firstname, 'lastname' : user.lastname})
+    form = ChangePassForm(data={'firstname' : user.firstname, 'lastname' : user.lastname,'lock_user' : user.confirmed})
     profile_form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
     if request.method!="POST":
         return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form})
@@ -76,16 +89,29 @@ def profile(request, page_info):
         if form.is_valid():
             try:
                 data = form.cleaned_data
+                if id != None and data['newpass']:
+                    if data['newpass']==data['confirm']:
+                        user.set_password(data['newpass'])
+                        bar.messages.append('Password changed.')
+                    else:
+                        bar.errors.append('Passwords do not match!')
                 if data['oldpass']:
                     user.change_password(data['oldpass'],data['newpass'])
                     bar.messages.append('Password changed.')
-                user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
-                form = ChangePassForm()
+                if user.firstname!=data['firstname'] or user.lastname!=data['lastname']:
+                    user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
+                    bar.messages.append('Personal data changed.')
+                if user_admin and data['lock_user'] and not user.confirmed:
+                    user.modify(UserStruct(confirmed=True))
+                    bar.messages.append('User identity locked.');
+                if user_admin and not data['lock_user'] and user.confirmed:
+                    user.modify(UserStruct(confirmed=False))
+                    bar.messages.append('User identity unlocked.');
             except LoginFailed:
                 bar.errors.append('Login failed!')
             except InvalidPassword:
                 bar.errors.append('Invalid pasword!')
-            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form}) 
+            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form,'status_bar' : bar}) 
     if 'update' in request.POST.keys():
         profile_form = xmlparams.ParamsForm(parser=parser, data=request.POST)
         if profile_form.is_valid():

@@ -5,7 +5,7 @@ import java.util.List;
 
 import satori.problem.SProblemReader;
 import satori.session.SSession;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.thrift.gen.Problem;
 import satori.thrift.gen.ProblemStruct;
 
@@ -25,9 +25,9 @@ public class SProblemData {
 		@Override public SProblemReader get(int index) { return new ProblemWrap(list.get(index)); }
 	}
 	
-	public static SProblemReader load(long id) throws Exception {
-		STaskManager.log("Loading problem...");
-		Problem.Iface iface = new Problem.Client(SSession.getProtocol());
+	public static SProblemReader load(STaskHandler handler, long id) throws Exception {
+		handler.log("Loading problem...");
+		Problem.Iface iface = new Problem.Client(handler.getProtocol());
 		return new ProblemWrap(iface.Problem_get_struct(SSession.getToken(), id));
 	}
 	
@@ -38,24 +38,24 @@ public class SProblemData {
 		return struct;
 	}
 	
-	public static long create(SProblemReader problem) throws Exception {
-		STaskManager.log("Creating problem...");
-		Problem.Iface iface = new Problem.Client(SSession.getProtocol());
+	public static long create(STaskHandler handler, SProblemReader problem) throws Exception {
+		handler.log("Creating problem...");
+		Problem.Iface iface = new Problem.Client(handler.getProtocol());
 		return iface.Problem_create(SSession.getToken(), createStruct(problem)).getId();
 	}
-	public static void save(SProblemReader problem) throws Exception {
-		STaskManager.log("Saving problem...");
-		Problem.Iface iface = new Problem.Client(SSession.getProtocol());
+	public static void save(STaskHandler handler, SProblemReader problem) throws Exception {
+		handler.log("Saving problem...");
+		Problem.Iface iface = new Problem.Client(handler.getProtocol());
 		iface.Problem_modify(SSession.getToken(), problem.getId(), createStruct(problem));
 	}
-	public static void delete(long id) throws Exception {
-		STaskManager.log("Deleting problem...");
-		Problem.Iface iface = new Problem.Client(SSession.getProtocol());
+	public static void delete(STaskHandler handler, long id) throws Exception {
+		handler.log("Deleting problem...");
+		Problem.Iface iface = new Problem.Client(handler.getProtocol());
 		iface.Problem_delete(SSession.getToken(), id);
 	}
-	public static List<SProblemReader> list() throws Exception {
-		STaskManager.log("Loading problem list...");
-		Problem.Iface iface = new Problem.Client(SSession.getProtocol());
+	public static List<SProblemReader> list(STaskHandler handler) throws Exception {
+		handler.log("Loading problem list...");
+		Problem.Iface iface = new Problem.Client(handler.getProtocol());
 		ProblemStruct filter = new ProblemStruct();
 		return new ProblemListWrap(iface.Problem_filter(SSession.getToken(), filter));
 	}

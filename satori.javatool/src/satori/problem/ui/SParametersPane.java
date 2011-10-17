@@ -18,6 +18,7 @@ import satori.data.SBlob;
 import satori.metadata.SInputMetadata;
 import satori.metadata.SParametersMetadata;
 import satori.problem.impl.STestSuiteImpl;
+import satori.task.STaskHandler;
 import satori.type.SBlobType;
 
 public class SParametersPane implements SPane {
@@ -57,7 +58,7 @@ public class SParametersPane implements SPane {
 			SBlob data = get();
 			return data != null ? meta.getType().isValid(data) : !meta.isRequired();
 		}
-		@Override public void set(SBlob data) { suite.setGeneralParameter(meta, data); }
+		@Override public void set(STaskHandler handler, SBlob data) { suite.setGeneralParameter(meta, data); }
 	}
 	public class StringInput implements SInput<String> {
 		private final SInputMetadata meta;
@@ -75,7 +76,7 @@ public class SParametersPane implements SPane {
 			String data = get();
 			return data != null ? meta.getType().isValid(data) : !meta.isRequired();
 		}
-		@Override public void set(String data) { suite.setGeneralParameter(meta, data); }
+		@Override public void set(STaskHandler handler, String data) { suite.setGeneralParameter(meta, data); }
 	}
 	
 	private void fillPane(String name, List<SInputMetadata> meta) {

@@ -28,6 +28,7 @@ import satori.main.SFrame;
 import satori.task.SResultTask;
 import satori.task.STask;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
 import satori.task.STaskManager;
 
 public class SEditDialog {
@@ -59,8 +60,10 @@ public class SEditDialog {
 				File file = blob != null ? blob.getFile() : null;
 				if (file == null) file = saveAs();
 				if (file == null) return;
-				try { blob = createPane(file); }
+				STaskHandler handler = STaskManager.getHandler();
+				try { blob = createPane(handler, file); }
 				catch(STaskException ex) { return; }
+				finally { handler.close(); }
 				setModified(false);
 			}
 		});
@@ -95,21 +98,21 @@ public class SEditDialog {
 		if (ret != JFileChooser.APPROVE_OPTION) return null;
 		return file_chooser.getSelectedFile();
 	}
-	private SBlob createPane(final File file) throws STaskException {
-		return STaskManager.execute(new SResultTask<SBlob>() {
+	private SBlob createPane(final STaskHandler handler, final File file) throws STaskException {
+		return handler.execute(new SResultTask<SBlob>() {
 			@Override public SBlob run() throws Exception {
-				STaskManager.log("Saving blob...");
+				handler.log("Saving blob...");
 				Writer writer = new FileWriter(file);
 				try { edit_pane.write(writer); }
 				finally { IOUtils.closeQuietly(writer); }
-				return SBlob.createLocalTask(file);
+				return SBlob.createLocalTask(handler, file);
 			}
 		});
 	}
-	private void loadPane() throws STaskException {
-		STaskManager.execute(new STask() {
+	private void loadPane(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				STaskManager.log(blob.getFile() != null ? "Loading local file..." : "Loading blob...");
+				handler.log(blob.getFile() != null ? "Loading local file..." : "Loading blob...");
 				Reader reader = new InputStreamReader(blob.getStreamTask());
 				try { edit_pane.read(reader, null); }
 				finally { IOUtils.closeQuietly(reader); }
@@ -117,7 +120,7 @@ public class SEditDialog {
 		});
 	}
 	
-	public SBlob process(SBlob blob) throws STaskException {
+	public SBlob process(SBlob blob) {
 		this.blob = blob;
 		String name = blob != null ? blob.getName() : "";
 		if (name.endsWith(".java")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_JAVA);
@@ -125,7 +128,12 @@ public class SEditDialog {
 		else if (name.endsWith(".cpp")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_CPLUSPLUS);
 		else if (name.endsWith(".py")) edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_PYTHON);
 		else edit_pane.setSyntaxEditingStyle(SyntaxConstants.SYNTAX_STYLE_NONE);
-		if (blob != null) loadPane();
+		if (blob != null) {
+			STaskHandler handler = STaskManager.getHandler();
+			try { loadPane(handler); }
+			catch(STaskException ex) { return null; }
+			finally { handler.close(); }
+		}
 		edit_pane.setCaretPosition(0);
 		edit_pane.discardAllEdits();
 		setModified(false);

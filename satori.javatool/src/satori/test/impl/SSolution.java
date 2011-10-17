@@ -7,6 +7,7 @@ import satori.common.SInput;
 import satori.common.SListener0;
 import satori.common.SView;
 import satori.data.SBlob;
+import satori.task.STaskHandler;
 
 public class SSolution implements SInput<SBlob> {
 	private SBlob blob;
@@ -17,7 +18,7 @@ public class SSolution implements SInput<SBlob> {
 	@Override public String getText() { return blob != null ? blob.getName() : null; }
 	@Override public String getDescription() { return "Solution file"; }
 	@Override public boolean isValid() { return blob != null; }
-	@Override public void set(SBlob blob) {
+	@Override public void set(STaskHandler handler, SBlob blob) {
 		if (blob == null && this.blob == null) return;
 		if (blob != null && blob.equals(this.blob)) return;
 		this.blob = blob;

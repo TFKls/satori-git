@@ -29,6 +29,8 @@ import satori.problem.STestSuiteSnap;
 import satori.problem.impl.SProblemImpl;
 import satori.problem.impl.STestSuiteImpl;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 import satori.test.STestSnap;
 import satori.test.impl.STestImpl;
 import satori.test.impl.STestSuiteBase;
@@ -90,10 +92,11 @@ public class SProblemPane implements STabPane, SView {
 	private final SListener1<List<STestSnap>> open_tests_listener = new SListener1<List<STestSnap>>() {
 		@Override public void call(List<STestSnap> snaps) {
 			List<STestImpl> tests = new ArrayList<STestImpl>();
-			for (STestSnap snap : snaps) {
-				try { tests.add(STestImpl.createRemote(problem, snap)); }
+			STaskHandler handler = STaskManager.getHandler();
+			try { for (STestSnap snap : snaps) {
+				try { tests.add(STestImpl.createRemote(handler, problem, snap)); }
 				catch(STaskException ex) { return; }
-			}
+			} } finally { handler.close(); }
 			STestSuitePane.openTests(tabs, problem, STestSuiteBase.createNew(tests));
 		}
 	};
@@ -106,25 +109,33 @@ public class SProblemPane implements STabPane, SView {
 	private final SListener1<STestSuiteSnap> open_suite_listener = new SListener1<STestSuiteSnap>() {
 		@Override public void call(STestSuiteSnap snap) {
 			STestSuiteImpl suite;
-			try { suite = STestSuiteImpl.create(snap, problem); }
+			STaskHandler handler = STaskManager.getHandler();
+			try { suite = STestSuiteImpl.create(handler, snap, problem); }
 			catch(STaskException ex) { return; }
+			finally { handler.close(); }
 			STestSuitePane.openTestSuite(tabs, problem, suite);
 		}
 	};
 	
 	private void saveRequest() {
-		try { if (problem.isRemote()) problem.save(); else problem.create(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { if (problem.isRemote()) problem.save(handler); else problem.create(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void reloadRequest() {
 		if (!problem.isRemote()) return;
-		try { problem.reload(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { problem.reload(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void deleteRequest() {
 		if (!problem.isRemote() || !SFrame.showWarningDialog("The problem will be deleted.")) return;
-		try { problem.delete(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { problem.delete(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void closeRequest() {
 		if (hasUnsavedData() && !SFrame.showWarningDialog("This tab contains unsaved data.")) return;

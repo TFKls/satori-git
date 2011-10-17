@@ -8,6 +8,7 @@ import satori.common.SAssert;
 import satori.common.SListener0;
 import satori.problem.SParentProblem;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
 import satori.test.STestSnap;
 
 public class STestSuiteBase {
@@ -28,14 +29,14 @@ public class STestSuiteBase {
 	
 	private STestSuiteBase() {}
 	
-	public static List<STestImpl> createTestList(SParentProblem problem, List<STestSnap> source) throws STaskException {
+	public static List<STestImpl> createTestList(STaskHandler handler, SParentProblem problem, List<STestSnap> source) throws STaskException {
 		List<STestImpl> tests = new ArrayList<STestImpl>();
-		for (STestSnap snap : source) tests.add(STestImpl.createRemote(problem, snap));
+		for (STestSnap snap : source) tests.add(STestImpl.createRemote(handler, problem, snap));
 		return tests;
 	}
-	public static STestSuiteBase create(SParentProblem problem, List<STestSnap> source) throws STaskException {
+	public static STestSuiteBase create(STaskHandler handler, SParentProblem problem, List<STestSnap> source) throws STaskException {
 		STestSuiteBase self = new STestSuiteBase();
-		self.tests = createTestList(problem, source);
+		self.tests = createTestList(handler, problem, source);
 		return self;
 	}
 	public static STestSuiteBase createNew() {

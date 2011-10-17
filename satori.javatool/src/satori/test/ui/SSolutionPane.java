@@ -24,6 +24,8 @@ import satori.common.ui.SStringOutputView;
 import satori.metadata.SJudge;
 import satori.metadata.SOutputMetadata;
 import satori.task.STaskException;
+import satori.task.STaskHandler;
+import satori.task.STaskManager;
 import satori.test.impl.SBlobOutput;
 import satori.test.impl.SSolution;
 import satori.test.impl.SStringOutput;
@@ -50,20 +52,28 @@ public class SSolutionPane implements SRow {
 	@Override public JComponent getPane() { return pane; }
 	
 	private void runRequest(STestResult result) {
-		try { result.run(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { result.run(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void runAllRequest() {
-		try { for (STestResult result : results) result.run(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { for (STestResult result : results) result.run(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void refreshRequest(STestResult result) {
-		try { result.refresh(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { result.refresh(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	private void refreshAllRequest() {
-		try { for (STestResult result : results) result.refresh(); }
+		STaskHandler handler = STaskManager.getHandler();
+		try { for (STestResult result : results) result.refresh(handler); }
 		catch(STaskException ex) {}
+		finally { handler.close(); }
 	}
 	
 //

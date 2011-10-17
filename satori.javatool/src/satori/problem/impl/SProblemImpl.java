@@ -22,7 +22,7 @@ import satori.problem.STestSuiteList;
 import satori.task.SResultTask;
 import satori.task.STask;
 import satori.task.STaskException;
-import satori.task.STaskManager;
+import satori.task.STaskHandler;
 import satori.test.STestBasicReader;
 
 public class SProblemImpl implements SProblemReader, SParentProblem {
@@ -60,12 +60,12 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 	public static SProblemImpl createNew(SProblemList problem_list) {
 		return new SProblemImpl(problem_list);
 	}
-	public static SProblemImpl createRemote(SProblemList problem_list, SProblemSnap snap) throws STaskException {
+	public static SProblemImpl createRemote(STaskHandler handler, SProblemList problem_list, SProblemSnap snap) throws STaskException {
 		SProblemImpl self = new SProblemImpl(problem_list);
 		self.snap = snap;
 		snap.addReference(self.reference);
 		self.id = new SId(snap.getId());
-		self.reload();
+		self.reload(handler);
 		return self;
 	}
 	
@@ -147,12 +147,12 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 			this.suites = suites;
 		}
 	}
-	public void reload() throws STaskException {
-		FullProblem source = STaskManager.execute(new SResultTask<FullProblem>() {
+	public void reload(final STaskHandler handler) throws STaskException {
+		FullProblem source = handler.execute(new SResultTask<FullProblem>() {
 			@Override public FullProblem run() throws Exception {
-				SProblemReader problem = SProblemData.load(getId());
-				List<STestBasicReader> tests = STestData.list(getId());
-				List<STestSuiteBasicReader> suites = STestSuiteData.list(getId());
+				SProblemReader problem = SProblemData.load(handler, getId());
+				List<STestBasicReader> tests = STestData.list(handler, getId());
+				List<STestSuiteBasicReader> suites = STestSuiteData.list(handler, getId());
 				return new FullProblem(problem, tests, suites);
 			}
 		});
@@ -164,10 +164,10 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		snap.getTestList().load(source.getTests());
 		snap.getTestSuiteList().load(source.getTestSuites());
 	}
-	public void create() throws STaskException {
-		id = STaskManager.execute(new SResultTask<SId>() {
+	public void create(final STaskHandler handler) throws STaskException {
+		id = handler.execute(new SResultTask<SId>() {
 			@Override public SId run() throws Exception {
-				 return new SId(SProblemData.create(SProblemImpl.this));
+				 return new SId(SProblemData.create(handler, SProblemImpl.this));
 			}
 		});
 		notifyUpToDate();
@@ -177,19 +177,19 @@ public class SProblemImpl implements SProblemReader, SParentProblem {
 		suite_list_listener.call(snap.getTestSuiteList());
 		problem_list.addProblem(snap);
 	}
-	public void save() throws STaskException {
-		STaskManager.execute(new STask() {
+	public void save(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				SProblemData.save(SProblemImpl.this);
+				SProblemData.save(handler, SProblemImpl.this);
 			}
 		});
 		notifyUpToDate();
 		snap.set(this);
 	}
-	public void delete() throws STaskException {
-		STaskManager.execute(new STask() {
+	public void delete(final STaskHandler handler) throws STaskException {
+		handler.execute(new STask() {
 			@Override public void run() throws Exception {
-				SProblemData.delete(getId());
+				SProblemData.delete(handler, getId());
 			}
 		});
 		problem_list.removeProblem(snap);
