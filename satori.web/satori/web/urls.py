@@ -65,7 +65,7 @@ urlpatterns = patterns('',
     url(r'^subpage/add$', 'satori.web.views.subpage.add', name='subpage_add'),
     url(r'^subpage/(?P<id>\d+)$', 'satori.web.views.subpage.view', name='subpage'),
     url(r'^subpage/(?P<id>\d+)/edit$', 'satori.web.views.subpage.edit', name='subpage_edit'),
-#    url(r'^users$', 'satori.web.views.users.view', name='users'),
+    url(r'^users$', 'satori.web.views.users.view', name='users'),
 #    url(r'^users/(?P<login>[a-z0-9_]+)/edit$', 'satori.web.views.users.edit', name='user_edit'),
     
     url(r'^(?P<mode>download|view)/(?P<model>[^/]+)/(?P<id>\d+)/(?P<attr_name>[^/]+)/(?P<file_name>[^/]+)$','satori.web.views.download.getfile', name='download'),

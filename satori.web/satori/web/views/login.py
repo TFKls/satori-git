@@ -47,26 +47,36 @@ def view(request, page_info):
     return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'status_bar' : bar })
 
 
-class ChangePassForm(forms.Form):
-    firstname = forms.CharField(label="First name:",required=False)
-    lastname = forms.CharField(label="Last name:",required=False)
-    oldpass = forms.CharField(label="Old password:",required=False,widget=forms.PasswordInput)
-    newpass = forms.CharField(label="New password:",required=False,widget=forms.PasswordInput)
-    confirm = forms.CharField(label="Confirm password:",required=False,widget=forms.PasswordInput)
-    def clean(self):
-        data = self.cleaned_data
-        if data["newpass"]!=data["confirm"]:
-            raise forms.ValidationError('Passwords do not match!')
-            del data["newpass"]
-            del data["confirm"]
-        return data
-
 @general_view
 def profile(request, page_info, id = None):
+
     if id==None:
         user = page_info.user
     else:
         user = User(int(id))
+
+    user_admin = page_info.is_admin
+#    change_allowed = user_admin or not user.confirmed
+    class ChangePassForm(forms.Form):
+#        if change_allowed:
+        firstname = forms.CharField(label="First name:",required=False)
+        lastname = forms.CharField(label="Last name:",required=False)
+#        else:
+#            firstname = forms.CharField(label="First name:",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}))
+#            lastname = forms.CharField(label="Last name:",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}))        
+        oldpass = forms.CharField(label="Old password:",required=False,widget=forms.PasswordInput)
+        newpass = forms.CharField(label="New password:",required=False,widget=forms.PasswordInput)
+        confirm = forms.CharField(label="Confirm password:",required=False,widget=forms.PasswordInput)
+#        if user_admin:
+#            lock_user = forms.BooleanField(label="Lock user:",required=False)
+        def clean(self):
+            data = self.cleaned_data
+            if data["newpass"]!=data["confirm"]:
+                raise forms.ValidationError('Passwords do not match!')
+                del data["newpass"]
+                del data["confirm"]
+            return data
+        
     a = Global.get_instance().profile_fields
     parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
     form = ChangePassForm(data={'firstname' : user.firstname, 'lastname' : user.lastname})
@@ -91,6 +101,12 @@ def profile(request, page_info, id = None):
                 if user.firstname!=data['firstname'] or user.lastname!=data['lastname']:
                     user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
                     bar.messages.append('Personal data changed.')
+#                if user_admin and data.has_key('lock_user') and not user.confirmed:
+#                    user.modify(UserStruct(confirmed=True))
+#                    bar.messages.append('User identity locked.');
+#                if user_admin and not data.has_key('lock_user') and user.confirmed:
+#                    user.modify(UserStruct(confirmed=False))
+#                    bar.messages.append('User identity unlocked.');
             except LoginFailed:
                 bar.errors.append('Login failed!')
             except InvalidPassword:
