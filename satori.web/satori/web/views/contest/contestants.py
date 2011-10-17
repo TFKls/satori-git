@@ -44,7 +44,7 @@ def view(request, page_info):
                         contestant.delete()
                     except CannotDeleteObject:
                         bar = StatusBar()
-                        bar.errors.append('Cannot delete '+contestant.name+' - submits may be present')
+                        bar.errors.append('Cannot delete '+contestant.name+' may have already submitted.')
         if 'revoke' in request.POST.keys():
             for contestant in accepted.contestants:
                 if 'revoke_'+str(contestant.id) in request.POST.keys():
@@ -63,3 +63,44 @@ def view(request, page_info):
                 Contestant.create(ContestantStruct(contest=contest,accepted=True),[add_form.cleaned_data['user']])
         return HttpResponseRedirect(reverse('contestants',args=[contest.id]))
     return render_to_response('contestants.html', {'page_info' : page_info, 'accepted' : accepted, 'pending' : pending, 'add_form' : add_form, 'page_params' : page_params, 'status_bar' : bar })
+
+@contest_view
+def viewteam(request, page_info, id = None):
+    class ContestantForm(forms.Form):
+        team_name = forms.CharField(required=True,label='Contestant name')
+        accepted = forms.BooleanField(required=False,label='Accepted')
+        invisible = forms.BooleanField(required=False,label='Hidden')
+        
+    class AddForm(forms.Form):
+        login = forms.CharField(required=True,label='Add user')
+        
+    if not id:
+        contestant = page_info.contestant
+    else:
+        contestant = Contestant(int(id))
+    users = contestant.get_member_users()
+    form = ContestantForm(data={'team_name' : contestant.name, 'accepted' : contestant.accepted, 'invisible' : contestant.invisible})
+    add_form = AddForm()
+    if request.method=="POST":
+        if 'change' in request.POST:
+            form = ContestantForm(request.POST)
+            if form.is_valid():
+                try:
+                    data = form.cleaned_data
+                    contestant.modify(ContestantStruct(name=data['team_name'],accepted=data['accepted'],invisible=data['invisible']))
+                    return HttpResponseRedirect(reverse('contestant_view',args=[page_info.contest.id,id]))
+                except:
+                    pass
+        if 'add' in request.POST:
+            add_form = AddForm(request.POST)
+            if add_form.is_valid():
+                newuser = User.filter(UserStruct(login=add_form.cleaned_data['login']))[0]
+                contestant.add_member_user(newuser)
+                return HttpResponseRedirect(reverse('contestant_view',args=[page_info.contest.id,id]))
+        for k in request.POST.keys():
+            if k[:6]=="remove":
+                uid = int(k[7:])
+                newuser = User(uid)
+                contestant.delete_member_user(newuser)
+                return HttpResponseRedirect(reverse('contestant_view',args=[page_info.contest.id,id]))
+    return render_to_response('teampage.html', {'page_info' : page_info, 'contestant' : contestant, 'users' : users, 'form' : form, 'add_form' : add_form})

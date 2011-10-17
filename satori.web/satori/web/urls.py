@@ -41,6 +41,7 @@ contestpatterns = patterns('',
     url(r'subpage/(?P<id>\d+)/edit$', 'satori.web.views.contest.subpage.edit', name='contest_subpage_edit'),
 #    url(r'subpage/(?P<id>\d+)/delete$', 'satori.web.views.contest.subpage.delete', name='contest_subpage_delete'),
     url(r'contestants$', 'satori.web.views.contest.contestants.view', name='contestants'),
+    url(r'contestants/(?P<id>\d+)$', 'satori.web.views.contest.contestants.viewteam', name='contestant_view'),
     url(r'manage$', 'satori.web.views.contest.manage.view', name='contest_manage'),
 #    url(r'manage/rights$', 'satori.web.views.contest.manage.rights', name='contest_manage_rights'),
 )

@@ -62,6 +62,12 @@ def view(request, page_info):
         user = Role(int(request.POST['adminid']))
         contest.delete_admin(user)
         return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
+    if "archive" in request.POST.keys():
+        contest.modify(ContestStruct(archived=True))
+        return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
+    if "unarchive" in request.POST.keys():
+        contest.modify(ContestStruct(archived=False))
+        return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
     admin_form = AdminForm()
     manage_form = ManageForm(request.POST)
     if not manage_form.is_valid():

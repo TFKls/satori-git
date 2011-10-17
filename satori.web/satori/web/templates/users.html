@@ -16,7 +16,7 @@
 <table>
 {% for user in user_list %}
 <tr>
-<td>{{user.login}}</td><td>{{user.firstname}}</td><td>{{user.lastname}}</td>
+<td><a href="{% url profile user.id %}">{{user.login}}</a></td><td>{{user.firstname}}</td><td>{{user.lastname}}</td>
 </tr>
 {% endfor %}
 </table>

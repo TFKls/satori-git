@@ -6,10 +6,12 @@
 <h3>Managed contests:</h3>
 <table>
     {% for cinfo in managed %}
+    {% if show_archived or not cinfo.contest.archived %}
     <tr>
         <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
         <td>{{ cinfo.contest.description }}</td>
     </tr>
+    {% endif %}
     {% endfor %}
 </table>
 {% endif %}
@@ -19,11 +21,13 @@
 <h3>Joined contests:</h3>
 <table>
     {% for cinfo in participating %}
+    {% if show_archived or not cinfo.contest.archived %}
     <tr>
         <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
         <td>{{ cinfo.contest.description }}</td>
         <td>{% if not cinfo.contestant.accepted %} (pending) {% endif %}</td>
     </tr>
+    {% endif %}
     {% endfor %}
 </table>
 {% endif %}
@@ -33,6 +37,7 @@
 <h3>Other contests:</h3>
 <table>
     {% for cinfo in other %}
+    {% if show_archived or not cinfo.contest.archived %}
     <tr>
         <td><a href="{% url contest_main cinfo.contest.id %}">{{ cinfo.contest.name }}</td>
         <td>{{ cinfo.contest.description }}</td>
@@ -46,6 +51,7 @@
             {% endif %}
         </td>
     </tr>
+    {% endif %}
     {% endfor %}
 </table>
 {% endif %}
@@ -59,9 +65,16 @@
 </table>
 <input class="button" type="submit" name="addcontest" value="Add contest"/>
 </form>
-
 {% endif %}
 
+<form action="" method="GET">
+Show archived contests:
+<select name="show_archived">
+  <option value="on">Yes</option>
+  <option value="off" selected>No</option>
+</select>
+<input type="submit"/>
+</form>
 
 
 {% endblock %}

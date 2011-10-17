@@ -12,7 +12,7 @@
         <input type="checkbox" name="revoke_{{cinfo.id}}"/>
     </td>
     <td>
-        {{cinfo.name}}
+        <a href="{% url contestant_view page_info.contest.id cinfo.id %}"> {{cinfo.name}} ({{cinfo.usernames}})</a>
     </td>
     <td>
         {% if cinfo.invisible %}
