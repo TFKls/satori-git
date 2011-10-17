@@ -369,5 +369,6 @@ if has_languages:
     languages = [ l.strip().lower() for l in test.get('languages')['value'].split(',') ]
     if fileext not in languages:
         communicate('SETSTRING', {'name': 'status', 'value': 'LANG'})
+        sys.exit(0)
 
 communicate('SETSTRING', {'name': 'status', 'value': 'OK'})
