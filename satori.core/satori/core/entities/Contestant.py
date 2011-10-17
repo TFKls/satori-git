@@ -103,6 +103,16 @@ class Contestant(Role):
     @ExportMethod(DjangoStructList('User'), [DjangoId('Contestant')], PCArg('self', 'VIEW'))
     def get_member_users(self):
         return User.objects.filter(parents=self)
+    
+    @ExportMethod(NoneType, [DjangoId('Contestant'), DjangoId('User')], PCArg('self', 'MANAGE'), [AlreadyRegistered])
+    def add_member_user(self, user):
+        if self.contest.find_contestant(user) is not None:
+            raise AlreadyRegistered(login=user.login)
+        self.add_member(member)
+
+    @ExportMethod(NoneType, [DjangoId('Contestant'), DjangoId('User')], PCArg('self', 'MANAGE'))
+    def delete_member_user(self, user):
+        self.delete_member(user)
 
     @ExportMethod(unicode, [unicode, unicode], PCPermit(), [LoginFailed])
     @staticmethod
