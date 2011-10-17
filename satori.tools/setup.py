@@ -16,5 +16,6 @@ setup(name='satori.tools',
         satori.athina_import_testsuite = satori.tools.athina:athina_import_testsuite
         satori.console = satori.tools.console:main
         satori.default_judges = satori.tools.judges:default_judges
+        satori.team = satori.tools.teams:uzi_team
     ''',
 )
