@@ -108,7 +108,7 @@ class Contestant(Role):
     def add_member_user(self, user):
         if self.contest.find_contestant(user) is not None:
             raise AlreadyRegistered(login=user.login)
-        self.add_member(member)
+        self.add_member(user)
 
     @ExportMethod(NoneType, [DjangoId('Contestant'), DjangoId('User')], PCArg('self', 'MANAGE'))
     def delete_member_user(self, user):
