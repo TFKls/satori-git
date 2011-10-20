@@ -1,8 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-import crypt
-import random
-import string
 import ipaddr
 
 from satori.ars.server  import server_info

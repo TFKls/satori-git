@@ -8,7 +8,7 @@ from   multiprocessing import Process, Semaphore
 import sys
 import os
 from   setproctitle import setproctitle
-from   signal       import signal, getsignal, SIGINT, SIGTERM, SIGHUP, pause
+from   signal       import signal, SIGINT, SIGTERM, SIGHUP
 import signal       as signal_module
 from   time         import sleep
 

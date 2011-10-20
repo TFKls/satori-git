@@ -6,7 +6,6 @@ __all__ = (
 
 from datetime import datetime, timedelta
 import base64
-import crypt
 import hashlib
 import random
 import time
