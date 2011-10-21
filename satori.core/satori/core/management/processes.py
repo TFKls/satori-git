@@ -9,10 +9,10 @@ from   multiprocessing import Process, Semaphore
 from   multiprocessing.connection import Client, Listener
 from   time         import sleep
 from   thrift.transport.TSocket import TServerSocket
+from   thrift.transport.TSSLSocket import TSSLServerSocket
 from   thrift.server.TServer    import TThreadedServer
 
 from satori.ars.thrift    import ThriftServer
-from satori.ars.thrift.TSSLSocket import TSSLServerSocket
 from satori.core.api      import ars_interface
 from satori.core.checking import CheckingMaster
 from satori.core.dbev.notifier              import run_notifier

@@ -11,11 +11,11 @@ from StringIO import StringIO
 from types import FunctionType
 
 from thrift.transport.TSocket import TSocket
+from thrift.transport.TSSLSocket import TSSLSocket
 
 from satori.client.common import setup_api
 from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 from satori.ars.thrift import ThriftClient, ThriftReader
-from satori.ars.thrift.TSSLSocket import TSSLSocket
 from satori.objects import Argument, Signature, ArgumentMode
 from unwrap import unwrap_interface
 from oa_map import get_oa_map
