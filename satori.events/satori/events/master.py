@@ -58,12 +58,47 @@ class PollScheduler(Scheduler):
         self.waits.unregister(fileno)
         del self.fdmap[fileno]
 
+class SelectScheduler(Scheduler):
+    """A Scheduler using select.select on file descriptors.
+    """
+
+    def __init__(self):
+        self.fdmap = dict()
+        self.ready = collections.deque()
+
+    def next(self):
+        """Return the next Client to handle.
+
+        A Client is available when its file descriptor is ready to be read from.
+        Available Clients are scheduler in a round-robin fashion.
+        """
+        while len(self.ready) == 0:
+            for fileno in select.select(self.fdmap.keys(), [], [])[0]:
+                client = self.fdmap[fileno]
+                self.ready.append(client)
+        return self.ready.popleft()
+
+    def add(self, client):
+        """Add a Client to this Scheduler.
+        """
+        fileno = client.fileno
+        if fileno in self.fdmap:
+            return
+        self.fdmap[fileno] = client
+
+    def remove(self, client):
+        """Remove a Client from this Scheduler.
+        """
+        fileno = client.fileno
+        if fileno not in self.fdmap:
+            return
+        del self.fdmap[fileno]
 
 class ConnectionClient(Client):
     """Out-of-process Client communicating over multiprocessing.Connection.
     """
 
-    @Argument('scheduler', type=PollScheduler)
+    @Argument('scheduler', type=Scheduler)
     @Argument('connection', type=Connection)
     def __init__(self, connection):
         self.connection = connection
@@ -95,7 +130,7 @@ class ListenerClient(Client):
     """In-process Client wrapping a multiprocessing.connection.Listener.
     """
 
-    @Argument('scheduler', type=PollScheduler)
+    @Argument('scheduler', type=Scheduler)
     @Argument('listener', type=Listener)
     def __init__(self, listener):
         self.listener = listener
@@ -137,7 +172,10 @@ class Master(Manager):
     @Argument('mapper', type=Mapper)
     def __init__(self, mapper):
         self.mapper = mapper
-        self.scheduler = PollScheduler()
+        if hasattr(select, 'poll'):
+            self.scheduler = PollScheduler()
+        else:
+            self.scheduler = SelectScheduler()
         self.serial = 0
 
     def connectSlave(self, connection):
