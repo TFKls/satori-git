@@ -41,6 +41,7 @@ class CheckingMaster(Client2):
         self.ranking_created_submits = dict()
         self.ranking_checked_test_suite_results = dict()
         self.rankings_to_rejudge = set()
+        self.rankings_to_stop = set()
 
         self.test_suite_result_cache = {}    
 
@@ -54,6 +55,7 @@ class CheckingMaster(Client2):
         self.map({'type': 'checking_rejudge_test_result'}, self.queue)
         self.map({'type': 'checking_rejudge_test_suite_result'}, self.queue)
         self.map({'type': 'checking_rejudge_ranking'}, self.queue)
+        self.map({'type': 'checking_stop_ranking'}, self.queue)
         self.map({'type': 'checking_default_test_suite_changed'}, self.queue)
         self.map({'type': 'checking_changed_contest'}, self.queue)
         self.map({'type': 'checking_changed_contestants'}, self.queue)
@@ -80,6 +82,10 @@ class CheckingMaster(Client2):
         flag = True
         while flag:
             flag = False
+            while self.rankings_to_stop:
+                flag = True
+                ranking = self.rankings_to_stop.pop()
+                self.do_stop_ranking(ranking)
             while self.test_suite_results_to_start:
                 flag = True
                 test_suite_result = self.test_suite_results_to_start.pop()
@@ -176,6 +182,14 @@ class CheckingMaster(Client2):
             logging.debug('checking master: rejudge ranking %s: not running', ranking.id)
             self.start_ranking(ranking)
 
+    def do_stop_ranking(self, ranking):
+        logging.debug('checking master: running rankings: ' + ' '.join([str(x.id) for x in self.ranking_map]))
+        if ranking in self.ranking_map:
+            logging.debug('checking master: stop ranking %s: running', ranking.id)
+            self.stop_ranking(ranking)
+        else:
+            logging.debug('checking master: stop ranking %s: not running', ranking.id)
+
     def handle_event(self, queue, event):
         logging.debug('checking master: event %s', event.type)
 
@@ -218,6 +232,12 @@ class CheckingMaster(Client2):
             ranking = Ranking.objects.get(id=event.id)
             logging.debug('checking master: rejudge ranking %s', ranking.id)
             self.rankings_to_rejudge.add(ranking)
+        elif event.type == 'checking_stop_ranking':
+            ranking = Ranking()
+            ranking.id = event.id
+            ranking.parent_entity_id = event.id
+            logging.debug('checking master: stop ranking %s', ranking.id)
+            self.rankings_to_stop.add(ranking)
         elif event.type == 'checking_default_test_suite_changed':
             problem_mapping = ProblemMapping.objects.get(id=event.id)
             logging.debug('checking master: changed default test suite for problem mapping %s', problem_mapping.id)
@@ -241,8 +261,12 @@ class CheckingMaster(Client2):
         elif event.type == 'checking_changed_contest':
             contest = Contest.objects.get(id=event.id)
             logging.debug('checking master: changed contest %s', contest.id)
-            for ranking in Ranking.objects.filter(contest=contest):
-                self.rankings_to_rejudge.add(ranking)
+            if contest.archived:
+                for ranking in Ranking.objects.filter(contest=contest):
+                    self.rankings_to_stop.add(ranking)
+            else:
+                for ranking in Ranking.objects.filter(contest=contest):
+                    self.rankings_to_rejudge.add(ranking)
         elif event.type == 'checking_test_result_dequeue':
             e = Event(type='checking_test_result_dequeue_result')
             e.tag = event.tag

@@ -111,6 +111,8 @@ class Contest(Entity):
         try:
             admin_role = self.admin_role
             contestant_role = self.contestant_role
+            for ranking in self.rankings.all():
+                ranking.stop()
             super(Contest, self).delete()
             admin_role.delete()
             contestant_role.delete()
