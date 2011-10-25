@@ -53,7 +53,7 @@ def judge_loop():
 
             template = 'default'
             if td.get('template') and not td.get('template').is_blob:
-                template = td.get('template').value
+                template = str(td.get('template').value)
 
             jb = JailBuilder(
                 root=options.jail_dir,
