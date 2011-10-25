@@ -213,7 +213,7 @@ def edit(request, page_info, id):
                 phash = writer.close()
                 mapping.statement_files_set_blob_hash('pdf',phash)
                 mapping.statement_files_set_blob_hash('_pdf',phash)
-            return HttpResponseRedirect(reverse('contest_problems', args=[page_info.contest.id]))
+            return HttpResponseRedirect(reverse('contest_problems_view', args=[page_info.contest.id,id]))
     else:
         fid = tempfile.mkdtemp()
         form = ProblemAddForm(initial={ 'code' : mapping.code,
@@ -235,5 +235,5 @@ def edit(request, page_info, id):
 def view(request, page_info, id):
     problem = Web.get_problem_mapping_info(ProblemMapping(int(id)))
     content = fill_image_links(problem.html,'ProblemMapping',id, 'statement_files')
-    return render_to_response('problems_view.html', {'page_info' : page_info, 'problem' : problem, 'content' : content })
+    return render_to_response('problems_view.html', {'page_info' : page_info, 'problemid' : id, 'content' : content })
     

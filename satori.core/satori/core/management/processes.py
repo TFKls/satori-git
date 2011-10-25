@@ -2,25 +2,17 @@
 
 from   cherrypy.wsgiserver import CherryPyWSGIServer
 from   cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter
-from   datetime    import datetime
 from   django.conf import settings
 from   django.core.handlers.wsgi import WSGIHandler
-import errno
-import fcntl
 import logging
 from   multiprocessing import Process, Semaphore
 from   multiprocessing.connection import Client, Listener
-import sys
-import os
 from   time         import sleep
-from   setproctitle import setproctitle
-from   signal       import signal, getsignal, SIGINT, SIGTERM, SIGHUP, pause
-import signal       as signal_module
 from   thrift.transport.TSocket import TServerSocket
+from   thrift.transport.TSSLSocket import TSSLServerSocket
 from   thrift.server.TServer    import TThreadedServer
 
 from satori.ars.thrift    import ThriftServer
-from satori.ars.thrift.TSSLSocket import TSSLServerSocket
 from satori.core.api      import ars_interface
 from satori.core.checking import CheckingMaster
 from satori.core.dbev.notifier              import run_notifier

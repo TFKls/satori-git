@@ -45,4 +45,14 @@
 {{ admin_form }}
 <input class="button" type="submit" name="addadmin" value="Add admin"/>
 </form>
+
+<form action="" method="POST">
+{% if page_info.contest.archived %}
+<h4>Contest archived.</h4>
+<input type="submit" name="unarchive" value="Revert"/>
+{% else %}
+<input type="submit" name="archive" value="Archive contest"/>
+{% endif %}
+</form>
+
 {% endblock %}

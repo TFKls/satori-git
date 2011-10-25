@@ -15,6 +15,7 @@ class CreateForm(forms.Form):
 def view(request, page_info):
     create_form = None
     can_create = Privilege.global_demand('MANAGE_CONTESTS')
+    show_archived = request.GET.get('show_archived',None)=='on'
     if request.method=="POST":
         if can_create and "addcontest" in request.POST.keys():
             create_form = CreateForm(request.POST)
@@ -41,4 +42,4 @@ def view(request, page_info):
             participating.append(contest_info)
         else:
             other.append(contest_info)
-    return render_to_response('select_contest.html', {'page_info' : page_info, 'managed' : managed, 'participating' : participating, 'other' : other, 'create_form' : create_form})
+    return render_to_response('select_contest.html', {'page_info' : page_info, 'managed' : managed, 'participating' : participating, 'other' : other, 'create_form' : create_form, 'show_archived' : show_archived})

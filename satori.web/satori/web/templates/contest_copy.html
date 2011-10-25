@@ -1,0 +1,32 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+{% if preform %}
+
+<form action="" method="GET">
+{{ preform.as_p }}
+<input type="submit" value="Use"/>
+</form>
+
+{% else %}
+
+<form action="" method="POST">
+
+{{copyform.as_p}}
+<input type="submit" value="Copy" name="copyone"/>
+
+</form>
+
+<form action="" method="POST">
+
+{{massform.as_p}}
+
+<input type="submit" value="Mass copy" name="masscopy"/>
+
+</form>
+
+
+{% endif %}
+
+{% endblock %}

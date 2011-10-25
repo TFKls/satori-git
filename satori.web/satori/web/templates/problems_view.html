@@ -2,6 +2,10 @@
 
 {% block content %}
 
+{% if page_info.contest_is_admin %}
+  <a class="button" href="{% url contest_problems_edit page_info.contest.id problemid %}">Edit problem</a>
+{% endif %}
+
 {{content|safe}}
 
 {% endblock %}

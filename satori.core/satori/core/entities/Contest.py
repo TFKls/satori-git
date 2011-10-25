@@ -39,7 +39,7 @@ class Contest(Entity):
     intra_files  = AttributeGroupField(PCArg('self', 'VIEW_INTRA_FILES'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
-        fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
+        fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('archived', 'VIEW'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
     @classmethod
     def inherit_rights(cls):
@@ -111,6 +111,8 @@ class Contest(Entity):
         try:
             admin_role = self.admin_role
             contestant_role = self.contestant_role
+            for ranking in self.rankings.all():
+                ranking.stop()
             super(Contest, self).delete()
             admin_role.delete()
             contestant_role.delete()

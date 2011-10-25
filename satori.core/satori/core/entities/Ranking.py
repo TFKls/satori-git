@@ -146,6 +146,7 @@ class Ranking(Entity):
     def delete(self):
         try:
             super(Ranking, self).delete()
+            self.stop()
         except models.ProtectedError as e:
             raise CannotDeleteObject()
 
@@ -167,6 +168,10 @@ class Ranking(Entity):
     @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
     def rejudge(self):
         RawEvent().send(Event(type='checking_rejudge_ranking', id=self.id))
+
+    @ExportMethod(NoneType, [DjangoId('Ranking')], PCArg('self', 'MANAGE'))
+    def stop(self):
+        RawEvent().send(Event(type='checking_stop_ranking', id=self.id))
 
     @ExportMethod(unicode, [DjangoId('Ranking')], PCArg('self', 'VIEW_FULL'))
     def full_ranking(self):

@@ -282,6 +282,7 @@ def athina_import():
                 test_results[test['object']] = oa.get_map()
         submit['object'] = Creator('Submit', contestant=user['contestant'], time=submit['time'], problem=problems[submit['problem']]['mapping']).additional(filename=submit['filename'], content=submit['data'], test_results=test_results).function('inject')()
 
+
 def athina_import_testsuite():
     from satori.tools import options, setup
     (options, args) = setup()
@@ -344,3 +345,82 @@ def athina_import_testsuite():
         tests.append(Creator('Test', problem=problem, name=problem.name + '_import_' + str(t)).additional(data=oa.get_map())())
     params = OaMap()
     testsuite = Creator('TestSuite', problem=problem, name=problem.name + '_import').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
+
+def athina_import_problem():
+    from satori.tools import options, setup
+    (options, args) = setup()
+    if len(args) != 7:
+        logging.error('usage: code directory name contest judge statement description')
+        sys.exit(1)
+    code = unicode(args[0])
+    base_dir = unicode(args[1])
+    name = unicode(args[2])
+    judge_path = unicode(args[4])
+    pdf = unicode(args[5])
+    description = unicode(args[6])
+    problem = Creator('Problem', name=name, description=description)()
+    try:
+        contest = Contest.filter(ContestStruct(name=unicode(args[3])))[0]
+    except:
+        raise Exception('contest not found')
+    if not os.path.exists(os.path.join(base_dir, 'testcount')):
+        logging.error('provided path is invalid')
+        sys.exit(1)
+
+    def get_path(*args):
+        return os.path.join(base_dir, *args)
+
+    with open(get_path('testcount')) as f:
+        testcount = int(f.readline()) + 1
+    with open(get_path('sizelimit')) as f:
+        sizelimit = int(f.readline())
+    if os.path.exists(get_path('checker')):
+        checker = get_path('checker')
+    else:
+        checker = None
+    judge = judge_path
+    if not os.path.exists(judge):
+    	raise Exception('judge missing')
+    if not os.path.exists(pdf):
+    	raise Exception('statement missing')
+    tests = [] 
+    for t in range(testcount):
+        input = get_path(str(t) + '.in')
+        if not os.path.exists(input):
+            input = None
+        output = get_path(str(t) + '.out')
+        if not os.path.exists(output):
+            output = None
+        memlimit = get_path(str(t) + '.mem')
+        if os.path.exists(memlimit):
+            with open(memlimit, 'r') as f:
+                memlimit = int(f.readline())
+        else:
+            memlimit = None
+        timelimit = get_path(str(t) + '.tle')
+        if os.path.exists(timelimit):
+            with open(timelimit, 'r') as f:
+                timelimit = timedelta(seconds=float(f.readline())*0.01)
+        else:
+            timelimit = None
+
+        oa = OaMap()
+        oa.set_blob_path('judge', judge)
+        if checker != None:
+            oa.set_blob_path('checker', checker)
+        if input != None:
+            oa.set_blob_path('input', input)
+        if output != None:
+            oa.set_blob_path('hint', output)
+        if memlimit != None:
+            oa.set_str('memory', str(memlimit)+'B')
+        if timelimit != None:
+            oa.set_str('time', str(seconds(timelimit))+'s')
+        tests.append(Creator('Test', problem=problem, name=problem.name + '_import_' + str(t)).additional(data=oa.get_map())())
+    params = OaMap()
+    testsuite = Creator('TestSuite', problem=problem, name=problem.name + '_import').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
+    pmoa = OaMap()
+    pmoa.set_blob_path('_pdf',pdf)
+    pm = Creator('ProblemMapping',problem=problem,contest=contest,code=code,title=name,default_test_suite=testsuite)()
+    pm.statement_files_set_map(pmoa.get_map())
+    
