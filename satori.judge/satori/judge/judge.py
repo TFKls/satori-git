@@ -415,9 +415,12 @@ class JailRun(Object):
                         f.write(str(pid))
                     return { 'res' : 'OK' }
                 return { 'res' : 'FAIL' }
-
-            def cmd_DESTROYCG(self, input):
-                path = self.cgroup_path(input['group'])
+            
+            def rec_destroy_cg(self, path):
+                for sub in os.listdir(path):
+                	sub = os.path.join(path, sub)
+                    if os.path.isdir(sub):
+                    	self.rec_destroy_cg(sub)
                 killer = True
                 #TODO: po ilu probach sie poddac?
                 while killer:
@@ -428,6 +431,10 @@ class JailRun(Object):
                             os.kill(int(pid), signal.SIGKILL)
                     time.sleep(1)
                 os.rmdir(path)
+
+            def cmd_DESTROYCG(self, input):
+                path = self.cgroup_path(input['group'])
+                self.rec_destroy_cg(path)
                 return { 'res' : 'OK' }
 
             def cmd_QUERYCG(self, input):
