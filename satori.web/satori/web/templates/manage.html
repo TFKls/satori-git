@@ -9,12 +9,15 @@
 <input class="button" type="submit" name="params" value="Submit"/>
 </form>
 
+<hr class="divide"/>
+
+
 <h4>Subpages</h4>
 <table>
 {% for s in page_info.subpages %}
 <tr>
 {% if s.contest %}
-<td>{{ s.name }}</td><td><a class="smallbutton" href="{% url contest_subpage_edit page_info.contest.id s.id %}">edit</a></td>
+<td>{{ s.name }}</td><td><a class="button button_small" href="{% url contest_subpage_edit page_info.contest.id s.id %}">edit</a></td>
 {% endif %}
 </tr>
 {% endfor %}
@@ -22,22 +25,25 @@
 
 <a class="button" href="{% url contest_subpage_add page_info.contest.id %}">Add new subpage</a>
 
+<hr class="divide"/>
 
 <h4>Rankings</h4>
 <table>
 {% for s in page_info.rankings %}
 <tr>
-<td>{{ s.name }} </td><td><a class="smallbutton" href="{% url ranking_edit page_info.contest.id s.id %}">edit</a></td><td> <a class="smallbutton" href="{% url ranking_rejudge page_info.contest.id s.id %}">rejudge</a></td>
+<td>{{ s.name }} </td><td><a class="button button_small" href="{% url ranking_edit page_info.contest.id s.id %}">edit</a></td><td> <a class="button button_small" href="{% url ranking_rejudge page_info.contest.id s.id %}">rejudge</a></td>
 </tr>
 {% endfor %}
 </table>
 <a class="button" href="{% url ranking_add page_info.contest.id %}">Add new ranking</a>
 
+<hr class="divide"/>
+
 <h4>Admins</h4>
 <table>
 {% for a in admins %}
 <tr>
-    <td>{{ a.name }}</td><td><form action="" method="POST"><input type="hidden" name="adminid" value="{{a.id}}"/><input type="submit" class="smallbutton" name="revokeadmin" value="Revoke"/></form></td>
+    <td>{{ a.name }}</td><td><form action="" method="POST"><input type="hidden" name="adminid" value="{{a.id}}"/><input type="submit" class="button button_small" name="revokeadmin" value="Revoke"/></form></td>
 </tr>
 {% endfor %}
 </table>
@@ -46,12 +52,12 @@
 <input class="button" type="submit" name="addadmin" value="Add admin"/>
 </form>
 
+<hr class="divide"/>
 <form action="" method="POST">
 {% if page_info.contest.archived %}
-<h4>Contest archived.</h4>
-<input type="submit" name="unarchive" value="Revert"/>
+<p class="emph">Contest archived. <input type="submit" class="button" name="unarchive" value="Revert"/></p>
 {% else %}
-<input type="submit" name="archive" value="Archive contest"/>
+<input type="submit" class="button" name="archive" value="Archive contest"/>
 {% endif %}
 </form>
 

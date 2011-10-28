@@ -89,7 +89,7 @@ PDF
 
 <td class="edit">
 {% if pinfo.admin %}
-<a class="smallbutton" href={% url contest_problems_edit page_info.contest.id problem.id %}>Edit problem</a>
+<a class="button button_small" href={% url contest_problems_edit page_info.contest.id problem.id %}>Edit problem</a>
 {% endif %}
 </td>
 
@@ -115,23 +115,26 @@ PDF
 {{form.submitfinish.errors}}
 <p>Set submission times from {{form.submitstart}} to {{form.submitfinish}}
 {{form.viewauto}} Set view times automatically
-<input class="button" type="submit" name="changesubmit" value="Change times"/>
+<input class="button" type="submit" name="changesubmit" value="Change submission times"/>
 </p>
 
 {{form.viewstart.errors}}
 {{form.viewfinish.errors}}
 <p>Set view times from {{form.viewstart}} to {{form.viewfinish}}
-<input class="button" type="submit" name="changeview" value="Change times"/>
+<input class="button" type="submit" name="changeview" value="Change publish times"/>
 </p>
-
-<input class="button" type="submit" name="revokesubmit" value="Revoke submits"/>
-<input class="button" type="submit" name="revokeview" value="Revoke submits AND hide problems"/>
+<div class="button_bar">
+<input class="button" type="submit" name="revokesubmit" value="Stop submissions"/>
+<input class="button" type="submit" name="revokeview" value="Hide problems"/>
+</div>
 </form>
 {% endif %}
 
 {% if page_info.contest_is_admin %}
-<p>
+<hr class="divide"/>
+<div class="button_bar">
 <a class="button" href="{% url contest_problems_add page_info.contest.id %}">Add new problem</a>
-</p>
+<a class="button" href="{% url contest_copyproblems page_info.contest.id %}">Copy from another contest</a>
+</div>
 {% endif %}
 {% endblock %}

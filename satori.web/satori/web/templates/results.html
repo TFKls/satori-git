@@ -2,86 +2,13 @@
 
 {% block content %}
 
-{% load switch %}
 
 <h2>Results</h2>
 
-{% if page_info.contest_is_admin %}
-<form action="" method="GET"/>
-    {{ form }} 
-    <input class="button" type="submit" value="Select"/>
-</form>
-{% endif %}
-
 <table class="results">
-
-<tr>
-    <th>#</th>
-{% if page_info.contest_is_admin %}
-    <th>User</th>
-{% endif %}
-    <th>Problem</th>
-    <th>Time</th>
-    <th>Status</th>
-{% comment %}  
-    <th></th> 
-{% endcomment %}
-</tr>
-
-{% for s in results %}
-<tr>
-    <td><a href="{% url view_result page_info.contest.id s.submit.id %}">{{s.submit.id}}</a></td>
-{% if page_info.contest_is_admin %}   
-     <td>{{s.contestant.name}}</td>
-{% endif %}
-    <td>{{s.problem_mapping.code}}</td>
-    <td>{{s.submit.time|date:"Y-m-d, H:i:s"}}</td>
-
-<td class={% switch s.status %}
-                {% case "QUE" %} "staQUE"
-                {% case "CME" %} "staCME"
-                {% case "ACC" %} "staACC"
-                {% case "OK" %} "staOK"
-                {% case "TLE" %} "staTLE"
-                {% case "ANS" %} "staANS"
-                {% case "RTE" %} "staRTE"
-                {% case "MEM" %} "staMEM"
-                {% case "REJ" %} "staREJ"
-                {% case "CMP" %} "staCMP"
-                {% else %} ""
-           {% endswitch %}> 
-{% if not s.status %}
-  Waiting
-{% else %}
-    {{s.status}}
-{% endif %}
-    
-</td>
-    
-{% comment %}    <td><a href="{{s.link}}" class="showhidelink">Show/hide details</a></td> {% endcomment %}
-</tr>
-
-{% comment %}
-{% if s.report %}
-<tr>
-    <td colspan="6">{{s.submit.details}}</td>
-</tr>
-{% endif %}
-{% endcomment %}
-
-{% endfor %}
-
+    {{ results.render_table|safe }}
 </table>
-
-{% if page_params.pagecount > 1 %}
-{% for number in page_params.loop %}
-{% if number == page_params.page %}
-{{number}}
-{% else %}
-<a href="?contestant={{page_params.contestant}}&problem={{page_params.problem}}&page={{number}}">{{number}}</a>
-{% endif %}
-{% endfor %}
-{% endif %}
-
+    {{ results.render_scrollbar|safe }}
+    {{ results.render_filters|safe }}
 
 {% endblock %}

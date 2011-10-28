@@ -16,3 +16,4 @@ tmp/*
 satori.javatool/bin/*
 satori.javatool/lib/*
 syncdb.sh
+\.orig$

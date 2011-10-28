@@ -2,7 +2,7 @@ from django import forms
 from django.db import models
 from datetime import datetime
 from satori.tools.params import OaTypeTime
-
+from copy import deepcopy
 
 class StatusBar():
     def __init__(self):
@@ -64,3 +64,9 @@ class SatoriSizeField(forms.CharField):
             raise forms.ValidationError('Invalid size format.')
     def clean(self,value):
         return self.to_python(value)
+
+
+def RenderObjectButton(id, name, buttonname, css='button'):
+    return '<form action="" method="POST"><input type="submit" class="'+unicode(css)+'" name="'+unicode(name)+'" value="'+unicode(buttonname)+'"><input type="hidden" name="id" value="'+unicode(id)+'"/></form>'
+
+        

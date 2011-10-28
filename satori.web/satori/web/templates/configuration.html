@@ -4,21 +4,19 @@
 
 
 <h4>Global subpages</h4>
-{% for s in page_info.subpages %}
-{% if not s.contest %}
-<p>{{ s.name }} (<a href="{% url subpage_edit s.id %}">edit</a>)</p>
-{% endif %}
-{% endfor %}
+<table class="simple">
+    {{ global_subpages.render_table|safe }}
+</table>
 
 <a class="button" href="{% url subpage_add %}">Add new subpage</a>
 
-{% if is_priv_admin %}
+
+<hr class="divide"/>
+
 <h4>Problem setters</h4>
 
-<table>
-{% for ps in problem_setters %}
-<tr><td>{{ ps.name }}</td><td><form action="" method="POST"><input type="submit" class="postlink" name="revoke" value="Revoke"><input type="hidden" name="id" value="{{ps.id}}"/></form></td></tr>
-{% endfor %}
+<table class="simple">
+    {{ problem_setters.render_table|safe }}
 </table>
 
 <h4>Add problem setter:</h4>
@@ -26,7 +24,6 @@
 {{ form }} <input type="submit" class="button" name="add" value="Add"/>
 </form>
 
-{% endif %}
 
 
 {% endblock %}

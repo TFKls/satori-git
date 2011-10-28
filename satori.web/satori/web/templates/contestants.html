@@ -2,37 +2,14 @@
 
 {% block content %}
 
-{% if accepted.contestants %}
+{% if accepted.total > 0 %}
+
 <h4>Accepted contestants</h4>
 <form action="" method="POST"/>
-<table class="contestants">
-{% for cinfo in accepted.contestants %}
-<tr>
-    <td class="box">
-        <input type="checkbox" name="revoke_{{cinfo.id}}"/>
-    </td>
-    <td>
-        <a href="{% url contestant_view page_info.contest.id cinfo.id %}"> {{cinfo.name}} ({{cinfo.usernames}})</a>
-    </td>
-    <td>
-        {% if cinfo.invisible %}
-        Invisible
-        {% endif %}
-    </td>
-</tr>
-{% endfor %}
+<table class="results">
+{{ accepted.render_table|safe }}
 </table>
-{% if page_params.count1 > 1 %}
-<div class="wheel">
-{% for p in page_params.loop1 %}
-{% if forloop.counter0 == page_params.page1 %}
-<span class="wheelsel">{{ p }}</span>
-{% else %}
-<a class="wheelitem" href="?page1={{p}}&page2={{page_params.page2}}">{{p}}</a>&nbsp;
-{% endif %}
-{% endfor %}
-</div>
-{% endif %}
+{{ accepted.render_scrollbar|safe }}
 <p>
 <input class="button" type="submit" name="revoke" value="Unaccept selected"/>
 <input class="button" type="submit" name="hide" value="Hide selected"/>
@@ -40,37 +17,20 @@
 </p>
 </form>
 
-
 {% endif %}
 
-{% if pending.contestants %}
+{% if pending.total > 0 %}
+
 <h4>Pending contestants</h4>
 <form action="" method="POST"/>
-<table class="contestants">
-{% for cinfo in pending.contestants %}
-<tr>
-    <td class="box">
-        <input type="checkbox" name="accept_{{cinfo.id}}"/>
-    </td>
-    <td>
-        {{cinfo.name}}
-    </td>
-</tr>
-{% endfor %}
+<table class="results">
+{{ pending.render_table|safe }}
 </table>
-{% if page_params.count2 > 1 %}
-<div class="wheel">
-{% for p in page_params.loop2 %}
-{% if forloop.counter0 == page_params.page2 %}
-<span class="wheelsel">{{ p }}</span>
-{% else %}
-<a class="wheelitem" href="?page1={{page_params.page1}}&page2={{p}}">{{p}}</a>&nbsp;
-{% endif %}
-{% endfor %}
-</div>
-{% endif %}
+{{ pending.render_scrollbar|safe }}
+<p>
 <input class="button" type="submit" name="accept" value="Accept selected"/>
 <input class="button" type="submit" name="dismiss" value="Dismiss selected"/>
+</p>
 </form>
 {% endif %}
 
