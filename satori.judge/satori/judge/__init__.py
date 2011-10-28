@@ -25,8 +25,8 @@ options.add_option('--template-src', dest='template_src', default='student.tcs.u
 options.add_option('--retry-time', dest='retry_time', default=5, action='store', type='int')
 
 options.add_option('--cgroup', dest='cgroup', default='runner', action='store', type='string')
-options.add_option('--memory', dest='cgroup_memory', default=2*1024*1024*1024, action='store', type='int')
-options.add_option('--time', dest='cgroup_time', default=5*60*1000, action='store', type='int')
+options.add_option('--memory', dest='cgroup_memory', default=8*1024*1024*1024, action='store', type='int')
+options.add_option('--time', dest='real_time', default=5*60*1000, action='store', type='int')
 
 options.add_option('--host-interface', dest='host_eth', default='vethsh', action='store', type='string')
 options.add_option('--host-ip', dest='host_ip', default='192.168.100.101', action='store', type='string')
@@ -80,7 +80,7 @@ def judge_loop():
                     debug=options.debug,
                     cgroup=options.cgroup,
                     cgroup_memory=options.cgroup_memory,
-                    cgroup_time=options.cgroup_time,
+                    real_time=options.real_time,
                     host_eth=options.host_eth,
                     host_ip=options.host_ip,
                     guest_eth=options.guest_eth,

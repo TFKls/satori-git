@@ -205,10 +205,10 @@ class JailRun(Object):
     @Argument('control_port', type=int)
     @Argument('cgroup', type=str, default='runner')
     @Argument('cgroup_memory', type=int, default=64*1024*1024)
-    @Argument('cgroup_time', type=int, default=5*60*1000)
+    @Argument('real_time', type=int, default=5*60*1000)
     @Argument('debug', type=str, default='')
     @Argument('search', type=bool, default=False)
-    def __init__(self, submit, root, cgroup_path, template_path, path, args, host_eth, host_ip, guest_eth, guest_ip, netmask, control_port, cgroup, cgroup_memory, cgroup_time, debug, search):
+    def __init__(self, submit, root, cgroup_path, template_path, path, args, host_eth, host_ip, guest_eth, guest_ip, netmask, control_port, cgroup, cgroup_memory, real_time, debug, search):
         self.submit = submit
         self.root = root
         self.cgroup_path = cgroup_path
@@ -223,7 +223,7 @@ class JailRun(Object):
         self.control_port = control_port
         self.cgroup = cgroup
         self.cgroup_memory = cgroup_memory
-        self.cgroup_time = cgroup_time
+        self.real_time = real_time
         self.debug = debug
         self.search = search
 
@@ -256,7 +256,7 @@ class JailRun(Object):
             pipe.close()
 
             runargs = [ 'runner', '--root', self.root, '--env=simple', '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
-            runargs += [ '--control-host', self.host_ip, '--control-port', str(self.control_port), '--cgroup',  '/', '--cgroup-memory', str(self.cgroup_memory), '--cgroup-cputime', str(self.cgroup_time) ]
+            runargs += [ '--control-host', self.host_ip, '--control-port', str(self.control_port), '--cgroup',  '/', '--cgroup-memory', str(self.cgroup_memory), '--max-realtime', str(self.real_time) ]
             if self.search:
                 runargs += [ '--search' ]
             if self.debug:

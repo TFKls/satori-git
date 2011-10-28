@@ -567,7 +567,7 @@ CpuTimes miliseconds(const ProcStats& stat)
 CpuTimes miliseconds(const Controller::Stats& stat)
 {
     const long CGROUP_CPU_CLK_TCK = HZ;
-    return CpuTimes(stat.utime*1000/CGROUP_CPU_CLK_TCK, stat.stime*1000/CGROUP_CPU_CLK_TCK, stat.time/1000000);
+    return CpuTimes(stat.utime*1000/CGROUP_CPU_CLK_TCK, stat.stime*1000/CGROUP_CPU_CLK_TCK);//, stat.time/1000000);
 };
 bool Runner::milisleep(long ms)
 {
