@@ -10,7 +10,7 @@ from django import forms
 @contest_view
 def view(request, page_info):
     contest = page_info.contest
-    admin = page_info.is_admin
+    admin = page_info.contest_is_admin
     class SubmitsTable(ResultTable):
        
         def length(self):
