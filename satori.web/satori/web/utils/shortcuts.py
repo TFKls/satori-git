@@ -3,7 +3,6 @@ import os
 from docutils.core import publish_parts
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
-from satori.web.sphinx.translator import rendertask
 from satori.web.urls import PROJECT_PATH
 
 def fill_image_links(content, model, id, group):
