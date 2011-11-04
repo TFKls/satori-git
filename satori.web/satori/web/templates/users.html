@@ -2,6 +2,17 @@
 
 {% block content %}
 
+
+<h4>All users</h4>
+<table class="results">
+    {{ user_list.render_table|safe }}
+</table>
+    {{ user_list.render_scrollbar|safe }}
+
+{{ user_list.render_filters|safe }}
+
+<hr class="divide"/>
+
 {% if edit_form %}
 <h4>Edit user</h4>
 <form action="" method="POST">
@@ -11,15 +22,6 @@
 <input class="button" type="submit" name="edit user" value="Edit user"/>
 </form>
 {% endif %}
-
-<h4>All users</h4>
-<table>
-{% for user in user_list %}
-<tr>
-<td><a href="{% url profile user.id %}">{{user.login}}</a></td><td>{{user.firstname}}</td><td>{{user.lastname}}</td>
-</tr>
-{% endfor %}
-</table>
 
 
 {% endblock %}

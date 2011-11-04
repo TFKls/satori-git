@@ -2,6 +2,8 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
+from satori.web.utils.forms import RenderObjectButton
+from satori.web.utils.tables import *
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -13,6 +15,24 @@ class PSetterAddForm(forms.Form):
 
 @general_view
 def view(request, page_info):
+
+    class GlobalSubpages(ResultTable):
+        def __init__(self,req,prefix):
+            super(GlobalSubpages,self).__init__(req=req,prefix=prefix,autosort=False)
+            self.results = [s for s in page_info.subpages]
+            self.total = len(self.results)
+#            self.fields.append(TableField(name='test',value=(lambda table,i : '0'),id=0))
+            self.fields.append(TableField(name='',value=(lambda table,i : table.results[i].name),id=1))
+            self.fields.append(TableField(name='',value=(lambda table,i : '<a class="button button_small" href="'+reverse('subpage_edit',args=[table.results[i].id])+'">'+'Edit'+'</a>'),id=2))
+            
+    class PSetterTable(ResultTable):
+        def __init__(self,req,prefix):
+            super(PSetterTable,self).__init__(req=req,prefix=prefix,autosort=False)
+            self.results = Privilege.global_list('MANAGE_PROBLEMS').keys()
+            self.total = len(self.results)
+            self.fields.append(TableField(name='',value=(lambda table,i : table.results[i].name),id=1))
+            self.fields.append(TableField(name='',value='Revoke',render=(lambda table,i : RenderObjectButton(name='revoke',buttonname='Revoke',id=table.results[i].id,css='button button_small')),id=2))
+            
     if request.method=='POST' and 'add' in request.POST.keys():
         form = PSetterAddForm(data=request.POST)
         if form.is_valid():
@@ -30,7 +50,8 @@ def view(request, page_info):
         Privilege.global_revoke(user,'MANAGE_PROBLEMS')
     is_priv_admin = Privilege.global_demand('MANAGE_PRIVILEGES')
     if is_priv_admin:
-        problem_setters = Privilege.global_list('MANAGE_PROBLEMS').keys()
+        problem_setters = PSetterTable(req=request.GET,prefix='psetters')
     else:
         problem_setters = None
-    return render_to_response('configuration.html', {'page_info' : page_info, 'problem_setters' : problem_setters, 'form' : form, 'is_priv_admin' : is_priv_admin})
+    global_subpages = GlobalSubpages(req=request.GET,prefix='subpages')
+    return render_to_response('configuration.html', {'page_info' : page_info, 'problem_setters' : problem_setters, 'form' : form, 'global_subpages' : global_subpages})

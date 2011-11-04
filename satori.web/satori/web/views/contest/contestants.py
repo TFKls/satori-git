@@ -3,6 +3,7 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
 from satori.web.utils.forms import StatusBar
+from satori.web.utils.tables import *
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -21,15 +22,36 @@ class ManualAddForm(forms.Form):
 
 @contest_view
 def view(request, page_info):
-    limit = 25
-    page1 = int(request.GET.get('page1',0))
-    page2 = int(request.GET.get('page2',0))
     contest = page_info.contest
-    accepted = Web.get_accepted_contestants(contest=contest,offset=page1*limit,limit=limit)
-    count1 = (accepted.count+limit-1)/limit
-    pending = Web.get_pending_contestants(contest=contest,offset=page2*limit, limit=limit)
-    count2 = (pending.count+limit-1)/limit
-    page_params = {'page1' : page1, 'page2' : page2, 'loop1' : range(0,count1), 'loop2' : range(0,count2), 'count1' : count1, 'count2' : count2}
+    
+    class AcceptedTable(ResultTable):
+        @staticmethod
+        def default_limit():
+            return 20
+        def length(self):
+            return len(self.contestants)
+
+
+        def __init__(self,req,prefix,get_function,button_prefix):
+            super(AcceptedTable,self).__init__(req=req,prefix=prefix,autosort=False)
+            page = self.params['page']
+            limit = self.params['limit']
+            query = get_function(contest=contest,offset=(page-1)*limit,limit=limit)
+            self.contestants = query.contestants
+            self.total = query.count
+            self.button_prefix = button_prefix
+    
+            self.fields.append(TableField( name ='',
+                            value = lambda table, i : 'check',
+                            render = lambda table, i : '<input type="checkbox" name="'+table.button_prefix+str(table.contestants[i].id)+'"/>',
+                            sortable = False, id = 1 ))
+            self.fields.append(TableField( name='Team name', value= lambda table,i: table.contestants[i].name,
+                                                             render = lambda table,i: '<a class="stdlink" href="'+str(reverse('contestant_view',args=[contest.id,table.contestants[i].id]))+'">'+table.contestants[i].name+'</a>',
+                                                             id=2 ))
+            self.fields.append(TableField( name='Users',value=(lambda table,i: table.contestants[i].usernames), id=3 ))
+            
+    accepted = AcceptedTable(req=request.GET,prefix='accepted',get_function=Web.get_accepted_contestants,button_prefix='revoke_')
+    pending = AcceptedTable(req=request.GET,prefix='pending',get_function=Web.get_pending_contestants,button_prefix='accept_')
     add_form = ManualAddForm()
     bar = None
     if request.method=="POST":
@@ -62,7 +84,7 @@ def view(request, page_info):
             if add_form.is_valid():
                 Contestant.create(ContestantStruct(contest=contest,accepted=True),[add_form.cleaned_data['user']])
         return HttpResponseRedirect(reverse('contestants',args=[contest.id]))
-    return render_to_response('contestants.html', {'page_info' : page_info, 'accepted' : accepted, 'pending' : pending, 'add_form' : add_form, 'page_params' : page_params, 'status_bar' : bar })
+    return render_to_response('contestants.html', {'page_info' : page_info, 'accepted' : accepted, 'pending' : pending, 'add_form' : add_form, 'status_bar' : bar })
 
 @contest_view
 def viewteam(request, page_info, id = None):

@@ -3,11 +3,49 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
 from satori.web.utils.forms import StatusBar
+from satori.web.utils.tables import *
 from django import forms
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 
+@contest_view
+def copyproblems(request,page_info):
+    contest = page_info.contest
+    class CopyTable(ResultTable):
+        def __init__(self,req=request.GET,prefix='pcopy'):
+            super(CopyTable,self).__init__(req,prefix)
+            try:
+                source = Contest.filter(ContestStruct(id=int(self.filters['contest'])))[0]
+            except:
+                source = None
+            if source:
+                self.results = ProblemMapping.filter(ProblemMappingStruct(contest=source))
+            self.fields.append(TableField(id='check',name='Code',sortable=True,value=lambda table,i : table.results[i].code,render=(lambda table,i : '<input type="checkbox" name="mid_'+unicode(table.results[i].id)+'"/>'+table.results[i].code)))
+            self.fields.append(TableField(id='title',name='Title',value=(lambda table,i : table.results[i].title)))
+            self.fields.append(TableField(id='based',name='Based on',value=(lambda table,i : table.results[i].problem.name+' ('+table.results[i].problem.description+')')))
+            self.fields.append(TableField(id='ascode',name='Target code',sortable=False,value=(lambda table,i : '<input class="transparent_box" type="text" size="8" name="code_'+unicode(table.results[i].id)+'"/>')))
+            self.fields.append(TableField(id='stm',name='Copy statement?',sortable=False,render=(lambda table,i : '<input type="checkbox" name="stm_'+unicode(table.results[i].id)+'"/>')))
+            
+            self.filter_functions.append(FilterFunction(name='Contest',prefix='contest',showall=False,choices=[[-1,'Select']] + [[c.contest.id,c.contest.name] for c in Web.get_contest_list() if c.is_admin ],default=-1))
+    copytable = CopyTable()
+    if request.method=="POST":
+        source = Contest(int(request.POST["cid"]))
+        for k in request.POST.keys():
+            if k[:4]=='mid_':
+                pm = ProblemMapping(int(k[4:]))
+                if 'stm_'+k[4:] in request.POST.keys():
+                    statement = pm.statement
+                else:
+                    statement = None
+                code = request.POST.get('code_'+k[4:],'')
+                if code=='':
+                    code = pm.code
+                npm = ProblemMapping.create(ProblemMappingStruct(contest=contest,code=code,statement=statement,problem=pm.problem,title=pm.title,default_test_suite=pm.default_test_suite))
+                npm.statement_files_set_map(pm.statement_files_get_map())
+        return HttpResponseRedirect(reverse('contest_problems',args=[contest.id]))
+    return render_to_response('copy_problems.html', {'page_info' : page_info, 'copytable' : copytable} )
+            
 @contest_view
 def view(request, page_info):
     contest = page_info.contest

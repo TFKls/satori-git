@@ -13,9 +13,9 @@ setup(name='satori.client.common',
         'satori.ars',
         'satori.objects',
     ],
-    entry_points='''
-        [console_scripts]
-        satori.client.console = satori.client.common:start_console
-        satori.client.localconsole = satori.client.common:start_local_console
-    ''',
+#    entry_points='''
+#        [console_scripts]
+#        satori.client.console = satori.client.common:start_console
+#        satori.client.localconsole = satori.client.common:start_local_console
+#    ''',
 )
