@@ -193,6 +193,7 @@ else:
     hint_file = '/dev/null'
 if has_checker:
     communicate('GETTESTBLOB', {'name': 'checker', 'path': '/tmp/checker.x'})
+    os.chmod('/tmp/checker.x', 0755)
     checker = ['/tmp/checker.x', '/tmp/data.in', hint_file, '/tmp/data.out']
 else:
     checker = ['/usr/bin/diff', '-q', '-w', '-B', hint_file, '/tmp/data.out']
