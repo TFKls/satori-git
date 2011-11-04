@@ -57,8 +57,9 @@ if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     EVENT_PORT = 37888
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
+    DATABASE_HOST = 'db.tcs.uj.edu.pl'
     USE_SSL = True
-    SSL_CERTIFICATE = '/home/mwrobel/satori/ssl/server.pem'
+    SSL_CERTIFICATE = '/home/zzzmwm01/satori/ssl/server.pem'
 if getpass.getuser() == 'duraj':
     EVENT_PORT = 36888
     THRIFT_PORT = 36889
