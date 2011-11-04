@@ -199,7 +199,7 @@ class ACMReporter(ReporterBase):
         	columns = [(20, 'Test')]
             for (column_id, column_name) in self.columns:
                 if self._column_nonempty[column_id]:
-                	columns.append((10, column_name))
+                	columns.append((15, column_name))
             table = RestTable(*columns)
             report = table.row_separator + table.header_row + table.header_separator
             for code in sorted(self._codes):
