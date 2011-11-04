@@ -145,16 +145,21 @@ class ACMReporter(ReporterBase):
 #@      </general>
 #@</reporter>
     """
+
+    columns = [('status', 'Status'), ('execute_time_cpu', 'CPU time'), ('execute_time_gpu', 'GPU time'), ('message', 'Message')]
+
     def __init__(self, test_suite_result):
         super(ACMReporter, self).__init__(test_suite_result)
 
     def init(self):
-        self._statuses = {}
-        self._times = {}
-        self._messages = {}
         self._names = {}
         self._codes = []
+        self._column_values = {}
+        self._column_nonempty = {}
         self._status = 'OK'
+        for (column_id, column_name) in self.columns:
+        	self._column_values[column_id] = {}
+        	self._column_nonempty[column_id] = False
         self.test_suite_result.oa_set_str('status', 'QUE')
         self.test_suite_result.status = 'QUE'
         self.test_suite_result.report = ''
@@ -164,16 +169,15 @@ class ACMReporter(ReporterBase):
         test = test_result.test
         code = TestMapping.objects.get(test=test, suite=self.test_suite_result.test_suite).order
         status = test_result.oa_get_str('status')
-        time = test_result.oa_get_str('execute_time_cpu')
-        if time is None:
-            time = ''
-        message = test_result.oa_get_str('message') or ''
-        name = test_result.test.name
+        for (column_id, column_name) in self.columns:
+            value = test_result.oa_get_str(column_id)
+            if value is not None:
+            	self._column_values[column_id][code] = value
+            	self._column_nonempty[column_id] = True
+            else:
+            	self._column_values[column_id][code] = ''
         self._codes.append(code)
-        self._statuses[code] = status
-        self._times[code] = time
-        self._messages[code] = message
-        self._names[code] = name
+        self._names[code] = test_result.test.name
         logging.debug('ACM Reporter %s: %s += %s', self.test_suite_result.id, self._status, status)
         if status is None:
             status = 'INT'
@@ -192,10 +196,18 @@ class ACMReporter(ReporterBase):
         self.test_suite_result.oa_set_str('status', status)
         self.test_suite_result.status = status
         if self.params.show_tests:
-            table = RestTable((20, 'Test'), (10, 'Status'), (10, 'CPU time'), (30, 'Message'))
+        	columns = [(20, 'Test')]
+            for (column_id, column_name) in self.columns:
+                if self._column_nonempty[column_id]:
+                	columns.append((10, column_name))
+            table = RestTable(*columns)
             report = table.row_separator + table.header_row + table.header_separator
             for code in sorted(self._codes):
-                report += table.generate_row(self._names[code], self._statuses[code], self._times[code], self._messages[code]) + table.row_separator
+            	values = [self._names[code]]
+                for (column_id, column_name) in self.columns:
+                    if self._column_nonempty[column_id]:
+                        values.append(self._column_values[column_id][code])
+                report += table.generate_row(*values) + table.row_separator
         else:
             report = ''
         self.test_suite_result.report = report
