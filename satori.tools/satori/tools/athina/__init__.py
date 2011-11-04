@@ -352,12 +352,12 @@ def athina_import_problem():
     if len(args) != 7:
         logging.error('usage: code directory name contest judge statement description')
         sys.exit(1)
-    code = unicode(args[0])
-    base_dir = unicode(args[1])
-    name = unicode(args[2])
-    judge_path = unicode(args[4])
-    pdf = unicode(args[5])
-    description = unicode(args[6])
+    code = unicode(args[0],'utf-8')
+    base_dir = unicode(args[1],'utf-8')
+    name = unicode(args[2],'utf-8')
+    judge_path = unicode(args[4],'utf-8')
+    pdf = unicode(args[5],'utf-8')
+    description = unicode(args[6],'utf-8')
     problem = Creator('Problem', name=name, description=description)()
     try:
         contest = Contest.filter(ContestStruct(name=unicode(args[3])))[0]
@@ -381,7 +381,7 @@ def athina_import_problem():
     judge = judge_path
     if not os.path.exists(judge):
     	raise Exception('judge missing')
-    if not os.path.exists(pdf):
+    if pdf!='none' and not os.path.exists(pdf):
     	raise Exception('statement missing')
     tests = [] 
     for t in range(testcount):
@@ -416,11 +416,12 @@ def athina_import_problem():
             oa.set_str('memory', str(memlimit)+'B')
         if timelimit != None:
             oa.set_str('time', str(seconds(timelimit))+'s')
-        tests.append(Creator('Test', problem=problem, name=problem.name + '_import_' + str(t)).additional(data=oa.get_map())())
+        tests.append(Creator('Test', problem=problem, name=str(t)).additional(data=oa.get_map())())
     params = OaMap()
-    testsuite = Creator('TestSuite', problem=problem, name=problem.name + '_import').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
-    pmoa = OaMap()
-    pmoa.set_blob_path('_pdf',pdf)
+    testsuite = Creator('TestSuite', problem=problem, name=problem.name + '_all').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
     pm = Creator('ProblemMapping',problem=problem,contest=contest,code=code,title=name,default_test_suite=testsuite)()
-    pm.statement_files_set_map(pmoa.get_map())
+    if pdf!='none':
+        pmoa = OaMap()
+        pmoa.set_blob_path('_pdf',pdf)
+        pm.statement_files_set_map(pmoa.get_map())
     
