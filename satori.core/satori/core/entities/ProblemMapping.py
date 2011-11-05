@@ -31,6 +31,16 @@ class ProblemMapping(Entity):
         fields = [('contest', 'VIEW'), ('problem', 'MANAGE'), ('code', 'VIEW'), ('title', 'VIEW'),
                 ('description', 'VIEW'), ('group', 'VIEW'), ('override_fields', 'VIEW'), ('statement', 'VIEW'), ('default_test_suite', 'MANAGE')]
 
+    class RightsMeta(object):
+        rights = ['SUBMIT']
+        inherit_parent = 'contest'
+        inherit_parent_require = 'VIEW'
+
+        inherit_parent_VIEW = ['VIEW_TASKS']
+        inherit_SUBMIT = ['MANAGE']
+        inherit_parent_SUBMIT = ['SUBMIT']
+        inherit_parent_MANAGE = ['MANAGE']
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(ProblemMapping, cls).inherit_rights()

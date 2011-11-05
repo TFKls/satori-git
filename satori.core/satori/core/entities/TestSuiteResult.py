@@ -22,6 +22,12 @@ class TestSuiteResult(Entity):
 
     class ExportMeta(object):
         fields = [('submit', 'VIEW'), ('test_suite', 'VIEW'), ('pending', 'VIEW'), ('status', 'VIEW'), ('report', 'VIEW')]
+    
+    class RightsMeta(object):
+        inherit_parent = 'submit'
+        inherit_parent_require = 'VIEW'
+
+        inherit_parent_MANAGE = ['MANAGE']
 
     @classmethod
     def inherit_rights(cls):

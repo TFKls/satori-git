@@ -21,6 +21,15 @@ class Submit(Entity):
     class ExportMeta(object):
         fields = [('contestant', 'VIEW'), ('problem', 'VIEW'), ('time', 'VIEW')]
 
+    class RightsMeta(object):
+        rights = ['OBSERVE']
+        inherit_parent = 'contestant'
+
+        inherit_VIEW = ['OBSERVE']
+        inherit_OBSERVE = ['MANAGE']
+        inherit_parent_OBSERVE = ['OBSERVE']
+        inherit_parent_MANAGE = ['MANAGE']
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(Submit, cls).inherit_rights()

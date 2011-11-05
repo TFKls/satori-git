@@ -114,6 +114,11 @@ BEGIN
         AS SELECT keyid AS role_id
             FROM connectby('core_rolemapping'::text, 'parent_id'::text, 'child_id'::text, arg::text, 0)
                 AS t(keyid INT, parent_keyid INT, level INT);
+
+    DROP TABLE IF EXISTS user_privs;
+    CREATE TEMPORARY TABLE user_privs ("right", entity_id)
+        AS SELECT cp.right, cp.entity_id
+            FROM core_privilege AS cp JOIN user_roles AS ur ON cp.role_id = ur.role_id;
 END;
 $$ LANGUAGE plpgsql;
 """

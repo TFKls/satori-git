@@ -57,4 +57,4 @@ def init():
     global Global
     global Token
     from satori.core.models import Global, Contest
-    from satori.core.sec import Token
+    from satori.core.sec.token import Token

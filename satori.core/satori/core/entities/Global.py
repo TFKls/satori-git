@@ -26,6 +26,16 @@ class Global(Entity):
     class ExportMeta(object):
         fields = [('contest_admins', 'VIEW'), ('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
 
+    class RightsMeta(object):
+        rights = ['TEMPORARY_SUBMIT', 'MANAGE_PRIVILEGES', 'MANAGE_CONTESTS', 'MANAGE_PROBLEMS', 'JUDGE', 'RAW_BLOB', 'ADMIN']
+    
+        inherit_TEMPORARY_SUBMIT = ['MANAGE_PROBLEMS']
+        inherit_MANAGE_PRIVILEGES = ['ADMIN']
+        inherit_MANAGE_CONTESTS = ['ADMIN']
+        inherit_MANAGE_PROBLEMS = ['ADMIN']
+        inherit_JUDGE = ['ADMIN']
+        inherit_RAW_BLOB = ['JUDGE', 'MANAGE_PROBLEMS']
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(Global, cls).inherit_rights()

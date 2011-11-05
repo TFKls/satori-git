@@ -3,7 +3,7 @@ import logging
 from django.db import models
 from django.http import HttpResponse, HttpResponseForbidden, HttpResponseNotFound, HttpResponseServerError, HttpResponseNotAllowed
 import urllib
-from satori.core.sec import Token
+from satori.core.sec.token import Token
 import satori.core.models
 from satori.core.models import AttributeGroup, Blob, OpenAttribute, Privilege
 from satori.core.export import token_container

@@ -3,4 +3,3 @@
 Security and authorization procedures.
 """
 
-from satori.core.sec.tools import Token

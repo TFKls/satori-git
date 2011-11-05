@@ -23,6 +23,12 @@ class Question(Entity):
     class ExportMeta(object):
         fields = [('problem', 'VIEW'), ('contest', 'VIEW'), ('inquirer', 'VIEW'), ('content', 'VIEW'), ('answer', 'VIEW'), ('date_created', 'VIEW')]
 
+    class RightsMeta(object):
+        inherit_parent = 'contest'
+        inherit_parent_require = 'VIEW'
+
+        inherit_parent_MANAGE = ['MANAGE']
+
     def save(self, *args, **kwargs):
         self.fixup_answer_files()
         return super(Question, self).save(*args, **kwargs)

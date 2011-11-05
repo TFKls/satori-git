@@ -24,6 +24,12 @@ class Test(Entity):
 
     class ExportMeta(object):
         fields = [('problem', 'VIEW'), ('name', 'VIEW'), ('description', 'VIEW'), ('environment', 'VIEW'), ('obsolete', 'VIEW')]
+    
+    class RightsMeta(object):
+        inherit_parent = 'problem'
+        inherit_parent_require = 'VIEW'
+
+        inherit_parent_MANAGE = ['MANAGE']
 
     @classmethod
     def inherit_rights(cls):

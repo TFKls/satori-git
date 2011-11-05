@@ -28,6 +28,17 @@ class Contestant(Role):
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW')]
 
+    class RightsMeta(object):
+        rights = ['OBSERVE']
+        inherit_parent = 'contest'
+
+        inherit_VIEW = ['OBSERVE']
+        inherit_parent_VIEW = ['VIEW']
+        inherit_OBSERVE = ['EDIT']
+        inherit_parent_OBSERVE = ['OBSERVE']
+        inherit_EDIT = ['MANAGE']
+        inherit_parent_MANAGE = ['MANAGE']
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(Contestant, cls).inherit_rights()

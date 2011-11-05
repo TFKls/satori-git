@@ -4,7 +4,6 @@ from datetime  import datetime
 from types     import NoneType
 
 from django.db import models
-from django.db import connection
 
 from satori.core.dbev   import Events
 from satori.core.models import Entity, Global
@@ -31,11 +30,29 @@ class Privilege(Entity):
 
     @staticmethod
     def where_can(queryset, right):
-        return queryset.extra(where=['right_check({0}.{1}, %s)'.format(queryset.model._meta.db_table, queryset.model._meta.pk.get_attname_column()[1])], params=[right])
+        if not right in queryset.model._rights_meta.rights:
+            raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, quesyset.model.__name__))
 
+        # create a copy of a queryset
+        queryset = queryset.all()
+
+        queryset.query.where.add(queryset.model._rights_meta.nodes[right].prepare(queryset.query), 'AND')
+
+        return queryset
+
+    # BIG FAT WARNING
+    # the returned queryset shouldn't be further modified (especially used as subquery)
     @staticmethod
     def select_can(queryset, right):
-        return queryset.extra(select={'_can_' + right: 'right_check({0}.{1}, %s)'.format(queryset.model._meta.db_table, queryset.model._meta.pk.get_attname_column()[1])}, select_params=[right])
+        if not right in queryset.model._rights_meta.rights:
+            raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, quesyset.model.__name__))
+
+        # create a copy of a queryset
+        queryset = queryset.all()
+
+        queryset = queryset.extra(select={'_can_' + right: queryset.model._rights_meta.nodes[right].prepare(queryset.query).as_sql(lambda x: x, None)[0]})
+
+        return queryset
 
     @staticmethod
     def select_struct_can(queryset):
@@ -82,14 +99,13 @@ class Privilege(Entity):
     @ExportMethod(bool, [DjangoId('Entity'), unicode], PCPermit())
     @staticmethod
     def demand(entity, right):
+        if not right in entity._rights_meta.rights:
+            raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, entity.__class__.__name__))
+
         if hasattr(entity, '_can_' + right):
             return getattr(entity, '_can_' + right)
 
-        c = connection.cursor()
-        c.callproc('right_check', [int(entity.id), str(right)])
-        res = bool(c.fetchall()[0][0])
-        c.close()
-        return res
+        return Privilege.where_can(entity.__class__.objects.filter(id=entity.id), right).exists()
 
     @ExportMethod(NoneType, [DjangoId('Role'), unicode, PrivilegeTimes], PCGlobal('MANAGE_PRIVILEGES'))
     @staticmethod

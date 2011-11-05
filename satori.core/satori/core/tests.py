@@ -6,7 +6,7 @@
 import unittest
 
 import satori.core.setup
-from satori.core.sec import Token
+from satori.core.sec.token import Token
 from datetime import timedelta
 
 import crypt

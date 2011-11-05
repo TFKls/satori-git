@@ -20,6 +20,12 @@ class Role(Entity):
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('sort_field', 'VIEW')]
 
+    class RightsMeta(object):
+        rights = ['EDIT']
+
+        inherit_VIEW = ['EDIT']
+        inherit_EDIT = ['MANAGE']
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(Role, cls).inherit_rights()

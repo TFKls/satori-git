@@ -41,6 +41,17 @@ class Contest(Entity):
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('archived', 'VIEW'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
+    class RightsMeta(object):
+        rights = ['APPLY', 'JOIN', 'SUBMIT', 'OBSERVE', 'VIEW_TASKS', 'ASK_QUESTIONS', 'VIEW_INTRA_FILES']
+
+        inherit_APPLY = ['JOIN']
+        inherit_JOIN = ['MANAGE']
+        inherit_SUBMIT = ['MANAGE']
+        inherit_OBSERVE = ['MANAGE']
+        inherit_VIEW_TASKS = ['MANAGE']
+        inherit_ASK_QUESTIONS = ['MANAGE']
+        inherit_VIEW_INTRA_FILES = ['MANAGE']
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(Contest, cls).inherit_rights()

@@ -27,6 +27,15 @@ class Ranking(Entity):
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('name', 'VIEW'), ('aggregator', 'MANAGE'), ('header', 'MANAGE'), ('footer', 'MANAGE'), ('is_public', 'MANAGE')]
 
+    class RightsMeta(object):
+        rights = ['VIEW_FULL']
+        inherit_parent = 'contest'
+        inherit_parent_require = 'VIEW'
+
+        inherit_VIEW = ['VIEW_FULL']
+        inherit_VIEW_FULL = ['MANAGE']
+        inherit_parent_MANAGE = ['MANAGE']
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(Ranking, cls).inherit_rights()

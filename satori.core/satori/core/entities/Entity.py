@@ -1,15 +1,28 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from django.core.exceptions import ObjectDoesNotExist
+from django.db.models.base import ModelBase
 from django.db import models
 
 from satori.core.dbev import Events
-from django.core.exceptions import ObjectDoesNotExist
+from satori.core.sec.rights import RightsOptions
 
 CannotSetField = DefineException('CannotSetField', 'You can\'t set the field: {field}',
     [('field', unicode, False)])
 
+class EntityMeta(ModelBase):
+    def __new__(cls, name, bases, attrs):
+        meta = attrs.pop('RightsMeta', type('RightsMeta', (), {}))
+
+        cls = super(EntityMeta, cls).__new__(cls, name, bases, attrs)
+
+        cls._rights_meta = RightsOptions(cls, meta, [parent._rights_meta for parent in cls._meta.parents]) 
+
+        return cls
+
 @ExportModel
 class Entity(models.Model):
+    __metaclass__ = EntityMeta
     """Model. Base for all database objects. Provides common GUID space.
 
     rights:
@@ -21,6 +34,12 @@ class Entity(models.Model):
 
     class ExportMeta(object):
         fields = [('id', 'VIEW')]
+
+    class RightsMeta(object):
+        rights = ['VIEW', 'MANAGE']
+
+        inherit_VIEW = ['MANAGE']
+        inherit_global_MANAGE = ['ADMIN']
 
     @classmethod
     def inherit_rights(cls):

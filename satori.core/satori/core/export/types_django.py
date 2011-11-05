@@ -75,6 +75,7 @@ class ArsDjangoId(ArsTypeAlias):
             raise ArgumentNotFound(model=self.model.__name__, id=value)
         else:
             if not ret._can_VIEW:
+#            if not Privilege.demand(ret, 'VIEW'):
                 raise AccessDenied()
             return ret
 

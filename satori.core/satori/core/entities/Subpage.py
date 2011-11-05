@@ -28,6 +28,12 @@ class Subpage(Entity):
     class ExportMeta(object):
         fields = [('contest', 'VIEW'), ('is_public', 'VIEW'), ('is_sticky', 'VIEW'), ('is_announcement', 'VIEW'), ('name', 'VIEW'), ('content', 'VIEW'), ('order', 'VIEW'), ('date_created', 'VIEW')]
 
+    class RightsMeta(object):
+        inherit_parent = 'contest'
+        inherit_parent_require = 'VIEW'
+
+        inherit_parent_MANAGE = ['MANAGE']
+
     def save(self, *args, **kwargs):
         self.fixup_content_files()
         return super(Subpage, self).save(*args, **kwargs)

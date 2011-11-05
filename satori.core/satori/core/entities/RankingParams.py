@@ -20,6 +20,13 @@ class RankingParams(Entity):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('ranking', 'problem'),)
 
+    
+    class RightsMeta(object):
+        inherit_parent = 'ranking'
+        inherit_parent_require = 'VIEW'
+
+        inherit_parent_MANAGE = ['MANAGE']
+
     def save(self, *args, **kwargs):
         self.fixup_params()
         super(RankingParams, self).save(*args, **kwargs)

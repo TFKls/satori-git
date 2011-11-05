@@ -88,6 +88,7 @@ def _load_models():
     import satori.core.export.type_helpers
     import satori.core.export.types_django
     import satori.core.export.token
+    import satori.core.sec.rights
 
     satori.core.export.init()
     satori.core.export.oa.init()
@@ -95,10 +96,17 @@ def _load_models():
     satori.core.export.type_helpers.init()
     satori.core.export.types_django.init()
     satori.core.export.token.init()
+    satori.core.sec.rights.init()
 
     glob = globals()
 
     for ars_struct in satori.core.export.types_django.ars_django_structure.values():
         glob[ars_struct.name] = ars_struct.get_class()
 
-_load_models()
+#_load_models()
+
+try:
+    _load_models()
+except:
+    import traceback
+    traceback.print_exc()

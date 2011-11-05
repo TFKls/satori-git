@@ -27,6 +27,12 @@ class TestSuite(Entity):
     class ExportMeta(object):
         fields = [('problem', 'VIEW'), ('name', 'VIEW'), ('description', 'VIEW'), ('dispatcher', 'VIEW'), ('accumulators', 'VIEW'), ('reporter', 'VIEW')]
 
+    class RightsMeta(object):
+        inherit_parent = 'problem'
+        inherit_parent_require = 'VIEW'
+
+        inherit_parent_MANAGE = ['MANAGE']
+
     @classmethod
     def inherit_rights(cls):
         inherits = super(TestSuite, cls).inherit_rights()
