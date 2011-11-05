@@ -23,13 +23,16 @@ To activate your Satori account visit http://satori.tcs.uj.edu.pl/activate/{code
 Your activation token is: {code} .
 """
 
-DATABASE_ENGINE = 'postgresql_psycopg2'
-DATABASE_NAME = getpass.getuser()
-DATABASE_USER = ''
-DATABASE_PASSWORD = ''
-DATABASE_HOST = ''
-DATABASE_PORT = ''
-DATABASE_OPTIONS = {'autocommit': True}
+DATABASES = {
+        'default': {
+            'ENGINE': 'django.db.backends.postgresql_psycopg2',
+            'NAME': getpass.getuser(),
+            'HOST': 'db.tcs.uj.edu.pl',
+            'OPTIONS': {
+                'autocommit': True,
+                },
+            },
+        }
 
 CACHE_BACKEND = 'memcached://localhost:11211'
 
@@ -53,19 +56,16 @@ if getpass.getuser() == 'gutowski':
     EVENT_PORT = 39888
     THRIFT_PORT = 39889
     BLOB_PORT = 39887
-if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
+if getpass.getuser() == 'zzzmwm01':
     EVENT_PORT = 37888
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
-    DATABASE_HOST = 'db.tcs.uj.edu.pl'
     USE_SSL = True
     SSL_CERTIFICATE = '/home/zzzmwm01/satori/ssl/server.pem'
 if getpass.getuser() == 'duraj':
     EVENT_PORT = 36888
     THRIFT_PORT = 36889
     BLOB_PORT = 36887
-    DATABASE_HOST = 'satori.tcs.uj.edu.pl'
-    DATABASE_PASSWORD = 'DurajD12'
 
 ADMIN_NAME = 'admin'
 ADMIN_PASSWORD = 'admin'
