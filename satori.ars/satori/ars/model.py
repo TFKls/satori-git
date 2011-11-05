@@ -466,46 +466,34 @@ class ArsInterface(ArsElement):
         self.constants = ArsNamedTuple()
         self.services = ArsNamedTuple()
 
-    @DispatchOn(type=ArsType)
     def add_type(self, type):
-        raise TypeError('Unknown ArsType type: {0}'.format(type.__class__.__name__))
+        if isinstance(type, ArsAtomicType):
+        	pass
+        elif isinstance(type, ArsTypeAlias):
+            if type not in self.types:
+                self.add_type(type.target_type)
+                self.types.append(type)
+        elif isinstance(type, ArsList):
+            self.add_type(type.element_type)
+        elif isinstance(type, ArsSet):
+            self.add_type(type.element_type)
+        elif isinstance(type, ArsMap):
+            self.add_type(type.key_type)
+            self.add_type(type.value_type)
+        elif isinstance(type, ArsStructure):
+            if type not in self.types:
+                for field in type.fields:
+                    self.add_type(field.type)
+                self.types.append(type)
+        else:
+            raise TypeError('Unknown ArsType type: {0}'.format(type.__class__.__name__))
 
-    @DispatchOn(type=ArsAtomicType)
-    def add_type(self, type):
-        pass
-
-    @DispatchOn(type=ArsTypeAlias)
-    def add_type(self, type):
-        self.add_type(type.target_type)
-        self.types.append(type)
-
-    @DispatchOn(type=ArsList)
-    def add_type(self, type):
-        self.add_type(type.element_type)
-
-    @DispatchOn(type=ArsSet)
-    def add_type(self, type):
-        self.add_type(type.element_type)
-
-    @DispatchOn(type=ArsMap)
-    def add_type(self, type):
-        self.add_type(type.key_type)
-        self.add_type(type.value_type)
-
-    @DispatchOn(type=ArsStructure)
-    def add_type(self, type):
-        for field in type.fields:
-            self.add_type(field.type)
-        self.types.append(type)
-
-    @Argument('constant', type=ArsConstant)
     def add_constant(self, constant=None, **kwargs):
         if constant is None:
             constant = ArsConstant(**kwargs)
         self.add_type(constant.type)
         self.constants.append(constant)
 
-    @Argument('service', type=ArsService)
     def add_service(self, service):
         if service.base:
             self.add_service(service.base)
