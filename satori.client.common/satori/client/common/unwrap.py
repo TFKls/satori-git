@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import logging
 from satori.ars.model import ArsType, ArsTypeAlias, ArsInt64, ArsStructure, ArsExceptionBase, ArsDateTime
 from satori.ars import perf
 from token_container import token_container
@@ -77,10 +78,11 @@ def unwrap_procedure(_proc):
         _arg_numbers[_args[i][0]] = i
 
     def func(*args, **kwargs):
-        perf.begin('wrap')
         newargs = []
         newkwargs = {}
 
+        logging.error('Calling procedure %s', _procname)
+        perf.begin('args')
         if _token_type is not None:
             newargs.append(_token_type.convert_to_ars(token_container.get_token()))
 
@@ -97,9 +99,12 @@ def unwrap_procedure(_proc):
 
             argtype = _args[_arg_numbers[name]][1]
             newkwargs[name] = argtype.convert_to_ars(value)
+        perf.end('args')
 
         try:
+            perf.begin('call')
             ret = _implementation(*newargs, **newkwargs)
+            perf.end('call')
         except ArsExceptionBase as ex:
             ex = ex.ars_type().convert_from_ars(ex)
             reraise = compile('def ' + _procname + '():\n raise ex\n', '<thrift>', 'exec')
@@ -107,9 +112,9 @@ def unwrap_procedure(_proc):
             exec reraise in exception
             exception[_procname]()
             
+        perf.begin('ret')
         ret = _rettype.convert_from_ars(ret)
-        print _procname
-        perf.end('wrap')
+        perf.end('ret')
         return ret
 
     func.func_name = _procname

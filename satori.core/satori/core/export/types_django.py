@@ -5,6 +5,7 @@ from   django.db import models
 import inspect
 
 from satori.ars.model import *
+from satori.ars import perf
 
 from satori.core.export.type_helpers import DefineException, ArsDeferredStructure, python_to_ars_type
 from satori.core.export.pc import AccessDenied
@@ -112,9 +113,12 @@ class ArsDjangoStructure(ArsDeferredStructure):
         return True
 
     def do_convert_to_ars(self, value):
+        if not hasattr(value, '_can_VIEW'):
+        	value = Privilege.select_struct_can(value.__class__.objects.all()).get(id=value.id)
+
         if not Privilege.demand(value, 'VIEW'):
             raise CannotReturnObject()
-
+        
         ret = self.get_class()()
 
         for (field_name, field_permission) in self.django_fields:

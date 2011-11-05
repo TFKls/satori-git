@@ -104,10 +104,14 @@ class ExportMethod(object):
             transaction.managed(True)
 
             try:
+                perf.begin('token')
                 token_container.check_set_token_str(kwargs.pop('token', ''))
-                
+                perf.end('token')
+
+                perf.begin('args')
                 for arg_name in kwargs:
                     kwargs[arg_name] = ars_proc.parameters[arg_name].type.convert_from_ars(kwargs[arg_name])
+                perf.end('args')
                     
                 if '_self' in kwargs:
                     kwargs['self'] = kwargs.pop('_self')
@@ -119,7 +123,9 @@ class ExportMethod(object):
                 ret = func(**kwargs)
                 perf.end('func')
 
+                perf.begin('ret')
                 ret = ars_proc.return_type.convert_to_ars(ret)
+                perf.end('ret')
 
                 transaction.commit()
                 transaction.leave_transaction_management()

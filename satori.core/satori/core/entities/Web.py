@@ -104,9 +104,9 @@ class Web(object):
             ret.rankings = contest.rankings
             ret.contest_is_admin = Privilege.demand(contest, 'MANAGE')
             ret.contest_can_ask_questions = Privilege.demand(contest, 'ASK_QUESTIONS')
-            ret.contest_answers_exist = bool(Privilege.where_can(contest.questions.all(), 'VIEW'))
-            ret.contest_submittable_problems_exist = bool(Privilege.where_can(contest.problem_mappings.all(), 'SUBMIT'))
-            ret.contest_viewable_problems_exist = bool(Privilege.where_can(contest.problem_mappings.all(), 'VIEW'))
+            ret.contest_answers_exist = Privilege.where_can(contest.questions.all(), 'VIEW').exists()
+            ret.contest_submittable_problems_exist = Privilege.where_can(contest.problem_mappings.all(), 'SUBMIT').exists()
+            ret.contest_viewable_problems_exist = Privilege.where_can(contest.problem_mappings.all(), 'VIEW').exists()
         else:
             ret.subpages = Subpage.get_global(False)
         return ret
