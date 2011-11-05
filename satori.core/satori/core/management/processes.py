@@ -1,7 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-from   cherrypy.wsgiserver import CherryPyWSGIServer
-from   cherrypy.wsgiserver.ssl_builtin import BuiltinSSLAdapter
 from   django.conf import settings
 from   django.core.handlers.wsgi import WSGIHandler
 import logging
@@ -11,6 +9,8 @@ from   time         import sleep
 from   thrift.transport.TSocket import TServerSocket
 from   thrift.transport.TSSLSocket import TSSLServerSocket
 from   thrift.server.TServer    import TThreadedServer
+from   twisted.web         import server, wsgi
+from   twisted.internet    import reactor, ssl
 
 from satori.ars.thrift    import ThriftServer
 from satori.core.api      import ars_interface
@@ -76,13 +76,16 @@ class BlobServerProcess(SatoriProcess):
         super(BlobServerProcess, self).__init__('blob server')
 
     def do_handle_signal(self, signum, frame):
-        self.server.stop()
+        reactor.callFromThread(reactor.stop)
 
     def do_run(self):
-        self.server = CherryPyWSGIServer((settings.BLOB_HOST, settings.BLOB_PORT), WSGIHandler())
+        resource = wsgi.WSGIResource(reactor, reactor.getThreadPool(), WSGIHandler())
         if settings.USE_SSL:
-            self.server.ssl_adapter = BuiltinSSLAdapter(certificate=settings.SSL_CERTIFICATE, private_key=settings.SSL_CERTIFICATE)
-        self.server.start()
+            reactor.listenSSL(settings.BLOB_PORT, server.Site(resource), 
+                    ssl.DefaultOpenSSLContextFactory(settings.SSL_CERTIFICATE, settings.SSL_CERTIFICATE), interface=settings.BLOB_HOST)
+        else:
+            reactor.listenTCP(settings.BLOB_PORT, server.Site(resource), interface=settings.BLOB_HOST)
+        reactor.run()
 
 
 class DbevNotifierProcess(SatoriProcess):

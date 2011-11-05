@@ -13,7 +13,7 @@ import signal       as signal_module
 from   time         import sleep
 
 
-signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG'))
+signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG') and v.isalpha())
 
 
 class SatoriProcess(Process):
@@ -42,7 +42,6 @@ class SatoriProcess(Process):
 
         signal(SIGTERM, self.handle_signal)
         signal(SIGINT, self.handle_signal)
-        signal(SIGHUP, self.handle_signal)
 
         logging.info('%s starting', self.name)
 
