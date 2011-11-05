@@ -28,29 +28,29 @@ class Privilege(Entity):
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('role', 'entity', 'right'),)
 
+    # BIG FAT WARNING
+    # the returned queryset shouldn't be used in cirumstances causing table aliases change (subqueries, .exclude(), etc.)
     @staticmethod
     def where_can(queryset, right):
         if not right in queryset.model._rights_meta.rights:
             raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, quesyset.model.__name__))
 
-        # create a copy of a queryset
+        # create a copy of a queryset - prepare() modifies queryset.query
         queryset = queryset.all()
-
-        queryset.query.where.add(queryset.model._rights_meta.nodes[right].prepare(queryset.query), 'AND')
+        queryset = queryset.extra(where=[queryset.model._rights_meta.nodes[right].prepare(queryset.query).as_sql()])
 
         return queryset
 
     # BIG FAT WARNING
-    # the returned queryset shouldn't be further modified (especially used as subquery)
+    # the returned queryset shouldn't be used in cirumstances causing table aliases change (subqueries, .exclude(), etc.)
     @staticmethod
     def select_can(queryset, right):
         if not right in queryset.model._rights_meta.rights:
             raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, quesyset.model.__name__))
 
-        # create a copy of a queryset
+        # create a copy of a queryset - prepare() modifies queryset.query
         queryset = queryset.all()
-
-        queryset = queryset.extra(select={'_can_' + right: queryset.model._rights_meta.nodes[right].prepare(queryset.query).as_sql(lambda x: x, None)[0]})
+        queryset = queryset.extra(select={'_can_' + right: queryset.model._rights_meta.nodes[right].prepare(queryset.query).as_sql()})
 
         return queryset
 

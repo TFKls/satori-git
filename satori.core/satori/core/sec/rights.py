@@ -210,12 +210,8 @@ class RightsOptions(object):
 
     def create_nodes(self):
         self.nodes = {}
-#        self.select_names = {}
-#        self.select_nodes = {}
         for right in self.rights:
             self.nodes[right] = self.get_rights_node([right], [], False, set(), set(), set())
-#            self.select_names[right] = '_can_' + right
-#            self.select_nodes[right] = SelectAsNode(self.select_names[right], self.nodes[right])
 
 
 class SatoriNode(object):
@@ -254,19 +250,9 @@ class ConnectNode(SatoriNode):
         self.connector = connector
     def prepare(self, query):
         return ConnectNode([c.prepare(query) for c in self.children], self.connector)
-    def relabel_aliases(self, change_map):
-        print 'RLA'
-        for c in self.children:
-            c.relabel_aliases(change_map)
-    def as_sql(self, qn, connection):
-        sqls = []
-        params = []
-        for child in self.children:
-            ch_sql, ch_params = child.as_sql(qn, connection)
-            sqls.append(ch_sql)
-            params.extend(ch_params)
-        if sqls:
-            return '(' + (' ' + self.connector + ' ').join(sqls) + ')', params
+    def as_sql(self):
+        if self.children:
+            return '(' + (' ' + self.connector + ' ').join(child.as_sql() for child in self.children) + ')'
         else:
             if self.connector == 'OR':
                 return 'FALSE'
@@ -282,10 +268,8 @@ class PreparedRightNode(SatoriNode):
         self.table = table
         self.column = column
         self.right = right
-    def relabel_aliases(self, change_map):
-        self.table = change_map.get(self.table, self.table)
-    def as_sql(self, qn, connection):
-        return 'EXISTS (SELECT * FROM user_privs WHERE user_privs.entity_id = {0}.{1} AND user_privs.right = \'{2}\')'.format(qn(self.table), qn(self.column), self.right), []
+    def as_sql(self):
+        return 'EXISTS (SELECT * FROM user_privs WHERE user_privs.entity_id = {0}.{1} AND user_privs.right = \'{2}\')'.format(self.table, self.column, self.right)
 
 
 class RightNode(SatoriNode):
@@ -306,10 +290,8 @@ class GlobalRightNode(SatoriNode):
         self.right = right
     def prepare(self, query):
         return self
-    def relabel_aliases(self, change_map):
-        pass
-    def as_sql(self, qn, connection):
-        return 'EXISTS (SELECT * FROM user_privs WHERE user_privs.entity_id = {0} AND user_privs.right = \'{1}\')'.format(Global.get_instance().id, self.right), []
+    def as_sql(self):
+        return 'EXISTS (SELECT * FROM user_privs WHERE user_privs.entity_id = {0} AND user_privs.right = \'{1}\')'.format(Global.get_instance().id, self.right)
 
 
 class PreparedIsNullNode(SatoriNode):
@@ -318,10 +300,8 @@ class PreparedIsNullNode(SatoriNode):
         self.table = table
         self.column = column
         self.value = value
-    def relabel_aliases(self, change_map):
-        self.table = change_map.get(self.table, self.table)
-    def as_sql(self, qn, connection):
-        return '{0}.{1} IS {2} NULL'.format(qn(self.table), qn(self.column), '' if self.value else 'NOT'), []
+    def as_sql(self):
+        return '{0}.{1} IS {2} NULL'.format(self.table, self.column, '' if self.value else 'NOT')
 
 
 class IsNullNode(SatoriNode):
@@ -334,20 +314,6 @@ class IsNullNode(SatoriNode):
         table, column = self.prepare_joins(query, self.field_list, True, self.trim)
         return PreparedIsNullNode(table, column, self.value)
 
-
-#class SelectAsNode(SatoriNode):
-#    def __init__(self, alias, value):
-#        super(SelectAsNode, self).__init__()
-#        self.alias = alias
-#        self.value = value
-#    def prepare(self, query):
-#        return SelectAsNode(self.alias, self.value.prepare(query))
-#    def relabel_aliases(self, change_map):
-#        print 'RLA'
-#        self.value.relabel_aliases(change_map)
-#    def as_sql(self, qn, connection):
-#        ch_sql, ch_params = self.value.as_sql(qn, connection)
-#        return ch_sql + ' AS ' + self.alias
 
 def init():
     global Global
