@@ -116,7 +116,7 @@ class Web(object):
     def get_contest_list():
         ret = []
         whoami = Security.whoami()
-        for contest in Privilege.where_can(Contest.objects.all(), 'VIEW'):
+        for contest in Privilege.select_struct_can(Privilege.where_can(Contest.objects.all(), 'VIEW')):
             ret_c = ContestInfo()
             ret_c.contest = contest
             if whoami:
