@@ -109,7 +109,7 @@ class Privilege(Entity):
         if hasattr(entity, '_can_' + right):
             return getattr(entity, '_can_' + right)
 
-        return Privilege.wrap(model, right).filter(id=entity.id).exists()
+        return Privilege.wrap(model, where=[right]).filter(id=entity.id).exists()
 
     @ExportMethod(NoneType, [DjangoId('Role'), unicode, PrivilegeTimes], PCGlobal('MANAGE_PRIVILEGES'))
     @staticmethod
