@@ -8,14 +8,20 @@ from satori.web.utils.decorators import contest_view
 from satori.web.utils.files import valid_attachments
 from satori.web.utils.shortcuts import fill_image_links
 from satori.web.utils.shortcuts import render_to_json, text2html
+from satori.web.utils.rights import RightsTower
 from django import forms
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 
+
+rights = RightsTower(label='Visible for')
+rights.choices = ['Everyone','Contestants','Admins only']
+rights.rights = ['VIEW','VIEW','']
+
 class ContestSubpageEditForm(forms.Form):
     name = forms.CharField(label="Subpage name")
-    visibility = forms.ChoiceField(label="Visible for", required=True, choices=[['admin','Admins only'],['contestant','Contestants'],['public', 'Everyone']]) 
+    visibility = rights.field()
     fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
 
@@ -44,18 +50,9 @@ def add(request, page_info):
                                                                content='',
                                                                contest=page_info.contest,
                                                                name=data['name']))
-                                                               
-            vis = data["visibility"]
-            if vis=='public':
-                Privilege.grant(contest.contestant_role,subpage,'VIEW')
-                subpage.is_public = True
-            elif vis=='contestant':
-                Privilege.grant(contest.contestant_role,subpage,'VIEW')
-                subpage.is_public = False
-            else:
-                Privilege.revoke(contest.contestant_role,subpage,'VIEW')
-                subpage.is_public = False                                                               
-            
+            rights.roles = [Security.anonymous(),contest.contestant_role,None]
+            rights.objects = [subpage,subpage,None]
+            rights.set(int(data['visibility']))                                                               
             for ufile in glob.glob(os.path.join(fid, '*')):
                 subpage.content_files_set_blob_path(os.path.basename(ufile), ufile)
             try:
@@ -80,8 +77,19 @@ def add(request, page_info):
 
 @contest_view
 def edit(request, page_info,id):
+
     contest = page_info.contest
     subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
+    rights.roles = [Security.anonymous(),contest.contestant_role,None]
+    rights.objects = [subpage,subpage,None]
+    rights.check()
+    
+    class ContestSubpageEditForm(forms.Form):
+        name = forms.CharField(label="Subpage name")
+        visibility = rights.field()
+        fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
+        content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
+    
     if request.method=="POST":
         form = ContestSubpageEditForm(request.POST)
         if form.is_valid():
@@ -98,17 +106,8 @@ def edit(request, page_info,id):
             try:
                 subpage.modify(SubpageStruct(name=data['name'],
                                              content=data['content']))
-
-                vis = data["visibility"]
-                if vis=='public':
-                    Privilege.grant(contest.contestant_role,subpage,'VIEW')
-                    subpage.is_public = True
-                elif vis=='contestant':
-                    Privilege.grant(contest.contestant_role,subpage,'VIEW')
-                    subpage.is_public = False
-                else:
-                    Privilege.revoke(contest.contestant_role,subpage,'VIEW')
-                    subpage.is_public = False                                                               
+                vis = data['visibility']
+                rights.set(vis)
 
 
             except SphinxException as sphinxException:
@@ -121,12 +120,7 @@ def edit(request, page_info,id):
                                                                  'subpage' : subpage })
             return HttpResponseRedirect(reverse('contest_subpage', args=[page_info.contest.id, subpage.id]))
     else:
-        if subpage.is_public:
-            vis = 'public'
-        elif Privilege.get(contest.contestant_role,subpage,'VIEW'):
-            vis = 'contestant'
-        else:
-            vis = 'admin'
+        vis = unicode(rights.current)
         fid = tempfile.mkdtemp()
         form = ContestSubpageEditForm(initial={ 'name' : subpage.name,
                                                 'content' : subpage.content,

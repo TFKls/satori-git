@@ -69,4 +69,3 @@ class SatoriSizeField(forms.CharField):
 def RenderObjectButton(id, name, buttonname, css='button'):
     return '<form action="" method="POST"><input type="submit" class="'+unicode(css)+'" name="'+unicode(name)+'" value="'+unicode(buttonname)+'"><input type="hidden" name="id" value="'+unicode(id)+'"/></form>'
 
-        
