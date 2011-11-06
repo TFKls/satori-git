@@ -14,6 +14,7 @@ options.add_option('-c', '--config', dest='config', help='alternative configurat
 options.add_option('-s', '--section', dest='section', help='section from configuration file to use')
 options.add_option('-H', '--host', dest='host', help='Satori host in format host_name:thrift_port:blob_port')
 options.add_option('-u', '--username', dest='username', help='user name (or "-" to skip authentication)')
+options.add_option('-p', '--password', dest='password', help='password')
 options.add_option('-m', '--machine', dest='machine', help='machine name (or "-" to skip authentication)')
 options.add_option('-S', '--ssl', dest='ssl', help='use SSL', action='store_true')
 
@@ -118,6 +119,9 @@ def setup():
 
     if options.options.username:
         auth_setup.username = options.options.username
+
+    if options.options.password:
+        auth_setup.password = options.options.password
 
     if options.options.machine:
         auth_setup.machine = options.options.machine

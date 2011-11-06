@@ -33,12 +33,12 @@ def view(request, page_info):
             self.total = len(self.results)
             
             self.fields.append(TableField(name='Login',value=(lambda table,i: table.results[i].login), 
-                                          render = lambda table,i: '<a class="stdlink" href="'+str(reverse('profile',args=[table.results[i].id]))+'">'+table.results[i].login+'</a>',
+                                          render = lambda table,i: '<a class="stdlink" href="'+unicode(reverse('profile',args=[table.results[i].id]))+'">'+table.results[i].login+'</a>',
                                           id=1 ))
             self.fields.append(TableField(name='First name',value=(lambda table,i: table.results[i].firstname), id=2 ))
             self.fields.append(TableField(name='Last name',value=(lambda table,i: table.results[i].lastname), id=3 ))
-            self.fields.append(TableField(name='E-mail',value=(lambda table,i: str(table.results[i].email)), id=4 ))
-            affiliation = TableField(name='Affiliation',value=(lambda table,i: str(table.results[i].profile_get_str('affiliation'))), id=5)
+            self.fields.append(TableField(name='E-mail',value=(lambda table,i: unicode(table.results[i].email)), id=4 ))
+            affiliation = TableField(name='Affiliation',value=(lambda table,i: unicode(table.results[i].profile_get_str('affiliation'))), id=5)
             self.fields.append(affiliation)
             self.add_autofilter(affiliation)
         
