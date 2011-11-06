@@ -31,34 +31,37 @@ class Privilege(Entity):
     # BIG FAT WARNING
     # the returned queryset shouldn't be used in cirumstances causing table aliases change (subqueries, .exclude(), etc.)
     @staticmethod
-    def where_can(queryset, right):
-        if not right in queryset.model._rights_meta.rights:
-            raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, quesyset.model.__name__))
+    def wrap(queryset, struct=False, select=[], where=[]):
+        if isinstance(queryset, type) and issubclass(queryset, models.Model):
+            queryset = queryset.objects.all()
+
+        for right in select:
+            if not right in queryset.model._rights_meta.rights:
+                raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, quesyset.model.__name__))
+
+        for right in where:
+            if not right in queryset.model._rights_meta.rights:
+                raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, quesyset.model.__name__))
+
+        select = set(select)
+        if struct:
+            select.update(queryset.model._struct_rights)
+
+        where = set(where)
+
+        do_select = {}
+        do_where = []
 
         # create a copy of a queryset - prepare() modifies queryset.query
         queryset = queryset.all()
-        queryset = queryset.extra(where=[queryset.model._rights_meta.nodes[right].prepare(queryset.query).as_sql()])
 
-        return queryset
+        for right in select:
+            do_select['_can_' + right] = queryset.model._rights_meta.nodes[right].prepare(queryset.query).as_sql()
 
-    # BIG FAT WARNING
-    # the returned queryset shouldn't be used in cirumstances causing table aliases change (subqueries, .exclude(), etc.)
-    @staticmethod
-    def select_can(queryset, right):
-        if not right in queryset.model._rights_meta.rights:
-            raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, quesyset.model.__name__))
+        for right in where:
+            do_where.append(queryset.model._rights_meta.nodes[right].prepare(queryset.query).as_sql())
 
-        # create a copy of a queryset - prepare() modifies queryset.query
-        queryset = queryset.all()
-        queryset = queryset.extra(select={'_can_' + right: queryset.model._rights_meta.nodes[right].prepare(queryset.query).as_sql()})
-
-        return queryset
-
-    @staticmethod
-    def select_struct_can(queryset):
-        for right in queryset.model._struct_rights:
-            queryset = Privilege.select_can(queryset, right)
-        return queryset
+        return queryset.extra(select=do_select, where=do_where)
 
     @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode, PrivilegeTimes], PCArg('entity', 'MANAGE'))
     @staticmethod
@@ -99,13 +102,14 @@ class Privilege(Entity):
     @ExportMethod(bool, [DjangoId('Entity'), unicode], PCPermit())
     @staticmethod
     def demand(entity, right):
-        if not right in entity._rights_meta.rights:
-            raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, entity.__class__.__name__))
+        model = models.get_model(*entity.model.split('.'))
+        if not right in model._rights_meta.rights:
+            raise RuntimeError('The specified right {0} is not available for model {1}'.format(right, model.__name__))
 
         if hasattr(entity, '_can_' + right):
             return getattr(entity, '_can_' + right)
 
-        return Privilege.where_can(entity.__class__.objects.filter(id=entity.id), right).exists()
+        return Privilege.wrap(model, right).filter(id=entity.id).exists()
 
     @ExportMethod(NoneType, [DjangoId('Role'), unicode, PrivilegeTimes], PCGlobal('MANAGE_PRIVILEGES'))
     @staticmethod

@@ -71,12 +71,11 @@ class ArsDjangoId(ArsTypeAlias):
 
     def do_convert_from_ars(self, value):
         try:
-            ret = Privilege.select_can(self.model.objects.all(), 'VIEW').get(id=value)
+            ret = Privilege.wrap(self.model, select=['VIEW']).get(id=value)
         except self.model.DoesNotExist:
             raise ArgumentNotFound(model=self.model.__name__, id=value)
         else:
-            if not ret._can_VIEW:
-#            if not Privilege.demand(ret, 'VIEW'):
+            if not Privilege.demand(ret, 'VIEW'):
                 raise AccessDenied()
             return ret
 
@@ -114,7 +113,7 @@ class ArsDjangoStructure(ArsDeferredStructure):
 
     def do_convert_to_ars(self, value):
         if not hasattr(value, '_can_VIEW'):
-        	value = Privilege.select_struct_can(value.__class__.objects.all()).get(id=value.id)
+        	value = Privilege.wrap(value.__class__, struct=True).get(id=value.id)
 
         if not Privilege.demand(value, 'VIEW'):
             raise CannotReturnObject()
@@ -169,7 +168,8 @@ class ArsDjangoIdList(ArsList):
         return True
 
     def do_convert_to_ars(self, value):
-        return super(ArsDjangoIdList, self).do_convert_to_ars(Privilege.select_can(Privilege.where_can(value ,'VIEW'), 'VIEW'))
+        return super(ArsDjangoIdList, self).do_convert_to_ars(Privilege.wrap(value, where=['VIEW'], select=['VIEW']))
+
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoIdList, self).do_convert_from_ars(value)
@@ -196,7 +196,7 @@ class ArsDjangoStructureList(ArsList):
         return True
 
     def do_convert_to_ars(self, value):
-        return super(ArsDjangoStructureList, self).do_convert_to_ars(Privilege.select_struct_can(Privilege.where_can(value ,'VIEW')))
+        return super(ArsDjangoStructureList, self).do_convert_to_ars(Privilege.wrap(value, where=['VIEW'], struct=True))
 
     def do_convert_from_ars(self, value):
         return super(ArsDjangoStructureList, self).do_convert_from_ars(value)

@@ -104,9 +104,9 @@ class Web(object):
             ret.rankings = contest.rankings
             ret.contest_is_admin = Privilege.demand(contest, 'MANAGE')
             ret.contest_can_ask_questions = Privilege.demand(contest, 'ASK_QUESTIONS')
-            ret.contest_answers_exist = Privilege.where_can(contest.questions.all(), 'VIEW').exists()
-            ret.contest_submittable_problems_exist = Privilege.where_can(contest.problem_mappings.all(), 'SUBMIT').exists()
-            ret.contest_viewable_problems_exist = Privilege.where_can(contest.problem_mappings.all(), 'VIEW').exists()
+            ret.contest_answers_exist = Privilege.wrap(contest.questions.all(), where=['VIEW']).exists()
+            ret.contest_submittable_problems_exist = Privilege.wrap(contest.problem_mappings.all(), where=['SUBMIT']).exists()
+            ret.contest_viewable_problems_exist = Privilege.wrap(contest.problem_mappings.all(), where=['VIEW']).exists()
         else:
             ret.subpages = Subpage.get_global(False)
         return ret
@@ -116,7 +116,7 @@ class Web(object):
     def get_contest_list():
         ret = []
         whoami = Security.whoami()
-        for contest in Privilege.select_struct_can(Privilege.where_can(Contest.objects.all(), 'VIEW')):
+        for contest in Privilege.wrap(Contest, where=['VIEW'], struct=True):
             ret_c = ContestInfo()
             ret_c.contest = contest
             if whoami:
@@ -150,7 +150,7 @@ class Web(object):
     @staticmethod
     def get_problem_mapping_list(contest):
         ret = []
-        for problem in Privilege.select_struct_can(Privilege.where_can(contest.problem_mappings.all(), 'VIEW')):
+        for problem in Privilege.wrap(contest.problem_mappings.all(), where=['VIEW'], struct=True):
             ret.append(Web.get_problem_mapping_info(problem))
         return ret
 
@@ -170,7 +170,7 @@ class Web(object):
     @staticmethod
     def get_subpage_list_global(announcements):
         ret = []
-        for subpage in Privilege.where_can(Subpage.get_global(announcements), 'VIEW'):
+        for subpage in Privilege.wrap(Subpage.get_global(announcements), where=['VIEW'], struct=True):
             ret.append(Web.get_subpage_info(subpage))
         return ret
 
@@ -178,52 +178,55 @@ class Web(object):
     @staticmethod
     def get_subpage_list_for_contest(contest, announcements):
         ret = []
-        for subpage in Privilege.where_can(Subpage.get_for_contest(contest, announcements), 'VIEW'):
+        for subpage in Privilege.wrap(Subpage.get_for_contest(contest, announcements), where=['VIEW'], struct=True):
             ret.append(Web.get_subpage_info(subpage))
         return ret
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'VIEW'))
     @staticmethod
     def get_accepted_contestants(contest, limit=20, offset=0):
-        result = Privilege.select_struct_can(Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role).order_by('sort_field'))
+        result = Privilege.wrap(Contestant.objects.filter(contest=contest, accepted=True).exclude(parents=contest.admin_role).order_by('sort_field'), where=['VIEW'], struct=True)
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
     def get_pending_contestants(contest, limit=20, offset=0):
-        result = Privilege.select_struct_can(Contestant.objects.filter(contest=contest, accepted=False).exclude(parents=contest.admin_role).order_by('sort_field'))
+        result = Privilege.wrap(Contestant.objects.filter(contest=contest, accepted=False).exclude(parents=contest.admin_role).order_by('sort_field'), where=['VIEW'], struct=True)
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedContestantList, [DjangoId('Contest'), int, int], PCArg('contest', 'MANAGE'))
     @staticmethod
     def get_contest_admins(contest, limit=20, offset=0):
-        result = Privilege.select_struct_can(Contestant.objects.filter(parents=contest.admin_role).order_by('sort_field'))
+        result = Privilege.wrap(Contestant.objects.filter(parents=contest.admin_role).order_by('sort_field'), where=['VIEW'], struct=True)
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
     @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
     @staticmethod
     def get_results(contest, contestant=None, problem=None, limit=20, offset=0):
+        q = Privilege.wrap(Submit, where=['OBSERVE'], struct=True).order_by('-id')
+
         if contestant:
-            contestant_list = Contestant.objects.filter(id=contestant.id)
-        else:
-            contestant_list = Contestant.objects.filter(contest=contest).order_by('sort_field')
-        contestant_list = list(Privilege.where_can(contestant_list, 'OBSERVE'))
-        q = Submit.objects.filter(contestant__in=contestant_list).order_by('-id')
-#        if contestant:
-#            q = Submit.objects.filter(contestant=contestant)
-#        else:
-#            q = Submit.objects.filter(contestant__contest=contest)
+            q = q.filter(contestant=contestant)
+
         if problem:
             q = q.filter(problem=problem)
-#        q = Privilege.where_can(q, 'OBSERVE')
+
         contestant_dict = {}
-        for c in Privilege.select_struct_can(Contestant.objects.filter(id__in=q[offset:offset+limit].values_list('contestant', flat=True))):
-            contestant_dict[c.id] = c
+        if contestant:
+            contestant_dict[contestant.id] = Privilege.wrap(Contestant, where=['VIEW'], struct=True).get(id=contestant.id)
+        else:
+            for c in Privilege.wrap(Contestant, where=['VIEW'], struct=True).filter(contest=contest):
+                contestant_dict[c.id] = c
+
         problem_dict = {}
-        for p in Privilege.select_struct_can(ProblemMapping.objects.filter(id__in=q[offset:offset+limit].values_list('problem', flat=True))):
-            problem_dict[p.id] = p
+        if problem:
+            problem_dict[problem.id] = Privilege.wrap(ProblemMapping, where=['VIEW'], struct=True).get(id=problem.id)
+        else:
+            for c in Privilege.wrap(Contestant, where=['VIEW'], struct=True).filter(contest=contest):
+                problem_dict[c.id] = c
+                
         ret = []
-        for submit in Privilege.select_struct_can(q)[offset:offset+limit]:
+        for submit in q[offset:offset+limit]:
             ret_r = ResultInfo()
             ret_r.submit = submit
             ret_r.contestant = contestant_dict[submit.contestant_id]
@@ -255,16 +258,16 @@ class Web(object):
             ret.data = None
         if Privilege.demand(submit, 'MANAGE'):
             ret_tsrs = []
-            for tsr in TestSuiteResult.objects.filter(submit=submit):
+            for tsr in Privilege.wrap(TestSuiteResult, struct=True).filter(submit=submit):
                 ret_tsr = TestSuiteResultInfo()
-                ret_tsr.test_suite = tsr.test_suite
+                ret_tsr.test_suite = Privilege.wrap(TestSuite, struct=True).get(id=tsr.test_suite_id)
                 ret_tsr.test_suite_result = tsr
                 ret_tsr.attributes = tsr.oa_get_map()
                 ret_tsrs.append(ret_tsr)
             ret_trs = []
-            for tr in TestResult.objects.filter(submit=submit):
+            for tr in Privilege.wrap(TestResult, struct=True).filter(submit=submit):
                 ret_tr = TestResultInfo()
-                ret_tr.test = tr.test
+                ret_tr.test = Privilege.wrap(Test, struct=True).get(id=tr.test_id)
                 ret_tr.test_result = tr
                 ret_tr.attributes = tr.oa_get_map()
                 ret_trs.append(ret_tr)

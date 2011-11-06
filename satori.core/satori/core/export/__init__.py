@@ -52,12 +52,7 @@ def ExportModel(cls):
                 kwargs[field_name] = getattr(arg_struct, field_name)
                 permissions.add(field_permission)
 
-        queryset = cls.objects.filter(**kwargs)
-
-        for permission in permissions:
-            queryset = Privilege.where_can(queryset, permission)
-
-        return queryset
+        return Privilege.wrap(cls, where=permissions).filter(**kwargs)
 
     cls.filter = filter
 
