@@ -222,8 +222,8 @@ class Web(object):
         if problem:
             problem_dict[problem.id] = Privilege.wrap(ProblemMapping, where=['VIEW'], struct=True).get(id=problem.id)
         else:
-            for c in Privilege.wrap(Contestant, where=['VIEW'], struct=True).filter(contest=contest):
-                problem_dict[c.id] = c
+            for p in Privilege.wrap(ProblemMapping, where=['VIEW'], struct=True).filter(contest=contest):
+                problem_dict[p.id] = p
                 
         ret = []
         for submit in q[offset:offset+limit]:
