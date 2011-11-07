@@ -48,7 +48,7 @@ def view(request, page_info):
             
             if admin:
                 cts = TableField(name='Contestant',value=(lambda table,i: table.results[i].contestant.name),
-                                                  render=(lambda table,i: '<a class="stdlink" href="'+table.getparams(filters={'cts' : unicode(table.results[i].contestant.id)})+'">'+table.results[i].contestant.name+'</a>'),
+                                                  render=(lambda table,i: '<a class="stdlink" href="'+table.getparams(filters={'cts' : unicode(table.results[i].contestant.id)},page=1)+'">'+table.results[i].contestant.name+'</a>'),
                                                             id='cts')
                 
                 choices = [[unicode(c.id),c.name] for c in Web.get_accepted_contestants(contest=contest,limit=self.max_limit()).contestants]

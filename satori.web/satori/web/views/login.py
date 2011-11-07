@@ -110,7 +110,7 @@ def profile(request, page_info, id = None):
             except LoginFailed:
                 bar.errors.append('Login failed!')
             except InvalidPassword:
-                bar.errors.append('Invalid pasword!')
+                bar.errors.append('Invalid password!')
             return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form,'status_bar' : bar}) 
     if 'update' in request.POST.keys():
         profile_form = xmlparams.ParamsForm(parser=parser, data=request.POST)

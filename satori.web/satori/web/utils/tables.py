@@ -95,7 +95,6 @@ class ResultTable(object):
         for key in self.filters:
             if not key in filters.keys():
                 p['filter_'+key] = self.filters[key]
-                
         return '?'+'&'.join([self.prefix+'_'+unicode(k)+'='+unicode(v) for (k,v) in p.iteritems()])
         
     def render_header(self):
