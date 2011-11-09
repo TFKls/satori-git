@@ -203,7 +203,7 @@ class Web(object):
     @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
     @staticmethod
     def get_results(contest, contestant=None, problem=None, limit=20, offset=0):
-        q = Privilege.wrap(Submit, where=['OBSERVE'], struct=True).order_by('-id')
+        q = Privilege.wrap(Submit, where=['OBSERVE'], struct=True).filter(contestant__contest=contest).order_by('-id')
 
         if contestant:
             q = q.filter(contestant=contestant)
