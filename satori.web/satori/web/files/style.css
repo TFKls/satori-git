@@ -128,8 +128,26 @@ body {
 	font-family: Arial;
 }
 
+ul.errorlist
+{
+    font-size : 0.8em;
+    background-color: #F8C3D2;
+    margin-bottom : 0em;
+}
 
+.bar_message
+{
+    font-size : 0.8em;
+    background-color: #D9F7C2;
+    padding : 0.4em;
+}
 
+.bar_error
+{
+    font-size : 0.8em;
+    background-color: #F8C3D2;
+    padding : 0.4em;
+}
 
 
 .logos {
@@ -243,7 +261,7 @@ table.form th
     color : #F3F3FC;
     -moz-border-radius: 4px;
     border-radius: 4px;
-    margin : 0;
+    margin-right : 4px;
 }
 
 .button_small

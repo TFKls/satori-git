@@ -1,6 +1,9 @@
 {% extends "templates/index.html" %}
 
 {% block content %}
+{% if page_info.contest_is_admin %}
+<div class="buttonbar"><a class="button" href="{% url ranking_edit page_info.contest.id ranking.id %}">Edit ranking</a><a class="button" href="{% url ranking_rejudge page_info.contest.id ranking.id %}">Rejudge ranking</a></div>
+{% endif %}
 <h3>{{ ranking.name }}</h3>
 {{ content|safe }}
 {% endblock %}

@@ -2,17 +2,12 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
+from satori.web.utils.rights import RightsTower
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django import forms
 
-class ManageForm(forms.Form):
-    name = forms.CharField(required=True)
-    description = forms.CharField(required=False)
-    viewing = forms.ChoiceField(label='Contest visible for',choices=[['none','Contestants only'],['auth','Logged users'],['anonym','Everyone']])
-    joining = forms.ChoiceField(label='Joining method',choices=[['none','None (only admin-adding)'],['apply','Application'],['free','Free']])
-    questions = forms.BooleanField(label='Questions allowed',required=False)
 
 class AdminForm(forms.Form):
     username = forms.CharField(required=True)
@@ -43,12 +38,34 @@ def view(request, page_info):
     status = get_status(contest)
     admins =  Web.get_contest_admins(contest=contest,offset=0,limit=500).contestants
     questions = Privilege.get(contest.contestant_role,contest,'ASK_QUESTIONS')
+    anonym = Security.anonymous()
+    auth = Security.authenticated()
+    
+    viewing = RightsTower(label='Contest visible for')
+    viewing.add(anonym,contest,'VIEW','Everyone')
+    viewing.add(auth,contest,'VIEW','Logged users')
+    viewing.add(None,None,'','Contestants only')
+    viewing.check()
+    
+    joining = RightsTower(label='Joining method')
+    joining.add(auth,contest,'JOIN','Free')
+    joining.add(auth,contest,'APPLY','Application')
+    joining.add(None,None,'','Admin-adding only')
+    joining.check()
+    
+    class ManageForm(forms.Form):
+        name = forms.CharField(required=True)
+        description = forms.CharField(required=False)
+        viewfield = viewing.field()
+        joinfield = joining.field()
+        questions = forms.BooleanField(label='Questions allowed',required=False)
+    
+    
     if request.method!="POST":
-        manage_form = ManageForm(initial={'viewing' : status.viewing, 'joining' : status.joining, 'name' : contest.name, 'description' : contest.description, 'questions' : questions})
+        manage_form = ManageForm(initial={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'questions' : questions})
         admin_form = AdminForm()
         return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
     if "addadmin" in request.POST.keys():
-        manage_form = ManageForm(initial={'viewing' : status.viewing, 'joining' : status.joining, 'name' : contest.name, 'description' : contest.description})
         admin_form = AdminForm(request.POST)
         if admin_form.is_valid():
             try:
@@ -72,27 +89,13 @@ def view(request, page_info):
     manage_form = ManageForm(request.POST)
     if not manage_form.is_valid():
         return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
-    viewing = manage_form.cleaned_data['viewing']
-    joining = manage_form.cleaned_data['joining']
+    viewing.set(manage_form.cleaned_data['viewfield'])
+    joining.set(manage_form.cleaned_data['joinfield'])
     contest.name = manage_form.cleaned_data['name']
     contest.description = manage_form.cleaned_data['description']
     if manage_form.cleaned_data['questions']:
         Privilege.grant(contest.contestant_role,contest,'ASK_QUESTIONS')
     else:
         Privilege.revoke(contest.contestant_role,contest,'ASK_QUESTIONS')    
-    if status.viewing!=viewing:
-        Privilege.revoke(status.auth,contest,'VIEW')
-        Privilege.revoke(status.anonym,contest,'VIEW')
-        if viewing=='anonym':
-            Privilege.grant(status.anonym,contest,'VIEW')
-        elif viewing=='auth':
-            Privilege.grant(status.auth,contest,'VIEW')
-    if status.joining!=joining:
-        Privilege.revoke(status.auth,contest,'APPLY')
-        Privilege.revoke(status.auth,contest,'JOIN')
-        if joining=='apply':
-            Privilege.grant(status.auth,contest,'APPLY')
-        elif joining=='free':
-            Privilege.grant(status.auth,contest,'JOIN')
     return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
 

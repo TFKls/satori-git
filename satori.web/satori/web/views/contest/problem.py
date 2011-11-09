@@ -108,6 +108,10 @@ def add(request, page_info, id):
                                                                  'form' : form, 
                                                                  'page_info' : page_info })
             return HttpResponseRedirect(reverse('contest_problems', args=[page_info.contest.id]))
+        return render_to_response('problems_add.html', { 'form' : form, 
+                                                         'page_info' : page_info,
+                                                         'base' : problem })
+
     else:
         #TODO(kalq): Create a hash instead of full pathname
         fid = tempfile.mkdtemp()
