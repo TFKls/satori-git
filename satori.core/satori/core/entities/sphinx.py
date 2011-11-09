@@ -31,7 +31,7 @@ do_hack()
 CORE_PATH = os.path.abspath(os.path.split(__file__)[0])
 
 config_overrides = {
-    'extensions' : ['sphinx.ext.pngmath','sphinx.ext.graphviz', 'satori.core.models'],
+    'extensions' : ['sphinx.ext.mathjax','sphinx.ext.graphviz', 'satori.core.models'],
     'templates_path' : [os.path.join(CORE_PATH, 'sphinx_templates')],
     'source_suffix' : '.rst',
     'master_doc' : 'index',
