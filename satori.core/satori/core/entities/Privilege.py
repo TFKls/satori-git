@@ -3,6 +3,7 @@
 from datetime  import datetime
 from types     import NoneType
 
+from django.db import connection
 from django.db import models
 
 from satori.core.dbev   import Events
@@ -27,6 +28,18 @@ class Privilege(Entity):
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('role', 'entity', 'right'),)
+
+    @staticmethod
+    def set_user_id(id):
+        cursor = connection.cursor()
+        cursor.callproc('set_user_id', [id])
+        cursor.close()
+
+    @staticmethod
+    def update_user_rights():
+        cursor = connection.cursor()
+        cursor.callproc('update_user_rights', [])
+        cursor.close()
 
     # BIG FAT WARNING
     # the returned queryset shouldn't be used in cirumstances causing table aliases change (subqueries, .exclude(), etc.)
@@ -73,6 +86,7 @@ class Privilege(Entity):
         priv.start_on = times.start_on
         priv.finish_on = times.finish_on
         priv.save()
+        Privilege.update_user_rights()
 
     @ExportMethod(NoneType, [DjangoId('Role'), DjangoId('Entity'), unicode], PCArg('entity', 'MANAGE'))
     @staticmethod
@@ -80,6 +94,7 @@ class Privilege(Entity):
         try:
             priv = Privilege.objects.get(role=role, entity=entity, right=right)
             priv.delete()
+            Privilege.update_user_rights()
         except Privilege.DoesNotExist:
             pass
 

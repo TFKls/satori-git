@@ -1,6 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
-from   django.db import connection
 import threading
 
 from satori.core.export.type_helpers import DefineException
@@ -43,10 +42,7 @@ class TokenContainer(threading.local):
             else:
                 userid = Global.get_instance().anonymous.id
 
-        cursor = connection.cursor()
-        cursor.callproc('set_user_id', [userid])
-        cursor.close()
-
+        Privilege.set_user_id(userid)
 
 
 token_container = TokenContainer()
@@ -56,5 +52,6 @@ def init():
     global Contest
     global Global
     global Token
-    from satori.core.models import Global, Contest
+    global Privilege
+    from satori.core.models import Global, Contest, Privilege
     from satori.core.sec.token import Token

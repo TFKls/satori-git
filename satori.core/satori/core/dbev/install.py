@@ -118,7 +118,20 @@ BEGIN
     DROP TABLE IF EXISTS user_privs;
     CREATE TEMPORARY TABLE user_privs ("right", entity_id)
         AS SELECT cp.right, cp.entity_id
-            FROM core_privilege AS cp JOIN user_roles AS ur ON cp.role_id = ur.role_id;
+            FROM core_privilege AS cp WHERE (EXISTS (SELECT * FROM user_roles AS ur WHERE ur.role_id = cp.role_id));
+END;
+$$ LANGUAGE plpgsql;
+"""
+    update_user_rights_function = """
+CREATE OR REPLACE FUNCTION update_user_rights() RETURNS VOID AS $$
+BEGIN
+    DROP TABLE IF EXISTS user_privs;
+    CREATE TEMPORARY TABLE user_privs ("right", entity_id)
+        AS SELECT cp.right, cp.entity_id
+            FROM core_privilege AS cp WHERE (EXISTS (SELECT * FROM user_roles AS ur WHERE ur.role_id = cp.role_id));
+EXCEPTION
+    WHEN undefined_table THEN
+        NULL;
 END;
 $$ LANGUAGE plpgsql;
 """
@@ -538,7 +551,7 @@ $$ LANGUAGE plpgsql;
 """
 #    SELECT INTO _exec create_triggers(_table, _key, _notify);
 #    _texec := _texec || _exec;
-    ret = [set_user_id_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, insert_rawevent_trigger, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function, install_rights_inheritance]
+    ret = [set_user_id_function, update_user_rights_function, get_user_id_function, transaction_id_seq, get_transaction_id_function, insert_rawevent_trigger, create_version_table_function, create_full_view_function, create_version_function_function, create_triggers_function, install_versions_function, install_rights_inheritance]
     for model in sorted(registry.keys(), key=lambda m: m._meta.db_table):
         ret.append(install_versions_sql(model))
     return tuple(ret);
