@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import ctypes
 from   django.conf     import settings
 import errno
 import fcntl
@@ -40,10 +41,22 @@ class SatoriProcess(Process):
     def run(self):
         setproctitle('satori: {0}'.format(self.name))
 
+        logging.info('%s starting', self.name)
+
         signal(SIGTERM, self.handle_signal)
         signal(SIGINT, self.handle_signal)
 
-        logging.info('%s starting', self.name)
+        # let ssl register OpenSSL callbacks, so that they do not interfere with callbacks from OpenSSL.crypto
+        import ssl
+
+        # let pyOpenSSL register OpenSSL callbacks
+        import OpenSSL.SSL
+        import OpenSSL.crypto
+
+        # tell libpq not to register OpenSSL callbacks - hopefully no DB connection has been created yet
+        libpq = ctypes.cdll.LoadLibrary('libpq.so')
+        libpq.PQinitSSL(0)
+
 
         try:
             self.do_run()
