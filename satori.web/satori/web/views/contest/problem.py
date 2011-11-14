@@ -96,7 +96,6 @@ def add(request, page_info, id):
                 writer.write(pdf.read())
                 phash = writer.close()
                 mapping.statement_files_set_blob_hash('pdf',phash)
-                mapping.statement_files_set_blob_hash('_pdf',phash)
 
             for ufile in glob.glob(os.path.join(fid, '*')):
                 mapping.statement_files_set_blob_path(os.path.basename(ufile), ufile)
@@ -142,7 +141,15 @@ def edit(request, page_info, id):
                     mapping.statement_files_delete(request.POST[rfile])
             for ufile in glob.glob(os.path.join(fid, '*')):
                 mapping.statement_files_set_blob_path(os.path.basename(ufile), ufile)
+            pdf = form.cleaned_data.get('pdf',None)
+            if pdf:
+                writer = Blob.create(pdf.size)
+                writer.write(pdf.read())
+                phash = writer.close()
+                mapping.statement_files_set_blob_hash('pdf',phash)
+        
             try:
+            
                 mapping.modify(ProblemMappingStruct(code=data['code'],
                                                     title=data['title'],
                                                     statement=data['statement'],
@@ -158,13 +165,6 @@ def edit(request, page_info, id):
                                                                  'page_info' : page_info,
                                                                  'base' : problem,
                                                                  'editing' : mapping })
-            pdf = form.cleaned_data.get('pdf',None)
-            if pdf:
-                writer = Blob.create(pdf.size)
-                writer.write(pdf.read())
-                phash = writer.close()
-                mapping.statement_files_set_blob_hash('pdf',phash)
-                mapping.statement_files_set_blob_hash('_pdf',phash)
             if mapping.statement:
                 return HttpResponseRedirect(reverse('contest_problems_view', args=[page_info.contest.id,id]))
             else:
