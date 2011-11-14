@@ -349,8 +349,8 @@ def athina_import_testsuite():
 def athina_import_problem():
     from satori.tools import options, setup
     (options, args) = setup()
-    if len(args) != 7:
-        logging.error('usage: code directory name contest judge statement description')
+    if len(args) != 8:
+        logging.error('usage: code directory name contest judge statement description timeconstant')
         sys.exit(1)
     code = unicode(args[0],'utf-8')
     base_dir = unicode(args[1],'utf-8')
@@ -358,6 +358,7 @@ def athina_import_problem():
     judge_path = unicode(args[4],'utf-8')
     pdf = unicode(args[5],'utf-8')
     description = unicode(args[6],'utf-8')
+    timeconstant = float(args[7])
     problem = Creator('Problem', name=name, description=description)()
     try:
         contest = Contest.filter(ContestStruct(name=unicode(args[3])))[0]
@@ -415,10 +416,13 @@ def athina_import_problem():
         if memlimit != None:
             oa.set_str('memory', str(memlimit)+'B')
         if timelimit != None:
-            oa.set_str('time', str(seconds(timelimit))+'s')
+            newlimit = seconds(timelimit)*timeconstant
+            if newlimit<0.5:
+                newlimit = 0.5
+            oa.set_str('time', '{0:.1f}'.format(newlimit)+'s')
         tests.append(Creator('Test', problem=problem, name=str(t)).additional(data=oa.get_map())())
     params = OaMap()
-    testsuite = Creator('TestSuite', problem=problem, name=problem.name + '_all').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
+    testsuite = Creator('TestSuite', problem=problem, name='Default').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
     pm = Creator('ProblemMapping',problem=problem,contest=contest,code=code,title=name,default_test_suite=testsuite)()
     if pdf!='none':
         pmoa = OaMap()

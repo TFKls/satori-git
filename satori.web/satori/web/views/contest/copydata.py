@@ -41,8 +41,9 @@ def copyproblems(request,page_info):
                 code = request.POST.get('code_'+k[4:],'')
                 if code=='':
                     code = pm.code
-                npm = ProblemMapping.create(ProblemMappingStruct(contest=contest,code=code,statement=statement,problem=pm.problem,title=pm.title,default_test_suite=pm.default_test_suite))
+                npm = ProblemMapping.create(ProblemMappingStruct(contest=contest,code=code,problem=pm.problem,title=pm.title,default_test_suite=pm.default_test_suite))
                 npm.statement_files_set_map(pm.statement_files_get_map())
+                npm.statement = statement
         return HttpResponseRedirect(reverse('contest_problems',args=[contest.id]))
     return render_to_response('copy_problems.html', {'page_info' : page_info, 'copytable' : copytable} )
             
@@ -88,10 +89,14 @@ def view(request, page_info):
                     ok = True
                     for i in  Web.get_problem_mapping_list(contest=source):
                         oldmapping = i.problem_mapping
+                        newmapping = None
                         try:
-                            newmapping = ProblemMapping.create(ProblemMappingStruct(contest=contest,problem=oldmapping.problem,code=oldmapping.code,title=oldmapping.title,default_test_suite=oldmapping.default_test_suite,statement=oldmapping.statement))
+                            newmapping = ProblemMapping.create(ProblemMappingStruct(contest=contest,problem=oldmapping.problem,code=oldmapping.code,title=oldmapping.title,default_test_suite=oldmapping.default_test_suite))
                             newmapping.statement_files_set_map(oldmapping.statement_files_get_map())
+                            newmapping.statement = oldmapping.statement
                         except:
+                            if newmapping:
+                                newmapping.delete()
                             bar.errors.append('Copy of problem '+oldmapping.code+' ('+oldmapping.title+') failed!')
                             ok = False
                     if ok:
