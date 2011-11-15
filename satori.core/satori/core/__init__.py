@@ -3,12 +3,16 @@
 exposed over Thrift.
 """
 
+import sys
 import os
 
 
 def manage():
     from django.core.management import execute_manager
-    import satori.core.settings
+
+    settings_module_name = os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'satori.core.settings')
+    __import__(settings_module_name)
+    settings_module = sys.modules[settings_module_name]
 
     # HACK
     import django.core.management
@@ -24,5 +28,5 @@ def manage():
     django.core.management.find_management_module = find_management_module
     # END OF HACK
 
-    execute_manager(satori.core.settings)
+    execute_manager(settings_module)
 
