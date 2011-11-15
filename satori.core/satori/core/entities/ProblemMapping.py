@@ -101,6 +101,8 @@ class ProblemMapping(Entity):
     @ExportMethod(NoneType, [DjangoId('ProblemMapping')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):
         try:
+            if len(ProblemMapping.objects.filter(contest=self.contest, problem=self.problem)) == 1:
+                Privilege.revoke(self.contest.admin_role, self.problem, 'MANAGE')
             super(ProblemMapping, self).delete()
         except models.ProtectedError as e:
             raise CannotDeleteObject()
