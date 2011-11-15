@@ -222,81 +222,85 @@ def render_sphinx(rest, oa_map):
     hash = writer.close()
     oa_map['_html'] = AnonymousAttribute(is_blob=True, filename='index.html', value=hash)
 
-    pdfbuilddir = os.path.join(srcdir, '_buildpdf')
-    os.mkdir(pdfbuilddir)
-    
-    for name in oa_map:
-        oa = oa_map[name]
-        if not oa.is_blob:
-            continue
-        if not (name.startswith('_img_') or (name == '_pdf') or (name == '_html')):
-            reader = Blob.open(oa.value)
-            dest = open(os.path.join(pdfbuilddir, name), 'w')
-            dest.write(reader.read())
-            reader.close()
-            dest.close()
+    if 'pdf' in oa_map:
+        oa_map['_pdf'] = deepcopy(oa_map['pdf'])
+        oa_map['_pdf'].name = '_pdf'
+    else:
+        pdfbuilddir = os.path.join(srcdir, '_buildpdf')
+        os.mkdir(pdfbuilddir)
+        
+        for name in oa_map:
+            oa = oa_map[name]
+            if not oa.is_blob:
+                continue
+            if not (name.startswith('_img_') or (name == '_pdf') or (name == '_html')):
+                reader = Blob.open(oa.value)
+                dest = open(os.path.join(pdfbuilddir, name), 'w')
+                dest.write(reader.read())
+                reader.close()
+                dest.close()
 
-    confToFile(os.path.join(srcdir, 'conf.py'))
+        confToFile(os.path.join(srcdir, 'conf.py'))
 
-    try:
-        app = Sphinx(srcdir, srcdir, pdfbuilddir, treedir, 'latex',
-                confoverrides = config_overrides,
-                freshenv = True,
-                status=None,
-                warning=None, 
-                warningiserror=True)
-        app.build(None, [indexpath])
-    except SphinxError as e:
-        raise SphinxException(error=unicode(e))
-    except PycodeError:
-        raise
+        try:
+            app = Sphinx(srcdir, srcdir, pdfbuilddir, treedir, 'latex',
+                    confoverrides = config_overrides,
+                    freshenv = True,
+                    status=None,
+                    warning=None, 
+                    warningiserror=True)
+            app.build(None, [indexpath])
+        except SphinxError as e:
+            raise SphinxException(error=unicode(e))
+        except PycodeError:
+            raise
 
-    texoutfilepath = os.path.join(pdfbuilddir, 'index.tex')    
-    assert os.path.exists(texoutfilepath)
+        texoutfilepath = os.path.join(pdfbuilddir, 'index.tex')    
+        assert os.path.exists(texoutfilepath)
 
 # save tex file for debug
-#    outfile = open(texoutfilepath, 'r')
-#    output = outfile.read()
-#    outfile.close()
+#        outfile = open(texoutfilepath, 'r')
+#        output = outfile.read()
+#        outfile.close()
 
-#    writer = Blob.create()
-#    writer.write(output)
-#    hash = writer.close()
-#    oa_map['_tex'] = AnonymousAttribute(is_blob=True, filename='index.tex', value=hash)
+#        writer = Blob.create()
+#        writer.write(output)
+#        hash = writer.close()
+#        oa_map['_tex'] = AnonymousAttribute(is_blob=True, filename='index.tex', value=hash)
 
-    for filename in os.listdir(os.path.join(CORE_PATH, 'sphinx_templates', 'latex')):
-        shutil.copy(os.path.join(CORE_PATH, 'sphinx_templates', 'latex', filename), pdfbuilddir)
+        for filename in os.listdir(os.path.join(CORE_PATH, 'sphinx_templates', 'latex')):
+            shutil.copy(os.path.join(CORE_PATH, 'sphinx_templates', 'latex', filename), pdfbuilddir)
 
 # python 2.7
-#    try:
+#        try:
+#            subprocess.check_output(['pdflatex', 'index.tex'], cwd=pdfbuilddir, stderr=subprocess.STDOUT)
 #        subprocess.check_output(['pdflatex', 'index.tex'], cwd=pdfbuilddir, stderr=subprocess.STDOUT)
-#        subprocess.check_output(['pdflatex', 'index.tex'], cwd=pdfbuilddir, stderr=subprocess.STDOUT)
-#    except subprocess.CalledProcessError as e:
-#        raise SphinxException(error='pdflatex ended with error code {0}:\n{1}'.format(e.returncode, e.output))
+#        except subprocess.CalledProcessError as e:
+#            raise SphinxException(error='pdflatex ended with error code {0}:\n{1}'.format(e.returncode, e.output))
 
-    # two times: pagerefs
+        # two times: pagerefs
 
-    proc = subprocess.Popen(['pdflatex', '-halt-on-error', 'index.tex'], cwd=pdfbuilddir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output = proc.communicate()[0]
-    if proc.returncode != 0:
-        raise SphinxException(error='pdflatex ended with error code {0}:\n{1}'.format(proc.returncode, output))
+        proc = subprocess.Popen(['pdflatex', '-halt-on-error', 'index.tex'], cwd=pdfbuilddir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = proc.communicate()[0]
+        if proc.returncode != 0:
+            raise SphinxException(error='pdflatex ended with error code {0}:\n{1}'.format(proc.returncode, output))
 
-    proc = subprocess.Popen(['pdflatex', 'index.tex'], cwd=pdfbuilddir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
-    output = proc.communicate()[0]
-    if proc.returncode != 0:
-        raise SphinxException(error='pdflatex ended with error code {0}:\n{1}'.format(proc.returncode, output))
+        proc = subprocess.Popen(['pdflatex', 'index.tex'], cwd=pdfbuilddir, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = proc.communicate()[0]
+        if proc.returncode != 0:
+            raise SphinxException(error='pdflatex ended with error code {0}:\n{1}'.format(proc.returncode, output))
 
-    pdfoutfilepath = os.path.join(pdfbuilddir, 'index.pdf')    
-    assert os.path.exists(pdfoutfilepath)
+        pdfoutfilepath = os.path.join(pdfbuilddir, 'index.pdf')    
+        assert os.path.exists(pdfoutfilepath)
 
-    outfile = open(pdfoutfilepath, 'rb')
-    output = outfile.read()
-    outfile.close()
+        outfile = open(pdfoutfilepath, 'rb')
+        output = outfile.read()
+        outfile.close()
 
-    writer = Blob.create()
-    writer.write(output)
-    hash = writer.close()
-    oa_map['_pdf'] = AnonymousAttribute(is_blob=True, filename='index.pdf', value=hash)
+        writer = Blob.create()
+        writer.write(output)
+        hash = writer.close()
+        oa_map['_pdf'] = AnonymousAttribute(is_blob=True, filename='index.pdf', value=hash)
 
     shutil.rmtree(srcdir, ignore_errors=True)
 
