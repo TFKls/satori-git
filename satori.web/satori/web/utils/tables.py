@@ -133,7 +133,7 @@ class ResultTable(object):
                 if unicode(f.id) == self.params['sort']:
                     f_key = f
         if self.autosort and f_key:
-            order.sort(key=lambda i: f_key.value(self,i))
+            order.sort(key=lambda i: f_key.value(self,i),reverse=(self.params.get('order',None)=='desc'))
         limit = self.params['limit']
         page = self.params['page']
         if self.autosort and limit>0:

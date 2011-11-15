@@ -58,7 +58,7 @@ def view(request, page_info):
             def button(table,i):
                 s=''
                 if table.contests[i].contestant and not table.contests[i].contestant.accepted:
-                    s='Pending'
+                    s='<span class="signature">Pending</span>'
                 if table.contests[i].contestant or table.contests[i].is_admin:
                     return s
                 if table.contests[i].can_apply:
@@ -66,7 +66,7 @@ def view(request, page_info):
                 if table.contests[i].can_join:
                     s = 'Join'
                 if s!='':
-                    s = '<a class="smallbutton" href="'+reverse('apply',args=[table.contests[i].contest.id])+'">'+s+'</a>'
+                    s = '<a class="button button_small" href="'+reverse('apply',args=[table.contests[i].contest.id])+'">'+s+'</a>'
                 return s
                 
             self.fields.append(TableField(name='',value=(lambda table,i: ''),
