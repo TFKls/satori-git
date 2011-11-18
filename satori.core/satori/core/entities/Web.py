@@ -256,7 +256,7 @@ class Web(object):
             ret.data = unicode(data, 'utf8')
         except:
             try:
-                ret.data = unicode(data, 'latin-2')
+                ret.data = unicode(data, 'latin2')
             except:
                 ret.data = None
         if Privilege.demand(submit, 'MANAGE'):
