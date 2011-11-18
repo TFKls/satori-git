@@ -37,6 +37,7 @@ def view(request, page_info):
             if limit==0:
                 limit = max_limit
             page = int(self.params['page'])
+            self.showdiff=int(self.params.get('diff','0'))
             query = Web.get_results(contest=contest,contestant=contestant,problem=problem,offset=(page-1)*limit,limit=limit)
             self.results = query.results
             self.total = query.count
@@ -45,7 +46,9 @@ def view(request, page_info):
                                           render=(lambda table,i: '<a class="stdlink" href="'+reverse('view_result',args=[contest.id,table.results[i].submit.id])+'">'
                                                                     +unicode(table.results[i].submit.id)+'</a>'),
                                           id=1))
-            
+            if self.showdiff:
+                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="diff_1" value="'+unicode(table.results[i].submit.id)+'"/>'),id='diff_1'))
+                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="diff_2" value="'+unicode(table.results[i].submit.id)+'"/>'),id='diff_2'))            
             if admin:
                 cts = TableField(name='Contestant',value=(lambda table,i: table.results[i].contestant.name),
                                                   render=(lambda table,i: '<a class="stdlink" href="'+table.getparams(filters={'cts' : unicode(table.results[i].contestant.id)},page=1)+'">'+table.results[i].contestant.name+'</a>'),
@@ -64,6 +67,10 @@ def view(request, page_info):
             self.fields.append(TableField(name='Status',value=(lambda table,i: table.results[i].status),
                                           render=(lambda table,i: '<div class="submitstatus"><div class="sta'+unicode(table.results[i].status)+'">'+unicode(table.results[i].status)+'</div></div>')
                                           ,id=5,css='status'))
-    
+            if self.showdiff:
+                newdiff = 0
+            else:
+                newdiff = 1
+            self.difflink = self.getparams(diff=newdiff)
     results = SubmitsTable(req = request.GET,prefix='results')
     return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results })

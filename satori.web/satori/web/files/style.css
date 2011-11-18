@@ -149,6 +149,25 @@ ul.errorlist
     padding : 0.4em;
 }
 
+.highlight_back
+{
+    display:block;
+    background-color : #F3F3FC;
+}
+
+.highlight_pos
+{
+    display:block;
+    background-color: #D9F7C2;
+}
+
+.highlight_neg
+{
+    display:block;
+    background-color: #F8C3D2;
+}
+
+
 
 .logos {
     text-align: center;

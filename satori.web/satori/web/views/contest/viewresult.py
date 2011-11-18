@@ -2,11 +2,14 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
+from satori.web.utils.forms import StatusBar
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django import forms
 from satori.web.utils.shortcuts import text2html
+from difflib import HtmlDiff,Differ
+from cgi import escape
 
 @contest_view
 def view(request, page_info, id):
@@ -40,6 +43,38 @@ def view(request, page_info, id):
     return render_to_response('viewresult.html',{'page_info' : page_info, 'widget' : widget, 'filename' : filename})
 
 
+@contest_view
+def diff(request, page_info):
+    try:
+        id0 = request.GET['diff_1']
+        id1 = request.GET['diff_2']
+        submit0 = Web.get_result_details(submit=Submit(int(id0)))
+        submit1 = Web.get_result_details(submit=Submit(int(id1)))
+        submits = [submit0,submit1]
+    except:
+        return HttpResponseRedirect(reverse('results',args=[unicode(page_info.contest.id)]))
+    bar = StatusBar()
+    codes = []
+    ok = True
+    for i in [0,1]:
+        codes.append(submits[i].data)
+        if codes[i]==None or codes[i]=="":
+            ok = False
+            bar.errors.append('Could not render submit '+unicode(submits[i].submit.id)+'!')
+    diff_html = ""
+    if ok:
+        d = Differ()
+        for line in d.compare(codes[1].splitlines(True),codes[0].splitlines(True)):
+            if line[0]=='?':
+                continue
+            css = 'highlight_back'
+            if line[0]=='+':
+                css = 'highlight_pos'
+            if line[0]=='-':
+                css = 'highlight_neg'
+            diff_html += '<span class="'+css+'">'+escape(line)+'</span>'
+    return render_to_response('viewdiff.html',{'page_info' : page_info, 'submits' : submits, 'diff' : diff_html, 'status_bar' : bar})
+        
 @contest_view
 def override(request, page_info, id):
     submit = Submit(int(id))
