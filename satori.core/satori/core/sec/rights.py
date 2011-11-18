@@ -153,7 +153,7 @@ class RightsOptions(object):
             node = node | local_node
 
         for child in self.child_models:
-            child._rights_meta.add_local_rights_nodes(node, rights, path + [self.child_models[child]], used | all_rights, used_parent | all_parent_rights, used_global | all_global_rights)
+            node = child._rights_meta.add_local_rights_nodes(node, rights, path + [self.child_models[child]], used | all_rights, used_parent | all_parent_rights, used_global | all_global_rights)
 
         return node
 
