@@ -255,7 +255,10 @@ class Web(object):
         try:
             ret.data = unicode(data, 'utf8')
         except:
-            ret.data = None
+            try:
+                ret.data = unicode(data, 'latin-2')
+            except:
+                ret.data = None
         if Privilege.demand(submit, 'MANAGE'):
             ret_tsrs = []
             for tsr in Privilege.wrap(TestSuiteResult, struct=True).filter(submit=submit):

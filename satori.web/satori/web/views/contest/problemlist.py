@@ -12,6 +12,7 @@ from django import forms
 from datetime import datetime
 from satori.web.utils.files import valid_attachments
 from satori.web.utils.forms import SatoriDateTimeField
+from satori.web.utils.tables import ResultTable
 from satori.web.utils.shortcuts import text2html,fill_image_links
 
 class ProblemsPublishForm(forms.Form):
@@ -27,6 +28,15 @@ class ProblemsPublishForm(forms.Form):
                 self.fields[str(pinfo.problem_mapping.id)] = forms.BooleanField(required=False)
 
 
+class ProblemGroup(ResultTable):
+    def __init__(self,req,prefix,table,name):
+        super(ProblemGroup,self).__init__(req=req,prefix=prefix)
+        self.results = table
+        self.total = len(table)
+        self.name = name
+        self.fields.append(name='Code',value=lambda p : p.problem_mapping.code,id=1)
+        self.fields.append(name='Code',value=lambda p : p.problem_mapping.title,id=2)
+        
 def between(times, now):
     if not times:
         return False
@@ -103,18 +113,4 @@ def viewall(request, page_info):
             
         groups[g].append(p)
     return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin, 'groups' : groups })
-
-class ProblemAddForm(forms.Form):
-    code = forms.CharField(required=True)
-    title = forms.CharField(required=True)
-    description = forms.CharField(required=False, label='Additional comment')
-    group = forms.CharField(required=False)
-    suite = forms.ChoiceField(choices=[])
-    statement = forms.CharField(widget=forms.Textarea, required=False)
-    pdf = forms.FileField(required=False)
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
-    def __init__(self,data=None,suites=[],*args,**kwargs):
-        super(ProblemAddForm,self).__init__(data,*args,**kwargs)
-        self.fields["suite"].choices = [[suite.id,suite.name + '(' + suite.description + ')'] for suite in suites]
-
 
