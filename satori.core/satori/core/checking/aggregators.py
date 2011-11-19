@@ -64,7 +64,7 @@ class AggregatorBase(object):
             self.scores[c.id].contestant = c
             self.scores[c.id].hidden = c.invisible and not getattr(self.params, 'show_invisible', False)
             if c.id in ranking_entry_cache:
-                self.scores[c.id].ranking_entry = ranking_entry_cache[c.id]
+                self.scores[c.id].ranking_entry = ranking_entry_cache.pop(c.id)
             else:
                 (self.scores[c.id].ranking_entry, created) = RankingEntry.objects.get_or_create(ranking=self.ranking, contestant=c, defaults={'position': self.position()})
 
@@ -73,6 +73,9 @@ class AggregatorBase(object):
         for cid in old_contestants:
             if cid not in new_contestants:
                 del self.scores[cid]
+
+        for cid in ranking_entry_cache:
+        	ranking_entry_cache[cid].delete()
     
     def created_submits(self, submits):
         for submit in submits:
