@@ -18,5 +18,6 @@ setup(name='satori.tools',
         satori.console = satori.tools.console:main
         satori.default_judges = satori.tools.judges:default_judges
         satori.team = satori.tools.teams:uzi_team
+        satori.submit = satori.tools.submit:submit
     ''',
 )
