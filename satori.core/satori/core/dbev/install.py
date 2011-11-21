@@ -116,22 +116,25 @@ BEGIN
                 AS t(keyid INT, parent_keyid INT, level INT);
 
     DROP TABLE IF EXISTS user_privs;
-    CREATE TEMPORARY TABLE user_privs ("right", entity_id, start_on, finish_on)
-        AS SELECT cp.right, cp.entity_id, cp.start_on, cp.finish_on
-            FROM core_privilege AS cp WHERE (EXISTS (SELECT * FROM user_roles AS ur WHERE ur.role_id = cp.role_id));
+    CREATE TEMPORARY TABLE user_privs ("right", entity_id)
+        AS SELECT cp.right, cp.entity_id
+            FROM core_privilege AS cp
+            WHERE 
+                (EXISTS (SELECT * FROM user_roles AS ur WHERE ur.role_id = cp.role_id))
+                AND (coalesce(cp.start_on, NOW()) <= NOW())
+                AND (coalesce(cp.finish_on, NOW()) >= NOW());
 END;
 $$ LANGUAGE plpgsql;
 """
     update_user_rights_function = """
 CREATE OR REPLACE FUNCTION update_user_rights() RETURNS VOID AS $$
+DECLARE
+    user_id INTEGER; 
 BEGIN
-    DROP TABLE IF EXISTS user_privs;
-    CREATE TEMPORARY TABLE user_privs ("right", entity_id, start_on, finish_on)
-        AS SELECT cp.right, cp.entity_id, cp.start_on, cp.finish_on
-            FROM core_privilege AS cp WHERE (EXISTS (SELECT * FROM user_roles AS ur WHERE ur.role_id = cp.role_id));
-EXCEPTION
-    WHEN undefined_table THEN
-        NULL;
+    user_id := get_user_id();
+    IF NOT (user_id IS NULL) THEN
+        PERFORM set_user_id(user_id);
+    END IF;
 END;
 $$ LANGUAGE plpgsql;
 """
