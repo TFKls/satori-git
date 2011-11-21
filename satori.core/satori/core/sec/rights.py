@@ -269,7 +269,7 @@ class PreparedRightNode(SatoriNode):
         self.column = column
         self.right = right
     def as_sql(self):
-        return 'EXISTS (SELECT * FROM user_privs WHERE user_privs.entity_id = {0}.{1} AND user_privs.right = \'{2}\')'.format(self.table, self.column, self.right)
+        return 'EXISTS (SELECT * FROM user_privs WHERE user_privs.entity_id = {0}.{1} AND user_privs.right = \'{2}\' AND coalesce(user_privs.start_on, NOW()) <= NOW() AND coalesce(user_privs.finish_on, NOW()) >= NOW())'.format(self.table, self.column, self.right)
 
 
 class RightNode(SatoriNode):
@@ -291,7 +291,7 @@ class GlobalRightNode(SatoriNode):
     def prepare(self, query):
         return self
     def as_sql(self):
-        return 'EXISTS (SELECT * FROM user_privs WHERE user_privs.entity_id = {0} AND user_privs.right = \'{1}\')'.format(Global.get_instance().id, self.right)
+        return 'EXISTS (SELECT * FROM user_privs WHERE user_privs.entity_id = {0} AND user_privs.right = \'{1}\' AND coalesce(user_privs.start_on, NOW()) <= NOW() AND coalesce(user_privs.finish_on, NOW()) >= NOW())'.format(Global.get_instance().id, self.right)
 
 
 class PreparedIsNullNode(SatoriNode):
