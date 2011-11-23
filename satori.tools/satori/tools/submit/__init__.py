@@ -47,7 +47,7 @@ def submit():
 
     print 'Submit successfully created:'
     print '  Contest:', contest.name
-    print '  Problem:', problem.code, '-', problem.name
+    print '  Problem:', problem.code, '-', problem.title
     print '  File:', args[1]
     print '  Submit ID:', submit.id
 
