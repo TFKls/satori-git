@@ -38,7 +38,28 @@ if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
 #    THRIFT_HOST = 'localhost'
 #    THRIFT_PORT = 36889
 #    BLOB_PORT = 36887
-    
+
+LOGGING = {
+        'version': 1,
+        'disable_existing_loggers': True,
+        'formatters': {
+            'default': {
+                'format': '%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+                },
+            },
+        'handlers': {
+            'console': {
+                'level': 'DEBUG',
+                'class': 'logging.StreamHandler',
+                'formatter': 'default',
+                },
+            },
+        'root': {
+            'handlers': ['console'],
+            'level': 'DEBUG',
+            },
+        }
+
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.

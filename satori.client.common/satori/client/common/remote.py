@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import getpass
+import logging
 import new
 import os
 import shutil
@@ -146,7 +147,7 @@ def setup(host, thrift_port, blob_port_, ssl_):
     blob_port = blob_port_
     ssl = ssl_
 
-    print 'Bootstrapping client...'
+    logging.debug('Bootstrapping client...')
 
     (_interface, _client) = bootstrap_thrift_client(transport_factory)
     _classes = unwrap_interface(_interface, BlobReader, BlobWriter)
@@ -156,5 +157,5 @@ def setup(host, thrift_port, blob_port_, ssl_):
 
     setup_api(_classes)
 
-    print 'Client bootstrapped.'
+    logging.debug('Client bootstrapped.')
 

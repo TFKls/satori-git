@@ -3,8 +3,10 @@
 from satori.client.common import want_import, remote
 import ConfigParser
 import getpass
+import logging
 import optparse
 import os
+import sys
 
 want_import(globals(), 'Machine', 'User', 'token_container', 'TokenInvalid', 'TokenExpired')
 
@@ -17,6 +19,7 @@ options.add_option('-u', '--username', dest='username', help='user name (or "-" 
 options.add_option('-p', '--password', dest='password', help='password')
 options.add_option('-m', '--machine', dest='machine', help='machine name (or "-" to skip authentication)')
 options.add_option('-S', '--ssl', dest='ssl', help='use SSL', action='store_true')
+options.add_option('-l', '--loglevel', dest='loglevel', help='Log level (as in logging module in python)')
 
 class AuthSetup:
     def __init__(self):
@@ -39,7 +42,7 @@ class AuthSetup:
             raise RuntimeError('Satori Thrift port number not specified in config file or arguments')
         if not self.blob_port:
             raise RuntimeError('Satori blob port number not specified in config file or arguments')
-        print 'Connecting to: {0}:{1}:{2}{3}'.format(self.hostname, self.thrift_port, self.blob_port, ' (SSL)' if self.ssl else '')
+        logging.debug('Connecting to: {0}:{1}:{2}{3}'.format(self.hostname, self.thrift_port, self.blob_port, ' (SSL)' if self.ssl else ''))
         remote.setup(self.hostname, self.thrift_port, self.blob_port, self.ssl)
 
     def authenticate(self):
@@ -68,7 +71,19 @@ class AuthSetup:
 
 auth_setup = AuthSetup()
 
-def setup():
+def setup(log_level=logging.DEBUG):
+    logger = logging.getLogger()
+    logger.setLevel(log_level)
+
+    for handler in logger.handlers:
+        logger.removeHandler(handler)
+
+    formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
     auth_setup.clear()
 
     (options.options, options.args) = options.parse_args()
@@ -79,7 +94,6 @@ def setup():
         config.read(options.options.config)
     else:
         config.read(os.path.expanduser('~/.satori.cfg'))
-
 
     if options.options.section:
         auth_setup.section = options.options.section
@@ -92,7 +106,13 @@ def setup():
 
     if auth_setup.section:
         if config.has_option(auth_setup.section, 'host'):
-            auth_setup.hostname = config.get(auth_setup.section, 'host')
+            host = config.get(auth_setup.section, 'host')
+            if len(host.split(':')) == 3:
+                (auth_setup.hostname, auth_setup.thrift_port, auth_setup.blob_port) = host.split(':')
+                auth_setup.thrift_port = int(auth_setup.thrift_port)
+                auth_setup.blob_port = int(auth_setup.blob_port)
+            else:
+                auth_setup.hostname = host
 
         if config.has_option(auth_setup.section, 'thrift_port'):
             auth_setup.thrift_port = config.getint(auth_setup.section, 'thrift_port')
@@ -112,6 +132,9 @@ def setup():
         if config.has_option(auth_setup.section, 'ssl'):
             auth_setup.ssl = config.getboolean(auth_setup.section, 'ssl')
 
+        if config.has_option(auth_setup.section, 'loglevel'):
+            logger.setLevel(logging._levelNames[config.get(auth_setup.section, 'loglevel')])
+
     if options.options.host:
         (auth_setup.hostname, auth_setup.thrift_port, auth_setup.blob_port) = options.options.host.split(':')
         auth_setup.thrift_port = int(auth_setup.thrift_port)
@@ -129,6 +152,9 @@ def setup():
     if options.options.ssl:
         auth_setup.ssl = True
 
+    if options.options.loglevel:
+        logger.setLevel(logging._levelNames[options.options.loglevel])
+
     auth_setup.setup()
 
     auth_setup.authenticate()
@@ -137,3 +163,14 @@ def setup():
 
 def authenticate():
     auth_setup.authenticate()
+
+def catch_exceptions(f):
+    def ff(*args, **kwargs):
+        try:
+            return f(*args, **kwargs)
+        except:
+            logging.exception("An error occured")
+            exctype, value = sys.exc_info()[:2]
+            print >>sys.stderr, "An error occured:", str(value)
+    return ff
+

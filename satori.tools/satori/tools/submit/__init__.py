@@ -1,15 +1,16 @@
+import logging
 import os.path
 
 from satori.client.common import want_import
+from satori.tools import config, options, setup, auth_setup, catch_exceptions
 want_import(globals(), '*')
 
+@catch_exceptions
 def submit():
-    from satori.tools import config, options, setup, auth_setup
-
     options.set_usage('Usage: %prog [options] problem_code submit_file')
     options.add_option('-C', '--contest', type='int', dest='contest', help='contest ID')
 
-    (options, args) = setup()
+    (opts, args) = setup(logging.CRITICAL)
 
     contestId = None
 
@@ -17,7 +18,7 @@ def submit():
         if config.has_option(auth_setup.section, 'contest'):
             contestId = config.getint(auth_setup.section, 'contest')
 
-    if options.contest:
+    if opts.contest:
     	contestId = options.contest
 
     if not contestId:
@@ -26,16 +27,17 @@ def submit():
     if len(args) != 2:
     	raise RuntimeError('Invalid number of positional parameters specified')
 
-    contest = Contest(contestId)
+    cc = Contest.filter(ContestStruct(id=contestId))
+    if not cc:
+    	raise RuntimeError('The specified contest is not found')
 
-    problem = None
+    contest = cc[0]
 
-    for p in ProblemMapping.filter(ProblemMappingStruct(contest=contest)):
-        if p.code == args[0]:
-        	problem = p
-
-    if not problem:
+    pp = ProblemMapping.filter(ProblemMappingStruct(contest=contest, code=args[0]))
+    if not pp:
     	raise RuntimeError('The specified problem is not found')
+
+    problem = pp[0]
 
     f = open(args[1], 'r')
     data = f.read()
@@ -43,5 +45,9 @@ def submit():
 
     submit = Submit.create(SubmitStruct(problem=problem), data, os.path.basename(args[1]))
 
-    print 'Submit successfully created, id={0}'.format(submit.id)
+    print 'Submit successfully created:'
+    print '  Contest:', contest.name
+    print '  Problem:', problem.code, '-', problem.name
+    print '  File:', args[1]
+    print '  Submit ID:', submit.id
 
