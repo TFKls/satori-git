@@ -5,7 +5,7 @@ from operator import attrgetter
 from django.db import models
 
 from satori.core.dbev   import Events
-from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check
+from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check, password_rehash_old
 
 @ExportModel
 class Contestant(Role):
@@ -138,6 +138,10 @@ class Contestant(Role):
         if password_check(contestant.password, password):
             session = Session.start()
             session.login(contestant, 'contestant')
+            pwhash = password_rehash_old(contestant.password, password)
+            if pwhash != contestant.password:
+                contestant.password = pwhash
+                contestant.save()
             return str(token_container.token)
         else:
             raise LoginFailed()
