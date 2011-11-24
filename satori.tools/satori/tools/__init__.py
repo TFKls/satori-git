@@ -168,6 +168,8 @@ def catch_exceptions(f):
     def ff(*args, **kwargs):
         try:
             return f(*args, **kwargs)
+        except SystemExit:
+            pass
         except:
             logging.exception("An error occured")
             exctype, value = sys.exc_info()[:2]
