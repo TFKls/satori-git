@@ -15,8 +15,6 @@ class Contest(Entity):
     """Model. Description of a contest.
 
     rights:
-        VIEW_INTRA_FILES
-        VIEW_TASKS
         APPLY
         JOIN
         OBSERVE
@@ -26,8 +24,8 @@ class Contest(Entity):
     name            = models.CharField(max_length=64, unique=True)
     description     = models.TextField(blank=True, default="")
     problems        = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
-    contestant_role = models.ForeignKey('Role', related_name='contest_contestants+', on_delete=models.PROTECT)
-    admin_role      = models.ForeignKey('Role', related_name='contest_admins+', on_delete=models.PROTECT)
+    contestant_role = models.ForeignKey('SystemRole', related_name='contest_contestants+', on_delete=models.PROTECT)
+    admin_role      = models.ForeignKey('SystemRole', related_name='contest_admins+', on_delete=models.PROTECT)
     archived        = models.BooleanField(default=False)
 
     lock_start   = models.DateTimeField(null=True)
@@ -35,22 +33,19 @@ class Contest(Entity):
     lock_address = models.IPAddressField(default='0.0.0.0')
     lock_netmask = models.IPAddressField(default='255.255.255.255')
 
-    public_files = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
-    intra_files  = AttributeGroupField(PCArg('self', 'VIEW_INTRA_FILES'), PCArg('self', 'MANAGE'), '')
+    appearance   = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
         fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('archived', 'VIEW'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
     class RightsMeta(object):
-        rights = ['APPLY', 'JOIN', 'SUBMIT', 'OBSERVE', 'VIEW_TASKS', 'ASK_QUESTIONS', 'VIEW_INTRA_FILES']
+        rights = ['APPLY', 'JOIN', 'SUBMIT', 'OBSERVE', 'ASK_QUESTIONS']
 
         inherit_APPLY = ['JOIN']
         inherit_JOIN = ['MANAGE']
         inherit_SUBMIT = ['MANAGE']
         inherit_OBSERVE = ['MANAGE']
-        inherit_VIEW_TASKS = ['MANAGE']
         inherit_ASK_QUESTIONS = ['MANAGE']
-        inherit_VIEW_INTRA_FILES = ['MANAGE']
 
     @classmethod
     def inherit_rights(cls):
@@ -65,8 +60,7 @@ class Contest(Entity):
         return inherits
 
     def save(self, *args, **kwargs):
-        self.fixup_public_files()
-        self.fixup_intra_files()
+        self.fixup_appearance()
         super(Contest, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -94,8 +88,8 @@ class Contest(Entity):
         contest = Contest()
         contest.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
         contest.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
-        contest.contestant_role = Role.create(fields=RoleStruct(name='Contestant of ' + contest.name))
-        contest.admin_role = Role.create(fields=RoleStruct(name='Administrator of ' + contest.name))
+        contest.contestant_role = SystemRole.create(fields=SystemRoleStruct(name='Contestants of ' + contest.name))
+        contest.admin_role = SystemRole.create(fields=SystemRoleStruct(name='Administrators of ' + contest.name))
         contest.save()
         contest.add_admin(token_container.token.user)
         Global.get_instance().contest_admins.add_member(contest.admin_role)
@@ -103,7 +97,6 @@ class Contest(Entity):
         Privilege.grant(contest.admin_role, contest.admin_role, 'MANAGE')
         Privilege.grant(contest.admin_role, contest.contestant_role, 'MANAGE')
         Privilege.grant(contest.contestant_role, contest, 'VIEW')
-        Privilege.grant(contest.contestant_role, contest, 'VIEW_INTRA_FILES')
         return contest
    
     @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), DjangoStruct('Contest')], PCArg('self', 'MANAGE'), [CannotSetField])

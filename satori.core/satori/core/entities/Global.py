@@ -11,10 +11,10 @@ class Global(Entity):
     """
     guardian         = models.IntegerField(unique=True)
 
-    contest_admins   = models.ForeignKey('Role', related_name='+', on_delete=models.PROTECT)
-    anonymous        = models.ForeignKey('Role', related_name='+', on_delete=models.PROTECT)
-    authenticated    = models.ForeignKey('Role', related_name='+', on_delete=models.PROTECT)
-    zero             = models.ForeignKey('Role', related_name='+', on_delete=models.PROTECT)
+    contest_admins   = models.ForeignKey('SystemRole', related_name='+', on_delete=models.PROTECT)
+    anonymous        = models.ForeignKey('SystemRole', related_name='+', on_delete=models.PROTECT)
+    authenticated    = models.ForeignKey('SystemRole', related_name='+', on_delete=models.PROTECT)
+    zero             = models.ForeignKey('SystemRole', related_name='+', on_delete=models.PROTECT)
 
     assignment       = models.ForeignKey('Problem', related_name='+', on_delete=models.PROTECT)
 
@@ -59,16 +59,16 @@ class Global(Entity):
 
     @staticmethod
     def create():
-        contest_admins = Role(name='CONTEST ADMINS')
+        contest_admins = SystemRole(name='Administrators of any contest')
         contest_admins.save()
 
-        zero = Role(name='ZERO')
+        zero = SystemRole(name='ZERO')
         zero.save()
 
-        authenticated = Role(name='AUTHENTICATED')
+        authenticated = SystemRole(name='Logged on users')
         authenticated.save()
 
-        anonymous = Role(name='ANONYMOUS')
+        anonymous = SystemRole(name='Everyone')
         anonymous.save()
 
         anonymous.add_member(authenticated)

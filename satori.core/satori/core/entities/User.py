@@ -21,6 +21,7 @@ class User(Role):
     email       = models.CharField(max_length=64, null=True)
     firstname   = models.CharField(max_length=64, null=True)
     lastname    = models.CharField(max_length=64, null=True)
+    affiliation = models.CharField(max_length=64, null=True)
     confirmed   = models.BooleanField(default=False)
     activated   = models.BooleanField(default=True)
     activation_code = models.CharField(max_length=128, null=True, unique=True)
