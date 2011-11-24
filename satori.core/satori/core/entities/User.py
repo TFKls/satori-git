@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django.db import models
 
 from satori.core.dbev   import Events
-from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check, email_ok
+from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check, password_rehash_old, email_ok
 
 @ExportModel
 class User(Role):
@@ -104,6 +104,10 @@ class User(Role):
         if password_check(user.password, password):
             session = Session.start()
             session.login(user, 'user')
+            pwhash = password_rehash_old(user.password, password)
+            if pwhash != user.password:
+            	user.password = pwhash
+            	user.save()
             return str(token_container.token)
         else:
             raise LoginFailed()

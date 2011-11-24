@@ -4,7 +4,7 @@ import ipaddr
 
 from satori.ars.server  import server_info
 from satori.core.dbev   import Events
-from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check
+from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check, password_rehash_old 
 from satori.core.models import LoginFailed
 
 @ExportModel
@@ -60,6 +60,10 @@ class Machine(Role):
             raise LoginFailed()
         session = Session.start()
         session.login(machine, 'machine')
+        pwhash = password_rehash_old(machine.password, password)
+        if pwhash != machine.password:
+            machine.password = pwhash
+            machine.save()
         return str(token_container.token)
 
     @ExportMethod(NoneType, [DjangoId('Machine'), unicode], PCArg('self', 'MANAGE'))

@@ -1,6 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import crypt
+import hashlib
 import random
 import string
 
@@ -39,15 +40,42 @@ def password_ok(password):
     if len(password) < 4:
         raise InvalidPassword(reason='is too short')
 
+
+def sha_crypt(password, salt=None):
+    if salt is None:
+        chars = '0123456789abcdef'
+        salt = ''
+        for i in range(6):
+            salt += random.choice(chars)
+    hasher = hashlib.sha1()
+    hasher.update(salt)
+    hasher.update(password)
+    return hasher.hexdigest() + salt
+def sha_salt(pwhash):
+    hasher = hashlib.sha1()
+    return pwhash[hasher.digest_size*2:]
+
+
 def password_crypt(password):
-    chars = string.letters + string.digits
-    salt = random.choice(chars) + random.choice(chars)
-    return crypt.crypt(password, salt)
+    return sha_crypt(password)
 
 def password_check(pwhash, password):
     if pwhash is None:
         return False
-    return crypt.crypt(password, pwhash) == pwhash
+    if crypt.crypt(password, pwhash) == pwhash:
+    	return True
+    salt = sha_salt(pwhash)
+    if sha_crypt(password, salt) == pwhash:
+        return True
+    return False
+
+def password_rehash_old(pwhash, password):
+    if not password_check(pwhash, password):
+    	return pwhash
+    salt = sha_salt(pwhash)
+    if sha_crypt(password, salt) == pwhash:
+    	return pwhash
+    return password_crypt(password)
 
 def email_ok(email):
     if email is None:
