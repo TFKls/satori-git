@@ -36,7 +36,7 @@ class ProblemMapping(Entity):
         inherit_parent = 'contest'
         inherit_parent_require = 'VIEW'
 
-        inherit_parent_VIEW = ['VIEW_TASKS']
+        inherit_VIEW = ['SUBMIT']
         inherit_SUBMIT = ['MANAGE']
         inherit_parent_SUBMIT = ['SUBMIT']
         inherit_parent_MANAGE = ['MANAGE']
