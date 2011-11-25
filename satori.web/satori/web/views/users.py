@@ -26,7 +26,9 @@ def view(request, page_info):
     form = EditUserForm()
     
     class UserTable(ResultTable):
-    
+        @staticmethod
+        def default_limit():
+            return 50
         def __init__(self,req,prefix=''):
             super(UserTable,self).__init__(req=req,prefix=prefix)
             self.results = User.filter(UserStruct())
@@ -38,7 +40,7 @@ def view(request, page_info):
             self.fields.append(TableField(name='First name',value=(lambda table,i: table.results[i].firstname), id=2 ))
             self.fields.append(TableField(name='Last name',value=(lambda table,i: table.results[i].lastname), id=3 ))
             self.fields.append(TableField(name='E-mail',value=(lambda table,i: unicode(table.results[i].email)), id=4 ))
-            affiliation = TableField(name='Affiliation',value=(lambda table,i: unicode(table.results[i].profile_get_str('affiliation'))), id=5)
+            affiliation = TableField(name='Affiliation',value=(lambda table,i: unicode(table.results[i].affiliation)), id=5)
             self.fields.append(affiliation)
             self.add_autofilter(affiliation)
         

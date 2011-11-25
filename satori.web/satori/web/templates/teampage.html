@@ -5,13 +5,13 @@
 <table>
 {{ form.as_table }}
 </table>
-<input type="submit" name="change" value="Change"/>
+<input type="submit" class="button" name="change" value="Change"/>
 
-<table>
-  <tr><th>Login</th><th>Name</th></td><td></td>
+<table class="simple">
+  <tr><th>Login</th><th>Name</th><th>Affiliation</th><th></th></tr>
 {% for u in users %}
   <tr>
-  <td>{{u.login}}</td><td>{{u.name}}</td><td><input type="submit" name="remove_{{u.id}}" value="Remove"</td>
+  <td>{{u.login}}</td><td>{{u.name}}</td><td>{{u.affiliation}}</td><td><input type="submit" class="button button_small" name="remove_{{u.id}}" value="Remove"</td>
   </tr>
 {% endfor %}
 </table>
@@ -21,6 +21,6 @@
 <table>
 {{ add_form.as_table}}
 </table>
-<input type="submit" name="add" value="Add new user"/>
+<input type="submit" class="button" name="add" value="Add new user"/>
 </form>
 {% endblock %}

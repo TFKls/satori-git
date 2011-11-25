@@ -57,7 +57,7 @@ def profile(request, page_info, id = None):
 
     user_admin = page_info.is_admin
     change_allowed = user_admin or not user.confirmed
-    class ChangePassForm(forms.Form):
+    class ProfileForm(forms.Form):
         if change_allowed:
             firstname = forms.CharField(label="First name:",required=False)
             lastname = forms.CharField(label="Last name:",required=False)
@@ -67,8 +67,9 @@ def profile(request, page_info, id = None):
         oldpass = forms.CharField(label="Old password:",required=False,widget=forms.PasswordInput)
         newpass = forms.CharField(label="New password:",required=False,widget=forms.PasswordInput)
         confirm = forms.CharField(label="Confirm password:",required=False,widget=forms.PasswordInput)
+        affiliation = forms.CharField(label="Affiliation:",required=False)
         if user_admin:
-            lock_user = forms.BooleanField(label="Lock user:",required=False)
+            lock_user = forms.BooleanField(label="Confirm identity:",required=False)
         def clean(self):
             data = self.cleaned_data
             if data["newpass"]!=data["confirm"]:
@@ -77,15 +78,14 @@ def profile(request, page_info, id = None):
                 del data["confirm"]
             return data
         
-    a = Global.get_instance().profile_fields
-    parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
-    form = ChangePassForm(data={'firstname' : user.firstname, 'lastname' : user.lastname,'lock_user' : user.confirmed})
-    profile_form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
+#    parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
+    form = ProfileForm(data={'firstname' : user.firstname, 'lastname' : user.lastname,'lock_user' : user.confirmed,'affiliation' : user.affiliation})
+#    profile_form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
     if request.method!="POST":
-        return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form})
+        return render_to_response('changepass.html', {'page_info' : page_info, 'form' : form})
     bar = StatusBar()
     if 'changepass' in request.POST.keys():
-        form = ChangePassForm(request.POST)
+        form = ProfileForm(request.POST)
         if form.is_valid():
             try:
                 data = form.cleaned_data
@@ -101,6 +101,9 @@ def profile(request, page_info, id = None):
                 if user.firstname!=data['firstname'] or user.lastname!=data['lastname']:
                     user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
                     bar.messages.append('Personal data changed.')
+                if user.affiliation!=data['affiliation']:
+                    user.modify(UserStruct(affiliation=data['affiliation']))
+                    bar.messages.append('Affiliation changed.')
                 if user_admin and data['lock_user'] and not user.confirmed:
                     user.modify(UserStruct(confirmed=True))
                     bar.messages.append('User identity locked.');
@@ -111,11 +114,11 @@ def profile(request, page_info, id = None):
                 bar.errors.append('Login failed!')
             except InvalidPassword:
                 bar.errors.append('Invalid password!')
-            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form,'status_bar' : bar}) 
-    if 'update' in request.POST.keys():
-        profile_form = xmlparams.ParamsForm(parser=parser, data=request.POST)
-        if profile_form.is_valid():
+            return render_to_response('changepass.html', {'page_info' : page_info, 'form' : form, 'status_bar' : bar}) 
+#    if 'update' in request.POST.keys():
+#        profile_form = xmlparams.ParamsForm(parser=parser, data=request.POST)
+#        if profile_form.is_valid():
 #            om = params.dict_to_oa_map(profile_form.cleaned_data)
-            user.profile_set_map(parser.write_oa_map(profile_form.cleaned_data))
-            return render_to_response('changepass.html', {'page_info' : page_info, 'password_form' : form, 'profile_form' : profile_form})
-    return render_to_response('changepass.html', {'page_info' : page_info, 'status_bar' : bar, 'password_form' : form, 'profile_form' : profile_form}) 
+#            user.profile_set_map(parser.write_oa_map(profile_form.cleaned_data))
+#            return render_to_response('changepass.html', {'page_info' : page_info, 'form' : form, 'profile_form' : profile_form})
+    return render_to_response('changepass.html', {'page_info' : page_info, 'status_bar' : bar, 'form' : form}) 

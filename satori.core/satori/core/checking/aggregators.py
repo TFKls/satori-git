@@ -102,7 +102,7 @@ class ACMAggregator(AggregatorBase):
 #@<aggregator name="ACM style aggregator">
 #@      <general>
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
-#@              <param type="bool"     name="show_zero"      description="Hide contestants with zero score" default="true"/>
+#@              <param type="bool"     name="show_zero"      description="Show contestants with zero score" default="false"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" default="1200s"/>
@@ -241,8 +241,8 @@ class PointsAggregator(AggregatorBase):
                     points = 0
                 else:
                     points = int(100*passed/checked)
-                if self.score.aggregator.submit_cache[result.submit_id].time > self.last_time:
-                    self.points = points
+#                if self.score.aggregator.submit_cache[result.submit_id].time > self.last_time:
+                self.points = points
 
         def __init__(self, aggregator):
             self.aggregator = aggregator

@@ -25,7 +25,9 @@ def getfile(request, mode, model, id, attr_name, file_name):
     blob = obj.oa_get_blob(attr_name)
     
     response = HttpResponse(content=blob_generator(blob), mimetype=guess_type(file_name)[0])
-    if mode == 'download':
+    if mode == 'view':
+        response['Content-Disposition'] = 'inline; filename='+file_name
+    else:
         response['Content-Disposition'] = 'attachment; filename='+file_name
     return response
 
@@ -39,6 +41,8 @@ def getfile_group(request, mode, model, id, group_name, attr_name, file_name):
     blob = getattr(obj, group_name + '_get_blob')(attr_name)
     
     response = HttpResponse(content=blob_generator(blob), mimetype=guess_type(file_name)[0])
-    if mode == 'download':
+    if mode == 'view':
+        response['Content-Disposition'] = 'inline; filename='+file_name
+    else:
         response['Content-Disposition'] = 'attachment; filename='+file_name
     return response

@@ -2,21 +2,12 @@
 
 {% block content %}
 
-<h3>Change password:</h3>
+<h3>User profile:</h3>
 <form action="" method="POST">
 <table>
-    {{ password_form.as_table }}
+    {{ form.as_table }}
 </table>
 <input type="submit" class="button" value="Change" name="changepass"/>
-</form>
-
-
-<h3>User settings:</h3>
-<form action="" method="POST">
-<table>
-    {{ profile_form.as_table }}
-</table>
-<input type="submit" class="button" value="Update profile" name="update"/>
 </form>
 
 

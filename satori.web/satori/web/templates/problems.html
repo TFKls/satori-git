@@ -39,7 +39,7 @@
 
 <td class="has_pdf">
 {% if pinfo.has_pdf %}
-<a class="button" href={% url download_group "download" "ProblemMapping" pinfo.problem.id "statement_files" "_pdf" pinfo.problem.code|add:".pdf" %}>
+<a class="button" href={% url download_group "view" "ProblemMapping" pinfo.problem.id "statement_files" "_pdf" pinfo.problem.code|add:".pdf" %}>
 PDF
 </a>
 {% endif %}
