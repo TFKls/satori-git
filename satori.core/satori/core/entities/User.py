@@ -29,7 +29,7 @@ class User(Role):
     profile     = AttributeGroupField(PCArg('self', 'EDIT'), PCArg('self', 'EDIT'), '')
 
     class ExportMeta(object):
-        fields = [('login', 'VIEW'), ('email', 'EDIT'), ('firstname', 'VIEW'), ('lastname', 'VIEW'), ('activated', 'VIEW'), ('confirmed', 'VIEW')]
+        fields = [('login', 'VIEW'), ('email', 'EDIT'), ('firstname', 'VIEW'), ('lastname', 'VIEW'), ('activated', 'VIEW'), ('confirmed', 'VIEW'), ('affiliation', 'VIEW')]
     
     def save(self, *args, **kwargs):
         self.fixup_profile()
