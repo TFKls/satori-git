@@ -46,7 +46,7 @@ class User(Role):
     def create(fields):
         user = User()
         user.forbid_fields(fields, ['id', 'name', 'sort_field'])
-        modified = user.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code'])
+        modified = user.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code','affiliation'])
         if not 'activation_code' in modified:
             user.activation_code = ''.join([random.choice(string.letters + string.digits) for i in range(16)])
         user.save()
@@ -74,13 +74,13 @@ class User(Role):
         changed = []
         if Privilege.demand(self, 'MANAGE'):
             self.forbid_fields(fields, ['id', 'name', 'sort_field'])
-            changed = self.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code'])
+            changed = self.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code','affiliation'])
         else:
             self.forbid_fields(fields, ['id', 'name', 'sort_field', 'login', 'confirmed', 'activated', 'activation_code', 'email'])
             if self.confirmed:
                 self.forbid_fields(fields, ['firstname', 'lastname'])
             else:
-                change = self.update_fields(fields, ['firstname', 'lastname'])
+                change = self.update_fields(fields, ['firstname', 'lastname', 'affiliation'])
         self.save()
         if 'firstname' in changed or 'lastname' in changed:
             for c in Contestant.objects.filter(children=self):
