@@ -241,8 +241,9 @@ class PointsAggregator(AggregatorBase):
                     points = 0
                 else:
                     points = int(100*passed/checked)
-#                if self.score.aggregator.submit_cache[result.submit_id].time > self.last_time:
-                self.points = points
+                if self.score.aggregator.submit_cache[result.submit_id].time > self.last_time:
+                    self.last_time = self.score.aggregator.submit_cache[result.submit_id].time
+                    self.points = points
 
         def __init__(self, aggregator):
             self.aggregator = aggregator
