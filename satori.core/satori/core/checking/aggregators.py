@@ -309,6 +309,7 @@ class MarksAggregator(AggregatorBase):
 #@<aggregator name="Marks aggregator">
 #@      <general>
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
+#@              <param type="bool"     name="show_tasklist" description="Show tasklist column" default="false"/>
 #@              <param type="float"    name="max_score"      description="Maximum score for each problem" default="1"/>
 #@              <param type="float"    name="min_score"      description="Minimum score for each problem" default="-1"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
@@ -416,7 +417,9 @@ class MarksAggregator(AggregatorBase):
                 column = '%.2f'%(score,)
                 if self.aggregator.params.show_max_score:
                     column += ' (%.2f)'%(mscore,)
-                columns += [column, problems]
+                columns += [column]
+                if self.aggregator.params.show_tasklist:
+                    columns += [problems]
                 pi=0
                 for pid in self.aggregator.sorted_problems:
                     params = self.aggregator.problem_params[pid]
@@ -485,7 +488,9 @@ class MarksAggregator(AggregatorBase):
         columns = [(4, 'Lp.'), (32, 'Name')]
         if self.params.show_marks:
             columns += [(16, 'Mark')]
-        columns += [(8, 'Score'), (16, 'Tasks')]
+        columns += [(8, 'Score')]
+        if self.params.show_tasklist:
+            columns += [(16, 'Tasks')]
         self.group_score = {}
         for pid in self.sorted_problems:
             problem = self.problem_cache[pid]
