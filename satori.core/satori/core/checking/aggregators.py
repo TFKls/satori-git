@@ -513,6 +513,7 @@ class ACMProblemStats(AggregatorBase):
 #@<aggregator name="ACM Problem Statistics">
 #@      <general>
 #@              <param type="text"     name="results"   description="Aggregated results"        default="OK,ANS,RTE,TLE,CME,MEM"/>
+#@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
 #@      </general>
 #@      <problem>
 #@      </problem>
@@ -525,21 +526,25 @@ class ACMProblemStats(AggregatorBase):
     def recalculate(self):
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         for p in self.problem_list:
-            col = [p.code+' \- '+p.title,unicode(self.total[p])] + [unicode(self.stats[p][r]) for r in self.results]
-            self.ranking.header += self.table.generate_row(*col)+self.table.row_separator               
-        if not self.problem_list:
-            self.ranking.header += self.table.row_separator
+            col = [p.code+' \- '+p.title,unicode(self.submitcount[p])] + [unicode(self.stats[p][r]) for r in self.results]
+            self.ranking.header += self.table.generate_row(*col)+self.table.row_separator
+        fcol = ['**Total:**',unicode(self.allsubmits)] + ['**'+unicode(self.total[r])+'**' for r in self.results]
+        self.ranking.header += self.table.generate_row(*fcol)+self.table.row_separator            
         self.ranking.save()
-    
+
     def init(self):
         super(ACMProblemStats, self).init()
 
-        self.problem_list = sorted(self.problem_cache.values(), key=attrgetter('code'))        
+        self.problem_list = sorted(self.problem_cache.values(), key=attrgetter('code'))
         self.results = self.params.results.split(',')
         self.stats = {}
+        self.submitcount = {}
         self.total = {}
+        self.allsubmits = 0
+        for r in self.results:
+            self.total[r] = 0
         for p in self.problem_list:
-            self.total[p] = 0
+            self.submitcount[p] = 0
             self.stats[p] = {}
             for r in self.results:
                 self.stats[p][r] = 0
@@ -548,13 +553,17 @@ class ACMProblemStats(AggregatorBase):
         self.recalculate()
 
     def changed_contestants(self):
-        pass    
+        self.recalculate()
     
     def checked_test_suite_results(self, test_suite_results):
         for result in test_suite_results:
             s = self.submit_cache[result.submit_id]
+            if s.contestant.invisible and not self.params.show_invisible:
+                continue
             status = result.oa_get_str('status')
-            self.total[s.problem] =  self.total[s.problem]+1
+            self.submitcount[s.problem] =  self.submitcount[s.problem]+1
+            self.total[status] = self.total[status]+1
+            self.allsubmits = self.allsubmits+1
             if status in self.results:
                 self.stats[s.problem][status] = self.stats[s.problem][status]+1
         self.recalculate()
