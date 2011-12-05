@@ -182,10 +182,9 @@ class ACMAggregator(AggregatorBase):
                 problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
 
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
-
-                self.ranking_entry.row = self.aggregator.table.generate_row('', contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
+                self.ranking_entry.row = self.aggregator.table.generate_row(unicode(self.ranking_entry.posistion), contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
                 self.ranking_entry.save()
 
         def aggregate(self, result):
@@ -529,7 +528,6 @@ class ACMProblemStats(AggregatorBase):
             col = [p.code+' \- '+p.title,unicode(self.submitcount[p])] + [unicode(self.stats[p][r]) for r in self.results]
             self.ranking.header += self.table.generate_row(*col)+self.table.row_separator
         fcol = [' **Total** ',' **'+unicode(self.allsubmits)+'** '] + [(' **'+unicode(self.total[r])+'** ') for r in self.results]
-        print fcol
         self.ranking.header += self.table.generate_row(*fcol)+self.table.row_separator            
         self.ranking.save()
 
@@ -549,7 +547,7 @@ class ACMProblemStats(AggregatorBase):
             self.stats[p] = {}
             for r in self.results:
                 self.stats[p][r] = 0
-        columns = [ (32,'Problem name'),(8,'Submits') ] + [ (4,r) for r in self.results ]
+        columns = [ (32,'Problem name'),(10,'Submits') ] + [ (8,r) for r in self.results ]
         self.table = RestTable(*columns)
         self.recalculate()
 
