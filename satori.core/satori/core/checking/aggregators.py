@@ -184,7 +184,7 @@ class ACMAggregator(AggregatorBase):
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
-                self.ranking_entry.row = self.aggregator.table.generate_row(unicode(self.ranking_entry.posistion), contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
+                self.ranking_entry.row = self.aggregator.table.generate_row(unicode(self.ranking_entry.position), contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
                 self.ranking_entry.save()
 
         def aggregate(self, result):
