@@ -528,7 +528,7 @@ class ACMProblemStats(AggregatorBase):
         self.problem_list = sorted(self.problem_cache.values(), key=attrgetter('code'))
         self.results = self.params.results.split(',')
         columns = [ (32,'Problem name'),(8,'Submits') ] + [ (4,r) for r in self.results ]
-        self.header = RestTable(*columns)
+        self.ranking.header = RestTable(*columns)
         self.ranking.save()
 
     def changed_contestants(self):
