@@ -508,9 +508,46 @@ class MarksAggregator(AggregatorBase):
         return self.MarksScore(self)
 
 
+class ACMProblemStats(AggregatorBase):
+    """
+#@<aggregator name="ACM Problem Statistics">
+#@      <general>
+#@              <param type="text"     name="results"   description="Aggregated results"        default="OK,ANS,RTE,TLE,CME,MEM"/>
+#@      </general>
+#@      <problem>
+#@      </problem>
+#@</aggregator>
+    """
+
+    def __init__(self, supervisor, ranking):
+        super(ACMProblemStats, self).__init__(supervisor, ranking)
+
+    def init(self):
+        super(ACMProblemStats, self).init()
+
+        self.problem_list = sorted(self.problem_cache.values(), key=attrgetter('code'))
+        self.results = self.params.results.split(',')
+        columns = [ (32,'Problem name'),(8,'Submits') ] + [ (4,r) for r in self.results ]
+        self.header = RestTable(*columns)
+        self.ranking.save()
+
+    def changed_contestants(self):
+        pass
+    
+    def created_submits(self, submits):
+        pass
+    
+    def checked_test_suite_results(self, test_suite_results):
+        pass
+
+
         
 
 aggregators = {}
 for item in globals().values():
     if isinstance(item, type) and issubclass(item, AggregatorBase) and (item != AggregatorBase):
         aggregators[item.__name__] = item
+
+
+
+
