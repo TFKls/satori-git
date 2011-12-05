@@ -531,6 +531,7 @@ class ACMProblemStats(AggregatorBase):
         self.table = RestTable(*columns)
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
+        self.ranking.header += [  self.table.generate_row([(32,p.code),(8,'0')] + [(4,'0') for r in self.results])  for p in self.problem_list ]
         self.ranking.save()
 
     def changed_contestants(self):
