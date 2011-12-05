@@ -525,7 +525,7 @@ class ACMProblemStats(AggregatorBase):
     def recalculate(self):
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         for p in self.problem_list:
-            col = [p.code,unicode(self.total[p])] + [unicode(self.stats[p][r]) for r in self.results]
+            col = [p.code+' \- '+p.title,unicode(self.total[p])] + [unicode(self.stats[p][r]) for r in self.results]
             self.ranking.header += self.table.generate_row(*col)+self.table.row_separator               
         if not self.problem_list:
             self.ranking.header += self.table.row_separator
