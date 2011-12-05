@@ -540,7 +540,7 @@ class ACMProblemStats(AggregatorBase):
         for p in self.problem_list:
             self.total[p] = 0
             self.stats[p] = {}
-            for r in results:
+            for r in self.results:
                 self.stats[p][r] = 0
         columns = [ (32,'Problem name'),(8,'Submits') ] + [ (4,r) for r in self.results ]
         self.table = RestTable(*columns)
