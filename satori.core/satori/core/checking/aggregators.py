@@ -562,9 +562,9 @@ class ACMProblemStats(AggregatorBase):
                 continue
             status = result.oa_get_str('status')
             self.submitcount[s.problem] =  self.submitcount[s.problem]+1
-            self.total[status] = self.total[status]+1
             self.allsubmits = self.allsubmits+1
             if status in self.results:
+                self.total[status] = self.total[status]+1
                 self.stats[s.problem][status] = self.stats[s.problem][status]+1
         self.recalculate()
 
