@@ -522,27 +522,41 @@ class ACMProblemStats(AggregatorBase):
     def __init__(self, supervisor, ranking):
         super(ACMProblemStats, self).__init__(supervisor, ranking)
 
+    def recalculate(self):
+        self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
+        for p in self.problem_list:
+            col = [p.code,unicode(self.total[p])] + [unicode(self.stats[p][r]) for r in self.results]
+            self.ranking.header += self.table.generate_row(*col)               
+        self.ranking.header += self.table.row_separator
+        self.ranking.save()
+    
     def init(self):
         super(ACMProblemStats, self).init()
 
-        self.problem_list = sorted(self.problem_cache.values(), key=attrgetter('code'))
+        self.problem_list = sorted(self.problem_cache.values(), key=attrgetter('code'))        
         self.results = self.params.results.split(',')
+        self.stats = {}
+        self.total = {}
+        for p in self.problem_list:
+            self.total[p] = 0
+            self.stats[p] = {}
+            for r in results:
+                self.stats[p][r] = 0
         columns = [ (32,'Problem name'),(8,'Submits') ] + [ (4,r) for r in self.results ]
         self.table = RestTable(*columns)
-        self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
-        for p in self.problem_list:
-            col = [(32,p.code),(8,'0')] + [(4,'0') for r in self.results]
-            self.ranking.header +=   self.table.generate_row(*col)               
-        self.ranking.save()
+        self.recalculate()
 
     def changed_contestants(self):
-        pass
-    
-    def created_submits(self, submits):
-        pass
+        pass    
     
     def checked_test_suite_results(self, test_suite_results):
-        pass
+        for result in test_suite_results:
+            s = self.submit_cache[result.submit_id]
+            status = result.oa_get_str('status')
+            self.total[s.problem] =  self.total[s.problem]+1
+            if status in self.results:
+                self.stats[s.problem][status] = self.stats[s.problem][status]+1
+        self.recalculate()
 
 
         
