@@ -528,7 +528,7 @@ class ACMProblemStats(AggregatorBase):
         for p in self.problem_list:
             col = [p.code+' \- '+p.title,unicode(self.submitcount[p])] + [unicode(self.stats[p][r]) for r in self.results]
             self.ranking.header += self.table.generate_row(*col)+self.table.row_separator
-        fcol = ['**Total**',unicode(self.allsubmits)] + ['**'+unicode(self.total[r])+'**' for r in self.results]
+        fcol = ['**Total**','**'+unicode(self.allsubmits)+'**'] + ['**'+unicode(self.total[r])+'**' for r in self.results]
         self.ranking.header += self.table.generate_row(*fcol)+self.table.row_separator            
         self.ranking.save()
 
