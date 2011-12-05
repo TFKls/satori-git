@@ -515,6 +515,7 @@ class ACMProblemStats(AggregatorBase):
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
 #@      </general>
 #@      <problem>
+#@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
 #@      </problem>
 #@</aggregator>
     """
@@ -525,8 +526,9 @@ class ACMProblemStats(AggregatorBase):
     def recalculate(self):
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         for p in self.problem_list:
-            col = [p.code+' \- '+p.title,unicode(self.submitcount[p])] + [unicode(self.stats[p][r]) for r in self.results]
-            self.ranking.header += self.table.generate_row(*col)+self.table.row_separator
+            if not self.problem_params[p.id].ignore:
+                col = [p.code+' \- '+p.title,unicode(self.submitcount[p])] + [unicode(self.stats[p][r]) for r in self.results]
+                self.ranking.header += self.table.generate_row(*col)+self.table.row_separator
         fcol = [' **Total** ',' **'+unicode(self.allsubmits)+'** '] + [(' **'+unicode(self.total[r])+'** ') for r in self.results]
         self.ranking.header += self.table.generate_row(*fcol)+self.table.row_separator            
         self.ranking.save()
