@@ -316,7 +316,7 @@ class MarksAggregator(AggregatorBase):
 #@              <param type="int"      name="max_stars"      description="Maximal number of stars" default="4"/>
 #@              <param type="text"     name="group_points"   description="Number of points for each problem group"/>
 #@              <param type="text"     name="points_mark"    description="Marks for points ranges"/>
-#@              <param type="bool"     name="show_marks"     description="Show marks" default="true"/>
+#@              <param type="bool"     name="show_marks"     description="Show marks" default="false"/>
 #@              <param type="bool"     name="show_max_score" description="Show maximum possible score" default="false"/>
 #@              <param type="datetime" name="time_start_descent"       description="Descent start time"/>
 #@              <param type="time"     name="time_descent"   description="Descent to zero time"/>
@@ -325,7 +325,7 @@ class MarksAggregator(AggregatorBase):
 #@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
 #@              <param type="bool"     name="show"           description="Show column for this problem" default="true"/>
 #@              <param type="bool"     name="show_max_score" description="Show maximum possible score"/>
-#@              <param type="bool"     name="obligatory"     description="Problem is obligatory" default="1"/>
+#@              <param type="bool"     name="obligatory"     description="Problem is obligatory" default="false"/>
 #@              <param type="float"    name="max_score"      description="Maximum score for problem" default="1"/>
 #@              <param type="float"    name="min_score"      description="Minimum score for problem" default="-1"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
