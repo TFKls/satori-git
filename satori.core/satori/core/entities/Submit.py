@@ -22,13 +22,15 @@ class Submit(Entity):
         fields = [('contestant', 'VIEW'), ('problem', 'VIEW'), ('time', 'VIEW')]
 
     class RightsMeta(object):
-        rights = ['OBSERVE']
+        rights = ['VIEW_CONTENTS', 'VIEW_RESULTS']
         inherit_parent = 'contestant'
 
-        inherit_VIEW = ['OBSERVE']
-        inherit_OBSERVE = ['MANAGE']
-        inherit_parent_OBSERVE = ['OBSERVE']
+        inherit_VIEW = ['VIEW_CONTENTS', 'VIEW_RESULTS']
         inherit_parent_MANAGE = ['MANAGE']
+        inherit_VIEW_CONTENTS = ['MANAGE']
+        inherit_parent_VIEW_CONTENTS = ['VIEW_SUBMIT_CONTENTS']
+        inherit_VIEW_RESULTS = ['MANAGE']
+        inherit_parent_VIEW_RESULTS = ['VIEW_SUBMIT_RESULTS']
 
     @classmethod
     def inherit_rights(cls):
@@ -51,7 +53,6 @@ class Submit(Entity):
         submit.forbid_fields(fields, ['id', 'contestant', 'time'])
         submit.update_fields(fields, ['problem'])
         submit.save()
-        Privilege.grant(submit.contestant, submit, 'VIEW')
         blob = submit.data_set_blob('content', filename=filename)
         blob.write(content)
         blob.close()
@@ -67,7 +68,6 @@ class Submit(Entity):
         submit.save()
         submit.update_fields(fields, ['time'])
         submit.save()
-        Privilege.grant(submit.contestant, submit, 'VIEW')
         blob = submit.data_set_blob('content', filename=filename)
         blob.write(content)
         blob.close()
@@ -90,34 +90,23 @@ class Submit(Entity):
         self.overrides_set_map(overrides)
         self.rejudge_test_suite_results()
 
-    @ExportMethod(DjangoStructList('TestResult'), [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
-    def get_test_suite_results(self, test_suite=None):
-        if test_suite is None:
-            test_suite = self.problem.default_test_suite
-        return TestResult.objects.filter(submit=self, test__test_suites=test_suite)
-            
-    @ExportMethod(DjangoStruct('TestSuiteResult'), [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
-    def get_test_suite_result(self, test_suite=None):
+    @ExportMethod(unicode, [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW_RESULTS'))
+    def get_test_suite_status(self, test_suite=None):
         if test_suite is None:
             test_suite = self.problem.default_test_suite
         try:
-            return TestSuiteResult.objects.get(submit=self, test_suite=test_suite)
+            return TestSuiteResult.objects.get(submit=self, test_suite=test_suite).status
         except TestSuiteResult.DoesNotExist:
             return None
-
-    @ExportMethod(unicode, [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
-    def get_test_suite_status(self, test_suite=None):
-        test_suite_result = self.get_test_suite_result(test_suite)
-        if test_suite_result is None:
-            return None
-        return test_suite_result.status
     
-    @ExportMethod(unicode, [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW'))
+    @ExportMethod(unicode, [DjangoId('Submit'), DjangoId('TestSuite')], PCArg('self', 'VIEW_RESULTS'))
     def get_test_suite_report(self, test_suite=None):
-        test_suite_result = self.get_test_suite_result(test_suite)
-        if test_suite_result is None:
+        if test_suite is None:
+            test_suite = self.problem.default_test_suite
+        try:
+            return TestSuiteResult.objects.get(submit=self, test_suite=test_suite).report
+        except TestSuiteResult.DoesNotExist:
             return None
-        return test_suite_result.report
 
     @ExportMethod(NoneType, [DjangoId('Submit')], PCArg('self', 'MANAGE'))
     def rejudge_test_results(self):

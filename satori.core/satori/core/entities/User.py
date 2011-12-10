@@ -87,6 +87,16 @@ class User(Role):
                 c.update_usernames()
         return self
 
+    @ExportMethod(NoneType, [DjangoId('User')], PCArg('self', 'MANAGE'))
+    def delete(self):
+        parent_contestants = list(Contestant.objects.filter(children=self))
+        try:
+            super(User, self).delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
+        for contestant in parent_contestants:
+            contestant.update_usernames()
+
     @ExportMethod(NoneType, [unicode], PCPermit())
     def activate(activation_code):
         user = User.objects.get(activation_code=activation_code)

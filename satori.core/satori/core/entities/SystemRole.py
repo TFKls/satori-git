@@ -24,6 +24,14 @@ class SystemRole(Role):
         role.save()
         return role
 
+    def modify(self, fields):
+        self.forbid_fields(fields, ['id', 'sort_field'])
+        self.update_fields(fields, ['name'])
+        self.name = self.name.strip()
+        self.sort_field = self.name
+        self.save()
+        return self
+
 class SystemRoleEvents(Events):
     model = SystemRole
     on_insert = on_update = on_delete = []

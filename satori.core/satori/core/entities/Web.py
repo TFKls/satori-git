@@ -129,16 +129,17 @@ class Web(object):
             ret.append(ret_c)
         return ret
 
-    @ExportMethod(ProblemMappingInfo, [DjangoId('ProblemMapping')], PCPermit())
+    @ExportMethod(ProblemMappingInfo, [DjangoId('ProblemMapping'), bool], PCPermit())
     @staticmethod
-    def get_problem_mapping_info(problem):
+    def get_problem_mapping_info(problem, include_html=True):
         ret_p = ProblemMappingInfo()
         ret_p.problem_mapping = problem
         ret_p.has_pdf = problem.statement_files_get('_pdf') is not None
-        reader = problem.statement_files_get_blob('_html')
-        if reader:
-            ret_p.html = reader.read()
-            reader.close()
+        if include_html:
+            reader = problem.statement_files_get_blob('_html')
+            if reader:
+                ret_p.html = reader.read()
+                reader.close()
         ret_p.can_submit = Privilege.demand(problem, 'SUBMIT')
         ret_p.is_admin = Privilege.demand(problem, 'MANAGE')
         if ret_p.is_admin:
@@ -151,7 +152,7 @@ class Web(object):
     def get_problem_mapping_list(contest):
         ret = []
         for problem in Privilege.wrap(contest.problem_mappings.all(), where=['VIEW'], struct=True):
-            ret.append(Web.get_problem_mapping_info(problem))
+            ret.append(Web.get_problem_mapping_info(problem, False))
         return ret
 
     @ExportMethod(SubpageInfo, [DjangoId('Subpage')], PCPermit())
@@ -203,7 +204,7 @@ class Web(object):
     @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
     @staticmethod
     def get_results(contest, contestant=None, problem=None, limit=20, offset=0):
-        q = Privilege.wrap(Submit, where=['OBSERVE'], struct=True).filter(contestant__contest=contest).order_by('-id')
+        q = Privilege.wrap(Submit, where=['VIEW_RESULTS'], struct=True).filter(contestant__contest=contest).order_by('-id')
 
         if contestant:
             q = q.filter(contestant=contestant)
@@ -239,7 +240,7 @@ class Web(object):
             results=ret
             )
             
-    @ExportMethod(ResultInfo, [DjangoId('Submit')], PCArg('submit', 'OBSERVE'))
+    @ExportMethod(ResultInfo, [DjangoId('Submit')], PCArg('submit', 'VIEW_RESULTS'))
     @staticmethod
     def get_result_details(submit):
         ret = ResultInfo()
@@ -248,17 +249,21 @@ class Web(object):
         ret.problem_mapping = submit.problem
         ret.status = submit.get_test_suite_status()
         ret.report = submit.get_test_suite_report()
-        reader = submit.data_get_blob('content')
-        data = reader.read(min(100000, reader.length))
-        ret.data_filename = reader.filename
-        reader.close()
-        try:
-            ret.data = unicode(data, 'utf8')
-        except:
+        if Privilege.demand(submit, 'VIEW_CONTENTS'):
+            reader = submit.data_get_blob('content')
+            data = reader.read(min(100000, reader.length))
+            ret.data_filename = reader.filename
+            reader.close()
             try:
-                ret.data = unicode(data, 'latin2')
+                ret.data = unicode(data, 'utf8')
             except:
-                ret.data = None
+                if data.find('\0') = -1:
+                    try:
+                        ret.data = unicode(data, 'latin2')
+                    except:
+                        ret.data = None
+                else:
+                    ret.data = None
         if Privilege.demand(submit, 'MANAGE'):
             ret_tsrs = []
             for tsr in Privilege.wrap(TestSuiteResult, struct=True).filter(submit=submit):

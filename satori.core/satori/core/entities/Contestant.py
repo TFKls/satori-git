@@ -29,15 +29,16 @@ class Contestant(Role):
         fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW')]
 
     class RightsMeta(object):
-        rights = ['OBSERVE']
+        rights = ['VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS']
         inherit_parent = 'contest'
 
-        inherit_VIEW = ['OBSERVE']
         inherit_parent_VIEW = ['VIEW']
-        inherit_OBSERVE = ['EDIT']
-        inherit_parent_OBSERVE = ['OBSERVE']
         inherit_EDIT = ['MANAGE']
         inherit_parent_MANAGE = ['MANAGE']
+        inherit_VIEW_SUBMIT_CONTENTS = ['EDIT']
+        inherit_parent_VIEW_SUBMIT_CONTENTS = ['VIEW_SUBMIT_CONTENTS']
+        inherit_VIEW_SUBMIT_RESULTS = ['EDIT']
+        inherit_parent_VIEW_SUBMIT_RESULTS = ['VIEW_SUBMIT_RESULTS']
 
     @classmethod
     def inherit_rights(cls):
@@ -120,10 +121,12 @@ class Contestant(Role):
         if self.contest.find_contestant(user) is not None:
             raise AlreadyRegistered(login=user.login)
         self.add_member(user)
+        self.update_usernames()
 
     @ExportMethod(NoneType, [DjangoId('Contestant'), DjangoId('User')], PCArg('self', 'MANAGE'))
     def delete_member_user(self, user):
         self.delete_member(user)
+        self.update_usernames()
 
     @ExportMethod(unicode, [unicode, unicode], PCPermit(), [LoginFailed])
     @staticmethod

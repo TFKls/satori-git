@@ -39,13 +39,14 @@ class Contest(Entity):
         fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('archived', 'VIEW'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
     class RightsMeta(object):
-        rights = ['APPLY', 'JOIN', 'SUBMIT', 'OBSERVE', 'ASK_QUESTIONS']
+        rights = ['APPLY', 'JOIN', 'SUBMIT', 'ASK_QUESTIONS', 'VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS']
 
         inherit_APPLY = ['JOIN']
         inherit_JOIN = ['MANAGE']
         inherit_SUBMIT = ['MANAGE']
-        inherit_OBSERVE = ['MANAGE']
         inherit_ASK_QUESTIONS = ['MANAGE']
+        inherit_VIEW_SUBMIT_CONTENTS = ['MANAGE']
+        inherit_VIEW_SUBMIT_RESULTS = ['MANAGE']
 
     @classmethod
     def inherit_rights(cls):
@@ -105,8 +106,8 @@ class Contest(Entity):
         modified = self.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         self.save()
         if 'name' in modified:
-            self.contestant_role.modify(fields=RoleStruct(name='Contestant of ' + self.name))
-            self.admin_role.modify(fields=RoleStruct(name='Administrator of ' + self.name))
+            self.contestant_role.modify(fields=SystemRoleStruct(name='Contestants of ' + self.name))
+            self.admin_role.modify(fields=SystemRoleStruct(name='Administrators of ' + self.name))
         self.changed()
         return self
 
