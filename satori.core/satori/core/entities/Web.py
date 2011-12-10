@@ -257,7 +257,7 @@ class Web(object):
             try:
                 ret.data = unicode(data, 'utf8')
             except:
-                if data.find('\0') = -1:
+                if data.find('\0') == -1:
                     try:
                         ret.data = unicode(data, 'latin2')
                     except:
