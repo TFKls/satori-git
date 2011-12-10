@@ -93,10 +93,10 @@ class PdfInfoDirective(Directive):
     def run(self):
         ret = '\n\n'
         if 'leftlogo' in self.options:
-            ret += r'\renewcommand{\PDFleftlogo}{\includegraphics[width=2cm]{' + self.options['leftlogo'] + r'}}' + '\n'
+            ret += r'\renewcommand{\PDFleftlogo}{\includegraphics[height=0.9cm]{' + self.options['leftlogo'] + r'}}' + '\n'
 
         if 'rightlogo' in self.options:
-            ret += r'\renewcommand{\PDFrightlogo}{\includegraphics[width=2cm]{' + self.options['rightlogo'] + r'}}' + '\n'
+            ret += r'\renewcommand{\PDFrightlogo}{\includegraphics[height=2.1cm,width=2cm]{' + self.options['rightlogo'] + r'}}' + '\n'
 
         if 'date' in self.options:
             ret += r'\renewcommand{\PDFdate}{' + self.options['date'] + r'}' + '\n'

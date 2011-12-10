@@ -39,7 +39,7 @@
 
 \newcommand{\logo}{   \begin{tabular}{@{}ll}
                         \vspace{-1,45cm}%położenie loga ASD
-                         \PDFleftlogo %
+                         \PDFleftlogo &
                             \begin{minipage}{8cm}
                                \begin{flushleft}
                                   \vspace*{-0.6cm} %położenie napisu Alogrytmy....
