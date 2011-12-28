@@ -45,10 +45,13 @@ def view(request, page_info):
             if data["codefile"]:
                 content = data["codefile"]
                 filename = content.name
-                writer = Blob.create(content.size)
+                #HACK: check if blob not too large
+                if content.size>100000:
+                    raise Exception('File too large for backup.')
+                writer = contestant.backup_set_blob(data['name'],content.size,filename)
                 writer.write(content.read())
-                phash = writer.close()
-                contestant.backup_set_blob_hash(data['name'],phash,filename)
+                writer.close()
+
             return HttpResponseRedirect(reverse('backup',args=[page_info.contest.id]))
     else:
         form = BackupForm()

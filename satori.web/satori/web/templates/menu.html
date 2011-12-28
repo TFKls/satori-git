@@ -22,7 +22,9 @@
             {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
                 <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
             {% endif %}
+            {% if page_info.contest_can_backup %}
                 <li><a href="{% url backup page_info.contest.id %}">Backup</a></li>
+            {% endif %}
             {% for ranking in page_info.rankings %}
                 <li><a href="{% url ranking page_info.contest.id ranking.id %}">{{ranking.name}}</a></li>
             {% endfor %}

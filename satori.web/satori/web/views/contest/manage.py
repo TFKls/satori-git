@@ -38,6 +38,7 @@ def view(request, page_info):
     status = get_status(contest)
     admins =  Web.get_contest_admins(contest=contest,offset=0,limit=500).contestants
     questions = Privilege.get(contest.contestant_role,contest,'ASK_QUESTIONS')
+    backups = Privilege.get(contest.contestant_role,contest,'PERMIT_BACKUP')
     anonym = Security.anonymous()
     auth = Security.authenticated()
     
@@ -59,10 +60,10 @@ def view(request, page_info):
         viewfield = viewing.field()
         joinfield = joining.field()
         questions = forms.BooleanField(label='Questions allowed',required=False)
-    
+        backups = forms.BooleanField(label='Backups allowed',required=False)            
     
     if request.method!="POST":
-        manage_form = ManageForm(initial={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'questions' : questions})
+        manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'questions' : questions, 'backups' : backups})
         admin_form = AdminForm()
         return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
     if "addadmin" in request.POST.keys():
@@ -97,5 +98,9 @@ def view(request, page_info):
         Privilege.grant(contest.contestant_role,contest,'ASK_QUESTIONS')
     else:
         Privilege.revoke(contest.contestant_role,contest,'ASK_QUESTIONS')    
+    if manage_form.cleaned_data['backups']:
+        Privilege.grant(contest.contestant_role,contest,'PERMIT_BACKUP')
+    else:
+        Privilege.revoke(contest.contestant_role,contest,'PERMIT_BACKUP')    
     return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
 
