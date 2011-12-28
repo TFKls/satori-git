@@ -20,7 +20,7 @@ class Contestant(Role):
     login       = models.CharField(max_length=64, null=True)
     password    = models.CharField(max_length=128, null=True)
     
-    backup      = AttributeGroupField(PCArg('self', 'EDIT'), PCArg('self', 'EDIT'), '')
+    backup      = AttributeGroupField(PCAnd(PCArg('self', 'EDIT'), PCArg('self', 'PERMIT_BACKUP')), PCAnd(PCArg('self', 'EDIT'), PCArg('self', 'PERMIT_BACKUP')), '')
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'login'),)
@@ -29,7 +29,7 @@ class Contestant(Role):
         fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW')]
 
     class RightsMeta(object):
-        rights = ['VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS']
+        rights = ['VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS', 'PERMIT_BACKUP']
         inherit_parent = 'contest'
 
         inherit_parent_VIEW = ['VIEW']
@@ -39,6 +39,8 @@ class Contestant(Role):
         inherit_parent_VIEW_SUBMIT_CONTENTS = ['VIEW_SUBMIT_CONTENTS']
         inherit_VIEW_SUBMIT_RESULTS = ['EDIT']
         inherit_parent_VIEW_SUBMIT_RESULTS = ['VIEW_SUBMIT_RESULTS']
+        inherit_PERMIT_BACKUP = ['MANAGE']
+        inherit_parent_PERMIT_BACKUP = ['PERMIT_BACKUP']
 
     @classmethod
     def inherit_rights(cls):

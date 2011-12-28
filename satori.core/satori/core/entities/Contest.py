@@ -39,7 +39,7 @@ class Contest(Entity):
         fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('archived', 'VIEW'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
     class RightsMeta(object):
-        rights = ['APPLY', 'JOIN', 'SUBMIT', 'ASK_QUESTIONS', 'VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS']
+        rights = ['APPLY', 'JOIN', 'SUBMIT', 'ASK_QUESTIONS', 'VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS', 'PERMIT_BACKUP']
 
         inherit_APPLY = ['JOIN']
         inherit_JOIN = ['MANAGE']
@@ -47,6 +47,7 @@ class Contest(Entity):
         inherit_ASK_QUESTIONS = ['MANAGE']
         inherit_VIEW_SUBMIT_CONTENTS = ['MANAGE']
         inherit_VIEW_SUBMIT_RESULTS = ['MANAGE']
+        inherit_PERMIT_BACKUP = ['MANAGE']
 
     @classmethod
     def inherit_rights(cls):
