@@ -17,6 +17,7 @@ PageInfo = Struct('PageInfo', [
     ('contest_answers_exist', bool, False),
     ('contest_submittable_problems_exist', bool, False),
     ('contest_viewable_problems_exist', bool, False),
+    ('contest_can_backup', bool, False),
     ])
 
 ContestInfo = Struct('ContestInfo', [
@@ -107,6 +108,8 @@ class Web(object):
             ret.contest_answers_exist = Privilege.wrap(contest.questions.all(), where=['VIEW']).exists()
             ret.contest_submittable_problems_exist = Privilege.wrap(contest.problem_mappings.all(), where=['SUBMIT']).exists()
             ret.contest_viewable_problems_exist = Privilege.wrap(contest.problem_mappings.all(), where=['VIEW']).exists()
+            if ret.contestant:
+            	ret.contest_can_backup = Privilege.demand(ret.contestant, 'PERMIT_BACKUP')
         else:
             ret.subpages = Subpage.get_global(False)
         return ret
