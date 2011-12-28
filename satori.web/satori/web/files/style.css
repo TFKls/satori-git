@@ -1,3 +1,13 @@
+.hidden
+{
+    display : none;
+}
+
+.unhidden
+{
+  display : block;
+}
+
 body {
     font-family: Arial;
     background: #FFFFFF;
@@ -169,6 +179,7 @@ ul.errorlist
 
 
 
+
 .logos {
     text-align: center;
 }
@@ -251,6 +262,7 @@ span.signature {
 }
 
 
+
 table.form
 {
   width : 90%;
@@ -287,7 +299,7 @@ table.form th
 {
     font-style : italic;
     font-size :  0.65em;
-    padding : 0.4em 0.8em;
+    padding : 0.3em 0.8em;
 }
 
 
@@ -348,6 +360,25 @@ table.results td
   padding : 0;
 }
 
+table.results input.check
+{
+    height : 100%;
+    width : 100%;
+}
+
+table.results td.padleft
+{
+  padding : 0 0 0 4px;
+}
+
+
+.tinytext
+{
+    font-style : italic;
+    font-size : 0.7em;
+}
+
+
 table.results td.description
 {
   font-style : italic;
@@ -358,8 +389,26 @@ table.results td.link
     text-align : center;
 }
 
+table.results td.centered
+{
+    text-align : center;
+}
+
+table.results td.small
+{
+    width : 5%;
+}
+
+table.results td.medium
+{
+    width : 30%;
+}
 
 
+table.results td div.mainsphinx p
+{
+    display: inline;
+}
 
 a.stdlink
 {

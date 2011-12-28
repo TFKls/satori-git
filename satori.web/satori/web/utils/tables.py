@@ -26,8 +26,10 @@ class TableField(object):
         self.css = css
         
     def class_string(self):
+        if isinstance(self.css,str) or isinstance(self.css,unicode):
+            self.css=[self.css]
         if self.css:
-            return 'class="'+self.css+'"'
+            return 'class="'+' '.join(self.css)+'"'
         else:
             return ''
         

@@ -15,8 +15,7 @@
 {% for msg in messages %}
 <div class = "newsmsg bDots">
     <table class="message">
-            <tr><td><h4>{{ msg.subpage.name }}</h4></td><td style="text-align: right"><span class="signature">{{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}</span></td>
-            <td>
+            <tr><td><h4>{{ msg.subpage.name }}</h4></td><td style="text-align: right"><span class="signature">{{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}</span>
             {% if msg.is_admin %}
             {% if page_info.contest %}
                 {% if msg.subpage.contest %}

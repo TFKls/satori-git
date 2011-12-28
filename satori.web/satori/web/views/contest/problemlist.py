@@ -12,30 +12,16 @@ from django import forms
 from datetime import datetime
 from satori.web.utils.files import valid_attachments
 from satori.web.utils.forms import SatoriDateTimeField
-from satori.web.utils.tables import ResultTable
+from satori.web.utils.tables import *
 from satori.web.utils.shortcuts import text2html,fill_image_links
 
 class ProblemsPublishForm(forms.Form):
     submitstart = SatoriDateTimeField(required=False)
     submitfinish = SatoriDateTimeField(required=False)
-    viewauto = forms.BooleanField(required=False,initial=True)
-    viewstart = SatoriDateTimeField(required=False)
-    viewfinish = SatoriDateTimeField(required=False)
-    def __init__(self,problem_list=[],data=None,*args,**kwargs):
-        super(ProblemsPublishForm, self).__init__(data,*args, **kwargs)
-        for pinfo in problem_list:
-            if pinfo.is_admin:
-                self.fields[str(pinfo.problem_mapping.id)] = forms.BooleanField(required=False)
-
-
-class ProblemGroup(ResultTable):
-    def __init__(self,req,prefix,table,name):
-        super(ProblemGroup,self).__init__(req=req,prefix=prefix)
-        self.results = table
-        self.total = len(table)
-        self.name = name
-        self.fields.append(name='Code',value=lambda p : p.problem_mapping.code,id=1)
-        self.fields.append(name='Code',value=lambda p : p.problem_mapping.title,id=2)
+    group = forms.CharField(required=False)
+#    viewauto = forms.BooleanField(required=False,initial=True)
+#    viewstart = SatoriDateTimeField(required=False)
+#    viewfinish = SatoriDateTimeField(required=False)
         
 def between(times, now):
     if not times:
@@ -52,32 +38,107 @@ def between(times, now):
         return True
     return False
     
+        
 @contest_view
-def viewall(request, page_info):
+def viewall(request,page_info):
+    class ProblemsTable(ResultTable):
+        @staticmethod
+        def default_limit():
+            return 0
+        def __init__(self,req,problem_list,group,admin):
+            self.groupname = group
+            prefix = 'p'+unicode(hash(group))
+            super(ProblemsTable,self).__init__(req=req,prefix=prefix,autosort=True)
+            if not self.params.get('sort',None):
+                self.params['sort']='code'
+                self.params['order']='asc'
+            self.results = [p for p in problem_list if p.problem_mapping.group==group]
+            def view_link(table,i):
+                p = table.results[i]
+                if not p.problem_mapping.statement:
+                    return p.problem_mapping.title
+                else:
+                    return '<a class="stdlink" href="'+reverse('contest_problems_view',args=[unicode(page_info.contest.id),unicode(p.problem_mapping.id)])+'">'+p.problem_mapping.title+'</a>'
+            def visible(table,i):
+                p = table.results[i]
+                if between(p.contestant_role_view_times,datetime.now()):
+                    return '<div class="highlight_pos"><span class="tinytext">Visible</span></div>'
+                else:
+                    return '<div class="highlight_neg"><span class="tinytext">Invisible</span></div>'
+            def submittable(table,i):
+                p = table.results[i]
+                v = p.contestant_role_submit_times
+                active = between(v,datetime.now())
+                s = ""
+                if active:
+                    s+='<div class="highlight_pos"><span class="tinytext">'
+                else:
+                    s+='<div class="highlight_neg"><span class="tinytext">'
+                if active:
+                    s+='Submitting enabled'
+                    if v and v.start_on:
+                        s += ', started at '+str(v.start_on)
+                elif v and v.start_on:
+                    s += 'Submiting starts at '+str(v.start_on)
+                if v and v.finish_on:
+                    if not v or not v.start_on:
+                        s += 'Submitting '
+                    else:
+                        s += ', '
+                    s += 'ends on '+str(v.finish_on)
+                if not v:
+                    s += 'Submitting disabled'
+                s += "</span></div>"
+                return s
+            def edit_button(table,i):
+                p = table.results[i]
+                if p.is_admin:
+                    return '<a class="button button_small" href="'+reverse('contest_problems_edit',args=[unicode(page_info.contest.id),unicode(table.results[i].problem_mapping.id)])+'">Edit</a>'
+                else:
+                    return ''
+            def pdflink(table,i):
+                p = table.results[i]
+                url = reverse('download_group',args=['view','ProblemMapping',str(p.problem_mapping.id),'statement_files','_pdf',p.problem_mapping.code+'.pdf'])
+                return '<a class="button button_small" href="'+url+'">PDF</a>' if p.has_pdf else ''
+            if admin:
+                self.fields.append(TableField(name='',value='',render=lambda table,i: '<input type="checkbox" class="check" name="pm_'+str(table.results[i].problem_mapping.id)+'">' if table.results[i].is_admin else '',id='box',sortable=False,css=['centered','small']))
+            self.fields.append(TableField(name='Code',value=(lambda table,i: table.results[i].problem_mapping.code),id='code',css=['centered','small']))
+            self.fields.append(TableField(name='Title',value=(lambda table,i: table.results[i].problem_mapping.title),
+                                                       render=view_link,id='title'))
+            self.fields.append(TableField(name='PDF',value='',render=pdflink,id='pdf',sortable=False,css=['centered','small']))
+            self.fields.append(TableField(name='',value=(lambda table,i: table.results[i].problem_mapping.description),
+                                                  render=(lambda table,i: text2html(table.results[i].problem_mapping.description) if table.results[i].problem_mapping.description else ''),
+                                                  id='desc'))
+            if admin:
+                self.fields.append(TableField(name='',value='',render=visible,id='visibility',sortable=False,css=['small','centered']))
+                self.fields.append(TableField(name='',value='',render=submittable,id='submits',sortable=False,css=['medium']))
+            if admin:
+                self.fields.append(TableField(name='',value='',render=edit_button,id='edit',sortable=False,css=['centered','small']))
+            self.total = len(self.results)
+
     problem_list = Web.get_problem_mapping_list(page_info.contest)
-    problem_list.sort(key=lambda p:p.problem_mapping.code)
+    
     if request.method=="POST":
-        form = ProblemsPublishForm(data=request.POST,problem_list=problem_list)
+        form = ProblemsPublishForm(data=request.POST)
         if form.is_valid():
             data = form.cleaned_data
             selected = []
             role = page_info.contest.contestant_role
             for pinfo in problem_list:
                 id = str(pinfo.problem_mapping.id)
-                if id in request.POST.keys():
+                if 'pm_'+str(id) in request.POST.keys():
                     selected.append(pinfo.problem_mapping)
             if "changesubmit" in request.POST.keys():
                 for s in selected:
                     start = data.get('submitstart',None)
                     finish = data.get('submitfinish',None)
                     Privilege.grant(role,s,'SUBMIT',PrivilegeTimes(start_on=start,finish_on=finish))
-                    if 'viewauto' in request.POST.keys():
-                        Privilege.grant(role,s,'VIEW',PrivilegeTimes(start_on=start))
-            elif "changeview" in request.POST.keys():
-                for s in selected:
-                    start = data.get('viewstart',None)
-                    finish = data.get('viewfinish',None)
-                    Privilege.grant(role,s,'VIEW',PrivilegeTimes(start_on=start,finish_on=finish))
+                    Privilege.grant(role,s,'VIEW',PrivilegeTimes(start_on=start))
+#            elif "changeview" in request.POST.keys():
+#                for s in selected:
+#                    start = data.get('viewstart',None)
+#                    finish = data.get('viewfinish',None)
+#                    Privilege.grant(role,s,'VIEW',PrivilegeTimes(start_on=start,finish_on=finish))
             elif "revokesubmit" in request.POST.keys():
                 for s in selected:
                     Privilege.revoke(role,s,"SUBMIT")
@@ -85,32 +146,24 @@ def viewall(request, page_info):
                 for s in selected:
                     Privilege.revoke(role,s,"SUBMIT")
                     Privilege.revoke(role,s,"VIEW")
-            problem_list = Web.get_problem_mapping_list(page_info.contest)
-            problem_list.sort(key=lambda p:p.problem_mapping.code)
-    else:
-        form = ProblemsPublishForm(problem_list=problem_list)
-    problems = []
+            elif "publish" in request.POST.keys():
+                for s in selected:
+                    Privilege.grant(role,s,"VIEW")
+            elif "addgroup" in request.POST.keys():
+                for s in selected:
+                    s.group = data.get('group','')
+            return HttpResponseRedirect(reverse('contest_problems',args=[page_info.contest.id]))
+    form = ProblemsPublishForm()
     any_admin = False
-    groups = {}
-    for pinfo in problem_list:
-        p = {}
-        admin = pinfo.is_admin
-        p['problem'] = pinfo.problem_mapping
-        p['admin'] = admin
-        p['has_pdf'] = pinfo.has_pdf
-        if pinfo.problem_mapping.description and pinfo.problem_mapping.description!="":
-            p['description'] = text2html(pinfo.problem_mapping.description)
-        g = pinfo.problem_mapping.group
-        if not g in groups.keys():
-            groups[g] = []
-        if admin:
+    groupnames = []
+    for p in problem_list:
+        if p.is_admin:
             any_admin = True
-            p['select'] = form[str(pinfo.problem_mapping.id)]
-            p['visible'] = between(pinfo.contestant_role_view_times,datetime.now())
-            p['submittable'] = between(pinfo.contestant_role_submit_times,datetime.now())
-            p['when_view'] = pinfo.contestant_role_view_times
-            p['when_submit'] = pinfo.contestant_role_submit_times
-            
-        groups[g].append(p)
-    return render_to_response('problems.html', { 'page_info' : page_info, 'form' : form, 'problems' : problems, 'any_admin' : any_admin, 'groups' : groups })
-
+        if not p.problem_mapping.group in groupnames:
+            groupnames.append(p.problem_mapping.group)
+    groupnames.sort()
+    groups = []
+    for g in groupnames:
+        groups.append(ProblemsTable(req=request.GET,problem_list=problem_list,group=g,admin=any_admin))
+    return render_to_response('problems.html', { 'page_info' : page_info, 'groups' : groups, 'form' : form, 'admin' : any_admin, 'moregroups' : len(groupnames)>1 or (len(groupnames)==1 and groupnames[0])})
+    

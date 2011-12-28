@@ -1,0 +1,19 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+<h2>Backup</h2>
+
+<table class="results">
+{{ backups.render_table|safe }}
+</table>
+
+
+<form action="" method="post" enctype="multipart/form-data">
+<table>
+    {{ form.as_table }}
+</table>
+<input class="button" type="submit" value="Backup"/>
+</form>
+
+{% endblock %}

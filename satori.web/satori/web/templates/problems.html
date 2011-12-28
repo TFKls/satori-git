@@ -2,131 +2,60 @@
 
 {% block header %}
 
+{% include "showhide.html" %}
+
 {{ form.media }}
 
 {% endblock %}
 
 {% block content %}
 
-<form action="{% url contest_problems page_info.contest.id %}" method="POST">
+<form action="" method="POST"/>
 
-{% for group,problemlist in groups.iteritems %}
+{% if moregroups %}
 
-{% if group %}
-<h5>{{ group }}:</h5>
-{% endif %}
-
-<table class="problems_table">
-{% for pinfo in problemlist %}
-{% with pinfo.problem as problem %}
-<tr class="problem_row">
-
-<td class="box">
-{{pinfo.select}}
-</td>
-
-<td class="code">
- {{ problem.code }} 
-</td>
-
-<td class="title"> 
-{% if problem.statement %}
-<a class="problemtitle" href="{% url contest_problems_view page_info.contest.id problem.id %}">{{ problem.title }}</a><br/>
+{% for g in groups %}
+{% if g.groupname and not forloop.last %}
+<h4>{% if g.groupname %} {{g.groupname}} {% else %} Other problems: {% endif %} [<a class="stdlink" href="javascript:unhide('{{g.prefix}}');">show/hide</a>]</h4>
+<div class="hidden" id="{{g.prefix}}">
 {% else %}
-{{ problem.title }}
+<h4>{% if g.groupname %} {{g.groupname}} {% else %} Other problems: {% endif %} [<a class="stdlink" href="javascript:unhide('{{g.prefix}}');">show/hide</a>]</h4>
+<div class="unhidden" id="{{g.prefix}}">
 {% endif %}
-</td>
-
-<td class="has_pdf">
-{% if pinfo.has_pdf %}
-<a class="button" href={% url download_group "view" "ProblemMapping" pinfo.problem.id "statement_files" "_pdf" pinfo.problem.code|add:".pdf" %}>
-PDF
-</a>
-{% endif %}
-</td>
-
-
-<td class="visible">
-{% if pinfo.admin %}
-{% if pinfo.visible %} Visible <br/>{% endif %}
-{% if pinfo.submittable %} Submittable {% endif %}
-{% endif %}
-</td>
-
-
-<td class="times"> 
-{% if pinfo.admin %}
-{% if pinfo.when_view %}
-
-    {% if pinfo.when_view.start_on %}
-    Appears on: {{ pinfo.when_view.start_on|date:"Y-m-d H:i:s" }}
-    {% endif %}
-<br/>    
-    {% if pinfo.when_view.finish_on %}
-    Hides on: {{ pinfo.when_view.finish_on|date:"Y-m-d H:i:s" }}
-    {% endif %}
-    
-{% endif %}
-{% endif %}
-</td>
-
-<td class="times"> 
-{% if pinfo.admin %}
-{% if pinfo.when_submit %}
-
-    {% if pinfo.when_submit.start_on %}
-    Submits start on: {{ pinfo.when_submit.start_on|date:"Y-m-d H:i:s" }}
-    {% endif %}
-<br/>    
-    {% if pinfo.when_submit.finish_on %}
-    Submits end on: {{ pinfo.when_submit.finish_on|date:"Y-m-d H:i:s" }}
-    {% endif %}
-    
-{% endif %}
-{% endif %}
-</td>
-
-
-<td class="edit">
-{% if pinfo.admin %}
-<a class="button button_small" href={% url contest_problems_edit page_info.contest.id problem.id %}>Edit problem</a>
-{% endif %}
-</td>
-
-</tr>
-{% if pinfo.description %}
-<tr class="comment_row"/>
-<td colspan="8" class="comment">
-{{ pinfo.description|safe }}
-</td>
-</tr>
-{% endif %}
-
-{% endwith %}
-{% endfor %}
+<table class="results">
+    {{g.render_table|safe}}
 </table>
-
-
+</div>
 {% endfor %}
 
-{% if any_admin %}
+{% else %}
+
+{% for g in groups %}
+<h4>{{g.groupname}}</h4>
+<table class="results">
+    {{g.render_table|safe}}
+</table>
+{% endfor %}
+
+{% endif %}
+
+{% if admin %}
 <h4>Mass edit</h4>
 {{form.submitstart.errors}}
 {{form.submitfinish.errors}}
 <p>Set submission times from {{form.submitstart}} to {{form.submitfinish}}
-{{form.viewauto}} Set view times automatically
 <input class="button" type="submit" name="changesubmit" value="Change submission times"/>
-</p>
-
-{{form.viewstart.errors}}
-{{form.viewfinish.errors}}
-<p>Set view times from {{form.viewstart}} to {{form.viewfinish}}
-<input class="button" type="submit" name="changeview" value="Change publish times"/>
 </p>
 <div class="button_bar">
 <input class="button" type="submit" name="revokesubmit" value="Stop submissions"/>
+<input class="button" type="submit" name="publish" value="Publish problems"/>
 <input class="button" type="submit" name="revokeview" value="Hide problems"/>
 </div>
+
+<p>Add to group: {{form.group}} 
+<input class="button" type="submit" name="addgroup" value="Add to group"/>
+</p>
+
 </form>
 {% endif %}
 
@@ -138,3 +67,4 @@ PDF
 </div>
 {% endif %}
 {% endblock %}
+

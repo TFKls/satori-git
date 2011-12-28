@@ -15,21 +15,6 @@ from satori.web.utils.forms import SatoriDateTimeField
 from satori.web.utils.tables import *
 from satori.web.utils.shortcuts import text2html,fill_image_links
 
-
-def between(times, now):
-    if not times:
-        return False
-    start = times.start_on
-    finish = times.finish_on
-    if not start and not finish:
-        return True
-    if not start and finish and finish>now:
-        return True
-    if not finish and start and start<now:
-        return True
-    if start and finish and start<now and finish>now:
-        return True
-    return False
     
 
 class ProblemAddForm(forms.Form):
