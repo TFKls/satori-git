@@ -1,0 +1,6 @@
+/scripts/local-top/cryptopensc
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/local-top/dmraid
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/local-top/cryptroot
+[ -e /conf/param.conf ] && . /conf/param.conf

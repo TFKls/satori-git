@@ -1,0 +1,11 @@
+#!/bin/sh
+
+if [ "$1" = "prereqs" ] ; then
+  exit 0
+fi
+
+. /scripts/mdadm-functions
+. /scripts/functions
+
+degraded_arrays || exit 0
+mountroot_fail || panic "Dropping to a shell."

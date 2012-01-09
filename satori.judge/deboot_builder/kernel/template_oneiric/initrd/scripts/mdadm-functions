@@ -1,0 +1,92 @@
+#!/bin/sh
+
+
+degraded_arrays()
+{
+	mdadm --misc --scan --detail --test >/dev/null 2>&1
+	return $((! $?))
+}
+
+mountroot_fail()
+{
+	if degraded_arrays; then
+		cat <<EOF
+** WARNING: There appears to be one or more degraded RAID devices **
+
+The system may have suffered a hardware fault, such as a disk drive
+failure.  The root device may depend on the RAID devices being online. One
+or more of the following RAID devices are degraded:
+EOF
+		cat /proc/mdstat
+
+		BOOT_DEGRADED="false"
+		# Read BOOT_DEGRADED from file
+		if [ -r "/conf/conf.d/mdadm" ]; then
+			. /conf/conf.d/mdadm
+		fi
+		# But allow for overides on the kernel command line
+		for x in $(cat /proc/cmdline); do
+			case $x in
+				bootdegraded)
+					BOOT_DEGRADED="true"
+				;;
+				bootdegraded=*)
+					BOOT_DEGRADED=${x#bootdegraded=}
+				;;
+			esac
+		done
+		# Allow for a couple of permutations, {true|1|yes|on}
+		case "$BOOT_DEGRADED" in
+			1)    BOOT_DEGRADED="true";;
+			yes)  BOOT_DEGRADED="true";;
+			on)   BOOT_DEGRADED="true";;
+		esac
+		# Check to see if user has already answered interactive question
+		# If they say anything other than "yes", the boot halts, so we
+		# can just set it to true to skip asking again.
+		if [ -f /run/.boot-degraded-asked ] ; then
+			BOOT_DEGRADED="true"
+		fi
+		# Finally, prompt interactively if the user has not specified
+		# to boot degraded either in a configuration file or as a
+		# kernel boot parameter
+		if [ "$BOOT_DEGRADED" != "true" ]; then
+			cat <<EOF
+You may attempt to start the system anyway, or stop now and attempt
+manual recovery operations.  To do this automatically in the future,
+add "bootdegraded=true" to the kernel boot options.
+
+If you choose to start the degraded RAID, the system may boot normally,
+but performance may be degraded, and a further hardware fault could
+result in permanent data loss.
+
+If you abort now, you will be provided with a recovery shell.
+
+EOF
+			# Set a 15-second timeout for this question
+			ANSWER="unanswered"
+			read -t 15 -p "Do you wish to start the degraded RAID? [y/N]: " -r ANSWER
+			echo "" > /run/.boot-degraded-asked
+			case "$ANSWER" in
+				unanswered) echo "Timed out" ;;
+				y*|Y*)  BOOT_DEGRADED="true" ;;
+				*)      BOOT_DEGRADED="false";;
+			esac
+		fi
+		if [ "$BOOT_DEGRADED" = "true" ]; then
+			echo "Attempting to start the RAID in degraded mode..."
+			if mdadm --incremental --run --scan; then
+				echo "Started the RAID in degraded mode."
+				return 0
+			else	
+				if mdadm --assemble --scan --run; then
+					echo "Started the RAID in degraded mode."
+					return 0
+				else
+					echo "Could not start the RAID in degraded mode."
+				fi
+			fi
+		fi
+	fi
+	return 1
+}
