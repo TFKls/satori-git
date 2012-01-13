@@ -148,7 +148,7 @@ class ACMAggregator(AggregatorBase):
                             if self.params.time_start and time > self.params.time_start:
                                 self.ok_time = time - self.params.time_start
                             else:
-                                self.ok_time = time - datetime.fromtimestamp(0)
+                                self.ok_time = timedelta()
                             self.ok_submit = submit_id
                             break
                         self.star_count += 1
