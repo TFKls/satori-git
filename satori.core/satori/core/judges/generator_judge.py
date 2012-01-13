@@ -119,7 +119,7 @@ elif fileext in ['cpp', 'cc', 'cxx']:
 elif fileext in ['pas', 'p', 'pp']:
     fileext = 'pas'
     source_file = 'solution.pas'
-    compiler  = [ '/usr/bin/fpc', '-Sgic', '-Xs', '-viwnh', '-OG2', '-Wall', 'solution.pas', '-osolution.x']
+    compiler  = [ '/usr/bin/fpc', '-Sgic', '-Xs', '-viwnh', '-O2', 'solution.pas', '-osolution.x']
 else:
     communicate('SETSTRING', {'name': 'status', 'value': 'EXT'})
     sys.exit(0)
