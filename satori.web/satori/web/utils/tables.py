@@ -42,7 +42,7 @@ class ResultTable(object):
     def default_limit():
         return 0
                     
-    def __init__(self, req = {}, prefix='', autosort=True):
+    def __init__(self, req = {}, prefix='', autosort=True, default_sort=None, default_desc=False):
         self.results = []
         self.params = {}
         self.filters = {}
@@ -77,6 +77,10 @@ class ResultTable(object):
             self.params['limit'] = int(self.params['limit'])
         if self.params['limit'] < 0:
             self.params['limit'] = self.default_limit()
+        if 'sort' not in self.params.keys() and default_sort:
+            self.params['sort'] = unicode(default_sort)
+            if default_desc:
+                self.params['order'] = 'desc'
 
     def add_autofilter(self,field):
         def autocheck(table,i,v):

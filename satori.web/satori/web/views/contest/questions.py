@@ -67,6 +67,9 @@ def answer(request, page_info, id):
         content = forms.CharField(required=True, widget=forms.Textarea)
         answer = forms.CharField(required=False, widget=forms.Textarea)
     if request.method=="POST":
+        if 'delete' in request.POST.keys():
+            Question.delete(question)
+            return HttpResponseRedirect(reverse('questions',args=[contest.id]))    
         form = AnswerForm(request.POST)
         if form.is_valid():
             question.content = form.cleaned_data["content"]
@@ -75,6 +78,7 @@ def answer(request, page_info, id):
                 question2 = Question.create(QuestionStruct(contest=contest,problem=question.problem,content=question.content))
                 question2.answer = question.answer
                 Privilege.grant(contest.contestant_role,question2,'VIEW')
+#                Question.delete(question)
             return HttpResponseRedirect(reverse('questions',args=[contest.id]))    
     else:
         form = AnswerForm(initial={'content' : question.content, 'answer' : question.answer})

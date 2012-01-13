@@ -31,20 +31,19 @@
 <div class="question_answer">
   {{ q.answer }}
 </div>
+{% endif %}
+
 {% if page_info.contest_is_admin %}
-<p>
+<form action="{% url answer_question page_info.contest.id q.id %}" method="POST">
+<div class="button_bar">
+{% if q.answer %}
 <a class="button" href="{% url answer_question page_info.contest.id q.id %}">Edit</a>
-</p>
-{% endif %}
-
 {% else %}
-
-{% if page_info.contest_is_admin %}
-<p>
 <a class="button" href="{% url answer_question page_info.contest.id q.id %}">Answer</a>
-</p>
 {% endif %}
-
+    <input type="submit" class="button button_warn" value="Delete" name="delete">
+</div>
+</form>
 {% endif %}
 
 </div>

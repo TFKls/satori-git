@@ -13,6 +13,7 @@ import datetime
 def view(request, page_info):
     contest = page_info.contest
     contestant = page_info.contestant
+    is_admin = page_info.contest_is_admin
     class BackupForm(forms.Form):
         name = forms.CharField(label='Name',initial=unicode(datetime.datetime.now()),required=True)
         codefile = forms.FileField(label='Upload file',required=True)
@@ -27,18 +28,43 @@ def view(request, page_info):
         def default_limit(self):
             return 20
         def __init__(self,req,prefix=''):
-            super(BackupTable,self).__init__(req=req,prefix=prefix)
-            self.results = contestant.backup_get_list()
+            super(BackupTable,self).__init__(req=req,prefix=prefix,default_sort=2,default_desc=True)
+            self.results = []
+            self.contestants = []
+            if is_admin:
+                clist = Contestant.filter(ContestantStruct(contest=contest))
+            else:
+                clist = [contestant]
+            for c in clist:
+                for r in c.backup_get_list():
+                    self.results.append(r)
+                    self.contestants.append(c)
             self.total = len(self.results)
-            self.fields.append(TableField(name='Name',value=(lambda table,i : table.results[i].name),id=1))
+            if is_admin:
+                self.fields.append(TableField(name='Contestant',value=(lambda table,i : table.contestants[i].name),id=1))
+            self.fields.append(TableField(name='Name',value=(lambda table,i : table.results[i].name),id=2))
             def download_link(table,i):
                 name=table.results[i].name
                 filename=table.results[i].filename
                 url = reverse('download_group',args=['download','Contestant',str(contestant.id),'backup',name,filename])
                 return '<a href="'+url+'" class="stdlink">'+filename+'</a>'
-            self.fields.append(TableField(name='File',value=(lambda table,i : table.results[i].filename),render=download_link,id=2))
+            self.fields.append(TableField(name='File',value=(lambda table,i : table.results[i].filename),render=download_link,id=3,sortable=False))
+            def delete_form(table,i):
+                name=table.results[i].name
+                url = '<form action="" method="POST"><input type="hidden" name="id" value="'+name+'"/><input type="hidden" name="cid" value="'+unicode(table.contestants[i].id)+'"/><input class="button button_small" type="submit" name="delete" value="Delete">'
+                return url
+            self.fields.append(TableField(name='',value='',render=delete_form,id=4,sortable=False,css=['centered']))
             
     if request.method == "POST":
+        if 'delete' in request.POST.keys():
+            c = Contestant(int(request.POST["cid"]))
+            c.backup_delete(request.POST["id"])
+            return HttpResponseRedirect(reverse('backup',args=[page_info.contest.id]))
+        if 'clearall' in request.POST.keys() and is_admin:
+            for c in Contestant.filter(ContestantStruct(contest=contest)):
+                for oa in c.backup_get_list():
+                    c.backup_delete(oa.name)
+            return HttpResponseRedirect(reverse('backup',args=[page_info.contest.id]))
         form = BackupForm(request.POST,request.FILES)
         if form.is_valid():
             data = form.cleaned_data
@@ -57,3 +83,4 @@ def view(request, page_info):
         form = BackupForm()
     backups = BackupTable(req=request.GET,prefix='backup')
     return render_to_response('backup.html', {'page_info' : page_info, 'form' : form, 'backups' : backups})
+
