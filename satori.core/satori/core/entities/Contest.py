@@ -142,10 +142,10 @@ class Contest(Entity):
     @ExportMethod(DjangoStruct('Contestant'), [DjangoId('Contest'), DjangoId('Role')], PCOr(PCTokenUser('user'), PCArg('self', 'MANAGE')))
     def find_contestant(self, user):
         try:
-            return Privilege.wrap(Contestant, struct=True).get(contest=self, children__id=user.id)
+            return Contestant.objects.get(contest=self, children__id=user.id)
         except Contestant.DoesNotExist:
             try:
-                return Privilege.wrap(Contestant, struct=True).get(contest=self, id=user.id)
+                return Contestant.objects.get(contest=self, id=user.id)
             except Contestant.DoesNotExist:
                return None
 
