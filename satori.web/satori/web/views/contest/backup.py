@@ -46,12 +46,12 @@ def view(request, page_info):
             def download_link(table,i):
                 name=table.results[i].name
                 filename=table.results[i].filename
-                url = reverse('download_group',args=['download','Contestant',str(contestant.id),'backup',name,filename])
+                url = reverse('download_group',args=['download','Contestant',str(table.contestants[i].id),'backup',name,filename])
                 return '<a href="'+url+'" class="stdlink">'+filename+'</a>'
             self.fields.append(TableField(name='File',value=(lambda table,i : table.results[i].filename),render=download_link,id=3,sortable=False))
             def delete_form(table,i):
                 name=table.results[i].name
-                url = '<form action="" method="POST"><input type="hidden" name="id" value="'+name+'"/><input type="hidden" name="cid" value="'+unicode(table.contestants[i].id)+'"/><input class="button button_small" type="submit" name="delete" value="Delete">'
+                url = '<form action="" method="POST"><input type="hidden" name="id" value="'+name+'"/><input type="hidden" name="cid" value="'+unicode(table.contestants[i].id)+'"/><input class="button button_small" type="submit" name="delete" value="Delete"></form>'
                 return url
             self.fields.append(TableField(name='',value='',render=delete_form,id=4,sortable=False,css=['centered']))
             
