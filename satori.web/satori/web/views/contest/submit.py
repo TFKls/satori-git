@@ -43,5 +43,5 @@ def view(request, page_info):
             Submit.create(SubmitStruct(problem=problem),content=content,filename=filename)
             return HttpResponseRedirect(reverse('results',args=[page_info.contest.id]))
     else:
-        form = SubmitForm()
+        form = SubmitForm(initial={'problem' : request.GET.get('select',None)})
     return render_to_response('submit.html', {'page_info' : page_info, 'form' : form})

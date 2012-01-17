@@ -1,8 +1,11 @@
 {% extends "templates/index.html" %}
 
+{% block header %}
+ {% include "showhide.html" %}
+{% endblock %}
+
 {% block content %}
 
-{% load switch %}
 
 <h3>Submit {{widget.sid}}</h4>
 
@@ -21,35 +24,32 @@
     <td>{{widget.problem.code}}</td>
     <td>{{widget.time|date:"Y-m-d, H:i:s"}}</td>
 
-<td class={% switch widget.status %}
-                {% case "QUE" %} "staQUE"
-                {% case "ACC" %} "staACC"
-                {% case "OK" %} "staOK"
-                {% case "TLE" %} "staTLE"
-                {% case "ANS" %} "staANS"
-                {% case "RTE" %} "staRTE"
-                {% case "MEM" %} "staMEM"
-                {% case "REJ" %} "staREJ"
-                {% case "CME" %} "staCME"
-                {% else %} ""
-           {% endswitch %}>
-
-    {{widget.status}}</td>
+<td class=sta{{ widget.status }}>{{widget.status}}</td>
 </tr>
 
 
 </table>
 
-<h3>Checking report</h4>
+{% if widget.details %}
+<h4>Checking report</h4>
 {{widget.details|safe}}
+{% endif %}
 
+<hr class="divide"/>
 
 {% if widget.suites %}
 <h3>Suite results</h3>
 
-{% for result in widget.suites %}
-<h4>Suite: {{result.test_suite.name}}</h4>
-{% for key, attr in result.attributes.iteritems %}
+{% for r in widget.suites %}
+<h4>Suite: {{r.result.test_suite.name}}  {% if r.default %}(default){% endif %}, status: {{r.result.status}} [<a class="stdlink" href="javascript:unhide('sd_{{r.result.test_suite.id}}');">show details</a>]</h4>
+<div class="hidden" id="sd_{{r.result.test_suite.id}}">
+
+<h5>Report </h5>
+
+{{r.report|safe}}
+
+<h5>Attributes</h5>
+{% for key, attr in r.attrs.iteritems %}
 {% if not attr.is_blob %}
 {{ key }} : {{ attr.value}}
 {% else %}
@@ -57,24 +57,24 @@
 {% endif %}
 </br>
 {% endfor %}
+
+</div>
+
+
 {% endfor %}
+
+
+<hr class="divide"/>
 
 {% endif %}
 
-{% if widget.results %}
+{% if page_info.contest_is_admin %}
 <h3>Test results</h3>
 
-{% for result in widget.results %}
-<h4>Test: {{result.test.name}}</h4>
-{% for key, attr in result.attributes.iteritems %}
-{% if not attr.is_blob %}
-{{ key }} : {{ attr.value}}
-{% else %}
-{{ key }} : <a href="{% url download "download" "TestResult" result.test_result.id key attr.filename %}">({{ attr.filename }})</a>
-{% endif %}
-<br/>
-{% endfor %}
-{% endfor %}
+<table class="results">
+  {{tests.render_table|safe}}
+</table>
+<hr class="divide"/>
 
 {% endif %}
 
@@ -87,10 +87,12 @@
     <input class="button" type="submit" name="revert" value="Revert override"/>
 </form><br/>
 
+<hr class="divide"/>
+
 {% endif %}
 
 
-<h3>Code (<a href="{% url download_group "download" "Submit" widget.sid "data" "content" filename %}">download</a>)</h3>
+<h3>Code (<a class="stdlink" href="{% url download_group "download" "Submit" widget.sid "data" "content" filename %}">download</a>)</h3>
 {% if widget.code %}
 {{widget.code|safe}}
 {% else %}

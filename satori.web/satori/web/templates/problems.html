@@ -17,7 +17,7 @@
 {% for g in groups %}
 {% if g.groupname and not forloop.last %}
 <h4>{% if g.groupname %} {{g.groupname}} {% else %} Other problems: {% endif %} [<a class="stdlink" href="javascript:unhide('{{g.prefix}}');">show/hide</a>]</h4>
-<div class="hidden" id="{{g.prefix}}">
+<div class="unhidden" id="{{g.prefix}}">
 {% else %}
 <h4>{% if g.groupname %} {{g.groupname}} {% else %} Other problems: {% endif %} [<a class="stdlink" href="javascript:unhide('{{g.prefix}}');">show/hide</a>]</h4>
 <div class="unhidden" id="{{g.prefix}}">

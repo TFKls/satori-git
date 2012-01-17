@@ -8,6 +8,7 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django import forms
 from satori.web.utils.shortcuts import text2html
+from satori.web.utils.tables import ResultTable,TableField
 from difflib import HtmlDiff,Differ
 from cgi import escape
 
@@ -22,15 +23,58 @@ def view(request, page_info, id):
     widget["contestant"] = res.contestant
     widget["problem"] = res.problem_mapping
     widget["time"] = submit.time
-    widget["details"] = text2html(res.report)
+    if res.report:
+        widget["details"] = text2html(res.report)
     widget["status"] = res.status
     widget["isadmin"] = admin
-    widget["suites"] = res.test_suite_results
-    if widget["suites"]:
-        widget["suites"].sort(key=lambda r: r.test_suite.name)
-    widget["results"] = res.test_results
-    if widget["results"]:
-        widget["results"].sort(key=lambda r: r.test.name)
+    if res.test_suite_results:
+        widget["suites"] = [ {'result' : tsr.test_suite_result, 'report' : text2html(tsr.test_suite_result.report), 'attrs' : tsr.attributes, 'default' : tsr.test_suite_result.test_suite==res.problem_mapping.default_test_suite } for tsr in res.test_suite_results ]
+#    if widget["suites"]:
+#        widget["suites"].sort(key=lambda r: r.test_suite.name)
+    class TestResultTable(ResultTable):
+        @staticmethod
+        def default_limit():
+            return 0
+        def __init__(self,req,prefix=''):
+            super(TestResultTable,self).__init__(req=req,prefix=prefix,default_sort='name')
+            self.results = res.test_results
+            attributes = set()
+            for t in self.results:
+                for a in t.attributes.keys():
+                    attributes.add(t.attributes[a].name)
+            self.fields.append(TableField(name='Test name',value=lambda table,i : table.results[i].test.name,id='name'))
+            def attribute_value(table,i,a):
+                r = table.results[i]
+                if a in r.attributes.keys():
+                    v = r.attributes[a]
+                    if v.is_blob:
+                        return v.filename
+                    else:
+                        return v.value
+                else:
+                    return ''
+            def attribute_render(table,i,a):
+                r = table.results[i]
+                if a in r.attributes.keys():
+                    v = r.attributes[a]
+                    if v.is_blob:
+                        return '<a class="stdlink" href="'+reverse('download',args=['download','TestResult',unicode(r.test_result.id),a,v.filename])+'">'+v.filename+'</a>'
+                    else:
+                        return v.value
+                else:
+                    return ''
+            def lar(att):
+                return lambda table,i : attribute_render(table,i,att)
+            def lav(att):
+                return lambda table,i : attribute_value(table,i,att)            
+            for a in attributes:
+                print a
+                self.fields.append(TableField(name=a,value=lav(a),render=lar(a),id=a))
+    
+    if admin:
+        tests = TestResultTable(req=request.GET)
+    else:
+        tests = None
     fullname = res.data_filename.rsplit('.',2)
     if len(fullname)==2:
         extension = '.'+fullname[1]
@@ -40,7 +84,7 @@ def view(request, page_info, id):
     rawcode = res.data
     if rawcode and rawcode!="":
         widget["code"] = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
-    return render_to_response('viewresult.html',{'page_info' : page_info, 'widget' : widget, 'filename' : filename})
+    return render_to_response('viewresult.html',{'page_info' : page_info, 'widget' : widget, 'tests' : tests,'filename' : filename})
 
 
 @contest_view
@@ -118,3 +162,4 @@ def override(request, page_info, id):
     else:
         code = None
     return render_to_response('result_override.html',{'page_info' : page_info, 'form' : form, 'submit' : res, 'filename': filename, 'code' : code, 'report' : report})
+    

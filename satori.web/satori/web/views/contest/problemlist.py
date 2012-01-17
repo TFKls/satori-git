@@ -96,6 +96,12 @@ def viewall(request,page_info):
                     return '<a class="button button_small" href="'+reverse('contest_problems_edit',args=[unicode(page_info.contest.id),unicode(table.results[i].problem_mapping.id)])+'">Edit</a>'
                 else:
                     return ''
+            def submit_button(table,i):
+                p = table.results[i]
+                if p.can_submit:
+                    return '<a class="button button_small" href="'+reverse('submit',args=[unicode(page_info.contest.id)])+'?select='+unicode(table.results[i].problem_mapping.id)+'">Submit</a>'
+                else:
+                    return ''
             def pdflink(table,i):
                 p = table.results[i]
                 url = reverse('download_group',args=['view','ProblemMapping',str(p.problem_mapping.id),'statement_files','_pdf',p.problem_mapping.code+'.pdf'])
@@ -114,6 +120,7 @@ def viewall(request,page_info):
                 self.fields.append(TableField(name='',value='',render=submittable,id='submits',sortable=False,css=['medium']))
             if admin:
                 self.fields.append(TableField(name='',value='',render=edit_button,id='edit',sortable=False,css=['centered','small']))
+            self.fields.append(TableField(name='',value='',render=submit_button,id='submit',sortable=False,css=['centered','small']))
             self.total = len(self.results)
 
     problem_list = Web.get_problem_mapping_list(page_info.contest)

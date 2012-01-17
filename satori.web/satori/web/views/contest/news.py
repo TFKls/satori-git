@@ -84,6 +84,12 @@ def edit(request, page_info,id):
                                              content=data['content'],
                                              is_sticky=data['is_sticky'],
                                              is_public=data['is_public']))
+                if not data['is_public']:
+                    Privilege.revoke(Security.anonymous(),message,'VIEW')
+                    Privilege.grant(page_info.contest.contestant_role,message,'VIEW')
+                else:
+                    Privilege.revoke(page_info.contest.contestant_role,message,'VIEW')
+                    Privilege.grant(Security.anonymous(),message,'VIEW')
             except SphinxException as sphinxException:
                 attachments = valid_attachments(message.content_files_get_list())
                 form._errors['content'] = form.error_class([sphinxException])
