@@ -254,7 +254,7 @@ class PointsAggregator(AggregatorBase):
                 self.scores[problem_id] = self.PointsProblemScore(self, self.aggregator.problem_cache[problem_id])
 
         def update(self):
-            if (self.hidden and not self.params.show_invisible) or not any([s.points is not None for s in self.scores.values()]):
+            if (self.hidden and not self.score.aggregator.params.show_invisible) or not any([s.points is not None for s in self.scores.values()]):
                 self.ranking_entry.row = ''
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position()
