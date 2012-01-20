@@ -220,6 +220,7 @@ class PointsAggregator(AggregatorBase):
 #@      <general>
 #@      </general>
 #@      <problem>
+#@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
 #@      </problem>
 #@</aggregator>
     """
@@ -285,7 +286,7 @@ class PointsAggregator(AggregatorBase):
     def init(self):
         super(PointsAggregator, self).init()
 
-        self.problem_list = sorted(self.problem_cache.values(), key=attrgetter('code'))
+        self.problem_list = filter(lambda p : not self.problem_params[p.id].ignore, sorted(self.problem_cache.values(), key=attrgetter('code')))
        
         columns = [(5, 'Lp.'), (20, 'Name')]
 

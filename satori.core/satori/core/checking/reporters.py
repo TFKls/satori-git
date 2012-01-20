@@ -218,6 +218,7 @@ class PointsReporter(ReporterBase):
     """
 #@<reporter name="Points reporter">
 #@      <general>
+#@              <param type="bool"     name="show_tests"     description="Show individual test results" default="true"/>
 #@      </general>
 #@</reporter>
     """
@@ -234,22 +235,32 @@ class PointsReporter(ReporterBase):
         self.test_suite_result.save()
 
     def accumulate(self, test_result):
+        test = test_result.test
+        code = TestMapping.objects.get(test=test, suite=self.test_suite_result.test_suite).order
         result = test_result.oa_get_str('status')
         self.checked = self.checked+1
         if result is None:
             result = 'INT'
         if result == 'OK':
             self.passed = self.passed+1
-        self._status = str(self.passed) + ' / '+ str(self.checked)
-        
-        self.reportlines.add([test_result.test.name,result])
-        self.test_suite_result.report = ' '.join(['['+str(r[0])+':'+str(r[1])+']' for r in self.reportlines])
+        self._status = str(self.passed) + ' / '+ str(self.checked)        
+        self.reportlines.add([test_result.test.name,result,'Time'])
         self.test_suite_result.save()
         
     def status(self):
         return True
 
     def deinit(self):
+        if self.params.show_tests:
+        	columns = [(20, 'Test'), (10, 'Status'), (20,'Time')]
+            table = RestTable(*columns)
+            report = table.row_separator + table.header_row + table.header_separator
+            for line in self.reportlines:
+                values = line
+                report += table.generate_row(*values) + table.row_separator
+        else:
+            report = ''
+        self.test_suite_result.report = report
         self.test_suite_result.status = self._status
         self.test_suite_result.oa_set_str('status', self._status)
         self.test_suite_result.oa_set_str('checked', self.checked)
