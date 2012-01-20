@@ -243,8 +243,12 @@ class PointsReporter(ReporterBase):
             result = 'INT'
         if result == 'OK':
             self.passed = self.passed+1
-        self._status = str(self.passed) + ' / '+ str(self.checked)        
-        self.reportlines.add([test_result.test.name,result,test_result.oa_get_str('execute_time_cpu')+ ' / ' +test.data_get_str('time')])
+        self._status = str(self.passed) + ' / '+ str(self.checked)
+        if result == 'OK' or result == 'ANS':
+    	    elapsed = test_result.oa_get_str('execute_time_cpu')
+    	else:
+    	    elapsed = "\-\-"
+        self.reportlines.add([test_result.test.name,result,elapsed+' / ' +test.data_get_str('time')])
         self.test_suite_result.save()
         
     def status(self):
