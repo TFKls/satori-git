@@ -219,6 +219,7 @@ class PointsReporter(ReporterBase):
 #@<reporter name="Points reporter">
 #@      <general>
 #@              <param type="bool"     name="show_tests"     description="Show individual test results" default="true"/>
+#@              <param type="bool"     name="falling"     description="Linear points decrease" default="false"/>
 #@      </general>
 #@</reporter>
     """
@@ -228,6 +229,7 @@ class PointsReporter(ReporterBase):
     def init(self):
         self.checked = 0
         self.passed = 0
+        self.weighted = 0
         self._status = ''
         self.reportlines = sortedlist(key=lambda row: row[0])
         self.test_suite_result.status = 'QUE'
@@ -248,7 +250,14 @@ class PointsReporter(ReporterBase):
     	    elapsed = test_result.oa_get_str('execute_time_cpu')
     	else:
     	    elapsed = "\-\-"
-        self.reportlines.add([test_result.test.name,result,elapsed+' / ' +test.data_get_str('time')])
+    	limit = test.data_get_str('time')
+    	score = int(10*(2-2*(float(elapsed[:-1])/float(limit[:-1]))))
+    	if score<0:
+    	    score = 0
+    	if score>10:
+    	    score = 10
+    	self.weighted += score
+        self.reportlines.add([test_result.test.name,result,elapsed+' / ' +limit,unicode(score)])
         self.test_suite_result.save()
         
     def status(self):
@@ -256,7 +265,7 @@ class PointsReporter(ReporterBase):
 
     def deinit(self):
         if self.params.show_tests:
-        	columns = [(20, 'Test'), (10, 'Status'), (20,'Time')]
+        	columns = [(20, 'Test'), (10, 'Status'), (20,'Time'), (20,'Weighted score')]
             table = RestTable(*columns)
             report = table.row_separator + table.header_row + table.header_separator
             for line in self.reportlines:
@@ -269,6 +278,7 @@ class PointsReporter(ReporterBase):
         self.test_suite_result.oa_set_str('status', self._status)
         self.test_suite_result.oa_set_str('checked', self.checked)
         self.test_suite_result.oa_set_str('passed', self.passed)
+        self.test_suite_result.oa_set_str('weighted', self.weighted)
         self.test_suite_result.save()
 
 
