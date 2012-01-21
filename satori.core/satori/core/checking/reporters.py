@@ -251,7 +251,10 @@ class PointsReporter(ReporterBase):
     	else:
     	    elapsed = "\-\-"
     	limit = test.data_get_str('time')
-    	score = int(10*(2-2*(float(elapsed[:-1])/float(limit[:-1]))))
+    	if result == 'OK':
+        	score = int(10*(2-2*(float(elapsed[:-1])/float(limit[:-1]))))
+        else:
+    	    score = 0
     	if score<0:
     	    score = 0
     	if score>10:
