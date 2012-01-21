@@ -252,14 +252,15 @@ class PointsReporter(ReporterBase):
     	    elapsed = "\-\-"
     	limit = test.data_get_str('time')
     	if result == 'OK':
-        	score = int(10*(2-2*(float(elapsed[:-1])/float(limit[:-1]))))
+        	score = round((2-2*(float(elapsed[:-1])/float(limit[:-1]))),2)
         else:
     	    score = 0
     	if score<0:
     	    score = 0
-    	if score>10:
-    	    score = 10
+    	if score>=1:
+    	    score = 1
     	self.weighted += score
+    	self.normalized = int(100*self.weighted/self.checked)
         self.reportlines.add([test_result.test.name,result,elapsed+' / ' +limit,unicode(score)])
         self.test_suite_result.save()
         
@@ -282,6 +283,7 @@ class PointsReporter(ReporterBase):
         self.test_suite_result.oa_set_str('checked', self.checked)
         self.test_suite_result.oa_set_str('passed', self.passed)
         self.test_suite_result.oa_set_str('weighted', self.weighted)
+        self.test_suite_result.oa_set_str('score', self.normalized)
         self.test_suite_result.save()
 
 
