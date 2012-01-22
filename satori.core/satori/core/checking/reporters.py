@@ -287,10 +287,10 @@ class PointsReporter(ReporterBase):
         else:
             report = ''
         self.test_suite_result.report = report
-        if self.params.show_score:
-            self.test_suite_result.status = unicode(self.normalized)+' ['+self._status+']'
-        else:
-            self.test_suite_result.status = self._status            
+#        if self.params.show_score:
+        self.test_suite_result.status = unicode(self.normalized)+' ['+self._status+']'
+#        else:
+#            self.test_suite_result.status = self._status            
         self.test_suite_result.status = self._status
         self.test_suite_result.oa_set_str('status', self._status)
         self.test_suite_result.oa_set_str('checked', self.checked)
