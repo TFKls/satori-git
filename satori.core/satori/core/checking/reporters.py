@@ -196,14 +196,14 @@ class ACMReporter(ReporterBase):
         self.test_suite_result.oa_set_str('status', status)
         self.test_suite_result.status = status
         if self.params.show_tests:
-        	columns = [(20, 'Test')]
+            columns = [(20, 'Test')]
             for (column_id, column_name) in self.columns:
                 if self._column_nonempty[column_id]:
-                	columns.append((15, column_name))
+                    columns.append((15, column_name))
             table = RestTable(*columns)
             report = table.row_separator + table.header_row + table.header_separator
             for code in sorted(self._codes):
-            	values = [self._names[code]]
+                values = [self._names[code]]
                 for (column_id, column_name) in self.columns:
                     if self._column_nonempty[column_id]:
                         values.append(self._column_values[column_id][code])
@@ -247,26 +247,26 @@ class PointsReporter(ReporterBase):
             self.passed = self.passed+1
         self._status = str(self.passed) + ' / '+ str(self.checked)
         if result == 'OK' or result == 'ANS':
-    	    elapsed = test_result.oa_get_str('execute_time_cpu')
-    	else:
-    	    elapsed = "\-\-"
-    	limit = test.data_get_str('time')
-    	if result == 'OK':
-    	    if self.params.falling:
-        	score = round((2-2*(float(elapsed[:-1])/float(limit[:-1]))),2)
-    	    else:
-    		score = 1
+            elapsed = test_result.oa_get_str('execute_time_cpu')
         else:
-    	    score = 0
-    	if score<0:
-    	    score = 0
-    	if score>=1:
-    	    score = 1
-    	self.weighted += score
-    	self.normalized = int(100*self.weighted/self.checked)
-    	line = [test_result.test.name,result,elapsed+' / ' +limit]
-    	if self.params.falling:
-    	    line.append(unicode(score))
+            elapsed = "\-\-"
+        limit = test.data_get_str('time')
+        if result == 'OK':
+            if self.params.falling:
+                score = round((2-2*(float(elapsed[:-1])/float(limit[:-1]))),2)
+            else:
+                score = 1
+        else:
+            score = 0
+        if score<0:
+            score = 0
+        if score>=1:
+            score = 1
+        self.weighted += score
+        self.normalized = int(100*self.weighted/self.checked)
+        line = [test_result.test.name,result,elapsed+' / ' +limit]
+        if self.params.falling:
+            line.append(unicode(score))
         self.reportlines.add(line)
         self.test_suite_result.save()
         
