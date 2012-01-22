@@ -252,7 +252,10 @@ class PointsReporter(ReporterBase):
     	    elapsed = "\-\-"
     	limit = test.data_get_str('time')
     	if result == 'OK':
+    	    if self.params.falling:
         	score = round((2-2*(float(elapsed[:-1])/float(limit[:-1]))),2)
+    	    else:
+    		score = 1
         else:
     	    score = 0
     	if score<0:
@@ -261,7 +264,10 @@ class PointsReporter(ReporterBase):
     	    score = 1
     	self.weighted += score
     	self.normalized = int(100*self.weighted/self.checked)
-        self.reportlines.add([test_result.test.name,result,elapsed+' / ' +limit,unicode(score)])
+    	line = [test_result.test.name,result,elapsed+' / ' +limit]
+    	if self.params.falling:
+    	    line.append(unicode(score))
+        self.reportlines.add(line)
         self.test_suite_result.save()
         
     def status(self):
@@ -269,7 +275,9 @@ class PointsReporter(ReporterBase):
 
     def deinit(self):
         if self.params.show_tests:
-        	columns = [(20, 'Test'), (10, 'Status'), (20,'Time'), (20,'Weighted score')]
+            columns = [(20, 'Test'), (10, 'Status'), (20,'Time')]
+            if self.params.falling:
+                columns.append((20,'Weighted score'))
             table = RestTable(*columns)
             report = table.row_separator + table.header_row + table.header_separator
             for line in self.reportlines:

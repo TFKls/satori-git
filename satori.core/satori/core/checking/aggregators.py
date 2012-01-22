@@ -219,6 +219,7 @@ class PointsAggregator(AggregatorBase):
 #@<aggregator name="Points aggregator">
 #@      <general>
 #@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
+#@              <param type="bool"     name="auto_score" description="Automatic score calculation" default="true"/>
 #@      </general>
 #@      <problem>
 #@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
@@ -241,7 +242,10 @@ class PointsAggregator(AggregatorBase):
                 if checked == 0:
                     points = 0
                 else:
-                    points = int(100*passed/checked)
+                    if self.score.aggregator.params.auto_score:
+                        points = int(100*passed/checked)
+                    else:
+                        score = int(result.oa_get_str('score'))
                 if self.score.aggregator.submit_cache[result.submit_id].time > self.last_time:
                     self.last_time = self.score.aggregator.submit_cache[result.submit_id].time
                     self.points = points
