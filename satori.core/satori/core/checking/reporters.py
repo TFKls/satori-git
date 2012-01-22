@@ -219,7 +219,8 @@ class PointsReporter(ReporterBase):
 #@<reporter name="Points reporter">
 #@      <general>
 #@              <param type="bool"     name="show_tests"     description="Show individual test results" default="true"/>
-#@              <param type="bool"     name="falling"     description="Linear points decrease" default="false"/>
+#@              <param type="bool"     name="falling"        description="Linear points decrease" default="false"/>
+#@              <param type="bool"     name="show_score"     description="Show score in status" default="false"/>
 #@      </general>
 #@</reporter>
     """
@@ -286,6 +287,10 @@ class PointsReporter(ReporterBase):
         else:
             report = ''
         self.test_suite_result.report = report
+        if self.params.show_score:
+            self.test_suite_result.status = self.normalized+' ['+self._status+']'
+        else:
+            self.test_suite_result.status = self._status            
         self.test_suite_result.status = self._status
         self.test_suite_result.oa_set_str('status', self._status)
         self.test_suite_result.oa_set_str('checked', self.checked)
