@@ -245,7 +245,7 @@ class PointsAggregator(AggregatorBase):
                     if self.score.aggregator.params.auto_score:
                         points = int(100*passed/checked)
                     else:
-                        score = int(result.oa_get_str('score'))
+                        points = int(result.oa_get_str('score'))
                 if self.score.aggregator.submit_cache[result.submit_id].time > self.last_time:
                     self.last_time = self.score.aggregator.submit_cache[result.submit_id].time
                     self.points = points
