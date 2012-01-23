@@ -70,8 +70,6 @@ def view(request, page_info):
                                           ,id=5,css='status'))
             def suite_results(table,i):
                 r = table.results[i]
-                d = r.__dict__
-                8/0
                 return '<br/>'.join([tsr.test_suite.name+': '+tsr.test_suite_result.status for tsr in r.test_suite_results])
             if detailed_tsr:
                 self.fields.append(TableField(name='Results',value='',render=suite_results,id=6))
