@@ -40,6 +40,7 @@ setup(name='satori.core',
         'ipaddr',
         'gdata',
         'pyyaml',
+        'sphinx',
     ],
     entry_points='''
         [console_scripts]
