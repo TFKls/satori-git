@@ -204,9 +204,9 @@ class Web(object):
         result = Privilege.wrap(Contestant.objects.filter(parents=contest.admin_role).order_by('sort_field'), where=['VIEW'], struct=True)
         return SizedContestantList(count=len(result), contestants=result[offset:offset+limit])
 
-    @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int], PCPermit())
+    @ExportMethod(SizedResultList, [DjangoId('Contest'), DjangoId('Contestant'), DjangoId('ProblemMapping'), int, int, bool], PCPermit())
     @staticmethod
-    def get_results(contest, contestant=None, problem=None, limit=20, offset=0):
+    def get_results(contest, contestant=None, problem=None, limit=20, offset=0, detailed_tsr=False):
         q = Privilege.wrap(Submit, where=['VIEW_RESULTS'], struct=True).filter(contestant__contest=contest).order_by('-id')
 
         if contestant:
@@ -237,6 +237,15 @@ class Web(object):
             ret_r.problem_mapping = problem_dict[submit.problem_id]
             ret_r.status = submit.get_test_suite_status()
             ret_r.report = submit.get_test_suite_report()
+            if detailed_tsr and Privilege.demand(submit, 'MANAGE'):
+                ret_tsrs = []
+                for tsr in Privilege.wrap(TestSuiteResult, struct=True).filter(submit=submit):
+                    ret_tsr = TestSuiteResultInfo()
+                    ret_tsr.test_suite = Privilege.wrap(TestSuite, struct=True).get(id=tsr.test_suite_id)
+                    ret_tsr.test_suite_result = tsr
+                    ret_tsr.attributes = tsr.oa_get_map()
+                    ret_tsrs.append(ret_tsr)
+                ret_r.test_suite_results = ret_tsrs
             ret.append(ret_r)
         return SizedResultList(
             count=len(q),
