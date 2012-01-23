@@ -196,14 +196,14 @@ class ACMReporter(ReporterBase):
         self.test_suite_result.oa_set_str('status', status)
         self.test_suite_result.status = status
         if self.params.show_tests:
-        	columns = [(20, 'Test')]
+            columns = [(20, 'Test')]
             for (column_id, column_name) in self.columns:
                 if self._column_nonempty[column_id]:
-                	columns.append((15, column_name))
+                    columns.append((15, column_name))
             table = RestTable(*columns)
             report = table.row_separator + table.header_row + table.header_separator
             for code in sorted(self._codes):
-            	values = [self._names[code]]
+                values = [self._names[code]]
                 for (column_id, column_name) in self.columns:
                     if self._column_nonempty[column_id]:
                         values.append(self._column_values[column_id][code])
@@ -219,6 +219,8 @@ class PointsReporter(ReporterBase):
 #@<reporter name="Points reporter">
 #@      <general>
 #@              <param type="bool"     name="show_tests"     description="Show individual test results" default="true"/>
+#@              <param type="bool"     name="falling"        description="Linear points decrease" default="false"/>
+#@              <param type="bool"     name="show_score"     description="Show score in status" default="false"/>
 #@      </general>
 #@</reporter>
     """
@@ -228,6 +230,7 @@ class PointsReporter(ReporterBase):
     def init(self):
         self.checked = 0
         self.passed = 0
+        self.weighted = 0
         self._status = ''
         self.reportlines = sortedlist(key=lambda row: row[0])
         self.test_suite_result.status = 'QUE'
@@ -243,8 +246,29 @@ class PointsReporter(ReporterBase):
             result = 'INT'
         if result == 'OK':
             self.passed = self.passed+1
-        self._status = str(self.passed) + ' / '+ str(self.checked)        
-        self.reportlines.add([test_result.test.name,result,'Time'])
+        self._status = str(self.passed) + ' / '+ str(self.checked)
+        if result == 'OK' or result == 'ANS':
+            elapsed = test_result.oa_get_str('execute_time_cpu')
+        else:
+            elapsed = "\-\-"
+        limit = test.data_get_str('time')
+        if result == 'OK':
+            if self.params.falling:
+                score = round((2-2*(float(elapsed[:-1])/float(limit[:-1]))),2)
+            else:
+                score = 1
+        else:
+            score = 0
+        if score<0:
+            score = 0
+        if score>=1:
+            score = 1
+        self.weighted += score
+        self.normalized = int(100*self.weighted/self.checked)
+        line = [test_result.test.name,result,elapsed+' / ' +limit]
+        if self.params.falling:
+            line.append(unicode(score))
+        self.reportlines.add(line)
         self.test_suite_result.save()
         
     def status(self):
@@ -252,7 +276,9 @@ class PointsReporter(ReporterBase):
 
     def deinit(self):
         if self.params.show_tests:
-        	columns = [(20, 'Test'), (10, 'Status'), (20,'Time')]
+            columns = [(20, 'Test'), (10, 'Status'), (20,'Time')]
+            if self.params.falling:
+                columns.append((20,'Weighted score'))
             table = RestTable(*columns)
             report = table.row_separator + table.header_row + table.header_separator
             for line in self.reportlines:
@@ -261,10 +287,15 @@ class PointsReporter(ReporterBase):
         else:
             report = ''
         self.test_suite_result.report = report
-        self.test_suite_result.status = self._status
-        self.test_suite_result.oa_set_str('status', self._status)
+        if self.params.show_score:
+            self.test_suite_result.status = unicode(self.normalized)+' ['+self._status+']'
+        else:
+            self.test_suite_result.status = self._status            
+        self.test_suite_result.oa_set_str('simple_status', self._status)
         self.test_suite_result.oa_set_str('checked', self.checked)
         self.test_suite_result.oa_set_str('passed', self.passed)
+        self.test_suite_result.oa_set_str('weighted', self.weighted)
+        self.test_suite_result.oa_set_str('score', self.normalized)
         self.test_suite_result.save()
 
 

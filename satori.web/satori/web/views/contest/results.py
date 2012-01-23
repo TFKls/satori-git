@@ -67,10 +67,17 @@ def view(request, page_info):
             self.fields.append(TableField(name='Status',value=(lambda table,i: table.results[i].status),
                                           render=(lambda table,i: '<div class="submitstatus"><div class="sta'+unicode(table.results[i].status)+'">'+unicode(table.results[i].status)+'</div></div>')
                                           ,id=5,css='status'))
+            def suite_results(table,i):
+                r = Web.get_result_details(table.results[i].submit)
+                return '<br/>'.join([tsr.test_suite.name+': '+tsr.test_suite_result.status for tsr in r.test_suite_results])
+            if self.filters.get('allsuites','0')=='1':
+                self.fields.append(TableField(name='Results',value='',render=suite_results,id=6))
             if self.showdiff:
                 newdiff = 0
             else:
                 newdiff = 1
             self.difflink = self.getparams(diff=newdiff)
+            if admin:
+                self.filter_functions.append(FilterFunction(prefix='allsuites',name='Show results on',choices=[('0','Default suite'),('1','All suites')],default='0',showall=False))
     results = SubmitsTable(req = request.GET,prefix='results')
     return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results })
