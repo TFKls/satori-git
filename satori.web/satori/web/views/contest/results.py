@@ -38,7 +38,8 @@ def view(request, page_info):
                 limit = max_limit
             page = int(self.params['page'])
             self.showdiff=int(self.params.get('diff','0'))
-            query = Web.get_results(contest=contest,contestant=contestant,problem=problem,offset=(page-1)*limit,limit=limit)
+            detailed_tsr = admin and (self.filters.get('allsuites','0')=='1')
+            query = Web.get_results(contest=contest,contestant=contestant,problem=problem,offset=(page-1)*limit,limit=limit,detailed_tsr=detailed_tsr)
             self.results = query.results
             self.total = query.count
             self.fields.append(TableField(name='No.',
@@ -68,9 +69,11 @@ def view(request, page_info):
                                           render=(lambda table,i: '<div class="submitstatus"><div class="sta'+unicode(table.results[i].status)+'">'+unicode(table.results[i].status)+'</div></div>')
                                           ,id=5,css='status'))
             def suite_results(table,i):
-                r = Web.get_result_details(table.results[i].submit)
+                r = table.results[i]
+                d = r.__dict__
+                8/0
                 return '<br/>'.join([tsr.test_suite.name+': '+tsr.test_suite_result.status for tsr in r.test_suite_results])
-            if self.filters.get('allsuites','0')=='1':
+            if detailed_tsr:
                 self.fields.append(TableField(name='Results',value='',render=suite_results,id=6))
             if self.showdiff:
                 newdiff = 0
