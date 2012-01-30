@@ -264,7 +264,7 @@ class PointsAggregator(AggregatorBase):
                 self.ranking_entry.position = self.aggregator.position()
                 self.ranking_entry.save()
             else:
-                points = sum([self.scores[p].points for p in self.problem_list if self.scores[p].points is not None], 0)
+                points = sum([self.scores[p].points for p in self.aggregator.problem_list if self.scores[p].points is not None], 0)
                 
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
         
