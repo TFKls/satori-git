@@ -5,7 +5,7 @@ class FilterFunction(object):
         self.check = check
         self.choices = choices
         if showall:
-            self.choices = [['disable_filter','Show all']]+self.choices
+            self.choices = [['disable_filter','-------']]+self.choices
         self.name = name
         self.prefix = prefix
         self.default = default
