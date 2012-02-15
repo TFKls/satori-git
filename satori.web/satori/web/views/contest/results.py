@@ -117,7 +117,7 @@ def view(request, page_info):
             def suite_results(table,i):
                 r = table.results[i]
                 return '<br/>'.join([tsr.test_suite.name+': '+tsr.test_suite_result.status for tsr in r.test_suite_results])
-            if detailed_tsr:
+            if detailed_tsr and not compsuite:
                 self.fields.append(TableField(name='Results',value='',render=suite_results,id=6))
             if self.showdiff:
                 newdiff = 0
