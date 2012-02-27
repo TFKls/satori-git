@@ -87,8 +87,9 @@ class AggregatorBase(object):
         
         for result in test_suite_results:
             s = self.submit_cache[result.submit_id]
-            self.scores[s.contestant_id].aggregate(result)
-            changed_contestants.add(s.contestant_id)
+            if s.contestant_id in self.scores:
+                self.scores[s.contestant_id].aggregate(result)
+                changed_contestants.add(s.contestant_id)
 
         for cid in changed_contestants:
             self.scores[cid].update()
