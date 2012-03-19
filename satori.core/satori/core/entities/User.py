@@ -74,7 +74,7 @@ class User(Role):
         changed = []
         if Privilege.demand(self, 'MANAGE'):
             self.forbid_fields(fields, ['id', 'name', 'sort_field'])
-            changed = self.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code','affiliation'])
+            changed = self.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code', 'affiliation'])
         else:
             self.forbid_fields(fields, ['id', 'name', 'sort_field', 'login', 'confirmed', 'activated', 'activation_code', 'email'])
             if self.confirmed:

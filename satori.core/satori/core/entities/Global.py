@@ -27,9 +27,10 @@ class Global(Entity):
         fields = [('contest_admins', 'VIEW'), ('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
 
     class RightsMeta(object):
-        rights = ['TEMPORARY_SUBMIT', 'MANAGE_PRIVILEGES', 'MANAGE_CONTESTS', 'MANAGE_PROBLEMS', 'JUDGE', 'RAW_BLOB', 'ADMIN']
+        rights = ['TEMPORARY_SUBMIT', 'MANAGE_LOCKS', 'MANAGE_PRIVILEGES', 'MANAGE_CONTESTS', 'MANAGE_PROBLEMS', 'JUDGE', 'RAW_BLOB', 'ADMIN']
     
         inherit_TEMPORARY_SUBMIT = ['MANAGE_PROBLEMS']
+        inherit_MANAGE_LOCKS = ['ADMIN']
         inherit_MANAGE_PRIVILEGES = ['ADMIN']
         inherit_MANAGE_CONTESTS = ['ADMIN']
         inherit_MANAGE_PROBLEMS = ['ADMIN']
@@ -40,6 +41,7 @@ class Global(Entity):
     def inherit_rights(cls):
         inherits = super(Global, cls).inherit_rights()
         cls._inherit_add(inherits, 'TEMPORARY_SUBMIT', 'id', 'ADMIN')
+        cls._inherit_add(inherits, 'MANAGE_LOCKS', 'id', 'ADMIN')
         cls._inherit_add(inherits, 'MANAGE_PRIVILEGES', 'id', 'ADMIN')
         cls._inherit_add(inherits, 'MANAGE_CONTESTS', 'id', 'ADMIN')
         cls._inherit_add(inherits, 'MANAGE_PROBLEMS', 'id', 'ADMIN')

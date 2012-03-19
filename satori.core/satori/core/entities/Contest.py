@@ -89,6 +89,8 @@ class Contest(Entity):
     def create(fields):
         contest = Contest()
         contest.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
+        if not Privilege.global_demand('MANAGE_LOCKS'):
+            contest.forbid_fields(fields, ['lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         contest.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         contest.contestant_role = SystemRole.create(fields=SystemRoleStruct(name='Contestants of ' + contest.name))
         contest.admin_role = SystemRole.create(fields=SystemRoleStruct(name='Administrators of ' + contest.name))
@@ -104,6 +106,8 @@ class Contest(Entity):
     @ExportMethod(DjangoStruct('Contest'), [DjangoId('Contest'), DjangoStruct('Contest')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
+        if not Privilege.global_demand('MANAGE_LOCKS'):
+            self.forbid_fields(fields, ['lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         modified = self.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         self.save()
         if 'name' in modified:
@@ -125,7 +129,7 @@ class Contest(Entity):
         except models.ProtectedError as e:
             raise CannotDeleteObject()
 
-    @ExportMethod(NoneType, [DjangoId('Contest')], PCArg('self', 'MANAGE'))
+    @ExportMethod(NoneType, [DjangoId('Contest')], PCAnd(PCArg('self', 'MANAGE'), PCGlobal('MANAGE_LOCKS')))
     def disable_lock(self):
         self.lock_start = None
         self.lock_finish = None
