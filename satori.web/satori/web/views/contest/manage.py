@@ -57,13 +57,17 @@ def view(request, page_info):
     class ManageForm(forms.Form):
         name = forms.CharField(required=True)
         description = forms.CharField(required=False)
+        lock_start = SatoriDateTimeField(required=False)
+        lock_finish = SatoriDateTimeField(required=False)
+        lock_address = forms.IPAddressField(required=False)
+        lock_netmask = forms.IPAddressField(required=False)
         viewfield = viewing.field()
         joinfield = joining.field()
         questions = forms.BooleanField(label='Questions allowed',required=False)
         backups = forms.BooleanField(label='Backups allowed',required=False)            
     
     if request.method!="POST":
-        manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'questions' : questions, 'backups' : backups})
+        manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'lock_start' : contest.lock_start, 'lock_finish' : contest.lock_finish, 'lock_address' : contest.lock_address, 'lock_netmask' : contest.lock_netmask, 'questions' : questions, 'backups' : backups})
         admin_form = AdminForm()
         return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
     if "addadmin" in request.POST.keys():
@@ -94,6 +98,10 @@ def view(request, page_info):
     joining.set(manage_form.cleaned_data['joinfield'])
     contest.name = manage_form.cleaned_data['name']
     contest.description = manage_form.cleaned_data['description']
+    contest.lock_start = manage_form.cleaned_data['lock_start']
+    contest.lock_finish = manage_form.cleaned_data['lock_finish']
+    contest.lock_address = manage_form.cleaned_data['lock_address']
+    contest.lock_netmask = manage_form.cleaned_data['lock_netmask']
     if manage_form.cleaned_data['questions']:
         Privilege.grant(contest.contestant_role,contest,'ASK_QUESTIONS')
     else:
