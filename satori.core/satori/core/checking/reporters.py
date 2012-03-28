@@ -112,7 +112,7 @@ class MultipleStatusReporter(ReporterBase):
 
     def accumulate(self, test_result):
         test = test_result.test
-        code = TestMapping.objects().filter(test=test, suite= self.test_suite_result.suite)[0].order
+        code = TestMapping.objects.get(test=test, suite=self.test_suite_result.test_suite).order
         status = test_result.oa_get_str('status')
         self._statuses[code] = status
         logging.debug('Status Reporter %s: %s += %s', self.test_suite_result.id, self._status, status)
@@ -185,7 +185,7 @@ class ACMReporter(ReporterBase):
             self._status = status
 
     def status(self):
-        return self._status == 'OK'
+        return self._status == 'OK' or self.params.show_tests
 
     def deinit(self):
         logging.debug('ACM Reporter %s: %s', self.test_suite_result.id, self._status)
