@@ -70,7 +70,15 @@ def view(request, page_info):
         backups = forms.BooleanField(label='Backups allowed',required=False)            
     
     if request.method!="POST":
-        manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'lock_start_0' : contest.lock_start.date(), 'lock_start_1' : contest.lock_start.time(), 'lock_finish_0' : contest.lock_finish.date(),'lock_finish_1' : contest.lock_finish.time(), 'lock_address' : contest.lock_address, 'lock_netmask' : contest.lock_netmask, 'questions' : questions, 'backups' : backups})
+        def get_date(x):
+            if x:
+                return x.date()
+            return None
+        def get_time(x):
+            if x:
+                return x.time()
+            return None
+        manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'lock_start_0' : get_date(contest.lock_start), 'lock_start_1' : get_time(contest.lock_start), 'lock_finish_0' : get_date(contest.lock_finish),'lock_finish_1' : get_time(contest.lock_finish), 'lock_address' : contest.lock_address, 'lock_netmask' : contest.lock_netmask, 'questions' : questions, 'backups' : backups})
         admin_form = AdminForm()
         return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
     if "addadmin" in request.POST.keys():
