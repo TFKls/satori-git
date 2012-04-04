@@ -329,10 +329,19 @@ ProcStats::ProcStats(int _pid)
     f = fopen(filename, "r");
     if (!f)
         Fail("read of '/proc/%d/statm' failed", _pid);
-    if (fscanf(f, "%d%d%d%d%d%d%d",
+    if (fscanf(f, "%llu%llu%llu%llu%llu%llu%llu",
         &mem_size, &mem_resident, &mem_shared, &mem_text, &mem_lib, &mem_data, &mem_dirty
     ) != 7)
         Fail("scanf of '/proc/%d/statm' failed", _pid);
+    unsigned psize = getpagesize();
+    mem_size *= psize;
+    mem_resident *= psize;
+    mem_shared *= psize;
+    mem_text *= psize;
+    mem_lib *= psize;
+    mem_data *= psize;
+    mem_dirty *= psize;
+
     fclose(f);
 }
 void UserInfo::set(void* _p)
@@ -829,7 +838,7 @@ bool Runner::check_times()
         Fail("clock_gettime(CLOCK_REALTIME) failed");
     long realtimesofar = miliseconds(ts) - start_time;
     CpuTimes proctimesofar = dead_pids_time;
-    long curmemory = 0;
+    unsigned long long curmemory = 0;
     for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
     {
         /* NIE DA SIE TAK, A POWINNO! Musimy czytać wolnego proca w sighandlerze
@@ -854,7 +863,7 @@ bool Runner::check_times()
     result.cpu_time = proctimesofar.time;
     result.user_time = proctimesofar.user;
     result.system_time = proctimesofar.system;
-    result.memory = max((long)result.memory, curmemory);
+    result.memory = max((unsigned long long)result.memory, curmemory/1024);
     if ((cpu_time > 0 && cpu_time < (long)result.cpu_time) ||
             (real_time > 0 && real_time < (long)result.real_time) ||
             (user_time > 0 && user_time < (long)result.user_time) ||
@@ -863,7 +872,7 @@ bool Runner::check_times()
         result.SetStatus(Result::RES_TIME);
         return false;
     }
-    if ((memory_space > 0) && (curmemory > memory_space))
+    if ((memory_space > 0) && ((long)curmemory > memory_space))
     {
         result.SetStatus(Result::RES_MEMORY);
         return false;
@@ -1163,7 +1172,6 @@ void Runner::run_child()
         set_rlimit("AS", RLIMIT_AS, memory_space);
         set_rlimit("DATA", RLIMIT_DATA, memory_space);
         set_rlimit("STACK", RLIMIT_STACK, memory_space);
-        set_rlimit("RSS", RLIMIT_RSS, memory_space);
     }
     if (stack_space > 0)
         set_rlimit("STACK", RLIMIT_STACK, min(stack_space, memory_space));
@@ -1467,6 +1475,12 @@ void Runner::process_child(long epid)
         {
             result.exit_status = status;
             result.usage = usage;
+            result.memory = max((long)result.memory, (long)usage.ru_maxrss);
+            CpuTimes times = miliseconds(usage);
+            result.cpu_time = max((long)result.cpu_time, (long)times.time);
+            result.user_time = max((long)result.user_time, (long)times.user);
+            result.system_time = max((long)result.system_time, (long)times.system);
+
             if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
                 result.SetStatus(Result::RES_OK);
             else

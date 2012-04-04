@@ -71,7 +71,7 @@ namespace runner {
                 unsigned long long start_time,io_delay;
                 char state;
                 std::string command;
-                int mem_size, mem_resident, mem_shared, mem_text, mem_lib, mem_data, mem_dirty;
+                unsigned long long mem_size, mem_resident, mem_shared, mem_text, mem_lib, mem_data, mem_dirty; // in bytes
                 ProcStats(int);
         };
 
@@ -185,8 +185,8 @@ namespace runner {
             RES_STATUS status;
             int    exit_status;
             rusage usage;
-            unsigned long memory;
-            unsigned long cpu_time;
+            unsigned long memory; //KB
+            unsigned long cpu_time; //1/1000 s
             unsigned long user_time;
             unsigned long system_time;
             unsigned long real_time;
