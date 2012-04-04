@@ -28,8 +28,10 @@ THRIFT_HOST = 'dev.satori.tcs.uj.edu.pl'
 THRIFT_PORT = 38889
 BLOB_PORT = 38887
 if getpass.getuser() == 'gutowski':
+    THRIFT_HOST = 'localhost'
     THRIFT_PORT = 39889
     BLOB_PORT = 39887
+    USE_SSL = False
 if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     THRIFT_HOST = 'localhost'
     THRIFT_PORT = 37889
