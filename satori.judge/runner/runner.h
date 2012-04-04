@@ -402,7 +402,7 @@ namespace runner {
 					  , dir("")
 					  , pivot(false)
 					  , exec("")
-					  , work_dir("/")
+					  , work_dir("")
 					  , params()
 					  , user("")
 					  , group("")

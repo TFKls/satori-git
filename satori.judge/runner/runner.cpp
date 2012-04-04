@@ -953,24 +953,26 @@ int cat_open(const char* path, int oflag, int mode) {
             total_write(ctrlpipe[1], &f, sizeof(f));
             exit(1);
         }
+        for (int g=getdtablesize(); g >= 0; g--)
+            if (g!=ctrlpipe[1] && g!=catpipe[0])
+                close(g);
+
+        int fd = open(path, oflag, mode);
+
         f = chdir("/");
         if (f < 0) {
             total_write(ctrlpipe[1], &f, sizeof(f));
             exit(1);
         }
-        for (int f=getdtablesize(); f >= 0; f--)
-            if (f!=ctrlpipe[1] && f!=catpipe[0])
-                close(f);
 
-        int fd = open(path, oflag, mode);
         total_write(ctrlpipe[1], &fd, sizeof(fd));
         close(ctrlpipe[1]);
         if (fd < 0)
             exit(1);
         char buf[4096];
         while (true) {
-            int r = read(catpipe[0], buf, 4096);
-            if (r < 0)
+            int r = read(catpipe[0], buf, sizeof(buf));
+            if (r <= 0)
                 exit(0);
             total_write(fd, buf, r);
         }
@@ -1116,7 +1118,7 @@ void Runner::run_child()
             Fail("chdir('%s') failed", work_dir.c_str());
     }
     else
-        if (chdir("/"))
+        if (dir != "" && chdir("/"))
             Fail("chdir('/') failed");
 
     if (new_mount && mount_proc)
