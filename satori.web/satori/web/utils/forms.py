@@ -20,7 +20,6 @@ class SatoriSplitDateTime(forms.SplitDateTimeWidget):
         self.widgets[0].attrs = {'class': 'SatoriDateField', 'size': '10'}
         self.widgets[1].attrs = {'class': 'SatoriTimeField', 'size': '8'}
 
-
 class SatoriDateTimeField(forms.DateTimeField):
     def __init__(self,*args,**kwargs):
         super(SatoriDateTimeField,self).__init__(widget=SatoriSplitDateTime,*args,**kwargs)
