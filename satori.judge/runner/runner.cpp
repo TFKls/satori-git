@@ -926,12 +926,76 @@ int total_read(int fd, void* buf, size_t cnt) {
     return 0;
 }
 
-int cat_open(const char* path, int oflag, int mode) {
+int cat_open_read(const char* path, int oflag) {
     int catpipe[2];
     int ctrlpipe[2];
-    if (pipe(catpipe))
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, catpipe))
         Fail("pipe failed");
-    if (pipe(ctrlpipe))
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, ctrlpipe))
+        Fail("pipe failed");
+    int f = fork();
+    if (f<0)
+        Fail("fork failed");
+    if (f==0) {
+        close(ctrlpipe[0]);
+        close(catpipe[1]);
+
+        f = fork();
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+        if (f > 0)
+            exit(0);
+        umask(0);
+        f = setsid();
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+        for (int g=getdtablesize(); g >= 0; g--)
+            if (g!=ctrlpipe[1] && g!=catpipe[0])
+                close(g);
+
+        int fd = open(path, oflag);
+
+        f = chdir("/");
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+
+        total_write(ctrlpipe[1], &fd, sizeof(fd));
+        close(ctrlpipe[1]);
+        if (fd < 0)
+            exit(1);
+        char buf[4096];
+        while (true) {
+            int r = read(fd, buf, sizeof(buf));
+            if (r <= 0) {
+                close(fd);
+                close(catpipe[0]);
+                exit(0);
+            }
+            total_write(catpipe[0], buf, r);
+        }
+    }
+    close(ctrlpipe[1]);
+    close(catpipe[0]);
+    total_read(ctrlpipe[0], &f, sizeof(f));
+    close(ctrlpipe[0]);
+    if (f<0)
+        Fail("cat_open failed");
+    return catpipe[1];
+}
+
+
+int cat_open_write(const char* path, int oflag, int mode) {
+    int catpipe[2];
+    int ctrlpipe[2];
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, catpipe))
+        Fail("pipe failed");
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, ctrlpipe))
         Fail("pipe failed");
     int f = fork();
     if (f<0)
@@ -972,8 +1036,11 @@ int cat_open(const char* path, int oflag, int mode) {
         char buf[4096];
         while (true) {
             int r = read(catpipe[0], buf, sizeof(buf));
-            if (r <= 0)
+            if (r <= 0) {
+                close(catpipe[0]);
+                close(fd);
                 exit(0);
+            }
             total_write(fd, buf, r);
         }
     }
@@ -1040,13 +1107,13 @@ void Runner::run_child()
     setresgid(rgid, rgid, egid);
     setresuid(ruid, ruid, euid);
     int fi=-1, fo=-1, fe=-1;
-    if ((input != "") && ((fi = open(input.c_str(), O_RDONLY)) < 0))
+    if ((input != "") && ((fi = cat_open_read(input.c_str(), O_RDONLY)) < 0))
         Fail("open('%s') failed", input.c_str());
-    if ((output != "") && ((fo = cat_open(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
+    if ((output != "") && ((fo = cat_open_write(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
         Fail("open('%s') failed", output.c_str());
     if (error_to_output)
         fe = fo;
-    else if ((error != "") && ((fe = cat_open(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
+    else if ((error != "") && ((fe = cat_open_write(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
         Fail("open('%s') failed", error.c_str());
     setresgid(rgid, egid, sgid);
     setresuid(ruid, euid, suid);
@@ -1623,7 +1690,7 @@ bool Runner::Check()
 void Runner::Wait()
 {
     while (child>0 && Check())
-        Initializer::ProcessLoop(1000);
+        Initializer::ProcessLoop(10);
 }
 
 }
