@@ -341,7 +341,6 @@ ProcStats::ProcStats(int _pid)
     mem_lib *= psize;
     mem_data *= psize;
     mem_dirty *= psize;
-
     fclose(f);
 }
 void UserInfo::set(void* _p)
@@ -847,7 +846,7 @@ bool Runner::check_times()
         */
         ProcStats stat(*i);
         proctimesofar += miliseconds(stat);
-        curmemory += stat.mem_size;
+        curmemory += stat.mem_resident;
     }
     if (proctimesofar.user < 0 || proctimesofar.system < 0 || proctimesofar.time < 0)
     {
