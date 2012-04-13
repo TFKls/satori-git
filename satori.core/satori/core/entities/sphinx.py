@@ -4,6 +4,7 @@ SphinxException = DefineException('SphinxException', 'Sphinx error: {error}', [(
 import re
 import sys, os, shutil
 import subprocess
+import logging
 from copy import deepcopy
 from docutils import nodes
 from docutils.parsers.rst import Directive, directives
@@ -132,7 +133,7 @@ def confToFile(filePath):
 
 
 def render_sphinx(rest, oa_map):
-    print os.getcwd()
+    logging.debug(os.getcwd())
     if not rest.strip():
         to_delete = []
         for name in oa_map:
