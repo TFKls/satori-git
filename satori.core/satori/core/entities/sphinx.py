@@ -132,6 +132,7 @@ def confToFile(filePath):
 
 
 def render_sphinx(rest, oa_map):
+    print os.getcwd()
     if not rest.strip():
         to_delete = []
         for name in oa_map:
