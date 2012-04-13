@@ -133,7 +133,7 @@ def confToFile(filePath):
 
 
 def render_sphinx(rest, oa_map):
-    logging.debug(os.getcwd())
+    os.chdir('/')
     if not rest.strip():
         to_delete = []
         for name in oa_map:
