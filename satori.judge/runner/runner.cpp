@@ -329,10 +329,18 @@ ProcStats::ProcStats(int _pid)
     f = fopen(filename, "r");
     if (!f)
         Fail("read of '/proc/%d/statm' failed", _pid);
-    if (fscanf(f, "%d%d%d%d%d%d%d",
+    if (fscanf(f, "%llu%llu%llu%llu%llu%llu%llu",
         &mem_size, &mem_resident, &mem_shared, &mem_text, &mem_lib, &mem_data, &mem_dirty
     ) != 7)
         Fail("scanf of '/proc/%d/statm' failed", _pid);
+    unsigned psize = getpagesize();
+    mem_size *= psize;
+    mem_resident *= psize;
+    mem_shared *= psize;
+    mem_text *= psize;
+    mem_lib *= psize;
+    mem_data *= psize;
+    mem_dirty *= psize;
     fclose(f);
 }
 void UserInfo::set(void* _p)
@@ -829,7 +837,7 @@ bool Runner::check_times()
         Fail("clock_gettime(CLOCK_REALTIME) failed");
     long realtimesofar = miliseconds(ts) - start_time;
     CpuTimes proctimesofar = dead_pids_time;
-    long curmemory = 0;
+    unsigned long long curmemory = 0;
     for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
     {
         /* NIE DA SIE TAK, A POWINNO! Musimy czytać wolnego proca w sighandlerze
@@ -838,7 +846,7 @@ bool Runner::check_times()
         */
         ProcStats stat(*i);
         proctimesofar += miliseconds(stat);
-        curmemory += stat.mem_size;
+        curmemory += stat.mem_resident;
     }
     if (proctimesofar.user < 0 || proctimesofar.system < 0 || proctimesofar.time < 0)
     {
@@ -854,7 +862,7 @@ bool Runner::check_times()
     result.cpu_time = proctimesofar.time;
     result.user_time = proctimesofar.user;
     result.system_time = proctimesofar.system;
-    result.memory = max((long)result.memory, curmemory);
+    result.memory = max((unsigned long long)result.memory, curmemory/1024);
     if ((cpu_time > 0 && cpu_time < (long)result.cpu_time) ||
             (real_time > 0 && real_time < (long)result.real_time) ||
             (user_time > 0 && user_time < (long)result.user_time) ||
@@ -863,7 +871,7 @@ bool Runner::check_times()
         result.SetStatus(Result::RES_TIME);
         return false;
     }
-    if ((memory_space > 0) && (curmemory > memory_space))
+    if ((memory_space > 0) && ((long)curmemory > memory_space))
     {
         result.SetStatus(Result::RES_MEMORY);
         return false;
@@ -917,12 +925,12 @@ int total_read(int fd, void* buf, size_t cnt) {
     return 0;
 }
 
-int cat_open(const char* path, int oflag, int mode) {
+int cat_open_read(const char* path, int oflag) {
     int catpipe[2];
     int ctrlpipe[2];
-    if (pipe(catpipe))
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, catpipe))
         Fail("pipe failed");
-    if (pipe(ctrlpipe))
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, ctrlpipe))
         Fail("pipe failed");
     int f = fork();
     if (f<0)
@@ -944,25 +952,94 @@ int cat_open(const char* path, int oflag, int mode) {
             total_write(ctrlpipe[1], &f, sizeof(f));
             exit(1);
         }
+        for (int g=getdtablesize(); g >= 0; g--)
+            if (g!=ctrlpipe[1] && g!=catpipe[0])
+                close(g);
+
+        int fd = open(path, oflag);
+
         f = chdir("/");
         if (f < 0) {
             total_write(ctrlpipe[1], &f, sizeof(f));
             exit(1);
         }
-        for (int f=getdtablesize(); f >= 0; f--)
-            if (f!=ctrlpipe[1] && f!=catpipe[0])
-                close(f);
 
-        int fd = open(path, oflag, mode);
         total_write(ctrlpipe[1], &fd, sizeof(fd));
         close(ctrlpipe[1]);
         if (fd < 0)
             exit(1);
         char buf[4096];
         while (true) {
-            int r = read(catpipe[0], buf, 4096);
-            if (r < 0)
+            int r = read(fd, buf, sizeof(buf));
+            if (r <= 0) {
+                close(fd);
+                close(catpipe[0]);
                 exit(0);
+            }
+            total_write(catpipe[0], buf, r);
+        }
+    }
+    close(ctrlpipe[1]);
+    close(catpipe[0]);
+    total_read(ctrlpipe[0], &f, sizeof(f));
+    close(ctrlpipe[0]);
+    if (f<0)
+        Fail("cat_open failed");
+    return catpipe[1];
+}
+
+
+int cat_open_write(const char* path, int oflag, int mode) {
+    int catpipe[2];
+    int ctrlpipe[2];
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, catpipe))
+        Fail("pipe failed");
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, ctrlpipe))
+        Fail("pipe failed");
+    int f = fork();
+    if (f<0)
+        Fail("fork failed");
+    if (f==0) {
+        close(ctrlpipe[0]);
+        close(catpipe[1]);
+
+        f = fork();
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+        if (f > 0)
+            exit(0);
+        umask(0);
+        f = setsid();
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+        for (int g=getdtablesize(); g >= 0; g--)
+            if (g!=ctrlpipe[1] && g!=catpipe[0])
+                close(g);
+
+        int fd = open(path, oflag, mode);
+
+        f = chdir("/");
+        if (f < 0) {
+            total_write(ctrlpipe[1], &f, sizeof(f));
+            exit(1);
+        }
+
+        total_write(ctrlpipe[1], &fd, sizeof(fd));
+        close(ctrlpipe[1]);
+        if (fd < 0)
+            exit(1);
+        char buf[4096];
+        while (true) {
+            int r = read(catpipe[0], buf, sizeof(buf));
+            if (r <= 0) {
+                close(catpipe[0]);
+                close(fd);
+                exit(0);
+            }
             total_write(fd, buf, r);
         }
     }
@@ -1029,13 +1106,13 @@ void Runner::run_child()
     setresgid(rgid, rgid, egid);
     setresuid(ruid, ruid, euid);
     int fi=-1, fo=-1, fe=-1;
-    if ((input != "") && ((fi = open(input.c_str(), O_RDONLY)) < 0))
+    if ((input != "") && ((fi = cat_open_read(input.c_str(), O_RDONLY)) < 0))
         Fail("open('%s') failed", input.c_str());
-    if ((output != "") && ((fo = cat_open(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
+    if ((output != "") && ((fo = cat_open_write(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
         Fail("open('%s') failed", output.c_str());
     if (error_to_output)
         fe = fo;
-    else if ((error != "") && ((fe = cat_open(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
+    else if ((error != "") && ((fe = cat_open_write(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
         Fail("open('%s') failed", error.c_str());
     setresgid(rgid, egid, sgid);
     setresuid(ruid, euid, suid);
@@ -1107,7 +1184,7 @@ void Runner::run_child()
             Fail("chdir('%s') failed", work_dir.c_str());
     }
     else
-        if (chdir("/"))
+        if (dir != "" && chdir("/"))
             Fail("chdir('/') failed");
 
     if (new_mount && mount_proc)
@@ -1163,7 +1240,6 @@ void Runner::run_child()
         set_rlimit("AS", RLIMIT_AS, memory_space);
         set_rlimit("DATA", RLIMIT_DATA, memory_space);
         set_rlimit("STACK", RLIMIT_STACK, memory_space);
-        set_rlimit("RSS", RLIMIT_RSS, memory_space);
     }
     if (stack_space > 0)
         set_rlimit("STACK", RLIMIT_STACK, min(stack_space, memory_space));
@@ -1467,6 +1543,12 @@ void Runner::process_child(long epid)
         {
             result.exit_status = status;
             result.usage = usage;
+            result.memory = max((long)result.memory, (long)usage.ru_maxrss);
+            CpuTimes times = miliseconds(usage);
+            result.cpu_time = max((long)result.cpu_time, (long)times.time);
+            result.user_time = max((long)result.user_time, (long)times.user);
+            result.system_time = max((long)result.system_time, (long)times.system);
+
             if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
                 result.SetStatus(Result::RES_OK);
             else
@@ -1607,7 +1689,7 @@ bool Runner::Check()
 void Runner::Wait()
 {
     while (child>0 && Check())
-        Initializer::ProcessLoop(1000);
+        Initializer::ProcessLoop(10);
 }
 
 }

@@ -1,21 +1,25 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
+import json
 import logging
+import urllib
+import urllib2
 import yaml
 from blist import blist, sortedset, sortedlist
 from collections import deque
 from copy import deepcopy
-from datetime import datetime, timedelta
+from datetime import date, datetime, timedelta
 from operator import attrgetter
 
 from django.db.models import F
 
 from satori.ars import perf
-from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping, RankingParams
+from satori.core.models import Contestant, Test, TestResult, TestSuiteResult, Ranking, RankingEntry, Contest, ProblemMapping, RankingParams, TestMapping
 from satori.events import Event, Client2
 from satori.core.checking.utils import RestTable
 from satori.objects import Namespace
 from satori.tools.params import parse_params, total_seconds
+from satori.core.settings import SECRET_GOOGLE_SPREADSHEET_SERVICE 
 
 maxint = 2*(10**9)
 
@@ -577,13 +581,131 @@ class ACMProblemStats(AggregatorBase):
         self.recalculate()
 
 
-        
+class GoogleSpreadsheetAggregator(AggregatorBase):
+    """
+#@<aggregator name="Google Spreadsheet Aggregator">
+#@      <general>
+#@              <param type="text"     name="admins"         description="Comma separated list of emails of google spreadsheet editors" />
+#@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
+#@      </general>
+#@      <problem>
+#@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
+#@      </problem>
+#@</aggregator>
+    """
+
+    def __init__(self, supervisor, ranking):
+        super(GoogleSpreadsheetAggregator, self).__init__(supervisor, ranking)
+        self.ok = False
+
+
+    class encoder(json.JSONEncoder):
+        def default(self, obj):
+            if isinstance(obj, (date, datetime)):
+                return unicode(obj.ctime())
+            else:
+                return json.JSONEncoder.default(self, obj)
+
+    def call(self, action, params=list()):
+        try:
+            url = SECRET_GOOGLE_SPREADSHEET_SERVICE
+            values = {'action': action, 'ranking': self.ranking.id}
+            if action == 'create':
+            	values['admins'] = self.params.admins
+                values['name'] = 'Satori: ' + self.ranking.contest.name + ': ' + self.ranking.name
+            if action == 'contestants' or action == 'add_contestants':
+            	values['contestants'] = json.dumps(params, cls=self.encoder)
+            if action == 'problems' or action == 'add_problems':
+            	values['problems'] = json.dumps(params, cls=self.encoder)
+            if action == 'tests' or action == 'add_tests':
+            	values['tests'] = json.dumps(params, cls=self.encoder)
+            if action == 'submits' or action == 'add_submits':
+            	values['submits'] = json.dumps(params, cls=self.encoder)
+            if action == 'results' or action == 'add_results':
+            	values['results'] = json.dumps(params, cls=self.encoder)
+            headers = {"Content-Type": "application/x-www-form-urlencoded", "Accept": "text/html;q=0.9", "Accept-Charset": "utf8", "Accept-Language": "en-us,en;q=0.5"}
+
+            logging.debug('START: '+urllib.urlencode(values))
+            req = urllib2.Request(url, urllib.urlencode(values), headers)
+            res = urllib2.urlopen(req).read()
+            logging.debug('FINISH: '+urllib.urlencode(values)+': '+res)
+        except:
+            self.ok = False
+            raise
+
+    def recalculate(self):
+        self.ok = True
+        self.call('create')
+        contestants = [ {'id': c.id, 'name': c.name} for c in Contestant.objects.filter(contest__id=self.ranking.contest_id, accepted=True) ]
+        self.call('contestants', contestants)
+        problems = [ {'id': p.id, 'code': p.code, 'title': p.title, 'group': p.group} for p in self.problem_cache.values() ]
+        self.call('problems', problems)
+        tests = []
+        for pid in self.problem_cache:
+        	ts = self.test_suites[pid]
+            tests += [ {'id': str(pid)+'_'+str(t.id), 'problem': pid, 'name': t.name} for t in self.test_cache[ts.id] ]
+        self.call('tests', tests)
+        submits = [ {'id': s.id, 'contestant': s.contestant.id, 'problem': s.problem.id, 'time': s.time} for s in self.submit_cache.values() ]
+        self.call('submits', submits)
+        self.call('results', self.results)
+
+    def init(self):
+        super(GoogleSpreadsheetAggregator, self).init()
+
+        self.contestant_cache = set()
+        self.test_cache = {}
+        for pid in self.problem_cache:
+        	ts = self.test_suites[pid]
+            self.test_cache[ts.id] = [tm.test for tm in TestMapping.objects.filter(suite__id=ts.id) ]
+        self.results = {}
+        self.recalculate()
+
+    def changed_contestants(self):
+        if self.ok:
+            contestants = [ {'id': c.id, 'name': c.name} for c in Contestant.objects.filter(contest__id=self.ranking.contest_id, accepted=True) ]
+            self.call('contestants', contestants)
+        else:
+        	self.recalculate()
+    
+    def checked_test_suite_results(self, test_suite_results):
+        append = []
+        subs = []
+        for result in test_suite_results:
+            s = self.submit_cache[result.submit_id]
+            if s.contestant.invisible and not self.params.show_invisible:
+                continue
+            pid = s.problem.id
+        	ts = self.test_suites[pid]
+            for t in self.test_cache[ts.id]:
+                try:
+                	tr=TestResult.objects.get(submit__id=s.id, test__id=t.id)
+                except:
+                    continue
+            	key = (s.id, pid, t.id)
+                if key in self.results:
+                	self.ok = False
+                val = {'submit': s.id, 'test': str(pid)+'_'+str(t.id)}
+                for (k, v) in tr.oa_get_map().iteritems():
+                    if not v.is_blob:
+                    	val['result_'+k] = v.value
+                self.results[key] = val
+                append += [val]
+        if self.ok:
+            self.call('add_results', append)
+        else:
+        	self.recalculate()
+
+    def created_submits(self, submits):
+        if self.ok:
+            self.call('add_submits', [ {'id': s.id, 'contestant': s.contestant.id, 'problem': s.problem.id, 'time': s.time} for s in submits ])
+        else:
+        	self.recalculate()
+        logging.debug('hello')
+        super(GoogleSpreadsheetAggregator, self).created_submits(submits)
+
 
 aggregators = {}
 for item in globals().values():
     if isinstance(item, type) and issubclass(item, AggregatorBase) and (item != AggregatorBase):
         aggregators[item.__name__] = item
-
-
-
 

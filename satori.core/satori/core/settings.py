@@ -130,3 +130,5 @@ TEMPLATE_DIRS = (
 INSTALLED_APPS = (
     'satori.core',
 )
+
+SECRET_GOOGLE_SPREADSHEET_SERVICE = 'https://docs.google.com/macros/exec?service='
