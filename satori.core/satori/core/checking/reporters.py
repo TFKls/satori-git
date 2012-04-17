@@ -142,6 +142,7 @@ class ACMReporter(ReporterBase):
 #@<reporter name="ACM style reporter">
 #@      <general>
 #@              <param type="bool"     name="show_tests"     description="Show individual test results" default="true"/>
+#@              <param type="bool"     name="run_all"        description="Run all test (even after failing result)" default="false"/>
 #@      </general>
 #@</reporter>
     """
@@ -185,7 +186,7 @@ class ACMReporter(ReporterBase):
             self._status = status
 
     def status(self):
-        return self._status == 'OK' or self.params.show_tests
+        return self._status == 'OK' or self.params.run_all
 
     def deinit(self):
         logging.debug('ACM Reporter %s: %s', self.test_suite_result.id, self._status)
@@ -219,6 +220,7 @@ class PointsReporter(ReporterBase):
 #@<reporter name="Points reporter">
 #@      <general>
 #@              <param type="bool"     name="show_tests"     description="Show individual test results" default="true"/>
+#@              <param type="bool"     name="run_all"        description="Run all test (even after failing result)" default="false"/>
 #@              <param type="bool"     name="falling"        description="Linear points decrease" default="false"/>
 #@              <param type="bool"     name="show_score"     description="Show score in status" default="false"/>
 #@      </general>
