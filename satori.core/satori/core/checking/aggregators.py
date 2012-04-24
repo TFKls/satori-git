@@ -494,7 +494,7 @@ class MarksAggregator(AggregatorBase):
             if params.show_max_score is None:
                 params.show_max_score = self.params.show_max_score
 
-        self.sorted_problems = [p.id for p in sorted(self.problem_cache.values(), key=attrgetter('code'))]
+        self.sorted_problems = [p.id for p in sorted(self.problem_cache.values(), key=attrgetter('code')) if not self.problem_params[p.id].ignore]
         columns = [(4, 'Lp.'), (32, 'Name')]
         if self.params.show_marks:
             columns += [(16, 'Mark')]
