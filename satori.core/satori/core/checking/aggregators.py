@@ -275,9 +275,9 @@ class ACMBoardAggregator(AggregatorBase):
 
             def get_str(self):
                 if self.ok:
-                    return '+'+self.star_count
+                    return '+'+str(self.star_count)
                 else:
-                    return '\-'+self.star_count
+                    return '\-'+str(self.star_count)
 
         def __init__(self, aggregator):
             self.aggregator = aggregator
