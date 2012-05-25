@@ -218,6 +218,133 @@ class ACMAggregator(AggregatorBase):
     def get_score(self):
         return self.ACMScore(self)
 
+class ACMBoardAggregator(AggregatorBase):
+    """
+#@<aggregator name="ACM scoreboard">
+#@      <general>
+#@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
+#@              <param type="bool"     name="show_zero"      description="Show contestants with zero score" default="false"/>
+#@              <param type="datetime" name="time_start"     description="Submission start time"/>
+#@              <param type="datetime" name="time_freeze"    description="Freeze time"/>
+#@              <param type="datetime" name="time_stop"      description="Submission stop time"/>
+#@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" default="1200s"/>
+#@      </general>
+#@      <problem>
+#@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
+#@              <param type="float"    name="score"          description="Score" default="1"/>
+#@              <param type="datetime" name="time_start"     description="Submission start time"/>
+#@              <param type="datetime" name="time_stop"      description="Submission stop time (freeze)"/>
+#@      </problem>
+#@</aggregator>
+    """
+    def position(self,  score=0, time=maxint, name=''):
+        return (u'%09d%09d%s' % (maxint - score, time, name))[0:50]
+
+    class ACMScore(object):
+        class ACMProblemScore(object):
+            def __init__(self, score, problem):
+                self.score = score
+                self.ok = False
+                self.star_count = 0
+                self.ok_time = timedelta()
+                self.ok_submit = None
+                self.result_list = sortedlist()
+                self.problem = problem
+                self.params = self.score.aggregator.problem_params[problem.id]
+
+            def aggregate(self, result):
+                time = self.score.aggregator.submit_cache[result.submit_id].time
+                ok = result.oa_get_str('status') in ['OK', 'ACC']
+                if self.params.time_stop and time > self.params.time_stop:
+                    return
+                if self.params.ignore:
+                    return
+                if ok:
+                    self.ok = True
+                self.result_list.add((time, ok, result.submit_id))
+                self.star_count = 1
+                for (time, ok, submit_id) in self.result_list:
+                    if ok:
+                        if self.params.time_start and time > self.params.time_start:
+                            self.ok_time = time - self.params.time_start
+                        else:
+                            self.ok_time = timedelta()
+                        self.ok_submit = submit_id
+                        break
+                    self.star_count += 1
+
+            def get_str(self):
+                if self.ok:
+                    return '+'+self.star_count
+                else:
+                    return '\-'+self.star_count
+
+        def __init__(self, aggregator):
+            self.aggregator = aggregator
+            self.hidden = False
+            self.scores = {}
+
+        def update(self):
+            score_list = [s for s in self.scores.values() if s.ok]
+            if self.hidden or (not score_list and not self.aggregator.params.show_zero):
+                self.ranking_entry.row = ''
+                self.ranking_entry.individual = ''
+                self.ranking_entry.position = self.aggregator.position()
+                self.ranking_entry.save()
+            else:
+                points = int(sum([s.params.score for s in score_list], 0.0))
+                time = sum([s.ok_time + self.aggregator.params.time_penalty * s.star_count for s in score_list], timedelta(0))
+                time_seconds = int(total_seconds(time))
+                time_str = str(timedelta(seconds=time_seconds))
+#                problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
+
+                contestant_name = self.aggregator.table.escape(self.contestant.name)
+                row = ['', contestant_name,points,time]
+                for problem in self.aggregator.problem_list:
+                    if self.scores.has_key(problem.id):
+                        row.append(self.scores[problem.id].get_str())
+                    else:
+                        row.append('\-')
+#                row.append(points)
+
+                self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
+                self.ranking_entry.individual = ''
+                self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
+                self.ranking_entry.save()
+
+        def aggregate(self, result):
+            submit = self.aggregator.submit_cache[result.submit_id]
+            if submit.problem_id not in self.scores:
+                self.scores[submit.problem_id] = self.ACMProblemScore(self, self.aggregator.problem_cache[submit.problem_id])
+            self.scores[submit.problem_id].aggregate(result)
+
+    def __init__(self, supervisor, ranking):
+        super(ACMBoardAggregator, self).__init__(supervisor, ranking)
+
+    def init(self):
+        super(ACMBoardAggregator, self).init()
+        for pid, params in self.problem_params.iteritems():
+            if params.time_start is None:
+                params.time_start = self.params.time_start
+            if params.time_stop is None:
+                params.time_stop = self.params.time_stop
+
+        self.problem_list = filter(lambda p : not self.problem_params[p.id].ignore, sorted(self.problem_cache.values(), key=attrgetter('code')))
+       
+        columns = [(4, 'Lp.'), (32, 'Name'), (4, 'Score'), (8, 'Time'),]
+
+        for problem in self.problem_list:
+            columns.append((10, problem.code))
+
+        self.table = RestTable(*columns)
+        
+        self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
+        self.ranking.footer = self.table.header_row + self.table.row_separator
+        self.ranking.save()
+        
+    def get_score(self):
+        return self.ACMScore(self)
+
 
 class PointsAggregator(AggregatorBase):
     """
