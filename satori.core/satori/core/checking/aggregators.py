@@ -277,7 +277,7 @@ class ACMBoardAggregator(AggregatorBase):
                 if self.ok:
                     return ':tdpos:`'+str(self.star_count).strip(' ')+' ['+str(self.ok_time.seconds//60)+']`'
                 else:
-                    return ':tdneg:`'+str(self.star_count).strip(' ')+' []`'
+                    return ':tdneg:`'+str(self.star_count).strip(' ')+' ['+str(len(str(self.star_count)))+']`'
 
         def __init__(self, aggregator):
             self.aggregator = aggregator
