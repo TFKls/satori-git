@@ -177,13 +177,15 @@ ul.errorlist
     background-color: #F8C3D2;
 }
 
-.color_pos
+.tdpos
 {
+    display:block;
     background-color: #D9F7C2;
 }
 
-.color_neg
+.tdneg
 {
+    display:block;
     background-color: #F8C3D2;
 }
 
