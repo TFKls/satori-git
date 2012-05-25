@@ -299,7 +299,7 @@ class ACMBoardAggregator(AggregatorBase):
 #                problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
 
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
-                row = ['', contestant_name,points,time]
+                row = ['', 'contestant_name',points,time]
                 for problem in self.aggregator.problem_list:
                     if self.scores.has_key(problem.id):
                         row.append(self.scores[problem.id].get_str())
@@ -308,7 +308,6 @@ class ACMBoardAggregator(AggregatorBase):
 #                row.append(points)
 
                 self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
-                print unicode(self.ranking_entry.row,'utf8')
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
                 self.ranking_entry.save()
