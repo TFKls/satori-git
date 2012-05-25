@@ -302,9 +302,9 @@ class ACMBoardAggregator(AggregatorBase):
                 row = ['', contestant_name,points,time_seconds//60]
                 for problem in self.aggregator.problem_list:
                     if self.scores.has_key(problem.id):
-                        row.append(self.scores[problem.id].get_str())
+                        row.append(ljust(self.scores[problem.id].get_str(),20))
                     else:
-                        row.append('\-')
+                        row.append(ljust('\-',20))
 #                row.append(points)
 
                 self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
