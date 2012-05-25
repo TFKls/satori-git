@@ -275,9 +275,9 @@ class ACMBoardAggregator(AggregatorBase):
 
             def get_str(self):
                 if self.ok:
-                    return ':highlight_pos:`+'+str(self.star_count)+'('+str(self.ok_time.seconds//60)+')`'
+                    return ':mark:`+'+str(self.star_count)+'('+str(self.ok_time.seconds//60)+')`'
                 else:
-                    return ':highlight_neg:`\-'+str(self.star_count)+'`'
+                    return ':mark:`\-'+str(self.star_count)+'`'
 
         def __init__(self, aggregator):
             self.aggregator = aggregator
@@ -338,7 +338,7 @@ class ACMBoardAggregator(AggregatorBase):
 
         self.table = RestTable(*columns)
         
-        rhead = '.. role:: highlight_pos\n\n.. role:: highlight_neg\n\n'
+        rhead = '.. role:: mark\n\n'
         self.ranking.header = rhead+self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = self.table.header_row + self.table.row_separator
         self.ranking.save()
