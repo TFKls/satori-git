@@ -275,9 +275,9 @@ class ACMBoardAggregator(AggregatorBase):
 
             def get_str(self):
                 if self.ok:
-                    return ':tdpos:`'+str(self.star_count)+'['+str(self.ok_time.seconds//60)+']`'
+                    return ':tdpos:`'+str(self.star_count)+'`'
                 else:
-                    return ':tdneg:`'+str(self.star_count)+'['+str(len(str(self.star_count)))+']`'
+                    return ':tdneg:`'+str(self.star_count)+'`'
 
         def __init__(self, aggregator):
             self.aggregator = aggregator
@@ -299,7 +299,7 @@ class ACMBoardAggregator(AggregatorBase):
 #                problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
 
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
-                row = ['', 'contestant_name',points,time]
+                row = ['', contestant_name,points,time_seconds//60]
                 for problem in self.aggregator.problem_list:
                     if self.scores.has_key(problem.id):
                         row.append(self.scores[problem.id].get_str())
@@ -335,7 +335,7 @@ class ACMBoardAggregator(AggregatorBase):
         columns = [(4, 'Lp.'), (32, 'Name'), (4, 'Score'), (8, 'Time'),]
 
         for problem in self.problem_list:
-            columns.append((10, problem.code))
+            columns.append((20, problem.code))
 
         self.table = RestTable(*columns)
         
