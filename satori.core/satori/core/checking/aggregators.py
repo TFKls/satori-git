@@ -277,7 +277,7 @@ class ACMBoardAggregator(AggregatorBase):
                 if self.ok:
                     return ':tdpos:`'+str(self.star_count).strip(' ')+' ['+str(self.ok_time.seconds//60)+']`'
                 else:
-                    return ':tdneg:`'+str(self.star_count).strip(' ')+'`'
+                    return ':tdneg:`'+str(self.star_count).strip(' ')+' []`'
 
         def __init__(self, aggregator):
             self.aggregator = aggregator
@@ -308,6 +308,7 @@ class ACMBoardAggregator(AggregatorBase):
 #                row.append(points)
 
                 self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
+                print self.ranking_entry.row
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
                 self.ranking_entry.save()
