@@ -308,7 +308,7 @@ class ACMBoardAggregator(AggregatorBase):
 #                row.append(points)
 
                 self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
-                print self.ranking_entry.row
+                print unicode(self.ranking_entry.row,'utf8')
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
                 self.ranking_entry.save()
