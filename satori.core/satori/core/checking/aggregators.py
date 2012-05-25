@@ -338,7 +338,7 @@ class ACMBoardAggregator(AggregatorBase):
 
         self.table = RestTable(*columns)
         
-        rhead = '.. role:: highlight_pos\n\n..role:: highlight_neg\n\n'
+        rhead = '.. role:: highlight_pos\n\n.. role:: highlight_neg\n\n'
         self.ranking.header = rhead+self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = self.table.header_row + self.table.row_separator
         self.ranking.save()
