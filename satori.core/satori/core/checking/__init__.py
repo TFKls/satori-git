@@ -127,6 +127,7 @@ class CheckingMaster(Client2):
             test_result.pending = True
             test_result.tester = None
             test_result.save()
+            test_result.oa_set_map({})
             self.test_result_judged_set.remove(test_result)
             self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
@@ -135,6 +136,7 @@ class CheckingMaster(Client2):
             test_result.pending = True
             test_result.tester = None
             test_result.save()
+            test_result.oa_set_map({})
             self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
             for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
@@ -151,6 +153,7 @@ class CheckingMaster(Client2):
         if test_suite_result in self.test_suite_result_map:
             logging.debug('checking master: rejudge test suite result %s: running', test_suite_result.id)
             self.stop_test_suite_result(test_suite_result)
+            test_suite_result.oa_set_map({})
             self.start_test_suite_result(test_suite_result)
         else:
             logging.debug('checking master: rejudge test suite result %s: not running', test_suite_result.id)
@@ -159,6 +162,7 @@ class CheckingMaster(Client2):
                 self.rankings_to_rejudge.add(ranking)
             test_suite_result.pending = True
             test_suite_result.save()
+            test_suite_result.oa_set_map({})
             self.start_test_suite_result(test_suite_result)
 
     def do_notify_ranking_created_submits(self, ranking, created_submits):
