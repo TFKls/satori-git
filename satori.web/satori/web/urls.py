@@ -2,6 +2,8 @@
 from django.conf.urls.defaults import *
 from django.conf import settings
 
+from xstatic.pkg import mathjax
+
 from satori.client.common import remote
 remote.setup(settings.THRIFT_HOST, settings.THRIFT_PORT, settings.BLOB_PORT, settings.USE_SSL)
 
@@ -80,4 +82,6 @@ urlpatterns = patterns('',
 
     (r'^files/(?P<path>.*)$', 'django.views.static.serve',
         {'document_root': os.path.join(PROJECT_PATH,'files')}),
+    (r'^mathjax/(?P<path>.*)$', 'django.views.static.serve',
+        {'document_root': mathjax.BASE_DIR}),
 )
