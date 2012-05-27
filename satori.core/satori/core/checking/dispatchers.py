@@ -86,6 +86,8 @@ class ParallelDispatcher(DispatcherBase):
         for test in self.test_suite_result.test_suite.get_tests():
             self.to_check_id.add(test.id)
             self.supervisor.schedule_test_result(test_suite_result=self.test_suite_result, submit=submit, test=test)
+        if not self.to_check_id:
+            self.finish()
 
     def checked_test_results(self, test_results):
         for result in test_results:
