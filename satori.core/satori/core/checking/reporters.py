@@ -260,7 +260,7 @@ class PointsReporter(ReporterBase):
         if self.params.use_judge_score:
             score = int(test_result.oa_get_str('score'))
             self.weighted += score
-            self.normalized += score
+            self.normalized = self.weighted
         else:
             if result == 'OK':
                 if self.params.falling:
