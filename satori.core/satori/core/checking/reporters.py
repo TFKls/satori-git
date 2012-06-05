@@ -258,7 +258,11 @@ class PointsReporter(ReporterBase):
                 elapsed = "\-\-"
             limit = test.data_get_str('time')
         if self.params.use_judge_score:
-            score = int(test_result.oa_get_str('score'))
+            score = 0
+            try:
+                score = int(test_result.oa_get_str('score'))
+            except:
+                pass
             self.weighted += score
             self.normalized = self.weighted
         else:
