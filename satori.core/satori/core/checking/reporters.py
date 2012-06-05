@@ -290,7 +290,7 @@ class PointsReporter(ReporterBase):
         if self.params.show_tests:
             columns = [(20, 'Test'), (10, 'Status')]
             if self.params.display_time:
-                colums.append((20,'Time'))
+                columns.append((20,'Time'))
             if self.params.falling or self.params.use_judge_score:
                 columns.append((20,'Score'))
             table = RestTable(*columns)
