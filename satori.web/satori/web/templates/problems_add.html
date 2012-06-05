@@ -16,6 +16,9 @@
         {% if editing %}
             <input class="button" type="submit" name="change" value="Change problem"/>
             <input class="button button_warn" type="submit" name="delete" value="Delete problem"/>
+            {% if pdf_file %}
+            <input class="button button_small button_warn" type="submit" name="remove_pdf" value="Remove PDF statement"/>
+            {% endif %}
             </form>
             {% include "templates/attachments_edit.html" %}
         {% else %}

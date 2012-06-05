@@ -219,10 +219,12 @@ class PointsReporter(ReporterBase):
     """
 #@<reporter name="Points reporter">
 #@      <general>
-#@              <param type="bool"     name="show_tests"     description="Show individual test results" default="true"/>
-#@              <param type="bool"     name="run_all"        description="Run all test (even after failing result)" default="false"/>
-#@              <param type="bool"     name="falling"        description="Linear points decrease" default="false"/>
-#@              <param type="bool"     name="show_score"     description="Show score in status" default="false"/>
+#@              <param type="bool"     name="show_tests"        description="Show individual test results" default="true"/>
+#@              <param type="bool"     name="use_judge_score"   description="Use scores provided by judge" default="false"/>
+#@              <param type="bool"     name="display_time"      description="Display running/limit time" default="true"/>
+#@              <param type="bool"     name="run_all"           description="Run all test (even after failing result)" default="false"/>
+#@              <param type="bool"     name="falling"           description="Linear points decrease" default="false"/>
+#@              <param type="bool"     name="show_score"        description="Show score in status" default="false"/>
 #@      </general>
 #@</reporter>
     """
@@ -249,26 +251,34 @@ class PointsReporter(ReporterBase):
         if result == 'OK':
             self.passed = self.passed+1
         self._status = str(self.passed) + ' / '+ str(self.checked)
-        if result == 'OK' or result == 'ANS':
-            elapsed = test_result.oa_get_str('execute_time_cpu')
-        else:
-            elapsed = "\-\-"
-        limit = test.data_get_str('time')
-        if result == 'OK':
-            if self.params.falling:
-                score = round((2-2*(float(elapsed[:-1])/float(limit[:-1]))),2)
+        if self.params.display_time:
+            if result == 'OK' or result == 'ANS':
+                elapsed = test_result.oa_get_str('execute_time_cpu')
             else:
-                score = 1
+                elapsed = "\-\-"
+            limit = test.data_get_str('time')
+        if self.params.use_judge_score:
+            score = int(test.result.oa_get_str('score'))
+            self.weighted += score
+            self.normalized += score
         else:
-            score = 0
-        if score<0:
-            score = 0
-        if score>=1:
-            score = 1
-        self.weighted += score
-        self.normalized = int(100*self.weighted/self.checked)
-        line = [test_result.test.name,result,elapsed+' / ' +limit]
-        if self.params.falling:
+            if result == 'OK':
+                if self.params.falling:
+                    score = round((2-2*(float(elapsed[:-1])/float(limit[:-1]))),2)
+                else:
+                    score = 1
+            else:
+                score = 0
+            if score<0:
+                score = 0
+            if score>=1:
+                score = 1
+            self.weighted += score
+            self.normalized = int(100*self.weighted/self.checked)
+        line = [test_result.test.name,result]
+        if self.params.display_time:
+            line.append(unicode(elapsed+' / ' +limit))
+        if self.params.falling or self.params.use_judge_score:
             line.append(unicode(score))
         self.reportlines.add(line)
         self.test_suite_result.save()
@@ -278,9 +288,11 @@ class PointsReporter(ReporterBase):
 
     def deinit(self):
         if self.params.show_tests:
-            columns = [(20, 'Test'), (10, 'Status'), (20,'Time')]
-            if self.params.falling:
-                columns.append((20,'Weighted score'))
+            columns = [(20, 'Test'), (10, 'Status')]
+            if self.params.display_time:
+                colums.append((20,'Time'))
+            if self.params.falling or self.params.use_judge_score:
+                columns.append((20,'Score'))
             table = RestTable(*columns)
             report = table.row_separator + table.header_row + table.header_separator
             for line in self.reportlines:
