@@ -27,7 +27,7 @@ class RestTable(object):
         row_items = []
 
         for i in range(len(items)):
-            item = unicode(items[i])
+            item = unicode(items[i]).strip()
 
             width = self.col_width[i]
             row_item = []
