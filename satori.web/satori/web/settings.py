@@ -37,6 +37,7 @@ if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
 #if getpass.getuser() == 'duraj':
+#    USE_SSL = False
 #    THRIFT_HOST = 'localhost'
 #    THRIFT_PORT = 36889
 #    BLOB_PORT = 36887
