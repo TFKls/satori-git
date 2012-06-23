@@ -61,3 +61,19 @@ class RestTable(object):
 
         return ''.join([''.join([row_items[j][i] for j in range(len(items))]) + '|\n' for i in range(max_count)])
 
+class Transaction(object):
+    @staticmethod
+    def enter():
+        transaction.enter_transaction_management(True)
+        transaction.managed(True)
+
+    @staticmethod
+    def rollback():
+        transaction.rollback()
+
+    @staticmethod
+    def commit_and_leave():
+        transaction.commit()
+        transaction.managed(False)
+        transaction.leave_transaction_management()
+
