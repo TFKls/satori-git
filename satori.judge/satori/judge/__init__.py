@@ -3,7 +3,6 @@
 
 from satori.judge.judge import JailBuilder, JailRun
 from satori.client.common import want_import
-want_import(globals(), '*')
 
 import os
 import resource
@@ -35,7 +34,8 @@ options.add_option('--guest-ip', dest='guest_ip', default='192.168.100.102', act
 options.add_option('--netmask', dest='netmask', default='255.255.255.0', action='store', type='string')
 options.add_option('--port', dest='control_port', default=8765, action='store', type='int')
 
-(options, args) = setup()
+args = []
+
 
 def judge_loop():
     while True:
@@ -149,6 +149,9 @@ def judge_finalize():
             subprocess.call(['rmdir', options.template_dir])
 
 def judge_init():
+    global options, args
+    want_import(globals(), '*')
+    (options, args) = setup()
     try:
         judge_initialize()
         while True:
