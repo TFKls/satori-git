@@ -292,6 +292,7 @@ class JailRun(Object):
         finally:
             pipe.close()
         child.join()
+        self.exitcode = child.exitcode
         controller.terminate()
         self.result = dict(result)
 
