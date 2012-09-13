@@ -1,0 +1,8 @@
+/scripts/init-premount/mdadm
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/init-premount/lvm2
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/init-premount/devpts
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/init-premount/dropbear
+[ -e /conf/param.conf ] && . /conf/param.conf

@@ -23,10 +23,10 @@ DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
-USE_SSL = True
-THRIFT_HOST = 'dev.satori.tcs.uj.edu.pl'
-THRIFT_PORT = 38889
-BLOB_PORT = 38887
+USE_SSL = False
+THRIFT_HOST = 'student.tcs.uj.edu.pl'
+THRIFT_PORT = 32889
+BLOB_PORT = 32887
 if getpass.getuser() == 'gutowski':
     THRIFT_HOST = 'localhost'
     THRIFT_PORT = 39889
@@ -98,8 +98,8 @@ SECRET_KEY = 'm@i55d12d3la4!*%ba&_^p5tl*!0mqdohef3lm1(q5-%eyuff)'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.load_template_source',
-    'django.template.loaders.app_directories.load_template_source',
+    'django.template.loaders.filesystem.Loader',
+    'django.template.loaders.app_directories.Loader',
 #     'django.template.loaders.eggs.load_template_source',
 )
 

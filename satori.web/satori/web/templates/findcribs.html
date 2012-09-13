@@ -1,0 +1,25 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+
+<h2>Results</h2>
+
+{%if results.showdiff %} <form action="{% url results_diff page_info.contest.id %}" method="GET"> {% endif %}
+
+<table class="results">
+    {{ results.render_table|safe }}
+</table>
+<div class="button_bar">
+{%if results.showdiff %}  
+    <input class="button" value="Compare" type="submit"/>
+    </form>
+    <a class="button" href="{{ results.difflink }}">Hide diff</a>
+{% else %}
+    <a class="button" href="{{ results.difflink }}">Compare submits</a>
+{% endif %}
+</div>
+    {{ results.render_scrollbar|safe }}
+    {{ results.render_filters|safe }}
+
+{% endblock %}
