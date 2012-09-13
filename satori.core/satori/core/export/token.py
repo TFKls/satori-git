@@ -35,12 +35,12 @@ class TokenContainer(threading.local):
                     raise TokenInvalid()
                 userid = int(contestant.id)
             else:
-                userid = Global.get_instance().zero.id
+                userid = Global.get_instance().zero_id
         else:
-            if token.role:
-                userid = int(token.role.id)
+            if token.role_id:
+                userid = int(token.role_id)
             else:
-                userid = Global.get_instance().anonymous.id
+                userid = Global.get_instance().anonymous_id
 
         Privilege.set_user_id(userid)
 

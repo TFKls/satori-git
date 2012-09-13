@@ -110,6 +110,7 @@ def edit(request, page_info, id):
     mapping = ProblemMapping(int(id))
     problem = mapping.problem
     suites = TestSuite.filter(TestSuiteStruct(problem=problem))
+    pdf_file = mapping.statement_files_get("pdf")
     if request.method=="POST":
         form = ProblemAddForm(data=request.POST,files=request.FILES,suites=suites)
         if form.is_valid():
@@ -121,6 +122,9 @@ def edit(request, page_info, id):
                 except:
                     return HttpResponseRedirect(reverse('contest_problems_edit', args=[page_info.contest.id,id]))                    
                 return HttpResponseRedirect(reverse('contest_problems', args=[page_info.contest.id]))
+            if 'remove_pdf' in request.POST.keys():
+                mapping.statement_files_delete('pdf')
+                return HttpResponseRedirect(reverse('contest_problems_edit', args=[page_info.contest.id,id]))                    
             for rfile in request.POST:
                 if rfile.startswith('rfile'):
                     mapping.statement_files_delete(request.POST[rfile])
@@ -169,6 +173,7 @@ def edit(request, page_info, id):
                                                      'fid' : fid,
                                                      'form' : form,
                                                      'base' : problem,
+                                                     'pdf_file' : pdf_file,
                                                      'editing' : mapping })
 
 @contest_view

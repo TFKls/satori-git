@@ -197,6 +197,7 @@ class JailRun(Object):
     @Argument('template_path', type=str)
     @Argument('path', type=str)
     @Argument('args', default=[])
+    @Argument('runner_args', default=[])
     @Argument('host_eth', type=str)
     @Argument('host_ip', type=str)
     @Argument('guest_eth', type=str)
@@ -208,12 +209,13 @@ class JailRun(Object):
     @Argument('real_time', type=int, default=5*60*1000)
     @Argument('debug', type=str, default='')
     @Argument('search', type=bool, default=False)
-    def __init__(self, submit, root, cgroup_path, template_path, path, args, host_eth, host_ip, guest_eth, guest_ip, netmask, control_port, cgroup, cgroup_memory, real_time, debug, search):
+    def __init__(self, submit, root, cgroup_path, template_path, path, runner_args, args, host_eth, host_ip, guest_eth, guest_ip, netmask, control_port, cgroup, cgroup_memory, real_time, debug, search):
         self.submit = submit
         self.root = root
         self.cgroup_path = cgroup_path
         self.template_path = template_path
         self.path = path
+        self.runner_args = runner_args
         self.args = [self.path] + args
         self.host_eth = host_eth
         self.host_ip = host_ip
@@ -261,6 +263,7 @@ class JailRun(Object):
                 runargs += [ '--search' ]
             if self.debug:
                 runargs += [ '--debug', self.debug ]
+            runargs += self.runner_args
             runargs += self.args
             os.execvp('runner', runargs)
         except:
@@ -289,6 +292,7 @@ class JailRun(Object):
         finally:
             pipe.close()
         child.join()
+        self.exitcode = child.exitcode
         controller.terminate()
         self.result = dict(result)
 

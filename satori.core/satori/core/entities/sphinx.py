@@ -13,7 +13,7 @@ from sphinx.application import Sphinx
 from sphinx.errors import PycodeError, SphinxError
 
 
-# HACK
+# HACK (do not render links in pdf)
 
 def do_hack():
     import sphinx.writers.latex
@@ -28,11 +28,10 @@ do_hack()
 
 # HACK END
 
-
 CORE_PATH = os.path.abspath(os.path.split(__file__)[0])
 
-config_overrides = {
-    'extensions' : ['sphinx.ext.pngmath','sphinx.ext.graphviz', 'satori.core.models'],
+config = {
+    'extensions' : ['sphinx.ext.mathjax', 'satori.core.models'],
     'templates_path' : [os.path.join(CORE_PATH, 'sphinx_templates')],
     'source_suffix' : '.rst',
     'master_doc' : 'index',
@@ -42,12 +41,8 @@ config_overrides = {
     'release' : '1',
     'exclude_patterns' : ['_build'],
     'pygments_style' : 'sphinx',
-    'pngmath_use_preview' : True,
-    'pngmath_latex_preamble' : r'\usepackage{amsmath} \usepackage{polski}',
+    'mathjax_path': '/mathjax/MathJax.js',
 
-#    'html_theme' : 'default',
-#    'html_theme_path' : [os.path.join(CORE_PATH, 'sphinx_templates')],
-#    'html_static_path' : ['_static'],
     'htmlhelp_basename' : '',
 
     'latex_documents': [('index', 'index.tex', '', '', 'article')],
@@ -59,6 +54,7 @@ config_overrides = {
             }
 }
 
+# sphinx extension start
 
 class TexNode(nodes.Element):
     def __init__(self, *args, **kwargs):
@@ -118,18 +114,12 @@ def setup(app):
     app.add_node(TexNode, latex=(visit_tex_node_tex, depart_tex_node), html=(visit_tex_node_other, depart_tex_node), text=(visit_tex_node_other, depart_tex_node))
     app.add_directive('pdfinfo', PdfInfoDirective)
 
+# sphinx extension end
 
-#TODO: Make this irrelevant
-#This is needed because of the bug in sphinx: application.py (the order of extensions loading)
-def confToFile(filePath):
-    config = open(filePath, 'w')
-    for key, val in config_overrides.iteritems():
-        if isinstance(val, str) or isinstance(val, (str, unicode)):
-            raw = key + ' = "' + val.__str__() + '"\n'
-        else:
-            raw = key + ' = ' + val.__str__() + '\n'
-        config.write(raw)
-    config.close()
+def write_config(config_path):
+    with open(config_path, 'w') as config_file:
+        for key, val in config.iteritems():
+            config_file.write(key + ' = ' + repr(val) + '\n')
 
 
 def render_sphinx(rest, oa_map):
@@ -178,14 +168,13 @@ def render_sphinx(rest, oa_map):
 
     treedir = os.path.join(srcdir, '.doctrees')
     os.mkdir(treedir)
-    confToFile(os.path.join(srcdir, 'conf.py'))
+    write_config(os.path.join(srcdir, 'conf.py'))
 
     builddir = os.path.join(srcdir, '_build')
     os.mkdir(builddir)
 
     try:
         app = Sphinx(srcdir, srcdir, builddir, treedir, 'html',
-                confoverrides = config_overrides,
                 freshenv = True,
                 status=None,
                 warning=None, 
@@ -203,18 +192,6 @@ def render_sphinx(rest, oa_map):
     output = outfile.read()
     outfile.close()
 
-    def mathrepl(matchobj):
-        name = matchobj.group(1)
-        newname = '_img_' + matchobj.group(1)
-        src = open(os.path.join(srcdir, '_build', matchobj.group(0)), 'r')
-        writer = Blob.create()
-        writer.write(src.read())
-        src.close()
-        hash = writer.close()
-        oa_map[newname] = AnonymousAttribute(is_blob=True, filename=newname, value=hash)
-        return '_images/' + newname
-    output = re.sub(r'_images\/math\/([a-zA-Z0-9]*\.png)', mathrepl, output)
-    
     def linkrepl(matchobj):
         return '<a class="reference external" href="_images/' + matchobj.group(1) + '">'
     output = re.sub(r'<a class="reference external" href="([^"/]*)">', linkrepl, output)
@@ -242,11 +219,8 @@ def render_sphinx(rest, oa_map):
                 reader.close()
                 dest.close()
 
-        confToFile(os.path.join(srcdir, 'conf.py'))
-
         try:
             app = Sphinx(srcdir, srcdir, pdfbuilddir, treedir, 'latex',
-                    confoverrides = config_overrides,
                     freshenv = True,
                     status=None,
                     warning=None, 
@@ -276,7 +250,7 @@ def render_sphinx(rest, oa_map):
 # python 2.7
 #        try:
 #            subprocess.check_output(['pdflatex', 'index.tex'], cwd=pdfbuilddir, stderr=subprocess.STDOUT)
-#        subprocess.check_output(['pdflatex', 'index.tex'], cwd=pdfbuilddir, stderr=subprocess.STDOUT)
+#            subprocess.check_output(['pdflatex', 'index.tex'], cwd=pdfbuilddir, stderr=subprocess.STDOUT)
 #        except subprocess.CalledProcessError as e:
 #            raise SphinxException(error='pdflatex ended with error code {0}:\n{1}'.format(e.returncode, e.output))
 

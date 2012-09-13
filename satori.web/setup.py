@@ -28,6 +28,7 @@ setup(name='satori.web',
         'satori.client.common',
         'satori.tools',
         'Sphinx',
+        'xstatic-mathjax',
     ],
     entry_points='''
         [console_scripts]

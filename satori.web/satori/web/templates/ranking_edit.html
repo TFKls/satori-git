@@ -8,18 +8,22 @@
 
 {% block content %}
 
-<form action="" method="POST">
+<form action="" method="POST" enctype="multipart/form-data">
 <table>
 {{ base_form.as_table }}
 {{ form.as_table }}
 </table>
 <input class="button" type="submit" name="save" value="Save changes"/>
 <input class="button button_warn" type="submit" name="delete" value="Delete ranking"/>
+{% if stylesheet %}
+<input class="button button_small button_warn" type="submit" name="remove_css" value="Remove stylesheet"/>
+{% endif %}
 </form>
+
 
 <h3>Contest problems</h3>
 
-<table>
+<table class="results">
 <tr>
     <th>Code</th>
     <th>Title</th>
@@ -33,7 +37,7 @@
     <td>{{problem.title}}</td>
     <td>{% if suite %} {{suite.name}} {% else %} Default ({{problem.default_test_suite.name}}) {% endif %}</td>
     <td>{% if params %} Yes {% else %} No {% endif %}</td>
-    <td><a href={% url ranking_editparams page_info.contest.id ranking.id problem.id %}>(edit)</a></td>
+    <td><a class="button button_small" href={% url ranking_editparams page_info.contest.id ranking.id problem.id %}>Edit</a></td>
 </tr>
 {% endfor %}
 </table>

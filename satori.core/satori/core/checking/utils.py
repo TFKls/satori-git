@@ -27,7 +27,7 @@ class RestTable(object):
         row_items = []
 
         for i in range(len(items)):
-            item = unicode(items[i])
+            item = unicode(items[i]).strip()
 
             width = self.col_width[i]
             row_item = []
@@ -60,4 +60,20 @@ class RestTable(object):
                     row_items[i].append(filling)
 
         return ''.join([''.join([row_items[j][i] for j in range(len(items))]) + '|\n' for i in range(max_count)])
+
+class Transaction(object):
+    @staticmethod
+    def enter():
+        transaction.enter_transaction_management(True)
+        transaction.managed(True)
+
+    @staticmethod
+    def rollback():
+        transaction.rollback()
+
+    @staticmethod
+    def commit_and_leave():
+        transaction.commit()
+        transaction.managed(False)
+        transaction.leave_transaction_management()
 

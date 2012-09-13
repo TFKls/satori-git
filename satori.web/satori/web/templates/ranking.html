@@ -1,5 +1,9 @@
 {% extends "templates/index.html" %}
 
+{% block header %}
+<link rel="stylesheet" href="{% url download "download" "Ranking" ranking.id "stylesheet" "ranking.css" %}"/>
+{% endblock %}
+
 {% block content %}
 {% if page_info.contest_is_admin %}
 <div class="buttonbar"><a class="button" href="{% url ranking_edit page_info.contest.id ranking.id %}">Edit ranking</a><a class="button" href="{% url ranking_rejudge page_info.contest.id ranking.id %}">Rejudge ranking</a></div>

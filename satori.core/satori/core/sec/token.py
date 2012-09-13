@@ -106,6 +106,11 @@ class Token(object):
     validity = property(_get_validity, _set_validity)
     valid = property(lambda self: self.deadline > datetime.now())
     @property
+    def role_id(self):
+        if self.session is not None:
+            return self.session.role_id
+        return None
+    @property
     def role(self):
         if self.session is not None:
             return self.session.role

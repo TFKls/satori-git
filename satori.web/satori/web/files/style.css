@@ -177,6 +177,21 @@ ul.errorlist
     background-color: #F8C3D2;
 }
 
+.tdpos
+{
+    display:block;
+    background-color: #D9F7C2;
+    height:100%;
+    width:100%;
+}
+
+.tdneg
+{
+    display:table-cell;
+    background-color: #F8C3D2;
+    height:100%;
+    width:100%;
+}
 
 
 
@@ -514,7 +529,6 @@ table.message
 {
     width : 100%;
 }
-
 
 /*
 div.ranking tr:last-child td:first-child:after

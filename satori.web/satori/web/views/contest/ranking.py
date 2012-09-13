@@ -2,6 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.tools import params
+from satori.web.utils.files import valid_attachments
 from satori.web.utils.decorators import contest_view
 from satori.web.utils import xmlparams,rights
 from satori.web.utils.shortcuts import text2html
@@ -47,6 +48,7 @@ def edit(request, page_info, id):
     problems.sort(key=lambda p : p.code)
     suites_raw = ranking.get_problem_test_suites()
     params_raw = ranking.get_problem_params()
+    stylesheet = ranking.oa_get("stylesheet")
     suites = dict([[k.id, v] for k, v in suites_raw.iteritems()])
     problem_params = dict([[k.id, v] for k, v in params_raw.iteritems()])
     problem_list = [ [p,suites.get(p.id,None),problem_params.get(p.id,None)] for p in problems ]
@@ -60,6 +62,7 @@ def edit(request, page_info, id):
     
     class EditBaseForm(forms.Form):
         name = forms.CharField(label="Ranking name", required=True)
+        stylesheet = forms.FileField(required=False)
         visibility = rightfield.field()
 
     parser = params.parser_from_xml(description=aggregators[ranking.aggregator],section='aggregator',subsection='general')
@@ -67,16 +70,26 @@ def edit(request, page_info, id):
         if 'delete' in request.POST.keys():
             ranking.delete()
             return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
-        base_form = EditBaseForm(request.POST)
+        if 'remove_css' in request.POST.keys():
+            ranking.oa_delete('stylesheet')
+            return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,id]))
+        base_form = EditBaseForm(data=request.POST,files=request.FILES)
         form = xmlparams.ParamsForm(parser=parser,data=request.POST)
         if base_form.is_valid() and form.is_valid():
             ranking.modify_full(RankingStruct(contest=page_info.contest,name=base_form.cleaned_data["name"],aggregator=ranking.aggregator),parser.write_oa_map(form.cleaned_data), suites_raw, params_raw)
             rightfield.set(base_form.cleaned_data["visibility"])
+            css = base_form.cleaned_data.get("stylesheet",None)
+            data = base_form.cleaned_data
+            if css:
+                writer = Blob.create(css.size)
+                writer.write(css.read())
+                phash = writer.close()
+                ranking.oa_set_blob_hash('stylesheet',phash)
             return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,id]))
     else:
         base_form = EditBaseForm(initial={'name' : ranking.name, 'visibility' : unicode(rightfield.current)})
         form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(ranking.params_get_map(),check_required=False))
-    return render_to_response('ranking_edit.html', {'page_info' : page_info, 'ranking' : ranking, 'base_form' : base_form, 'form' : form, 'problem_list' : problem_list})
+    return render_to_response('ranking_edit.html', {'page_info' : page_info, 'ranking' : ranking, 'base_form' : base_form, 'form' : form, 'problem_list' : problem_list,'stylesheet' : stylesheet})
 
 
 
@@ -124,7 +137,7 @@ def editparams(request, page_info, id, problem_id):
     else:
         base_form = ParamsBaseForm(initial={'suite' : suiteid})
         form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(problem_params,check_required=False))
-    return render_to_response('ranking_editparams.html', {'page_info' : page_info, 'ranking' : ranking, 'form' : form, 'base_form' : base_form})
+    return render_to_response('ranking_editparams.html', {'page_info' : page_info, 'ranking' : ranking, 'form' : form, 'base_form' : base_form, 'problem' : problem})
     
 @contest_view
 def rejudge(request, page_info, id):
