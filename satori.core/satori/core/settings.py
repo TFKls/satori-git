@@ -14,12 +14,12 @@ ADMINS = (
 MANAGERS = ADMINS
 
 ACTIVATION_REQUIRED = True
-EMAIL_HOST = 'tcs.uj.edu.pl'
-ACTIVATION_EMAIL_FROM = 'satori@tcs.uj.edu.pl'
+EMAIL_HOST = 'localhost'
+ACTIVATION_EMAIL_FROM = 'szymon.borak@tcs.uj.edu.pl'
 ACTIVATION_EMAIL_SUBJECT = 'Your Satori account activation'
 ACTIVATION_EMAIL_BODY = """
 Hello {name}!
-To activate your Satori account visit http://satori.tcs.uj.edu.pl/activate/{code} .
+To activate your Satori account visit http://szymon.borak.student.tcs.uj.edu.pl/activate/{code} .
 Your activation token is: {code} .
 """
 
@@ -37,11 +37,11 @@ DATABASES = {
 CACHE_BACKEND = 'memcached://localhost:11211'
 
 EVENT_HOST = 'localhost'
-EVENT_PORT = 38888
+EVENT_PORT = 32888
 THRIFT_HOST = '0.0.0.0'
-THRIFT_PORT = 38889
+THRIFT_PORT = 32889
 BLOB_HOST = '0.0.0.0'
-BLOB_PORT = 38887
+BLOB_PORT = 32887
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 

@@ -23,10 +23,10 @@ DATABASE_PASSWORD = ''         # Not used with sqlite3.
 DATABASE_HOST = ''             # Set to empty string for localhost. Not used with sqlite3.
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
-USE_SSL = True
-THRIFT_HOST = 'dev.satori.tcs.uj.edu.pl'
-THRIFT_PORT = 38889
-BLOB_PORT = 38887
+USE_SSL = False
+THRIFT_HOST = 'student.tcs.uj.edu.pl'
+THRIFT_PORT = 32889
+BLOB_PORT = 32887
 if getpass.getuser() == 'gutowski':
     THRIFT_HOST = 'localhost'
     THRIFT_PORT = 39889
@@ -37,7 +37,6 @@ if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
 #if getpass.getuser() == 'duraj':
-#    USE_SSL = False
 #    THRIFT_HOST = 'localhost'
 #    THRIFT_PORT = 36889
 #    BLOB_PORT = 36887

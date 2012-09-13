@@ -1,0 +1,35 @@
+#!/bin/sh
+if [ "$#" != 3 ]; then
+	echo "Usage: $0 <type> <size> <device>" 1>&2
+	exit 1
+fi
+type="$1"
+size="$2"
+device="$3"
+
+number=
+suffix=
+eval $(printf "%s" "$size" | \
+       sed -nre 's/^ *([1-9][0-9]*) *([%KMGT]) *$/number="\1"; suffix="\2";/p')
+
+mem_total="$(sed -nre 's/^MemTotal:\s*([0-9]+) kB$/\1/p' /proc/meminfo)"
+
+case "$suffix" in
+%) kbytes="$(($mem_total * $number / 100))" ;;
+K) kbytes=$(($number))                       ;;
+M) kbytes=$(($number * 1024))                ;;
+G) kbytes=$(($number * 1024 * 1024))         ;;
+T) kbytes=$(($number * 1024 * 1024 * 1024))  ;;
+esac
+bytes="$(($kbytes * 1024))"
+
+if [ "$type" = zram ]; then
+	echo "$bytes" >/sys/block/$device/disksize && \
+	/sbin/mkswap "/dev/$device" >/dev/null
+
+elif [ "$type" = ramzswap ]; then
+	/sbin/rzscontrol "/dev/$device" --disksize_kb="$kbytes" --init
+fi
+/sbin/swapon -p 100 "/dev/$device" 2>/dev/null
+
+exit 0
