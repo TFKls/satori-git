@@ -66,7 +66,7 @@ class CheckingMaster(Client2):
         for test_result in TestResult.objects.filter(pending=True, submit__problem__contest__archived=False):
             if test_result.tester:
                 test_result.tester = None
-                test_result.save()
+                test_result.save(force_update=True)
             self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
         for test_suite_result in TestSuiteResult.objects.filter(pending=True, submit__problem__contest__archived=False):
@@ -126,7 +126,7 @@ class CheckingMaster(Client2):
             logging.debug('checking master: rejudge test result %s: in judge', test_result.id)
             test_result.pending = True
             test_result.tester = None
-            test_result.save()
+            test_result.save(force_update=True)
             test_result.oa_set_map({})
             self.test_result_judged_set.remove(test_result)
             self.test_result_queue.append(test_result)
@@ -135,7 +135,7 @@ class CheckingMaster(Client2):
             logging.debug('checking master: rejudge test result %s: rejudge', test_result.id)
             test_result.pending = True
             test_result.tester = None
-            test_result.save()
+            test_result.save(force_update=True)
             test_result.oa_set_map({})
             self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
@@ -161,7 +161,7 @@ class CheckingMaster(Client2):
             for ranking in self.scheduled_test_suite_results_map.get(test_suite_result, []):
                 self.rankings_to_rejudge.add(ranking)
             test_suite_result.pending = True
-            test_suite_result.save()
+            test_suite_result.save(force_update=True)
             test_suite_result.oa_set_map({})
             self.start_test_suite_result(test_suite_result)
 
@@ -277,14 +277,14 @@ class CheckingMaster(Client2):
             if self.temporary_submit_queue:
                 temporary_submit = self.temporary_submit_queue.popleft()
                 temporary_submit.tester = Role.objects.get(id=event.tester_id)
-                temporary_submit.save()
+                temporary_submit.save(force_update=True)
                 e.test_result_id = -temporary_submit.id
             elif self.test_result_queue:
                 test_result = self.test_result_queue.popleft()
                 self.test_result_set.remove(test_result)
                 self.test_result_judged_set.add(test_result)
                 test_result.tester = Role.objects.get(id=event.tester_id)
-                test_result.save()
+                test_result.save(force_update=True)
                 e.test_result_id = test_result.id
             else:
                 e.test_result_id = None
@@ -314,31 +314,31 @@ class CheckingMaster(Client2):
 
         logging.debug('Calling test suite result: %s.%s', test_suite_result.id, name)
 
+        transaction.enter_transaction_management(True)
+        transaction.managed(True)
         try:
-            transaction.enter_transaction_management(True)
-            transaction.managed(True)
             getattr(self.test_suite_result_map[test_suite_result], name)(*args)
         except:
-            logging.exception('Test suite result failed: %s', test_suite_result.id)
             transaction.rollback()
-            test_suite_result.status = 'INT'
-            test_suite_result.report = 'Internal error'
-            test_suite_result.save()
+            logging.exception('Test suite result failed: %s', test_suite_result.id)
             self.finished_test_suite_result(test_suite_result)
-            transaction.commit()
-            transaction.managed(False)
-            transaction.leave_transaction_management()
-        else:
-            transaction.commit()
-            transaction.managed(False)
-            transaction.leave_transaction_management()
+            try:
+                test_suite_result.status = 'INT'
+                test_suite_result.report = 'Internal error'
+                test_suite_result.save(force_update=True)
+            except:
+                transaction.rollback()
+                logging.exception('Test suite result cleanup failed: %s', test_suite_result.id)
+        transaction.commit()
+        transaction.managed(False)
+        transaction.leave_transaction_management()
 
     # callback
     def finished_test_suite_result(self, test_suite_result):
-        # get fresh version from db
+        # get a fresh version from db
         test_suite_result = TestSuiteResult.objects.get(id=test_suite_result.id)
         test_suite_result.pending = False
-        test_suite_result.save()
+        test_suite_result.save(force_update=True)
         for ranking in self.scheduled_test_suite_results_map.get(test_suite_result, []):
             self.ranking_checked_test_suite_results.setdefault(ranking, set()).add(test_suite_result)
         self.stop_test_suite_result(test_suite_result)
@@ -384,25 +384,25 @@ class CheckingMaster(Client2):
         logging.debug('Calling ranking: %s.%s', ranking.id, name)
 
         perf.begin('ranking')
+        transaction.enter_transaction_management(True)
+        transaction.managed(True)
         try:
-            transaction.enter_transaction_management(True)
-            transaction.managed(True)
             getattr(self.ranking_map[ranking], name)(*args)
         except:
-            logging.exception('Ranking failed: %s', ranking.id)
             transaction.rollback()
-            ranking.header = 'Internal error'
-            ranking.footer = ''
-            ranking.save()
-            RankingEntry.objects.filter(ranking=ranking).delete()
+            logging.exception('Ranking failed: %s', ranking.id)
             self.stop_ranking(ranking)
-            transaction.commit()
-            transaction.managed(False)
-            transaction.leave_transaction_management()
-        else:
-            transaction.commit()
-            transaction.managed(False)
-            transaction.leave_transaction_management()
+            try:
+                ranking.header = 'Internal error'
+                ranking.footer = ''
+                ranking.save(force_update=True)
+                RankingEntry.objects.filter(ranking=ranking).delete()
+            except:
+                transaction.rollback()
+                logging.exception('Ranking cleanup failed: %s', ranking.id)
+        transaction.commit()
+        transaction.managed(False)
+        transaction.leave_transaction_management()
         perf.end('ranking')
 
     def stop_ranking(self, ranking):
