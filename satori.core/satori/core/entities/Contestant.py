@@ -29,7 +29,7 @@ class Contestant(Role):
         fields = [('contest', 'VIEW'), ('accepted', 'VIEW'), ('invisible', 'VIEW'), ('login', 'VIEW'), ('usernames', 'VIEW')]
 
     class RightsMeta(object):
-        rights = ['VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS', 'PERMIT_BACKUP']
+        rights = ['VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS', 'PERMIT_BACKUP', 'PERMIT_PRINT']
         inherit_parent = 'contest'
 
         inherit_parent_VIEW = ['VIEW']
@@ -41,6 +41,7 @@ class Contestant(Role):
         inherit_parent_VIEW_SUBMIT_RESULTS = ['VIEW_SUBMIT_RESULTS']
         inherit_PERMIT_BACKUP = ['MANAGE']
         inherit_parent_PERMIT_BACKUP = ['PERMIT_BACKUP']
+        inherit_parent_PERMIT_PRINT = ['PERMIT_PRINT']
 
     @classmethod
     def inherit_rights(cls):

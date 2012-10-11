@@ -41,7 +41,7 @@ class User(Role):
             raise InvalidLogin(login=self.login, reason='is already used')
         super(User, self).save(*args, **kwargs)
 
-    @ExportMethod(DjangoStruct('User'), [DjangoStruct('User')], PCGlobal('MANAGE'), [InvalidLogin, InvalidEmail, CannotSetField])
+    @ExportMethod(DjangoStruct('User'), [DjangoStruct('User')], PCGlobal('ADMIN'), [InvalidLogin, InvalidEmail, CannotSetField])
     @staticmethod
     def create(fields):
         user = User()

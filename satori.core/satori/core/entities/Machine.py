@@ -27,7 +27,7 @@ class Machine(Role):
             raise InvalidLogin(login=self.login, reason='is already used')
         super(Machine, self).save(*args, **kwargs)
     
-    @ExportMethod(DjangoStruct('Machine'), [DjangoStruct('Machine')], PCGlobal('MANAGE'), [InvalidLogin, CannotSetField])
+    @ExportMethod(DjangoStruct('Machine'), [DjangoStruct('Machine')], PCGlobal('ADMIN'), [InvalidLogin, CannotSetField])
     @staticmethod
     def create(fields):
         machine = Machine()
