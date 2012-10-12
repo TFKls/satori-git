@@ -18,7 +18,7 @@ PageInfo = Struct('PageInfo', [
     ('contest_submittable_problems_exist', bool, False),
     ('contest_viewable_problems_exist', bool, False),
     ('contest_can_backup', bool, False),
-    ('contest_can_print', bool False),
+    ('contest_can_print', bool, False),
     ])
 
 ContestInfo = Struct('ContestInfo', [

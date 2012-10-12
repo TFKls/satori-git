@@ -144,7 +144,7 @@ class SatoriMasterProcess(SatoriProcess):
                 DebugQueueProcess(),
                 DbevNotifierProcess(),
                 CheckingMasterProcess(),
-                PrintingMasterProcess(),
+#                PrintingMasterProcess(),
                 ThriftServerProcess(),
                 BlobServerProcess(),
         ]
