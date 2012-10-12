@@ -5,5 +5,6 @@
 from reader import ThriftReader
 from writer import ThriftWriter
 from client import ThriftClient
+from client import ThriftHttpClient
 from server import ThriftServer
 

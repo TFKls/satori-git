@@ -13,10 +13,11 @@ from types import FunctionType
 
 from thrift.transport.TSocket import TSocket
 from thrift.transport.TSSLSocket import TSSLSocket
+from thrift.transport.THttpClient import THttpClient
 
 from satori.client.common import setup_api
 from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
-from satori.ars.thrift import ThriftClient, ThriftReader
+from satori.ars.thrift import ThriftClient, ThriftReader, ThriftHttpClient
 from satori.objects import Argument, Signature, ArgumentMode
 from unwrap import unwrap_interface
 from oa_map import get_oa_map
@@ -27,7 +28,11 @@ client_port = 0
 blob_port = 0
 ssl = True
 
+http = False
+#http = True
+
 def transport_factory():
+#    return THttpClient(("https" if ssl else "http") + "://" + client_host + ":" + str(blob_port) + "/thrift")
     if ssl:
         return TSSLSocket(host=client_host, port=client_port, validate=False)
     else:
@@ -41,7 +46,10 @@ def bootstrap_thrift_client(transport_factory):
     idl_serv.add_procedure(idl_proc)
     interface.add_service(idl_serv)
 
-    bootstrap_client = ThriftClient(interface, transport_factory)
+    if not http:
+        bootstrap_client = ThriftClient(interface, transport_factory)
+    else:
+        bootstrap_client = ThriftHttpClient(interface, client_host, blob_port, ssl)
     bootstrap_client.wrap_all()
     idl = idl_proc.implementation()
     bootstrap_client.stop()
@@ -49,7 +57,10 @@ def bootstrap_thrift_client(transport_factory):
     idl_reader = ThriftReader()
     interface = idl_reader.read_from_string(idl)
 
-    client = ThriftClient(interface, transport_factory)
+    if not http:
+        client = ThriftClient(interface, transport_factory)
+    else:
+        client = ThriftHttpClient(interface, client_host, blob_port, ssl)
     client.wrap_all()
 
     return (interface, client)
