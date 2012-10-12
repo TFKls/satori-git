@@ -6,6 +6,8 @@ from multiprocessing.connection import Client, Listener
 from time import sleep
 import ssl
 import os
+import signal
+import sys
 
 from django.conf import settings
 from django.core.handlers.wsgi import WSGIHandler
@@ -13,7 +15,7 @@ from django.core.handlers.wsgi import WSGIHandler
 from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 from thrift.transport.TSocket import TServerSocket, TSocket
 from thrift.transport.TTransport import TFramedTransportFactory, TTransportBase
-from thrift.server.TServer import TThreadedServer
+from thrift.server.TServer import TThreadedServer, TForkingServer
 
 from twisted.web import server, wsgi
 from twisted import internet
@@ -55,7 +57,10 @@ class TLateInitSSLSocket(TTransportBase):
         return self.getSocket().flush()
 
     def close(self):
-        return self.getSocket().close()
+        if self.socket is None:
+            self.handle.close()
+        else:
+            return self.getSocket().close()
         
 
 class TLateInitSSLServerSocket(TServerSocket):
@@ -126,13 +131,22 @@ class ThriftServerProcess(SatoriProcess):
     def __init__(self):
         super(ThriftServerProcess, self).__init__('thrift server')
 
+    def do_handle_signal(self, signum, frame):
+        if self.serverpid == os.getpid():
+            for child in self.server.children:
+                os.kill(child, signal.SIGTERM)
+                os.waitpid(child, 0)
+        sys.exit(0)
+
     def do_run(self):
         if settings.USE_SSL:
             socket = TLateInitSSLServerSocket(port=settings.THRIFT_PORT, certfile=settings.SSL_CERTIFICATE)
         else:
             socket = TServerSocket(port=settings.THRIFT_PORT)
-        server = TThreadedServer(ThriftProcessor(), socket, TFramedTransportFactory(), TBinaryProtocolFactory())
-        server.serve()
+#        server = TThreadedServer(ThriftProcessor(), socket, TFramedTransportFactory(), TBinaryProtocolFactory())
+        self.serverpid = os.getpid()
+        self.server = TForkingServer(ThriftProcessor(), socket, TFramedTransportFactory(), TBinaryProtocolFactory())
+        self.server.serve()
 
 
 class BlobServerProcess(SatoriProcess):

@@ -60,6 +60,8 @@ class SatoriProcess(Process):
 
         try:
             self.do_run()
+        except SystemExit:
+            logging.info('%s exited (SystemExit)', self.name)
         except:
             logging.exception('%s exited with error', self.name)
         else:
