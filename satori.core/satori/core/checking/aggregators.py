@@ -549,7 +549,7 @@ class MarksAggregator(AggregatorBase):
                 else:
                     mark = 'UNK (' + '%.2f'%(score,) + ')'
 
-                for mrk, (lower, upper) in self.aggregator.params.points_mark:
+                for mrk, (lower, upper) in self.aggregator.params.points_mark.iteritems():
                     if score >= lower and score < upper:
                         mark = mrk
 

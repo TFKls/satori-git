@@ -26,6 +26,7 @@ class Contest(Entity):
     problems        = models.ManyToManyField('Problem', through='ProblemMapping', related_name='contests')
     contestant_role = models.ForeignKey('SystemRole', related_name='contest_contestants+', on_delete=models.PROTECT)
     admin_role      = models.ForeignKey('SystemRole', related_name='contest_admins+', on_delete=models.PROTECT)
+    printer         = models.ForeignKey('Printer', related_name='contests', on_delete=models.SET_NULL, null=True)
     archived        = models.BooleanField(default=False)
 
     lock_start   = models.DateTimeField(null=True)
@@ -36,10 +37,10 @@ class Contest(Entity):
     appearance   = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class ExportMeta(object):
-        fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('archived', 'VIEW'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
+        fields = [('name', 'VIEW'), ('description', 'VIEW'), ('contestant_role', 'MANAGE'), ('admin_role', 'MANAGE'), ('printer', 'MANAGE'), ('archived', 'VIEW'), ('lock_start', 'MANAGE'), ('lock_finish', 'MANAGE'), ('lock_address', 'MANAGE'), ('lock_netmask', 'MANAGE')]
 
     class RightsMeta(object):
-        rights = ['APPLY', 'JOIN', 'SUBMIT', 'ASK_QUESTIONS', 'VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS', 'PERMIT_BACKUP']
+        rights = ['APPLY', 'JOIN', 'SUBMIT', 'ASK_QUESTIONS', 'VIEW_SUBMIT_CONTENTS', 'VIEW_SUBMIT_RESULTS', 'PERMIT_BACKUP', 'PERMIT_PRINT']
 
         inherit_APPLY = ['JOIN']
         inherit_JOIN = ['MANAGE']
@@ -48,6 +49,7 @@ class Contest(Entity):
         inherit_VIEW_SUBMIT_CONTENTS = ['MANAGE']
         inherit_VIEW_SUBMIT_RESULTS = ['MANAGE']
         inherit_PERMIT_BACKUP = ['MANAGE']
+        inherit_PERMIT_PRINT = ['MANAGE']
 
     @classmethod
     def inherit_rights(cls):
@@ -91,7 +93,7 @@ class Contest(Entity):
         contest.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
         if not Privilege.global_demand('MANAGE_LOCKS'):
             contest.forbid_fields(fields, ['lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
-        contest.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
+        contest.update_fields(fields, ['name', 'description', 'printer', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         contest.contestant_role = SystemRole.create(fields=SystemRoleStruct(name='Contestants of ' + contest.name))
         contest.admin_role = SystemRole.create(fields=SystemRoleStruct(name='Administrators of ' + contest.name))
         contest.save()
@@ -108,7 +110,7 @@ class Contest(Entity):
         self.forbid_fields(fields, ['id', 'contestant_role', 'admin_role'])
         if not Privilege.global_demand('MANAGE_LOCKS'):
             self.forbid_fields(fields, ['lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
-        modified = self.update_fields(fields, ['name', 'description', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
+        modified = self.update_fields(fields, ['name', 'description', 'printer', 'archived', 'lock_start', 'lock_finish', 'lock_address', 'lock_netmask'])
         self.save()
         if 'name' in modified:
             self.contestant_role.modify(fields=SystemRoleStruct(name='Contestants of ' + self.name))

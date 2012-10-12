@@ -3,7 +3,8 @@ syntax: regexp
 ^\.
 ^bin/
 ^include/
-^lib
+^lib/
+^local/
 ^src/
 ^var/
 ^tmp/

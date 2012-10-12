@@ -23,6 +23,7 @@ import twisted.internet.ssl
 
 from satori.core.api      import ars_interface
 from satori.core.checking import CheckingMaster
+from satori.core.printing import PrintingMaster
 from satori.core.dbev.notifier              import run_notifier
 from satori.core.management.master_process  import SatoriProcess
 from satori.core.thrift_server   import ThriftProcessor
@@ -193,3 +194,7 @@ class DebugQueueProcess(EventSlaveProcess):
 class CheckingMasterProcess(EventSlaveProcess):
     def __init__(self):
         super(CheckingMasterProcess, self).__init__('checking master', [CheckingMaster()])
+
+class PrintingMasterProcess(EventSlaveProcess):
+    def __init__(self):
+        super(PrintingMasterProcess, self).__init__('printing master', [PrintingMaster()])
