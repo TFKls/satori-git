@@ -27,7 +27,6 @@ DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql_psycopg2',
             'NAME': getpass.getuser(),
-            'HOST': 'db.tcs.uj.edu.pl',
             'OPTIONS': {
                 'autocommit': True,
                 },

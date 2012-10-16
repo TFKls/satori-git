@@ -13,7 +13,7 @@ from satori.events import Event, Client2
 
 serial = 1
 
-def printer(script, path, filename):
+def printer_func(script, path, filename):
     tmp = None
     try:
         tmp = tempfile.mkdtemp()
@@ -28,7 +28,7 @@ class PrintingMaster(Client2):
     queue = 'printing_master_queue'
 
     def __init__(self):
-        super(CheckingMaster, self).__init__()
+        super(PrintingMaster, self).__init__()
         self.printjob_queue = deque()
 
     def init(self):
@@ -52,6 +52,7 @@ class PrintingMaster(Client2):
         printer = printjob.contest.printer;
         if (printer is not None):
             oa = printjob.data_get('content');
-            path = Blob.blob_filename(oa.value)
-            p=Process(target=printer, args=(printjob.script, path, oa.filename), daemon=True)
+            path = os.path.join(settings.BLOB_DIR, oa.value[0], oa.value[1], oa.value[2], oa.value)
+            p=Process(target=printer_func, args=(printer.script, path, oa.filename))
+            p.daemon=True
             p.start()
