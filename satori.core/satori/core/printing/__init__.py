@@ -44,6 +44,9 @@ class PrintingMaster(Client2):
         self.attach(self.queue)
         self.map({'type': 'printjob'}, self.queue)
         for printjob in PrintJob.objects.filter(pending=True):
+            printjob.status = 'QUE'
+            printjob.report = None
+            printjob.save()
             self.printjob_queue.append(printjob)
         self.do_work()
 
@@ -56,6 +59,9 @@ class PrintingMaster(Client2):
         logging.debug('checking master: event %s', event.type)
         if event.type == 'printjob':
             printjob = PrintJob.objects.get(id=event.id)
+            printjob.status = 'QUE'
+            printjob.report = None
+            printjob.save()
             self.printjob_queue.append(printjob)
         self.do_work()
 

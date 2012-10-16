@@ -39,7 +39,6 @@ class PrintJob(Entity):
         printjob.contestant = fields.contest.find_contestant(token_container.token.role)
         printjob.forbid_fields(fields, ['id', 'contestant', 'time', 'pending', 'status', 'report'])
         printjob.update_fields(fields, ['contest'])
-        printjob.status = 'QUE'
         printjob.save()
         blob = printjob.data_set_blob('content', filename=filename)
         blob.write(content)
@@ -57,8 +56,6 @@ class PrintJob(Entity):
     @ExportMethod(NoneType, [DjangoId('PrintJob')], PCArg('self', 'MANAGE'))
     def reprint(self):
         self.pending = True
-        self.status = 'QUE'
-        self.report = None
         self.save()
         RawEvent().send(Event(type='printjob', id=self.id))
 
