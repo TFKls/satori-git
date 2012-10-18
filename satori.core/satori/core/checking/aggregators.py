@@ -287,7 +287,7 @@ class ACMBoardAggregator(AggregatorBase):
                     hours,mins = divmod(self.ok_time.totalseconds(),60)
                     return ':tdpos:`'+str(self.trials)+' ('+str(hours)+':'+str(mins)+')'+'`'
                 if self.late_trials > 0:
-                    return ':tdpnd:`'+str(self.trials-self.late_trials)+'+'+str(self.late_trials)'`'
+                    return ':tdpnd:`'+str(self.trials-self.late_trials)+'+'+str(self.late_trials)+'`'
                 else:
                     return ':tdneg:`'+str(self.trials)+'`'
 
