@@ -285,8 +285,8 @@ class ACMBoardAggregator(AggregatorBase):
 
             def get_str(self):
                 if self.ok:
-                    hours = self.ok_time.total_seconds() / 3600
-                    mins = (self.ok_time.total_seconds() % 3600) / 60
+                    hours = int(self.ok_time.total_seconds()) / 3600
+                    mins = (int(self.ok_time.total_seconds()) % 3600) / 60
                     return ':tdpos:`'+str(self.trials)+' ('+str(hours)+':'+str(mins)+')'+'`'
                 if self.late_trials > 0:
                     return ':tdpnd:`'+str(self.trials-self.late_trials)+'+'+str(self.late_trials)+'`'
