@@ -257,9 +257,9 @@ class ACMBoardAggregator(AggregatorBase):
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') in ['OK', 'ACC']
-                after_freeze = (self.params.time_freeze) and (time > self.params.time_freeze)
                 if self.params.time_stop and time > self.params.time_stop:
                     return
+                after_freeze = (self.params.time_freeze) and (time > self.params.time_freeze)
                 if self.params.ignore:
                     return
                 if self.ok:
