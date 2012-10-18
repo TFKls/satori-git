@@ -245,7 +245,9 @@ class ACMBoardAggregator(AggregatorBase):
             def __init__(self, score, problem):
                 self.score = score
                 self.ok = False
-                self.star_count = 0
+                self.pending = False
+                self.trials = 0
+                self.late_trials = 0
                 self.ok_time = timedelta()
                 self.ok_submit = None
                 self.result_list = sortedlist()
@@ -255,29 +257,39 @@ class ACMBoardAggregator(AggregatorBase):
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') in ['OK', 'ACC']
+                after_freeze = self.params.time_freeze and time > self.params.time_freeze
                 if self.params.time_stop and time > self.params.time_stop:
                     return
                 if self.params.ignore:
                     return
-                if ok:
+                if self.ok:
+                    return
+                self.trials += 1
+                if after_freeze:
+                    self.late_trials += 1
+                if ok and not after_freeze:
                     self.ok = True
                 self.result_list.add((time, ok, result.submit_id))
-                self.star_count = 1
-                for (time, ok, submit_id) in self.result_list:
-                    if ok:
-                        if self.params.time_start and time > self.params.time_start:
-                            self.ok_time = time - self.params.time_start
-                        else:
-                            self.ok_time = timedelta()
-                        self.ok_submit = submit_id
-                        break
-                    self.star_count += 1
+                if self.ok:
+                    self.trials = 0
+                    for (time, ok, submit_id) in self.result_list:
+                        self.trials += 1                
+                        if ok:
+                            if self.params.time_start and time > self.params.time_start:
+                                self.ok_time = time - self.params.time_start
+                            else:
+                                self.ok_time = timedelta()
+                            self.ok_submit = submit_id
+                            break
 
             def get_str(self):
                 if self.ok:
-                    return ':tdpos:`'+str(self.star_count)+'`'
+                    hours,mins = divmod(self.ok_time.totalseconds(),60)
+                    return ':tdpos:`'+str(self.trials)+' ('+str(hours)+':'+str(mins)+')'+'`'
+                if self.late_trials > 0:
+                    return ':tdpnd:`'+str(self.trials-self.late_trials)+'+'+str(self.late_trials)'`'
                 else:
-                    return ':tdneg:`'+str(self.star_count)+'`'
+                    return ':tdneg:`'+str(self.trials)+'`'
 
         def __init__(self, aggregator):
             self.aggregator = aggregator
@@ -293,7 +305,7 @@ class ACMBoardAggregator(AggregatorBase):
                 self.ranking_entry.save()
             else:
                 points = int(sum([s.params.score for s in score_list], 0.0))
-                time = sum([s.ok_time + self.aggregator.params.time_penalty * s.star_count for s in score_list], timedelta(0))
+                time = sum([s.ok_time + self.aggregator.params.time_penalty * (s.trials-1) for s in score_list], timedelta(0))
                 time_seconds = int(total_seconds(time))
                 time_str = str(timedelta(seconds=time_seconds))
 #                problems = ' '.join([s.get_str() for s in sorted([s for s in score_list], key=attrgetter('ok_time'))])
