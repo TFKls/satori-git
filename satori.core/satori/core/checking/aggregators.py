@@ -253,17 +253,18 @@ class ACMBoardAggregator(AggregatorBase):
                 self.result_list = sortedlist()
                 self.problem = problem
                 self.params = self.score.aggregator.problem_params[problem.id]
+                self.agr_params = self.score.aggregator.params
 
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') in ['OK', 'ACC']
                 if self.params.time_stop and time > self.params.time_stop:
                     return
-                after_freeze = (self.params.time_freeze) and (time > self.params.time_freeze)
                 if self.params.ignore:
                     return
                 if self.ok:
                     return
+                after_freeze = (self.agr_params.time_freeze) and (time > self.agr_params.time_freeze)
                 self.trials += 1
                 if after_freeze:
                     self.late_trials += 1
