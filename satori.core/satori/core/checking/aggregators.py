@@ -287,7 +287,7 @@ class ACMBoardAggregator(AggregatorBase):
                 if self.ok:
                     hours = int(self.ok_time.total_seconds()) / 3600
                     mins = (int(self.ok_time.total_seconds()) % 3600) / 60
-                    return ':tdpos:`'+str(self.trials)+' ('+str(hours)+':'+str(mins)+')'+'`'
+                    return ':tdpos:`'+str(self.trials)+'`'+' :signature:`('+str(hours)+':'+str(mins).zfill(2)+')`'
                 if self.late_trials > 0:
                     return ':tdpnd:`'+str(self.trials-self.late_trials)+'+'+str(self.late_trials)+'`'
                 else:
@@ -353,7 +353,7 @@ class ACMBoardAggregator(AggregatorBase):
 
         self.table = RestTable(*columns)
         
-        rhead = '.. role:: tdpos\n\n.. role:: tdneg\n\n.. role:: tdpnd\n\n'
+        rhead = '.. role:: tdpos\n\n.. role:: tdneg\n\n.. role:: tdpnd\n\n.. role:: signature\n\n'
         self.ranking.header = rhead+self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = self.table.header_row + self.table.row_separator
         self.ranking.save()
