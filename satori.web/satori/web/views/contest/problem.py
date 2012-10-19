@@ -46,8 +46,9 @@ def add_choose(request,page_info):
             self.problems = Problem.filter(ProblemStruct())
             self.total = len(self.problems)
             self.fields.append(TableField(name='Name',value=(lambda table,i: table.problems[i].name), 
-                                          render=(lambda table,i : '<a class="stdlink" href="'+reverse('contest_problems_add_selected',
-                                          args=[page_info.contest.id,table.problems[i].id])+'">'+table.problems[i].name+'</a>'),
+                                          render=(lambda table,i : format_html(u'<a class="stdlink" href="{0}">{1}</a>',
+                                              reverse('contest_problems_add_selected', args=[page_info.contest.id,table.problems[i].id]),
+                                              table.problems[i].name)),
                                           id=3,css='link'))
             self.fields.append(TableField(name='Description',value=(lambda table,i: table.problems[i].description), id=2, css='description'))
             
