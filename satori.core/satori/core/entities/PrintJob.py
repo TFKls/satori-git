@@ -43,7 +43,7 @@ class PrintJob(Entity):
         blob = printjob.data_set_blob('content', filename=filename)
         blob.write(content)
         blob.close()
-        RawEvent().send(Event(type='printjob', id=printjob.id))
+        RawEvent().send(Event(type='printjob_new', id=printjob.id))
         return printjob
 
     @ExportMethod(NoneType, [DjangoId('PrintJob')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
@@ -57,7 +57,7 @@ class PrintJob(Entity):
     def reprint(self):
         self.pending = True
         self.save()
-        RawEvent().send(Event(type='printjob', id=self.id))
+        RawEvent().send(Event(type='printjob_new', id=self.id))
 
 class PrintJobEvents(Events):
     model = PrintJob
