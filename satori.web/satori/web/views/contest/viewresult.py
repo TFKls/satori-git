@@ -58,7 +58,7 @@ def view(request, page_info, id):
                 if a in r.attributes.keys():
                     v = r.attributes[a]
                     if v.is_blob:
-                        return '<a class="stdlink" href="'+reverse('download',args=['download','TestResult',unicode(r.test_result.id),a,v.filename])+'">'+v.filename+'</a>'
+                        return format_html(u'<a class="stdlink" href="{0}">{1}</a>', reverse('download',args=['download','TestResult',unicode(r.test_result.id),a,v.filename]), v.filename)
                     else:
                         return v.value
                 else:
@@ -69,7 +69,7 @@ def view(request, page_info, id):
                 return lambda table,i : attribute_value(table,i,att)            
             for a in attributes:
                 print a
-                self.fields.append(TableField(name=a,value=lav(a),render=lar(a),id=a))
+                self.fields.append(TableField(name=a,value=lambda table,i: attribute_value(table,i,a),render=lambda table,i: attribute_render(table,i,a),id=a))
     
     if admin:
         tests = TestResultTable(req=request.GET)

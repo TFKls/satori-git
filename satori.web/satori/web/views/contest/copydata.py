@@ -24,8 +24,8 @@ def copyproblems(request,page_info):
             self.fields.append(TableField(id='check',name='Code',sortable=True,value=lambda table,i : table.results[i].code,render=(lambda table,i : '<input type="checkbox" name="mid_'+unicode(table.results[i].id)+'"/>'+table.results[i].code)))
             self.fields.append(TableField(id='title',name='Title',value=(lambda table,i : table.results[i].title)))
             self.fields.append(TableField(id='based',name='Based on',value=(lambda table,i : table.results[i].problem.name+' ('+table.results[i].problem.description+')')))
-            self.fields.append(TableField(id='ascode',name='Target code',sortable=False,value=(lambda table,i : '<input class="transparent_box" type="text" size="8" name="code_'+unicode(table.results[i].id)+'"/>')))
-            self.fields.append(TableField(id='stm',name='Copy statement?',sortable=False,render=(lambda table,i : '<input type="checkbox" name="stm_'+unicode(table.results[i].id)+'"/>')))
+            self.fields.append(TableField(id='ascode',name='Target code',sortable=False,value=(lambda table,i : format_html('<input class="transparent_box" type="text" size="8" name="code_{0}"/>', table.results[i].id))))
+            self.fields.append(TableField(id='stm',name='Copy statement?',sortable=False,render=(lambda table,i : format_html('<input type="checkbox" name="stm_{0}"/>', table.results[i].id))))
             
             self.filter_functions.append(FilterFunction(name='Contest',prefix='contest',showall=False,choices=[[-1,'Select']] + [[c.contest.id,c.contest.name] for c in Web.get_contest_list() if c.is_admin ],default=-1))
     copytable = CopyTable()

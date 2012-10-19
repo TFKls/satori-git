@@ -52,7 +52,7 @@ def view(request, page_info):
             self.contests=contest_list
             self.total = len(self.contests)
             self.fields.append(TableField(name='Name',value=(lambda table,i: table.contests[i].contest.name),
-                                                      render=(lambda table,i: '<a class="stdlink" href="'+reverse('contest_main',args=[table.contests[i].contest.id])+'">'+table.contests[i].contest.name+'</a>'),
+                                                      render=(lambda table,i: format_html(u'<a class="stdlink" href="{0}">{1}</a>', reverse('contest_main',args=[table.contests[i].contest.id]), table.contests[i].contest.name)),
                                                       id=1 ))
             self.fields.append(TableField(name='Description',value=(lambda table,i: table.contests[i].contest.description), css='description', id=2 ))
             def button(table,i):
@@ -66,7 +66,7 @@ def view(request, page_info):
                 if table.contests[i].can_join:
                     s = 'Join'
                 if s!='':
-                    s = '<a class="button button_small" href="'+reverse('apply',args=[table.contests[i].contest.id])+'">'+s+'</a>'
+                    s = format_html(u'<a class="button button_small" href="{0}">{1}</a>', reverse('apply',args=[table.contests[i].contest.id]), s)
                 return s
                 
             self.fields.append(TableField(name='',value=(lambda table,i: ''),

@@ -23,7 +23,7 @@
 <div class="unhidden" id="{{g.prefix}}">
 {% endif %}
 <table class="results">
-    {{g.render_table|safe}}
+    {{g.render_table}}
 </table>
 </div>
 {% endfor %}
@@ -33,7 +33,7 @@
 {% for g in groups %}
 <h4>{{g.groupname}}</h4>
 <table class="results">
-    {{g.render_table|safe}}
+    {{g.render_table}}
 </table>
 {% endfor %}
 
