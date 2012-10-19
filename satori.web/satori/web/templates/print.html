@@ -4,6 +4,14 @@
 
 <h2>Print</h2>
 
+<table class="results">
+
+{{ prints.render_table }}
+
+</table>
+
+{{ prints.render_scrollbar }}
+
 <form action="{% url print page_info.contest.id %}" method="post" enctype="multipart/form-data">
 <table>
     {{ form.as_table }}

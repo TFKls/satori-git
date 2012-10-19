@@ -40,6 +40,7 @@ def view(request, page_info):
     admins =  Web.get_contest_admins(contest=contest,offset=0,limit=500).contestants
     questions = Privilege.get(contest.contestant_role,contest,'ASK_QUESTIONS')
     backups = Privilege.get(contest.contestant_role,contest,'PERMIT_BACKUP')
+    prints = Privilege.get(contest.contestant_role,contest,'PERMIT_PRINT')
     locks = Privilege.global_demand('MANAGE_LOCKS')
     anonym = Security.anonymous()
     auth = Security.authenticated()
@@ -68,6 +69,7 @@ def view(request, page_info):
         joinfield = joining.field()
         questions = forms.BooleanField(label='Questions allowed',required=False)
         backups = forms.BooleanField(label='Backups allowed',required=False)            
+        prints = forms.BooleanField(label='Prints allowed',required=False)            
     
     if request.method!="POST":
         def get_date(x):
@@ -122,5 +124,9 @@ def view(request, page_info):
         Privilege.grant(contest.contestant_role,contest,'PERMIT_BACKUP')
     else:
         Privilege.revoke(contest.contestant_role,contest,'PERMIT_BACKUP')    
+    if manage_form.cleaned_data['prints']:
+        Privilege.grant(contest.contestant_role,contest,'PERMIT_PRINT')
+    else:
+        Privilege.revoke(contest.contestant_role,contest,'PERMIT_PRINT')    
     return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
 

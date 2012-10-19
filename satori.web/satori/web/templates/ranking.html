@@ -1,7 +1,7 @@
 {% extends "templates/index.html" %}
 
 {% block header %}
-<link rel="stylesheet" href="{% url download "download" "Ranking" ranking.id "stylesheet" "ranking.css" %}"/>
+<link rel="stylesheet" href="{% url download_group "download" "Ranking" ranking.id "presentation" "stylesheet" "ranking.css" %}"/>
 {% endblock %}
 
 {% block content %}
