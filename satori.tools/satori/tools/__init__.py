@@ -4,22 +4,22 @@ from satori.client.common import want_import, remote
 import ConfigParser
 import getpass
 import logging
-import optparse
+import argparse
 import os
 import sys
 
 want_import(globals(), 'Machine', 'User', 'token_container', 'TokenInvalid', 'TokenExpired')
 
 config = ConfigParser.RawConfigParser()
-options = optparse.OptionParser()
-options.add_option('-c', '--config', dest='config', help='alternative configuration file')
-options.add_option('-s', '--section', dest='section', help='section from configuration file to use')
-options.add_option('-H', '--host', dest='host', help='Satori host in format host_name:thrift_port:blob_port')
-options.add_option('-u', '--username', dest='username', help='user name (or "-" to skip authentication)')
-options.add_option('-p', '--password', dest='password', help='password')
-options.add_option('-m', '--machine', dest='machine', help='machine name (or "-" to skip authentication)')
-options.add_option('-S', '--ssl', dest='ssl', help='use SSL', action='store_true')
-options.add_option('-l', '--loglevel', dest='loglevel', help='Log level (as in logging module in python)')
+options = argparse.ArgumentParser()
+options.add_argument('-c', '--config', help='alternative configuration file')
+options.add_argument('-s', '--section', help='section from configuration file to use')
+options.add_argument('-H', '--host', help='Satori host in format host_name:thrift_port:blob_port')
+options.add_argument('-u', '--username', help='user name (or "-" to skip authentication)')
+options.add_argument('-p', '--password', help='password')
+options.add_argument('-m', '--machine', help='machine name (or "-" to skip authentication)')
+options.add_argument('-S', '--ssl', help='use SSL', action='store_true')
+options.add_argument('-l', '--loglevel', type=int, help='Log level (as in logging module in python)')
 
 class AuthSetup:
     def __init__(self):
@@ -86,17 +86,17 @@ def setup(log_level=logging.DEBUG):
 
     auth_setup.clear()
 
-    (options.options, options.args) = options.parse_args()
+    option_values = options.parse_args()
 
-    if options.options.config:
-        if not os.path.exists(options.options.config):
-            raise RuntimeError('The specified configuration file "{0}" does not exist'.format(options.options.config))
-        config.read(options.options.config)
+    if option_values.config:
+        if not os.path.exists(option_values.config):
+            raise RuntimeError('The specified configuration file "{0}" does not exist'.format(option_values.config))
+        config.read(option_values.config)
     else:
         config.read(os.path.expanduser('~/.satori.cfg'))
 
-    if options.options.section:
-        auth_setup.section = options.options.section
+    if option_values.section:
+        auth_setup.section = option_values.section
         if not config.has_section(auth_setup.section):
             raise RuntimeError('The specified section "{0}" not found in config file'.format(auth_setup.section))
     elif config.has_option('defaults', 'section'):
@@ -135,31 +135,31 @@ def setup(log_level=logging.DEBUG):
         if config.has_option(auth_setup.section, 'loglevel'):
             logger.setLevel(logging._levelNames[config.get(auth_setup.section, 'loglevel')])
 
-    if options.options.host:
-        (auth_setup.hostname, auth_setup.thrift_port, auth_setup.blob_port) = options.options.host.split(':')
+    if option_values.host:
+        (auth_setup.hostname, auth_setup.thrift_port, auth_setup.blob_port) = option_values.host.split(':')
         auth_setup.thrift_port = int(auth_setup.thrift_port)
         auth_setup.blob_port = int(auth_setup.blob_port)
 
-    if options.options.username:
-        auth_setup.username = options.options.username
+    if option_values.username:
+        auth_setup.username = option_values.username
 
-    if options.options.password:
-        auth_setup.password = options.options.password
+    if option_values.password:
+        auth_setup.password = option_values.password
 
-    if options.options.machine:
-        auth_setup.machine = options.options.machine
+    if option_values.machine:
+        auth_setup.machine = option_values.machine
 
-    if options.options.ssl:
+    if option_values.ssl:
         auth_setup.ssl = True
 
-    if options.options.loglevel:
-        logger.setLevel(logging._levelNames[options.options.loglevel])
+    if option_values.loglevel:
+        logger.setLevel(logging._levelNames[option_values.loglevel])
 
     auth_setup.setup()
 
     auth_setup.authenticate()
 
-    return (options.options, options.args)
+    return option_values
 
 def authenticate():
     auth_setup.authenticate()

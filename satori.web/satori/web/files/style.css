@@ -181,17 +181,23 @@ ul.errorlist
 {
     display:block;
     background-color: #D9F7C2;
-    height:100%;
-    width:100%;
+    width:90%;
 }
 
 .tdneg
 {
-    display:table-cell;
+    display:block;
     background-color: #F8C3D2;
-    height:100%;
-    width:100%;
+    width:90%;
 }
+
+.tdpnd
+{
+    display:block;
+    background-color: #FFF2C8;
+    width:90%;
+}
+
 
 
 

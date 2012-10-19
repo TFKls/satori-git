@@ -8,9 +8,9 @@ want_import(globals(), '*')
 @catch_exceptions
 def submit():
     options.set_usage('Usage: %prog [options] problem_code submit_file')
-    options.add_option('-C', '--contest', type='int', dest='contest', help='contest ID')
+    options.add_argument('-C', '--contest', type=int, help='contest ID')
 
-    (opts, args) = setup(logging.CRITICAL)
+    opts = setup(logging.CRITICAL)
 
     contestId = None
 

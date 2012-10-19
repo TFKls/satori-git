@@ -27,20 +27,28 @@ USE_SSL = True
 THRIFT_HOST = 'dev.satori.tcs.uj.edu.pl'
 THRIFT_PORT = 38889
 BLOB_PORT = 38887
-if getpass.getuser() == 'gutowski':
+params = os.environ.get('SATORI_BACKEND', None)
+if params:
+    params = params.split(':')
+    assert len(params) == 3, '$SATORI_BACKEND should be of form host:thrift_port:blob_port'
+    THRIFT_HOST = params[0]
+    THRIFT_PORT = int(params[1])
+    BLOB_PORT = int(params[2])
+elif getpass.getuser() == 'gutowski':
     THRIFT_HOST = 'localhost'
     THRIFT_PORT = 39889
     BLOB_PORT = 39887
     USE_SSL = False
-if (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
+elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     THRIFT_HOST = 'localhost'
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
-#if getpass.getuser() == 'duraj':
+#elif getpass.getuser() == 'duraj':
 #    USE_SSL = False
 #    THRIFT_HOST = 'localhost'
 #    THRIFT_PORT = 36889
 #    BLOB_PORT = 36887
+del params
 
 LOGGING = {
         'version': 1,
