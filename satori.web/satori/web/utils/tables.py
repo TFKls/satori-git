@@ -62,7 +62,7 @@ class TableField(object):
         if isinstance(self.css,str) or isinstance(self.css,unicode):
             self.css=[self.css]
         if self.css:
-            return 'class="'+' '.join(self.css)+'"'
+            return format_html(u' class="{0}"', ' '.join(self.css))
         else:
             return ''
         
@@ -150,7 +150,7 @@ class ResultTable(object):
         return format_html(u'<tr>{0}</tr>', s)
         
     def render_row(self,i):
-        s = format_html_join(u'', u'<td {0}>{1}</td>', [(f.class_string(), f.render(self,i)) for f in self.fields])
+        s = format_html_join(u'', u'<td{0}>{1}</td>', [(f.class_string(), f.render(self,i)) for f in self.fields])
         return format_html(u'<tr>{0}</tr>', s)
         
     def render_table(self):
@@ -191,7 +191,7 @@ class ResultTable(object):
                 return format_html(u'<span class="wheelsel">{0}</span>', i)
             else:
                 return format_html(u'<a class="wheelitem" href="{0}">{1}</a>',self.getparams(page=i), i)
-        s = format_html_join(u'', u'{0}', [render_wheelitem(i) for i in range(1, tpages)])
+        s = format_html_join(u'', u'{0}', [(render_wheelitem(i),) for i in range(1, tpages)])
         return format_html(u'<div class="wheel">{0}</div>', s)
 
     def render_filters(self):
