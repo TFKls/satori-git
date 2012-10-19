@@ -48,7 +48,7 @@ def edit(request, page_info, id):
     problems.sort(key=lambda p : p.code)
     suites_raw = ranking.get_problem_test_suites()
     params_raw = ranking.get_problem_params()
-    stylesheet = ranking.oa_get("stylesheet")
+    stylesheet = ranking.presentation_get("stylesheet")
     suites = dict([[k.id, v] for k, v in suites_raw.iteritems()])
     problem_params = dict([[k.id, v] for k, v in params_raw.iteritems()])
     problem_list = [ [p,suites.get(p.id,None),problem_params.get(p.id,None)] for p in problems ]
@@ -71,7 +71,7 @@ def edit(request, page_info, id):
             ranking.delete()
             return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
         if 'remove_css' in request.POST.keys():
-            ranking.oa_delete('stylesheet')
+            ranking.presentation_delete('stylesheet')
             return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,id]))
         base_form = EditBaseForm(data=request.POST,files=request.FILES)
         form = xmlparams.ParamsForm(parser=parser,data=request.POST)
@@ -84,7 +84,7 @@ def edit(request, page_info, id):
                 writer = Blob.create(css.size)
                 writer.write(css.read())
                 phash = writer.close()
-                ranking.oa_set_blob_hash('stylesheet',phash)
+                ranking.presentation_set_blob_hash('stylesheet',phash)
             return HttpResponseRedirect(reverse('ranking_edit',args=[contest.id,id]))
     else:
         base_form = EditBaseForm(initial={'name' : ranking.name, 'visibility' : unicode(rightfield.current)})
