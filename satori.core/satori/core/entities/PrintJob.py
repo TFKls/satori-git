@@ -16,7 +16,7 @@ class PrintJob(Entity):
     time          = models.DateTimeField(auto_now_add=True)
     pending       = models.BooleanField(default=True)
     status        = models.CharField(max_length=64)
-    report        = models.TextField()
+    report        = models.TextField(blank=True, default="")
 
     data          = AttributeGroupField(PCArg('self', 'VIEW'), PCDeny(), '')
 
