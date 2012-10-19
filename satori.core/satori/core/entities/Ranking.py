@@ -19,7 +19,8 @@ class Ranking(Entity):
     is_public     = models.BooleanField()
     problems      = models.ManyToManyField('ProblemMapping', related_name='rankings+', through='RankingParams')
 
-    params         = AttributeGroupField(PCArg('self', 'MANAGE'), PCDeny(), '')
+    params        = AttributeGroupField(PCArg('self', 'MANAGE'), PCDeny(), '')
+    presentation  = AttributeGroupField(PCArg('self', 'VIEW'), PCArg('self', 'MANAGE'), '')
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('contest', 'name'),)
@@ -47,6 +48,7 @@ class Ranking(Entity):
 
     def save(self, *args, **kwargs):
         self.fixup_params()
+        self.fixup_presentation()
         from satori.core.checking.aggregators import aggregators
         if not self.aggregator in aggregators:
             raise ValueError('Aggregator '+self.aggregator+' is not allowed')
