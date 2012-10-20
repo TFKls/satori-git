@@ -21,7 +21,7 @@ def copyproblems(request,page_info):
                 source = None
             if source:
                 self.results = ProblemMapping.filter(ProblemMappingStruct(contest=source))
-            self.fields.append(TableField(id='check',name='Code',sortable=True,value=lambda table,i : table.results[i].code,render=(lambda table,i : '<input type="checkbox" name="mid_'+unicode(table.results[i].id)+'"/>'+table.results[i].code)))
+            self.fields.append(TableField(id='check',name='Code',sortable=True,value=lambda table,i : table.results[i].code,render=(lambda table,i : format_html(u'<input type="checkbox" name="mid_{0}">{1}', table.results[i].id, table.results[i].code))))
             self.fields.append(TableField(id='title',name='Title',value=(lambda table,i : table.results[i].title)))
             self.fields.append(TableField(id='based',name='Based on',value=(lambda table,i : table.results[i].problem.name+' ('+table.results[i].problem.description+')')))
             self.fields.append(TableField(id='ascode',name='Target code',sortable=False,value=(lambda table,i : format_html('<input class="transparent_box" type="text" size="8" name="code_{0}"/>', table.results[i].id))))
