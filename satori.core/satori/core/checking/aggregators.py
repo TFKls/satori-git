@@ -262,8 +262,6 @@ class ACMBoardAggregator(AggregatorBase):
                     return
                 if self.params.ignore:
                     return
-                if self.ok:
-                    return
                 after_freeze = (self.agr_params.time_freeze) and (time > self.agr_params.time_freeze)
                 self.trials += 1
                 if after_freeze:
