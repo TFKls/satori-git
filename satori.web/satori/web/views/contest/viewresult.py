@@ -8,7 +8,7 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django import forms
 from satori.web.utils.shortcuts import text2html
-from satori.web.utils.tables import ResultTable,TableField
+from satori.web.utils.tables import ResultTable,TableField,format_html
 from difflib import HtmlDiff,Differ
 from cgi import escape
 
