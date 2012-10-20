@@ -59,7 +59,7 @@ def viewall(request,page_info):
                 if not p.problem_mapping.statement:
                     return p.problem_mapping.title
                 else:
-                    return format_html(u'<a class="stdlink" href="{0}>{1}</a>', reverse('contest_problems_view',args=[unicode(page_info.contest.id),unicode(p.problem_mapping.id)]), p.problem_mapping.title)
+                    return format_html(u'<a class="stdlink" href="{0}">{1}</a>', reverse('contest_problems_view',args=[unicode(page_info.contest.id),unicode(p.problem_mapping.id)]), p.problem_mapping.title)
             def visible(table,i):
                 p = table.results[i]
                 if between(p.contestant_role_view_times,datetime.now()):
