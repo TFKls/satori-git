@@ -12,13 +12,14 @@ want_import(globals(), 'Machine', 'User', 'token_container', 'TokenInvalid', 'To
 
 config = ConfigParser.RawConfigParser()
 options = argparse.ArgumentParser()
-options.add_argument('-c', '--config', help='alternative configuration file')
-options.add_argument('-s', '--section', help='section from configuration file to use')
-options.add_argument('-H', '--host', help='Satori host in format host_name:thrift_port:blob_port')
-options.add_argument('-u', '--username', help='user name (or "-" to skip authentication)')
-options.add_argument('-p', '--password', help='password')
-options.add_argument('-m', '--machine', help='machine name (or "-" to skip authentication)')
-options.add_argument('-S', '--ssl', help='use SSL', action='store_true')
+thrift_settings = options.add_argument_group('thrift settings')
+thrift_settings.add_argument('-c', '--config', help='alternative configuration file')
+thrift_settings.add_argument('-s', '--section', help='section from configuration file to use')
+thrift_settings.add_argument('-H', '--host', help='Satori host in format host_name:thrift_port:blob_port')
+thrift_settings.add_argument('-u', '--username', help='user name (or "-" to skip authentication)')
+thrift_settings.add_argument('-p', '--password', help='password')
+thrift_settings.add_argument('-m', '--machine', help='machine name (or "-" to skip authentication)')
+thrift_settings.add_argument('-S', '--ssl', help='use SSL', action='store_true')
 options.add_argument('-l', '--loglevel', type=int, help='Log level (as in logging module in python)')
 
 class AuthSetup:
