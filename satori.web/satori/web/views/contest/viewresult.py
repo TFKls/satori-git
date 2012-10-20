@@ -69,7 +69,8 @@ def view(request, page_info, id):
                 return lambda table,i : attribute_value(table,i,att)            
             for a in attributes:
                 print a
-                self.fields.append(TableField(name=a,value=lambda table,i: attribute_value(table,i,a),render=lambda table,i: attribute_render(table,i,a),id=a))
+                aa = a
+                self.fields.append(TableField(name=a,value=lambda table,i: attribute_value(table,i,aa),render=lambda table,i: attribute_render(table,i,aa),id=a))
     
     if admin:
         tests = TestResultTable(req=request.GET)
