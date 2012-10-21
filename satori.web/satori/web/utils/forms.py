@@ -3,6 +3,7 @@ from django.db import models
 from datetime import datetime
 from satori.tools.params import OaTypeTime
 from copy import deepcopy
+from satori.web.utils.tables import format_html
 
 class StatusBar():
     def __init__(self):
@@ -66,5 +67,5 @@ class SatoriSizeField(forms.CharField):
 
 
 def RenderObjectButton(id, name, buttonname, css='button'):
-    return '<form action="" method="POST"><input type="submit" class="'+unicode(css)+'" name="'+unicode(name)+'" value="'+unicode(buttonname)+'"><input type="hidden" name="id" value="'+unicode(id)+'"/></form>'
+    return format_html(u'<form action="" method="POST"><input type="submit" class="{0}" name="{1}" value="{2}"><input type="hidden" name="id" value="{3}"/></form>', css, name, buttonname, id)
 

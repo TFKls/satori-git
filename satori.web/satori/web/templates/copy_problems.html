@@ -1,12 +1,12 @@
 {% extends "templates/index.html" %}
 
 {% block content %}
-{{ copytable.render_filters|safe }}
+{{ copytable.render_filters }}
 
 <form action="" method="POST">
 <input type="hidden" name="cid" value="{{page_info.contest.id}}"/>
 <table class="results">
-{{ copytable.render_table|safe }}
+{{ copytable.render_table }}
 </table>
 
 <input type="submit" class="button" value="Copy"/>

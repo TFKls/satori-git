@@ -8,7 +8,7 @@
 {%if results.showdiff %} <form action="{% url results_diff page_info.contest.id %}" method="GET"> {% endif %}
 
 <table class="results">
-    {{ results.render_table|safe }}
+    {{ results.render_table }}
 </table>
 <div class="button_bar">
 {%if results.showdiff %}  
@@ -19,7 +19,7 @@
     <a class="button" href="{{ results.difflink }}">Compare submits</a>
 {% endif %}
 </div>
-    {{ results.render_scrollbar|safe }}
-    {{ results.render_filters|safe }}
+    {{ results.render_scrollbar }}
+    {{ results.render_filters }}
 
 {% endblock %}

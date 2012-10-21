@@ -43,10 +43,10 @@ def view(request, page_info):
     
             self.fields.append(TableField( name ='',
                             value = lambda table, i : 'check',
-                            render = lambda table, i : '<input type="checkbox" name="'+table.button_prefix+str(table.contestants[i].id)+'"/>',
+                            render = lambda table, i : format_html(u'<input type="checkbox" name="{0}{1}"/>', table.button_prefix, table.contestants[i].id),
                             sortable = False, id = 1 ))
             self.fields.append(TableField( name='Team name', value= lambda table,i: table.contestants[i].name,
-                                                             render = lambda table,i: '<a class="stdlink" href="'+str(reverse('contestant_view',args=[contest.id,table.contestants[i].id]))+'">'+table.contestants[i].name+'</a>',
+                                                             render = lambda table,i: format_html(u'<a class="stdlink" href="{0}">{1}</a>', reverse('contestant_view',args=[contest.id,table.contestants[i].id]), table.contestants[i].name),
                                                              id=2 ))
             self.fields.append(TableField( name='Users',value=(lambda table,i: table.contestants[i].usernames), id=3 ))
             

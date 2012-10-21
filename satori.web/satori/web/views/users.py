@@ -35,7 +35,7 @@ def view(request, page_info):
             self.total = len(self.results)
             
             self.fields.append(TableField(name='Login',value=(lambda table,i: table.results[i].login), 
-                                          render = lambda table,i: '<a class="stdlink" href="'+unicode(reverse('profile',args=[table.results[i].id]))+'">'+table.results[i].login+'</a>',
+                                          render = lambda table,i: format_html(u'<a class="stdlink" href="{0}">{1}</a>', reverse('profile',args=[table.results[i].id]), table.results[i].login),
                                           id=1 ))
             self.fields.append(TableField(name='First name',value=(lambda table,i: table.results[i].firstname), id=2 ))
             self.fields.append(TableField(name='Last name',value=(lambda table,i: table.results[i].lastname), id=3 ))

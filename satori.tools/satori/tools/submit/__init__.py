@@ -1,3 +1,4 @@
+import argparse
 import logging
 import os.path
 
@@ -7,10 +8,11 @@ want_import(globals(), '*')
 
 @catch_exceptions
 def submit():
-    options.set_usage('Usage: %prog [options] problem_code submit_file')
-    options.add_option('-C', '--contest', type='int', dest='contest', help='contest ID')
+    options.add_argument('-C', '--contest', type=int, help='contest ID')
+    options.add_argument('problem_code')
+    options.add_argument('submit_file', type=argparse.FileType('r'))
 
-    (opts, args) = setup(logging.CRITICAL)
+    opts = setup(logging.CRITICAL)
 
     contestId = None
 
@@ -24,26 +26,23 @@ def submit():
     if not contestId:
     	raise RuntimeError('The contest ID has not been specified')
 
-    if len(args) != 2:
-    	raise RuntimeError('Invalid number of positional parameters specified')
-
     cc = Contest.filter(ContestStruct(id=contestId))
     if not cc:
     	raise RuntimeError('The specified contest is not found')
 
     contest = cc[0]
 
-    pp = ProblemMapping.filter(ProblemMappingStruct(contest=contest, code=args[0]))
+    pp = ProblemMapping.filter(ProblemMappingStruct(contest=contest, code=opts.problem_code))
     if not pp:
     	raise RuntimeError('The specified problem is not found')
 
     problem = pp[0]
 
-    f = open(args[1], 'r')
-    data = f.read()
-    f.close()
+    submit = Submit.create(SubmitStruct(problem=problem),
+                           opts.submit_file.read(),
+                           os.path.basename(opts.submit_file.name))
 
-    submit = Submit.create(SubmitStruct(problem=problem), data, os.path.basename(args[1]))
+    opts.submit_file.close()
 
     print 'Submit successfully created:'
     print '  Contest:', contest.name

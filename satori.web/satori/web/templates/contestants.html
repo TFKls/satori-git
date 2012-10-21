@@ -7,9 +7,9 @@
 <h4>Accepted contestants</h4>
 <form action="" method="POST"/>
 <table class="results">
-{{ accepted.render_table|safe }}
+{{ accepted.render_table }}
 </table>
-{{ accepted.render_scrollbar|safe }}
+{{ accepted.render_scrollbar }}
 <p>
 <input class="button" type="submit" name="revoke" value="Unaccept selected"/>
 <input class="button" type="submit" name="hide" value="Hide selected"/>
@@ -24,9 +24,9 @@
 <h4>Pending contestants</h4>
 <form action="" method="POST"/>
 <table class="results">
-{{ pending.render_table|safe }}
+{{ pending.render_table }}
 </table>
-{{ pending.render_scrollbar|safe }}
+{{ pending.render_scrollbar }}
 <p>
 <input class="button" type="submit" name="accept" value="Accept selected"/>
 <input class="button" type="submit" name="dismiss" value="Dismiss selected"/>

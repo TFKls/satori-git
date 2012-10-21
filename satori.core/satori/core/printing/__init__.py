@@ -3,6 +3,7 @@
 from collections import deque
 import logging
 from multiprocessing import Process
+from threading import Thread
 import os
 import shutil
 import subprocess
@@ -11,15 +12,20 @@ import tempfile
 from satori.core.models import *
 from satori.events import Event, Client2
 
-serial = 1
+#TODO: Launch no more than n jobs simultaneously
 
-def printer(script, path, filename):
+def printer_func(script, path, filename, printjob):
     tmp = None
     try:
         tmp = tempfile.mkdtemp()
         os.chdir(tmp)
         os.symlink(path, filename)
-        subprocess.call([script, filename])
+        sub = subprocess.Popen([script, filename, unicode(printjob.id)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        out, err = sub.communicate()
+        if sub.returncode == 0:
+            RawEvent().send(Event(type='printjob_done', id = printjob.id, status = 'OK', report = out[0:200]))
+        else:
+            RawEvent().send(Event(type='printjob_done', id = printjob.id, status = 'FAIL', report = (err+out)[0:200]))
     finally:
         if(tmp is not None):
             shutil.rmtree(tmp)
@@ -28,12 +34,18 @@ class PrintingMaster(Client2):
     queue = 'printing_master_queue'
 
     def __init__(self):
-        super(CheckingMaster, self).__init__()
+        super(PrintingMaster, self).__init__()
         self.printjob_queue = deque()
 
     def init(self):
         self.attach(self.queue)
-        self.map({'type': 'printjob'}, self.queue)
+        self.map({'type': 'printjob_new'}, self.queue)
+        self.map({'type': 'printjob_done'}, self.queue)
+        for printjob in PrintJob.objects.filter(pending=True):
+            printjob.status = 'QUE'
+            printjob.report = ''
+            printjob.save()
+            self.printjob_queue.append(printjob)
         self.do_work()
 
     def do_work(self):
@@ -43,15 +55,27 @@ class PrintingMaster(Client2):
 
     def handle_event(self, queue, event):
         logging.debug('checking master: event %s', event.type)
-        if event.type == 'printjob':
+        if event.type == 'printjob_new':
             printjob = PrintJob.objects.get(id=event.id)
+            printjob.status = 'QUE'
+            printjob.report = ''
+            printjob.save()
             self.printjob_queue.append(printjob)
+        elif event.type == 'printjob_done':
+            printjob = PrintJob.objects.get(id=event.id)
+            printjob.pending = False
+            printjob.status = event.status
+            printjob.report = event.report
+            printjob.save()
         self.do_work()
 
     def do_printjob(self, printjob):
         printer = printjob.contest.printer;
         if (printer is not None):
             oa = printjob.data_get('content');
-            path = Blob.blob_filename(oa.value)
-            p=Process(target=printer, args=(printjob.script, path, oa.filename), daemon=True)
+            path = os.path.join(settings.BLOB_DIR, oa.value[0], oa.value[1], oa.value[2], oa.value)
+            p = Thread(target=printer_func, args=(printer.script, path, oa.filename, printjob))
+            printjob.status = 'PRN'
+            printjob.save()
+            p.daemon = True
             p.start()

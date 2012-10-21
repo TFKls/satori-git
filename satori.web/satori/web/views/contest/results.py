@@ -57,15 +57,14 @@ def view(request, page_info):
             self.total = query.count
             self.fields.append(TableField(name='No.',
                                           value=(lambda table,i: table.results[i].submit.id), 
-                                          render=(lambda table,i: '<a class="stdlink" href="'+reverse('view_result',args=[contest.id,table.results[i].submit.id])+'">'
-                                                                    +unicode(table.results[i].submit.id)+'</a>'),
+                                          render=(lambda table,i: format_html(u'<a class="stdlink" href="{0}">{1}</a>', reverse('view_result',args=[contest.id,table.results[i].submit.id]), table.results[i].submit.id)),
                                           id=1))
             if self.showdiff:
-                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="diff_1" value="'+unicode(table.results[i].submit.id)+'"/>'),id='diff_1'))
-                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="diff_2" value="'+unicode(table.results[i].submit.id)+'"/>'),id='diff_2'))            
+                self.fields.append(TableField(name='',value='',render=(lambda table,i: format_html(u'<input type="radio" name="diff_1" value="{0}"/>', table.results[i].submit.id)),id='diff_1'))
+                self.fields.append(TableField(name='',value='',render=(lambda table,i: format_html(u'<input type="radio" name="diff_2" value="{0}"/>', table.results[i].submit.id)),id='diff_2'))            
             if admin:
                 cts = TableField(name='Contestant',value=(lambda table,i: table.results[i].contestant.name),
-                                                  render=(lambda table,i: '<a class="stdlink" href="'+table.getparams(filters={'cts' : unicode(table.results[i].contestant.id)},page=1)+'">'+table.results[i].contestant.name+'</a>'),
+                                                  render=(lambda table,i: format_html(u'<a class="stdlink" href="{0}">{1}</a>', table.getparams(filters={'cts' : unicode(table.results[i].contestant.id)},page=1), table.results[i].contestant.name)),
                                                             id='cts')
                 
                 choices = [[unicode(c.id),c.name] for c in Web.get_accepted_contestants(contest=contest,limit=self.max_limit()).contestants]
@@ -87,7 +86,7 @@ def view(request, page_info):
                     for k in table.results[i].test_suite_results:
                         if k.test_suite==suite:
                             kst = k.test_suite_result.status
-                            return '<div class="submitstatus"><div class="sta'+kst+'">'+kst+'</div></div>'
+                            return format_html('<div class="submitstatus"><div class="sta{0}">{1}</div></div>', kst, kst)
                 return suitestatus
             def different(table,i):
                 if statusfunction(suite1)(table,i)==statusfunction(suite2)(table,i): 
@@ -96,14 +95,14 @@ def view(request, page_info):
                     return 'Different'
             def different_render(table,i):
                 if statusfunction(suite1)(table,i)==statusfunction(suite2)(table,i): 
-                    return '<span class="highlight_pos">Matching</span>' 
+                    return mark_safe('<span class="highlight_pos">Matching</span>')
                 else: 
-                    return '<span class="highlight_neg">Different</span>'
+                    return mark_safe('<span class="highlight_neg">Different</span>')
             
             if not compsuite:
                 self.fields.append(TableField(name='Status',value=(lambda table,i: table.results[i].status),
-                                          render=(lambda table,i: '<div class="submitstatus"><div class="sta'+unicode(table.results[i].status)+'">'+unicode(table.results[i].status)+'</div></div>')
-                                          ,id=5,css='status'))
+                                          render=(lambda table,i: format_html('<div class="submitstatus"><div class="sta{0}">{1}</div></div>', table.results[i].status, table.results[i].status)),
+                                          id=5,css='status'))
             else:
                 self.fields.append(TableField(name=suite1.name,value='',
                                           render=statusfunction(suite1)

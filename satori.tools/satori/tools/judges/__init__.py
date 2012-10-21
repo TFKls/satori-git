@@ -10,11 +10,9 @@ want_import(globals(), '*')
 
 def default_judges():
     from satori.tools import options, setup
-    (options, args) = setup()
-    if len(args) != 1:
-        logging.error('incorrect number of arguments')
-        sys.exit(1)
-    judges_dir = unicode(args[0])
+    options.add_argument('judges_dir')
+    args = setup()
+    judges_dir = args.judges_dir
     for judge in [ os.path.join(judges_dir, entry) for entry in os.listdir(judges_dir) if os.path.isfile(os.path.join(judges_dir, entry)) ]:
         if judge[-3:] == '.py':
             name = os.path.basename(judge)[:-3]

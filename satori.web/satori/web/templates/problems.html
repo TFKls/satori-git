@@ -23,7 +23,7 @@
 <div class="unhidden" id="{{g.prefix}}">
 {% endif %}
 <table class="results">
-    {{g.render_table|safe}}
+    {{g.render_table}}
 </table>
 </div>
 {% endfor %}
@@ -33,7 +33,7 @@
 {% for g in groups %}
 <h4>{{g.groupname}}</h4>
 <table class="results">
-    {{g.render_table|safe}}
+    {{g.render_table}}
 </table>
 {% endfor %}
 
@@ -43,12 +43,12 @@
 <h4>Mass edit</h4>
 {{form.submitstart.errors}}
 {{form.submitfinish.errors}}
-<p>Set submission times from {{form.submitstart}} to {{form.submitfinish}}
-<input class="button" type="submit" name="changesubmit" value="Change submission times"/>
+<p>Submitting allowed from {{form.submitstart}} to {{form.submitfinish}}
+<input class="button" type="submit" name="changesubmit" value="Enable submitting"/>
 </p>
 <div class="button_bar">
-<input class="button" type="submit" name="revokesubmit" value="Stop submissions"/>
-<input class="button" type="submit" name="publish" value="Publish problems"/>
+<input class="button" type="submit" name="revokesubmit" value="Disable submitting"/>
+<input class="button" type="submit" name="publish" value="Reveal problems"/>
 <input class="button" type="submit" name="revokeview" value="Hide problems"/>
 </div>
 

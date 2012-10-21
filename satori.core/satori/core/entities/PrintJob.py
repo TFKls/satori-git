@@ -14,11 +14,14 @@ class PrintJob(Entity):
     contestant    = models.ForeignKey('Contestant', related_name='printjobs', on_delete=models.CASCADE)
     contest       = models.ForeignKey('Contest', related_name='printjobs', on_delete=models.CASCADE)
     time          = models.DateTimeField(auto_now_add=True)
+    pending       = models.BooleanField(default=True)
+    status        = models.CharField(max_length=64)
+    report        = models.TextField(blank=True, default="")
 
     data          = AttributeGroupField(PCArg('self', 'VIEW'), PCDeny(), '')
 
     class ExportMeta(object):
-        fields = [('contestant', 'VIEW'), ('contest', 'VIEW'), ('time', 'VIEW')]
+        fields = [('contestant', 'VIEW'), ('contest', 'VIEW'), ('time', 'VIEW'), ('pending', 'VIEW'), ('status', 'VIEW'), ('report', 'VIEW')]
 
     class RightsMeta(object):
         inherit_parent = 'contestant'
@@ -34,13 +37,13 @@ class PrintJob(Entity):
     def create(fields, content, filename):
         printjob = PrintJob()
         printjob.contestant = fields.contest.find_contestant(token_container.token.role)
-        printjob.forbid_fields(fields, ['id', 'contestant', 'time'])
+        printjob.forbid_fields(fields, ['id', 'contestant', 'time', 'pending', 'status', 'report'])
         printjob.update_fields(fields, ['contest'])
         printjob.save()
         blob = printjob.data_set_blob('content', filename=filename)
         blob.write(content)
         blob.close()
-        RawEvent().send(Event(type='printjob', id=printjob.id))
+        RawEvent().send(Event(type='printjob_new', id=printjob.id))
         return printjob
 
     @ExportMethod(NoneType, [DjangoId('PrintJob')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
@@ -52,7 +55,9 @@ class PrintJob(Entity):
 
     @ExportMethod(NoneType, [DjangoId('PrintJob')], PCArg('self', 'MANAGE'))
     def reprint(self):
-        RawEvent().send(Event(type='printjob', id=self.id))
+        self.pending = True
+        self.save()
+        RawEvent().send(Event(type='printjob_new', id=self.id))
 
 class PrintJobEvents(Events):
     model = PrintJob

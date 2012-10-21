@@ -3,9 +3,9 @@
 {% block content %}
 <h4>Choose problem to add:</h4>
 <table class="results">
-    {{ problem_list.render_table|safe }}
+    {{ problem_list.render_table }}
 </table>
 
-{{ problem_list.render_scrollbar|safe }}
+{{ problem_list.render_scrollbar }}
 
 {% endblock %}

@@ -23,7 +23,7 @@ def view(request, page_info):
             self.total = len(self.results)
 #            self.fields.append(TableField(name='test',value=(lambda table,i : '0'),id=0))
             self.fields.append(TableField(name='',value=(lambda table,i : table.results[i].name),id=1))
-            self.fields.append(TableField(name='',value=(lambda table,i : '<a class="button button_small" href="'+reverse('subpage_edit',args=[table.results[i].id])+'">'+'Edit'+'</a>'),id=2))
+            self.fields.append(TableField(name='',value=(lambda table,i : format_html('<a class="button button_small" href="{0}">Edit</a>', reverse('subpage_edit',args=[table.results[i].id]))),id=2))
             
     class PSetterTable(ResultTable):
         def __init__(self,req,prefix):

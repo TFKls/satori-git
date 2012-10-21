@@ -5,27 +5,27 @@
 {% if managed %}
 <h3>Managed contests:</h3>
 <table class="results">
-    {{ managed.render_table|safe }}
+    {{ managed.render_table }}
 </table>
-    {{ managed.render_filters|safe }}
+    {{ managed.render_filters }}
 {% endif %}
 
 
 {% if participating %}
 <h3>Joined contests:</h3>
 <table class="results">
-    {{ participating.render_table|safe }}
+    {{ participating.render_table }}
 </table>
-    {{ participating.render_filters|safe }}
+    {{ participating.render_filters }}
 {% endif %}
 
 
 {% if other %}
 <h3>Other contests:</h3>
 <table class="results">
-    {{ other.render_table|safe }}
+    {{ other.render_table }}
 </table>
-    {{ other.render_filters|safe }}
+    {{ other.render_filters }}
 
 {% endif %}
 

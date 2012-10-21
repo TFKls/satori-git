@@ -1,5 +1,38 @@
 from copy import deepcopy
 
+# Copied from django/utils/html.py
+# TODO(robryk): Remove once we start using a version of Django that includes these
+from django.utils.html import conditional_escape, mark_safe
+def format_html(format_string, *args, **kwargs):
+    """
+    Similar to str.format, but passes all arguments through conditional_escape,
+    and calls 'mark_safe' on the result. This function should be used instead
+    of str.format or % interpolation to build up small HTML fragments.
+    """
+    args_safe = map(conditional_escape, args)
+    kwargs_safe = dict([(k, conditional_escape(v)) for (k, v) in
+                        kwargs.iteritems()])
+    return mark_safe(format_string.format(*args_safe, **kwargs_safe))
+
+def format_html_join(sep, format_string, args_generator):
+    """
+    A wrapper format_html, for the common case of a group of arguments that need
+    to be formatted using the same format string, and then joined using
+    'sep'. 'sep' is also passed through conditional_escape.
+
+    'args_generator' should be an iterator that returns the sequence of 'args'
+    that will be passed to format_html.
+
+    Example:
+
+      format_html_join('\n', "<li>{0} {1}</li>", ((u.first_name, u.last_name)
+                                                  for u in users))
+
+    """
+    return mark_safe(conditional_escape(sep).join(
+            format_html(format_string, *tuple(args))
+            for args in args_generator))
+
 class FilterFunction(object):
     def __init__(self, prefix, name='', choices=[], check=(lambda table, i, value : True),default=None,showall=True):
         self.check = check
@@ -29,7 +62,7 @@ class TableField(object):
         if isinstance(self.css,str) or isinstance(self.css,unicode):
             self.css=[self.css]
         if self.css:
-            return 'class="'+' '.join(self.css)+'"'
+            return format_html(u' class="{0}"', ' '.join(self.css))
         else:
             return ''
         
@@ -110,15 +143,15 @@ class ResultTable(object):
             return self.getparams(sort=f.id,order='desc')
         def header(f):
             if self.autosort and f.sortable:
-                return '<a class="stdlink" href="'+sort_link(f)+'">'+f.name+'</a>'
+                return format_html(u'<a class="stdlink" href="{0}">{1}</a>', sort_link(f), f.name)
             else:
                 return f.name
-        s = '<tr>'+''.join(['<th>'+header(f)+'</th>' for f in self.fields])+'</tr>'
-        return s
+        s = format_html_join(u'', u'<th>{0}</th>', [(header(f),) for f in self.fields])
+        return format_html(u'<tr>{0}</tr>', s)
         
     def render_row(self,i):
-        s = '<tr>'+''.join(['<td '+f.class_string()+'>'+unicode(f.render(self,i))+'</td>' for f in self.fields])+'</tr>'
-        return s
+        s = format_html_join(u'', u'<td{0}>{1}</td>', [(f.class_string(), f.render(self,i)) for f in self.fields])
+        return format_html(u'<tr>{0}</tr>', s)
         
     def render_table(self):
         f_key = None
@@ -144,8 +177,8 @@ class ResultTable(object):
         page = self.params['page']
         if self.autosort and limit>0:
             order = order[(page-1)*limit:page*limit]
-        s = self.render_header() + ''.join([self.render_row(i) for i in order])
-        return s
+        s = format_html_join(u'', u'{0}', [(self.render_row(i),) for i in order])
+        return format_html(u'{0}{1}', self.render_header(), s)
         
     def render_scrollbar(self):
         limit = self.params['limit']
@@ -153,14 +186,13 @@ class ResultTable(object):
             return ''
         page = self.params['page']
         tpages = (self.total+limit-1)/limit + 1
-        s = ''
-        for i in range(1,tpages):
+        def render_wheelitem(i):
             if i == page:
-                s = s+'<span class="wheelsel">'+unicode(i)+'</span>'
+                return format_html(u'<span class="wheelsel">{0}</span>', i)
             else:
-                s += '<a class="wheelitem" href="'+self.getparams(page=i)+'">'+unicode(i)+'</a>'
-        s = '<div class="wheel">'+s+'</div>'
-        return s
+                return format_html(u'<a class="wheelitem" href="{0}">{1}</a>',self.getparams(page=i), i)
+        s = format_html_join(u'', u'{0}', [(render_wheelitem(i),) for i in range(1, tpages)])
+        return format_html(u'<div class="wheel">{0}</div>', s)
 
     def render_filters(self):
         s = '<form action="" method="GET">'
@@ -189,5 +221,6 @@ class ResultTable(object):
                 s += '</select>'
             
         s += '<input type="submit" class="button" value="Filter"/></form>'
-        return s
+        # FIXME(robryk): Make this saner, although this doesn't seem to be a vulnerability now.
+        return mark_safe(s)
         

@@ -5,7 +5,7 @@
 
 <h4>Global subpages</h4>
 <table class="simple">
-    {{ global_subpages.render_table|safe }}
+    {{ global_subpages.render_table }}
 </table>
 
 <a class="button" href="{% url subpage_add %}">Add new subpage</a>
@@ -16,7 +16,7 @@
 <h4>Problem setters</h4>
 
 <table class="simple">
-    {{ problem_setters.render_table|safe }}
+    {{ problem_setters.render_table }}
 </table>
 
 <h4>Add problem setter:</h4>

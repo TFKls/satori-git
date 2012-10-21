@@ -47,12 +47,11 @@ def view(request, page_info):
                 name=table.results[i].name
                 filename=table.results[i].filename
                 url = reverse('download_group',args=['download','Contestant',str(table.contestants[i].id),'backup',name,filename])
-                return '<a href="'+url+'" class="stdlink">'+filename+'</a>'
+                return format_html(u'<a href="{0}" class="stdlink">{1}</a>', url, filename)
             self.fields.append(TableField(name='File',value=(lambda table,i : table.results[i].filename),render=download_link,id=3,sortable=False))
             def delete_form(table,i):
-                name=table.results[i].name
-                url = '<form action="" method="POST"><input type="hidden" name="id" value="'+name+'"/><input type="hidden" name="cid" value="'+unicode(table.contestants[i].id)+'"/><input class="button button_small" type="submit" name="delete" value="Delete"></form>'
-                return url
+                return format_html(u'<form action="" method="POST"><input type="hidden" name="id" value="{0}"/><input type="hidden" name="cid" value="{1}"/><input class="button button_small"' +
+                                    ' type="submit" name="delete" value="Delete"></form>', table.results[i].name, table.contestants[i].name)
             self.fields.append(TableField(name='',value='',render=delete_form,id=4,sortable=False,css=['centered']))
             
     if request.method == "POST":

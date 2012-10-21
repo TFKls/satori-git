@@ -8,6 +8,7 @@ from satori.web.utils.decorators import contest_view
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
+from django.utils.html import mark_safe
 from django import forms
 from datetime import datetime
 from satori.web.utils.files import valid_attachments
@@ -58,13 +59,13 @@ def viewall(request,page_info):
                 if not p.problem_mapping.statement:
                     return p.problem_mapping.title
                 else:
-                    return '<a class="stdlink" href="'+reverse('contest_problems_view',args=[unicode(page_info.contest.id),unicode(p.problem_mapping.id)])+'">'+p.problem_mapping.title+'</a>'
+                    return format_html(u'<a class="stdlink" href="{0}">{1}</a>', reverse('contest_problems_view',args=[unicode(page_info.contest.id),unicode(p.problem_mapping.id)]), p.problem_mapping.title)
             def visible(table,i):
                 p = table.results[i]
                 if between(p.contestant_role_view_times,datetime.now()):
-                    return '<div class="highlight_pos"><span class="tinytext">Visible</span></div>'
+                    return mark_safe('<div class="highlight_pos"><span class="tinytext">Visible</span></div>')
                 else:
-                    return '<div class="highlight_neg"><span class="tinytext">Invisible</span></div>'
+                    return mark_safe('<div class="highlight_neg"><span class="tinytext">Invisible</span></div>')
             def submittable(table,i):
                 p = table.results[i]
                 v = p.contestant_role_submit_times
@@ -89,31 +90,32 @@ def viewall(request,page_info):
                 if not v:
                     s += 'Submitting disabled'
                 s += "</span></div>"
-                return s
+                # FIXME(robryk): Make this saner
+                return mark_safe(s)
             def edit_button(table,i):
                 p = table.results[i]
                 if p.is_admin:
-                    return '<a class="button button_small" href="'+reverse('contest_problems_edit',args=[unicode(page_info.contest.id),unicode(table.results[i].problem_mapping.id)])+'">Edit</a>'
+                    return format_html(u'<a class="button button_small" href="{0}">Edit</a>', reverse('contest_problems_edit',args=[unicode(page_info.contest.id),unicode(table.results[i].problem_mapping.id)]))
                 else:
                     return ''
             def submit_button(table,i):
                 p = table.results[i]
                 if p.can_submit:
-                    return '<a class="button button_small" href="'+reverse('submit',args=[unicode(page_info.contest.id)])+'?select='+unicode(table.results[i].problem_mapping.id)+'">Submit</a>'
+                    return format_html(u'<a class="button button_small" href="{0}?select={1}">Submit</a>', reverse('submit',args=[unicode(page_info.contest.id)]), table.results[i].problem_mapping.id)
                 else:
                     return ''
             def pdflink(table,i):
                 p = table.results[i]
                 url = reverse('download_group',args=['view','ProblemMapping',str(p.problem_mapping.id),'statement_files','_pdf',p.problem_mapping.code+'.pdf'])
-                return '<a class="button button_small" href="'+url+'">PDF</a>' if p.has_pdf else ''
+                return format_html(u'<a class="button button_small" href="{0}">PDF</a>', url) if p.has_pdf else ''
             if admin:
-                self.fields.append(TableField(name='',value='',render=lambda table,i: '<input type="checkbox" class="check" name="pm_'+str(table.results[i].problem_mapping.id)+'">' if table.results[i].is_admin else '',id='box',sortable=False,css=['centered','small']))
+                self.fields.append(TableField(name='',value='',render=lambda table,i: format_html(u'<input type="checkbox" class="check" name="pm_{0}">', table.results[i].problem_mapping.id) if table.results[i].is_admin else '',id='box',sortable=False,css=['centered','small']))
             self.fields.append(TableField(name='Code',value=(lambda table,i: table.results[i].problem_mapping.code),id='code',css=['centered','small']))
             self.fields.append(TableField(name='Title',value=(lambda table,i: table.results[i].problem_mapping.title),
                                                        render=view_link,id='title'))
             self.fields.append(TableField(name='PDF',value='',render=pdflink,id='pdf',sortable=False,css=['centered','small']))
             self.fields.append(TableField(name='',value=(lambda table,i: table.results[i].problem_mapping.description),
-                                                  render=(lambda table,i: text2html(table.results[i].problem_mapping.description) if table.results[i].problem_mapping.description else ''),
+                                                  render=(lambda table,i: mark_safe(text2html(table.results[i].problem_mapping.description)) if table.results[i].problem_mapping.description else ''),
                                                   id='desc'))
             if admin:
                 self.fields.append(TableField(name='',value='',render=visible,id='visibility',sortable=False,css=['small','centered']))
