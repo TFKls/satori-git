@@ -178,7 +178,7 @@ class ACMAggregator(AggregatorBase):
                 self.ranking_entry.row = ''
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position()
-                self.ranking_entry.save()
+                self.ranking_entry.save(force_update=True)
             else:
                 points = int(sum([s.params.score for s in score_list], 0.0))
                 time = sum([s.ok_time + self.aggregator.params.time_penalty * s.star_count for s in score_list], timedelta(0))
@@ -190,7 +190,7 @@ class ACMAggregator(AggregatorBase):
                 self.ranking_entry.row = self.aggregator.table.generate_row('',contestant_name, str(points), time_str, problems) + self.aggregator.table.row_separator
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
-                self.ranking_entry.save()
+                self.ranking_entry.save(force_update=True)
 
         def aggregate(self, result):
             submit = self.aggregator.submit_cache[result.submit_id]
@@ -213,7 +213,7 @@ class ACMAggregator(AggregatorBase):
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = self.table.header_row + self.table.row_separator
-        self.ranking.save()
+        self.ranking.save(force_update=True)
         
     def get_score(self):
         return self.ACMScore(self)
@@ -302,7 +302,7 @@ class ACMBoardAggregator(AggregatorBase):
                 self.ranking_entry.row = ''
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position()
-                self.ranking_entry.save()
+                self.ranking_entry.save(force_update=True)
             else:
                 points = int(sum([s.params.score for s in score_list], 0.0))
                 time = sum([s.ok_time + self.aggregator.params.time_penalty * (s.trials-1) for s in score_list], timedelta(0))
@@ -323,7 +323,7 @@ class ACMBoardAggregator(AggregatorBase):
 #                print self.ranking_entry.row
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
-                self.ranking_entry.save()
+                self.ranking_entry.save(force_update=True)
 
         def aggregate(self, result):
             submit = self.aggregator.submit_cache[result.submit_id]
@@ -354,7 +354,7 @@ class ACMBoardAggregator(AggregatorBase):
         rhead = '.. role:: tdpos\n\n.. role:: tdneg\n\n.. role:: tdpnd\n\n.. role:: signature\n\n'
         self.ranking.header = rhead+self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = self.table.header_row + self.table.row_separator
-        self.ranking.save()
+        self.ranking.save(force_update=True)
         
     def get_score(self):
         return self.ACMScore(self)
@@ -413,7 +413,7 @@ class PointsAggregator(AggregatorBase):
                 self.ranking_entry.row = ''
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position()
-                self.ranking_entry.save()
+                self.ranking_entry.save(force_update=True)
             else:
                 points = sum([self.scores[p.id].points for p in self.aggregator.problem_list if self.scores[p.id].points is not None], 0)
                 
@@ -430,7 +430,7 @@ class PointsAggregator(AggregatorBase):
                 self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, self.contestant.name)
-                self.ranking_entry.save()
+                self.ranking_entry.save(force_update=True)
 
         def aggregate(self, result):
             submit = self.aggregator.submit_cache[result.submit_id]
@@ -455,7 +455,7 @@ class PointsAggregator(AggregatorBase):
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = ''
-        self.ranking.save()
+        self.ranking.save(force_update=True)
 
     def get_score(self):
         return self.PointsScore(self)
@@ -515,7 +515,7 @@ class MarksAggregator(AggregatorBase):
                 self.ranking_entry.row = ''
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position()
-                self.ranking_entry.save()
+                self.ranking_entry.save(force_update=True)
             else:
                 all_ok = True
                 points = []
@@ -595,7 +595,7 @@ class MarksAggregator(AggregatorBase):
                 self.ranking_entry.row = self.aggregator.table.generate_row(*columns) + self.aggregator.table.row_separator
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(self.contestant.sort_field)
-                self.ranking_entry.save()
+                self.ranking_entry.save(force_update=True)
 
         def aggregate(self, result):
             submit = self.aggregator.submit_cache[result.submit_id]
@@ -658,7 +658,7 @@ class MarksAggregator(AggregatorBase):
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = ''
-        self.ranking.save()
+        self.ranking.save(force_update=True)
         
     def get_score(self):
         return self.MarksScore(self)
@@ -688,7 +688,7 @@ class ACMProblemStats(AggregatorBase):
                 self.ranking.header += self.table.generate_row(*col)+self.table.row_separator
         fcol = [' **Total** ',' **'+unicode(self.allsubmits)+'** '] + [(' **'+unicode(self.total[r])+'** ') for r in self.results]
         self.ranking.header += self.table.generate_row(*fcol)+self.table.row_separator            
-        self.ranking.save()
+        self.ranking.save(force_update=True)
 
     def init(self):
         super(ACMProblemStats, self).init()
