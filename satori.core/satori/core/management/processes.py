@@ -150,9 +150,9 @@ class ThriftServerProcess(SatoriProcess):
         self.server.serve()
 
 
-class BlobServerProcess(SatoriProcess):
+class TwistedHttpServerProcess(SatoriProcess):
     def __init__(self):
-        super(BlobServerProcess, self).__init__('blob server')
+        super(TwistedHttpServerProcess, self).__init__('http server')
 
     def do_handle_signal(self, signum, frame):
         internet.reactor.callFromThread(internet.reactor.stop)
@@ -165,6 +165,27 @@ class BlobServerProcess(SatoriProcess):
         else:
             internet.reactor.listenTCP(settings.BLOB_PORT, server.Site(resource), interface=settings.BLOB_HOST)
         internet.reactor.run()
+
+
+class UwsgiHttpServerProcess(SatoriProcess):
+    def __init__(self):
+        super(UwsgiHttpServerProcess, self).__init__('http server')
+
+    def do_run(self):
+        options = ['satori: http server (uWSGI)']
+        if settings.USE_SSL:
+            options.extend(['--https', '{0}:{1},{2},{3}'.format(settings.BLOB_HOST, settings.BLOB_PORT, settings.SSL_CERTIFICATE, settings.SSL_CERTIFICATE)])
+        else:
+            options.extend(['--http', '{0}:{1}'.format(settings.BLOB_HOST, settings.BLOB_PORT)])
+        options.extend(['--master', '--module', 'satori.core.wsgi:application', '--log-date=%F %T,000 - uWSGI - INFO',
+            '--disable-logging', '--auto-procname', '--procname-prefix-spaced', 'satori:',
+            '--processes', '50', '--http-processes', '10', '--cheaper', '5', '--cheaper-step', '5', '--cheaper-overload', '5',])
+        if 'VIRTUAL_ENV' in os.environ:
+            options.extend(['--virtualenv', os.environ['VIRTUAL_ENV']])
+        os.execvp('uwsgi', options)
+
+    def terminate(self):
+        os.kill(self.pid, signal.SIGQUIT)
 
 
 class DbevNotifierProcess(SatoriProcess):

@@ -36,6 +36,7 @@ setup(name='satori.core',
         'satori.tools',
         'setproctitle',
         'Twisted',
+        'uwsgi >= 1.3'
         'pyopenssl',
         'ipaddr',
         'gdata',
