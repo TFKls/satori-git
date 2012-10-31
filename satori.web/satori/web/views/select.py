@@ -6,6 +6,7 @@ from satori.web.utils.tables import *
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
+from django.utils.html import mark_safe
 from django import forms
 
 
@@ -58,7 +59,7 @@ def view(request, page_info):
             def button(table,i):
                 s=''
                 if table.contests[i].contestant and not table.contests[i].contestant.accepted:
-                    s='<span class="signature">Pending</span>'
+                    s=mark_safe('<span class="signature">Pending</span>')
                 if table.contests[i].contestant or table.contests[i].is_admin:
                     return s
                 if table.contests[i].can_apply:
