@@ -14,28 +14,26 @@ import subprocess
 import traceback
 
 from satori.tools import options, setup, authenticate
-options.add_option('--debug', dest='debug', default='', action='store', type='string')
 
-options.add_option('--jail-dir', dest='jail_dir', default='/jail', action='store', type='string')
-options.add_option('--cgroup-dir', dest='cgroup_dir', default='/cgroup', action='store', type='string')
-options.add_option('--template-dir', dest='template_dir', default='/template', action='store', type='string')
-options.add_option('--template-src', dest='template_src', default='student.tcs.uj.edu.pl:/exports/judge', action='store', type='string')
+options.add_argument('--debug', dest='debug', default='')
 
-options.add_option('--retry-time', dest='retry_time', default=5, action='store', type='int')
+options.add_argument('--jail-dir', dest='jail_dir', default='/jail')
+options.add_argument('--cgroup-dir', dest='cgroup_dir', default='/cgroup')
+options.add_argument('--template-dir', dest='template_dir', default='/template')
+options.add_argument('--template-src', dest='template_src', default='student.tcs.uj.edu.pl:/exports/judge')
 
-options.add_option('--cgroup', dest='cgroup', default='runner', action='store', type='string')
-options.add_option('--memory', dest='cgroup_memory', default=8*1024*1024*1024, action='store', type='int')
-options.add_option('--time', dest='real_time', default=5*60*1000, action='store', type='int')
+options.add_argument('--retry-time', dest='retry_time', default=5, type=int)
 
-options.add_option('--host-interface', dest='host_eth', default='vethsh', action='store', type='string')
-options.add_option('--host-ip', dest='host_ip', default='192.168.100.101', action='store', type='string')
-options.add_option('--guest-interface', dest='guest_eth', default='vethsg', action='store', type='string')
-options.add_option('--guest-ip', dest='guest_ip', default='192.168.100.102', action='store', type='string')
-options.add_option('--netmask', dest='netmask', default='255.255.255.0', action='store', type='string')
-options.add_option('--port', dest='control_port', default=8765, action='store', type='int')
+options.add_argument('--cgroup', dest='cgroup', default='runner')
+options.add_argument('--memory', dest='cgroup_memory', default=8*1024*1024*1024, type=int)
+options.add_argument('--time', dest='real_time', default=5*60*1000, type=int)
 
-args = []
-
+options.add_argument('--host-interface', dest='host_eth', default='vethsh')
+options.add_argument('--host-ip', dest='host_ip', default='192.168.100.101')
+options.add_argument('--guest-interface', dest='guest_eth', default='vethsg')
+options.add_argument('--guest-ip', dest='guest_ip', default='192.168.100.102')
+options.add_argument('--netmask', dest='netmask', default='255.255.255.0')
+options.add_argument('--port', dest='control_port', default=8765, type=int)
 
 def judge_loop():
     while True:
@@ -56,12 +54,12 @@ def judge_loop():
                 template = str(td.get('template').value)
 
             jb = JailBuilder(
-                root=options.jail_dir,
+                root=option_values.jail_dir,
                 template=template,
-                template_path=options.template_dir)
+                template_path=option_values.template_dir)
             try:
                 jb.create()
-                dst_path = os.path.join(options.jail_dir, 'judge')
+                dst_path = os.path.join(option_values.jail_dir, 'judge')
                 if td.get('judge') and td.get('judge').is_blob:
                     td.get_blob_path('judge', dst_path)
                     os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
@@ -73,24 +71,24 @@ def judge_loop():
                     continue
                 jr = JailRun(
                     submit=sub,
-                    root=options.jail_dir,
-                    cgroup_path=options.cgroup_dir,
-                    template_path=options.template_dir,
+                    root=option_values.jail_dir,
+                    cgroup_path=option_values.cgroup_dir,
+                    template_path=option_values.template_dir,
                     path='/judge',
-                    debug=options.debug,
-                    cgroup=options.cgroup,
-                    cgroup_memory=options.cgroup_memory,
-                    real_time=options.real_time,
-                    host_eth=options.host_eth,
-                    host_ip=options.host_ip,
-                    guest_eth=options.guest_eth,
-                    guest_ip=options.guest_ip,
-                    netmask=options.netmask,
-                    control_port=options.control_port,
-                    args = ['--control-host', options.host_ip, '--control-port', str(options.control_port)])
+                    debug=option_values.debug,
+                    cgroup=option_values.cgroup,
+                    cgroup_memory=option_values.cgroup_memory,
+                    real_time=option_values.real_time,
+                    host_eth=option_values.host_eth,
+                    host_ip=option_values.host_ip,
+                    guest_eth=option_values.guest_eth,
+                    guest_ip=option_values.guest_ip,
+                    netmask=option_values.netmask,
+                    control_port=option_values.control_port,
+                    args = ['--control-host', option_values.host_ip, '--control-port', str(option_values.control_port)])
                 res = jr.run()
-                if options.debug:
-                    dh = Blob.create_path(options.debug)
+                if option_values.debug:
+                    dh = Blob.create_path(option_values.debug)
                     res['judge.log'] = {'is_blob':True, 'value':dh, 'filename': 'judge.log'}
                 Judge.set_result(tr, res)
             except:
@@ -98,7 +96,7 @@ def judge_loop():
             finally:
                 jb.destroy()
         else:
-            time.sleep(options.retry_time)
+            time.sleep(option_values.retry_time)
 
 def judge_initialize():
     for res in [ resource.RLIMIT_CPU, resource.RLIMIT_FSIZE, resource.RLIMIT_DATA, resource.RLIMIT_STACK, resource.RLIMIT_RSS, resource.RLIMIT_NPROC, resource.RLIMIT_MEMLOCK, resource.RLIMIT_AS ]:
@@ -127,31 +125,31 @@ def judge_initialize():
     subprocess.check_call(['iptables', '-F', 'FORWARD'])
     subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
 
-    subprocess.call(['umount', '-l', options.cgroup_dir])
-    subprocess.call(['rmdir', options.cgroup_dir])
-    subprocess.check_call(['mkdir', '-p', options.cgroup_dir])
-    subprocess.check_call(['mount', '-t', 'cgroup', '-o', 'rw,nosuid,noexec,relatime,memory,cpuacct,cpuset', 'cgroup', options.cgroup_dir])
-    if options.template_src:
-        subprocess.call(['umount', '-l', options.template_dir])
-        subprocess.call(['rmdir', options.template_dir])
-        subprocess.check_call(['mkdir', '-p', options.template_dir])
-        subprocess.check_call(['mkdir', '-p', options.template_dir+'.temp'])
-        subprocess.check_call(['mount', options.template_src, options.template_dir+'.temp'])
-        subprocess.check_call(['rsync', '-a', options.template_dir+'.temp/', options.template_dir])
-        subprocess.check_call(['umount', options.template_dir+'.temp'])
-        subprocess.call(['rmdir', options.template_dir+'.temp'])
+    subprocess.call(['umount', '-l', option_values.cgroup_dir])
+    subprocess.call(['rmdir', option_values.cgroup_dir])
+    subprocess.check_call(['mkdir', '-p', option_values.cgroup_dir])
+    subprocess.check_call(['mount', '-t', 'cgroup', '-o', 'rw,nosuid,noexec,relatime,memory,cpuacct,cpuset', 'cgroup', option_values.cgroup_dir])
+    if option_values.template_src:
+        subprocess.call(['umount', '-l', option_values.template_dir])
+        subprocess.call(['rmdir', option_values.template_dir])
+        subprocess.check_call(['mkdir', '-p', option_values.template_dir])
+        subprocess.check_call(['mkdir', '-p', option_values.template_dir+'.temp'])
+        subprocess.check_call(['mount', option_values.template_src, option_values.template_dir+'.temp'])
+        subprocess.check_call(['rsync', '-a', option_values.template_dir+'.temp/', option_values.template_dir])
+        subprocess.check_call(['umount', option_values.template_dir+'.temp'])
+        subprocess.call(['rmdir', option_values.template_dir+'.temp'])
 
 def judge_finalize():
-        subprocess.call(['umount', '-l', options.cgroup_dir])
-        subprocess.call(['rmdir', options.cgroup_dir])
-        if options.template_src:
-            subprocess.call(['umount', '-l', options.template_dir])
-            subprocess.call(['rmdir', options.template_dir])
+        subprocess.call(['umount', '-l', option_values.cgroup_dir])
+        subprocess.call(['rmdir', option_values.cgroup_dir])
+        if option_values.template_src:
+            subprocess.call(['umount', '-l', option_values.template_dir])
+            subprocess.call(['rmdir', option_values.template_dir])
 
 def judge_init():
-    global options, args
     want_import(globals(), '*')
-    (options, args) = setup()
+    global option_values
+    option_values = setup()
     try:
         judge_initialize()
         while True:
