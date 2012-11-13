@@ -79,9 +79,11 @@ def get_oa_map(Attribute, AnonymousAttribute, BadAttributeType, Blob):
         def set_blob_hash(self, name, value, filename=''):
             self.set(Attribute(name=name, value=value, filename=filename, is_blob=True))
 
-        def set_blob_path(self, name, path):
+        def set_blob_path(self, name, path, filename=None):
+            if filename is None:
+                filename = os.path.basename(path)
             hash = Blob.create_path(path)
-            self.set_blob_hash(name, hash)
+            self.set_blob_hash(name, hash, filename=filename)
             return hash
 
         def add_list(self, attributes):
