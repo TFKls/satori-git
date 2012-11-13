@@ -137,7 +137,7 @@ class SatoriMasterProcess(SatoriProcess):
         
         self.sem.release()
 
-        from satori.core.management.processes import EventMasterProcess, DbevNotifierProcess, ThriftServerProcess, TwistedHttpServerProcess, UwsgiHttpServerProcess, DebugQueueProcess, CheckingMasterProcess
+        from satori.core.management.processes import EventMasterProcess, DbevNotifierProcess, ThriftServerProcess, TwistedHttpServerProcess, UwsgiHttpServerProcess, DebugQueueProcess, CheckingMasterProcess, PrintingMasterProcess()
 
         to_start = [
                 EventMasterProcess(),
