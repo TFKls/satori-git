@@ -286,6 +286,8 @@ class ACMBoardAggregator(AggregatorBase):
                             break
 
             def get_str(self):
+                if self.trials==0:
+                    return ""
                 if self.ok:
                     hours = int(self.ok_time.total_seconds()) / 3600
                     mins = (int(self.ok_time.total_seconds()) % 3600) / 60
@@ -317,7 +319,7 @@ class ACMBoardAggregator(AggregatorBase):
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
                 row = ['', contestant_name,points,time_seconds//60]
                 for problem in self.aggregator.problem_list:
-                    if self.scores.has_key(problem.id):
+                    if self.scores.has_key(problem.id) and self.scores[problem.id]!="":
                         row.append(self.scores[problem.id].get_str())
                     else:
                         row.append('\-')
