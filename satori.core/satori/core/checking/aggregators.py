@@ -227,6 +227,7 @@ class ACMBoardAggregator(AggregatorBase):
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_freeze"    description="Freeze time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time"/>
+#@              <param type="text"     name="ignored"        description="Non-penalized results" default=""/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" default="1200s"/>
 #@      </general>
 #@      <problem>
@@ -254,17 +255,20 @@ class ACMBoardAggregator(AggregatorBase):
                 self.problem = problem
                 self.params = self.score.aggregator.problem_params[problem.id]
                 self.agr_params = self.score.aggregator.params
+                self.ignored = self.params.ignored.split(',')
 
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') in ['OK', 'ACC']
+                ign = result.oa_get_str('status') in self.ignored
                 if self.params.time_stop and time > self.params.time_stop:
                     return
                 if self.params.ignore:
                     return
                 after_freeze = (self.agr_params.time_freeze) and (time > self.agr_params.time_freeze)
-                self.trials += 1
-                if after_freeze:
+                if not ign:
+                    self.trials += 1
+                if not ign and after_freeze:
                     self.late_trials += 1
                 if ok and not after_freeze:
                     self.ok = True
