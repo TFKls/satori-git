@@ -64,21 +64,11 @@ class Creator(object):
 def athina_import():
     import os,sys,getpass
     from satori.tools import options, setup
-    options.add_option('-N', '--name',
-        default='',
-        action='store',
-        type='string',
-        help='Contest name')
-    options.add_option('-E', '--environment',
-        default='default',
-        action='store',
-        type='string',
-        help='Test environment name')
-    (options, args) = setup()
-    if len(args) != 1:
-        logging.error('incorrect number of arguments')
-        sys.exit(1)
-    base_dir = unicode(args[0])
+    options.add_argument('--name', help='Contest name')
+    options.add_argument('--environment', help='Test environment name')
+    options.add_argument('base_dir')
+    args = setup()
+    base_dir = args.base_dir
     if not os.path.exists(os.path.join(base_dir, 'server', 'contest', 'users')):
         logging.error('provided path is invalid')
         sys.exit(1)
@@ -86,10 +76,10 @@ def athina_import():
     def get_path(*args):
         return os.path.join(base_dir, 'server', 'contest', *args)
 
-    while not options.name:
-        options.name = raw_input('Contest name: ')
-    print 'Contest name: ', options.name
-    print 'Test environment: ', options.environment
+    while not args.name:
+        args.name = raw_input('Contest name: ')
+    print 'Contest name: ', args.name
+    print 'Test environment: ', args.environment
 
     time_start =  None
     with open(get_path('times', 'start'), 'r') as f:
@@ -222,7 +212,7 @@ def athina_import():
 
     mytoken = token_container.get_token()
 
-    contest = Creator('Contest', name=options.name)()
+    contest = Creator('Contest', name=args.name)()
     Privilege.grant(contest.contestant_role, contest, 'SUBMIT')
     Privilege.grant(contest.contestant_role, contest, 'VIEW')
     Privilege.grant(contest.contestant_role, contest, 'VIEW_TASKS')
@@ -230,13 +220,13 @@ def athina_import():
     for login, user in sorted(users.iteritems()):
         firstname = user['name'].split()[0]
         lastname = ' '.join(user['name'].split()[1:])
-        user['object'] = Creator('User', login=options.name + '_' + user['login']).fields(firstname=firstname, lastname=lastname)()
+        user['object'] = Creator('User', login=args.name + '_' + user['login']).fields(firstname=firstname, lastname=lastname)()
         user['object'].set_password(user['password'])
         user['contestant'] = Creator('Contestant', contest=contest, login=user['object'].login).additional(user_list=[user['object']])()
         user['contestant'].set_password(user['password'])
 
     for name, problem in sorted(problems.iteritems()):
-        problem['object'] = Creator('Problem', name=options.name + '_' + problem['problem'])()
+        problem['object'] = Creator('Problem', name=args.name + '_' + problem['problem'])()
         tests = []
         for num, test in sorted(problem['tests'].iteritems()):
             oa = OaMap()
@@ -250,11 +240,11 @@ def athina_import():
                 oa.set_str('memory', str(test['memlimit'])+'B')
             if test['timelimit'] != None:
                 oa.set_str('time', str(seconds(test['timelimit']))+'s')
-            test['object'] = Creator('Test', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default_' + str(test['test'])).fields(environment=options.environment).additional(data=oa.get_map())()
+            test['object'] = Creator('Test', problem=problem['object'], name=args.name + '_' + problem['problem'] + '_default_' + str(test['test'])).fields(environment=args.environment).additional(data=oa.get_map())()
             tests.append(test['object'])
         params = OaMap()
         params.set_str('reporter_show_tests', 'true')
-        problem['testsuite'] = Creator('TestSuite', problem=problem['object'], name=options.name + '_' + problem['problem'] + '_default').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
+        problem['testsuite'] = Creator('TestSuite', problem=problem['object'], name=args.name + '_' + problem['problem'] + '_default').fields(reporter='ACMReporter', dispatcher='SerialDispatcher', accumulators='').additional(test_list=tests, params=params.get_map(), test_params=[{}]*len(tests))()
         problem['mapping'] = Creator('ProblemMapping', contest=contest, problem=problem['object']).fields(code=problem['problem'], title=problem['problem'], default_test_suite=problem['testsuite'])()
     params = OaMap()
     params.set_str('time_start', time_start.strftime('%Y-%m-%d %H:%M:%S'))
@@ -285,12 +275,11 @@ def athina_import():
 
 def athina_import_testsuite():
     from satori.tools import options, setup
-    (options, args) = setup()
-    if len(args) != 2:
-        logging.error('incorrect number of arguments')
-        sys.exit(1)
-    problem = Problem.filter(ProblemStruct(name=unicode(args[0])))[0]
-    base_dir = unicode(args[1])
+    options.add_argument('problem_name')
+    options.add_argument('base_dir')
+    args = setup()
+    problem = Problem.filter(ProblemStruct(name=unicode(args.problem_name)))[0]
+    base_dir = unicode(args.base_dir)
     if not os.path.exists(os.path.join(base_dir, 'testcount')):
         logging.error('provided path is invalid')
         sys.exit(1)
