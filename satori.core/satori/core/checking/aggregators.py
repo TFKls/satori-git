@@ -255,7 +255,7 @@ class ACMBoardAggregator(AggregatorBase):
                 self.problem = problem
                 self.params = self.score.aggregator.problem_params[problem.id]
                 self.agr_params = self.score.aggregator.params
-                self.ignored = self.params.ignored.split(',')
+                self.ignored = self.agr_params.ignored.split(',')
 
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
