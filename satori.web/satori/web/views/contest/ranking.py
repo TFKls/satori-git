@@ -15,7 +15,11 @@ from django import forms
 @contest_view
 def view(request, page_info, id):
     ranking = Ranking(int(id))
-    return render_to_response('ranking.html', {'page_info' : page_info, 'ranking' : ranking, 'content' : text2html(ranking.full_ranking())})
+    if request.GET.get('fullscreen','0')!='0':
+        template = 'ranking_fs.html'
+    else:
+        template = 'ranking.html'
+    return render_to_response(template, {'page_info' : page_info, 'ranking' : ranking, 'content' : text2html(ranking.full_ranking())})
 
 
 
