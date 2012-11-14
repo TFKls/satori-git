@@ -209,7 +209,7 @@ class ACMAggregator(AggregatorBase):
             if params.time_stop is None:
                 params.time_stop = self.params.time_stop
 
-        self.table = RestTable((4, 'Lp.'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
+        self.table = RestTable((4, 'Rank'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = self.table.header_row + self.table.row_separator
@@ -350,7 +350,7 @@ class ACMBoardAggregator(AggregatorBase):
 
         self.problem_list = filter(lambda p : not self.problem_params[p.id].ignore, sorted(self.problem_cache.values(), key=attrgetter('code')))
        
-        columns = [(32, 'Lp.'), (320, 'Name'), (32, 'Score'), (32, 'Time'),]
+        columns = [(32, 'Rank'), (320, 'Name'), (32, 'Score'), (32, 'Time'),]
 
         for problem in self.problem_list:
             columns.append((32, problem.code))
@@ -450,7 +450,7 @@ class PointsAggregator(AggregatorBase):
 
         self.problem_list = filter(lambda p : not self.problem_params[p.id].ignore, sorted(self.problem_cache.values(), key=attrgetter('code')))
        
-        columns = [(5, 'Lp.'), (20, 'Name')]
+        columns = [(5, 'Rank'), (20, 'Name')]
 
         for problem in self.problem_list:
             columns.append((10, problem.code))
