@@ -1,6 +1,18 @@
 syntax: regexp
 
 ^\.
+/\.
+/build/
+/dist/
+\.py[co]$
+\.egg-info/
+tmp/*
+satori.javatool/bin/*
+satori.javatool/lib/*
+satori.judge/runner/runner
+syncdb.sh
+\.orig$
+
 ^bin/
 ^include/
 ^lib/
@@ -8,13 +20,3 @@ syntax: regexp
 ^src/
 ^var/
 ^tmp/
-/\.
-\.py[co]$
-/build/
-/dist/
-\.egg-info/
-tmp/*
-satori.javatool/bin/*
-satori.javatool/lib/*
-syncdb.sh
-\.orig$
