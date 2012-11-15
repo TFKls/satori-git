@@ -82,7 +82,7 @@ class AggregatorBase(object):
                 del self.scores[cid]
 
         for cid in ranking_entry_cache:
-        	ranking_entry_cache[cid].delete()
+            ranking_entry_cache[cid].delete()
     
     def created_submits(self, submits):
         for submit in submits:
@@ -231,6 +231,7 @@ class ACMBoardAggregator(AggregatorBase):
 #@              <param type="datetime" name="time_freeze"    description="Freeze time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time"/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" default="1200s"/>
+#@              <param type="bool"     name="resolver"       description="Prepare resolver.js"/>
 #@      </general>
 #@      <problem>
 #@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
@@ -248,6 +249,7 @@ class ACMBoardAggregator(AggregatorBase):
             def __init__(self, score, problem):
                 self.score = score
                 self.ok = False
+                self.ok_final = False
                 self.pending = False
                 self.trials = 0
                 self.late_trials = 0
@@ -269,13 +271,18 @@ class ACMBoardAggregator(AggregatorBase):
                 self.trials += 1
                 if after_freeze:
                     self.late_trials += 1
+                if ok:
+                    self.ok_final = True
                 if ok and not after_freeze:
                     self.ok = True
                 self.result_list.add((time, ok, result.submit_id))
-                if self.ok:
+                if self.ok_final:
                     self.trials = 0
+                    self.late_trials = 0
                     for (time, ok, submit_id) in self.result_list:
-                        self.trials += 1                
+                        self.trials += 1 
+                        if (self.agr_params.time_freeze) and (time > self.agr_params.time_freeze):
+                            self.late_trials += 1
                         if ok:
                             if self.params.time_start and time > self.params.time_start:
                                 self.ok_time = time - self.params.time_start
@@ -294,10 +301,30 @@ class ACMBoardAggregator(AggregatorBase):
                 else:
                     return ':tdneg:`'+str(self.trials)+'`'
 
+            def get_str_for_resolver(self):
+                if self.ok:
+                    return 'O'
+                if self.late_trials > 0:
+                    return 'F'
+                if len(self.result_list) > 0:
+                    return 'W'
+                return 'N'
+
+            def get_resolution_for_resolver(self):
+                if self.ok:
+                    return None
+                if self.late_trials == 0:
+                    return None
+                if self.ok_final:
+                    return (True, int(self.params.score), int(total_seconds(self.ok_time + self.agr_params.time_penalty * (self.trials-1),)))
+                else:
+                    return (False, 0, 0,)
+
         def __init__(self, aggregator):
             self.aggregator = aggregator
             self.hidden = False
             self.scores = {}
+            self.resolver = None
 
         def update(self):
             score_list = [s for s in self.scores.values() if s.ok]
@@ -322,11 +349,27 @@ class ACMBoardAggregator(AggregatorBase):
                         row.append('\-')
 #                row.append(points)
 
+
                 self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
 #                print self.ranking_entry.row
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(points, time_seconds, self.contestant.name)
                 self.ranking_entry.save(force_update=True)
+                
+                counters = []
+                statuses = []
+                solutions = []
+                for problem in self.aggregator.problem_list:
+                    if self.scores.has_key(problem.id):
+                        score = self.scores[problem.id]
+                        counters.append(score.trials)
+                        statuses.append(score.get_str_for_resolver())
+                        solutions.append(score.get_resolution_for_resolver())
+                    else:
+                        counters.append(0)
+                        statuses.append('N')
+                        solutions.append(None)
+                self.resolver = ( self.contestant.login, self.contestant.name, points, time_seconds, counters, statuses, solutions )
 
         def aggregate(self, result):
             submit = self.aggregator.submit_cache[result.submit_id]
@@ -361,6 +404,21 @@ class ACMBoardAggregator(AggregatorBase):
         
     def get_score(self):
         return self.ACMScore(self)
+
+    def update_resolver(self):
+        if self.params.resolver:
+            resolver = [s.resolver for s in sorted(self.scores.values(), key=attrgetter('ranking_entry.position')) if s.ranking_entry.row != '']
+            blob = self.ranking.oa_set_blob('resolver.json')
+            blob.write(json.dumps(resolver))
+            blob.close()
+
+    def checked_test_suite_results(self, test_suite_results):
+        super(ACMBoardAggregator, self).checked_test_suite_results(test_suite_results)
+        self.update_resolver()
+
+    def changed_contestants(self):
+        super(ACMBoardAggregator, self).changed_contestants()
+        self.update_resolver()
 
 
 class PointsAggregator(AggregatorBase):
@@ -760,18 +818,18 @@ class GoogleSpreadsheetAggregator(AggregatorBase):
             url = SECRET_GOOGLE_SPREADSHEET_SERVICE
             values = {'action': action, 'ranking': self.ranking.id}
             if action == 'create':
-            	values['admins'] = self.params.admins
+                values['admins'] = self.params.admins
                 values['name'] = 'Satori: ' + self.ranking.contest.name + ': ' + self.ranking.name
             if action == 'contestants' or action == 'add_contestants':
-            	values['contestants'] = json.dumps(params, cls=self.encoder)
+                values['contestants'] = json.dumps(params, cls=self.encoder)
             if action == 'problems' or action == 'add_problems':
-            	values['problems'] = json.dumps(params, cls=self.encoder)
+                values['problems'] = json.dumps(params, cls=self.encoder)
             if action == 'tests' or action == 'add_tests':
-            	values['tests'] = json.dumps(params, cls=self.encoder)
+                values['tests'] = json.dumps(params, cls=self.encoder)
             if action == 'submits' or action == 'add_submits':
-            	values['submits'] = json.dumps(params, cls=self.encoder)
+                values['submits'] = json.dumps(params, cls=self.encoder)
             if action == 'results' or action == 'add_results':
-            	values['results'] = json.dumps(params, cls=self.encoder)
+                values['results'] = json.dumps(params, cls=self.encoder)
             headers = {"Content-Type": "application/x-www-form-urlencoded", "Accept": "text/html;q=0.9", "Accept-Charset": "utf8", "Accept-Language": "en-us,en;q=0.5"}
 
             logging.debug('START: '+urllib.urlencode(values))
@@ -791,7 +849,7 @@ class GoogleSpreadsheetAggregator(AggregatorBase):
         self.call('problems', problems)
         tests = []
         for pid in self.problem_cache:
-        	ts = self.test_suites[pid]
+            ts = self.test_suites[pid]
             tests += [ {'id': str(pid)+'_'+str(t.id), 'problem': pid, 'name': t.name} for t in self.test_cache[ts.id] ]
         self.call('tests', tests)
         submits = [ {'id': s.id, 'contestant': s.contestant.id, 'problem': s.problem.id, 'time': s.time} for s in self.submit_cache.values() ]
@@ -804,7 +862,7 @@ class GoogleSpreadsheetAggregator(AggregatorBase):
         self.contestant_cache = set()
         self.test_cache = {}
         for pid in self.problem_cache:
-        	ts = self.test_suites[pid]
+            ts = self.test_suites[pid]
             self.test_cache[ts.id] = [tm.test for tm in TestMapping.objects.filter(suite__id=ts.id) ]
         self.results = {}
         self.recalculate()
@@ -814,7 +872,7 @@ class GoogleSpreadsheetAggregator(AggregatorBase):
             contestants = [ {'id': c.id, 'name': c.name} for c in Contestant.objects.filter(contest__id=self.ranking.contest_id, accepted=True) ]
             self.call('contestants', contestants)
         else:
-        	self.recalculate()
+            self.recalculate()
     
     def checked_test_suite_results(self, test_suite_results):
         append = []
@@ -824,31 +882,31 @@ class GoogleSpreadsheetAggregator(AggregatorBase):
             if s.contestant.invisible and not self.params.show_invisible:
                 continue
             pid = s.problem.id
-        	ts = self.test_suites[pid]
+            ts = self.test_suites[pid]
             for t in self.test_cache[ts.id]:
                 try:
-                	tr=TestResult.objects.get(submit__id=s.id, test__id=t.id)
+                    tr=TestResult.objects.get(submit__id=s.id, test__id=t.id)
                 except:
                     continue
-            	key = (s.id, pid, t.id)
+                key = (s.id, pid, t.id)
                 if key in self.results:
-                	self.ok = False
+                    self.ok = False
                 val = {'submit': s.id, 'test': str(pid)+'_'+str(t.id)}
                 for (k, v) in tr.oa_get_map().iteritems():
                     if not v.is_blob:
-                    	val['result_'+k] = v.value
+                        val['result_'+k] = v.value
                 self.results[key] = val
                 append += [val]
         if self.ok:
             self.call('add_results', append)
         else:
-        	self.recalculate()
+            self.recalculate()
 
     def created_submits(self, submits):
         if self.ok:
             self.call('add_submits', [ {'id': s.id, 'contestant': s.contestant.id, 'problem': s.problem.id, 'time': s.time} for s in submits ])
         else:
-        	self.recalculate()
+            self.recalculate()
         logging.debug('hello')
         super(GoogleSpreadsheetAggregator, self).created_submits(submits)
 
