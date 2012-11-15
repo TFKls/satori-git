@@ -1,0 +1,28 @@
+{% extends "templates/index.html" %}
+
+{% block header %}
+
+{{ form.media }}
+
+{% endblock %}
+
+{% block content %}
+
+<h2>Extend time</h2>
+
+<table class="results">
+
+{{ extends.render_table }}
+
+</table>
+
+{{ extends.render_scrollbar }}
+
+<form action="" method="post" enctype="multipart/form-data">
+<table>
+    {{ form.as_table }}
+</table>
+<input class="button" name="grant" type="submit" value="Grant extension"/>
+</form>
+
+{% endblock %}

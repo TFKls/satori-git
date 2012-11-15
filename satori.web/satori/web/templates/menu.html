@@ -33,6 +33,7 @@
             {% endfor %}
             
             {% if page_info.contest_is_admin %}
+                <li><a href="{% url extends page_info.contest.id %}">Extensions</a></li>
                 <li><a href="{% url contestants page_info.contest.id %}">Contestants</a></li>
                 <li><a href="{% url contest_manage page_info.contest.id %}">Manage contest</a></li>
             {% endif %}
