@@ -32,7 +32,6 @@ source "$DEST/bin/activate"
 
 exec "$DEST/bin/satori.judge_init" "\$@"
 EOF
-&&
 chmod a+x "$BIN/satori.judge" || exit 1
 
 popd

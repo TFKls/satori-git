@@ -26,7 +26,6 @@ source "$DEST/bin/activate"
 
 exec "$DEST/bin/satori.submit" "\$@"
 EOF
-&&
 chmod a+x "$BIN/satori.submit" || exit 1
 
 popd
