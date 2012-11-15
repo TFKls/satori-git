@@ -212,7 +212,7 @@ class ACMAggregator(AggregatorBase):
             if params.time_stop is None:
                 params.time_stop = self.params.time_stop
 
-        self.table = RestTable((4, 'Lp.'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
+        self.table = RestTable((4, 'Rank'), (32, 'Name'), (8, 'Score'), (16, 'Time'), (16, 'Tasks'))
         
         self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
         self.ranking.footer = self.table.header_row + self.table.row_separator
@@ -230,6 +230,7 @@ class ACMBoardAggregator(AggregatorBase):
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_freeze"    description="Freeze time"/>
 #@              <param type="datetime" name="time_stop"      description="Submission stop time"/>
+#@              <param type="text"     name="ignored"        description="Non-penalized results" default=""/>
 #@              <param type="time"     name="time_penalty"   description="Penalty for wrong submit" default="1200s"/>
 #@              <param type="bool"     name="resolver"       description="Prepare resolver.js"/>
 #@      </general>
@@ -259,10 +260,13 @@ class ACMBoardAggregator(AggregatorBase):
                 self.problem = problem
                 self.params = self.score.aggregator.problem_params[problem.id]
                 self.agr_params = self.score.aggregator.params
+                self.ignored = self.agr_params.ignored.split(',')
 
             def aggregate(self, result):
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') in ['OK', 'ACC']
+                if result.oa_get_str('status') in self.ignored:
+                    return
                 if self.params.time_stop and time > self.params.time_stop:
                     return
                 if self.params.ignore:
@@ -292,6 +296,8 @@ class ACMBoardAggregator(AggregatorBase):
                             break
 
             def get_str(self):
+                if self.trials==0:
+                    return ""
                 if self.ok:
                     hours = int(self.ok_time.total_seconds()) / 3600
                     mins = (int(self.ok_time.total_seconds()) % 3600) / 60
@@ -343,7 +349,7 @@ class ACMBoardAggregator(AggregatorBase):
                 contestant_name = self.aggregator.table.escape(self.contestant.name)
                 row = ['', contestant_name,points,time_seconds//60]
                 for problem in self.aggregator.problem_list:
-                    if self.scores.has_key(problem.id):
+                    if self.scores.has_key(problem.id) and self.scores[problem.id]!="":
                         row.append(self.scores[problem.id].get_str())
                     else:
                         row.append('\-')
@@ -390,7 +396,7 @@ class ACMBoardAggregator(AggregatorBase):
 
         self.problem_list = filter(lambda p : not self.problem_params[p.id].ignore, sorted(self.problem_cache.values(), key=attrgetter('code')))
        
-        columns = [(32, 'Lp.'), (320, 'Name'), (32, 'Score'), (32, 'Time'),]
+        columns = [(32, 'Rank'), (320, 'Name'), (32, 'Score'), (32, 'Time'),]
 
         for problem in self.problem_list:
             columns.append((32, problem.code))
@@ -505,7 +511,7 @@ class PointsAggregator(AggregatorBase):
 
         self.problem_list = filter(lambda p : not self.problem_params[p.id].ignore, sorted(self.problem_cache.values(), key=attrgetter('code')))
        
-        columns = [(5, 'Lp.'), (20, 'Name')]
+        columns = [(5, 'Rank'), (20, 'Name')]
 
         for problem in self.problem_list:
             columns.append((10, problem.code))
