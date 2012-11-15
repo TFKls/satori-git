@@ -17,6 +17,8 @@ setup(name='satori.tools',
         satori.athina_import_problem = satori.tools.athina:athina_import_problem
         satori.console = satori.tools.console:main
         satori.default_judges = satori.tools.judges:default_judges
+        satori.get_judges = satori.tools.judges:get_judges
+        satori.update_judges = satori.tools.judges:update_judges
         satori.team = satori.tools.teams:uzi_team
         satori.submit = satori.tools.submit:submit
     ''',
