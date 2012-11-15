@@ -13,7 +13,7 @@ Dependencies
 ------------
 
 Project dependencies (together with the build process) should be handled
-by buildout configuration. External packages should _not_ be placed within
+by setuptools configuration. External packages should _not_ be placed within
 the repository, unless their _modified_ version is required (even then,
 a patching script might be more suitable).
 
@@ -31,4 +31,4 @@ The following programs are required to work with the project:
 To prepare the work environment (after hg clone), run (from the repository
 root):
 
- ./bootstrap.sh
+ ./develop.sh

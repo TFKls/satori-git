@@ -1,8 +1,12 @@
 #!/bin/bash
+OFFICE=$(dirname $(readlink -f $(which $0)))
+pushd "$OFFICE"
 
-cd "$(dirname "$(readlink -f "$0")")"
-aptitude -y install python-virtualenv python-dev libpq-dev libyaml-dev libcap-dev make patch
+apt-get -y install python-virtualenv python-dev libpopt-dev libcurl4-openssl-dev libpq-dev libyaml-dev libcap-dev make patch
 unset PYTHONPATH
-virtualenv --no-site-packages .
-source bin/activate
-easy_install -U distribute
+
+virtualenv --no-site-packages . &&
+source bin/activate &&
+easy_install -U distribute || exit 1
+
+popd

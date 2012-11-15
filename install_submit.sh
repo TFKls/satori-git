@@ -1,33 +1,32 @@
-aptitude -y install python-virtualenv python-dev libyaml-dev make patch
-
-rm -R /usr/local/satori
-mkdir /usr/local/satori
-
-cd /usr/local/satori
-
-virtualenv --no-site-packages .
-source bin/activate
-easy_install -U distribute
-
-cp -R /mnt/storage/users/zzzmwm01/satori /tmp/__satori__
-
-cd /tmp/__satori__
-
-for i in satori.objects satori.ars satori.client.common satori.tools ; do
-    (cd $i ; python setup.py install )
-done
-
-cd /usr/local/bin
-
-cat > satori.submit <<EOF
 #!/bin/bash
 
-. /usr/local/satori/bin/activate
+DEST=/usr/local/satori
+BIN=/usr/local/bin
 
-exec satori.submit \$@
+OFFICE=$(dirname $(readlink -f $(which $0)))
+pushd "$OFFICE"
+unset PYTHONPATH
+
+apt-get -y install python-virtualenv python-dev libyaml-dev make patch
+
+rm -Rf "$DEST" && mkdir "$DEST" && pushd "$DEST" || exit 1
+virtualenv --no-site-packages . &&
+source bin/activate &&
+easy_install -U distribute || exit 1 
+popd
+
+for i in satori.objects satori.ars satori.client.common satori.tools ; do
+    pushd "$i" || exit 1; python setup.py install; popd
+done
+
+cat > "$BIN/satori.submit" <<EOF
+#!/bin/bash
+
+source "$DEST/bin/activate"
+
+exec "$DEST/bin/satori.submit" "\$@"
 EOF
+&&
+chmod a+x "$BIN/satori.submit" || exit 1
 
-chmod a+x satori.submit
-
-rm -R /tmp/__satori__
-
+popd
