@@ -19,6 +19,19 @@ class RestTable(object):
                 ret.append(c)
         return u''.join(ret)
 
+    def unescape(self, item):
+        ret = []
+        esc = False
+        for c in unicode(item):
+            if esc:
+                ret.append(c)
+                esc = False;
+            if c == u'\\':
+                esc = True;
+            else:
+                ret.append(c)
+        return u''.join(ret)
+
     def generate_row(self, *items):
         if len(items) != len(self.col_width):
             raise RuntimeError('Item count not equal to column count.')
@@ -60,6 +73,19 @@ class RestTable(object):
                     row_items[i].append(filling)
 
         return ''.join([''.join([row_items[j][i] for j in range(len(items))]) + '|\n' for i in range(max_count)])
+
+    def parse_row(self, row):
+        res = []
+        start = []
+        pos = 0
+        for i in range(len(self.col_width)):
+            start.append(1+pos)
+            res.append([])
+            pos = pos+1+self.col_width[i]
+        for line in row.split('\n'):
+            for i in range(len(res)):
+                res[i].append(line[start[i]:start[i]+self.col_width[i]].strip())
+        return [ ' '.join(r).strip() for r in res ]
 
 class Transaction(object):
     @staticmethod

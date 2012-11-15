@@ -71,6 +71,9 @@ class AggregatorBase(object):
                 self.scores[c.id].ranking_entry = ranking_entry_cache.pop(c.id)
             else:
                 (self.scores[c.id].ranking_entry, created) = RankingEntry.objects.get_or_create(ranking=self.ranking, contestant=c, defaults={'position': self.position()})
+            
+            if hasattr(self.scores[c.id], 'initialize'):
+                self.scores[c.id].initialize()
 
             self.scores[c.id].update()
     
@@ -849,6 +852,105 @@ class GoogleSpreadsheetAggregator(AggregatorBase):
         logging.debug('hello')
         super(GoogleSpreadsheetAggregator, self).created_submits(submits)
 
+class BaloonAggregator(AggregatorBase):
+    """
+#@<aggregator name="Baloon dispatcher">
+#@      <general>
+#@              <param type="bool"     name="show_invisible" description="Show invisible submits" default="false"/>
+#@              <param type="datetime" name="time_start"     description="Submission start time"/>
+#@              <param type="datetime" name="time_stop"      description="Submission stop time"/>
+#@              <param type="text"     name="script"         description="Print script"/>
+#@      </general>
+#@      <problem>
+#@              <param type="bool"     name="ignore"         description="Ignore problem" default="false"/>
+#@      </problem>
+#@</aggregator>
+    """
+    def position(self, name=''):
+        return (u'%s' % (name))[0:50]
+
+    class BaloonScore(object):
+        class BaloonProblemScore(object):
+            def __init__(self, score, problem):
+                self.score = score
+                self.problem = problem
+                self.ok = False
+                self.params = self.score.aggregator.problem_params[problem.id]
+                self.agr_params = self.score.aggregator.params
+
+            def aggregate(self, result):
+                if self.ok:
+                    return
+                if self.params.ignore:
+                    return
+                ok = result.oa_get_str('status') in ['OK', 'ACC']
+                if not ok:
+                    return
+                time = self.score.aggregator.submit_cache[result.submit_id].time
+                if self.agr_params.time_stop and time > self.agr_params.time_stop:
+                    return
+                self.ok = True
+#TODO: use print_script to print result.submit_id
+                import subprocess
+                subprocess.check_output([unicode(self.agr_params.script), unicode(result.submit_id)], stderr=subprocess.STDOUT)
+
+            def get_str(self):
+                return self.problem.code
+
+        def __init__(self, aggregator):
+            self.aggregator = aggregator
+            self.hidden = False
+            self.scores = {}
+
+        def initialize(self):
+            row = self.aggregator.table.parse_row(self.ranking_entry.row[0:-len(self.aggregator.table.row_separator)])
+            baloons = set([self.aggregator.table.unescape(b) for b in row[2].strip().split(' ')])
+            for problem in self.aggregator.problem_cache.itervalues():
+                if problem.code in baloons:
+                    if problem.id not in self.scores:
+                        self.scores[problem.id] = self.BaloonProblemScore(self, problem)
+                    self.scores[problem.id].ok = True
+
+        def update(self):
+            score_list = [s for s in self.scores.values() if s.ok]
+            if self.hidden:
+                self.ranking_entry.row = ''
+                self.ranking_entry.individual = ''
+                self.ranking_entry.position = self.aggregator.position()
+                self.ranking_entry.save(force_update=True)
+            else:
+                problems = ' '.join(sorted([s.get_str() for s in score_list]))
+                contestant_name = self.aggregator.table.escape(self.contestant.name)
+                row = ['', contestant_name, problems]
+                self.ranking_entry.row = self.aggregator.table.generate_row(*row) + self.aggregator.table.row_separator
+                self.ranking_entry.individual = ''
+                self.ranking_entry.position = self.aggregator.position(self.contestant.sort_field)
+                self.ranking_entry.save(force_update=True)
+
+        def aggregate(self, result):
+            submit = self.aggregator.submit_cache[result.submit_id]
+            if submit.problem_id not in self.scores:
+                self.scores[submit.problem_id] = self.BaloonProblemScore(self, self.aggregator.problem_cache[submit.problem_id])
+            self.scores[submit.problem_id].aggregate(result)
+
+    def __init__(self, supervisor, ranking):
+        super(BaloonAggregator, self).__init__(supervisor, ranking)
+
+    def init(self):
+        super(BaloonAggregator, self).init()
+
+        self.problem_list = filter(lambda p : not self.problem_params[p.id].ignore, sorted(self.problem_cache.values(), key=attrgetter('code')))
+       
+        columns = [(32, 'Lp.'), (320, 'Name'), (32, 'Baloons'),]
+
+        self.table = RestTable(*columns)
+        
+        self.ranking.header = self.table.row_separator + self.table.header_row + self.table.header_separator
+        self.ranking.footer = self.table.header_row + self.table.row_separator
+        self.ranking.save(force_update=True)
+        
+    def get_score(self):
+        return self.BaloonScore(self)
 
 aggregators = {}
 for item in globals().values():
