@@ -3,7 +3,7 @@
     {% if page_info.contest %}
         <li>Selected contest {{page_info.contest.name}} (<a href="{% url select_contest %}">change</a>)</li>
     {% endif %}
-    <li>Server time: {% now "H:i:s" %}</li>
+	<li id='clock'>Server time:{% now "H:i:s" %}</li>
 </ul>
 <ul class="headerRightUl">
     {% if page_info.role %}
