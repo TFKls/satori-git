@@ -18,11 +18,11 @@
             {% if page_info.contestant or page_info.contest_is_admin %}
                 <li><a href="{% url results page_info.contest.id %}">Results</a></li>
             {% endif %}
-<!--            
-            {% if page_info.contestant or page_info.contest_is_admin %}
-                <li><a href="{% url results page_info.contest.id %}">FindCribs</a></li>
-            {% endif %}
--->        
+           
+            {% if page_info.contest_is_admin %}
+                <li><a href="{% url findcribs page_info.contest.id %}">FindCribs</a></li>
+            {% endif %} 
+   
             {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
                 <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
             {% endif %}

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
-"""Satori judge implementation.
+"""Satori cribfinder implementation.
 """
 
 from satori.objects import Object, Argument

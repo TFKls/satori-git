@@ -3,15 +3,15 @@
 {% block content %}
 
 
-<h2>Results</h2>
+<h2>FindCribs</h2>
 
-{%if results.showdiff %} <form action="{% url results_diff page_info.contest.id %}" method="GET"> {% endif %}
+{%if findcribs.showdiff %} <form action="{% url results_diff page_info.contest.id %}" method="GET"> {% endif %}
 
 <table class="results">
-    {{ results.render_table|safe }}
+    {{ findcribs.render_table|safe }}
 </table>
 <div class="button_bar">
-{%if results.showdiff %}  
+{%if findcribs.showdiff %}  
     <input class="button" value="Compare" type="submit"/>
     </form>
     <a class="button" href="{{ results.difflink }}">Hide diff</a>
@@ -19,7 +19,7 @@
     <a class="button" href="{{ results.difflink }}">Compare submits</a>
 {% endif %}
 </div>
-    {{ results.render_scrollbar|safe }}
-    {{ results.render_filters|safe }}
+    {{ findcribs.render_scrollbar|safe }}
+    {{ findcribs.render_filters|safe }}
 
 {% endblock %}
