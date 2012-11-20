@@ -104,6 +104,7 @@ def view(request, page_info):
                 self.fields.append(TableField(name='Status',value=(lambda table,i: table.results[i].status),
                                           render=(lambda table,i: '<div class="submitstatus"><div class="sta'+unicode(table.results[i].status)+'">'+unicode(table.results[i].status)+'</div></div>')
                                           ,id=5,css='status'))
+#radiobuttonscribs
                 self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="crib_1" value="'+unicode(table.results[i].submit.id)+'"/>'),id='crib_1'))
                 self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="crib_2" value="'+unicode(table.results[i].submit.id)+'"/>'),id='crib_2'))
             else:

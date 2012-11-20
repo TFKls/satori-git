@@ -14,12 +14,26 @@
 {%if findcribs.showdiff %}  
     <input class="button" value="Compare" type="submit"/>
     </form>
-    <a class="button" href="{{ findcribs.difflink }}">Hide diff</a>
+    <a class="button" href="{{ resultsplus.difflink }}">Hide diff</a>
 {% else %}
-    <a class="button" href="{{ findcribs.difflink }}">Compare submits</a>
+    <a class="button" href="{{ resultsplus.difflink }}">Compare submits</a>
 {% endif %}
 </div>
     {{ resultsplus.render_scrollbar|safe }}
     {{ resultsplus.render_filters|safe }}
+
+{%if noproblems %}
+
+No problems to submit!
+
+{%else%}
+
+<form action="{% url findcribs page_info.contest.id %}" method="post" enctype="multipart/form-data">
+<table>
+    {{ form.as_table }}
+</table>
+<input class="button" type="submit" value="Submit"/>
+</form>
+{%endif%}
 
 {% endblock %}
