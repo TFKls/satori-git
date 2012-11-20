@@ -52,6 +52,7 @@ contestpatterns = patterns('',
     url(r'findcribs$', 'satori.web.views.contest.findcribs.view', name='findcribs'),
     url(r'findcribs/(?P<id>\d+)$', 'satori.web.views.contest.viewfindcribs.view', name='view_findcribs'),
     url(r'findcribs/(?P<id>\d+)/override$', 'satori.web.views.contest.viewfindcribs.override', name='submit_override'),
+    url(r'findcribs/diff$', 'satori.web.views.contest.viewfindcribs.diff', name='findcribs_diff'),
 #   url(r'manage/rights$', 'satori.web.views.contest.manage.rights', name='contest_manage_rights'),
 )
 

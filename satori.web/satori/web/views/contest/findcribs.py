@@ -62,7 +62,7 @@ def view(request, page_info):
                                           id=1))
             if self.showdiff:
                 self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="diff_1" value="'+unicode(table.results[i].submit.id)+'"/>'),id='diff_1'))
-                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="diff_2" value="'+unicode(table.results[i].submit.id)+'"/>'),id='diff_2'))            
+                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="diff_2" value="'+unicode(table.results[i].submit.id)+'"/>'),id='diff_2'))          
             if admin:
                 cts = TableField(name='Contestant',value=(lambda table,i: table.results[i].contestant.name),
                                                   render=(lambda table,i: '<a class="stdlink" href="'+table.getparams(filters={'cts' : unicode(table.results[i].contestant.id)},page=1)+'">'+table.results[i].contestant.name+'</a>'),
@@ -75,7 +75,7 @@ def view(request, page_info):
             pmlist = Web.get_problem_mapping_list(contest=contest)
             pmlist.sort(key=lambda p: p.problem_mapping.code)
             pchoices = [[unicode(p.problem_mapping.id),p.problem_mapping.code+' ('+p.problem_mapping.title+')'] for p in pmlist]
-            self.fields.append(prf)
+            self.fields.append(prf) 
             self.filter_functions.append(FilterFunction(name='Problem',prefix='problem',choices=pchoices))
             if admin and problem:
                 schoices = [ [unicode(s.id),s.name] for s in TestSuite.filter(TestSuiteStruct(problem=problem.problem))]
@@ -104,6 +104,8 @@ def view(request, page_info):
                 self.fields.append(TableField(name='Status',value=(lambda table,i: table.results[i].status),
                                           render=(lambda table,i: '<div class="submitstatus"><div class="sta'+unicode(table.results[i].status)+'">'+unicode(table.results[i].status)+'</div></div>')
                                           ,id=5,css='status'))
+                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="crib_1" value="'+unicode(table.results[i].submit.id)+'"/>'),id='crib_1'))
+                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="crib_2" value="'+unicode(table.results[i].submit.id)+'"/>'),id='crib_2'))
             else:
                 self.fields.append(TableField(name=suite1.name,value='',
                                           render=statusfunction(suite1)
@@ -113,7 +115,6 @@ def view(request, page_info):
                                           ,id=7,css='status'))
                 suitediff = TableField(name='Different',value=different, render=different_render,id='suitediff',css=['description','centered'])
                 self.fields.append(suitediff)
-                self.add_autofilter(suitediff)
             def suite_results(table,i):
                 r = table.results[i]
                 return '<br/>'.join([tsr.test_suite.name+': '+tsr.test_suite_result.status for tsr in r.test_suite_results])
@@ -127,4 +128,4 @@ def view(request, page_info):
             if admin and not compsuite:
                 self.filter_functions.append(FilterFunction(prefix='allsuites',name='Show results on',choices=[('0','Default suite'),('1','All suites')],default='0',showall=False))
     results = SubmitsTable(req = request.GET,prefix='results')
-    return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results })
+    return render_to_response('findcribs.html',{ 'page_info' : page_info, 'resultsplus' : results })

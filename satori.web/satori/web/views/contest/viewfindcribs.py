@@ -117,7 +117,7 @@ def diff(request, page_info):
             if line[0]=='-':
                 css = 'highlight_neg'
             diff_html += '<span class="'+css+'">'+escape(line)+'</span>'
-    return render_to_response('viewdiff.html',{'page_info' : page_info, 'submits' : submits, 'diff' : diff_html, 'status_bar' : bar})
+    return render_to_response('viewdiffcribs.html',{'page_info' : page_info, 'submits' : submits, 'diff' : diff_html, 'status_bar' : bar})
         
 @contest_view
 def override(request, page_info, id):
@@ -161,5 +161,5 @@ def override(request, page_info, id):
         code = text2html(u'::\n\n'+''.join(u'  '+s for s in rawcode.splitlines(True)))
     else:
         code = None
-    return render_to_response('result_override.html',{'page_info' : page_info, 'form' : form, 'submit' : res, 'filename': filename, 'code' : code, 'report' : report})
+    return render_to_response('findcribs_override.html',{'page_info' : page_info, 'form' : form, 'submit' : res, 'filename': filename, 'code' : code, 'report' : report})
     
