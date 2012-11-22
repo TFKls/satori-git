@@ -5,12 +5,13 @@ from satori.web.utils.decorators import contest_view
 from satori.web.utils.tables import *
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
+from django.http import HttpResponseRedirect
 from django import forms
 
 @contest_view
 def view(request, page_info):
     contest = page_info.contest
-    admin = page_info.contest_is_admin
+    admin = page_info.contest_is_admin 
     class SubmitsTable(ResultTable):
        
         def length(self):
@@ -104,9 +105,6 @@ def view(request, page_info):
                 self.fields.append(TableField(name='Status',value=(lambda table,i: table.results[i].status),
                                           render=(lambda table,i: '<div class="submitstatus"><div class="sta'+unicode(table.results[i].status)+'">'+unicode(table.results[i].status)+'</div></div>')
                                           ,id=5,css='status'))
-#radiobuttonscribs
-                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="crib_1" value="'+unicode(table.results[i].submit.id)+'"/>'),id='crib_1'))
-                self.fields.append(TableField(name='',value='',render=(lambda table,i: '<input type="radio" name="crib_2" value="'+unicode(table.results[i].submit.id)+'"/>'),id='crib_2'))
             else:
                 self.fields.append(TableField(name=suite1.name,value='',
                                           render=statusfunction(suite1)
@@ -129,4 +127,45 @@ def view(request, page_info):
             if admin and not compsuite:
                 self.filter_functions.append(FilterFunction(prefix='allsuites',name='Show results on',choices=[('0','Default suite'),('1','All suites')],default='0',showall=False))
     results = SubmitsTable(req = request.GET,prefix='results')
-    return render_to_response('findcribs.html',{ 'page_info' : page_info, 'resultsplus' : results })
+#    return render_to_response('findcribs.html',{ 'page_info' : page_info, 'resultsplus' : results })\
+
+
+#part two:
+    submitable = [["",'Select a problem']]
+    algo = [["0","C++ Check"]]
+    suitetable = [["",'Select a suite']]
+    problems = ProblemMapping.filter(ProblemMappingStruct(contest=contest))
+    problems.sort(key=lambda p: p.code)
+    for problem in problems:
+        if Privilege.demand(problem,"SUBMIT"):#ask gucio
+            submitable.append((problem.id, problem.code+": "+problem.title))
+
+    suits = TestSuite.filter(TestSuiteStruct(problem=problem))
+    suits.sort(key=lambda p: p.code)
+
+    for suite in suits:
+        suitetable.append((suite.id, suite.code": "+suite.title))
+
+    class ComparisonForm(forms.Form):
+        problem = forms.ChoiceField(submitable,label='Please select problem')
+        algorithm = forms.ChoiceField(algo, label='Please select algorithm')
+        test_suite = forms.ChoiceField(suitetable, label='Please select test suite')
+        regexp = forms.CharField(max_length=64)
+        
+            
+    if request.method == "POST":
+        form = ComparisonForm(request.POST,request.FILES)
+        if form.is_valid():
+            data = form.cleaned_data
+            pid = int(data["problem"])
+            problem = ProblemMapping.filter(ProblemMappingStruct(id=pid))[0]
+            algorithm = int(data["algorithm"])
+            test_suite = _id(0) #data["test_suite"]
+            regexp = data["regexp"]
+
+            Comparison.create(ComparisonStruct(problem=problem, algorithm=algorithm, test_suite=test_suite, regexp=regexp))
+            return HttpResponseRedirect(reverse('results',args=[page_info.contest.id]))
+    else:
+        form = ComparisonForm(initial={'problem' : request.GET.get('select',None), 'algorithm' : "0", 'test_suite' : "test_suite", 'regexp' : "regexp"})
+    
+    return render_to_response('findcribs.html',{ 'page_info' : page_info, 'resultsplus' : results, 'form' : form})
