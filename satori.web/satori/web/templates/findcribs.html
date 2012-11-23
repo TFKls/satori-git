@@ -3,31 +3,6 @@
 {% block content %}
 
 
-<h2>FindCribs</h2>
-
-{%if findcribs.showdiff %} <form action="{% url findcribs_diff page_info.contest.id %}" method="GET"> {% endif %}
-
-<table class="resultsplus">
-    {{ resultsplus.render_table|safe }}
-</table>
-<div class="button_bar">
-{%if findcribs.showdiff %}  
-    <input class="button" value="Compare" type="submit"/>
-    </form>
-    <a class="button" href="{{ resultsplus.difflink }}">Hide diff</a>
-{% else %}
-    <a class="button" href="{{ resultsplus.difflink }}">Compare submits</a>
-{% endif %}
-</div>
-    {{ resultsplus.render_scrollbar|safe }}
-    {{ resultsplus.render_filters|safe }}
-
-{%if noproblems %}
-
-No problems to submit!
-
-{%else%}
-<hr>
 <h3>Make </h3>
 <form action="{% url findcribs page_info.contest.id %}" method="post" enctype="multipart/form-data">
 <table>
@@ -35,6 +10,6 @@ No problems to submit!
 </table>
 <input class="button" type="submit" value="Submit"/>
 </form>
-{%endif%}
+
 
 {% endblock %}

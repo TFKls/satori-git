@@ -1,5 +1,6 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+#import datetime
 from django.db import models
 
 from satori.core.dbev  import Events
@@ -24,10 +25,13 @@ class Comparison(Entity):
     algorithm       = models.IntegerField(default=0, choices=ALGORITHM_CHOICES)
     test_suite      = models.ForeignKey('TestSuite', related_name='comparisons+', on_delete=models.PROTECT)
     regexp          = models.CharField(max_length=64, unique=False)
+    creation_date   = models.DateTimeField(auto_now_add=True)
+    execution_date  = models.DateTimeField(null=True)
+    
     
 
     class ExportMeta(object):
-        fields = [('problem', 'VIEW'), ('algorithm', 'VIEW'), ('test_suite', 'VIEW'), ('regexp', 'VIEW')]
+        fields = [('problem', 'VIEW'), ('algorithm', 'VIEW'), ('test_suite', 'VIEW'), ('regexp', 'VIEW'), ('creation_date', 'VIEW'), ('execution_date', 'VIEW')]
 
     class RightsMeta(object):
         inherit_parent = 'problem'
@@ -50,15 +54,16 @@ class Comparison(Entity):
     @staticmethod
     def create(fields):
         comparison = Comparison()
-        comparison.forbid_fields(fields, ['id'])
+        comparison.forbid_fields(fields, ['id', 'creation_date'])
         comparison.update_fields(fields, ['problem', 'algorithm', 'test_suite', 'regexp'])
         comparison.save()
         return comparison
         
     @ExportMethod(DjangoStruct('Comparison'), [DjangoId('Comparison'), DjangoStruct('Comparison')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        self.forbid_fields(fields, ['id'])
+        self.forbid_fields(fields, ['id', 'creation_date'])
         self.update_fields(fields, ['problem', 'algorithm', 'test_suite', 'regexp'])
+        self.execution_date = datetime.datetime.now()
         self.save()
         return self
 
