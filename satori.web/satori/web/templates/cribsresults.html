@@ -1,0 +1,18 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+
+<h2>CribsResults</h2>
+
+
+
+<table class="resultsplus">
+    {{ resultsplus.render_table|safe }}
+</table>
+</div>
+    {{ resultsplus.render_scrollbar|safe }}
+    {{ resultsplus.render_filters|safe }}
+
+
+{% endblock %}
