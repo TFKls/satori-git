@@ -28,7 +28,7 @@ def view(request, page_info):
     problems = ProblemMapping.filter(ProblemMappingStruct(contest=contest))
     problems.sort(key=lambda p: p.code)
     for problem in problems:
-        if Privilege.demand(problem, "MANAGE"):#ask gucio
+        if Privilege.demand(problem, "MANAGE"):
             submitable.append((problem.id, problem.code+": "+problem.title))
 
     if request.REQUEST.get('problem', '') != '':
@@ -65,9 +65,9 @@ def view(request, page_info):
             test_suite = TestSuite(int(data["test_suite"]))
             regexp = data["regexp"]
 
-            Comparison.create(ComparisonStruct(problem=problem, algorithm=algorithm, test_suite=test_suite, regexp=regexp))
-            return HttpResponseRedirect(reverse('results',args=[page_info.contest.id]))
+            Comparison.create(ComparisonStruct(problem_mapping=problem, algorithm=algorithm, test_suite=test_suite, regexp=regexp))
+            return HttpResponseRedirect(reverse('findcribs',args=[page_info.contest.id]))
     else:
         form = ComparisonForm(initial={'refresh': None, 'problem' : request.GET.get('problem',None), 'algorithm' : request.GET.get('algorithm', "0"), 'test_suite' : request.GET.get('test_suite', 0), 'regexp' : request.GET.get('regexp', '')})
     
-    return render_to_response('findcribs.html',{ 'page_info' : page_info, 'resultsplus' : results, 'form' : form})
+    return render_to_response('findcribs.html',{ 'page_info' : page_info, 'form' : form})

@@ -21,7 +21,7 @@ class Comparison(Entity):
 		(1, 'other ;) '),
 	)
 
-    problem         = models.ForeignKey('Problem', related_name='comparisons+', on_delete=models.PROTECT)
+    problem_mapping = models.ForeignKey('ProblemMapping', related_name='comparisons+', on_delete=models.PROTECT)
     algorithm       = models.IntegerField(default=0, choices=ALGORITHM_CHOICES)
     test_suite      = models.ForeignKey('TestSuite', related_name='comparisons+', on_delete=models.PROTECT)
     regexp          = models.CharField(max_length=64, unique=False)
@@ -31,38 +31,37 @@ class Comparison(Entity):
     
 
     class ExportMeta(object):
-        fields = [('problem', 'VIEW'), ('algorithm', 'VIEW'), ('test_suite', 'VIEW'), ('regexp', 'VIEW'), ('creation_date', 'VIEW'), ('execution_date', 'VIEW')]
+        fields = [('problem_mapping', 'VIEW'), ('algorithm', 'VIEW'), ('test_suite', 'VIEW'), ('regexp', 'VIEW'), ('creation_date', 'VIEW'), ('execution_date', 'VIEW')]
 
     class RightsMeta(object):
-        inherit_parent = 'problem'
+        inherit_parent = 'problem_mapping'
         inherit_parent_MANAGE = ['MANAGE']
 
     @classmethod
     def inherit_rights(cls):
         inherits = super(Comparison, cls).inherit_rights()
-        cls._inherit_add(inherits, 'MANAGE', 'problem', 'MANAGE')
+        cls._inherit_add(inherits, 'MANAGE', 'problem_mapping', 'MANAGE')
         return inherits
         
     def save(self, *args, **kwargs):
-        self.fixup_appearance()
         super(Comparison, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
 
-    @ExportMethod(DjangoStruct('Comparison'), [DjangoStruct('Comparison')], PCArgField('fields', 'problem', 'MANAGE'), [CannotSetField])
+    @ExportMethod(DjangoStruct('Comparison'), [DjangoStruct('Comparison')], PCArgField('fields', 'problem_mapping', 'MANAGE'), [CannotSetField])
     @staticmethod
     def create(fields):
         comparison = Comparison()
         comparison.forbid_fields(fields, ['id', 'creation_date'])
-        comparison.update_fields(fields, ['problem', 'algorithm', 'test_suite', 'regexp'])
+        comparison.update_fields(fields, ['problem_mapping', 'algorithm', 'test_suite', 'regexp'])
         comparison.save()
         return comparison
         
     @ExportMethod(DjangoStruct('Comparison'), [DjangoId('Comparison'), DjangoStruct('Comparison')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'creation_date'])
-        self.update_fields(fields, ['problem', 'algorithm', 'test_suite', 'regexp'])
+        self.update_fields(fields, ['problem_mapping', 'algorithm', 'test_suite', 'regexp'])
         self.execution_date = datetime.datetime.now()
         self.save()
         return self
