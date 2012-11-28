@@ -140,11 +140,11 @@ class ACMAggregator(AggregatorBase):
                 self.params = self.score.aggregator.problem_params[problem.id]
 
             def aggregate(self, result):
+                if self.params.ignore:
+                    return
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') in ['OK', 'ACC']
                 if self.params.time_stop and time > self.params.time_stop:
-                    return
-                if self.params.ignore:
                     return
                 if ok:
                     self.ok = True
@@ -263,13 +263,13 @@ class ACMBoardAggregator(AggregatorBase):
                 self.ignored = self.agr_params.ignored.split(',')
 
             def aggregate(self, result):
+                if self.params.ignore:
+                    return
                 time = self.score.aggregator.submit_cache[result.submit_id].time
                 ok = result.oa_get_str('status') in ['OK', 'ACC']
                 if result.oa_get_str('status') in self.ignored:
                     return
                 if self.params.time_stop and time > self.params.time_stop:
-                    return
-                if self.params.ignore:
                     return
                 after_freeze = (self.agr_params.time_freeze) and (time > self.agr_params.time_freeze)
                 self.trials += 1
@@ -943,9 +943,9 @@ class BaloonAggregator(AggregatorBase):
                 self.agr_params = self.score.aggregator.params
 
             def aggregate(self, result):
-                if self.ok:
-                    return
                 if self.params.ignore:
+                    return
+                if self.ok:
                     return
                 ok = result.oa_get_str('status') in ['OK', 'ACC']
                 if not ok:
