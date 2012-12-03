@@ -1,6 +1,6 @@
 #!/bin/bash
 
-for TYPE in server; do
+for TYPE in generic server; do
     echo ${TYPE}
     VER=`ls system/lib/modules |grep "${TYPE}" |sort |tail -n 1`
     if [ -z "${VER}" ]; then
@@ -15,7 +15,10 @@ for TYPE in server; do
         mv "${VER}"/initrd/lib/modules/"${V}" "${VER}"/initrd/lib/modules/"${VER}"
     fi
     cp -a system/boot/vmlinuz-"${VER}" "${VER}"/vmlinuz
-    ./update-modules.pl "${VER}" system/lib/modules/"${VER}"
+    chmod 644 "${VER}"/vmlinuz
+    cp -a system/lib/firmware/"${VER}" "${VER}"/initrd/lib/firmware
+    ./update-modules.pl "${VER}"/initrd/lib/modules/"${VER}" system/lib/modules/"${VER}"
+    ./update-modules.pl "${VER}"/initrd/lib/firmware system/lib/firmware
     cd "${VER}"
     ./umount.sh
     cd ..

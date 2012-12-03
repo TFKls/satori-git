@@ -1,2 +1,0 @@
-/scripts/casper-premount/10driver_updates
-[ -e /conf/param.conf ] && . /conf/param.conf

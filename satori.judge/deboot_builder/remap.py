@@ -99,10 +99,21 @@ passwd_names = dict([ (p.name, p.uid) for p in correct.passwd.values() ])
 
 group_new = dict()
 passwd_new = dict()
+ok = True
 for g in current.group.values():
-	group_map[g.gid] = group_names[g.name]
+    if g.name in group_names:
+	    group_map[g.gid] = group_names[g.name]
+	else:
+		print 'Group ', g.name, ' is incorrect'
+		ok = False
 for p in current.passwd.values():
-	passwd_map[p.uid] = passwd_names[p.name]
+    if p.name in passwd_names:
+    	passwd_map[p.uid] = passwd_names[p.name]
+    else:
+		print 'User ', p.name, ' is incorrect'
+		ok = False
+if not ok:
+	sys.exit(1)
 free_group = 2000
 free_passwd = 2000
 while free_group in current.group:

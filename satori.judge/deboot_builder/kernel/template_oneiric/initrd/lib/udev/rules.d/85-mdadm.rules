@@ -1,6 +1,0 @@
-# This file causes block devices with Linux RAID (mdadm) signatures to
-# automatically cause mdadm to be run.
-# See udev(8) for syntax
-
-SUBSYSTEM=="block", ACTION=="add|change", ENV{ID_FS_TYPE}=="linux_raid*", \
-	RUN+="/sbin/mdadm --incremental $env{DEVNAME}"

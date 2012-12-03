@@ -1,5 +1,0 @@
-#! /bin/sh
-
-if [ -d /root/usr/share/kubuntu-mobile-default-settings/ ]; then
-    cp /root/usr/share/kubuntu-mobile-default-settings/share/nodm /root/etc/default/nodm
-fi

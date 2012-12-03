@@ -79,4 +79,10 @@ _cvsadmin:x:144:
 scanner:x:145:colord
 greylist:x:146:Debian-exim
 kdm:x:147:
+vboxsf:x:148:
+postfix:x:149:
+postdrop:x:150:
+whoopsie:x:151:
+nslcd:x:152:
+mlocate:x:153:
 nogroup:x:65534:

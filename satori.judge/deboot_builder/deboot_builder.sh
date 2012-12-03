@@ -1,5 +1,5 @@
 #!/bin/bash
-# vim:ts=2:sts=2:sw=2:expandtab
+#vim:ts=2:sts=2:sw=2:expandtab
 unset DEBCONF_REDIR
 unset DEBIAN_HAS_FRONTEND
 export DEBIAN_PRIORITY=critical
@@ -38,21 +38,22 @@ if [ -z "${ARCH}" ]; then
   ARCH=amd64
 fi
 if [ -z "${DIST}" ]; then
-  DIST=oneiric
+  DIST=precise
 fi
 INC=aptitude,locales
 LOC=en_US.UTF-8
 JUDGE="gcc g++ gcc-4.4 g++-4.4 fp-compiler openjdk-6-jdk a2ps iptables python-yaml libpopt-dev libcap-dev libcurl4-openssl-dev libyaml-dev time libgmp3-dev make"
-CHECKER="${JUDGE} linux-image-server linux-headers-server smartmontools mdadm lvm2 ssh nfs-client vim screen mc rsync bash-completion psmisc mercurial debootstrap squashfs-tools tshark nmap ethtool iptraf ctorrent atftp lzma lshw memtest86+ strace telnet usbutils command-not-found language-pack-en"
-UZI="${JUDGE} linux-server linux-headers-server nscd dkms openssh-server rsync xubuntu-desktop xorg xserver-xorg-video-vesa lzma lshw memtest86+ strace telnet usbutils xserver-xorg-video-all command-not-found language-pack-en firefox icedtea-plugin vim emacs geany geany-plugins mc gedit kate konsole gdb nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm libsdl1.2debian-pulseaudio dconf-tools openjdk-6-doc acroread"
-DEBIAN="${UZI} linux-image-amd64 vim gnome"
-FULL="${CHECKER} ${UZI} dmraid rdate casper libstdc++5"
-FULL="${FULL} eclipse eclipse-jdt ftp meld kwrite kdbg"
-FULL="${FULL} nscd ldap-utils ldap-auth-client libnss-ldap libpam-afs-session libpam-krb5 krb5-user libpam-ldap libpam-mount libpam-ssh openafs-client openafs-krb5 rdiff-backup squashfs-tools sshfs smbfs"
+CHECKER="${JUDGE} linux-image-generic linux-headers-generic smartmontools mdadm lvm2 ssh nfs-client vim screen mc rsync bash-completion psmisc mercurial debootstrap squashfs-tools tshark nmap ethtool iptraf ctorrent atftp lzma lshw memtest86+ strace telnet usbutils command-not-found language-pack-en network-manager subversion unzip mercurial"
+UZI="${JUDGE} linux-image-generic openssh-server rsync ubuntu-desktop indicator-applet-complete indicator-session indicator-datetime-gtk2 unity-lens-applications unity-lens-files xserver-xorg-video-all command-not-found language-pack-en gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm dconf-tools openjdk-6-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate"
+FULL="${CHECKER} ${UZI} dmraid rdate casper libstdc++5 jenkins clang"
+FULL="${FULL} firefox icedtea-plugin eclipse eclipse-cdt acroread"
+FULL="${FULL} gnome-desktop-environment gnome-shell gnome-applets gnome-backgrounds gnome-control-center gnome-do gnome-games gnome-system-tools gnome-themes-ubuntu gnome-utils gnome-video-effects"
+FULL="${FULL} ftp meld kwrite kdbg kate konsole"
+FULL="${FULL} nscd ldap-utils ldap-auth-client libnss-ldapd libpam-afs-session libpam-krb5 krb5-user libpam-ldap libpam-mount openafs-client openafs-krb5 rdiff-backup squashfs-tools sshfs smbfs fuse-exfat"
 FULL="${FULL} aspell-en aspell-pl language-pack-pl language-pack-en language-pack-gnome-pl language-pack-gnome-en language-pack-kde-pl language-pack-kde-en myspell-en-us myspell-en-gb myspell-pl"
 FULL="${FULL} bash-completion openvpn finger"
-FULL="${FULL} libtool autotools-dev autoconf binutils-dev automake bison cmake dpatch ddd flex indent m4 monodevelop nasm ocaml cervisia codelite doxygen intltool intltool-debian ipython libboost-dev php5-cli rails rhino jedit"
-FULL="${FULL} postgresql-client sqlite3 python-virtualenv python-scipy"
+FULL="${FULL} libtool autotools-dev autoconf binutils-dev automake bison cmake dpatch ddd flex indent m4 monodevelop mono-mcs mono-gmcs nasm ocaml cervisia codelite doxygen intltool intltool-debian ipython libboost-dev php5-cli rails rhino jedit"
+FULL="${FULL} postgresql-client pgadmin3 sqlite3 python-virtualenv python-scipy"
 FULL="${FULL} avant-window-navigator"
 FULL="${FULL} alien dpkg-dev arj debootstrap bc bcrypt mcrypt cabextract zip unzip rar unrar ctorrent lzip lzma make nfs-client smartmontools mdadm lvm2 lsof p7zip-full pwgen zoo lha unace unshield"
 FULL="${FULL} lynx elinks alpine wget mutt w3m procmail ncftp hexedit curl"
@@ -66,23 +67,25 @@ FULL="${FULL} ffmpeg flashplugin-installer mplayer mencoder w64codecs x264 smpla
 FULL="${FULL} frozen-bubble gnome-games"
 FULL="${FULL} kadu kdesvn konwert krusader kile digikam dolphin pidgin kfind"
 FULL="${FULL} latex2html texlive-full latexdraw latex2rtf html2text html2ps pdfjam texmaker texpower"
-FULL="${FULL} cups-pdf exif expect gnome-genius gnokii gnome-commander parcellite screenlets"
+FULL="${FULL} cups-pdf exif expect gnome-genius gnokii gnome-commander clipit screenlets"
 FULL="${FULL} xfig xnest xpdf xvfb xvnc4viewer geeqie imagemagick"
 FULL="${FULL} gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly"
 FULL="${FULL} scilab r-recommended"
 FULL="${FULL} skype virtualbox virtualbox-guest-additions virtualbox-guest-utils wine nautilus-dropbox nautilus-open-terminal lastfm"
 FULL="${FULL} ttf-unifont msttcorefonts"
-FULL="${FULL} git mercurial libglew1.5 mysql-client ivy menu"
+FULL="${FULL} subversion git mercurial libglew1.5 mysql-client ivy menu"
 FULL="${FULL} orbit2 time gv openjpeg-tools"
-SERVER="${FULL} linux-server linux-headers-server linux-source vlan apt-cacher-ng apache2-mpm-prefork libapache2-mod-fcgid libapache2-mod-proxy-html libapache2-mod-auth-mysql apache2-suexec-custom php5-cgi php5-curl php5-gd php5-mysql php5-pgsql bittorrent clamav exim4 exim4-daemon-heavy greylistd srs memcached memtest86+ memtester nfs-kernel-server php5 quota quotatool spamassassin tinyca tinyproxy wakeonlan ntp atftpd subversion-tools mercurial-server trac trac-mercurial bittorrent trac-bitten ant maven2 ivy ant-contrib python-zc.buildout postgresql mysql-server"
-SERVER="${SERVER} neatx-server libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev libevent-dev libplot-dev libplplot-dev libzbar-dev libqrencode-dev libgsl0-dev libhighgui-dev libopenjpeg-dev libsfml-dev libcsfml-dev libfreeimage-dev"
+FULL="${FULL} mlton shutter libboost-all-dev devscripts evtest mesa-utils ekg2 clusterssh tmux"
+SERVER="${FULL} linux-source vlan apt-cacher-ng nginx apache2-mpm-prefork libapache2-svn libapache2-mod-fcgid libfcgi-perl libfcgi-ruby1.8 libapache2-mod-proxy-html libapache2-mod-auth-mysql apache2-suexec-custom php5-cgi php5-curl php5-gd php5-mysql php5-pgsql bittorrent clamav exim4 exim4-daemon-heavy greylistd srs memcached memtest86+ memtester nfs-kernel-server php5 quota quotatool spamassassin tinyca tinyproxy wakeonlan ntp atftpd subversion-tools mercurial-server trac trac-mercurial bittorrent trac-bitten ant maven2 ivy ant-contrib python-zc.buildout postgresql mysql-server"
+SERVER="${SERVER} libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev libevent-dev libplot-dev libplplot-dev libzbar-dev libqrencode-dev libgsl0-dev libhighgui-dev libopenjpeg-dev libsfml-dev libcsfml-dev libfreeimage-dev libavdevice-dev libavfilter-dev libpostproc-dev libcgal-dev libtheora-dev"
 SERVER="${SERVER} ruby-dev libruby libfcgi-dev fcgiwrap"
-SERVER="${SERVER} python-django python-psycopg2 python-mysqldb ubuntu-desktop kubuntu-desktop xubuntu-desktop"
+SERVER="${SERVER} python-django python-psycopg2 python-mysqldb ubuntu-desktop kubuntu-desktop xubuntu-desktop qt-sdk"
 DIR="${MYDIR}/${DIST}_${ARCH}_debooted"
 TMP="${MYDIR}/.${DIST}_${ARCH}.tmp"
+ABORT="${MYDIR}/.abort"
 APTCACHER="http://149.156.75.213:3142"
 KEYSERVER="keyserver.ubuntu.com"
-FORBID="apparmor global postfix"
+FORBID="apparmor"
 
 
 SOURCES="${DIR}"/etc/apt/sources.list
@@ -103,9 +106,16 @@ function uniq_pack_list
 JUDGE=`uniq_pack_list $JUDGE`
 CHECKER=`uniq_pack_list $CHECKER`
 UZI=`uniq_pack_list $UZI`
-DEBIAN=`uniq_pack_list $DEBIAN`
 FULL=`uniq_pack_list $FULL`
 SERVER=`uniq_pack_list $SERVER`
+
+function finalize
+{
+  umount -l "${DIR}"/{proc,sys,dev}
+  umount -l "${DIR}"
+  rm -rf "${TMP}"
+  return 0
+}
 
 function run_inside_child
 {
@@ -153,14 +163,11 @@ function run_inside
   rm -rf "${tmp_dir}"
   restore_init
   return $result
-}
-
-function finalize
-{
-  umount -l "${DIR}"/{proc,sys,dev}
-  umount -l "${DIR}"
-  rm -rf "${TMP}"
-  return 0
+  if [ -f "${ABORT}" ]; then
+    echo "File '${ABORT}' exists. Aborting. "
+    finalize
+    exit 1
+  fi
 }
 
 function initialize
@@ -190,8 +197,33 @@ function restore
   F="${DIR}${FILE}"
   B=`basename "${FILE}"`
   B="${TMP}/${B}"
+  rm -f "${F}"
   mv "${B}" "${F}"
   return 0
+}
+
+function store_md5
+{
+  FILE="$1"
+  F="${DIR}${FILE}"
+  B=`basename "${FILE}"`
+  B="${TMP}/${B}.md5"
+  cat "${F}" |md5sum > "${B}"
+  return 0
+}
+
+function check_md5
+{
+  FILE="$1"
+  F="${DIR}${FILE}"
+  B=`basename "${FILE}"`
+  B="${TMP}/${B}.md5"
+  n=`cat "${F}" |md5sum`
+  t=`cat "${B}"`
+  if [ "$n" == "$t" ]; then
+    return 0
+  fi
+  return 1
 }
 
 function inject
@@ -203,42 +235,45 @@ function inject
 
 function store_conf
 {
-  for i in ${CONFFILES}; do
-    store "${i}"
+  for cf in ${CONFFILES}; do
+    store "${cf}"
   done
   return 0
 }
 
 function restore_conf
 {
-  for i in ${CONFFILES}; do
-    restore "${i}"
+  for cf in ${CONFFILES}; do
+    restore "${cf}"
   done
   return 0
 }
 
 function inject_conf
 {
-  for i in ${CONFFILES}; do
-    inject "${i}"
+  for cf in ${CONFFILES}; do
+    inject "${cf}"
   done
   return 0
 }
 
 function disable_init
 {
-  for i in ${UPSTARTFILES}; do
-    store "${i}"
-    echo "#!/bin/bash" >"${DIR}${i}"
-    echo "exit 0" >"${DIR}${i}"
-    chmod 755 "${DIR}${i}"
+  for usf in ${UPSTARTFILES}; do
+    store "${usf}"
+    echo "#!/bin/bash" >"${DIR}${usf}"
+    echo "exit 0" >>"${DIR}${usf}"
+    chmod 755 "${DIR}${usf}"
+    store_md5 "${usf}"
   done
 }
 
 function restore_init
 {
-  for i in ${UPSTARTFILES}; do
-    restore "${i}"
+  for usf in ${UPSTARTFILES}; do
+    if check_md5 "${usf}"; then
+      restore "${usf}"
+    fi
   done
 }
 
@@ -262,20 +297,25 @@ function initialize_full
 function make_squash
 {
   RES="$1"
-  run_inside aptitude -y clean
-  for l in `find "${DIR}"/var/log -type f`; do
-    :> "$l"
+  rm -rf "${DIR}"/etc/apt/sources.list.d/*
+  run_inside apt-get -y clean
+  for lf in `find "${DIR}"/var/log -type f`; do
+    :> "$lf"
   done
-  for f in `find "${DIR}"/root "${DIR}"/tmp "${DIR}"/var/crash -mindepth 1`; do
-    rm -rf "$f"
-  done
+  run_inside find /root /tmp /var/tmp /var/crash -mindepth 1 -exec rm -rf {} \;
+  run_inside find -L /run /var /tmp \( -type f -o -type s \) \( -name "*.pid" -o -name "*.sock" -o -name "lock" -o -name "*.lock" \) -exec rm -f {} \;
+
+  mkdir "${DIR}"/tmp/.X11-unix
+  chmod 777 "${DIR}"/tmp/.X11-unix
+  chmod o+t "${DIR}"/tmp/.X11-unix
 
 
   umount -l "${DIR}"/{proc,sys,dev}
   umount -l "${DIR}"
   store_conf
-  ./remap.py "${DIR}"
+  ./remap.py "${DIR}" || return 1
   rm -f "${RES}"
+  local OK
   OK=0
   mksquashfs "${DIR}" "${RES}" -noappend &&
   chmod 644 "${RES}" &&
@@ -297,6 +337,7 @@ function use_squash
   store "${APTCACHER_CONF}"
   finalize
   rm -rf "${DIR}"
+  local OK
   OK=0
   unsquashfs -dest "${DIR}" "${SRC}" &&
   OK=1
@@ -313,6 +354,7 @@ function use_squash
 function vbox_add
 {
   return 0
+  local OK
   OK=0
   mkdir -p "${TMP}"/VBoxGuestAdditions &&
   mount -o loop "${DIR}"/usr/share/virtualbox/VBoxGuestAdditions.iso "${TMP}"/VBoxGuestAdditions &&
@@ -332,80 +374,218 @@ function vbox_add
 function dkms_all
 {
   for KER in `ls "${DIR}"/lib/modules |sort`; do
-  ls "${DIR}"/usr/src |sed -e "s|\(.*\)-\(.*\)|\1 \2|" |while read line; do
-    MOD=`echo "$line" |cut -d " " -f 1`
-    VER=`echo "$line" |cut -d " " -f 2`
+  ls "${DIR}"/usr/src |sed -e "s|^\(.*\)-\([0-9.]*\)\$|OK \1 \2|" |grep "^OK" |while read line; do
+    MOD=`echo "$line" |cut -d " " -f 2`
+    VER=`echo "$line" |cut -d " " -f 3`
     CHK=`echo "${MOD}" |cut -d "-" -f 1`
     if [ "$CHK" == "linux" ]; then
       continue
     fi
-    echo "${MOD}" "${VER}" "${KER}"
-    run_inside dkms add -m "${MOD}" -v "${VER}"
-    run_inside dkms build -m "${MOD}" -v "${VER}" -k "${KER}"
-    run_inside dkms install -m "${MOD}" -v "${VER}" -k "${KER}"
+    if [ -d "${DIR}"/usr/src/"${MOD}"-"${VER}" ]; then
+      echo "${MOD}" "${VER}" "${KER}"
+      run_inside dkms add -m "${MOD}" -v "${VER}"
+      run_inside dkms build -m "${MOD}" -v "${VER}" -k "${KER}"
+      run_inside dkms install -m "${MOD}" -v "${VER}" -k "${KER}"
+    fi
   done
   done
 }
 
 function avcodec_extra
 {
-    list=`run_inside aptitude search "^lib[asp][vwo].*-extra-[0-9]" |cut -d " " -f 4 |grep "^lib" |xargs echo`
-    run_inside apt-get -y install $list
+    list=`run_inside aptitude search "^lib.*extra" |cut -d " " -f 4 |grep "^lib[aps][vow].*extra-[0-9]*\$" |xargs echo`
+    run_inside apt-get -f -y install $list
+}
+
+function wget_html
+{
+    wtfile=`mktemp --suffix .html`
+    wget --convert-links -O "${wtfile}" "$@" 2>/dev/null
+    wret="$?"
+    if [ "$wret" != "0" ]; then
+        return ${wret}
+    fi
+    cat "${wtfile}"
+    rm "${wtfile}"
+    return 0
+}
+
+function netbeans
+{
+    src=`wget_html "http://download.netbeans.org/netbeans/" |grep -i 'href="[^"]*/[0-9][0-9.]*/*"' |sed -e 's|.*href="\([^"]*/[0-9][0-9.]*/*\)".*|\1|i' |grep -v "7.2" |tail -n 1`
+    if [ -n "$src" ]; then
+        echo $src
+        src=`wget_html "${src}" |grep -i 'href="[^"]*/[a-z][a-z]*/*"' |tail -n 1 |sed -e 's|.*href="\([^"]*/[a-z][a-z.]*/*\)".*|\1|i'`
+        if [ -n "$src" ]; then
+        echo $src
+        src=`wget_html "${src}zip/" |grep -i 'href="[^"]*netbeans[^"]*ml.zip"' |tail -n 1 |sed -e 's|.*href="\([^"]*netbeans[^"]*ml.zip\)".*|\1|i'`
+        if [ -n "$src" ]; then
+            echo $src
+            wtfile=`mktemp --suffix .zip`
+            wget -O "${wtfile}" "$src" 2>/dev/null
+            unzip -d "${DIR}/opt" "${wtfile}"
+            cat > "${DIR}"/usr/local/bin/netbeans <<EOF
+#!/bin/bash
+exec /opt/netbeans/bin/netbeans "\$@"
+EOF
+            chmod 755 "${DIR}"/usr/local/bin/netbeans
+            rm "${wtfile}"
+        fi
+        fi
+    fi
+}
+
+function android
+{
+    src=`wget_html "http://developer.android.com/sdk/index.html" |grep -i 'href="[^"]*linux[^"]*tgz"' |tail -n 1 |sed -e 's|.*href="\([^"]*linux[^"]*tgz\)".*|\1|i'`
+    if [ -n "$src" ]; then
+        rm -rf "${DIR}"/opt/google/android
+        mkdir -p "${DIR}"/opt/google/android
+        echo "$src"
+        wget "$src" -O - 2>/dev/null | tar -C "${DIR}"/opt/google/android -x -z --strip-components 1
+        cat > "${DIR}"/usr/local/bin/android <<EOF
+#!/bin/bash
+exec /opt/google/android/tools/android "\$@"
+EOF
+        chmod 755 "${DIR}"/usr/local/bin/android
+        list=`run_inside android list sdk --extended |grep 'id:' |sed -e 's|.*"\([^"]*\)".*|\1|'`
+        inst=`for elem in $list; do if [[ "$elem" =~ google || "$elem" =~ intel ]]; then echo $elem; fi; done |sort |uniq |tr "\n" ","`
+
+        yes | run_inside android update sdk --no-ui --force --filter ${inst}platform,system-image,tool,platform-tool,doc,sample
+        cat > "${DIR}"/usr/local/bin/adb <<EOF
+#!/bin/bash
+exec /opt/google/android/platform-tools/adb "\$@"
+EOF
+        chmod 755 "${DIR}"/usr/local/bin/android "${DIR}"/usr/local/bin/adb
+    fi
+}
+
+function vmware
+{
+    cp -a vmware/VMware-Player* "${DIR}"/root/vmplayer.sh &&
+    chmod 755 "${DIR}"/root/vmplayer.sh &&
+    cp -a vmware/patch*.sh "${DIR}"/root/vmpatch.sh &&
+    chmod 755 "${DIR}"/root/vmpatch.sh &&
+    cp -a vmware/*.patch "${DIR}"/root
+    export VMWARE_EULAS_AGREED="yes"
+    run_inside /root/vmplayer.sh --console --required
+    unset VMWARE_EULAS_AGREED
+    run_inside /root/vmpatch.sh
+    KERNEL=`ls -1 "${DIR}"/lib/modules |head -n 1`
+    for MOD in `ls -1 "${DIR}"/usr/lib/vmware/modules/source |cut -d "." -f 1`; do
+        run_inside vmware-modconfig --console --build-mod -k "${KERNEL}" "${MOD}" /usr/bin/gcc /usr/src/linux-headers-"${KERNEL}"/include
+    done
 }
 
 function cuda_toolkit
 {
   cp -a cuda/NVIDIA-Linux*.run "${DIR}"/root/nvidiadriver.run &&
   chmod 755 "${DIR}"/root/nvidiadriver.run &&
-  cp -a cuda/cudatoolkit*.run "${DIR}"/root/cudatoolkit.run &&
-  chmod 755 "${DIR}"/root/cudatoolkit.run &&
-  cp -a cuda/cudatools*.run "${DIR}"/root/cudatools.run &&
-  chmod 755 "${DIR}"/root/cudatools.run &&
-  cp -a cuda/gpucomputingsdk*.run "${DIR}"/root/gpusdk.run &&
-  chmod 755 "${DIR}"/root/gpusdk.run
+  cp -a cuda/cuda_*.run "${DIR}"/root/cuda.run &&
+  chmod 755 "${DIR}"/root/cuda.run &&
+#  cp -a cuda/cudatoolkit*.run "${DIR}"/root/cudatoolkit.run &&
+#  chmod 755 "${DIR}"/root/cudatoolkit.run &&
+#  cp -a cuda/gpucomputingsdk*.run "${DIR}"/root/gpusdk.run &&
+#  chmod 755 "${DIR}"/root/gpusdk.run
 
-  run_inside apt-get -y install make perl-modules linux-headers-server
-  for TYPE in server; do
+#Options:
+#   -help               : Print help message
+#   -driver             : Install NVIDIA Display Driver
+#   -uninstall          : Uninstall NVIDIA Display Driver
+#   -toolkit            : Install CUDA 5.0 Toolkit
+#   -toolkitpath=<PATH> : Specify path for CUDA location (default: /usr/local/cuda-5.0)
+#   -samples            : Install CUDA 5.0 Samples
+#   -samplespath=<PATH> : Specify path for Samples location (default: /usr/local/cuda-5.0/samples)
+#   -silent             : Run in silent mode. Implies acceptance of the EULA
+#   -verbose            : Run in verbose mode
+#   -extract=<PATH>     : Extract individual installers from the .run file to PATH
+#   -optimus            : Install driver support for Optimus
+#   -override           : Overrides the installation checks (compiler, lib, etc)
+
+
+  run_inside apt-get -y install make perl-modules linux-headers-generic g++-4.4 gcc-4.4 dkms
+  for TYPE in generic; do
     echo ${TYPE}
     VER=`ls "${DIR}"/lib/modules |grep "${TYPE}" |sort |tail -n 1`
     if [ -z "${VER}" ]; then
         continue
     fi
-    run_inside /root/nvidiadriver.run --no-distro-scripts --no-cc-version-check --no-x-check --no-nouveau-check --no-network --no-runlevel-check --accept-license --no-backup --no-precompiled-interface --ui=none --no-questions -k "${VER}"
+    run_inside /root/nvidiadriver.run --no-distro-scripts --no-cc-version-check --no-x-check --no-nouveau-check --no-network --no-runlevel-check --accept-license --no-precompiled-interface --ui=none --no-questions -k "${VER}"
   done
-  mkdir -p "${DIR}"/usr/local/cuda
-  run_inside /root/cudatoolkit.run -- --prefix=/usr/local/cuda
-  run_inside /root/cudatools.run --
-  run_inside /root/gpusdk.run -- --prefix=/usr/local/cuda/NVIDIA_GPU_Computing_SDK
-  mkdir -p /usr/local/cuda/cc
-  ln -s /usr/bin/g++-4.4 /usr/local/cuda/cc
-  ln -s /usr/bin/gcc-4.4 /usr/local/cuda/cc
-  echo 'compiler-bindir  = $(TOP)/cc' >> /usr/local/cuda/nvcc.profile
-  cat > "${DIR}"/usr/local/bin/nvcc <<EOF
-  #!/bin/bash
-  exec /usr/local/cuda/bin/nvcc "$@"
+  echo "blacklist nouveau" > "${DIR}"/etc/modprobe.d/nvidia_nouveau.conf
+  if [ "$1" != "driver" -o -d "${DIR}"/usr/local/cuda ]; then
+      #mkdir -p "${DIR}"/usr/local/cuda
+      #run_inside /root/cudatoolkit.run -- --prefix=/usr/local/cuda
+      #run_inside /root/gpusdk.run -- --prefix=/usr/local/cuda/NVIDIA_GPU_Computing_SDK --cudaprefix=/usr/local/cuda
+      run_inside /root/cuda.run -toolkit -override -silent
+      run_inside /root/cuda.run -samples -override -silent
+      mkdir -p "${DIR}"/usr/local/cuda/cc
+      ln -s /usr/bin/g++-4.6 "${DIR}"/usr/local/cuda/cc/g++
+      ln -s /usr/bin/gcc-4.6 "${DIR}"/usr/local/cuda/cc/gcc
+      echo 'compiler-bindir  = $(TOP)/cc' >> "${DIR}"/usr/local/cuda/bin/nvcc.profile
+      cat > "${DIR}"/usr/local/bin/nvcc <<EOF
+#!/bin/bash
+exec /usr/local/cuda/bin/nvcc "\$@"
 EOF
-  chmod 755 "${DIR}"/usr/local/bin/nvcc
-  $( cd "${DIR}"/usr/local/bin
-  for i in ../cuda/bin/* ../cuda/open64/bin/* ../cuda/computeprof/bin/computeprof; do
-    if [ -x "$i" ]; then
-      ln -s "$i" "${DIR}"/usr/local/bin
-    fi
-  done
-  ln -s ../cuda/include "${DIR}"/usr/local/include/cuda
-  ln -s ../cuda/lib64/* "${DIR}"/usr/local/lib )
-  rm "${DIR}"/root/{nvidiadriver,cudatoolkit,cudatools,gpusdk}.run
+      chmod 755 "${DIR}"/usr/local/bin/nvcc
+      $( cd "${DIR}"/usr/local/bin
+      for ef in ../cuda/bin/* ../cuda/open64/bin/* ../cuda/computeprof/bin/computeprof ../cuda/libnvvp/nvvp ../cuda/nvvm/cicc; do
+        if [ -x "$ef" ]; then
+          ln -s "$ef" "${DIR}"/usr/local/bin
+        fi
+      done
+      ln -s ../cuda/lib64/* "${DIR}"/usr/local/lib
+      ln -s ../cuda/extras/CUPTI/lib64/* "${DIR}"/usr/local/lib )
+  fi
+  rm "${DIR}"/root/{nvidiadriver,cuda,cudatoolkit,gpusdk}.run
+  return 0
+}
+
+function satori_client
+{
+  cat > "${DIR}"/root/script.sh <<EOF
+#!/bin/bash
+mkdir -p /opt/satori
+cd /opt/satori
+virtualenv --no-site-packages .
+source bin/activate
+easy_install -U distribute
+hg clone --insecure "https://develro:XVxPqc99Rnsf@satori.tcs.uj.edu.pl/hg/satori" /tmp/satori
+for i in satori.objects satori.ars satori.client.common satori.tools ; do
+  (cd /tmp/satori/\$i ; python setup.py install )
+done
+EOF
+  chmod 755 "${DIR}"/root/script.sh
+  run_inside /root/script.sh
+  cat > "${DIR}"/usr/local/bin/satori.submit <<EOF
+#!/bin/bash
+. /opt/satori/bin/activate
+exec satori.submit "\$@"
+EOF
+  chmod 755 "${DIR}"/usr/local/bin/satori.submit
+  cat > "${DIR}"/usr/local/bin/satori.console <<EOF
+#!/bin/bash
+. /opt/satori/bin/activate
+exec satori.console "\$@"
+EOF
+  chmod 755 "${DIR}"/usr/local/bin/satori.console
+
+  cat > "${DIR}"/usr/local/bin/satori.tool <<EOF
+#!/bin/bash
+exec javaws -J-Xmx256M https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp
+EOF
+  chmod 755 "${DIR}"/usr/local/bin/satori.tool
+  rm -rf "${DIR}"/root/script.sh "${DIR}"/tmp/satori
+  return 0
 }
 
 function build_base
 {
+  local OK
   OK=0
   finalize
   rm -rf "${DIR}"
   apt_cache="${APTCACHER}/archive.ubuntu.com/ubuntu"
-  if [ "${DIST}" == "squeeze" ]; then
-    apt_cache="${APTCACHER}/ftp.debian.org/debian"
-  fi
   initialize &&
   debootstrap --arch="${ARCH}" --include "${INC}" "${DIST}" "${DIR}" "${apt_cache}" &&
   OK=1
@@ -424,8 +604,10 @@ function build_base
 
 function build_judge
 {
+  local OK
   OK=0
   ( [ -f "${DIR}"_base.squashfs ] || build_base ) &&
+  local OK
   use_squash "${DIR}"_base.squashfs &&
   initialize_full &&
   echo "deb http://archive.ubuntu.com/ubuntu ${DIST} main restricted universe multiverse" > "${SOURCES}" &&
@@ -438,6 +620,7 @@ function build_judge
   echo sun-java6-jre shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
   echo sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
   run_inside aptitude -y update &&
+  run_inside aptitude -y install upstart &&
   run_inside aptitude -y full-upgrade &&
   run_inside aptitude -y forget-new &&
   run_inside apt-get --no-install-recommends -y install ${JUDGE} &&
@@ -456,60 +639,19 @@ function build_judge
   return 1
 }
 
-function build_debian
-{
-  OK=0
-  use_squash "${DIR}"_base.squashfs &&
-  initialize_full &&
-  echo "deb http://ftp.debian.org/debian/ ${DIST} main non-free contrib" > "${SOURCES}" &&
-  echo "deb http://security.debian.org/ ${DIST}/updates main non-free contrib" >> "${SOURCES}" &&
-  echo "deb http://ftp.debian.org/debian/ ${DIST}-updates main non-free contrib" >> "${SOURCES}" &&
-  echo "deb http://backports.debian.org/debian-backports ${DIST}-backports main non-free contrib" >> "${SOURCES}" &&
-  echo "deb http://www.debian-multimedia.org ${DIST} main non-free" >> "${SOURCES}" &&
-  echo "deb http://live.debian.net/ ${DIST}-snapshots main contrib non-free" >> "${SOURCES}" &&
-  echo "deb http://download.virtualbox.org/virtualbox/debian ${DIST} non-free contrib" >> "${SOURCES}" &&
-  echo "deb http://deb.opera.com/opera stable non-free" >> "${SOURCES}" &&
-  echo "deb http://dl.google.com/linux/deb/ stable main" >> "${SOURCES}" &&
-  echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> "${SOURCES}" &&
-  echo "deb http://dl.google.com/linux/talkplugin/deb/ stable main" >> "${SOURCES}" &&
-  echo "deb http://linux.dropbox.com/debian ${DIST} main" >> "${SOURCES}" &&
-  echo "deb http://apt.last.fm/ debian stable" >> "${SOURCES}" &&
-  echo "Acquire::http::Proxy \"${APTCACHER}\";" > "${DIR}${APTCACHER_CONF}" &&
-  run_inside locale-gen "${LOC}" &&
-  echo sun-java6-jre shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
-  echo sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
-  echo acroread acroread/default-viewer select true | run_inside debconf-set-selections &&
-  find_missing_keys &&
-  run_inside aptitude -y full-upgrade &&
-  run_inside aptitude -y forget-new &&
-  (
-  run_inside apt-get -y install ${DEBIAN}
-  run_inside aptitude -y purge ${FORBID}
-  run_inside apt-get --no-install-recommends -y install ${DEBIAN}
-  exit $?
-  ) &&
-  OK=1
-  if [ "${OK}" == "1" ]; then
-    OK=0
-    make_squash "${DIR}"_debian.squashfs &&
-    OK=1
-  fi
-  finalize
-  if [ "${OK}" == "1" ]; then
-    return 0
-  fi
-  return 1
-}
-
 function find_missing_keys
 {
+  rm -rf "${DIR}"/etc/apt/sources.list.d/*
   run_inside aptitude -y update
-  find "${DIR}"/var/lib/apt/ -name "*.gpg" | while read l; do
+  find "${DIR}"/var/lib/apt/ -type f | while read l; do
+    key=`gpg --verify "$l" 2>&1 |head -n 1|sed -e "s|.* ||"`
+    echo "${key}"
     key=`gpg --verify "$l" "$l" 2>&1 |head -n 1|sed -e "s|.* ||"`
     echo "${key}"
-  done |sort |uniq |while read key; do
+  done > "${TMP}/KEYS"
+  cat "${TMP}/KEYS" |sort |uniq |sed -e "s|.*[^A-F0-9].*|NO|" |grep -v "NO" |while read key; do
     run_inside apt-key adv --keyserver "${KEYSERVER}" --recv-key "${key}"
-    gpg --ignore-time-conflict --no-options --no-default-keyring --secret-keyring /etc/apt/secring.gpg --trustdb-name /etc/apt/trustdb.gpg --keyring /etc/apt/trusted.gpg --primary-keyring /etc/apt/trusted.gpg --armor --export "${key}" |run_inside apt-key add -
+#    gpg --ignore-time-conflict --no-options --no-default-keyring --secret-keyring /etc/apt/secring.gpg --trustdb-name /etc/apt/trustdb.gpg --keyring /etc/apt/trusted.gpg --primary-keyring /etc/apt/trusted.gpg --armor --export "${key}" |run_inside apt-key add -
   done
   run_inside aptitude -y update
   return 0
@@ -517,6 +659,7 @@ function find_missing_keys
 
 function build_checker
 {
+  local OK
   OK=0
   ( [ -f "${DIR}"_judge.squashfs ] || build_judge ) &&
   use_squash "${DIR}"_judge.squashfs &&
@@ -525,8 +668,9 @@ function build_checker
   run_inside aptitude -y forget-new &&
   run_inside apt-get --no-install-recommends -y install ${CHECKER} &&
   cuda_toolkit &&
-  hg clone --insecure "https://develro:XVxPqc99Rnsf@satori.tcs.uj.edu.pl/hg/satori" "${DIR}"/opt/satori &&
-  run_inside /opt/satori/bootstrap_judge.sh &&
+  hg clone --insecure "https://develro:XVxPqc99Rnsf@satori.tcs.uj.edu.pl/hg/satori" "${DIR}"/tmp/satori &&
+  run_inside /tmp/satori/install_judge.sh &&
+  rm -rf "${DIR}"/tmp/satori &&
   OK=1
 
   if [ "${OK}" == "1" ]; then
@@ -544,22 +688,26 @@ function build_checker
 
 function build_uzi
 {
+  local OK
   OK=0
   ( [ -f "${DIR}"_judge.squashfs ] || build_judge ) &&
   ( [ -f "${DIR}"_checker.squashfs ] || build_checker ) &&
   use_squash "${DIR}"_judge.squashfs &&
   initialize_full &&
-  echo acroread acroread/default-viewer select true | run_inside debconf-set-selections &&
+#  echo acroread acroread/default-viewer select true | run_inside debconf-set-selections &&
+  echo "deb http://dl.google.com/linux/deb/ stable main" >> "${SOURCES}" &&
+  echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> "${SOURCES}" &&
+  echo "deb http://dl.google.com/linux/talkplugin/deb/ stable main" >> "${SOURCES}" &&
   find_missing_keys &&
   run_inside aptitude -y full-upgrade &&
   run_inside aptitude -y forget-new &&
   (
-  run_inside apt-get -y install ${UZI}
+  run_inside apt-get --no-install-recommends -y install ${UZI}
   run_inside aptitude -y purge ${FORBID}
   run_inside apt-get --no-install-recommends -y install ${UZI}
   exit $?
   ) &&
-  cuda_toolkit &&
+  cuda_toolkit driver &&
   dkms_all &&
   OK=1
 
@@ -578,9 +726,10 @@ function build_uzi
 
 function build_full
 {
+  local OK
   OK=0
   ( [ -f "${DIR}"_uzi.squashfs ] || build_uzi ) &&
-  use_squash "${DIR}"_uzi.squashfs &&
+  use_squash "${DIR}"_judge.squashfs &&
   initialize_full &&
   echo "deb http://archive.ubuntu.com/ubuntu ${DIST} main restricted universe multiverse" > "${SOURCES}" &&
   echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-updates main restricted universe multiverse" >> "${SOURCES}" &&
@@ -588,16 +737,17 @@ function build_full
   echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-backports main restricted universe multiverse" >> "${SOURCES}" &&
   echo "deb http://archive.canonical.com/ ${DIST} partner" >> "${SOURCES}" &&
   echo "deb http://packages.medibuntu.org/ ${DIST} free non-free" >> "${SOURCES}" &&
-  echo "deb http://ppa.launchpad.net/freenx-team/ppa/ubuntu lucid main" >> "${SOURCES}" &&
-  echo "deb http://download.virtualbox.org/virtualbox/debian ${DIST} non-free contrib" >> "${SOURCES}" &&
+#  echo "deb http://ppa.launchpad.net/freenx-team/ppa/ubuntu lucid main" >> "${SOURCES}" &&
+#  echo "deb http://download.virtualbox.org/virtualbox/debian ${DIST} non-free contrib" >> "${SOURCES}" &&
   echo "deb http://deb.opera.com/opera stable non-free" >> "${SOURCES}" &&
   echo "deb http://dl.google.com/linux/deb/ stable main" >> "${SOURCES}" &&
   echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> "${SOURCES}" &&
   echo "deb http://dl.google.com/linux/talkplugin/deb/ stable main" >> "${SOURCES}" &&
   echo "deb http://linux.dropbox.com/ubuntu ${DIST} main" >> "${SOURCES}" &&
-  echo "deb http://linux.dropbox.com/ubuntu natty main" >> "${SOURCES}" &&
   echo "deb http://apt.last.fm/ debian stable" >> "${SOURCES}" &&
+  echo "deb http://pkg.jenkins-ci.org/debian binary/" >> "${SOURCES}" &&
   echo "Acquire::http::Proxy \"${APTCACHER}\";" > "${DIR}${APTCACHER_CONF}" &&
+  run_inside apt-add-repository ppa:relan/exfat
   find_missing_keys &&
   run_inside locale-gen "pl_PL.UTF-8" &&
   echo acroread acroread/default-viewer select true | run_inside debconf-set-selections &&
@@ -605,26 +755,41 @@ function build_full
   run_inside aptitude -y forget-new &&
   (
     run_inside apt-get -y install ${FULL}
-    for package in ${FULL}; do
-      run_inside apt-get -y install ${package}
-    done
+    cat > ${DIR}/root/script <<EOF
+#!/bin/bash
+for package in `echo ${FULL} |tr "\n" " "`; do
+  apt-get -y install \${package}
+done
+EOF
+    chmod 755 ${DIR}/root/script
+    run_inside /root/script
     run_inside aptitude -y purge ${FORBID}
     run_inside apt-get --no-install-recommends -y install ${FULL}
-    exit $?
+    exit 0
   ) &&
-  run_inside update-java-alternatives -s openjdk-6 &&
-  cp -a debs "${DIR}"/root &&
+  run_inside update-java-alternatives -s java-1.6.0-openjdk-amd64 &&
   (
-    R=0
-    for i in debs/*.deb; do
-      run_inside dpkg -i /root/"${i}" || R=1
-    done
-    exit ${R}
+    cp -a "${MYDIR}"/debs "${DIR}"/root
+    cat > "${DIR}"/root/script <<EOF
+#!/bin/bash
+R=0
+echo "debscript"
+for deb in /root/debs/*.deb; do
+  dpkg -i "\${deb}" || R=1
+done
+exit "\$R"
+EOF
+    chmod 755 "${DIR}"/root/script
+    run_inside /root/script 
+    exit 0
   ) &&
   avcodec_extra &&
   dkms_all &&
   vbox_add &&
   cuda_toolkit &&
+  netbeans &&
+  satori_client &&
+  vmware &&
   OK=1
 
   if [ "${OK}" == "1" ]; then
@@ -642,6 +807,7 @@ function build_full
 
 function build_server
 {
+  local OK
   OK=0
   ( [ -f "${DIR}"_full.squashfs ] || build_full ) &&
   use_squash "${DIR}"_full.squashfs &&
@@ -652,37 +818,61 @@ function build_server
   echo "deb-src http://archive.ubuntu.com/ubuntu ${DIST}-backports main restricted universe multiverse" >> "${SOURCES}" &&
   echo "deb-src http://archive.canonical.com/ ${DIST} partner" >> "${SOURCES}" &&
   echo "deb-src http://packages.medibuntu.org/ ${DIST} free non-free" >> "${SOURCES}" &&
-  echo "deb-src http://ppa.launchpad.net/freenx-team/ppa/ubuntu lucid main" >> "${SOURCES}" &&
   find_missing_keys &&
   run_inside aptitude -y full-upgrade &&
   run_inside aptitude -y forget-new &&
   (
     run_inside apt-get -y install ${SERVER}
-    for package in ${SERVER}; do
-      run_inside apt-get -y install ${package}
-    done
+    cat > ${DIR}/root/script <<EOF
+#!/bin/bash
+for package in `echo ${SERVER} |tr "\n" " "`; do
+  apt-get -y install \${package}
+done
+for package in `echo ${SERVER} |tr "\n" " "`; do
+  apt-get -y build-dep \${package}
+done
+EOF
+    chmod 755 ${DIR}/root/script
+    run_inside /root/script
     run_inside aptitude -y purge ${FORBID}
     run_inside apt-get --no-install-recommends -y install ${SERVER}
-    for i in ${SERVER}; do
-      run_inside apt-get -y build-dep ${i}
-    done
-    run_inside aptitude -y purge winbind network-manager network-manager-gnome network-manager-pptp network-manager-pptp-gnome
-    for service in atftpd lightdm gdm kdm exim4 apt-cacher-ng memcached inetd tinyproxy ntp mysql postgres postgresql; do
-      run_inside update-rc.d -f $service remove
-      run_inside mv /etc/init/$service.conf /etc/init/$service.conf.DISABLED
+    for service in network-manager winbind atftpd bluetooth lightdm gdm kdm exim4 apt-cacher-ng memcached inetd tinyproxy ntp mysql postgres postgresql saned rlinetd postfix apache2 exim4 vmware vmware-USBArbitrator virtualbox virtualbox-guest-utils jenkins openvpn winbind nginx; do
+      run_inside update-rc.d -f $service disable
+      if [ -e ${DIR}/etc/init/$service.conf ]; then
+          echo "manual" > ${DIR}/etc/init/$service.override
+      fi
     done
     exit 0
   ) &&
-  cp -a debs_server "${DIR}"/root &&
   (
-    R=0
-    for i in debs_server/*.deb; do
-      run_inside dpkg -i /root/"${i}" || R=1
-    done
-    exit ${R}
+    cp -a "${MYDIR}"/debs_server "${DIR}"/root
+    cat > "${DIR}"/root/script <<EOF
+#!/bin/bash
+R=0
+echo "debscript"
+for deb in /root/debs_server/*.deb; do
+  dpkg -i "\${deb}" || R=1
+done
+exit "\$R"
+EOF
+    chmod 755 "${DIR}"/root/script
+    run_inside /root/script 
+    exit 0
+  ) &&
+  (
+    cat > "${DIR}"/usr/bin/nxagent <<EOF
+#!/bin/bash
+NX="/usr/NX"
+export PATH="\${NX}/bin:/usr/local/bin:/usr/bin:/bin"
+export LD_LIBRARY_PATH="\${NX}/lib"
+exec "\${NX}/bin/nxagent" "\$@"
+EOF
+    chmod 755 "${DIR}"/usr/bin/nxagent
+    exit 0
   ) &&
   dkms_all &&
   vbox_add &&
+  android &&
   OK=1
 
   if [ "${OK}" == "1" ]; then
@@ -702,14 +892,6 @@ function build_server
 if [ "$1" == "squash" ]; then
   initialize_full &&
   make_squash "${DIR}"_squash.squashfs
-  finalize
-  exit 0
-fi
-
-if [ "$1" == "dkms" ]; then
-  initialize_full &&
-  dkms_all &&
-  vbox_add
   finalize
   exit 0
 fi
@@ -745,11 +927,6 @@ if [ "$1" == "checker" ]; then
     exit 0
 fi
 
-if [ "$1" == "debian" ]; then
-    build_debian
-    exit 0
-fi
-
 if [ "$1" == "uzi" ]; then
     build_uzi
     exit 0
@@ -770,15 +947,17 @@ if [ "$1" == "clean" ]; then
     exit 0
 fi
 
-if [ "$1" == "cuda" ]; then
+if [ "$1" == "debug" ]; then
     initialize_full &&
-    avcodec_extra
+    #avcodec_extra
+    #netbeans
+    #cuda_toolkit
+    vmware
     finalize
     exit 0
 fi
 
-
 echo " --- ### $0 ### --- "
 echo " Usage: "
-echo " $0 squash | dkms | bash | call | base | judge | checker | debian | uzi | full | server | clean"
+echo " $0 squash | bash | call | base | judge | checker | uzi | full | server | clean"
 exit 1

@@ -9,8 +9,8 @@ my $src=$ARGV[1];
 my $modules = {};
 my $source = {};
 
-die "No kernel" unless -d "$dir/initrd/lib/modules";
-open M, "find $dir/initrd/lib/modules -type f |";
+die "No kernel" unless -d "$dir";
+open M, "find $dir -type f |";
 while(<M>)
 {
   chomp;
