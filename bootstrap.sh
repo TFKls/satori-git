@@ -8,7 +8,7 @@ unset PYTHONPATH
 
 virtualenv --no-site-packages --prompt=\(satori\) "$VENV" &&
 mkdir -p bin &&
-ln -s "../$VENV"/bin/activate* bin/activate &&
+find "$VENV/bin" -name "activate*" |while read a; do ln -s "../$a" bin; done &&
 source bin/activate &&
 easy_install -U distribute || exit 1
 
