@@ -40,6 +40,12 @@ options.add_option('--port', dest='control_port', default=8765, action='store', 
 def cribfinder_loop():
     while True:
         authenticate()
+        comparisons = Comparison.filter(ComparisonStruct(execution_date=null)
+        for comp in comparison:
+            print comp.regexp
+        print "End of test"
+        break;
+
         submit = Judge.get_next()
         if submit != None:
             tr = submit['test_result']
