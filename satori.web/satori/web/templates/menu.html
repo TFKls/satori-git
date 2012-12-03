@@ -26,6 +26,10 @@
 	    {% if page_info.contest_is_admin %}
                 <li><a href="{% url cribsresults page_info.contest.id %}">CribsResults</a></li>
             {% endif %} 
+
+	    {% if page_info.contest_is_admin %}
+                <li><a href="{% url showcribs page_info.contest.id %}">ShowCribs</a></li>
+            {% endif %} 
    
             {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
                 <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
