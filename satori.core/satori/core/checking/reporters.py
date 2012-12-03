@@ -235,6 +235,7 @@ class PointsReporter(ReporterBase):
         self.checked = 0
         self.passed = 0
         self.weighted = 0
+        self.normalized = 0
         self._status = ''
         self.reportlines = sortedlist(key=lambda row: row[0])
         self.test_suite_result.status = 'QUE'
