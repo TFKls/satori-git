@@ -1,7 +1,6 @@
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 
-from satori.judge.judge import JailBuilder, JailRun
 from satori.client.common import want_import
 want_import(globals(), '*')
 
@@ -40,71 +39,34 @@ options.add_option('--port', dest='control_port', default=8765, action='store', 
 def cribfinder_loop():
     while True:
         authenticate()
-        comparisons = Comparison.filter(ComparisonStruct(execution_date=null)
-        for comp in comparison:
+        print "Kurwa"
+        comparisons = Comparison.filter(ComparisonStruct(execution_date=None))
+        #comparisons = Comparison.filter()
+        for comp in comparisons:
             print comp.regexp
+            test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.regexp))
+            num = 0;
+            submits = []
+            for tsr in test_suite_res:
+                submit = Web.get_result_details(submit=tsr.submit)
+                submits.append(submit)
+                filetmp = open('tmp/'+str(num)+'.cpp', 'w')
+                num += 1
+                filetmp.write(submit.data)
+                filetmp.close() 
+            for i in range(0,num-2):
+                for j in rnage(i+1,num-1):
+                    result = compere('tmp/'+str(i)+'.cpp','tmp/'+str(j)+'.cpp',100)
+                    
+            compres = ComparisonResult()
+            ComparisonResult.modify(compres,scomparison=comp, submit_1 = submits[0], submit_2 = submits[1],result = 999.9)
+            comp.modify(comp)
+            break
+            #print comp.execution_date
         print "End of test"
-        break;
+        break
 
-        submit = Judge.get_next()
-        if submit != None:
-            tr = submit['test_result']
-            td = OaMap(submit['test_data'])
-            sd = OaMap(submit['submit_data'])
-
-            sub = {
-                'test_data' : td,
-                'submit_data' : sd,
-            }
-
-            template = 'default'
-            if td.get('template') and not td.get('template').is_blob:
-                template = str(td.get('template').value)
-
-            jb = JailBuilder(
-                root=options.jail_dir,
-                template=template,
-                template_path=options.template_dir)
-            try:
-                jb.create()
-                dst_path = os.path.join(options.jail_dir, 'judge')
-                if td.get('judge') and td.get('judge').is_blob:
-                    td.get_blob_path('judge', dst_path)
-                    os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
-                else:
-                    res = dict()
-                    res['status'] = {'is_blob':False, 'value':'INT'}
-                    res['description'] = {'is_blob':False, 'value':'No judge specified'}
-                    Judge.set_result(tr, res)
-                    continue
-                jr = JailRun(
-                    submit=sub,
-                    root=options.jail_dir,
-                    cgroup_path=options.cgroup_dir,
-                    template_path=options.template_dir,
-                    path='/judge',
-                    debug=options.debug,
-                    cgroup=options.cgroup,
-                    cgroup_memory=options.cgroup_memory,
-                    real_time=options.real_time,
-                    host_eth=options.host_eth,
-                    host_ip=options.host_ip,
-                    guest_eth=options.guest_eth,
-                    guest_ip=options.guest_ip,
-                    netmask=options.netmask,
-                    control_port=options.control_port,
-                    args = ['--control-host', options.host_ip, '--control-port', str(options.control_port)])
-                res = jr.run()
-                if options.debug:
-                    dh = Blob.create_path(options.debug)
-                    res['judge.log'] = {'is_blob':True, 'value':dh, 'filename': 'judge.log'}
-                Judge.set_result(tr, res)
-            except:
-                traceback.print_exc()
-            finally:
-                jb.destroy()
-        else:
-            time.sleep(options.retry_time)
+        
 
 def cribfinder_initialize():
     for res in [ resource.RLIMIT_CPU, resource.RLIMIT_FSIZE, resource.RLIMIT_DATA, resource.RLIMIT_STACK, resource.RLIMIT_RSS, resource.RLIMIT_NPROC, resource.RLIMIT_MEMLOCK, resource.RLIMIT_AS ]:
@@ -167,3 +129,4 @@ def cribfinder_init():
         traceback.print_exc()
     finally:
         cribfinder_finalize()
+cribfinder_loop()
