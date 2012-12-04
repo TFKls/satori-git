@@ -451,8 +451,8 @@ class PointsAggregator(AggregatorBase):
                 self.problem = problem
 
             def aggregate(self, result):
-                checked = int(result.oa_get_str('checked'))
-                passed = int(result.oa_get_str('passed'))
+                checked = int(result.oa_get_str('checked', '0'))
+                passed = int(result.oa_get_str('passed', '0'))
                 if checked == 0:
                     points = 0
                 else:

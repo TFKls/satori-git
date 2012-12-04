@@ -252,12 +252,11 @@ class PointsReporter(ReporterBase):
         if result == 'OK':
             self.passed = self.passed+1
         self._status = str(self.passed) + ' / '+ str(self.checked)
-        if self.params.display_time:
-            if result == 'OK' or result == 'ANS':
-                elapsed = test_result.oa_get_str('execute_time_cpu')
-            else:
-                elapsed = "\-\-"
-            limit = test.data_get_str('time')
+        if result == 'OK' or result == 'ANS':
+            elapsed = test_result.oa_get_str('execute_time_cpu', '0s')
+        else:
+            elapsed = "\-\-"
+        limit = test.data_get_str('time', '1s')
         if self.params.use_judge_score:
             score = 0
             try:
