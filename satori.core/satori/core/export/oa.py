@@ -51,11 +51,11 @@ def {1}_get(self, name):
         return None
 
 @ExportMethod(unicode, [DjangoId('{0}'), unicode], pc_read, [BadAttributeType])
-def {1}_get_str(self, name):
+def {1}_get_str(self, name, def=None):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
     if oa is None:
-        return None
+        return def
     elif oa.is_blob:
         raise BadAttributeType(name=name, requested_type='string')
     else:
