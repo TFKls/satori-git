@@ -550,8 +550,8 @@ class MarksAggregator(AggregatorBase):
 #@              <param type="bool"     name="show"           description="Show column for this problem" default="true"/>
 #@              <param type="bool"     name="show_max_score" description="Show maximum possible score"/>
 #@              <param type="bool"     name="obligatory"     description="Problem is obligatory" default="false"/>
-#@              <param type="float"    name="max_score"      description="Maximum score for problem" default="1"/>
-#@              <param type="float"    name="min_score"      description="Minimum score for problem" default="-1"/>
+#@              <param type="float"    name="max_score"      description="Maximum score for problem"/>
+#@              <param type="float"    name="min_score"      description="Minimum score for problem"/>
 #@              <param type="datetime" name="time_start"     description="Submission start time"/>
 #@              <param type="datetime" name="time_stop"      description="Ignore submits after"/>
 #@              <param type="datetime" name="time_start_descent"       description="Descent start time"/>
