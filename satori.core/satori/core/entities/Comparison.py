@@ -62,9 +62,13 @@ class Comparison(Entity):
     def modify(self, fields):
         self.forbid_fields(fields, ['id', 'creation_date'])
         self.update_fields(fields, ['problem_mapping', 'algorithm', 'test_suite', 'regexp'])
-        self.execution_date = datetime.datetime.now()
+        self.execution_date = datetime.now()
         self.save()
         return self
+
+    @ExportMethod(bool, [DjangoId('Comparison')], PCArg('self', 'MANAGE'), [CannotSetField])
+    def isExecute(self):
+        return (self.execution_date is None)
 
     @ExportMethod(NoneType, [DjangoId('Comparison')], PCArg('self', 'MANAGE'), [CannotDeleteObject])
     def delete(self):

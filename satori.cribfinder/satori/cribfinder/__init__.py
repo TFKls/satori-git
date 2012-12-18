@@ -12,6 +12,7 @@ import shutil
 import time
 import subprocess
 import traceback
+import subprocess
 
 from satori.tools import options, setup, authenticate
 options.add_option('--debug', dest='debug', default='', action='store', type='string')
@@ -40,31 +41,39 @@ def cribfinder_loop():
     while True:
         authenticate()
         print "Kurwa"
-        comparisons = Comparison.filter(ComparisonStruct(execution_date=None))
-        #comparisons = Comparison.filter()
+        comparisons = Comparison.filter()
         for comp in comparisons:
-            print comp.regexp
-            test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.regexp))
-            num = 0;
-            submits = []
-            for tsr in test_suite_res:
-                submit = Web.get_result_details(submit=tsr.submit)
-                submits.append(submit)
-                filetmp = open('tmp/'+str(num)+'.cpp', 'w')
-                num += 1
-                filetmp.write(submit.data)
-                filetmp.close() 
-            for i in range(0,num-2):
-                for j in rnage(i+1,num-1):
-                    result = compere('tmp/'+str(i)+'.cpp','tmp/'+str(j)+'.cpp',100)
-                    
-            compres = ComparisonResult()
-            ComparisonResult.modify(compres,scomparison=comp, submit_1 = submits[0], submit_2 = submits[1],result = 999.9)
-            comp.modify(comp)
-            break
-            #print comp.execution_date
-        print "End of test"
-        break
+            if Comparison.isExecute(comp):
+                print comp.regexp
+                test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.regexp))
+                num = 0;
+                submits = []
+                for tsr in test_suite_res:
+                    submit = Web.get_result_details(submit=tsr.submit)
+                    submits.append(submit)
+                    filetmp = open('tmp/'+str(num)+'.cpp', 'w')
+                    num += 1
+                    filetmp.write(submit.data)
+                    filetmp.close() 
+                for i in range(0,num-2):
+                    for j in range(i+1,num-1):
+                        #subprocess.check_call("ls");
+                        #subprocess.call(['top', '-u', 'boraks']);
+                        #subprocess.check_call(['cd', 'comper']);
+                        subprocess.call(['./comparation',str(i)+'.cpp', str(j)+'.cpp ', '100']);
+                        result = open('stuff.res','r')
+                        strres = str(result.readline())
+                        print  strres + ' '+ str(i) +' '+ str(j)                    
+                        res = float(strres)
+                        ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = submits[0].submit, submit_2 = submits[1].submit, result = res))
+                        result.close()
+                        #break
+                    #break
+                Comparison.modify(comp, ComparisonStruct(problem_mapping = comp.problem_mapping, algorithm = comp.algorithm, test_suite = comp.test_suite, regexp = comp.regexp))
+                #break
+                print comp.execution_date
+        print "End of test" 
+        #break
 
         
 

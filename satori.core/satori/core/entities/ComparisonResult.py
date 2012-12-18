@@ -37,12 +37,17 @@ class ComparisonResult(Entity):
         cls._inherit_add(inherits, 'MANAGE', 'comparison', 'MANAGE')
         return inherits
 
-    def save(self, *args, **kwargs):
-        self.fixup_appearance()
-        super(Comparison, self).save(*args, **kwargs)
-
     def __str__(self):
         return self.name
+
+    @ExportMethod(DjangoStruct('ComparisonResult'), [DjangoStruct('ComparisonResult')], PCArgField('fields', 'comparison', 'MANAGE'), [CannotSetField])
+    @staticmethod
+    def create(fields):
+        comparisonres = ComparisonResult()
+        comparisonres.forbid_fields(fields, ['id'])
+        comparisonres.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'result'])
+        comparisonres.save()
+        return comparisonres
 
     @ExportMethod(DjangoStruct('ComparisonResult'), [DjangoId('ComparisonResult'), DjangoStruct('ComparisonResult')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):

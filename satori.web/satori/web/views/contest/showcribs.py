@@ -30,6 +30,6 @@ def view(request, page_info):
             compresults = ComparisonResult.filter(ComparisonResultStruct(comparison=q))
             for r in compresults:
                 results += '<tr>'
-                results += '<td>' + r.result + '</td></tr>'
+                results += '<td>' + str(r.result) + '</td></tr>'
     
     return render_to_response('showcribs.html',{ 'page_info' : page_info, 'resultsplus' : results})

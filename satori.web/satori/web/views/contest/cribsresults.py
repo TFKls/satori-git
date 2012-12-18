@@ -28,6 +28,6 @@ def view(request, page_info):
         comparisons.sort(key=lambda p: p.regexp)
         for q in comparisons:
             results += '<tr>'
-            results += '<td>' + q.regexp + '</td></tr>'
+            results += '<td>' + q.regexp + str(q.execution_date) +'</td></tr>'
     
-    return render_to_response('cribsresults.html',{ 'page_info' : page_info, 'resultsplus' : results})
+    return render_to_response('cribsresults.html',{ 'page_info' : page_info, 'resultsplus' : results}) 
