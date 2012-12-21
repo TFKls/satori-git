@@ -20,14 +20,15 @@ def build_url(*args, **kwargs):
 def view(request, page_info):
     contest = page_info.contest
     admin = page_info.contest_is_admin 
-    results = '<tr><td>Regexp</td></tr>'
+    results = ''#'<tr><td>Regexp</td></tr>'
     problems = ProblemMapping.filter(ProblemMappingStruct(contest=contest))
     problems.sort(key=lambda p: p.code)
     for problem in problems:
         comparisons = Comparison.filter(ComparisonStruct(problem_mapping=problem))
-        comparisons.sort(key=lambda p: p.regexp)
+        comparisons.sort(key=lambda p: p.creation_date)
         for q in comparisons:
+
             results += '<tr>'
-            results += '<td>' + q.regexp + str(q.execution_date) +'</td></tr>'
+            results += '<td>Problem: ' + str(problem.code) + ' CreationDate: '+ str(q.creation_date) + ' ExecutionDate: '+ str(q.execution_date) + ' Regexp'  + q.regexp + '</td></tr>'
     
     return render_to_response('cribsresults.html',{ 'page_info' : page_info, 'resultsplus' : results}) 
