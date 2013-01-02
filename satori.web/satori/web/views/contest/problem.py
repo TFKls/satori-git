@@ -11,7 +11,7 @@ from django.shortcuts import render_to_response
 from django import forms
 from datetime import datetime
 from satori.web.utils.files import valid_attachments
-from satori.web.utils.forms import SatoriDateTimeField
+from satori.web.utils.forms import SatoriDateTimeField, SatoriSignedField
 from satori.web.utils.tables import *
 from satori.web.utils.shortcuts import text2html,fill_image_links
 
@@ -25,7 +25,7 @@ class ProblemAddForm(forms.Form):
     suite = forms.ChoiceField(choices=[])
     statement = forms.CharField(widget=forms.Textarea, required=False)
     pdf = forms.FileField(required=False)
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
+    fid = SatoriSignedField(required=True) # (temporary) folder id
     def __init__(self,data=None,suites=[],*args,**kwargs):
         super(ProblemAddForm,self).__init__(data,*args,**kwargs)
         self.fields["suite"].choices = [[suite.id,suite.name + '(' + suite.description + ')'] for suite in suites]

@@ -6,6 +6,7 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
 from satori.web.utils.files import valid_attachments
+from satori.web.utils.forms import SatoriSignedField
 from satori.web.utils.rights import RightsTower
 from satori.web.utils.shortcuts import fill_image_links
 from satori.web.utils.shortcuts import render_to_json, text2html
@@ -19,7 +20,7 @@ rightfield.choices = ['Everyone','Logged users','Admins only']
 
 class GlobalSubpageEditForm(forms.Form):
     name = forms.CharField(label="Subpage name")
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
+    fid = SatoriSignedField(required=True) # (temporary) folder id
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
     visibility = rightfield.field()
     is_public = forms.BooleanField(label="Show in every contest", required=False)

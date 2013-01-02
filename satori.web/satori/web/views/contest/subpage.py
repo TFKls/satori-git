@@ -6,6 +6,7 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
 from satori.web.utils.files import valid_attachments
+from satori.web.utils.forms import SatoriSignedField
 from satori.web.utils.shortcuts import fill_image_links
 from satori.web.utils.shortcuts import render_to_json, text2html
 from satori.web.utils.rights import RightsTower
@@ -22,7 +23,7 @@ rights.rights = ['VIEW','VIEW','']
 class ContestSubpageEditForm(forms.Form):
     name = forms.CharField(label="Subpage name")
     visibility = rights.field()
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
+    fid = SatoriSignedField(required=True) # (temporary) folder id
     content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
 
 @contest_view
@@ -87,7 +88,7 @@ def edit(request, page_info,id):
     class ContestSubpageEditForm(forms.Form):
         name = forms.CharField(label="Subpage name")
         visibility = rights.field()
-        fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
+        fid = SatoriSignedField(required=True) # (temporary) folder id
         content = forms.CharField(required=False, widget=forms.Textarea, label="Content")
     
     if request.method=="POST":

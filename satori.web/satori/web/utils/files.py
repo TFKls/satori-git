@@ -2,6 +2,7 @@
 import glob
 import os
 import tempfile
+from satori.web.utils.forms import SatoriSignedField
 from satori.web.utils.decorators import general_view
 from satori.web.utils.shortcuts import render_to_json, text2html
 from django import forms
@@ -10,7 +11,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 
 class FileUploadForm(forms.Form):
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
+    fid = SatoriSignedField(required=True) # (temporary) folder id
     file = forms.FileField(required=True)
 
 @general_view
@@ -29,7 +30,7 @@ def fileupload(request, page_info):
     # TODO(kalq): return 404
 
 class FileRemoveForm(forms.Form):
-    fid = forms.CharField(required=True, widget=forms.HiddenInput) # (temporary) folder id
+    fid = SatoriSignedField(required=True) # (temporary) folder id
     filename = forms.CharField(required=True)
 
 # This function is used only to delete temporary files - (those that aren't inside core yet).
