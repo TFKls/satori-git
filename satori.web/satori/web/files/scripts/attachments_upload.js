@@ -1,4 +1,5 @@
-function createFileUploadInstance(fid, remove_url) {
+function createFileUploadInstance(form_id, input_id, remove_url) {
+    var fid = $('form.'+form_id).find('input.'+input_id).val();
     var actualFilesList = {};
     $(function() {
         $('#files input[name="rfile"]').each(function() {
@@ -10,8 +11,7 @@ function createFileUploadInstance(fid, remove_url) {
         var removedFilesCounter = 0;
         $('.remove_existing').submit(function(event) {
             event.preventDefault();
-            var form = $(event.target); rfile = form.find('input').val();
-
+            var form = $(event.target); rfile = form.find('input').val(
             $('#edit_form').append(
                 '<input type="hidden" name="rfile_' + removedFilesCounter + 
                 '" value="' + rfile + '">'
