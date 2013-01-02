@@ -1,5 +1,5 @@
-function createFileUploadInstance(form_id, input_id, remove_url) {
-    var fid = $('form.'+form_id).find('input.'+input_id).val();
+function createFileUploadInstance(form_id, input_name, remove_url) {
+    var fid = $('#'+form_id+' input[name='+input_name+']').val();
     var actualFilesList = {};
     $(function() {
         $('#files input[name="rfile"]').each(function() {
