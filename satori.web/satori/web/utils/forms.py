@@ -70,7 +70,7 @@ class SatoriSizeField(forms.CharField):
 class SatoriSignedWidget(forms.HiddenInput):
     def render(self, name, value, attrs=None):
         signer = TimestampSigner()
-        value = signer.sign(fid)
+        value = signer.sign(value)
         return super(SatoriSignedWidget,self).render(name, value, attrs)
 
 class SatoriSignedField(forms.CharField):
