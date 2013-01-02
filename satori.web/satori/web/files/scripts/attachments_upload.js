@@ -11,7 +11,8 @@ function createFileUploadInstance(form_id, input_name, remove_url) {
         var removedFilesCounter = 0;
         $('.remove_existing').submit(function(event) {
             event.preventDefault();
-            var form = $(event.target); rfile = form.find('input').val(
+            var form = $(event.target); rfile = form.find('input').val();
+
             $('#edit_form').append(
                 '<input type="hidden" name="rfile_' + removedFilesCounter + 
                 '" value="' + rfile + '">'
