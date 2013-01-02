@@ -20,10 +20,10 @@ def mkdtemp():
 
 def validate_filename(value):
     try:
-        login.decode('ascii')
+        value.decode('ascii')
     except:
         raise ValidationError(u'filename \'%s\' contains invalid characters' % value)
-    for l in login:
+    for l in value:
         if not (l.isalpha() or l.isdigit() or l == '_' or l == "."):
             raise ValidationError(u'filename \'%s\' contains invalid characters' % value)
 
