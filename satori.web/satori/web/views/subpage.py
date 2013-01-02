@@ -5,7 +5,7 @@ import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
-from satori.web.utils.files import valid_attachments
+from satori.web.utils.files import mkdtemp, valid_attachments
 from satori.web.utils.forms import SatoriSignedField
 from satori.web.utils.rights import RightsTower
 from satori.web.utils.shortcuts import fill_image_links
@@ -68,7 +68,7 @@ def add(request, page_info):
             return HttpResponseRedirect(reverse('subpage',args=[subpage.id]))
     else:
         #TODO(kalq): Create a hash instead of full pathname
-        fid = tempfile.mkdtemp()
+        fid = mkdtemp()
         form = GlobalSubpageEditForm(initial={ 'fid' : fid })
     return render_to_response('subpage_add.html', { 'fid' : fid,
                                                     'form' : form,
@@ -109,7 +109,7 @@ def edit(request, page_info, id):
                                                                  'subpage' : subpage })
             return HttpResponseRedirect(reverse('subpage',args=[subpage.id]))
     else:
-        fid = tempfile.mkdtemp()
+        fid = mkdtemp()
         form = GlobalSubpageEditForm(initial={ 'name' : subpage.name,
                                                'content' : subpage.content,
                                                'visibility' : unicode(rightfield.current),
