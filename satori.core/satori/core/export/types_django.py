@@ -27,6 +27,7 @@ field_basic_types = {
     models.BooleanField: bool,
     models.DateTimeField: datetime,
     models.IPAddressField: unicode,
+    models.FloatField: float,
 }
 
 

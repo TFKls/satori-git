@@ -93,6 +93,7 @@ python_basic_types = {
     basestring: ArsString,
     bool: ArsBoolean,
     datetime: ArsDateTime,
+    float: ArsFloat,
 }
 
 
