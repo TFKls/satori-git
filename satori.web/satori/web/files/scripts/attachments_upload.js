@@ -85,13 +85,13 @@ function createFileUploadInstance(form_id, input_name, remove_url) {
                     $.ajax({
                         data: {
                             fid : fid,
-                            filename : files[index].fileName
+                            filename : files[index].name
                         },
                         url: remove_url, 
                         type: 'POST',
                         success: function (data) {
                             /*$('#loading').fadeOut();*/
-                            delete actualFilesList[files[index].fileName];
+                            delete actualFilesList[files[index].name];
                             handler.downloadRow.remove();
                         }
                     });
