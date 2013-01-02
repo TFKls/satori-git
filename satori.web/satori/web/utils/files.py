@@ -6,13 +6,13 @@ from satori.web.utils.forms import SatoriSignedField
 from satori.web.utils.decorators import general_view
 from satori.web.utils.shortcuts import render_to_json, text2html
 from django import forms
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect, HttpResponseNotFound
 from django.core.urlresolvers import reverse
-import django.settings
 from django.shortcuts import render_to_response
 
-tempdir = django.settings.FILE_UPLOAD_TEMP_DIR
+tempdir = settings.FILE_UPLOAD_TEMP_DIR
 prefix = 'satori-temp-upload'
 
 def mkdtemp():
