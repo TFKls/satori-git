@@ -1,5 +1,5 @@
 #!/bin/bash
-OFFICE=$(dirname $(readlink -f $(which $0)))
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
 VENV=".virtual_env"
 pushd "$OFFICE"
 
