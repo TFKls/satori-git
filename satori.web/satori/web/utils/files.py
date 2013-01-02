@@ -28,7 +28,7 @@ def validate_filename(value):
             raise ValidationError(u'filename \'%s\' contains invalid characters' % value)
 
 def validate_file(value):
-    validate_filename(value.filename)
+    validate_filename(value.name)
 
 def validate_path(value):
     if not os.path.isabs(value):
