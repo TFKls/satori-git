@@ -18,7 +18,9 @@ class ComparisonResult(Entity):
 
     comparison      = models.ForeignKey('Comparison', related_name='results', on_delete=models.PROTECT)
     submit_1        = models.ForeignKey('Submit', related_name='comparisonresults+', on_delete=models.PROTECT)
-    submit_2        = models.ForeignKey('Submit', related_name='comparisonresults+', on_delete=models.PROTECT)
+    submit_2        = models.ForeignKey('Submit', related_name='comparisonresults+', on_delete=models.PROTECT)  
+    hidden          = models.BooleanField()
+    who_hid         = models.ForeignKey('User',  related_name='comparisonresults+', on_delete=models.PROTECT, null=True)
     result          = models.FloatField()
     
 
@@ -44,8 +46,8 @@ class ComparisonResult(Entity):
     @staticmethod
     def create(fields):
         comparisonres = ComparisonResult()
-        comparisonres.forbid_fields(fields, ['id'])
-        comparisonres.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'result'])
+        comparisonres.forbid_fields(fields, ['id', 'who_hid'])
+        comparisonres.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'hidden', 'result'])
         comparisonres.save()
         return comparisonres
 

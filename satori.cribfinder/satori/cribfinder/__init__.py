@@ -55,8 +55,9 @@ def cribfinder_loop():
                     num += 1
                     filetmp.write(submit.data)
                     filetmp.close() 
-                for i in range(0,num-2):
-                    for j in range(i+1,num-1):
+                print str(num)
+                for i in range(0,num):    
+                    for j in range(i+1,num):
                         #subprocess.check_call("ls");
                         #subprocess.call(['top', '-u', 'boraks']);
                         #subprocess.check_call(['cd', 'comper']);
@@ -65,7 +66,7 @@ def cribfinder_loop():
                         strres = str(result.readline())
                         print  strres + ' '+ str(i) +' '+ str(j)                    
                         res = float(strres)
-                        ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = submits[0].submit, submit_2 = submits[1].submit, result = res))
+                        ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = submits[i].submit, submit_2 = submits[j].submit, result = res))
                         result.close()
                         #break
                     #break
