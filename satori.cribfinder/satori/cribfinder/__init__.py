@@ -73,6 +73,51 @@ def cribfinder_loop():
                 Comparison.modify(comp, ComparisonStruct(problem_mapping = comp.problem_mapping, algorithm = comp.algorithm, test_suite = comp.test_suite, regexp = comp.regexp))
                 #break
                 print comp.execution_date
+            else:
+                print comp.regexp
+                test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.regexp))
+                numNew = 0
+                numOld = 0
+                num = 0
+                newSubmits = []
+                oldSubmits = []
+                for tsr in test_suite_res:
+                    submit = Web.get_result_details(submit=tsr.submit)
+                    if submit.submit.time < comp.execution_date:
+                        newSubmits.append(submit)
+                        numNew += 1
+                    else:
+                        oldSubmits.append(submit)
+                        numOld += 1
+                for s in newSubmits:
+                    filetmp = open('tmp/'+str(num)+'.cpp', 'w')
+                    num += 1
+                    filetmp.write(s.data)
+                    filetmp.close()
+                for s in oldSubmits:
+                    filetmp = open('tmp/'+str(num)+'.cpp', 'w')
+                    num += 1
+                    filetmp.write(s.data)
+                    filetmp.close() 
+                print str(num)
+                for i in range(0,numNew):    
+                    for j in range(numNew,num):
+                        #subprocess.check_call("ls");
+                        #subprocess.call(['top', '-u', 'boraks']);
+                        #subprocess.check_call(['cd', 'comper']);
+                        subprocess.call(['./comparation',str(i)+'.cpp', str(j)+'.cpp ', '100']);
+                        result = open('stuff.res','r')
+                        strres = str(result.readline())
+                        print  strres + ' '+ str(i) +' '+ str(j)                    
+                        res = float(strres)
+                        ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = newSubmits[i].submit, submit_2 = oldSubmits[j-numNew].submit, result = res))
+                        result.close()
+                        #break
+                    #break
+                Comparison.modify(comp, ComparisonStruct(problem_mapping = comp.problem_mapping, algorithm = comp.algorithm, test_suite = comp.test_suite, regexp = comp.regexp))
+                #break
+                print comp.execution_date
+                
         print "End of test" 
         #break
 
