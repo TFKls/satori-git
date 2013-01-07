@@ -110,7 +110,7 @@ def cribfinder_loop():
                         strres = str(result.readline())
                         print  strres + ' '+ str(i) +' '+ str(j)                    
                         res = float(strres)
-                        ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = newSubmits[i].submit, submit_2 = oldSubmits[j-numNew].submit, result = res))
+                        ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = newSubmits[i].submit, submit_2 = oldSubmits[j-numNew].submit, hidden = False, result = res))
                         result.close()
                         #break
                     #break

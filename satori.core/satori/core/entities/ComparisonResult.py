@@ -25,7 +25,7 @@ class ComparisonResult(Entity):
     
 
     class ExportMeta(object):
-        fields = [('comparison', 'VIEW'), ('submit_1', 'VIEW'), ('submit_2', 'VIEW'), ('result', 'VIEW')]
+        fields = [('comparison', 'VIEW'), ('submit_1', 'VIEW'), ('submit_2', 'VIEW'), ('hidden', 'VIEW'), ('who_hid', 'VIEW'), ('result', 'VIEW')]
         
     class RightsMeta(object):
         inherit_parent = 'comparison'
@@ -54,7 +54,7 @@ class ComparisonResult(Entity):
     @ExportMethod(DjangoStruct('ComparisonResult'), [DjangoId('ComparisonResult'), DjangoStruct('ComparisonResult')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
         self.forbid_fields(fields, ['id'])
-        self.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'result'])
+        self.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'hidden', 'who_hid', 'result'])
         self.save()
         return self
 
