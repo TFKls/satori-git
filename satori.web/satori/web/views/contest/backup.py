@@ -51,7 +51,7 @@ def view(request, page_info):
             self.fields.append(TableField(name='File',value=(lambda table,i : table.results[i].filename),render=download_link,id=3,sortable=False))
             def delete_form(table,i):
                 return format_html(u'<form action="" method="POST"><input type="hidden" name="id" value="{0}"/><input type="hidden" name="cid" value="{1}"/><input class="button button_small"' +
-                                    ' type="submit" name="delete" value="Delete"></form>', table.results[i].name, table.contestants[i].name)
+                                    ' type="submit" name="delete" value="Delete"></form>', table.results[i].name, table.contestants[i].id)
             self.fields.append(TableField(name='',value='',render=delete_form,id=4,sortable=False,css=['centered']))
             
     if request.method == "POST":
