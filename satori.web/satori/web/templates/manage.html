@@ -59,6 +59,14 @@
 </form>
 
 <hr class="divide"/>
+
+<form action="" method="POST">
+{{ contestants_form }}
+<input class="button" type="submit" name="importcontestants" value="Import contestants"/>
+</form>
+
+<hr class="divide"/>
+
 <form action="" method="POST">
 {% if page_info.contest.archived %}
 <p class="emph">Contest archived. <input type="submit" class="button" name="unarchive" value="Revert"/></p>
