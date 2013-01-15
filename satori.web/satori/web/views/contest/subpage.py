@@ -5,7 +5,7 @@ import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
-from satori.web.utils.files import valid_attachments
+from satori.web.utils.files import mkdtemp, valid_attachments
 from satori.web.utils.forms import SatoriSignedField
 from satori.web.utils.shortcuts import fill_image_links
 from satori.web.utils.shortcuts import render_to_json, text2html
@@ -70,7 +70,7 @@ def add(request, page_info):
             return HttpResponseRedirect(reverse('contest_subpage', args=[page_info.contest.id, subpage.id]))
     else:
         #TODO(kalq): Create a hash instead of full pathname
-        fid = tempfile.mkdtemp()
+        fid = mkdtemp()
         form = ContestSubpageEditForm(initial={ 'fid' : fid })
     return render_to_response('subpage_add.html', { 'fid' : fid,
                                                     'form' : form,
@@ -122,7 +122,7 @@ def edit(request, page_info,id):
             return HttpResponseRedirect(reverse('contest_subpage', args=[page_info.contest.id, subpage.id]))
     else:
         vis = unicode(rights.current)
-        fid = tempfile.mkdtemp()
+        fid = mkdtemp()
         form = ContestSubpageEditForm(initial={ 'name' : subpage.name,
                                                 'content' : subpage.content,
                                                 'fid' : fid,

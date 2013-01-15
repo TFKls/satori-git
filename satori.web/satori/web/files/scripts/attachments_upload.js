@@ -1,4 +1,5 @@
-function createFileUploadInstance(fid, remove_url) {
+function createFileUploadInstance(form_id, input_name, remove_url) {
+    var fid = $('#'+form_id+' input[name='+input_name+']').val();
     var actualFilesList = {};
     $(function() {
         $('#files input[name="rfile"]').each(function() {
@@ -84,13 +85,13 @@ function createFileUploadInstance(fid, remove_url) {
                     $.ajax({
                         data: {
                             fid : fid,
-                            filename : files[index].fileName
+                            filename : files[index].name
                         },
                         url: remove_url, 
                         type: 'POST',
                         success: function (data) {
                             /*$('#loading').fadeOut();*/
-                            delete actualFilesList[files[index].fileName];
+                            delete actualFilesList[files[index].name];
                             handler.downloadRow.remove();
                         }
                     });

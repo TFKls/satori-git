@@ -10,7 +10,7 @@ from django.core.urlresolvers import reverse
 from django.shortcuts import render_to_response
 from django import forms
 from datetime import datetime
-from satori.web.utils.files import valid_attachments
+from satori.web.utils.files import mkdtemp, valid_attachments
 from satori.web.utils.forms import SatoriDateTimeField, SatoriSignedField
 from satori.web.utils.tables import *
 from satori.web.utils.shortcuts import text2html,fill_image_links
@@ -99,7 +99,7 @@ def add(request, page_info, id):
 
     else:
         #TODO(kalq): Create a hash instead of full pathname
-        fid = tempfile.mkdtemp()
+        fid = mkdtemp()
         form = ProblemAddForm(suites=suites, initial={ 'fid' : fid })
         return render_to_response('problems_add.html', { 'page_info' : page_info,
                                                          'fid' : fid,
@@ -160,7 +160,7 @@ def edit(request, page_info, id):
             else:
                 return HttpResponseRedirect(reverse('contest_problems', args=[page_info.contest.id]))
     else:
-        fid = tempfile.mkdtemp()
+        fid = mkdtemp()
         form = ProblemAddForm(initial={ 'code' : mapping.code,
                                         'title' : mapping.title,
                                         'statement' : mapping.statement,

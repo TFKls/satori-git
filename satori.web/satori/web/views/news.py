@@ -5,7 +5,7 @@ import tempfile
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
-from satori.web.utils.files import valid_attachments
+from satori.web.utils.files import mkdtemp, valid_attachments
 from satori.web.utils.forms import SatoriSignedField
 from satori.web.utils.shortcuts import text2html, fill_image_links, render_to_json
 from django import forms
@@ -61,11 +61,11 @@ def add(request, page_info):
             return HttpResponseRedirect(reverse('news'))
         else:
             #TODO(kalq): Find out why sometimes valid forms land here.
-            fid = form.data['fid'] if 'fid' in form.data else tempfile.mkdtemp()
+            fid = form.data['fid'] if 'fid' in form.data else mkdtemp()
     else:
         #TODO(kalq): Create a hash instead of full pathname
-        fid = tempfile.mkdtemp()
-        form = NewsEditForm(initial={ 'fid' : tempfile.mkdtemp() })
+        fid = mkdtemp()
+        form = NewsEditForm(initial={ 'fid' : fid })
     return render_to_response('news_add.html', { 'page_info' : page_info, 
                                                  'fid' : fid,
                                                  'form' : form })
@@ -101,7 +101,7 @@ def edit(request, page_info,id):
                                                               'page_info' : page_info })
             return HttpResponseRedirect(reverse('news'))
     else:
-        fid = tempfile.mkdtemp()
+        fid = mkdtemp()
         form = NewsEditForm(initial={ 'name' : message.name,
                                       'content' : message.content,
                                       'fid' : fid,
