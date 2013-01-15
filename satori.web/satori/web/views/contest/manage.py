@@ -72,7 +72,7 @@ def view(request, page_info):
         prints = forms.BooleanField(label='Prints allowed',required=False)            
 
     class ContestantsForm(forms.Form):
-        contest = forms.ChoiceField(choices=[[c.contest.id, c.contest.name] for c in Web.get_contest_list() if c.is_admin and c.contest.id != contest.id], required=True)
+        contest = forms.ChoiceField(choices=[[c.contest.id, c.contest.name] for c in Web.get_contest_list() if c.is_admin and c.contest.id != page_info.contest.id], required=True)
 
     
     if request.method!="POST":
