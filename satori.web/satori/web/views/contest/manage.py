@@ -86,7 +86,7 @@ def view(request, page_info):
         manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'lock_start_0' : get_date(contest.lock_start), 'lock_start_1' : get_time(contest.lock_start), 'lock_finish_0' : get_date(contest.lock_finish),'lock_finish_1' : get_time(contest.lock_finish), 'lock_address' : contest.lock_address, 'lock_netmask' : contest.lock_netmask, 'questions' : questions, 'backups' : backups, 'prints' : prints})
         admin_form = AdminForm()
         contestants_form = ContestantsForm()
-        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins, 'contestant_form' : contestant_form})
+        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins, 'contestants_form' : contestants_form})
     if "addadmin" in request.POST.keys():
         admin_form = AdminForm(request.POST)
         if admin_form.is_valid():
@@ -117,8 +117,9 @@ def view(request, page_info):
 
     admin_form = AdminForm()
     manage_form = ManageForm(request.POST)
+    contestants_form = ContestantsForm(request.POST)
     if not manage_form.is_valid():
-        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
+        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins, 'contestants_form' : contestants_form})
     viewing.set(manage_form.cleaned_data['viewfield'])
     joining.set(manage_form.cleaned_data['joinfield'])
     contest.name = manage_form.cleaned_data['name']
@@ -140,5 +141,4 @@ def view(request, page_info):
         Privilege.grant(contest.contestant_role,contest,'PERMIT_PRINT')
     else:
         Privilege.revoke(contest.contestant_role,contest,'PERMIT_PRINT')    
-    return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
-
+    return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins, 'contestants_form' : contestants_form})
