@@ -13,9 +13,6 @@ from satori.web.utils.forms import SatoriDateTimeField
 class AdminForm(forms.Form):
     username = forms.CharField(required=True)
 
-class ContestantsForm(forms.Form):
-    contest = forms.ChoiceField(choices=[[c.contest.id, c.contest.name] for c in Web.get_contest_list() if c.is_admin], required=True)
-
 class RightsStatus(object):
     viewing = 'none'
     joining = 'none'
@@ -73,6 +70,10 @@ def view(request, page_info):
         questions = forms.BooleanField(label='Questions allowed',required=False)
         backups = forms.BooleanField(label='Backups allowed',required=False)            
         prints = forms.BooleanField(label='Prints allowed',required=False)            
+
+    class ContestantsForm(forms.Form):
+        contest = forms.ChoiceField(choices=[[c.contest.id, c.contest.name] for c in Web.get_contest_list() if c.is_admin], required=True)
+
     
     if request.method!="POST":
         def get_date(x):
