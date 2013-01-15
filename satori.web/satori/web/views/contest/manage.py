@@ -71,10 +71,6 @@ def view(request, page_info):
         backups = forms.BooleanField(label='Backups allowed',required=False)            
         prints = forms.BooleanField(label='Prints allowed',required=False)            
 
-    class ContestantsForm(forms.Form):
-        contest = forms.ChoiceField(choices=[[c.contest.id, c.contest.name] for c in Web.get_contest_list() if c.is_admin and c.contest.id != page_info.contest.id], required=True)
-
-    
     if request.method!="POST":
         def get_date(x):
             if x:
@@ -86,8 +82,7 @@ def view(request, page_info):
             return None
         manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'lock_start_0' : get_date(contest.lock_start), 'lock_start_1' : get_time(contest.lock_start), 'lock_finish_0' : get_date(contest.lock_finish),'lock_finish_1' : get_time(contest.lock_finish), 'lock_address' : contest.lock_address, 'lock_netmask' : contest.lock_netmask, 'questions' : questions, 'backups' : backups, 'prints' : prints})
         admin_form = AdminForm()
-        contestants_form = ContestantsForm()
-        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins, 'contestants_form' : contestants_form})
+        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
     if "addadmin" in request.POST.keys():
         admin_form = AdminForm(request.POST)
         if admin_form.is_valid():
@@ -108,22 +103,11 @@ def view(request, page_info):
     if "unarchive" in request.POST.keys():
         contest.modify(ContestStruct(archived=False))
         return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
-    if "importcontestants" in request.POST.keys():
-        contestants_form = ContestantsForm(request.POST)
-        if contestants_form.is_valid():
-            import_from = Contest(int(contestants_form.cleaned_data["contest"]))
-            for contestant in Contestant.filter(ContestantStruct(contest=import_from)):
-                try:
-                    Contestant.create(ContestantStruct(contest=contest, accepted=contestant.accepted, invisible=contestant.invisible), contestant.get_member_users())
-                except AlreadyRegistered:
-                    pass
-            return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
 
     admin_form = AdminForm()
     manage_form = ManageForm(request.POST)
-    contestants_form = ContestantsForm(request.POST)
     if not manage_form.is_valid():
-        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins, 'contestants_form' : contestants_form})
+        return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
     viewing.set(manage_form.cleaned_data['viewfield'])
     joining.set(manage_form.cleaned_data['joinfield'])
     contest.name = manage_form.cleaned_data['name']
@@ -145,4 +129,4 @@ def view(request, page_info):
         Privilege.grant(contest.contestant_role,contest,'PERMIT_PRINT')
     else:
         Privilege.revoke(contest.contestant_role,contest,'PERMIT_PRINT')    
-    return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins, 'contestants_form' : contestants_form})
+    return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})

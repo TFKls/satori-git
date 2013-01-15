@@ -49,10 +49,14 @@ def view(request, page_info):
                                                              render = lambda table,i: format_html(u'<a class="stdlink" href="{0}">{1}</a>', reverse('contestant_view',args=[contest.id,table.contestants[i].id]), table.contestants[i].name),
                                                              id=2 ))
             self.fields.append(TableField( name='Users',value=(lambda table,i: table.contestants[i].usernames), id=3 ))
+
+    class ImportForm(forms.Form):
+        contest = forms.ChoiceField(choices=[[c.contest.id, c.contest.name] for c in Web.get_contest_list() if c.is_admin and c.contest.id != page_info.contest.id], required=True)
             
     accepted = AcceptedTable(req=request.GET,prefix='accepted',get_function=Web.get_accepted_contestants,button_prefix='revoke_')
     pending = AcceptedTable(req=request.GET,prefix='pending',get_function=Web.get_pending_contestants,button_prefix='accept_')
     add_form = ManualAddForm()
+    import_form = ImportForm()
     bar = None
     if request.method=="POST":
         if 'accept' in request.POST.keys():
@@ -83,8 +87,17 @@ def view(request, page_info):
             add_form = ManualAddForm(request.POST)
             if add_form.is_valid():
                 Contestant.create(ContestantStruct(contest=contest,accepted=True),[add_form.cleaned_data['user']])
+        if "import" in request.POST.keys():
+            import_form = ImportForm(request.POST)
+            if import_form.is_valid():
+                import_from = Contest(int(import_form.cleaned_data["contest"]))
+                for contestant in Contestant.filter(ContestantStruct(contest=import_from)):
+                    try:
+                        Contestant.create(ContestantStruct(contest=contest, accepted=contestant.accepted, invisible=contestant.invisible), contestant.get_member_users())
+                    except AlreadyRegistered:
+                        pass
         return HttpResponseRedirect(reverse('contestants',args=[contest.id]))
-    return render_to_response('contestants.html', {'page_info' : page_info, 'accepted' : accepted, 'pending' : pending, 'add_form' : add_form, 'status_bar' : bar })
+    return render_to_response('contestants.html', {'page_info' : page_info, 'accepted' : accepted, 'pending' : pending, 'add_form' : add_form, 'import_form' : import_form, 'status_bar' : bar })
 
 @contest_view
 def viewteam(request, page_info, id = None):
