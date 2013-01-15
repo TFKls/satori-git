@@ -72,7 +72,7 @@ def view(request, page_info):
         prints = forms.BooleanField(label='Prints allowed',required=False)            
 
     class ContestantsForm(forms.Form):
-        contest = forms.ChoiceField(choices=[[c.contest.id, c.contest.name] for c in Web.get_contest_list() if c.is_admin], required=True)
+        contest = forms.ChoiceField(choices=[[c.contest.id, c.contest.name] for c in Web.get_contest_list() if c.is_admin and c.contest.id != contest.id], required=True)
 
     
     if request.method!="POST":
@@ -113,7 +113,10 @@ def view(request, page_info):
         if contestants_form.is_valid():
             import_from = Contest(int(contestants_form.cleaned_data["contest"]))
             for contestant in Contestant.filter(ContestantStruct(contest=import_from)):
-                Contestant.create(ContestantStruct(contest=contest, accepted=contestant.accepted, invisible=contestant.invisible), contestant.get_member_users())
+                try:
+                    Contestant.create(ContestantStruct(contest=contest, accepted=contestant.accepted, invisible=contestant.invisible), contestant.get_member_users())
+                except AlreadyRegistered:
+                    pass
             return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
 
     admin_form = AdminForm()
