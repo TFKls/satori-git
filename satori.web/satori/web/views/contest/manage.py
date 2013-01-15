@@ -111,7 +111,7 @@ def view(request, page_info):
         contestants_form = ContestantsForm(request.POST)
         if contestants_form.is_valid():
             import_from = Contest(contestants_form.cleaned_data["contest"])
-            for contestant in Contestant.filter(ContestantStruct(contest=import_from, accepted=True)):
+            for contestant in Contestant.filter(ContestantStruct(contest=import_from)):
                 Contestant.create(ContestantStruct(contest=contest, accepted=contestant.accepted, invisible=contestant.invisible), contestant.get_member_users())
             return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
 
