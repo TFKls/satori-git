@@ -93,7 +93,7 @@ def view(request, page_info):
                 import_from = Contest(int(import_form.cleaned_data["contest"]))
                 for contestant in Contestant.filter(ContestantStruct(contest=import_from)):
                     try:
-                        Contestant.create(ContestantStruct(contest=contest, accepted=contestant.accepted, invisible=contestant.invisible, login=contestant.login, password=contestant.password), contestant.get_member_users())
+                        Contestant.create(ContestantStruct(contest=contest, accepted=contestant.accepted, invisible=contestant.invisible, login=contestant.login), contestant.get_member_users())
                     except AlreadyRegistered:
                         pass
         return HttpResponseRedirect(reverse('contestants',args=[contest.id]))
