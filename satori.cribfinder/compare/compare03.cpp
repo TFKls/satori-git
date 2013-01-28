@@ -185,7 +185,7 @@ int main(int argc, char **argv) {
 #endif
 
   //printf("Edit distance: %d Block size: %d\n", 4 * n * MAX_LEN - hun::hungarian(2 * n), min_block);
-	printf("%d", 4 * n * MAX_LEN - hun::hungarian(2 * n));
+	printf("%d\n", 4 * n * MAX_LEN - hun::hungarian(2 * n));
 
   return 0;
 }
