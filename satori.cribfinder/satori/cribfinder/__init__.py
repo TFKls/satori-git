@@ -34,7 +34,7 @@ def cribfinder_compare(comparison, submit_1, submit_2):
         sub2 = os.path.join(tmpd, 'submit2.cpp')
         submit_1.data_get_blob_path('content', sub1)
         submit_2.data_get_blob_path('content', sub2)
-        res = float(subprocess.check_output(['comparation', sub1, sub2, '100']))
+        res = float(subprocess.check_output(['comparation', sub1, sub2, '100']).strip())
         cr = ComparisonResult.filter(ComparisonResultStruct(comparison=comparison, submit_1 = submit_1, submit_2 = submit_2))
         if len(cr) > 0:
             cr = cr[0]
