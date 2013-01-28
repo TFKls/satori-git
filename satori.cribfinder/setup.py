@@ -13,6 +13,6 @@ setup(name='satori.cribfinder',
     ],
     entry_points='''
         [console_scripts]
-        satori.judge_init = satori.judge:judge_init
+        satori.cribfinder_init = satori.cribfinder:cribfinder_init
     ''',
 )

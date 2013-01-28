@@ -1,2 +1,0 @@
-KERNEL=="zram0", ACTION=="add", \
-  RUN+="/sbin/compcache-enable zram 50% zram0"

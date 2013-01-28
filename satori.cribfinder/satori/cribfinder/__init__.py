@@ -9,6 +9,7 @@ import resource
 import stat
 import sys
 import shutil
+import tempfile
 import time
 import subprocess
 import traceback
@@ -17,25 +18,33 @@ import subprocess
 from satori.tools import options, setup, authenticate
 options.add_option('--debug', dest='debug', default='', action='store', type='string')
 
-options.add_option('--jail-dir', dest='jail_dir', default='/jail', action='store', type='string')
-options.add_option('--cgroup-dir', dest='cgroup_dir', default='/cgroup', action='store', type='string')
-options.add_option('--template-dir', dest='template_dir', default='/template', action='store', type='string')
-options.add_option('--template-src', dest='template_src', default='student.tcs.uj.edu.pl:/exports/judge', action='store', type='string')
-
-options.add_option('--retry-time', dest='retry_time', default=5, action='store', type='int')
-
-options.add_option('--cgroup', dest='cgroup', default='runner', action='store', type='string')
-options.add_option('--memory', dest='cgroup_memory', default=8*1024*1024*1024, action='store', type='int')
-options.add_option('--time', dest='real_time', default=5*60*1000, action='store', type='int')
-
-options.add_option('--host-interface', dest='host_eth', default='vethsh', action='store', type='string')
-options.add_option('--host-ip', dest='host_ip', default='192.168.100.101', action='store', type='string')
-options.add_option('--guest-interface', dest='guest_eth', default='vethsg', action='store', type='string')
-options.add_option('--guest-ip', dest='guest_ip', default='192.168.100.102', action='store', type='string')
-options.add_option('--netmask', dest='netmask', default='255.255.255.0', action='store', type='string')
-options.add_option('--port', dest='control_port', default=8765, action='store', type='int')
-
 (options, args) = setup()
+
+def cribfinder_compare(comparison, submit_1, submit_2):
+    if submit_1.id > submit2.id:
+        z = submit_1
+        submit_1 = submit_2
+        submit_2 = z
+    cw = os.getcwd()
+    tmpd = tempfile.mkdtemp()
+    os.chdir(tmpd)
+    try:
+        sub1 = os.path.join(tmpd, 'submit1.cpp')
+        sub2 = os.path.join(tmpd, 'submit2.cpp')
+        with open(sub1, 'w') as s1:
+            s1.write(submit_1.data)
+        with open(sub2, 'w') as s2:
+            s2.write(submit_2.data)
+        res = float(subprocess.check_output(['comparation', sub1, sub2, '100']))
+        cr = ComparisonResult.filter(ComparisonResultStruct(comparison=comparison, submit_1 = submit_1, submit_2 = submit_2))
+        if len(cr) > 0:
+            cr = cr[0]
+            cr.result = res
+        else:
+            ComparisonResult.create(ComparisonResultStruct(comparison=comparison, submit_1 = submit_1, submit_2 = submit_2, result = res))
+    finally:
+        os.chdir(cw)
+        shutil.rmtree(tmpd)
 
 def cribfinder_loop():
     while True:
@@ -44,117 +53,45 @@ def cribfinder_loop():
         comparisons = Comparison.filter()
         for comp in comparisons:
             if Comparison.isExecute(comp):
-                print comp.result_filter
+                ts = datetime.datetime.fromtimestamp(0)
                 test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.result_filter))
-                num = 0;
                 submits = []
                 for tsr in test_suite_res:
                     submit = Web.get_result_details(submit=tsr.submit)
-                    submits.append(submit)
-                    filetmp = open('tmp/'+str(num)+'.cpp', 'w')
-                    num += 1
-                    filetmp.write(submit.data)
-                    filetmp.close() 
-                print str(num)
-                for i in range(0,num):    
-                    for j in range(i+1,num):
-                        subprocess.call(['./comparation',str(i)+'.cpp', str(j)+'.cpp ', '100']);
-                        result = open('stuff.res','r')
-                        strres = str(result.readline())
-                        print  strres + ' '+ str(i) +' '+ str(j)                    
-                        res = float(strres)
-                        ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = submits[i].submit, submit_2 = submits[j].submit, result = res))
-                        result.close()
-                Comparison.modify(comp, ComparisonStruct(problem = comp.problem, algorithm = comp.algorithm, test_suite = comp.test_suite, result_filter = comp.result_filter))
-                print comp.date_last_executed
+                    if submit.time > ts:
+                        ts = submit.time
+                    submits.append(submit.submit)
+               for i in range(0,len(submits)): 
+                    for j in range(i+1,len(submits)):
+                        cribfinder_compare(comp, submits[i], submits[j])
+                comp.date_last_execute = ts
             else:
-                print comp.regexp
+                ts = datetime.datetime.fromtimestamp(0)
                 test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.result_filter))
-                numNew = 0
-                num = 0
-                newSubmits = []
-                oldSubmits = []
+                submits = []
+                old_submits = []
                 for tsr in test_suite_res:
                     submit = Web.get_result_details(submit=tsr.submit)
+                    if submit.time > ts:
+                        ts = submit.time
                     if submit.submit.time < comp.execution_date:
-                        newSubmits.append(submit)
-                        numNew += 1
+                        submits.append(submit)
                     else:
-                        oldSubmits.append(submit)
-                for s in newSubmits:
-                    filetmp = open('tmp/'+str(num)+'.cpp', 'w')
-                    num += 1
-                    filetmp.write(s.data)
-                    filetmp.close()
-                for s in oldSubmits:
-                    filetmp = open('tmp/'+str(num)+'.cpp', 'w')
-                    num += 1
-                    filetmp.write(s.data)
-                    filetmp.close() 
-                print str(num)
-                for i in range(0,numNew):    
-                    for j in range(numNew,num):
-                        subprocess.call(['./comparation',str(i)+'.cpp', str(j)+'.cpp ', '100']);
-                        result = open('stuff.res','r')
-                        strres = str(result.readline())
-                        print  strres + ' '+ str(i) +' '+ str(j)                    
-                        res = float(strres)
-                        ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = newSubmits[i].submit, submit_2 = oldSubmits[j-numNew].submit, hidden = False, result = res))
-                        result.close()
-                Comparison.modify(comp, ComparisonStruct(problem = comp.problem, algorithm = comp.algorithm, test_suite = comp.test_suite, result_filter = comp.result_filter))
-                
-        print "End of testing" 
-        #break
-
-        
+                        old_submits.append(submit)
+                for i in submits: 
+                    for j in old_submits:
+                        cribfinder_compare(comp, i, j)
+                for i in range(0,len(submits):    
+                    for j in range(i+1,len(submits)):
+                        cribfinder_compare(comp, submits[i], submits[j])
+                comp.date_last_execute = ts
+        time.sleep(10)
 
 def cribfinder_initialize():
-    for res in [ resource.RLIMIT_CPU, resource.RLIMIT_FSIZE, resource.RLIMIT_DATA, resource.RLIMIT_STACK, resource.RLIMIT_RSS, resource.RLIMIT_NPROC, resource.RLIMIT_MEMLOCK, resource.RLIMIT_AS ]:
-        resource.setrlimit(res, (-1,-1))
-    subprocess.check_call(['iptables', '-P', 'INPUT', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-F', 'INPUT'])
-    subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-A', 'INPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
-    subprocess.check_call(['iptables', '-A', 'INPUT', '-i', 'lo', '-j', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-A', 'INPUT', '-i', 'eth+', '-p', 'tcp', '--dport', '22', '-j', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-A', 'INPUT', '-i', 'veth+', '-p', 'tcp', '--dport', '8765', '-j', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-A', 'INPUT', '-j', 'LOG'])
-    subprocess.check_call(['iptables', '-P', 'INPUT', 'ACCEPT'])
-
-    subprocess.check_call(['iptables', '-P', 'OUTPUT', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-F', 'OUTPUT'])
-    subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
-    subprocess.check_call(['iptables', '-A', 'OUTPUT', '-o', 'lo', '-j', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'owner', '--uid-owner', 'root', '-j', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'owner', '--uid-owner', 'daemon', '-j', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-A', 'OUTPUT', '-j', 'LOG'])
-    subprocess.check_call(['iptables', '-P', 'OUTPUT', 'ACCEPT'])
-
-    subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
-    subprocess.check_call(['iptables', '-F', 'FORWARD'])
-    subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
-
-    subprocess.call(['umount', '-l', options.cgroup_dir])
-    subprocess.call(['rmdir', options.cgroup_dir])
-    subprocess.check_call(['mkdir', '-p', options.cgroup_dir])
-    subprocess.check_call(['mount', '-t', 'cgroup', '-o', 'rw,nosuid,noexec,relatime,memory,cpuacct,cpuset', 'cgroup', options.cgroup_dir])
-    if options.template_src:
-        subprocess.call(['umount', '-l', options.template_dir])
-        subprocess.call(['rmdir', options.template_dir])
-        subprocess.check_call(['mkdir', '-p', options.template_dir])
-        subprocess.check_call(['mkdir', '-p', options.template_dir+'.temp'])
-        subprocess.check_call(['mount', options.template_src, options.template_dir+'.temp'])
-        subprocess.check_call(['rsync', '-a', options.template_dir+'.temp/', options.template_dir])
-        subprocess.check_call(['umount', options.template_dir+'.temp'])
-        subprocess.call(['rmdir', options.template_dir+'.temp'])
+    pass
 
 def cribfinder_finalize():
-        subprocess.call(['umount', '-l', options.cgroup_dir])
-        subprocess.call(['rmdir', options.cgroup_dir])
-        if options.template_src:
-            subprocess.call(['umount', '-l', options.template_dir])
-            subprocess.call(['rmdir', options.template_dir])
+    pass
 
 def cribfinder_init():
     try:
@@ -169,4 +106,3 @@ def cribfinder_init():
         traceback.print_exc()
     finally:
         cribfinder_finalize()
-cribfinder_loop()
