@@ -4,6 +4,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 
+import datetime
 import os
 import resource
 import stat
@@ -21,7 +22,7 @@ options.add_option('--debug', dest='debug', default='', action='store', type='st
 (options, args) = setup()
 
 def cribfinder_compare(comparison, submit_1, submit_2):
-    if submit_1.id > submit2.id:
+    if submit_1.id > submit_2.id:
         z = submit_1
         submit_1 = submit_2
         submit_2 = z
@@ -31,10 +32,8 @@ def cribfinder_compare(comparison, submit_1, submit_2):
     try:
         sub1 = os.path.join(tmpd, 'submit1.cpp')
         sub2 = os.path.join(tmpd, 'submit2.cpp')
-        with open(sub1, 'w') as s1:
-            s1.write(submit_1.data)
-        with open(sub2, 'w') as s2:
-            s2.write(submit_2.data)
+        submit_1.data_get_blob_path('content', sub1)
+        submit_2.data_get_blob_path('content', sub2)
         res = float(subprocess.check_output(['comparation', sub1, sub2, '100']))
         cr = ComparisonResult.filter(ComparisonResultStruct(comparison=comparison, submit_1 = submit_1, submit_2 = submit_2))
         if len(cr) > 0:
@@ -52,16 +51,16 @@ def cribfinder_loop():
         print "Start"
         comparisons = Comparison.filter()
         for comp in comparisons:
-            if Comparison.isExecute(comp):
+            if comp.date_last_executed is None:
                 ts = datetime.datetime.fromtimestamp(0)
                 test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.result_filter))
                 submits = []
                 for tsr in test_suite_res:
-                    submit = Web.get_result_details(submit=tsr.submit)
+                    submit = tsr.submit
                     if submit.time > ts:
                         ts = submit.time
-                    submits.append(submit.submit)
-               for i in range(0,len(submits)): 
+                    submits.append(submit)
+                for i in range(0,len(submits)): 
                     for j in range(i+1,len(submits)):
                         cribfinder_compare(comp, submits[i], submits[j])
                 comp.date_last_execute = ts
@@ -71,17 +70,17 @@ def cribfinder_loop():
                 submits = []
                 old_submits = []
                 for tsr in test_suite_res:
-                    submit = Web.get_result_details(submit=tsr.submit)
+                    submit = tsr.submit
                     if submit.time > ts:
                         ts = submit.time
-                    if submit.submit.time < comp.execution_date:
+                    if submit.time < comp.date_last_executed:
                         submits.append(submit)
                     else:
                         old_submits.append(submit)
                 for i in submits: 
                     for j in old_submits:
                         cribfinder_compare(comp, i, j)
-                for i in range(0,len(submits):    
+                for i in range(0,len(submits)):    
                     for j in range(i+1,len(submits)):
                         cribfinder_compare(comp, submits[i], submits[j])
                 comp.date_last_execute = ts
