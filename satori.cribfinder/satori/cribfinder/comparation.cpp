@@ -22,7 +22,7 @@ int main(int argc, char **argv){
 
     strcpy(file_2, argv[2]);
 
-    strcpy(path, "tmp/");
+    strcpy(path, "");
 
 
     //:
@@ -54,27 +54,27 @@ int main(int argc, char **argv){
 
 
     //Prepare system command to run prepr02 on created path to i sorcecode:
-    sprintf(command, "./parseClang %s%s > temp/%s.pre", path, file_1, file_1);
+    sprintf(command, "./parseClang %s%s > temp/%s.pre", path, file_1, "file_1");
 
     //Run that command:
     system(command);
 
 
     //Prepare system command to run prepr02 on created path to i sorcecode:
-    sprintf(command, "./parseClang %s%s > temp/%s.pre", path, file_2, file_2);
+    sprintf(command, "./parseClang %s%s > temp/%s.pre", path, file_2, "file_2");
 
     //Run that command:
     system(command);
 
     //:
-    sprintf(command, "dd if=temp/%s.pre bs=1 skip=`stat -c %s temp/inc1.pre` of=temp/%s.prex", file_1,"%s", file_1);
+    sprintf(command, "dd if=temp/%s.pre bs=1 skip=`stat -c %s temp/inc1.pre` of=temp/%s.prex > /dev/null", "file_1","%s", "file_1");
 
 
     //Run that command:
     system(command);
 
     //:
-    sprintf(command, "dd if=temp/%s.pre bs=1 skip=`stat -c %s temp/inc2.pre` of=temp/%s.prex", file_2,"%s", file_2);
+    sprintf(command, "dd if=temp/%s.pre bs=1 skip=`stat -c %s temp/inc2.pre` of=temp/%s.prex > /dev/null", "file_2","%s", "file_2");
 
     //Run that command:
     system(command);
@@ -85,7 +85,7 @@ int main(int argc, char **argv){
     sscanf(argv[3], "%d", &min_block);
 
     //Prepare system command to run compare03 on submits V[i] and V[j] with min_block:
-    sprintf(command, "./compare03 temp/%s.prex temp/%s.prex %d > stuff.res", file_1, file_2, min_block);
+    sprintf(command, "./compare03 temp/%s.prex temp/%s.prex %d", "file_1", "file_2", min_block);
 
     //execute shell command with mode 'r' for reading:
     system(command);
