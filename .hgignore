@@ -13,7 +13,10 @@ syntax: regexp
 /dist/
 \.egg-info/
 tmp/*
-satori.javatool/bin/*
-satori.javatool/lib/*
-syncdb.sh
+^satori.javatool/bin/*
+^satori.javatool/lib/*
+^syncdb.sh$
 \.orig$
+^satori.cribfinder/compare/compare03$
+^satori.cribfinder/compare/parseClang$
+^satori.judge/runner/runner$
