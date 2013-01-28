@@ -10,7 +10,7 @@
 #include <string>
 #include <set>
 #include <dlfcn.h>
-#include "Index.h"
+#include "clang-c/Index.h"
 //int i;
 
 CXChildVisitResult visitor(CXCursor node, CXCursor parent, CXClientData children){
