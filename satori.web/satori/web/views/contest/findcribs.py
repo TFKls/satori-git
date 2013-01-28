@@ -58,7 +58,7 @@ def view(request, page_info):
             test_suite = TestSuite(int(data["test_suite"]))
             regexp = data["regexp"]
 
-            Comparison.create(ComparisonStruct(problem_mapping=problem, algorithm=algorithm, test_suite=test_suite, regexp=regexp))
+            Comparison.create(ComparisonStruct(problem=problem, algorithm=algorithm, test_suite=test_suite, result_filter=regexp))
             return HttpResponseRedirect(reverse('findcribs',args=[page_info.contest.id]))
     else:
         form = ComparisonForm(initial={'refresh': None, 'problem' : request.GET.get('problem',None), 'algorithm' : request.GET.get('algorithm', "0"), 'test_suite' : request.GET.get('test_suite', 0), 'regexp' : request.GET.get('regexp', '')})

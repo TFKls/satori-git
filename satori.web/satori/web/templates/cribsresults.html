@@ -14,7 +14,7 @@
 
 
 <table class="results" border = "0">
-<tr><td>Diff</td><td>Problem</td><td>RegExp</td><td>Submit_1</td><td>User_1</td><td>Submit_2</td><td>User_2</td><td>Result</td></tr>
+<tr><td>Diff</td><td>Problem</td><td>Filter</td><td>Submit_1</td><td>User_1</td><td>Submit_2</td><td>User_2</td><td>Result</td></tr>
 {% for r in results %}
    <tr><td><a href= 'http://szymon.borak.student.tcs.uj.edu.pl/contest/30/results/diff?diff_1={{ r.submit_1|safe }}&diff_2={{ r.submit_2|safe }}'>diff</a></td><td>{{ r.problem }}</td><td>{{ r.regexp }}</td><td>{{ r.submit_1 }}</td><td>{{ r.user_1 }}</td><td>{{ r.submit_2 }}</td><td>{{ r.user_2 }}</td><td>{{ r.result }}</td></tr>
 

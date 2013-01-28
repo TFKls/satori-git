@@ -44,8 +44,8 @@ def cribfinder_loop():
         comparisons = Comparison.filter()
         for comp in comparisons:
             if Comparison.isExecute(comp):
-                print comp.regexp
-                test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.regexp))
+                print comp.result_filter
+                test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.result_filter))
                 num = 0;
                 submits = []
                 for tsr in test_suite_res:
@@ -65,11 +65,11 @@ def cribfinder_loop():
                         res = float(strres)
                         ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = submits[i].submit, submit_2 = submits[j].submit, result = res))
                         result.close()
-                Comparison.modify(comp, ComparisonStruct(problem_mapping = comp.problem_mapping, algorithm = comp.algorithm, test_suite = comp.test_suite, regexp = comp.regexp))
-                print comp.execution_date
+                Comparison.modify(comp, ComparisonStruct(problem = comp.problem, algorithm = comp.algorithm, test_suite = comp.test_suite, result_filter = comp.result_filter))
+                print comp.date_last_executed
             else:
                 print comp.regexp
-                test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.regexp))
+                test_suite_res = TestSuiteResult.filter(TestSuiteResultStruct(test_suite=comp.test_suite, status=comp.result_filter))
                 numNew = 0
                 num = 0
                 newSubmits = []
@@ -101,8 +101,7 @@ def cribfinder_loop():
                         res = float(strres)
                         ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = newSubmits[i].submit, submit_2 = oldSubmits[j-numNew].submit, hidden = False, result = res))
                         result.close()
-                Comparison.modify(comp, ComparisonStruct(problem_mapping = comp.problem_mapping, algorithm = comp.algorithm, test_suite = comp.test_suite, regexp = comp.regexp))
-                print comp.execution_date
+                Comparison.modify(comp, ComparisonStruct(problem = comp.problem, algorithm = comp.algorithm, test_suite = comp.test_suite, result_filter = comp.result_filter))
                 
         print "End of testing" 
         #break

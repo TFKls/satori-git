@@ -16,16 +16,16 @@ class ComparisonResult(Entity):
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_comparisonresult')
     
 
-    comparison      = models.ForeignKey('Comparison', related_name='results', on_delete=models.PROTECT)
-    submit_1        = models.ForeignKey('Submit', related_name='comparisonresults+', on_delete=models.PROTECT)
-    submit_2        = models.ForeignKey('Submit', related_name='comparisonresults+', on_delete=models.PROTECT)  
-    hidden          = models.BooleanField()
-    who_hid         = models.ForeignKey('User',  related_name='comparisonresults+', on_delete=models.PROTECT, null=True)
-    result          = models.FloatField()
+    comparison      = models.ForeignKey('Comparison', related_name='results', on_delete=models.CASCADE)
+    submit_1        = models.ForeignKey('Submit', related_name='comparisonresults+', on_delete=models.CASCADE)
+    submit_2        = models.ForeignKey('Submit', related_name='comparisonresults+', on_delete=models.CASCADE)  
+    resolved        = models.BooleanField()
+    resolver        = models.ForeignKey('User',  related_name='comparisonresults+', on_delete=models.SET_NULL, null=True)
+    result          = models.FloatField(null=True)
     
 
     class ExportMeta(object):
-        fields = [('comparison', 'VIEW'), ('submit_1', 'VIEW'), ('submit_2', 'VIEW'), ('hidden', 'VIEW'), ('who_hid', 'VIEW'), ('result', 'VIEW')]
+        fields = [('comparison', 'VIEW'), ('submit_1', 'VIEW'), ('submit_2', 'VIEW'), ('resolved', 'VIEW'), ('resolver', 'VIEW'), ('result', 'VIEW')]
         
     class RightsMeta(object):
         inherit_parent = 'comparison'
@@ -46,15 +46,20 @@ class ComparisonResult(Entity):
     @staticmethod
     def create(fields):
         comparisonres = ComparisonResult()
-        comparisonres.forbid_fields(fields, ['id', 'who_hid'])
-        comparisonres.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'hidden', 'result'])
+        comparisonres.forbid_fields(fields, ['id', 'resolver'])
+        comparisonres.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'resolved'])
         comparisonres.save()
         return comparisonres
 
     @ExportMethod(DjangoStruct('ComparisonResult'), [DjangoId('ComparisonResult'), DjangoStruct('ComparisonResult')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        self.forbid_fields(fields, ['id'])
-        self.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'hidden', 'who_hid', 'result'])
+        self.forbid_fields(fields, ['id', 'resolver'])
+        modified = self.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'resolved', 'result'])
+        if 'resolved' in modified:
+            if self.resolved:
+                self.resolver = token_container.token_user
+            else:
+                self.resolver = None
         self.save()
         return self
 

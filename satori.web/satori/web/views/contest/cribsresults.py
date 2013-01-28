@@ -39,10 +39,10 @@ def view(request, page_info):
     problems.sort(key=lambda p: p.code)
     for problem in problems:
         if Privilege.demand(problem, "MANAGE"):
-            comparisons = Comparison.filter(ComparisonStruct(problem_mapping=problem))
-            comparisons.sort(key=lambda p: p.creation_date)
+            comparisons = Comparison.filter(ComparisonStruct(problem=problem))
+            comparisons.sort(key=lambda p: p.date_created)
             for comp in comparisons:
-                submitable.append((comp.id, str(comp.problem_mapping.code) +": "+str(comp.execution_date)))
+                submitable.append((comp.id, str(comp.problem.code) +": "+str(comp.date_last_executed)))
 
     if request.REQUEST.get('comparison', '') != '':
         comparison = Comparison(int(request.REQUEST.get('comparison'))) 
@@ -55,7 +55,7 @@ def view(request, page_info):
             if bound <= 0:
                 break
             bound -= 1
-            results.append(ShowCribs(problem = str(comparison.problem_mapping.code), regexp = cres.comparison.regexp, submit_1 = str(cres.submit_1.id),  user_1 = cres.submit_1.contestant.usernames, submit_2 = str(cres.submit_2.id), user_2 = cres.submit_2.contestant.usernames, result = str(cres.result)))
+            results.append(ShowCribs(problem = str(comparison.problem.code), regexp = cres.comparison.result_filter, submit_1 = str(cres.submit_1.id),  user_1 = cres.submit_1.contestant.usernames, submit_2 = str(cres.submit_2.id), user_2 = cres.submit_2.contestant.usernames, result = str(cres.result)))
 
     class ComparisonForm(forms.Form):
         refresh = forms.CharField(widget=forms.HiddenInput(), required=False)
