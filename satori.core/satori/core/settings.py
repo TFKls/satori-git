@@ -35,36 +35,40 @@ DATABASES = {
 
 CACHE_BACKEND = 'memcached://localhost:11211'
 
-EVENT_HOST = 'localhost'
-EVENT_PORT = 32888
-THRIFT_HOST = '0.0.0.0'
-THRIFT_PORT = 32889
-BLOB_HOST = '0.0.0.0'
-BLOB_PORT = 32887
-
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
 BLOB_DIR = os.path.join(BASE_DIR, 'tmp', 'blob')
 LOG_FILE = os.path.join(BASE_DIR, 'tmp', 'server.log')
 PID_FILE = os.path.join(BASE_DIR, 'tmp', 'server.pid')
 
-USE_SSL = False
+USE_SSL = True
 SSL_CERTIFICATE = ''
-
+EVENT_HOST = 'localhost'
+EVENT_PORT = 32888
+THRIFT_HOST = '0.0.0.0'
+THRIFT_PORT = 32889
+BLOB_HOST = '0.0.0.0'
+BLOB_PORT = 32887
 if getpass.getuser() == 'gutowski':
+    USE_SSL = False
     EVENT_PORT = 39888
     THRIFT_PORT = 39889
     BLOB_PORT = 39887
-if getpass.getuser() == 'zzzmwm01':
+elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
+    SSL_CERTIFICATE = '/home/zzzmwm01/satori/ssl/server.pem'
     EVENT_PORT = 37888
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
-    USE_SSL = True
-    SSL_CERTIFICATE = '/home/zzzmwm01/satori/ssl/server.pem'
-if getpass.getuser() == 'duraj':
+elif getpass.getuser() == 'duraj':
+    USE_SSL = False
     EVENT_PORT = 36888
     THRIFT_PORT = 36889
     BLOB_PORT = 36887
+elif getpass.getuser() == 'boraks':
+    USE_SSL = False
+    EVENT_PORT = 32888
+    THRIFT_PORT = 32889
+    BLOB_PORT = 32887
 
 ADMIN_NAME = 'admin'
 ADMIN_PASSWORD = 'admin'

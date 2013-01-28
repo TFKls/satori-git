@@ -43,16 +43,16 @@ elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     THRIFT_HOST = 'localhost'
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
+elif getpass.getuser() == 'duraj':
+    USE_SSL = False
+    THRIFT_HOST = 'localhost'
+    THRIFT_PORT = 36889
+    BLOB_PORT = 36887
 elif getpass.getuser() == 'boraks':
     USE_SSL = False
     THRIFT_HOST = 'student.tcs.uj.edu.pl'
     THRIFT_PORT = 32889
     BLOB_PORT = 32887
-#elif getpass.getuser() == 'duraj':
-#    USE_SSL = False
-#    THRIFT_HOST = 'localhost'
-#    THRIFT_PORT = 36889
-#    BLOB_PORT = 36887
 del params
 
 LOGGING = {
