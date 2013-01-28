@@ -49,7 +49,7 @@ class ComparisonResult(Entity):
         comparisonres = ComparisonResult()
         comparisonres.forbid_fields(fields, ['id', 'resolver'])
         comparisonres.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'resolved'])
-        if comaprisonres.submit_1.id > comparisonres.submit_2.id:
+        if comparisonres.submit_1.id > comparisonres.submit_2.id:
             z = comparisonres.submit_1
             comparisonres.submit_1 = comparisonres.submit_2
             comparisonres.submit_2 = z
