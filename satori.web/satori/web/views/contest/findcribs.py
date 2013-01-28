@@ -21,7 +21,6 @@ def view(request, page_info):
     contest = page_info.contest
     admin = page_info.contest_is_admin 
 
-#part two:
     submitable = [["",'Select a problem']]
     algo = [["0","C++ Check"]]
     suitetable = [["",'Select a suite']]
@@ -36,12 +35,6 @@ def view(request, page_info):
         suits = TestSuite.filter(TestSuiteStruct(problem=problem.problem))
         for suite in sorted(suits, key=lambda ts: ts.name):
             suitetable.append((suite.id, suite.name))
-
-    #    suits = TestSuite.filter(TestSuiteStruct(problem=problem))
-    #    suits.sort(key=lambda p: p.code)
-    #
-    #    for suite in suits:
-    #       suitetable.append((suite.id, suite.code+": "+suite.title))
 
     class ComparisonForm(forms.Form):
         refresh = forms.CharField(widget=forms.HiddenInput(), required=False)
