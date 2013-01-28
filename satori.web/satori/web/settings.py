@@ -35,14 +35,19 @@ if params:
     THRIFT_PORT = int(params[1])
     BLOB_PORT = int(params[2])
 elif getpass.getuser() == 'gutowski':
+    USE_SSL = False
     THRIFT_HOST = 'localhost'
     THRIFT_PORT = 39889
     BLOB_PORT = 39887
-    USE_SSL = False
 elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
     THRIFT_HOST = 'localhost'
     THRIFT_PORT = 37889
     BLOB_PORT = 37887
+elif getpass.getuser() == 'boraks':
+    USE_SSL = False
+    THRIFT_HOST = 'student.tcs.uj.edu.pl'
+    THRIFT_PORT = 32889
+    BLOB_PORT = 32887
 #elif getpass.getuser() == 'duraj':
 #    USE_SSL = False
 #    THRIFT_HOST = 'localhost'

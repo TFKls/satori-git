@@ -27,7 +27,7 @@ class Global(Entity):
         fields = [('contest_admins', 'VIEW'), ('anonymous', 'VIEW'), ('authenticated', 'VIEW'), ('zero', 'VIEW'), ('assignment', 'VIEW'), ('profile_fields', 'VIEW')]
 
     class RightsMeta(object):
-        rights = ['TEMPORARY_SUBMIT', 'MANAGE_LOCKS', 'MANAGE_PRIVILEGES', 'MANAGE_CONTESTS', 'MANAGE_PROBLEMS', 'JUDGE', 'RAW_BLOB', 'ADMIN']
+        rights = ['TEMPORARY_SUBMIT', 'MANAGE_LOCKS', 'MANAGE_PRIVILEGES', 'MANAGE_CONTESTS', 'MANAGE_PROBLEMS', 'JUDGE', 'COMPARE', 'RAW_BLOB', 'ADMIN']
     
         inherit_TEMPORARY_SUBMIT = ['MANAGE_PROBLEMS']
         inherit_MANAGE_LOCKS = ['ADMIN']
@@ -35,7 +35,7 @@ class Global(Entity):
         inherit_MANAGE_CONTESTS = ['ADMIN']
         inherit_MANAGE_PROBLEMS = ['ADMIN']
         inherit_JUDGE = ['ADMIN']
-        inherit_RAW_BLOB = ['JUDGE', 'MANAGE_PROBLEMS']
+        inherit_RAW_BLOB = ['JUDGE', 'COMPARE', 'MANAGE_PROBLEMS']
 
     @classmethod
     def inherit_rights(cls):

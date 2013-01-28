@@ -1,0 +1,102 @@
+{% extends "templates/index.html" %}
+
+{% block header %}
+ {% include "showhide.html" %}
+{% endblock %}
+
+{% block content %}
+
+
+<h3>Submit {{widget.sid}}</h4>
+
+
+<table class="results">
+<tr>
+    <th>#</th>
+    <th>User</th>
+    <th>Problem</th>
+    <th>Time</th>
+    <th>Status</th>
+</tr>
+<tr>
+    <td>{{widget.sid}}</td>
+    <td>{{widget.contestant.name}}</td>
+    <td>{{widget.problem.code}}</td>
+    <td>{{widget.time|date:"Y-m-d, H:i:s"}}</td>
+
+<td class=sta{{ widget.status }}>{{widget.status}}</td>
+</tr>
+
+
+</table>
+
+{% if widget.details %}
+<h4>Checking report</h4>
+{{widget.details|safe}}
+{% endif %}
+
+<hr class="divide"/>
+
+{% if widget.suites %}
+<h3>Suite results</h3>
+
+{% for r in widget.suites %}
+<h4>Suite: {{r.result.test_suite.name}}  {% if r.default %}(default){% endif %}, status: {{r.result.status}} [<a class="stdlink" href="javascript:unhide('sd_{{r.result.test_suite.id}}');">show details</a>]</h4>
+<div class="hidden" id="sd_{{r.result.test_suite.id}}">
+
+<h5>Report </h5>
+
+{{r.report|safe}}
+
+<h5>Attributes</h5>
+{% for key, attr in r.attrs.iteritems %}
+{% if not attr.is_blob %}
+{{ key }} : {{ attr.value}}
+{% else %}
+{{ key }} : <a href="{% url download "download" "TestSuiteResult" result.test_suite_result.id key attr.filename %}">({{ attr.filename }})</a>
+{% endif %}
+</br>
+{% endfor %}
+
+</div>
+
+
+{% endfor %}
+
+
+<hr class="divide"/>
+
+{% endif %}
+
+{% if page_info.contest_is_admin %}
+<h3>Test results</h3>
+
+<table class="results">
+  {{tests.render_table|safe}}
+</table>
+<hr class="divide"/>
+
+{% endif %}
+
+{% if page_info.contest_is_admin %}
+<h3>Actions</h3>
+
+<form action="{% url submit_override page_info.contest.id widget.sid %}" method="POST">
+    <input class="button" type="submit" name="rejudge" value="Rejudge submit"/>
+    <a class="button" href="{% url submit_override page_info.contest.id widget.sid %}">Override result</a>
+    <input class="button" type="submit" name="revert" value="Revert override"/>
+</form><br/>
+
+<hr class="divide"/>
+
+{% endif %}
+
+
+<h3>Code (<a class="stdlink" href="{% url download_group "download" "Submit" widget.sid "data" "content" filename %}">download</a>)</h3>
+{% if widget.code %}
+{{widget.code|safe}}
+{% else %}
+Cannot render this file, please download.
+{% endif %}
+
+{% endblock %}

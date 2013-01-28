@@ -1,0 +1,48 @@
+{% extends "templates/index.html" %}
+
+{% block content %}
+
+{% load switch %}
+
+<h3>Compare submits</h4>
+
+
+<table class="results">
+
+<tr>
+    <th>#</th>
+    <th>User</th>
+    <th>Problem</th>
+    <th>Time</th>
+    <th>Status</th>
+</tr>
+{% for s in submits %}
+<tr>
+    <td><span class="{% cycle 'highlight_pos' 'highlight_neg' %}">{{s.submit.id}}</span></td>
+    <td>{{s.contestant.name}}</td>
+    <td>{{s.problem_mapping.code}}</td>
+    <td>{{s.submit.time|date:"Y-m-d, H:i:s"}}</td>
+
+<td class={% switch widget.status %}
+                {% case "QUE" %} "staQUE"
+                {% case "ACC" %} "staACC"
+                {% case "OK" %} "staOK"
+                {% case "TLE" %} "staTLE"
+                {% case "ANS" %} "staANS"
+                {% case "RTE" %} "staRTE"
+                {% case "MEM" %} "staMEM"
+                {% case "REJ" %} "staREJ"
+                {% case "CME" %} "staCME"
+                {% else %} ""
+           {% endswitch %}>
+
+    {{s.status}}</td>
+</tr>
+{% endfor %}
+</table>
+
+<pre>
+{{ diff|safe }}
+</pre>
+
+{% endblock %}

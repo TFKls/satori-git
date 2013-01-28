@@ -1,0 +1,69 @@
+#!/usr/bin/env python
+# -*- coding: utf-8 -*-
+# vim:ts=4:sts=4:sw=4:expandtab
+
+import datetime
+import os
+import re
+import resource
+import stat
+import sys
+import shutil
+import tempfile
+import time
+import subprocess
+import traceback
+import subprocess
+
+
+def headers(source_path, header_path):
+    with open(source_path, 'r') as src:
+        with open(header_path, 'w') as dst:
+            for line in src:
+                if re.match(r'^\w*#', line):
+                    dst.write(line)
+def clang_parse(source_path, parsed_path):
+    with open(parsed_path, 'w') as dst:
+        subprocess.check_call(['parseClang', source_path], stdout=dst)
+def cutoff(source_path, cut_path, dst_path):
+    clen = os.stat(cut_path).st_size
+    with open(source_path, 'r') as src:
+        src.seek(clen)
+        with open(dst_path, 'w') as dst:
+            shutil.copyfileobj(src, dst)
+
+def comper():
+#1 - first file, 2 - second file, 3 - block size
+
+    file_1 = os.path.abspath(os.path.realpath(str(sys.argv[1])))
+    file_2 = os.path.abspath(os.path.realpath(str(sys.argv[2])))
+    min_block = int(sys.argv[3])
+    if min_block < 10:
+        min_block = 10
+
+    cw = os.getcwd()
+    tmpc = tempfile.mkdtemp()
+    os.chdir(tmpc)
+    try:
+        inc1cpp = os.path.join(tmpc, 'inc1.cpp')
+        inc2cpp = os.path.join(tmpc, 'inc2.cpp')
+        headers(file_1, inc1cpp)
+        headers(file_2, inc2cpp)
+        inc1pre = os.path.join(tmpc, 'inc1.pre')
+        inc2pre = os.path.join(tmpc, 'inc2.pre')
+        clang_parse(inc1cpp, inc1pre)
+        clang_parse(inc2cpp, inc2pre)
+        full1pre = os.path.join(tmpc, 'full1.pre')
+        full2pre = os.path.join(tmpc, 'full2.pre')
+        clang_parse(file_1, full1pre)
+        clang_parse(file_2, full2pre)
+        prex1 = os.path.join(tmpc, 'file_1.prex')
+        prex2 = os.path.join(tmpc, 'file_2.prex')
+        cutoff(full1pre, inc1pre, prex1)
+        cutoff(full2pre, inc2pre, prex2)
+        subprocess.check_call(['compare03', prex1, prex2, str(min_block)])
+    finally:
+        os.chdir(cw)
+        shutil.rmtree(tmpc)
+
+comper()
