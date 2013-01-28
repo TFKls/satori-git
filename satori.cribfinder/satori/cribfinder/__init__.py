@@ -65,7 +65,7 @@ def cribfinder_loop():
                         res = float(strres)
                         ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = submits[i].submit, submit_2 = submits[j].submit, result = res))
                         result.close()
-                Comparison.modify(comp, ComparisonStruct(problem = comp.problem, algorithm = comp.algorithm, test_suite = comp.test_suite, result_filter = comp.result_filter))
+                Comparison.updateExecuteDate(comp)
                 print comp.date_last_executed
             else:
                 print comp.regexp
@@ -101,7 +101,7 @@ def cribfinder_loop():
                         res = float(strres)
                         ComparisonResult.create(ComparisonResultStruct(comparison=comp, submit_1 = newSubmits[i].submit, submit_2 = oldSubmits[j-numNew].submit, hidden = False, result = res))
                         result.close()
-                Comparison.modify(comp, ComparisonStruct(problem = comp.problem, algorithm = comp.algorithm, test_suite = comp.test_suite, result_filter = comp.result_filter))
+                Comparison.updateExecuteDate(comp)
                 
         print "End of testing" 
         #break
