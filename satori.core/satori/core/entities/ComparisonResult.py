@@ -7,14 +7,13 @@ from satori.core.models import Entity
 
 @ExportModel
 class ComparisonResult(Entity):
-    """Model. Description of a comparison.
+    """Model. Description of a comparison result.
 
     rights:
 		VIEW
         MANAGE
     """
     parent_entity = models.OneToOneField(Entity, parent_link=True, related_name='cast_comparisonresult')
-    
 
     comparison      = models.ForeignKey('Comparison', related_name='results', on_delete=models.CASCADE)
     submit_1        = models.ForeignKey('Submit', related_name='comparisonresults+', on_delete=models.CASCADE)
@@ -23,6 +22,8 @@ class ComparisonResult(Entity):
     resolver        = models.ForeignKey('User',  related_name='comparisonresults+', on_delete=models.SET_NULL, null=True)
     result          = models.FloatField(null=True)
     
+    class Meta:                                                # pylint: disable-msg=C0111
+        unique_together = (('comparison', 'submit_1', 'submit_2'),)
 
     class ExportMeta(object):
         fields = [('comparison', 'VIEW'), ('submit_1', 'VIEW'), ('submit_2', 'VIEW'), ('resolved', 'VIEW'), ('resolver', 'VIEW'), ('result', 'VIEW')]
@@ -48,13 +49,19 @@ class ComparisonResult(Entity):
         comparisonres = ComparisonResult()
         comparisonres.forbid_fields(fields, ['id', 'resolver'])
         comparisonres.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'resolved'])
+        if comaprisonres.submit_1.id > comparisonres.submit_2.id:
+            z = comparisonres.submit_1
+            comparisonres.submit_1 = comparisonres.submit_2
+            comparisonres.submit_2 = z
+        if comparisonres.resolved:
+            comparisonres.resolver = token_container.token_user
         comparisonres.save()
         return comparisonres
 
     @ExportMethod(DjangoStruct('ComparisonResult'), [DjangoId('ComparisonResult'), DjangoStruct('ComparisonResult')], PCArg('self', 'MANAGE'), [CannotSetField])
     def modify(self, fields):
-        self.forbid_fields(fields, ['id', 'resolver'])
-        modified = self.update_fields(fields, ['comparison', 'submit_1', 'submit_2', 'resolved', 'result'])
+        self.forbid_fields(fields, ['id', 'resolver', 'submit_1', 'submit_2'])
+        modified = self.update_fields(fields, ['comparison', 'resolved', 'result'])
         if 'resolved' in modified:
             if self.resolved:
                 self.resolver = token_container.token_user
