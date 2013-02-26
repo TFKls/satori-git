@@ -100,6 +100,15 @@ class Contestant(Role):
         self.contest.changed_contestants()
         return self
 
+    @ExportMethod(NoneType, [DjangoId('Contestant')], PCArg('self', 'MANAGE'))
+    def delete(self):
+        contest = self.contest
+        try:
+            super(Contestant, self).delete()
+        except models.ProtectedError as e:
+            raise CannotDeleteObject()
+        contest.changed_contestants()
+
     def update_usernames(self):
         name = u', '.join([x.name for x in sorted(self.get_members(), key=attrgetter('sort_field'))]).strip()
         sort_field = u', '.join([x.sort_field for x in sorted(self.get_members(), key=attrgetter('sort_field'))]).strip()

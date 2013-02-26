@@ -87,7 +87,7 @@ class User(Role):
                 c.update_usernames()
         return self
 
-    @ExportMethod(NoneType, [DjangoId('User')], PCArg('self', 'MANAGE'))
+    @ExportMethod(NoneType, [DjangoId('User')], PCArg('self', 'MANAGE'), [CannotDeleteObject)
     def delete(self):
         parent_contestants = list(Contestant.objects.filter(children=self))
         try:
