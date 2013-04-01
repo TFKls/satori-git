@@ -8,6 +8,7 @@ setup(name='satori.tools',
     ],
     install_requires=[
         'setuptools',
+        'argparse',
         'satori.client.common',
     ],
     entry_points='''
