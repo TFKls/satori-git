@@ -1,11 +1,12 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block content %}
 
 {% if page_info.contest %}
-<form action={% url contest_news_add page_info.contest.id %} method="POST">
+<form action={% url 'contest_news_add' page_info.contest.id %} method="POST">
 {% else %}
-<form action={% url news_add %} method="POST">
+<form action={% url 'news_add' %} method="POST">
 {% endif %}
 
 {{ form.fid }}

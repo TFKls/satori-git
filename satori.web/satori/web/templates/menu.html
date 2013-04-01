@@ -1,49 +1,50 @@
+{% load url from future %}
 <div id="navigationPanel">
     <ul>
         {% if page_info.contest %}
-            <li><a href="{% url contest_news page_info.contest.id %}">News</a></li>
+            <li><a href="{% url 'contest_news' page_info.contest.id %}">News</a></li>
             
             {% for subpage in page_info.subpages %}
-                <li><a href="{% url contest_subpage page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
+                <li><a href="{% url 'contest_subpage' page_info.contest.id subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
             
             {% if page_info.contest_viewable_problems_exist or page_info.contest_is_admin %}
-                <li><a href="{% url contest_problems page_info.contest.id %}">Problems</a></li>
+                <li><a href="{% url 'contest_problems' page_info.contest.id %}">Problems</a></li>
             {% endif %}
             
             {% if page_info.contest_submittable_problems_exist %}
-                <li><a href="{% url submit page_info.contest.id %}">Submit</a></li>
+                <li><a href="{% url 'submit' page_info.contest.id %}">Submit</a></li>
             {% endif %}
             
             {% if page_info.contestant or page_info.contest_is_admin %}
-                <li><a href="{% url results page_info.contest.id %}">Results</a></li>
+                <li><a href="{% url 'results' page_info.contest.id %}">Results</a></li>
             {% endif %}
            
             {% if page_info.contest_is_admin %}
-                <li><a href="{% url findcribs page_info.contest.id %}">FindCribs</a></li>
+                <li><a href="{% url 'findcribs' page_info.contest.id %}">FindCribs</a></li>
             {% endif %} 
 
 	    {% if page_info.contest_is_admin %}
-                <li><a href="{% url cribsresults page_info.contest.id %}">CribsResults</a></li>
+                <li><a href="{% url 'cribsresults' page_info.contest.id %}">CribsResults</a></li>
             {% endif %} 
    
             {% if page_info.contest_can_ask_questions or page_info.contest_answers_exist %}
-                <li><a href="{% url questions page_info.contest.id %}">Questions</a></li>
+                <li><a href="{% url 'questions' page_info.contest.id %}">Questions</a></li>
             {% endif %}
             {% if page_info.contest_can_print %}
-                <li><a href="{% url print page_info.contest.id %}">Print</a></li>
+                <li><a href="{% url 'print' page_info.contest.id %}">Print</a></li>
             {% endif %}
             {% if page_info.contest_can_backup %}
-                <li><a href="{% url backup page_info.contest.id %}">Backup</a></li>
+                <li><a href="{% url 'backup' page_info.contest.id %}">Backup</a></li>
             {% endif %}
             {% for ranking in page_info.rankings %}
-                <li><a href="{% url ranking page_info.contest.id ranking.id %}">{{ranking.name}}</a></li>
+                <li><a href="{% url 'ranking' page_info.contest.id ranking.id %}">{{ranking.name}}</a></li>
             {% endfor %}
             
             {% if page_info.contest_is_admin %}
-                <li><a href="{% url extends page_info.contest.id %}">Extensions</a></li>
-                <li><a href="{% url contestants page_info.contest.id %}">Contestants</a></li>
-                <li><a href="{% url contest_manage page_info.contest.id %}">Manage contest</a></li>
+                <li><a href="{% url 'extends' page_info.contest.id %}">Extensions</a></li>
+                <li><a href="{% url 'contestants' page_info.contest.id %}">Contestants</a></li>
+                <li><a href="{% url 'contest_manage' page_info.contest.id %}">Manage contest</a></li>
             {% endif %}
 
             {% if page_info.is_problemsetter %}
@@ -51,15 +52,15 @@
             {% endif %}
             
         {% else %}
-            <li><a href="{% url news %}">News</a></li>
-            <li><a href="{% url select_contest %}">Select contest</a></li>
+            <li><a href="{% url 'news' %}">News</a></li>
+            <li><a href="{% url 'select_contest' %}">Select contest</a></li>
             {% if page_info.is_admin %}
-                <li><a href="{% url configuration %}">Configuration</a></li>
-                <li><a href="{% url users %}">Users</a></li>
+                <li><a href="{% url 'configuration' %}">Configuration</a></li>
+                <li><a href="{% url 'users' %}">Users</a></li>
             {% endif %}
             
             {% if page_info.user %}
-                <li><a href="{% url profile %}">User profile</a></li>
+                <li><a href="{% url 'profile' %}">User profile</a></li>
             {% endif %}
             
 
@@ -68,7 +69,7 @@
             {% endif %}
 
             {% for subpage in page_info.subpages %}
-                <li><a href="{% url subpage subpage.id %}">{{subpage.name}}</a></li>
+                <li><a href="{% url 'subpage' subpage.id %}">{{subpage.name}}</a></li>
             {% endfor %}
         {% endif %}
     </ul>

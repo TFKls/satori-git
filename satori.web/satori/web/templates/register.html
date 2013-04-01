@@ -1,7 +1,8 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block content %}
-<form action={% url register %} method="POST">
+<form action={% url 'register' %} method="POST">
 <table>
     {{ form.as_table }}
 </table>

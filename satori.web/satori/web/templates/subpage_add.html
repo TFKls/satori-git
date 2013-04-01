@@ -1,4 +1,5 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block header %}
 {% endblock %}
@@ -6,9 +7,9 @@
 {% block content %}
 
 {% if page_info.contest %}
-<form action={% url contest_subpage_add page_info.contest.id %} method="POST">
+<form action={% url 'contest_subpage_add' page_info.contest.id %} method="POST">
 {% else %}
-<form action={% url subpage_add %} method="POST">
+<form action={% url 'subpage_add' %} method="POST">
 {% endif %}
 
 {{ form.fid }}

@@ -1,4 +1,5 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block header %}
 {{ form.media }}
@@ -37,7 +38,7 @@
     <td>{{problem.title}}</td>
     <td>{% if suite %} {{suite.name}} {% else %} Default ({{problem.default_test_suite.name}}) {% endif %}</td>
     <td>{% if params %} Yes {% else %} No {% endif %}</td>
-    <td><a class="button button_small" href={% url ranking_editparams page_info.contest.id ranking.id problem.id %}>Edit</a></td>
+    <td><a class="button button_small" href={% url 'ranking_editparams' page_info.contest.id ranking.id problem.id %}>Edit</a></td>
 </tr>
 {% endfor %}
 </table>

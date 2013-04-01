@@ -1,12 +1,13 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block header %}
-<link rel="stylesheet" href="{% url download_group "download" "Ranking" ranking.id "presentation" "stylesheet" "ranking.css" %}"/>
+<link rel="stylesheet" href="{% url 'download_group' "download" "Ranking" ranking.id "presentation" "stylesheet" "ranking.css" %}"/>
 {% endblock %}
 
 {% block content %}
 {% if page_info.contest_is_admin %}
-<div class="buttonbar"><a class="button" href="{% url ranking_edit page_info.contest.id ranking.id %}">Edit ranking</a><a class="button" href="{% url ranking_rejudge page_info.contest.id ranking.id %}">Rejudge ranking</a></div>
+<div class="buttonbar"><a class="button" href="{% url 'ranking_edit' page_info.contest.id ranking.id %}">Edit ranking</a><a class="button" href="{% url 'ranking_rejudge' page_info.contest.id ranking.id %}">Rejudge ranking</a></div>
 {% endif %}
 <h3>{{ ranking.name }}</h3>
 <div class="ranking">

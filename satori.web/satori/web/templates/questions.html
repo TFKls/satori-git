@@ -1,9 +1,10 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block content %}
 
 {% if page_info.contest_can_ask_questions %}
-<a class="button" href="{% url ask_question page_info.contest.id %}">Ask a question</a>
+<a class="button" href="{% url 'ask_question' page_info.contest.id %}">Ask a question</a>
 {% endif %}
 
 <h3>Questions</h3>
@@ -34,12 +35,12 @@
 {% endif %}
 
 {% if page_info.contest_is_admin %}
-<form action="{% url answer_question page_info.contest.id q.id %}" method="POST">
+<form action="{% url 'answer_question' page_info.contest.id q.id %}" method="POST">
 <div class="button_bar">
 {% if q.answer %}
-<a class="button" href="{% url answer_question page_info.contest.id q.id %}">Edit</a>
+<a class="button" href="{% url 'answer_question' page_info.contest.id q.id %}">Edit</a>
 {% else %}
-<a class="button" href="{% url answer_question page_info.contest.id q.id %}">Answer</a>
+<a class="button" href="{% url 'answer_question' page_info.contest.id q.id %}">Answer</a>
 {% endif %}
     <input type="submit" class="button button_warn" value="Delete" name="delete">
 </div>

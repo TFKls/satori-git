@@ -1,4 +1,5 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block content %}
 
@@ -12,7 +13,7 @@
 
 {{ prints.render_scrollbar }}
 
-<form action="{% url print page_info.contest.id %}" method="post" enctype="multipart/form-data">
+<form action="{% url 'print' page_info.contest.id %}" method="post" enctype="multipart/form-data">
 <table>
     {{ form.as_table }}
 </table>

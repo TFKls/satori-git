@@ -1,4 +1,5 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block header %}
 
@@ -62,8 +63,8 @@
 {% if page_info.contest_is_admin %}
 <hr class="divide"/>
 <div class="button_bar">
-<a class="button" href="{% url contest_problems_add page_info.contest.id %}">Add new problem</a>
-<a class="button" href="{% url contest_copyproblems page_info.contest.id %}">Copy from another contest</a>
+<a class="button" href="{% url 'contest_problems_add' page_info.contest.id %}">Add new problem</a>
+<a class="button" href="{% url 'contest_copyproblems' page_info.contest.id %}">Copy from another contest</a>
 </div>
 {% endif %}
 {% endblock %}

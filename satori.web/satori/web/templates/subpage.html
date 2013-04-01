@@ -1,12 +1,13 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block content %}
 <p>
 {% if can_edit %}
 {% if page_info.contest %}
-<a class="button" href="{% url contest_subpage_edit page_info.contest.id subpage.id %}">Edit subpage</a>
+<a class="button" href="{% url 'contest_subpage_edit' page_info.contest.id subpage.id %}">Edit subpage</a>
 {% else %}
-<a class="button" href="{% url subpage_edit subpage.id %}">Edit subpage</a>
+<a class="button" href="{% url 'subpage_edit' subpage.id %}">Edit subpage</a>
 {% endif %}
 {% endif %}
 </p>
@@ -19,7 +20,7 @@
 <table>
     {% for afile in attachments %}
     <tr><td>
-        <a href="{% url download_group 'download' 'Subpage' subpage.id 'content_files' afile afile  %}">{{ afile }}</a>
+        <a href="{% url 'download_group' 'download' 'Subpage' subpage.id 'content_files' afile afile  %}">{{ afile }}</a>
     </td></tr>
     {% endfor %}
 </table>

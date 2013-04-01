@@ -1,4 +1,5 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block header %}
 
@@ -23,13 +24,13 @@
 {% for s in page_info.subpages %}
 <tr>
 {% if s.contest %}
-<td>{{ s.name }}</td><td><a class="button button_small" href="{% url contest_subpage_edit page_info.contest.id s.id %}">edit</a></td>
+<td>{{ s.name }}</td><td><a class="button button_small" href="{% url 'contest_subpage_edit' page_info.contest.id s.id %}">edit</a></td>
 {% endif %}
 </tr>
 {% endfor %}
 </table>
 
-<a class="button" href="{% url contest_subpage_add page_info.contest.id %}">Add new subpage</a>
+<a class="button" href="{% url 'contest_subpage_add' page_info.contest.id %}">Add new subpage</a>
 
 <hr class="divide"/>
 
@@ -37,11 +38,11 @@
 <table>
 {% for s in page_info.rankings %}
 <tr>
-<td>{{ s.name }} </td><td><a class="button button_small" href="{% url ranking_edit page_info.contest.id s.id %}">edit</a></td><td> <a class="button button_small" href="{% url ranking_rejudge page_info.contest.id s.id %}">rejudge</a></td>
+<td>{{ s.name }} </td><td><a class="button button_small" href="{% url 'ranking_edit' page_info.contest.id s.id %}">edit</a></td><td> <a class="button button_small" href="{% url 'ranking_rejudge' page_info.contest.id s.id %}">rejudge</a></td>
 </tr>
 {% endfor %}
 </table>
-<a class="button" href="{% url ranking_add page_info.contest.id %}">Add new ranking</a>
+<a class="button" href="{% url 'ranking_add' page_info.contest.id %}">Add new ranking</a>
 
 <hr class="divide"/>
 

@@ -1,13 +1,14 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block content %}
 {% if page_info.contest_is_admin %}
-<a class="button" href="{% url contest_news_add page_info.contest.id %}">Add news</a>
+<a class="button" href="{% url 'contest_news_add' page_info.contest.id %}">Add news</a>
 <hr class="divide"/>
 {% endif %}
 
 {% if not page_info.contest and page_info.is_admin %}
-<a class="button" href="{% url news_add %}">Add global news</a>
+<a class="button" href="{% url 'news_add' %}">Add global news</a>
 <hr class="divide"/>
 {% endif %}
 
@@ -19,10 +20,10 @@
             {% if msg.is_admin %}
             {% if page_info.contest %}
                 {% if msg.subpage.contest %}
-                <a class="button button_small" href="{% url contest_news_edit page_info.contest.id msg.subpage.id %}">Edit</a> 
+                <a class="button button_small" href="{% url 'contest_news_edit' page_info.contest.id msg.subpage.id %}">Edit</a> 
                 {% endif %}
             {% else %}
-                <a class="button button_small" href="{% url news_edit msg.subpage.id %}">Edit</a>
+                <a class="button button_small" href="{% url 'news_edit' msg.subpage.id %}">Edit</a>
             {% endif %}
             {% endif %}
             </td>
@@ -36,7 +37,7 @@
     <table>
         {% for afile in attachments %}
         <tr><td>
-            <a href="{% url download_group 'download' 'Subpage' subpage.id 'content_files' afile afile  %}">{{ afile }}</a>
+            <a href="{% url 'download_group' 'download' 'Subpage' subpage.id 'content_files' afile afile  %}">{{ afile }}</a>
         </td></tr>
         {% endfor %}
     </table>

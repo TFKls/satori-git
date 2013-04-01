@@ -1,4 +1,5 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
 
 {% block content %}
         {% if editing %}
@@ -6,9 +7,9 @@
         {% endif %}
         <p>Based on problem {{ base.name }} ({{base.description}}).</p>
         {% if editing %}
-            <form enctype="multipart/form-data" action="{% url contest_problems_edit page_info.contest.id editing.id %}" method="POST">
+            <form enctype="multipart/form-data" action="{% url 'contest_problems_edit' page_info.contest.id editing.id %}" method="POST">
         {% else %}
-            <form enctype="multipart/form-data" action="{% url contest_problems_add_selected page_info.contest.id base.id %}" method="POST">
+            <form enctype="multipart/form-data" action="{% url 'contest_problems_add_selected' page_info.contest.id base.id %}" method="POST">
         {% endif %}
         <table class="form">
             {{ form.as_table }}
