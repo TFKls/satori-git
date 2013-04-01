@@ -1,0 +1,3 @@
+source /opt/satori/virtual_env/bin/activate
+export SATORI_RUN_DIR=/opt/satori/run
+
