@@ -1,6 +1,10 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+Problem {{ problem.code }}: {{ problem.title }}
+{% endblock %}
+
 {% block content %}
 
 <div class="buttton_bar">

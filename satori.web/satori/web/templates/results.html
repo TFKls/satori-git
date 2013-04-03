@@ -1,6 +1,10 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+{{ page_info.contest.name }} - results
+{% endblock %}
+
 {% block content %}
 
 

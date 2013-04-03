@@ -1,6 +1,14 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+{% if page_info.contest %}
+{{ page_info.contest.name }}
+{% else %}
+Main page
+{% endif %}
+{% endblock %}
+
 {% block content %}
 {% if page_info.contest_is_admin %}
 <a class="button" href="{% url 'contest_news_add' page_info.contest.id %}">Add news</a>

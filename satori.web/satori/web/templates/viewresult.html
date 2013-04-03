@@ -1,6 +1,10 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+Submit {{ widget.sid }}
+{% endblock %}
+
 {% block header %}
  {% include "showhide.html" %}
 {% endblock %}

@@ -1,6 +1,10 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+Questions
+{% endblock %}
+
 {% block content %}
 
 {% if page_info.contest_can_ask_questions %}

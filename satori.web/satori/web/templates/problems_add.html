@@ -1,6 +1,10 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+Edit problem
+{% endblock %}
+
 {% block content %}
         {% if editing %}
             <h4>{{ editing.code }} - {{ editing.title }}</h4>

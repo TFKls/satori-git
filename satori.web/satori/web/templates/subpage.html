@@ -1,6 +1,10 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+{{ subpage.name }}
+{% endblock %}
+
 {% block content %}
 <p>
 {% if can_edit %}

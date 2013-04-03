@@ -14,12 +14,17 @@ from django import forms
 
 @contest_view
 def view(request, page_info, id):
+    contest = page_info.contest
     ranking = Ranking(int(id))
+    if page_info.contest_is_admin:
+        visible = Privilege.get(contest.contestant_role,ranking,'VIEW_FULL') or Privilege.get(Security.anonymous(),ranking,'VIEW_FULL') or Privilege.get(Security.authenticated(),ranking,'VIEW_FULL')
+    else:
+        visible = None
     if request.GET.get('fullscreen','0')!='0':
         template = 'ranking_fs.html'
     else:
         template = 'ranking.html'
-    return render_to_response(template, {'page_info' : page_info, 'ranking' : ranking, 'content' : text2html(ranking.full_ranking())})
+    return render_to_response(template, {'page_info' : page_info, 'ranking' : ranking, 'visible' : visible, 'content' : text2html(ranking.full_ranking())})
 
 
 
@@ -29,7 +34,6 @@ def view(request, page_info, id):
 def add(request, page_info):
     contest = page_info.contest
     aggregators = Global.get_aggregators()
-
     class AddForm(forms.Form):
         ranking_name = forms.CharField(label="Ranking name", required=True)
         selected = forms.ChoiceField(choices=[[a,a] for a in aggregators.keys()],label="Select ranking type")
@@ -45,6 +49,7 @@ def add(request, page_info):
 
 @contest_view
 def edit(request, page_info, id):
+    massedit = request.GET.get('massedit',None)
     aggregators = Global.get_aggregators()
     ranking = Ranking(int(id))
     contest = page_info.contest

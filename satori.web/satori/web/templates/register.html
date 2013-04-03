@@ -1,6 +1,11 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+Register
+{% endblock %}
+
+
 {% block content %}
 <form action={% url 'register' %} method="POST">
 <table>

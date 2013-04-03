@@ -1,6 +1,10 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 
+{% block title %}
+{{ ranking.name }} - edit
+{% endblock %}
+
 {% block header %}
 {{ form.media }}
 {% endblock %}
@@ -8,6 +12,7 @@
 
 
 {% block content %}
+<h3>{{ranking.name}}
 <h3>Problem {{problem.code}}: {{ problem.title }}</h3>
 
 <form action="" method="POST">
