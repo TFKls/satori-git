@@ -603,7 +603,9 @@ class MarksAggregator(AggregatorBase):
                     if minscore is not None and mscore < minscore:
                         mscore = minscore
                     if pid in self.scores:
-                        if self.scores[pid].ok:
+                        if self.scores[pid].fixed_score:
+                            score = maxscore*(self.scores[pid].fixed_score/100.0)
+                        elif self.scores[pid].ok:
                             score = maxscore
                             solve_time = self.aggregator.submit_cache[self.scores[pid].ok_submit].time
                             if params.time_start_descent is not None and params.time_descent is not None:
@@ -663,11 +665,25 @@ class MarksAggregator(AggregatorBase):
                 self.ranking_entry.individual = ''
                 self.ranking_entry.position = self.aggregator.position(self.contestant.sort_field)
                 self.ranking_entry.save(force_update=True)
+                
+        def MarksProblemScore(ACMAggregator.ACMScore.ACMProblemScore):        
+            def __init__(self, score, problem):
+                super(MarksProblemScore,self).__init(self, score, problem)
+                self.fixed_score = None
+                
+            def aggregate(self,result):
+                try:
+                    if not self.fixed_score:
+                        self.fixed_score = 0
+                    self.fixed_score = max(self.fixed_score,int(result.oa_get_str('score')))
+                except:
+                    super(MarksProblemScore,self).aggregate(result)
+
 
         def aggregate(self, result):
             submit = self.aggregator.submit_cache[result.submit_id]
             if submit.problem_id not in self.scores:
-                self.scores[submit.problem_id] = ACMAggregator.ACMScore.ACMProblemScore(self, self.aggregator.problem_cache[submit.problem_id])
+                self.scores[submit.problem_id] = MarksProblemScore(self, self.aggregator.problem_cache[submit.problem_id])
             self.scores[submit.problem_id].aggregate(result)
 
     def __init__(self, supervisor, ranking):
