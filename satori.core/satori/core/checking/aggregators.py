@@ -668,7 +668,7 @@ class MarksAggregator(AggregatorBase):
                 
         class MarksProblemScore(ACMAggregator.ACMScore.ACMProblemScore):        
             def __init__(self, score, problem):
-                super(MarksAggregator.MarksScore.MarksProblemScore,self).__init__(self, score, problem)
+                super(MarksAggregator.MarksScore.MarksProblemScore,self).__init__(score, problem)
                 self.fixed_score = None
                 
             def aggregate(self,result):
