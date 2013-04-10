@@ -666,7 +666,7 @@ class MarksAggregator(AggregatorBase):
                 self.ranking_entry.position = self.aggregator.position(self.contestant.sort_field)
                 self.ranking_entry.save(force_update=True)
                 
-        def MarksProblemScore(ACMAggregator.ACMScore.ACMProblemScore):        
+        class MarksProblemScore(ACMAggregator.ACMScore.ACMProblemScore):        
             def __init__(self, score, problem):
                 super(MarksProblemScore,self).__init(self, score, problem)
                 self.fixed_score = None
