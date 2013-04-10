@@ -683,7 +683,7 @@ class MarksAggregator(AggregatorBase):
         def aggregate(self, result):
             submit = self.aggregator.submit_cache[result.submit_id]
             if submit.problem_id not in self.scores:
-                self.scores[submit.problem_id] = MarksProblemScore(self, self.aggregator.problem_cache[submit.problem_id])
+                self.scores[submit.problem_id] = MarksAggregator.MarksProblemScore(self, self.aggregator.problem_cache[submit.problem_id])
             self.scores[submit.problem_id].aggregate(result)
 
     def __init__(self, supervisor, ranking):
