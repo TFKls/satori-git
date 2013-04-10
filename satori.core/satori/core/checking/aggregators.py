@@ -668,7 +668,7 @@ class MarksAggregator(AggregatorBase):
                 
         class MarksProblemScore(ACMAggregator.ACMScore.ACMProblemScore):        
             def __init__(self, score, problem):
-                super(MarksProblemScore,self).__init(self, score, problem)
+                super(MarksAggregator.MarksScore.MarksProblemScore,self).__init(self, score, problem)
                 self.fixed_score = None
                 
             def aggregate(self,result):
@@ -677,7 +677,7 @@ class MarksAggregator(AggregatorBase):
                         self.fixed_score = 0
                     self.fixed_score = max(self.fixed_score,int(result.oa_get_str('score')))
                 except:
-                    super(MarksProblemScore,self).aggregate(result)
+                    super(MarksAggregator.MarksScore.MarksProblemScore,self).aggregate(result)
 
 
         def aggregate(self, result):
