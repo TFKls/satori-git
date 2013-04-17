@@ -23,6 +23,7 @@ setup(name='satori.core',
     ],
     install_requires=[
         'pycrypto == 2.3',
+        'pyopenssl',
         'python-openid',
         'python-memcached',
         'setuptools',

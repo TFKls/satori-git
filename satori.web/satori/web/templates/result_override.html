@@ -1,4 +1,9 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
+
+{% block title %}
+Override result
+{% endblock %}
 
 {% block content %}
 
@@ -52,7 +57,7 @@
 </form>
 
 
-<h3>Code (<a href="{% url download_group "download" "Submit" submit.submit.id "data" "content" filename %}">download</a>)</h3>
+<h3>Code (<a href="{% url 'download_group' "download" "Submit" submit.submit.id "data" "content" filename %}">download</a>)</h3>
 {% if code %}
 {{code|safe}}
 {% else %}

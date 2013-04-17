@@ -1,16 +1,17 @@
+{% load url from future %}
 <ul class="headerLeftUl">
-    <li><a href="{% url news %}">Main page</a></li>
+    <li><a href="{% url 'news' %}">Main page</a></li>
     {% if page_info.contest %}
-        <li>Selected contest {{page_info.contest.name}} (<a href="{% url select_contest %}">change</a>)</li>
+        <li>Selected contest {{page_info.contest.name}} (<a href="{% url 'select_contest' %}">change</a>)</li>
     {% endif %}
 	<li id='clock'>Server time:{% now "H:i:s" %}</li>
 </ul>
 <ul class="headerRightUl">
     {% if page_info.role %}
         <li>Logged in as {{page_info.role.name}}</li>
-        <li><a href="{% url logout %}">Sign out</a></li>
+        <li><a href="{% url 'logout' %}">Sign out</a></li>
     {% else %}
-        <li><a href="{% url register %}">Register</a></li>
-        <li><a href="{% url login %}?redir={{ page_info.url }}">Sign in</a></li>
+        <li><a href="{% url 'register' %}">Register</a></li>
+        <li><a href="{% url 'login' %}?redir={{ page_info.url }}">Sign in</a></li>
     {% endif %}
 </ul>

@@ -1,6 +1,7 @@
+{% load url from future %}
 <h4>Attachments</h4>
 <p>Click to select or drag-and-drop multiple files on the upload field:</p>
-<form id="file_upload" action={% url fileupload %} method="POST" enctype="multipart/form-data" class="file_upload">
+<form id="file_upload" action={% url 'fileupload' %} method="POST" enctype="multipart/form-data" class="file_upload">
     <input type="file" name="file" multiple>
     {{ form.fid }}
     <button>Upload</button>
@@ -8,4 +9,4 @@
 </form>
 <table id="files"></table>
 <script src="/files/scripts/attachments_upload.js" type="text/javascript"></script>
-<script type="text/javascript">createFileUploadInstance('file_upload', 'fid', '{% url fileremove %}');</script>
+<script type="text/javascript">createFileUploadInstance('file_upload', 'fid', '{% url 'fileremove' %}');</script>

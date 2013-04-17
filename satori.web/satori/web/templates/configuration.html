@@ -1,4 +1,8 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
+{% block title %}
+Configuration
+{% endblock %}
 
 {% block content %}
 
@@ -8,7 +12,7 @@
     {{ global_subpages.render_table }}
 </table>
 
-<a class="button" href="{% url subpage_add %}">Add new subpage</a>
+<a class="button" href="{% url 'subpage_add' %}">Add new subpage</a>
 
 
 <hr class="divide"/>

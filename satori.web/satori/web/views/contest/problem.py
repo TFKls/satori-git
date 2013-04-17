@@ -181,5 +181,5 @@ def edit(request, page_info, id):
 def view(request, page_info, id):
     problem = Web.get_problem_mapping_info(ProblemMapping(int(id)))
     content = fill_image_links(problem.html,'ProblemMapping',id, 'statement_files')
-    return render_to_response('problems_view.html', {'page_info' : page_info, 'problemid' : id, 'content' : content })
+    return render_to_response('problems_view.html', {'page_info' : page_info, 'problemid' : id, 'content' : content, 'problem' : problem.problem_mapping })
     

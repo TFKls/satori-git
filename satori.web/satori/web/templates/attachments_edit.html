@@ -1,6 +1,7 @@
+{% load url from future %}
 <h4>Attachments</h4>
 <p>Click to select or drag-and-drop multiple files on the upload field:</p>
-<form id="file_upload" action={% url fileupload %} method="POST" enctype="multipart/form-data" class="file_upload">
+<form id="file_upload" action={% url 'fileupload' %} method="POST" enctype="multipart/form-data" class="file_upload">
     <input type="file" name="file" multiple>
     {{ form.fid }}
     <button>Upload</button>
@@ -11,11 +12,11 @@
     {% for dfile in attachments %}
     <tr> 
         {% if editing %}
-            <td><a href="{% url download_group 'download' 'ProblemMapping' editing.id 'statement_files' dfile dfile %}">{{ dfile }}</a></td>
+            <td><a href="{% url 'download_group' 'download' 'ProblemMapping' editing.id 'statement_files' dfile dfile %}">{{ dfile }}</a></td>
         {% else %}{% if message %}
-            <td><a href="{% url download_group 'download' 'Subpage' message.id 'content_files' dfile dfile %}">{{ dfile }}</a></td>
+            <td><a href="{% url 'download_group' 'download' 'Subpage' message.id 'content_files' dfile dfile %}">{{ dfile }}</a></td>
         {% else %}
-            <td><a href="{% url download_group 'download' 'Subpage' subpage.id 'content_files' dfile dfile %}">{{ dfile }}</a></td>
+            <td><a href="{% url 'download_group' 'download' 'Subpage' subpage.id 'content_files' dfile dfile %}">{{ dfile }}</a></td>
         {% endif %}
         {% endif %}
         <td>
@@ -30,4 +31,4 @@
     {% endfor %}
 </table>
 <script src="/files/scripts/attachments_upload.js" type="text/javascript"></script>
-<script type="text/javascript">createFileUploadInstance('file_upload', 'fid', '{% url fileremove %}');</script>
+<script type="text/javascript">createFileUploadInstance('file_upload', 'fid', '{% url 'fileremove' %}');</script>

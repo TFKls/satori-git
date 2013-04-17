@@ -1,4 +1,9 @@
 {% extends "templates/index.html" %}
+{% load url from future %}
+
+{% block title %}
+Copy problems
+{% endblock %}
 
 {% block content %}
 {{ copytable.render_filters }}

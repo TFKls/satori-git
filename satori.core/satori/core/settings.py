@@ -3,6 +3,7 @@
 """
 import getpass
 import os
+from satori.core import setting_utils
 
 DEBUG = False
 TEMPLATE_DEBUG = DEBUG
@@ -37,18 +38,30 @@ CACHE_BACKEND = 'memcached://localhost:11211'
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.dirname(os.path.dirname(__file__))))
 
-BLOB_DIR = os.path.join(BASE_DIR, 'tmp', 'blob')
-LOG_FILE = os.path.join(BASE_DIR, 'tmp', 'server.log')
-PID_FILE = os.path.join(BASE_DIR, 'tmp', 'server.pid')
+RUN_DIR = os.environ.get('SATORI_RUN_DIR', os.path.join(BASE_DIR, 'tmp'))
 
-USE_SSL = True
+BLOB_DIR = os.path.join(RUN_DIR, 'blob')
+LOG_FILE = os.path.join(RUN_DIR, 'server.log')
+PID_FILE = os.path.join(RUN_DIR, 'server.pid')
+
+USE_SSL = False
 SSL_CERTIFICATE = ''
+if os.environ.get('SATORI_SSL_CERT', ''):
+    USE_SSL = True
+    SSL_CERTIFICATE = os.environ.get('SATORI_SSL_CERT', '')
+
 EVENT_HOST = 'localhost'
 EVENT_PORT = 32888
+EVENT_HOST, EVENT_PORT = setting_utils.parse_hostport(os.environ.get('SATORI_EVENT_SERVER', ''), EVENT_HOST, EVENT_PORT)
+
 THRIFT_HOST = '0.0.0.0'
 THRIFT_PORT = 32889
+THRIFT_HOST, THRIFT_PORT = setting_utils.parse_hostport(os.environ.get('SATORI_THRIFT_SERVER', ''), THRIFT_HOST, THRIFT_PORT)
+
 BLOB_HOST = '0.0.0.0'
 BLOB_PORT = 32887
+BLOB_HOST, BLOB_PORT = setting_utils.parse_hostport(os.environ.get('SATORI_BLOB_SERVER', ''), BLOB_HOST, BLOB_PORT)
+
 if getpass.getuser() == 'gutowski':
     USE_SSL = False
     EVENT_PORT = 39888
