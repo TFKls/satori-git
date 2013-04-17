@@ -85,4 +85,5 @@ postdrop:x:150:
 whoopsie:x:151:
 nslcd:x:152:
 mlocate:x:153:
+nbd:x:155:
 nogroup:x:65534:

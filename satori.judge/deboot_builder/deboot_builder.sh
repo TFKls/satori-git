@@ -42,11 +42,12 @@ if [ -z "${DIST}" ]; then
 fi
 INC=aptitude,locales
 LOC=en_US.UTF-8
-JUDGE="gcc g++ gcc-4.4 g++-4.4 fp-compiler openjdk-6-jdk a2ps iptables python-yaml libpopt-dev libcap-dev libcurl4-openssl-dev libyaml-dev time libgmp3-dev make"
+JUDGE="gcc g++ gcc-4.4 g++-4.4 g++-4.7 gcc-4.7 fp-compiler openjdk-7-jdk a2ps iptables python-yaml libpopt-dev libcap-dev libcurl4-openssl-dev libyaml-dev time libgmp3-dev make"
 CHECKER="${JUDGE} linux-image-generic linux-headers-generic smartmontools mdadm lvm2 ssh nfs-client vim screen mc rsync bash-completion psmisc mercurial debootstrap squashfs-tools tshark nmap ethtool iptraf ctorrent atftp lzma lshw memtest86+ strace telnet usbutils command-not-found language-pack-en network-manager subversion unzip mercurial"
-UZI="${JUDGE} linux-image-generic openssh-server rsync ubuntu-desktop indicator-applet-complete indicator-session indicator-datetime-gtk2 unity-lens-applications unity-lens-files xserver-xorg-video-all command-not-found language-pack-en gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm dconf-tools openjdk-6-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate"
-FULL="${CHECKER} ${UZI} dmraid rdate casper libstdc++5 jenkins clang"
-FULL="${FULL} firefox icedtea-plugin eclipse eclipse-cdt acroread"
+UZI="${JUDGE} linux-image-generic openssh-server rsync ubuntu-desktop indicator-applet-complete indicator-session indicator-datetime-gtk2 unity-lens-applications unity-lens-files xserver-xorg-video-all command-not-found language-pack-en gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm dconf-tools openjdk-7-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate"
+OLIMP="gcc g++ fp-compiler a2ps iptables time make linux-image-generic-pae linux-headers-generic-pae nfs-client vim screen mc rsync bash-completion ctorrent strace command-not-found language-pack-pl network-manager linux-image-generic-pae openssh-server rsync xubuntu-desktop xserver-xorg-video-all command-not-found language-pack-pl gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm dconf-tools openjdk-7-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate mc vim kate kwrite gedit gvim emacs scite codeblocks geany lazarus-ide gdb ddd valgrind gprof python gcalctool"
+FULL="${CHECKER} ${UZI} dmraid rdate casper libstdc++5 jenkins clang google-perftools libgoogle-perftools-dev"
+FULL="${FULL} firefox icedtea-7-plugin eclipse eclipse-cdt acroread maven2"
 FULL="${FULL} gnome-desktop-environment gnome-shell gnome-applets gnome-backgrounds gnome-control-center gnome-do gnome-games gnome-system-tools gnome-themes-ubuntu gnome-utils gnome-video-effects"
 FULL="${FULL} ftp meld kwrite kdbg kate konsole"
 FULL="${FULL} nscd ldap-utils ldap-auth-client libnss-ldapd libpam-afs-session libpam-krb5 krb5-user libpam-ldap libpam-mount openafs-client openafs-krb5 rdiff-backup squashfs-tools sshfs smbfs fuse-exfat"
@@ -58,7 +59,7 @@ FULL="${FULL} avant-window-navigator"
 FULL="${FULL} alien dpkg-dev arj debootstrap bc bcrypt mcrypt cabextract zip unzip rar unrar ctorrent lzip lzma make nfs-client smartmontools mdadm lvm2 lsof p7zip-full pwgen zoo lha unace unshield"
 FULL="${FULL} lynx elinks alpine wget mutt w3m procmail ncftp hexedit curl"
 FULL="${FULL} blender gimp inkscape dia djview gnuplot qcad"
-FULL="${FULL} opera google-chrome-stable google-talkplugin thunderbird konqueror"
+FULL="${FULL} opera google-chrome-stable google-talkplugin thunderbird konqueror calibre"
 FULL="${FULL} openoffice.org-base"
 FULL="${FULL} coq erlang gap ghc6 gfortran"
 FULL="${FULL} dosbox dosemu tofrodos"
@@ -66,17 +67,18 @@ FULL="${FULL} ethtool fakeroot ia32-libs iproute iptraf mtr nmap tshark htop ltr
 FULL="${FULL} ffmpeg flashplugin-installer mplayer mencoder w64codecs x264 smplayer vlc"
 FULL="${FULL} frozen-bubble gnome-games"
 FULL="${FULL} kadu kdesvn konwert krusader kile digikam dolphin pidgin kfind"
-FULL="${FULL} latex2html texlive-full latexdraw latex2rtf html2text html2ps pdfjam texmaker texpower"
+FULL="${FULL} latex2html texlive-full latexdraw latex2rtf html2text html2ps pdfjam texmaker texpower pdftk"
 FULL="${FULL} cups-pdf exif expect gnome-genius gnokii gnome-commander clipit screenlets"
 FULL="${FULL} xfig xnest xpdf xvfb xvnc4viewer geeqie imagemagick"
 FULL="${FULL} gstreamer0.10-plugins-bad gstreamer0.10-plugins-ugly"
 FULL="${FULL} scilab r-recommended"
-FULL="${FULL} skype virtualbox virtualbox-guest-additions virtualbox-guest-utils wine nautilus-dropbox nautilus-open-terminal lastfm"
+FULL="${FULL} skype virtualbox virtualbox-guest-additions virtualbox-guest-utils wine dropbox nautilus-open-terminal lastfm spotify"
 FULL="${FULL} ttf-unifont msttcorefonts"
 FULL="${FULL} subversion git mercurial libglew1.5 mysql-client ivy menu"
 FULL="${FULL} orbit2 time gv openjpeg-tools"
-FULL="${FULL} mlton shutter libboost-all-dev devscripts evtest mesa-utils ekg2 clusterssh tmux"
-SERVER="${FULL} linux-source vlan apt-cacher-ng nginx apache2-mpm-prefork libapache2-svn libapache2-mod-fcgid libfcgi-perl libfcgi-ruby1.8 libapache2-mod-proxy-html libapache2-mod-auth-mysql apache2-suexec-custom php5-cgi php5-curl php5-gd php5-mysql php5-pgsql bittorrent clamav exim4 exim4-daemon-heavy greylistd srs memcached memtest86+ memtester nfs-kernel-server php5 quota quotatool spamassassin tinyca tinyproxy wakeonlan ntp atftpd subversion-tools mercurial-server trac trac-mercurial bittorrent trac-bitten ant maven2 ivy ant-contrib python-zc.buildout postgresql mysql-server"
+FULL="${FULL} mlton shutter libboost-all-dev devscripts evtest mesa-utils ekg2 clusterssh tmux caffeine"
+FULL="${FULL} spotify-client"
+SERVER="${FULL} linux-source vlan apt-cacher-ng nginx apache2-mpm-prefork libapache2-svn libapache2-mod-fcgid libfcgi-perl libfcgi-ruby1.8 libapache2-mod-proxy-html libapache2-mod-auth-mysql apache2-suexec-custom php5-cgi php5-curl php5-gd php5-mysql php5-pgsql bittorrent clamav clamav-daemon exim4 exim4-daemon-heavy greylistd srs memcached memtest86+ memtester nfs-kernel-server php5 quota quotatool spamassassin tinyca tinyproxy wakeonlan ntp atftpd subversion-tools mercurial-server trac trac-mercurial bittorrent trac-bitten ant maven2 ivy ant-contrib python-zc.buildout postgresql mysql-server"
 SERVER="${SERVER} libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev libevent-dev libplot-dev libplplot-dev libzbar-dev libqrencode-dev libgsl0-dev libhighgui-dev libopenjpeg-dev libsfml-dev libcsfml-dev libfreeimage-dev libavdevice-dev libavfilter-dev libpostproc-dev libcgal-dev libtheora-dev"
 SERVER="${SERVER} ruby-dev libruby libfcgi-dev fcgiwrap"
 SERVER="${SERVER} python-django python-psycopg2 python-mysqldb ubuntu-desktop kubuntu-desktop xubuntu-desktop qt-sdk"
@@ -106,6 +108,7 @@ function uniq_pack_list
 JUDGE=`uniq_pack_list $JUDGE`
 CHECKER=`uniq_pack_list $CHECKER`
 UZI=`uniq_pack_list $UZI`
+OLIMP=`uniq_pack_list $OLIMP`
 FULL=`uniq_pack_list $FULL`
 SERVER=`uniq_pack_list $SERVER`
 
@@ -302,8 +305,8 @@ function make_squash
   for lf in `find "${DIR}"/var/log -type f`; do
     :> "$lf"
   done
-  run_inside find /root /tmp /var/tmp /var/crash -mindepth 1 -exec rm -rf {} \;
-  run_inside find -L /run /var /tmp \( -type f -o -type s \) \( -name "*.pid" -o -name "*.sock" -o -name "lock" -o -name "*.lock" \) -exec rm -f {} \;
+  run_inside find /root /tmp /var/tmp /var/crash -mindepth 1 -exec rm -rf {} \; -prune
+  run_inside find -L /run /var /tmp \( -type f -o -type s \) \( -name "*.pid" -o -name "*.sock" -o -name "lock" -o -name "*.lock" \) -exec rm -f {} \; -prune
 
   mkdir "${DIR}"/tmp/.X11-unix
   chmod 777 "${DIR}"/tmp/.X11-unix
@@ -313,7 +316,9 @@ function make_squash
   umount -l "${DIR}"/{proc,sys,dev}
   umount -l "${DIR}"
   store_conf
-  ./remap.py "${DIR}" || return 1
+  if [ -e ./remap.py ]; then
+    ./remap.py "${DIR}" || return 1
+  fi
   rm -f "${RES}"
   local OK
   OK=0
@@ -418,7 +423,7 @@ function netbeans
         src=`wget_html "${src}" |grep -i 'href="[^"]*/[a-z][a-z]*/*"' |tail -n 1 |sed -e 's|.*href="\([^"]*/[a-z][a-z.]*/*\)".*|\1|i'`
         if [ -n "$src" ]; then
         echo $src
-        src=`wget_html "${src}zip/" |grep -i 'href="[^"]*netbeans[^"]*ml.zip"' |tail -n 1 |sed -e 's|.*href="\([^"]*netbeans[^"]*ml.zip\)".*|\1|i'`
+        src=`wget_html "${src}zip/" |grep -i 'href="[^"]*netbeans-[^"]*-[0-9]*.zip"' |tail -n 1 |sed -e 's|.*href="\([^"]*netbeans-[^"]*-[0-9]*.zip\)".*|\1|i'`
         if [ -n "$src" ]; then
             echo $src
             wtfile=`mktemp --suffix .zip`
@@ -432,6 +437,25 @@ EOF
             rm "${wtfile}"
         fi
         fi
+    fi
+}
+
+function eclipse
+{
+    ECL_BASE="http://ftp.man.poznan.pl/eclipse/technology/epp/downloads/release"
+    ECL_DIST=`wget_html "${ECL_BASE}/release.xml" |grep -i "<present>" |sed -e "s|<present>\([^<]*\)</present>|\1|" |tail -n 1`
+    src=`wget_html "${ECL_BASE}/${ECL_DIST}" |grep -i '.*-java-.*linux.*x86_64.*tar.gz"' | sed -e 's|.*href="\([^"]*-java-[^"]*linux[^"]*x86_64[^"]*tar.gz\)".*|\1|i' |tail -n 1`
+    if [ -n "$src" ]; then
+        echo $src
+        wtfile=`mktemp --suffix .tar.gz`
+        wget -O "${wtfile}" "$src" 2>/dev/null
+        tar -C "${DIR}/opt" -x -z -f "${wtfile}"
+        cat > "${DIR}"/usr/local/bin/eclipse <<EOF
+#!/bin/bash
+exec /opt/eclipse/eclipse "\$@"
+EOF
+        chmod 755 "${DIR}"/usr/local/bin/eclipse
+        rm "${wtfile}"
     fi
 }
 
@@ -503,7 +527,7 @@ function cuda_toolkit
 #   -override           : Overrides the installation checks (compiler, lib, etc)
 
 
-  run_inside apt-get -y install make perl-modules linux-headers-generic g++-4.4 gcc-4.4 dkms
+  run_inside apt-get -f -y install make perl-modules linux-headers-generic g++-4.4 gcc-4.4 dkms
   for TYPE in generic; do
     echo ${TYPE}
     VER=`ls "${DIR}"/lib/modules |grep "${TYPE}" |sort |tail -n 1`
@@ -602,43 +626,6 @@ function build_base
   return 1
 }
 
-function build_judge
-{
-  local OK
-  OK=0
-  ( [ -f "${DIR}"_base.squashfs ] || build_base ) &&
-  local OK
-  use_squash "${DIR}"_base.squashfs &&
-  initialize_full &&
-  echo "deb http://archive.ubuntu.com/ubuntu ${DIST} main restricted universe multiverse" > "${SOURCES}" &&
-  echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-updates main restricted universe multiverse" >> "${SOURCES}" &&
-  echo "deb http://security.ubuntu.com/ubuntu ${DIST}-security main restricted universe multiverse" >> "${SOURCES}" &&
-  echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-backports main restricted universe multiverse" >> "${SOURCES}" &&
-  echo "deb http://archive.canonical.com/ ${DIST} partner" >> "${SOURCES}" &&
-  echo "Acquire::http::Proxy \"${APTCACHER}\";" > "${DIR}${APTCACHER_CONF}" &&
-  run_inside locale-gen "${LOC}" &&
-  echo sun-java6-jre shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
-  echo sun-java6-jdk shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
-  run_inside aptitude -y update &&
-  run_inside aptitude -y install upstart &&
-  run_inside aptitude -y full-upgrade &&
-  run_inside aptitude -y forget-new &&
-  run_inside apt-get --no-install-recommends -y install ${JUDGE} &&
-  OK=1
-
-  if [ "${OK}" == "1" ]; then
-    OK=0
-    make_squash "${DIR}"_judge.squashfs &&
-    OK=1
-  fi
-
-  finalize
-  if [ "${OK}" == "1" ]; then
-    return 0
-  fi
-  return 1
-}
-
 function find_missing_keys
 {
   rm -rf "${DIR}"/etc/apt/sources.list.d/*
@@ -657,6 +644,44 @@ function find_missing_keys
   return 0
 }
 
+function build_judge
+{
+  local OK
+  OK=0
+  ( [ -f "${DIR}"_base.squashfs ] || build_base ) &&
+  local OK
+  use_squash "${DIR}"_base.squashfs &&
+  initialize_full &&
+  echo "deb http://archive.ubuntu.com/ubuntu ${DIST} main restricted universe multiverse" > "${SOURCES}" &&
+  echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-updates main restricted universe multiverse" >> "${SOURCES}" &&
+  echo "deb http://security.ubuntu.com/ubuntu ${DIST}-security main restricted universe multiverse" >> "${SOURCES}" &&
+  echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-backports main restricted universe multiverse" >> "${SOURCES}" &&
+  echo "deb http://archive.canonical.com/ ${DIST} partner" >> "${SOURCES}" &&
+  echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DIST} main" >> "${SOURCES}" &&
+  echo "Acquire::http::Proxy \"${APTCACHER}\";" > "${DIR}${APTCACHER_CONF}" &&
+  run_inside locale-gen "${LOC}" &&
+  find_missing_keys &&
+#  echo sun-java7-jre shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
+#  echo sun-java7-jdk shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
+  run_inside aptitude -f -y install upstart &&
+  run_inside aptitude -y full-upgrade &&
+  run_inside aptitude -y forget-new &&
+  run_inside apt-get --no-install-recommends -f -y install ${JUDGE} &&
+  OK=1
+
+  if [ "${OK}" == "1" ]; then
+    OK=0
+    make_squash "${DIR}"_judge.squashfs &&
+    OK=1
+  fi
+
+  finalize
+  if [ "${OK}" == "1" ]; then
+    return 0
+  fi
+  return 1
+}
+
 function build_checker
 {
   local OK
@@ -666,7 +691,7 @@ function build_checker
   initialize_full &&
   run_inside aptitude -y full-upgrade &&
   run_inside aptitude -y forget-new &&
-  run_inside apt-get --no-install-recommends -y install ${CHECKER} &&
+  run_inside apt-get --no-install-recommends -f -y install ${CHECKER} &&
   cuda_toolkit &&
   hg clone --insecure "https://develro:XVxPqc99Rnsf@satori.tcs.uj.edu.pl/hg/satori" "${DIR}"/tmp/satori &&
   run_inside /tmp/satori/install_judge.sh &&
@@ -686,6 +711,54 @@ function build_checker
   return 1
 }
 
+function build_olimp
+{
+  local OK
+  OK=0
+  ( [ -f "${DIR}"_basee.squashfs ] || build_base ) &&
+  use_squash "${DIR}"_base.squashfs &&
+  initialize_full &&
+  echo "deb http://archive.ubuntu.com/ubuntu ${DIST} main restricted universe multiverse" > "${SOURCES}" &&
+  echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-updates main restricted universe multiverse" >> "${SOURCES}" &&
+  echo "deb http://security.ubuntu.com/ubuntu ${DIST}-security main restricted universe multiverse" >> "${SOURCES}" &&
+  echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-backports main restricted universe multiverse" >> "${SOURCES}" &&
+  echo "deb http://archive.canonical.com/ ${DIST} partner" >> "${SOURCES}" &&
+  echo "deb http://dl.google.com/linux/deb/ stable main" >> "${SOURCES}" &&
+  echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> "${SOURCES}" &&
+  echo "deb http://dl.google.com/linux/talkplugin/deb/ stable main" >> "${SOURCES}" &&
+  echo "Acquire::http::Proxy \"${APTCACHER}\";" > "${DIR}${APTCACHER_CONF}" &&
+  run_inside locale-gen "${LOC}" &&
+#  echo sun-java7-jre shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
+#  echo sun-java7-jdk shared/accepted-sun-dlj-v1-1 select true | run_inside debconf-set-selections &&
+  find_missing_keys &&
+  run_inside aptitude -f -y install upstart &&
+  run_inside aptitude -y full-upgrade &&
+  run_inside aptitude -y forget-new &&
+  (
+  run_inside apt-get --no-install-recommends -f -y install ${OLIMP}
+  run_inside aptitude -y purge ${FORBID}
+  run_inside apt-get --no-install-recommends -f -y install ${OLIMP}
+  exit $?
+  ) &&
+  cuda_toolkit driver &&
+  dkms_all &&
+  OK=1
+
+  if [ "${OK}" == "1" ]; then
+    OK=0
+    make_squash "${DIR}"_olimp.squashfs &&
+    OK=1
+  fi
+
+  finalize
+  if [ "${OK}" == "1" ]; then
+    return 0
+  fi
+  return 1
+}
+
+
+
 function build_uzi
 {
   local OK
@@ -702,9 +775,9 @@ function build_uzi
   run_inside aptitude -y full-upgrade &&
   run_inside aptitude -y forget-new &&
   (
-  run_inside apt-get --no-install-recommends -y install ${UZI}
+  run_inside apt-get --no-install-recommends -f -y install ${UZI}
   run_inside aptitude -y purge ${FORBID}
-  run_inside apt-get --no-install-recommends -y install ${UZI}
+  run_inside apt-get --no-install-recommends -f -y install ${UZI}
   exit $?
   ) &&
   cuda_toolkit driver &&
@@ -737,6 +810,9 @@ function build_full
   echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-backports main restricted universe multiverse" >> "${SOURCES}" &&
   echo "deb http://archive.canonical.com/ ${DIST} partner" >> "${SOURCES}" &&
   echo "deb http://packages.medibuntu.org/ ${DIST} free non-free" >> "${SOURCES}" &&
+  echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DIST} main" >> "${SOURCES}" &&
+  echo "deb http://ppa.launchpad.net/relan/exfat/ubuntu ${DIST} main" >> "${SOURCES}" &&
+  echo "deb http://ppa.launchpad.net/caffeine-developers/ppa/ubuntu ${DIST} main" >> "${SOURCES}" &&
 #  echo "deb http://ppa.launchpad.net/freenx-team/ppa/ubuntu lucid main" >> "${SOURCES}" &&
 #  echo "deb http://download.virtualbox.org/virtualbox/debian ${DIST} non-free contrib" >> "${SOURCES}" &&
   echo "deb http://deb.opera.com/opera stable non-free" >> "${SOURCES}" &&
@@ -746,28 +822,29 @@ function build_full
   echo "deb http://linux.dropbox.com/ubuntu ${DIST} main" >> "${SOURCES}" &&
   echo "deb http://apt.last.fm/ debian stable" >> "${SOURCES}" &&
   echo "deb http://pkg.jenkins-ci.org/debian binary/" >> "${SOURCES}" &&
+  echo "deb http://repository.spotify.com stable non-free" >> "${SOURCES}" && 
+  echo "deb http://repo.steampowered.com/steam/ ${DIST} steam" >> "${SOURCES}" &&
   echo "Acquire::http::Proxy \"${APTCACHER}\";" > "${DIR}${APTCACHER_CONF}" &&
-  run_inside apt-add-repository ppa:relan/exfat
   find_missing_keys &&
   run_inside locale-gen "pl_PL.UTF-8" &&
   echo acroread acroread/default-viewer select true | run_inside debconf-set-selections &&
   run_inside aptitude -y full-upgrade &&
   run_inside aptitude -y forget-new &&
   (
-    run_inside apt-get -y install ${FULL}
+    run_inside apt-get -f -y install ${FULL}
     cat > ${DIR}/root/script <<EOF
 #!/bin/bash
 for package in `echo ${FULL} |tr "\n" " "`; do
-  apt-get -y install \${package}
+  apt-get -f -y install \${package}
 done
 EOF
     chmod 755 ${DIR}/root/script
     run_inside /root/script
     run_inside aptitude -y purge ${FORBID}
-    run_inside apt-get --no-install-recommends -y install ${FULL}
+    run_inside apt-get --no-install-recommends -f -y install ${FULL}
     exit 0
   ) &&
-  run_inside update-java-alternatives -s java-1.6.0-openjdk-amd64 &&
+  run_inside update-java-alternatives -s java-1.7.0-openjdk-amd64 &&
   (
     cp -a "${MYDIR}"/debs "${DIR}"/root
     cat > "${DIR}"/root/script <<EOF
@@ -788,6 +865,7 @@ EOF
   vbox_add &&
   cuda_toolkit &&
   netbeans &&
+  eclipse &&
   satori_client &&
   vmware &&
   OK=1
@@ -822,11 +900,11 @@ function build_server
   run_inside aptitude -y full-upgrade &&
   run_inside aptitude -y forget-new &&
   (
-    run_inside apt-get -y install ${SERVER}
+    run_inside apt-get -f -y install ${SERVER}
     cat > ${DIR}/root/script <<EOF
 #!/bin/bash
 for package in `echo ${SERVER} |tr "\n" " "`; do
-  apt-get -y install \${package}
+  apt-get -f -y install \${package}
 done
 for package in `echo ${SERVER} |tr "\n" " "`; do
   apt-get -y build-dep \${package}
@@ -835,7 +913,7 @@ EOF
     chmod 755 ${DIR}/root/script
     run_inside /root/script
     run_inside aptitude -y purge ${FORBID}
-    run_inside apt-get --no-install-recommends -y install ${SERVER}
+    run_inside apt-get --no-install-recommends -f -y install ${SERVER}
     for service in network-manager winbind atftpd bluetooth lightdm gdm kdm exim4 apt-cacher-ng memcached inetd tinyproxy ntp mysql postgres postgresql saned rlinetd postfix apache2 exim4 vmware vmware-USBArbitrator virtualbox virtualbox-guest-utils jenkins openvpn winbind nginx; do
       run_inside update-rc.d -f $service disable
       if [ -e ${DIR}/etc/init/$service.conf ]; then
@@ -872,7 +950,7 @@ EOF
   ) &&
   dkms_all &&
   vbox_add &&
-  android &&
+#  android &&
   OK=1
 
   if [ "${OK}" == "1" ]; then
@@ -951,8 +1029,9 @@ if [ "$1" == "debug" ]; then
     initialize_full &&
     #avcodec_extra
     #netbeans
+    eclipse
     #cuda_toolkit
-    vmware
+    #vmware
     finalize
     exit 0
 fi
