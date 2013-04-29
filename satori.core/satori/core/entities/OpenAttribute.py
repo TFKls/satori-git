@@ -21,7 +21,7 @@ class OpenAttribute(models.Model):
     name     = models.CharField(max_length=64)
     is_blob  = models.BooleanField()
     value    = models.TextField()
-    filename = models.CharField(max_length=64, validators=[validate_filename])
+    filename = models.CharField(max_length=64, blank=True, validators=[validate_filename])
 
     class Meta:                                                # pylint: disable-msg=C0111
         unique_together = (('entity', 'name'),)
