@@ -20,7 +20,7 @@ class OpenAttribute(models.Model):
     entity   = models.ForeignKey('Entity', related_name='attributes', on_delete=models.CASCADE)
     name     = models.CharField(max_length=64)
     is_blob  = models.BooleanField()
-    value    = models.TextField()
+    value    = models.TextField(blank=True)
     filename = models.CharField(max_length=64, blank=True, validators=[validate_filename])
 
     class Meta:                                                # pylint: disable-msg=C0111
