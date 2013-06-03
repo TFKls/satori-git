@@ -180,7 +180,10 @@ class SatoriMasterProcess(SatoriProcess):
             fp.seek(0)
             pid = int(fp.read())
             fp.close()
-            os.kill(pid, SIGINT)
+            try:
+                os.kill(pid, SIGINT)
+            except OSError:
+                pass
         else:
             fp.close()
             print 'Satori not running'

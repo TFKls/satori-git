@@ -135,8 +135,11 @@ class ThriftServerProcess(SatoriProcess):
     def do_handle_signal(self, signum, frame):
         if self.serverpid == os.getpid():
             for child in self.server.children:
-                os.kill(child, signal.SIGTERM)
-                os.waitpid(child, 0)
+                try:
+                    os.kill(child, signal.SIGTERM)
+                    os.waitpid(child, 0)
+                except OSError:
+                    pass
         sys.exit(0)
 
     def do_run(self):

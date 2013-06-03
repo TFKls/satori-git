@@ -432,7 +432,10 @@ class JailRun(Object):
                     with open(os.path.join(path, 'tasks'), 'r') as f:
                         for pid in f:
                             killer = True
-                            os.kill(int(pid), signal.SIGKILL)
+                            try:
+                                os.kill(int(pid), signal.SIGKILL)
+                            except OSError:
+                                pass
                     time.sleep(1)
                 os.rmdir(path)
 
