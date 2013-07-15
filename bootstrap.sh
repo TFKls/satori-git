@@ -10,6 +10,6 @@ virtualenv --no-site-packages --prompt=\(satori\) "$VENV" &&
 mkdir -p bin &&
 find "$VENV/bin" -name "activate*" |while read a; do ln -s "../$a" bin; done &&
 source bin/activate &&
-easy_install -U distribute || exit 1
+pip install -U distribute || exit 1
 
 popd

@@ -12,7 +12,7 @@ apt-get -y install python-virtualenv python-dev libyaml-dev make patch
 rm -Rf "$DEST" && mkdir "$DEST" && pushd "$DEST" || exit 1
 virtualenv --no-site-packages --prompt=\(satori\) . &&
 source bin/activate &&
-easy_install -U distribute || exit 1 
+pip install -U distribute || exit 1 
 popd
 
 for i in satori.objects satori.ars satori.client.common satori.tools ; do
