@@ -1,15 +1,20 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
 def main():
-    from satori.tools import setup
+    from satori.tools import options, setup
 
-    setup()
+    options.add_argument('--ipython', help='Use IPython', action='store_true')
+    flags = setup()
 
-    import code
-    import readline
-    console = code.InteractiveConsole()
-    console.runcode('from satori.client.common import want_import')
-    console.runcode('want_import(globals(), "*")')
-    console.interact()
+    from satori.client.common import want_import
+    want_import(globals(), "*")
 
+    if flags.ipython:
+        print 'IPython needs to be manually installed in your virtual environment'
+        from IPython import embed
+        embed()
+    else:
+        import code
+        console = code.InteractiveConsole()
+        console.interact()
 
