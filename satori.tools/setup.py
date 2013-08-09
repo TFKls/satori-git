@@ -22,5 +22,6 @@ setup(name='satori.tools',
         satori.update_judges = satori.tools.judges:update_judges
         satori.team = satori.tools.teams:uzi_team
         satori.submit = satori.tools.submit:submit
+        satori.problems = satori.tools.problems:main
     ''',
 )

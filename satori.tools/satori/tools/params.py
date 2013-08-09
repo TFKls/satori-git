@@ -170,6 +170,11 @@ class OaTypeDatetime(OaType):
     def _from_unicode(cls, value):
         return datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
 
+class OaTypeBlob(OaType):  # It's here only to parse judges' xmls.
+    @classmethod
+    def name(cls):
+        return 'blob'
+
 oa_types = {}
 for item in globals().values():
     if isinstance(item, type) and issubclass(item, OaType) and (item != OaType):
