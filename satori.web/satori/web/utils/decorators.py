@@ -30,7 +30,12 @@ def contest_view(func):
             page_info.url = urlquote(request.path)
             res = func(request, page_info, **kwargs)
             if request.COOKIES.get('satori_token', '') != token_container.get_token():
-                res.set_cookie('satori_token', token_container.get_token())
+                res.set_cookie(settings.SATORI_TOKEN_COOKIE_NAME,
+                        token_container.get_token(),
+                        domain=settings.SATORI_TOKEN_COOKIE_DOMAIN,
+                        path=settings.SATORI_TOKEN_COOKIE_PATH,
+                        secure=settings.SATORI_TOKEN_COOKIE_SECURE or None,
+                        httponly=settings.SATORI_TOKEN_COOKIE_HTTPONLY or None)
             return res
         except (TokenInvalid, TokenExpired):
             res = HttpResponseRedirect(reverse('login')+'?redir='+urlquote(request.path))
