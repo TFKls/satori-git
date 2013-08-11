@@ -1,4 +1,5 @@
 # vim:ts=4:sts=4:sw=4:expandtab
+from django.conf import settings
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
@@ -17,7 +18,7 @@ def blob_generator(blob):
 
 def getfile(request, mode, model, id, attr_name, file_name):
     try:
-        token_container.set_token(request.COOKIES.get('satori_token', ''))
+        token_container.set_token(request.COOKIES.get(settings.SATORI_TOKEN_COOKIE_NAME, ''))
     except:
         token_container.set_token('')
 
@@ -33,7 +34,7 @@ def getfile(request, mode, model, id, attr_name, file_name):
 
 def getfile_group(request, mode, model, id, group_name, attr_name, file_name):
     try:
-        token_container.set_token(request.COOKIES.get('satori_token', ''))
+        token_container.set_token(request.COOKIES.get(settings.SATORI_TOKEN_COOKIE_NAME, ''))
     except:
         token_container.set_token('')
 

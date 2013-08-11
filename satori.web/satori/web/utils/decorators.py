@@ -14,7 +14,7 @@ want_import(globals(), '*')
 def contest_view(func):
     def wrapped_contest_view(request, contestid=None, **kwargs):
         try:
-            token_container.set_token(request.COOKIES.get('satori_token', ''))
+            token_container.set_token(request.COOKIES.get(settings.SATORI_TOKEN_COOKIE_NAME, ''))
         except:
             token_container.set_token('')
         page_info = None
@@ -29,7 +29,7 @@ def contest_view(func):
                 page_info = Web.get_page_info()
             page_info.url = urlquote(request.path)
             res = func(request, page_info, **kwargs)
-            if request.COOKIES.get('satori_token', '') != token_container.get_token():
+            if request.COOKIES.get(settings.SATORI_TOKEN_COOKIE_NAME, '') != token_container.get_token():
                 res.set_cookie(settings.SATORI_TOKEN_COOKIE_NAME,
                         token_container.get_token(),
                         domain=settings.SATORI_TOKEN_COOKIE_DOMAIN,
@@ -39,7 +39,7 @@ def contest_view(func):
             return res
         except (TokenInvalid, TokenExpired):
             res = HttpResponseRedirect(reverse('login')+'?redir='+urlquote(request.path))
-            res.set_cookie('satori_token', '')
+            res.set_cookie(settings.SATORI_TOKEN_COOKIE_NAME, '')
             return res
         except AccessDenied:
             if page_info and not page_info.role:
