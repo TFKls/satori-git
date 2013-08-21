@@ -44,7 +44,7 @@ def main():
     temporary_submit_parser = subparsers.add_parser('test')
     temporary_submit_parser.set_defaults(command=temporary_submit)
     temporary_submit_parser.add_argument('TEST')
-    temporary_submit_parser.add_argument('SOLUTION')
+    temporary_submit_parser.add_argument('SOLUTION', nargs='+')
 
     # TODO
     # upload_problem_parser = subparsers.add_parser('upload')
