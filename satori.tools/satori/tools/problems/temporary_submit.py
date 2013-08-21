@@ -1,13 +1,13 @@
 # vim:ts=4:sts=4:sw=4:et
 import argparse
 import glob
-import json
 import logging
 import os
 import os.path
 import shutil
 import sys
 import time
+import yaml
 
 from satori.client.common import want_import
 want_import(globals(), '*')
@@ -17,16 +17,16 @@ from satori.tools.params import parser_from_xml
 from satori.tools.problems.common import Dirs, upload_blob
 
 
-def make_oa_map(params_parser, json_data, dirs):
+def make_oa_map(params_parser, yaml_data, dirs):
     if not params_parser or not params_parser.params:
         return {}
     oa_map = {}
     for param in params_parser.params:
-        if param.name in json_data:
+        if param.name in yaml_data:
             if param.type_.name() == 'blob':
-                oa_map[param.name] = upload_blob(dirs.parse(json_data[param.name]))
+                oa_map[param.name] = upload_blob(dirs.parse(yaml_data[param.name]))
             else:
-                oa_map[param.name] = AnonymousAttribute(is_blob=False, value=json_data[param.name])
+                oa_map[param.name] = AnonymousAttribute(is_blob=False, value=yaml_data[param.name])
         else:
             if param.required and param.default is None:
                 raise RuntimeError(
@@ -34,30 +34,30 @@ def make_oa_map(params_parser, json_data, dirs):
     return oa_map
 
 
-def open_test(test_json_fname):
-    with open(test_json_fname) as test_json_file:
-        test_json = json.load(test_json_file)
-    if type(test_json) != dict:
+def open_test(test_yaml_fname):
+    with open(test_yaml_fname) as test_yaml_file:
+        test_yaml = yaml.safe_load(test_yaml_file)
+    if type(test_yaml) != dict:
         raise RuntimeError('Test JSON must be an object')
-    if 'name' not in test_json:
+    if 'name' not in test_yaml:
         raise RuntimeError('Test must have a name')
-    return test_json
+    return test_yaml
 
 
 def make_test_data(dirs):
-    test_json = open_test(dirs.parse('test.json'))  # path relative to test dir
-    test_name = test_json['name']
-    test_description = test_json.get('description', '')
+    test_yaml = open_test(dirs.parse('test.yaml'))  # path relative to test dir
+    test_name = test_yaml['name']
+    test_description = test_yaml.get('description', '')
 
-    if 'judge' not in test_json:
+    if 'judge' not in test_yaml:
         raise RuntimeError('No judge specified')
 
-    judge_path = dirs.parse(test_json['judge'])
+    judge_path = dirs.parse(test_yaml['judge'])
     with open(judge_path) as judge_file:
         judge_content = judge_file.read()
 
     judge_params = parser_from_xml(judge_content)
-    test_data = make_oa_map(judge_params, test_json, dirs)
+    test_data = make_oa_map(judge_params, test_yaml, dirs)
     test_data['name'] = AnonymousAttribute(is_blob=False, value=test_name)
     test_data['description'] = AnonymousAttribute(is_blob=False,
                                                   value=test_description)
@@ -67,11 +67,11 @@ def make_test_data(dirs):
 
 
 def discover_tests(problem_dir):
-    # TODO: fail if problem_dir does not contain problem.json file.
+    # TODO: fail if problem_dir does not contain problem.yaml file.
     tests = []
-    for fname in glob.glob(os.path.join(problem_dir, '*', 'test.json')):
-        test_json = open_test(fname)
-        tests.append((test_json['name'], os.path.dirname(fname)))
+    for fname in glob.glob(os.path.join(problem_dir, '*', 'test.yaml')):
+        test_yaml = open_test(fname)
+        tests.append((test_yaml['name'], os.path.dirname(fname)))
     return dict(tests)
 
 

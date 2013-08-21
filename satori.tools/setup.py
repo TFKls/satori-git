@@ -10,6 +10,7 @@ setup(name='satori.tools',
         'setuptools',
         'argparse',
         'satori.client.common',
+        'pyyaml',
     ],
     entry_points='''
         [console_scripts]

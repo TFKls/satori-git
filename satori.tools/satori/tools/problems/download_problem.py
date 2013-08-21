@@ -1,13 +1,13 @@
 # vim:ts=4:sts=4:sw=4:et
 import argparse
 import glob
-import json
 import logging
 import os
 import os.path
 import shutil
 import sys
 import time
+import yaml
 
 from satori.client.common import want_import
 want_import(globals(), '*')
@@ -25,51 +25,51 @@ def get_problem(problem_name):
         return problems[0]
 
 
-def create_suite_json(suite):
-    suite_json = {}
+def create_suite_yaml(suite):
+    suite_yaml = {}
     if not suite.name:
         raise RuntimeError('Problem has anonymous test suite')
-    suite_json['name'] = suite.name
-    suite_json['dispatcher'] = suite.dispatcher
-    suite_json['reporter'] = suite.reporter
+    suite_yaml['name'] = suite.name
+    suite_yaml['dispatcher'] = suite.dispatcher
+    suite_yaml['reporter'] = suite.reporter
     for param in suite.params_get_list():
-        suite_json[param.name] = param.value
-    suite_json['tests'] = [test.name for test in suite.get_tests()]
-    return suite_json
+        suite_yaml[param.name] = param.value
+    suite_yaml['tests'] = [test.name for test in suite.get_tests()]
+    return suite_yaml
 
 
-def create_test_json(test):
-    test_json = {}
+def create_test_yaml(test):
+    test_yaml = {}
     if not test.name:
         raise RuntimeError('Problem has anonymous test suite')
-    test_json['name'] = test.name
+    test_yaml['name'] = test.name
     for data in test.data_get_list():
         if data.is_blob:
-            test_json[data.name] = {
+            test_yaml[data.name] = {
                 'filename': data.filename,
                 'hash': data.value
             }
         else:
-            test_json[data.name] = data.value
-    return test_json
+            test_yaml[data.name] = data.value
+    return test_yaml
 
 
 def has_duplicates(names):
     return len(names) > len(set(names))
 
 
-def store_problem(problem_json, tests_json):
-    if has_duplicates([slugify(test['name']) for test in tests_json]):
+def store_problem(problem_yaml, tests_yaml):
+    if has_duplicates([slugify(test['name']) for test in tests_yaml]):
         raise RuntimeError('Slugified test names\' are not unique')
-    problem_dir = slugify(problem_json['name'])
+    problem_dir = slugify(problem_yaml['name'])
     os.mkdir(problem_dir)
-    problem_file = open(os.path.join(problem_dir, 'problem.json'), 'w')
-    json.dump(problem_json, problem_file, indent=4)
+    problem_file = open(os.path.join(problem_dir, 'problem.yaml'), 'w')
+    yaml.safe_dump(problem_yaml, stream=problem_file, indent=2)
     problem_file.close()
-    for test_json in tests_json:
-        test_dir = slugify(test_json['name'])
+    for test_yaml in tests_yaml:
+        test_dir = slugify(test_yaml['name'])
         os.mkdir(os.path.join(problem_dir, test_dir))
-        for (key, val) in test_json.items():
+        for (key, val) in test_yaml.items():
             if type(val) == dict:  # blob
                 remote_blob = Blob.open(val['hash'])
                 local_blob = open(
@@ -82,9 +82,10 @@ def store_problem(problem_json, tests_json):
                 print 'done'
                 remote_blob.close()
                 local_blob.close()
-                test_json[key] = val['filename']
-        test_file = open(os.path.join(problem_dir, test_dir, 'test.json'), 'w')
-        json.dump(test_json, test_file, indent=4)
+                test_yaml[key] = val['filename']
+        test_file = open(os.path.join(problem_dir, test_dir, 'test.yaml'), 'w')
+        yaml.safe_dump(test_yaml, stream=test_file, indent=2,
+                       default_flow_style=False)
         test_file.close()
         # TODO: check blob names are unique
         # TODO: avoid fetching the same blob twice
@@ -94,15 +95,15 @@ def download_problem(opts):
     problem_name = opts.PROBLEM_NAME
     problem = get_problem(problem_name)
     
-    problem_json = {}
-    problem_json['name'] = problem.name
-    problem_json['description'] = problem.description
+    problem_yaml = {}
+    problem_yaml['name'] = problem.name
+    problem_yaml['description'] = problem.description
     
     suites = TestSuite.filter(TestSuiteStruct(problem=problem))
-    problem_json['suites'] = [create_suite_json(suite) for suite in suites]
+    problem_yaml['suites'] = [create_suite_yaml(suite) for suite in suites]
 
     tests = Test.filter(TestStruct(problem=problem))
-    tests_json = [create_test_json(test) for test in tests]
+    tests_yaml = [create_test_yaml(test) for test in tests]
 
-    store_problem(problem_json, tests_json)
+    store_problem(problem_yaml, tests_yaml)
 
