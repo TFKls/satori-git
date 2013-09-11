@@ -17,10 +17,11 @@ from satori.tools.params import parser_from_xml
 from satori.tools.problems.common import upload_blob
 from satori.tools.problems.download_problem import download_problem
 from satori.tools.problems.temporary_submit import temporary_submit
+from satori.tools.problems.upload_problem import upload_problem
 
 #############################     Entry point     #############################
 
-@catch_exceptions
+# @catch_exceptions
 def main():
     subparsers = options.add_subparsers()
     
@@ -46,8 +47,9 @@ def main():
     temporary_submit_parser.add_argument('TEST')
     temporary_submit_parser.add_argument('SOLUTION', nargs='+')
 
-    # TODO
-    # upload_problem_parser = subparsers.add_parser('upload')
+    upload_problem_parser = subparsers.add_parser('upload')
+    upload_problem_parser.set_defaults(command=upload_problem)
+    upload_problem_parser.add_argument('PROBLEM', nargs='?')
     
     opts = setup(logging.CRITICAL)
     opts.command(opts)
