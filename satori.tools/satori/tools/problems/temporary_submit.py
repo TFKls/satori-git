@@ -14,7 +14,7 @@ want_import(globals(), '*')
 from satori.tools import auth_setup, catch_exceptions, config, options, setup
 from satori.tools.params import parser_from_xml
 
-from satori.tools.problems.common import Dirs, make_test_data, upload_blob
+from satori.tools.problems.common import Dirs, discover_tests, make_test_data, upload_blob
 
 
 def _temporary_submit_internal(problem_dir, test_dir, submit_file_path):
