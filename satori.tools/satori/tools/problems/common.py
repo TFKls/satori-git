@@ -1,5 +1,7 @@
 # vim:ts=4:sts=4:sw=4:et
+import base64
 import glob
+import hashlib
 import os.path
 import re
 import sys
@@ -38,16 +40,25 @@ def copy_file(src, dst):
         dst.write(buf)
 
 
+def _calculate_blob_hash(blob_path):
+    with open(blob_path) as blob:
+        # TODO: use a buffer to avoid unbounded memory usage
+        return base64.urlsafe_b64encode(hashlib.sha384(blob.read()).digest())
+
+
 def upload_blob(blob_path):
-    with open(blob_path) as local_blob:
-        blob_size = os.path.getsize(blob_path)
-        remote_blob = Blob.create(blob_size)
-        print 'Uploading blob', os.path.basename(blob_path) + ',',
-        print 'size =', blob_size, 'bytes' + '...',
-        sys.stdout.flush()
-        copy_file(local_blob, remote_blob)
-        print 'done'
-    blob_hash = remote_blob.close()
+    blob_hash = _calculate_blob_hash(blob_path)
+    if not Blob.exists(blob_hash):
+        with open(blob_path) as local_blob:
+            blob_size = os.path.getsize(blob_path)
+            remote_blob = Blob.create(blob_size)
+            print 'Uploading blob', os.path.basename(blob_path) + ',',
+            print 'size =', blob_size, 'bytes' + '...',
+            sys.stdout.flush()
+            copy_file(local_blob, remote_blob)
+            print 'done'
+        remote_blob_hash = remote_blob.close()
+        assert blob_hash == remote_blob_hash
     blob_name = os.path.basename(blob_path)
     return AnonymousAttribute(is_blob=True, value=blob_hash, filename=blob_name)
 
