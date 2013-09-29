@@ -11,6 +11,7 @@ setup(name='satori.tools',
         'argparse',
         'satori.client.common',
         'pyyaml',
+        'ipython >= 1.0',
     ],
     entry_points='''
         [console_scripts]
