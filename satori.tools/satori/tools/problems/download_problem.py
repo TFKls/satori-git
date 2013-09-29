@@ -1,17 +1,11 @@
 # vim:ts=4:sts=4:sw=4:et
-import argparse
-import glob
-import logging
 import os
 import os.path
-import shutil
 import sys
-import time
 import yaml
 
 from satori.client.common import want_import
 want_import(globals(), '*')
-from satori.tools import auth_setup, catch_exceptions, config, options, setup
 
 from satori.tools.problems.common import copy_file, slugify
 

@@ -1,20 +1,11 @@
 # vim:ts=4:sts=4:sw=4:et
-import argparse
-import glob
-import json
 import logging
-import os
-import os.path
-import shutil
-import sys
-import time
 
 from satori.client.common import want_import
 want_import(globals(), '*')
-from satori.tools import auth_setup, catch_exceptions, config, options, setup
+from satori.tools import catch_exceptions, options, setup
 from satori.tools.params import parser_from_xml
 
-from satori.tools.problems.common import upload_blob
 from satori.tools.problems.download_problem import download_problem
 from satori.tools.problems.render_statement import render_statement
 from satori.tools.problems.temporary_submit import temporary_submit

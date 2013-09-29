@@ -1,20 +1,14 @@
 # vim:ts=4:sts=4:sw=4:et
-import argparse
-import logging
 import os
 import os.path
-import shutil
 import sys
-import time
 import yaml
 
 from satori.client.common import want_import
 want_import(globals(), '*')
-from satori.tools import auth_setup, catch_exceptions, config, options, setup
 from satori.tools.params import parser_from_xml
 
 from satori.tools.problems.common import Dirs, discover_tests, make_oa_map, make_test_data, upload_blob
-
 
 def upload_problem(opts):
     problem_dir = opts.PROBLEM if opts.PROBLEM else os.getcwd()
@@ -91,4 +85,3 @@ def upload_problem(opts):
                 reporter_params,
                 tests_in_suite,
                 [{} for _ in tests_in_suite])
-
