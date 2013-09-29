@@ -16,6 +16,7 @@ from satori.tools.params import parser_from_xml
 
 from satori.tools.problems.common import upload_blob
 from satori.tools.problems.download_problem import download_problem
+from satori.tools.problems.render_statement import render_statement
 from satori.tools.problems.temporary_submit import temporary_submit
 from satori.tools.problems.upload_problem import upload_problem
 
@@ -50,7 +51,13 @@ def main():
     upload_problem_parser = subparsers.add_parser('upload')
     upload_problem_parser.set_defaults(command=upload_problem)
     upload_problem_parser.add_argument('PROBLEM', nargs='?')
-    
+
+    render_statement_parser = subparsers.add_parser('render')
+    render_statement_parser.set_defaults(command=render_statement)
+    render_statement_parser.add_argument('STATEMENT')
+    render_statement_parser.add_argument('ATTACHMENTS', nargs='*')
+    render_statement_parser.add_argument('OUTPUT')
+
     opts = setup(logging.CRITICAL)
     opts.command(opts)
 

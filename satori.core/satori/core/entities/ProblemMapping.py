@@ -130,3 +130,14 @@ class ProblemMappingEvents(Events):
     model = ProblemMapping
     on_insert = on_update = ['contest', 'problem']
     on_delete = []
+
+
+@ExportClass
+class ProblemStatementUtils(object):
+    """
+    """
+    @ExportMethod(unicode, [unicode, TypedMap(unicode, AnonymousAttribute)], PCGlobal('MANAGE_PROBLEMS'), [SphinxException])
+    @staticmethod
+    def render_to_pdf(statement, attachments_oa_map):
+        result_oa_map = render_sphinx(statement, attachments_oa_map)
+        return result_oa_map['_pdf'].value
