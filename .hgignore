@@ -7,8 +7,6 @@ syntax: regexp
 \.py[co]$
 \.egg-info/
 tmp/*
-^satori.cribfinder/compare/compare03$
-^satori.cribfinder/compare/parseClang$
 ^satori.javatool/bin/*
 ^satori.javatool/lib/*
 ^satori.judge/runner/runner$
