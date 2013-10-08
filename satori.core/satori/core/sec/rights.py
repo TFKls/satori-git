@@ -218,7 +218,7 @@ class SatoriNode(object):
     def prepare_joins(self, query, field_list, nullable=False, trim=False):
         field, source, opts, join_list, last, _ = query.setup_joins(
             field_list, query.get_meta(), query.get_initial_alias(), False)
-        query.promote_joins(join_list, nullable)
+        query.promote_alias_chain(join_list, nullable)
         col, _, join_list = query.trim_joins(source, join_list, last, trim)
         return (join_list[-1], col)
     @staticmethod
