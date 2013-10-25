@@ -51,7 +51,7 @@ def {1}_get(self, name):
         return None
 
 @ExportMethod(unicode, [DjangoId('{0}'), unicode, unicode], pc_read, [BadAttributeType])
-def {1}_get_str(self, name, default=None):
+def {1}_get_str(self, name, fallback=None):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
     if oa is None:
