@@ -152,6 +152,10 @@ class ThriftServerProcess(SatoriProcess):
         self.server = TForkingServer(ThriftProcessor(), socket, TFramedTransportFactory(), TBinaryProtocolFactory())
         self.server.serve()
 
+class ChainedOpenSSLContextFactory(internet.ssl.DefaultOpenSSLContextFactory):
+    def cacheContext(self):
+        super(ChainedOpenSSLContextFactory, self).cacheContext()
+        self._context.use_certificate_chain_file(self.certificateChainFileName)
 
 class TwistedHttpServerProcess(SatoriProcess):
     def __init__(self):
@@ -164,7 +168,7 @@ class TwistedHttpServerProcess(SatoriProcess):
         resource = wsgi.WSGIResource(internet.reactor, internet.reactor.getThreadPool(), WSGIHandler())
         if settings.USE_SSL:
             internet.reactor.listenSSL(settings.BLOB_PORT, server.Site(resource), 
-                    internet.ssl.DefaultOpenSSLContextFactory(settings.SSL_CERTIFICATE, settings.SSL_CERTIFICATE), interface=settings.BLOB_HOST)
+                    ChainedOpenSSLContextFactory(settings.SSL_CERTIFICATE, settings.SSL_CERTIFICATE), interface=settings.BLOB_HOST)
         else:
             internet.reactor.listenTCP(settings.BLOB_PORT, server.Site(resource), interface=settings.BLOB_HOST)
         internet.reactor.run()
