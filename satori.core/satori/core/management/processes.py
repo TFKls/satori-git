@@ -157,7 +157,7 @@ class ChainedOpenSSLContextFactory(internet.ssl.DefaultOpenSSLContextFactory):
 #        super(ChainedOpenSSLContextFactory, self).cacheContext()
 #ARGH: Twisted uses old-style classes.
         internet.ssl.DefaultOpenSSLContextFactory.cacheContext(self)
-        self._context.use_certificate_chain_file(self.certificateChainFileName)
+        self._context.use_certificate_chain_file(self.certificateFileName)
 
 class TwistedHttpServerProcess(SatoriProcess):
     def __init__(self):
