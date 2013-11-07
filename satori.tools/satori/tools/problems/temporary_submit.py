@@ -9,9 +9,13 @@ want_import(globals(), '*')
 from satori.tools.problems.common import Dirs, discover_tests, make_test_data, upload_blob
 
 
-def _temporary_submit_internal(problem_dir, test_dir, submit_file_path):
+def _temporary_submit_internal(problem_dir, test_dir, submit_file_path,
+                               override_time=None):
     dirs = Dirs(problem_dir, test_dir)
     test_data = make_test_data(dirs)
+    if override_time is not None and 'time' in test_data:
+        test_data['_original_time'] = test_data['time']
+        test_data['time'] = AnonymousAttribute(is_blob=False, value=override_time)
     submit_data = {'content': upload_blob(submit_file_path)}
     submit = TemporarySubmit.create(test_data, submit_data)
     print 'Testing %s on %s, temporary submit id: %d' % (
@@ -46,9 +50,15 @@ def _submit_to_results_row(submit):
     result_row.append(submit.submit_data_get_map()['content'].filename)
     result_row.append(_get_from_map(test_map, 'name'))
     result_row.append(_get_from_map(result_map, 'status'))
-    result_row.append('%s / %s' % (
-            _get_from_map(result_map, 'execute_time_cpu'),
-            _get_from_map(test_map, 'time')))
+    if '_original_time' in test_map:
+        result_row.append('%s / %s (%s)' % (
+                _get_from_map(result_map, 'execute_time_cpu'),
+                _get_from_map(test_map, '_original_time'),
+                _get_from_map(test_map, 'time')))
+    else:
+        result_row.append('%s / %s' % (
+                _get_from_map(result_map, 'execute_time_cpu'),
+                _get_from_map(test_map, 'time')))
     result_row.append(str(submit.id))
     return result_row
 
@@ -56,21 +66,27 @@ def _submit_to_results_row(submit):
 def _wait_for_results(submits):
     waiting_start = time.time()
     total = len(submits)
-    print 'Waiting for results, %d/%d done' % (0, total)
+    print 'Waiting for results, %d/%d done' % (0, total),
+    sys.stdout.flush()
     last_reported = 0
     while True:
         done = 0
         for submit in submits:
             if submit.result_get_list():
                 done += 1
-        if done > last_reported:
-            print 'Waiting for results, %d/%d done' % (done, total)
-            last_reported = done
         if done >= total:
             break
+        if done > last_reported:
+            print
+            print 'Waiting for results, %d/%d done' % (done, total),
+            sys.stdout.flush()
+            last_reported = done
         time.sleep(2)
+        print '.',
+        sys.stdout.flush()
     waiting_time = time.time() - waiting_start
-    print 'You had to wait ~%ds' % int(round(waiting_time))
+    print
+    print 'You had to wait %ds' % int(round(waiting_time))
 
 
 def temporary_submit(opts):
@@ -88,7 +104,7 @@ def temporary_submit(opts):
     for submit_file_path in opts.SOLUTION:
         for test_dir in test_dirs:
             submit = _temporary_submit_internal(
-                    problem_dir, test_dir, submit_file_path)
+                    problem_dir, test_dir, submit_file_path, opts.time)
             submits.append(submit)
 
     _wait_for_results(submits)
