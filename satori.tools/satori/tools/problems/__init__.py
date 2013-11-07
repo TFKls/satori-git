@@ -9,6 +9,7 @@ from satori.tools.params import parser_from_xml
 from satori.tools.problems.download_problem import download_problem
 from satori.tools.problems.render_statement import render_statement
 from satori.tools.problems.temporary_submit import temporary_submit
+from satori.tools.problems.temporary_submit import temporary_submit_result
 from satori.tools.problems.upload_problem import upload_problem
 
 #############################     Entry point     #############################
@@ -38,6 +39,10 @@ def main():
     temporary_submit_parser.set_defaults(command=temporary_submit)
     temporary_submit_parser.add_argument('TEST')
     temporary_submit_parser.add_argument('SOLUTION', nargs='+')
+
+    temporary_submit_result_parser = subparsers.add_parser('testresult')
+    temporary_submit_result_parser.set_defaults(command=temporary_submit_result)
+    temporary_submit_result_parser.add_argument('TSID')
 
     upload_problem_parser = subparsers.add_parser('upload')
     upload_problem_parser.set_defaults(command=upload_problem)
