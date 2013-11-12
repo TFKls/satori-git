@@ -55,7 +55,7 @@ def {1}_get_str(self, name, fallback=None):
     \"\"\"Attribute group: {1}\"\"\"
     oa = self.{1}_get(name)
     if oa is None:
-        return default
+        return fallback
     elif oa.is_blob:
         raise BadAttributeType(name=name, requested_type='string')
     else:
