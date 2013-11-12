@@ -59,7 +59,7 @@ def judge_loop():
                 template_path=option_values.template_dir)
             try:
                 jb.create()
-                dst_path = os.path.join(option_values.jail_dir, 'judge')
+                dst_path = os.path.join(jb.jail_path, 'judge')
                 if td.get('judge') and td.get('judge').is_blob:
                     td.get_blob_path('judge', dst_path)
                     os.chmod(dst_path, stat.S_IREAD | stat.S_IEXEC)
@@ -71,7 +71,7 @@ def judge_loop():
                     continue
                 jr = JailRun(
                     submit=sub,
-                    root=option_values.jail_dir,
+                    root=jb.jail_path,
                     cgroup_path=option_values.cgroup_dir,
                     template_path=option_values.template_dir,
                     path='/judge',
@@ -87,9 +87,6 @@ def judge_loop():
                     control_port=option_values.control_port,
                     args = ['--control-host', option_values.host_ip, '--control-port', str(option_values.control_port)])
                 res = jr.run()
-                if option_values.debug:
-                    dh = Blob.create_path(option_values.debug)
-                    res['judge.log'] = {'is_blob':True, 'value':dh, 'filename': 'judge.log'}
                 Judge.set_result(tr, res)
             except:
                 traceback.print_exc()

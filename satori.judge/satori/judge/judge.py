@@ -21,29 +21,6 @@ import unshare
 import yaml
 import traceback
 
-
-def loopUnmount(root):
-    paths = []
-    with open('/proc/mounts', 'r') as mounts:
-        for mount in mounts:
-            path = mount.split(' ')[1]
-            if checkSubPath(os.path.join('/', root), path):
-                paths.append(path)
-        paths.reverse()
-        for path in paths:
-            subprocess.call(['umount', '-l', path])
-
-def checkSubPath(root, path):
-    root = os.path.realpath(root).split('/')
-    path = os.path.realpath(path).split('/')
-
-    if len(path) < len(root):
-        return False
-    for i in range(0, len(root)):
-        if root[i] != path[i]:
-            return False
-    return True
-
 def jailPath(root, path):
     return os.path.join(root, os.path.abspath(os.path.join('/',path))[1:])
 
@@ -75,11 +52,13 @@ class JailBuilder(Object):
     def __init__(self, root, template, template_path):
         template = os.path.split(template)[1]
         self.root = root
+        self.jail_path = os.path.abspath(os.path.join(self.root, '__jail__'))
         self.template = os.path.join(template_path, template + '.template')
 
     def create(self):
         try:
             os.mkdir(self.root)
+            subprocess.check_call(['mount', '-t', 'tmpfs', '-o', 'noatime,rw,size=1m', 'tmpfs', self.root])
             template = yaml.load(open(self.template, 'r'))
             dirlist = []
             quota = 0
@@ -98,7 +77,7 @@ class JailBuilder(Object):
                         if os.path.isdir(src):
                             os.mkdir(path)
                             subprocess.check_call(['mount', '-o', 'bind,ro,'+opts, src, path])
-                            dirlist.append(path)
+                            dirlist.append((path,'ro'))
                         elif os.path.isfile(src):
                             os.mkdir(path)
                             if type is None:
@@ -108,7 +87,7 @@ class JailBuilder(Object):
                                 else:
                                     type = 'auto'
                             subprocess.check_call(['mount', '-t', type, '-o', 'loop,noatime,ro,'+opts, src, path])
-                            dirlist.append(path)
+                            dirlist.append((path,'ro'))
                         else:
                           raise Exception('Path '+base['path']+' can\'t be mounted')
             if 'quota' in template:
@@ -117,30 +96,35 @@ class JailBuilder(Object):
                 path = os.path.join(self.root, '__rw__')
                 os.mkdir(path)
                 subprocess.check_call(['mount', '-t', 'tmpfs', '-o', 'noatime,rw,size=' + str(quota) + 'm', 'tmpfs', path])
-                dirlist.append(path)
+                dirlist.append((path,'rw'))
+            os.mkdir(self.jail_path)
+            unionfs = 'aufs'
             if len(dirlist) == 1:
-                subprocess.check_call(['mount', '-o', 'bind', dirlist[0], self.root])
+                subprocess.check_call(['mount', '-o', 'bind', dirlist[0][0], self.jail_path])
             else:
-                subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+dirlist[0]+',upperdir='+dirlist[1], dirlist[1], self.root])
-                for d in dirlist[2:]:
-                    subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+self.root+',upperdir='+d, d, self.root])
+                if unionfs == 'overlayfs':
+                    subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+dirlist[0][0]+',upperdir='+dirlist[1][0], dirlist[1][0], self.jail_path])
+                    for d in dirlist[2:]:
+                        subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+self.jail_path+',upperdir='+d[0], d[0], self.jail_path])
+                else:
+                    subprocess.check_call(['mount', '-t', 'aufs', '-o', 'noatime,rw,dirs=' + ':'.join([d[0]+'='+d[1] for d in reversed(dirlist)]), 'aufs', self.jail_path])
             if 'insert' in template:
                 for src in template['insert']:
                     src = os.path.realpath(src)
                     if os.path.isdir(src):
-                        subprocess.check_call(['rsync', '-a', src, self.root])
+                        subprocess.check_call(['rsync', '-a', src, self.jail_path])
                     elif os.path.isfile(src):
                         name = os.path.basename(src).split('.')
                         if name[-1] == 'zip':
-                            subprocess.check_call(['unzip', '-d', self.root, src])
+                            subprocess.check_call(['unzip', '-d', self.jail_path, src])
                         elif name[-1] == 'tar':
-                            subprocess.check_call(['tar', '-C', self.root, '-x', '-f', src])
+                            subprocess.check_call(['tar', '-C', self.jail_path, '-x', '-f', src])
                         elif name[-1] == 'tbz' or name[-1] == 'tbz2' or (name[-1] == 'bz' or name[-1] == 'bz2') and name[-2] == 'tar':
-                            subprocess.check_call(['tar', '-C', self.root, '-x', '-j', '-f', src])
+                            subprocess.check_call(['tar', '-C', self.jail_path, '-x', '-j', '-f', src])
                         elif name[-1] == 'tgz'  or name[-1] == 'gz' and name[-2] == 'tar':
-                            subprocess.check_call(['tar', '-C', self.root, '-x', '-z', '-f', src])
+                            subprocess.check_call(['tar', '-C', self.jail_path, '-x', '-z', '-f', src])
                         elif name[-1] == 'lzma' and name[-2] == 'tar':
-                            subprocess.check_call(['tar', '-C', self.root, '-x', '--lzma', '-f', src])
+                            subprocess.check_call(['tar', '-C', self.jail_path, '-x', '--lzma', '-f', src])
                         else:
                           raise Exception('Path '+src+ ' can\'t be inserted')
                     else:
@@ -150,7 +134,7 @@ class JailBuilder(Object):
                     if isinstance(copy, str):
                         copy = { 'src' : copy }
                     src = copy['src']
-                    dst = jailPath(self.root, copy.get('dst', src))
+                    dst = jailPath(self.jail_path, copy.get('dst', src))
                     with open(src, "r") as s:
                         with open(dst, "w") as d:
                             shutil.copyfileobj(s, d)
@@ -159,13 +143,13 @@ class JailBuilder(Object):
                     os.chown(dst, st.st_uid, st.st_gid)
             if 'remove' in template:
                 for path in template['remove']:
-                  subprocess.check_call(['rm', '-rf', jailPath(self.root, path)])
+                  subprocess.check_call(['rm', '-rf', jailPath(self.jail_path, path)])
             if 'bind' in template:
                 for bind in template['bind']:
                     if isinstance(bind, str):
                         bind = { 'src' : bind }
                     src = bind['src']
-                    dst = jailPath(self.root, bind.get('dst', src))
+                    dst = jailPath(self.jail_path, bind.get('dst', src))
                     opts = bind.get('opts', '')
                     rec = bind.get('recursive', 0)
                     if rec:
@@ -176,7 +160,7 @@ class JailBuilder(Object):
             if 'script' in template:
                 for script in template['script']:
                     params = script.split(' ')
-                    runner = JailExec(root=self.root, path=params[0], args=params[1:], search=True)
+                    runner = JailExec(root=self.jail_path, path=params[0], args=params[1:], search=True)
                     process = Process(target=runner.run)
                     process.start()
                     process.join(self.scriptTimeout)
@@ -190,8 +174,8 @@ class JailBuilder(Object):
             raise
 
     def destroy(self):
-        loopUnmount(self.root)
-        shutil.rmtree(self.root)
+        subprocess.call(['umount', '-l', self.root])
+        os.rmdir(self.root)
 
 
 class JailRun(Object):
@@ -261,7 +245,7 @@ class JailRun(Object):
 
             pipe.close()
 
-            runargs = [ 'runner', '--root', self.root, '--env=simple', '--pivot', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
+            runargs = [ 'runner', '--root', self.root, '--pivot', '--work-dir', '/', '--env=simple', '--ns-ipc', '--ns-uts', '--ns-pid', '--ns-mount', '--mount-proc', '--cap', 'safe' ]
             runargs += [ '--control-host', self.host_ip, '--control-port', str(self.control_port), '--cgroup',  '/', '--cgroup-memory', str(self.cgroup_memory), '--max-realtime', str(self.real_time) ]
             if self.search:
                 runargs += [ '--search' ]
@@ -466,12 +450,11 @@ class JailRun(Object):
                 template = input['template']
                 jb = JailBuilder(root=path, template_path=self.jail_run.template_path, template=template)
                 jb.create()
-                return { 'res' : 'OK' }
-
-            def cmd_DESTROYJAIL(self, input):
-                path = os.path.join(jailPath(self.jail_run.root, input['path']))
-                jb = JailBuilder(root=path, template_path=self.jail_run.template_path)
-                jb.destroy()
+                try:
+                    subprocess.check_call(['mount', '-o', 'rbind', jb.jail_path, path])
+                except:
+                    jb.destroy()
+                    raise
                 return { 'res' : 'OK' }
 
             def cmd_SETSTRING(self, input):
