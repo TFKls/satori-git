@@ -11,7 +11,7 @@ def validate_filename(value):
     except:
         raise ValidationError(u'filename \'%s\' contains invalid characters' % value)
     for l in value:
-        if not (l.isalpha() or l.isdigit() or l == '_' or l == "."):
+        if not (l.isalpha() or l.isdigit() or l == '_' or l == '-' or l == "."):
             raise ValidationError(u'filename \'%s\' contains invalid characters' % value)
 
 class OpenAttribute(models.Model):
