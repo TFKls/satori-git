@@ -120,7 +120,7 @@ class JailBuilder(Object):
                 dirlist.append(path)
             if len(dirlist) == 1:
                 subprocess.check_call(['mount', '-o', 'bind', dirlist[0], self.root])
-            else
+            else:
                 subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+dirlist[0]+',upperdir='+dirlist[1], dirlist[1], self.root])
                 for d in dirlist[2:]:
                     subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+self.root+',upperdir='+d, d, self.root])
