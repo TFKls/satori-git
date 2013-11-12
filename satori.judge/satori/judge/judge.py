@@ -98,7 +98,7 @@ class JailBuilder(Object):
                         if os.path.isdir(src):
                             os.mkdir(path)
                             subprocess.check_call(['mount', '-o', 'bind,ro,'+opts, src, path])
-                            dirlist.append(path + '=nfsro')
+                            dirlist.append(path)
                         elif os.path.isfile(src):
                             os.mkdir(path)
                             if type is None:
@@ -108,7 +108,7 @@ class JailBuilder(Object):
                                 else:
                                     type = 'auto'
                             subprocess.check_call(['mount', '-t', type, '-o', 'loop,noatime,ro,'+opts, src, path])
-                            dirlist.append(path + '=nfsro')
+                            dirlist.append(path)
                         else:
                           raise Exception('Path '+base['path']+' can\'t be mounted')
             if 'quota' in template:
@@ -117,9 +117,13 @@ class JailBuilder(Object):
                 path = os.path.join(self.root, '__rw__')
                 os.mkdir(path)
                 subprocess.check_call(['mount', '-t', 'tmpfs', '-o', 'noatime,rw,size=' + str(quota) + 'm', 'tmpfs', path])
-                dirlist.append(path + '=rw')
-            dirlist.reverse()
-            subprocess.check_call(['mount', '-t', 'aufs', '-o', 'noatime,rw,dirs=' + ':'.join(dirlist), 'aufs', self.root])
+                dirlist.append(path)
+            if len(dirlist) == 1:
+                subprocess.check_call(['mount', '-o', 'bind', dirlist[0], self.root])
+            else
+                subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+dirlist[0]+',upperdir='+dirlist[1], dirlist[1], self.root])
+                for d in dirlist[2:]:
+                    subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+self.root+',upperdir='+d, d, self.root])
             if 'insert' in template:
                 for src in template['insert']:
                     src = os.path.realpath(src)
