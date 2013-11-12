@@ -88,7 +88,7 @@ class SatoriMasterProcess(SatoriProcess):
         for handler in logger.handlers:
             logger.removeHandler(handler)
 
-        formatter = logging.Formatter("%(asctime)s - %(name)s - %(levelname)s - %(message)s")
+        formatter = logging.Formatter("%(asctime)s - %(name)s - %(process)d - %(levelname)s - %(message)s")
 
         if not os.path.exists(os.path.dirname(settings.LOG_FILE)):
             os.makedirs(os.path.dirname(settings.LOG_FILE))
