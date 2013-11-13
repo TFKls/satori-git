@@ -40,6 +40,7 @@ def main():
     temporary_submit_parser.add_argument('TEST')
     temporary_submit_parser.add_argument('SOLUTION', nargs='+')
     temporary_submit_parser.add_argument('-t', '--time')
+    temporary_submit_parser.add_argument('-v', '--verbose', action='store_const', const=True)
 
     temporary_submit_result_parser = subparsers.add_parser('testresult')
     temporary_submit_result_parser.set_defaults(command=temporary_submit_result)

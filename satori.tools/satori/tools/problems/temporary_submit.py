@@ -108,20 +108,20 @@ def temporary_submit(opts):
             submits.append(submit)
 
     _wait_for_results(submits)
-    _prettyprint_table(
-            [_results_header()] + map(_submit_to_results_row, submits))
+    if not opts.verbose:
+        _prettyprint_table(
+                [_results_header()] + map(_submit_to_results_row, submits))
+    else:
+        for submit in submits:
+            print '=' * 70
+            _temporary_submit_result_internal(submit)
 
 
 def _print_bold_caption(caption):
     print '\033[1m' + caption + ':' + '\033[0m',
 
 
-def temporary_submit_result(opts):
-    submit = TemporarySubmit.filter(TemporarySubmitStruct(id=int(opts.TSID)))
-    if not submit:
-        raise RuntimeError('Unknown temporary submit id')
-    submit = submit[0]
-    
+def _temporary_submit_result_internal(submit):
     _print_bold_caption('solution')
     print submit.submit_data_get_map()['content'].filename
     _print_bold_caption('test')
@@ -142,3 +142,11 @@ def temporary_submit_result(opts):
             print content
         else:
             print attr.value
+
+
+def temporary_submit_result(opts):
+    submit = TemporarySubmit.filter(TemporarySubmitStruct(id=int(opts.TSID)))
+    if not submit:
+        raise RuntimeError('Unknown temporary submit id')
+    submit = submit[0]
+    _temporary_submit_result_internal(submit)
