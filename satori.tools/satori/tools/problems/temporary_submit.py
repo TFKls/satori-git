@@ -6,16 +6,18 @@ import time
 from satori.client.common import want_import
 want_import(globals(), '*')
 
-from satori.tools.problems.common import Dirs, discover_tests, make_test_data, upload_blob
+from satori.tools.problems.common import copy_file, Dirs, discover_tests, make_test_data, upload_blob
 
 
 def _temporary_submit_internal(problem_dir, test_dir, submit_file_path,
-                               override_time=None):
+                               override_time=None, store_io=False):
     dirs = Dirs(problem_dir, test_dir)
     test_data = make_test_data(dirs)
     if override_time is not None and 'time' in test_data:
         test_data['_original_time'] = test_data['time']
         test_data['time'] = AnonymousAttribute(is_blob=False, value=override_time)
+    if store_io:
+        test_data['store_io'] = AnonymousAttribute(is_blob=False, value='true')
     submit_data = {'content': upload_blob(submit_file_path)}
     submit = TemporarySubmit.create(test_data, submit_data)
     print 'Testing %s on %s, temporary submit id: %d' % (
@@ -89,6 +91,20 @@ def _wait_for_results(submits):
     print 'You had to wait %ds' % int(round(waiting_time))
 
 
+def _store_result_blob(result_map, blob_name, out_fname):
+    if not blob_name in result_map:
+        return
+    with open(out_fname, 'w') as out_file:
+        copy_file(Blob.open(result_map[blob_name].value), out_file)
+
+
+def _store_io(submit):
+    test_name = submit.test_data_get_map()['name'].value
+    result_map = submit.result_get_map()
+    _store_result_blob(result_map, 'input_file', test_name + '.in')
+    _store_result_blob(result_map, 'output_file', test_name + '.out')
+
+
 def temporary_submit(opts):
     if ':' not in opts.TEST:
         raise RuntimeError('TEST must be of form PROBLEM_DIR:TEST_NAME')
@@ -104,7 +120,8 @@ def temporary_submit(opts):
     for submit_file_path in opts.SOLUTION:
         for test_dir in test_dirs:
             submit = _temporary_submit_internal(
-                    problem_dir, test_dir, submit_file_path, opts.time)
+                    problem_dir, test_dir, submit_file_path,
+                    opts.time, opts.store_io)
             submits.append(submit)
 
     _wait_for_results(submits)
@@ -115,6 +132,9 @@ def temporary_submit(opts):
         for submit in submits:
             print '=' * 70
             _temporary_submit_result_internal(submit)
+    if opts.store_io:
+        for submit in submits:
+            _store_io(submit)
 
 
 def _print_bold_caption(caption):
