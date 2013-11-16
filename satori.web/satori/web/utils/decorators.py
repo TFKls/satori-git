@@ -3,6 +3,7 @@ import traceback
 import sys
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.core.exceptions import ValidationError
 from django.http import HttpResponseRedirect
 from django.utils.http import urlquote
 from django.shortcuts import render_to_response

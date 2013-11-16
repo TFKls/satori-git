@@ -8,6 +8,17 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from satori.web.utils.tables import *
 
+# TODO(robryk): Decouple descriptive filename from actual blob filename
+# The core wishes to receive blobs with proper file names ([0-9A-Za-z._-]*).
+# We do not wish to impose same rules on filenames of files to be printed
+# and we don't care about the exact name (it is printed out on the printout
+# and possibly by a2ps to detect file type).
+def is_legal_char(c):
+    return c == '.' or c == '-' or c == '_' or c.isalpha() or c.isdigit()
+
+def sanitize_filename(filename):
+    return ''.join([x for x in filename if is_legal_char(x)])
+
 @contest_view
 def view(request, page_info):
     contest = page_info.contest
@@ -42,7 +53,7 @@ def view(request, page_info):
                     return res
                 content = data["codefile"].read()
                 filename = data["codefile"].name
-                PrintJob.create(PrintJobStruct(contest=contest),content=content,filename=filename)
+                PrintJob.create(PrintJobStruct(contest=contest),content=content,filename=sanitize_filename(filename))
             return HttpResponseRedirect(reverse('print',args=[page_info.contest.id]))
     else:
         form = PrintForm()
