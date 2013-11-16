@@ -35,11 +35,13 @@ def view(request, page_info):
         if form.is_valid():
             data = form.cleaned_data
             if data["codefile"]:
+                # TODO(robryk): Limit shouldn't be set here and should be checked before the file is saved, if feasible.
                 if data["codefile"].size>100000:
-                    raise Exception('File too large for print.')
+                    res = render_to_response('error.html', { 'page_info' : page_info, 'message': 'Request entity too large', 'info': 'Files to be printed can\'t exceed 10KB' })
+                    res.status_code = 413
+                    return res
                 content = data["codefile"].read()
                 filename = data["codefile"].name
-                #HACK: check if blob not too large
                 PrintJob.create(PrintJobStruct(contest=contest),content=content,filename=filename)
             return HttpResponseRedirect(reverse('print',args=[page_info.contest.id]))
     else:
