@@ -15,6 +15,7 @@ setup(name='satori.tools',
     ],
     entry_points='''
         [console_scripts]
+        satori.passwd = satori.tools.admin:passwd
         satori.athina_import = satori.tools.athina:athina_import
         satori.athina_import_testsuite = satori.tools.athina:athina_import_testsuite
         satori.athina_import_problem = satori.tools.athina:athina_import_problem
