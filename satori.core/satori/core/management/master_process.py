@@ -77,6 +77,7 @@ class SatoriMasterProcess(SatoriProcess):
     
     def do_handle_signal(self, signum, frame):
         for process in reversed(self.started):
+            logging.info('Terminating %s', process.name)
             process.terminate()
             # wait for each child so it can deinitialize while other processes (like event master) still exist
             process.join()
