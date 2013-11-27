@@ -9,7 +9,7 @@ from   multiprocessing import Process, Semaphore
 import sys
 import os
 from   setproctitle import setproctitle
-from   signal       import signal, SIGINT, SIGTERM, SIGHUP
+from   signal       import signal, SIGINT, SIGTERM, SIGHUP, SIGKILL
 import signal       as signal_module
 from   time         import sleep
 
@@ -30,6 +30,14 @@ class SatoriProcess(Process):
             except OSError as e:
                 if e[0] != errno.EINTR:
                     raise
+
+    def kill(self):
+        try:
+            if self.pid is not None and self.is_alive():
+                logging.error('Forcibly killing %s', self.name)
+                os.kill(self.pid, SIGKILL)
+        except OSError:
+            pass
 
     def do_handle_signal(self, signum, frame):
         sys.exit()
@@ -80,7 +88,8 @@ class SatoriMasterProcess(SatoriProcess):
             logging.info('Terminating %s', process.name)
             process.terminate()
             # wait for each child so it can deinitialize while other processes (like event master) still exist
-            process.join()
+            process.join(5)
+            process.kill()
 
     def do_run(self):
         logger = logging.getLogger()
