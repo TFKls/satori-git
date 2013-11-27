@@ -45,7 +45,7 @@ config = {
 
     'htmlhelp_basename' : '',
 
-    'latex_documents': [('index', 'index.tex', '', '', 'article')],
+    'latex_documents': [('index', 'index.tex', '', '', 'sphinxarticle')],
     'latex_elements': {
             'papersize': 'a4paper',
             'pointsize': '12pt',

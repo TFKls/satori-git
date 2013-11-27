@@ -31,7 +31,7 @@
 
 \lhead{\sf \small \logo} %
 \rhead{\sf \small \raisebox{-0.3cm}{\data}} %
-\rfoot{\sf \small Strona \thepage/\pageref*{LastPage}} %
+\rfoot{\sf \small \thepage/\pageref*{LastPage}} %
 \cfoot{}
 \lfoot{\sf \small \@title} %
 
