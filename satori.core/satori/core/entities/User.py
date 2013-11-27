@@ -8,7 +8,7 @@ from django.core.mail import send_mail
 from django.db import models
 
 from satori.core.dbev   import Events
-from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check, password_rehash_old, email_ok
+from satori.core.models import Role, LoginFailed, InvalidLogin, login_ok, password_ok, password_crypt, password_check, password_rehash_old, email_ok, sha_crypt
 
 @ExportModel
 class User(Role):
@@ -48,7 +48,7 @@ class User(Role):
         user.forbid_fields(fields, ['id', 'name', 'sort_field'])
         modified = user.update_fields(fields, ['login', 'email', 'firstname', 'lastname', 'confirmed', 'activated', 'activation_code','affiliation'])
         if not 'activation_code' in modified:
-            user.activation_code = ''.join([random.choice(string.letters + string.digits) for i in range(16)])
+            user.activation_code = sha_crypt(user.login, ''.join([random.choice(string.letters + string.digits) for i in range(16)]))[0:16]
         user.save()
         Privilege.grant(user, user, 'EDIT')
         Privilege.grant(Global.get_instance().authenticated, user, 'VIEW')
