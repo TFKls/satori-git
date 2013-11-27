@@ -19,7 +19,7 @@ def printer_func(script, path, filename, printjob):
     try:
         tmp = tempfile.mkdtemp()
         os.chdir(tmp)
-        os.symlink(path, filename)
+        shutil.copy(path, filename)
         sub = subprocess.Popen([script, filename, unicode(printjob.id)], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         out, err = sub.communicate()
         if sub.returncode == 0:
@@ -73,7 +73,7 @@ class PrintingMaster(Client2):
         printer = printjob.contest.printer;
         if (printer is not None):
             oa = printjob.data_get('content');
-            path = os.path.join(settings.BLOB_DIR, oa.value[0], oa.value[1], oa.value[2], oa.value)
+            path = os.path.abspath(os.path.join(settings.BLOB_DIR, oa.value[0], oa.value[1], oa.value[2], oa.value))
             p = Thread(target=printer_func, args=(printer.script, path, oa.filename, printjob))
             printjob.status = 'PRN'
             printjob.save()
