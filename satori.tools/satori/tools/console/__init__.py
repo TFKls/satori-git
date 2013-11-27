@@ -1,5 +1,7 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+import logging
+
 def main():
     from satori.tools import options, setup
 
