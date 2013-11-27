@@ -14,7 +14,7 @@ def uzi_team():
     options.add_argument('contest', help='contest_name')
     options.add_argument('team', help='team_name')
     options.add_argument('contestants', nargs='+', metavar='contestant', help='contest name')
-    opts = setup(logging.CRITICAL)
+    opts = setup(logging.INFO)
 
     contest_name=opts.contest
     name=opts.team

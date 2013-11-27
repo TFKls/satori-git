@@ -12,7 +12,7 @@ def submit():
     options.add_argument('problem_code')
     options.add_argument('submit_file', type=argparse.FileType('r'))
 
-    opts = setup(logging.CRITICAL)
+    opts = setup(logging.INFO)
 
     contestId = None
 

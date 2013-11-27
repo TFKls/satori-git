@@ -4,7 +4,7 @@ def main():
     from satori.tools import options, setup
 
     options.add_argument('--ipython', help='Use IPython', action='store_true')
-    flags = setup()
+    flags = setup(logging.INFO)
 
     if flags.ipython:
         from satori.client.common import want_import

@@ -81,7 +81,7 @@ def unwrap_procedure(_proc):
         newargs = []
         newkwargs = {}
 
-        logging.error('Calling procedure %s', _procname)
+        logging.debug('Calling procedure %s', _procname)
         perf.begin('args')
         if _token_type is not None:
             newargs.append(_token_type.convert_to_ars(token_container.get_token()))

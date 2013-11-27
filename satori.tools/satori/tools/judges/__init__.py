@@ -11,7 +11,7 @@ want_import(globals(), '*')
 def default_judges():
     from satori.tools import options, setup
     options.add_argument('judges_dir')
-    args = setup()
+    args = setup(logging.INFO)
     judges_dir = args.judges_dir
     for judge in [ os.path.join(judges_dir, entry) for entry in os.listdir(judges_dir) if os.path.isfile(os.path.join(judges_dir, entry)) ]:
         if judge[-3:] == '.py':
@@ -23,7 +23,7 @@ def get_judges():
     options.add_argument('judges_dir')
     options.add_argument('--contest', help='Only for selected contest')
     contest = None
-    args = setup()
+    args = setup(logging.INFO)
     judges_dir = args.judges_dir
     if not os.path.exists(judges_dir):
         os.mkdir(judges_dir)
@@ -58,7 +58,7 @@ def update_judges():
     options.add_argument('judges_dir')
     options.add_argument('--contest', help='Only for selected contest')
     contest = None
-    args = setup()
+    args = setup(logging.INFO)
     judges_dir = args.judges_dir
     if not os.path.exists(judges_dir):
         return

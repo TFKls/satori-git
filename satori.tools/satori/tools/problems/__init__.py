@@ -57,7 +57,7 @@ def main():
     render_statement_parser.add_argument('ATTACHMENTS', nargs='*')
     render_statement_parser.add_argument('OUTPUT')
 
-    opts = setup(logging.CRITICAL)
+    opts = setup(logging.INFO)
     opts.command(opts)
 
 #############################     Dispatchers     #############################

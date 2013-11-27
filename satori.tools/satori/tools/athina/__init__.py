@@ -67,7 +67,7 @@ def athina_import():
     options.add_argument('--name', help='Contest name')
     options.add_argument('--environment', help='Test environment name')
     options.add_argument('base_dir')
-    args = setup()
+    args = setup(logging.INFO)
     base_dir = args.base_dir
     if not os.path.exists(os.path.join(base_dir, 'server', 'contest', 'users')):
         logging.error('provided path is invalid')
