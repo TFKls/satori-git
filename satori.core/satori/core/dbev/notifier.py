@@ -1,9 +1,12 @@
 # vim:ts=4:sts=4:sw=4:expandtab
-import select
-import psycopg2.extensions
-import logging
 import base64
+import logging
 import pickle
+import psycopg2.extensions
+import select
+import time
+
+from django import db
 from django.db import connection
 from django.db import models
 from satori.core.dbev.events import registry
@@ -111,7 +114,28 @@ def handle_notifications(cursor, slave):
             slave.send(event)
         cursor.execute('DELETE FROM core_rawevent WHERE transaction=%s', [transaction])
 
+class BackoffDelay(object):
+    def __init__(self, min_delay, max_delay):
+        self.min_delay = float(min_delay)
+        self.max_delay = float(max_delay)
+        self.backoff_multiplier = float(1.5)
+        self.calm_multiplier = float(5)
+        self.last_delay = self.min_delay
+        self.last_call = time.time()
+    def __call__(self):
+        now = time.time()
+        delay = self.last_delay
+        passed = max(0, now - self.last_call)
+        if passed < self.calm_multiplier*self.last_delay:
+            delay *= self.backoff_multiplier
+        else:
+            delay = self.min_delay
+        self.last_call = now
+        self.last_delay = min(self.max_delay,max(self.min_delay, delay))
+        time.sleep(int(self.last_delay))
+
 def run_notifier(slave):
+    delay = BackoffDelay(1, 60)
     while True:
         try:
             cursor = connection.cursor()
@@ -137,5 +161,7 @@ def run_notifier(slave):
             break
         except:
             logging.exception('DBEV notifier error')
+            db.close_connection()
+            delay()
     slave.disconnect()
 
