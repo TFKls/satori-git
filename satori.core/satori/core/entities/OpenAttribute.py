@@ -10,7 +10,7 @@ def validate_filename(value):
         value.decode('ascii')
     except:
         raise ValidationError(u'filename \'%s\' contains invalid characters' % value)
-    if l == '' or l == '.' or l == '..':
+    if value == '' or value == '.' or value == '..':
         raise ValidationError(u'filename \'%s\' s forbidden' % value)
     for l in value:
         if not (l.isalpha() or l.isdigit() or l == '_' or l == '-' or l == '.'):
