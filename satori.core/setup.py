@@ -16,7 +16,22 @@ def find_files(where='.', prefix=''):
                 out.append(prefix+name); 
     return out
 
-setup(name='satori.core',
+setup(
+    name='satori.core',
+    version='0.1',
+    description='Satori Testing System core server',
+    author='Satori Project',
+    author_email='satori@tcs.uj.edu.pl',
+    url='https://bitbucket.org/satoriproject/satori',
+    license='The MIT License',
+    classifiers=[
+        'Intended Audience :: Education',
+        'Topic :: Education :: Testing',
+        'Development Status :: 3 - Alpha',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: Python',
+        'Framework :: Django',
+    ],
     packages=find_packages(),
     namespace_packages=[
         'satori',
