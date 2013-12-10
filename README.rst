@@ -9,4 +9,4 @@ Satori development was supported by the European Social Fund in Poland.
 
 Satori is distributed under the terms of the MIT License.
 
-Satori source code repository, documentation, and issue tracking is hosted on `Bitbucket <https://bitbucket.org/satoriproject/satori/>'_.
+Satori source code repository, documentation, and issue tracking is hosted on `Bitbucket <https://bitbucket.org/satoriproject/satori/>`_.
