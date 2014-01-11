@@ -19,7 +19,7 @@ def blob_filename(hash):
 class BlobReader(object):
     def __init__(self, hash, filename='', on_close=None):
         self.file = open(blob_filename(hash), 'rb')
-        os.utime(blob_filename(hash))
+        os.utime(blob_filename(hash), None)
         self.filename = filename
         self.length = os.fstat(self.file.fileno()).st_size
         self.on_close = on_close
@@ -68,7 +68,7 @@ class BlobWriter(object):
             newfile.close()
         ensuredirs(dirname, 0700)
         os.rename(self.file.name, filename)
-        os.utime(filename)
+        os.utime(filename, None)
         if self.on_close:
             self.on_close(hash)
         return hash
@@ -92,5 +92,5 @@ class Blob(object):
     def exists(hash):
         ret = os.path.exists(blob_filename(hash))
         if ret:
-            os.utime(blob_filename(hash))
+            os.utime(blob_filename(hash), None)
         return ret
