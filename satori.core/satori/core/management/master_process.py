@@ -13,6 +13,8 @@ from   signal       import signal, SIGINT, SIGTERM, SIGHUP, SIGKILL
 import signal       as signal_module
 from   time         import sleep
 
+from satori.core.utils import ensuredirs
+
 
 signalnames = dict((k, v) for v, k in signal_module.__dict__.iteritems() if v.startswith('SIG') and v.isalpha())
 
@@ -100,8 +102,7 @@ class SatoriMasterProcess(SatoriProcess):
 
         formatter = logging.Formatter("%(asctime)s - %(name)s - %(process)d - %(levelname)s - %(message)s")
 
-        if not os.path.exists(os.path.dirname(settings.LOG_FILE)):
-            os.makedirs(os.path.dirname(settings.LOG_FILE))
+        ensuredirs(os.path.dirname(settings.LOG_FILE))
 
         file_handler = logging.FileHandler(settings.LOG_FILE)
         file_handler.setFormatter(formatter)
@@ -111,8 +112,7 @@ class SatoriMasterProcess(SatoriProcess):
         console_handler.setFormatter(formatter)
         logger.addHandler(console_handler)
 
-        if not os.path.exists(os.path.dirname(settings.PID_FILE)):
-            os.makedirs(os.path.dirname(settings.PID_FILE))
+        ensuredirs(os.path.dirname(settings.PID_FILE))
 
         fp = open(settings.PID_FILE, 'a+')
 
