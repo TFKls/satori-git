@@ -10,7 +10,7 @@ from satori.core.export.type_helpers import Struct, DefineException
 
 BadAttributeType = DefineException('BadAttributeType', 'The requested attribute "{name}" is not a {requested_type} attribute',
     [('name', unicode, False), ('requested_type', unicode, False)])
-
+MissingBlob = DefineException('MissingBlob', 'The requested blob does not exist', [])
 
 Attribute = Struct('Attribute', (
     ('name', str, False),
@@ -92,10 +92,12 @@ def {1}_get_map(self):
     \"\"\"Attribute group: {1}\"\"\"
     return dict((oa.name, oa) for oa in self{2}.attributes.all())
 
-@ExportMethod(NoneType, [DjangoId('{0}'), Attribute], PCAnd(pc_write, PCRawBlob('value')))
+@ExportMethod(NoneType, [DjangoId('{0}'), Attribute], PCAnd(pc_write, PCRawBlob('value')), [MissingBlob])
 def {1}_set(self, value):
     \"\"\"Attribute group: {1}\"\"\"
     self = self{2}
+    if value.is_blob and not Blob.exists(value.value):
+        raise MissingBlob()
     (newoa, created) = self.attributes.get_or_create(name=value.name)
     newoa.is_blob = value.is_blob
     newoa.value = value.value
@@ -117,31 +119,31 @@ def {1}_set_blob(self, name, length=-1, filename=''):
         self.{1}_set(OpenAttribute(name=name, value=hash, filename=filename, is_blob=True))
     return Blob.create(length, set_hash)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), unicode, unicode, unicode], PCAnd(pc_write, PCGlobal('RAW_BLOB')))
+@ExportMethod(NoneType, [DjangoId('{0}'), unicode, unicode, unicode], PCAnd(pc_write, PCGlobal('RAW_BLOB')), [MissingBlob])
 def {1}_set_blob_hash(self, name, value, filename=''):
     \"\"\"Attribute group: {1}\"\"\"
     self.{1}_set(Attribute(name=name, value=value, filename=filename, is_blob=True))
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedList(Attribute)], PCAnd(pc_write, PCEach('attributes', PCRawBlob('item'))))
+@ExportMethod(NoneType, [DjangoId('{0}'), TypedList(Attribute)], PCAnd(pc_write, PCEach('attributes', PCRawBlob('item'))), [MissingBlob])
 def {1}_add_list(self, attributes):
     \"\"\"Attribute group: {1}\"\"\"
     for struct in attributes:
         self.{1}_set(struct)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedList(Attribute)], PCAnd(pc_write, PCEach('attributes', PCRawBlob('item'))))
+@ExportMethod(NoneType, [DjangoId('{0}'), TypedList(Attribute)], PCAnd(pc_write, PCEach('attributes', PCRawBlob('item'))), [MissingBlob])
 def {1}_set_list(self, attributes):
     \"\"\"Attribute group: {1}\"\"\"
     self{2}.attributes.all().delete()
     self.{1}_add_list(attributes)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCAnd(pc_write, PCEachValue('attributes', PCRawBlob('item'))))
+@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCAnd(pc_write, PCEachValue('attributes', PCRawBlob('item'))), [MissingBlob])
 def {1}_add_map(self, attributes):
     \"\"\"Attribute group: {1}\"\"\"
     for name, struct in attributes.items():
         struct.name = name
         self.{1}_set(struct)
 
-@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCAnd(pc_write, PCEachValue('attributes', PCRawBlob('item'))))
+@ExportMethod(NoneType, [DjangoId('{0}'), TypedMap(unicode, AnonymousAttribute)], PCAnd(pc_write, PCEachValue('attributes', PCRawBlob('item'))), [MissingBlob])
 def {1}_set_map(self, attributes):
     \"\"\"Attribute group: {1}\"\"\"
     self{2}.attributes.all().delete()
