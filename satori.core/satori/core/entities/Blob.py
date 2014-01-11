@@ -11,6 +11,7 @@ from django.db   import models
 
 from satori.core.dbev   import Events
 from satori.core.models import OpenAttribute
+from satori.core.utils  import ensuredirs
 
 def blob_filename(hash):
     return os.path.join(settings.BLOB_DIR, hash[0], hash[1], hash[2], hash)
@@ -18,6 +19,7 @@ def blob_filename(hash):
 class BlobReader(object):
     def __init__(self, hash, filename='', on_close=None):
         self.file = open(blob_filename(hash), 'rb')
+        os.utime(blob_filename(hash))
         self.filename = filename
         self.length = os.fstat(self.file.fileno()).st_size
         self.on_close = on_close
@@ -33,8 +35,7 @@ class BlobReader(object):
 class BlobWriter(object):
     def __init__(self, length=-1, on_close=None):
         dirname = os.path.join(settings.BLOB_DIR, 'temp')
-        if not os.path.exists(dirname):
-            os.makedirs(dirname, 0700)
+        ensuredirs(dirname, 0700)
         self.file = NamedTemporaryFile(mode='wb', dir=dirname, delete=False)
         self.hash = sha384()
         self.on_close = on_close
@@ -65,9 +66,9 @@ class BlobWriter(object):
                 origlen -= 1024
             origfile.close()
             newfile.close()
-        if not os.path.exists(dirname):
-            os.makedirs(dirname, 0700)
+        ensuredirs(dirname, 0700)
         os.rename(self.file.name, filename)
+        os.utime(filename)
         if self.on_close:
             self.on_close(hash)
         return hash
@@ -89,4 +90,7 @@ class Blob(object):
     @ExportMethod(bool, [unicode], PCGlobal('RAW_BLOB'))
     @staticmethod
     def exists(hash):
-        return os.path.exists(blob_filename(hash))
+        ret = os.path.exists(blob_filename(hash))
+        if ret:
+            os.utime(blob_filename(hash))
+        return ret
