@@ -118,7 +118,7 @@ def temporary_submit(opts):
     
     submits = []
     for submit_file_path in opts.SOLUTION:
-        for test_dir in test_dirs:
+        for test_dir in sorted(test_dirs):
             submit = _temporary_submit_internal(
                     problem_dir, test_dir, submit_file_path,
                     opts.time, opts.store_io)
