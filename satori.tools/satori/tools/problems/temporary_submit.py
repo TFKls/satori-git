@@ -18,7 +18,13 @@ def _temporary_submit_internal(problem_dir, test_dir, submit_file_path,
         test_data['time'] = AnonymousAttribute(is_blob=False, value=override_time)
     if store_io:
         test_data['store_io'] = AnonymousAttribute(is_blob=False, value='true')
-    submit_data = {'content': upload_blob(submit_file_path)}
+    if submit_file_path[:1] == '%':
+        submits = Submit.filter(SubmitStruct(id=int(submit_file_path[1:])))
+        if not submits:
+            raise RuntimeException("Cannot find submit " + submit_file_path)
+        submit_data = submits[0].data_get_map()
+    else:
+        submit_data = {'content': upload_blob(submit_file_path)}
     submit = TemporarySubmit.create(test_data, submit_data)
     print 'Testing %s on %s, temporary submit id: %d' % (
             submit_data['content'].filename,
