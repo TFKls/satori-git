@@ -52,16 +52,20 @@ def has_duplicates(names):
     return len(names) > len(set(names))
 
 
+def valid_file_name(name):
+    return name != '.' and name != '..' and '/' not in name
+
 def store_problem(problem_yaml, tests_yaml):
-    if has_duplicates([slugify(test['name']) for test in tests_yaml]):
-        raise RuntimeError('Slugified test names\' are not unique')
+    for test in tests_yaml:
+        if not valid_file_name(test['name']):
+            raise RuntimeError('Cannot store problem, one of test names is not a valid file name')
     problem_dir = slugify(problem_yaml['name'])
     os.mkdir(problem_dir)
     problem_file = open(os.path.join(problem_dir, 'problem.yaml'), 'w')
     yaml.safe_dump(problem_yaml, stream=problem_file, indent=2)
     problem_file.close()
     for test_yaml in tests_yaml:
-        test_dir = slugify(test_yaml['name'])
+        test_dir = test_yaml['name']
         os.mkdir(os.path.join(problem_dir, test_dir))
         for (key, val) in test_yaml.items():
             if type(val) == dict:  # blob

@@ -85,8 +85,12 @@ def open_test(test_yaml_fname):
         test_yaml = yaml.safe_load(test_yaml_file)
     if type(test_yaml) != dict:
         raise RuntimeError('Test YAML must be an object')
-    if 'name' not in test_yaml:
-        raise RuntimeError('Test must have a name')
+    test_name = os.path.basename(os.path.dirname(test_yaml_fname))
+    if 'name' in test_yaml:
+        if test_yaml['name'] != test_name:
+            raise RuntimeError('Test name does not match directory name')
+    else:
+        test_yaml['name'] = test_name
     return test_yaml
 
 
