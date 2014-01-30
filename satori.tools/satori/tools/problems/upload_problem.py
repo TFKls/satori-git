@@ -8,7 +8,7 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.tools.params import parser_from_xml
 
-from satori.tools.problems.common import Dirs, discover_tests, make_oa_map, make_test_data, upload_blob
+from satori.tools.problems.common import Dirs, discover_tests, make_oa_map, make_test_data
 
 def upload_problem(opts):
     problem_dir = opts.PROBLEM if opts.PROBLEM else os.getcwd()

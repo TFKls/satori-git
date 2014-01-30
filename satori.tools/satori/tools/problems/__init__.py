@@ -39,6 +39,7 @@ def main():
     temporary_submit_parser.set_defaults(command=temporary_submit)
     temporary_submit_parser.add_argument('TEST')
     temporary_submit_parser.add_argument('SOLUTION', nargs='+')
+    temporary_submit_parser.add_argument('-2', '--results2d', action='store_const', const=True)
     temporary_submit_parser.add_argument('-t', '--time')
     temporary_submit_parser.add_argument('-v', '--verbose', action='store_const', const=True)
     temporary_submit_parser.add_argument('--store_io', action='store_const', const=True)

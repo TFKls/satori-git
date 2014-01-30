@@ -45,6 +45,15 @@ def _get_from_map(attr_map, attr):
         return '?'
 
 
+def _get_time_limit(test_map):
+    if '_original_time' in test_map:
+        return '%s (%s)' % (
+                _get_from_map(test_map, '_original_time'),
+                _get_from_map(test_map, 'time'))
+    else:
+        return _get_from_map(test_map, 'time')
+
+
 def _submit_to_results_row(submit):
     test_map = submit.test_data_get_map()
     result_map = submit.result_get_map()
@@ -52,17 +61,30 @@ def _submit_to_results_row(submit):
     result_row.append(submit.submit_data_get_map()['content'].filename)
     result_row.append(_get_from_map(test_map, 'name'))
     result_row.append(_get_from_map(result_map, 'status'))
-    if '_original_time' in test_map:
-        result_row.append('%s / %s (%s)' % (
-                _get_from_map(result_map, 'execute_time_cpu'),
-                _get_from_map(test_map, '_original_time'),
-                _get_from_map(test_map, 'time')))
-    else:
-        result_row.append('%s / %s' % (
-                _get_from_map(result_map, 'execute_time_cpu'),
-                _get_from_map(test_map, 'time')))
+    result_row.append('%s / %s' % (
+        _get_from_map(result_map, 'execute_time_cpu'),
+        _get_time_limit(test_map)))
     result_row.append(str(submit.id))
     return result_row
+
+
+def _results_to_2d_table(solutions, submits):
+    assert len(submits) % len(solutions) == 0
+    header = ['test'] + list(solutions) + ['limit']
+    table = [header]
+    for i in range(0, len(submits) / len(solutions)):
+        row = []
+        test_map = submits[i].test_data_get_map()
+        row.append(_get_from_map(test_map, 'name'))
+        for j in range(i, len(submits), len(submits) / len(solutions)):
+            result_map = submits[j].result_get_map()
+            status = _get_from_map(result_map, 'status')
+            if status == 'OK':
+                status = _get_from_map(result_map, 'execute_time_cpu')
+            row.append(status)
+        row.append(_get_time_limit(test_map))
+        table.append(row)
+    return table
 
 
 def _wait_for_results(submits):
@@ -126,8 +148,11 @@ def temporary_submit(opts):
 
     _wait_for_results(submits)
     if not opts.verbose:
-        _prettyprint_table(
-                [_results_header()] + map(_submit_to_results_row, submits))
+        if opts.results2d:
+            table = _results_to_2d_table(opts.SOLUTION, submits)
+        else:
+            table = [_results_header()] + map(_submit_to_results_row, submits)
+        _prettyprint_table(table)
     else:
         for submit in submits:
             print '=' * 70
