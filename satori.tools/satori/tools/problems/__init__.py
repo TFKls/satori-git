@@ -6,6 +6,8 @@ want_import(globals(), '*')
 from satori.tools import catch_exceptions, options, setup
 from satori.tools.params import parser_from_xml
 
+from satori.tools.problems.common import copy_file
+
 from satori.tools.problems.download_problem import download_problem
 from satori.tools.problems.render_statement import render_statement
 from satori.tools.problems.temporary_submit import temporary_submit
@@ -58,6 +60,10 @@ def main():
     render_statement_parser.add_argument('ATTACHMENTS', nargs='*')
     render_statement_parser.add_argument('OUTPUT')
 
+    download_submit_parser = subparsers.add_parser('downloadsubmit')
+    download_submit_parser.set_defaults(command=download_submit)
+    download_submit_parser.add_argument('SUBMITID')
+
     opts = setup(logging.INFO)
     opts.command(opts)
 
@@ -97,3 +103,16 @@ def list_problems(_):
     for name in sorted(problem_names):
         print name
 
+#############################   Download submit   #############################
+
+def download_submit(opts):
+    submits = Submit.filter(SubmitStruct(id=int(opts.SUBMITID)))
+    if not submits:
+        raise RuntimeError('Submit with a given id not found')
+    remote_blob = submits[0].data_get_blob('content')
+    remote_blob_name = remote_blob.filename
+    local_blob_name = opts.SUBMITID + '.' + remote_blob_name.split('.')[-1]
+    with open(local_blob_name, 'w') as local_blob:
+        copy_file(remote_blob, local_blob)
+    print 'mv %s %s  # to get an original file name' % (
+            local_blob_name, remote_blob_name)
