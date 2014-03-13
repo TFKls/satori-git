@@ -94,8 +94,12 @@ def open_test(test_yaml_fname):
     return test_yaml
 
 
-def make_test_data(dirs):
+def make_test_data(dirs, overrides=[]):
     test_yaml = open_test(dirs.parse('test.yaml'))  # path relative to test dir
+    if overrides:    
+        for override in overrides:
+            k, v = override.split('=', 2)
+            test_yaml[k] = v
     test_name = test_yaml['name']
     test_description = test_yaml.get('description', '')
 

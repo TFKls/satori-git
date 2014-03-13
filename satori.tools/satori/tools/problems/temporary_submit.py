@@ -10,9 +10,10 @@ from satori.tools.problems.common import copy_file, Dirs, discover_tests, make_t
 
 
 def _temporary_submit_internal(problem_dir, test_dir, submit_file_path,
-                               override_time=None, store_io=False):
+                               override_time=None, overrides=[],
+                               store_io=False):
     dirs = Dirs(problem_dir, test_dir)
-    test_data = make_test_data(dirs)
+    test_data = make_test_data(dirs, overrides)
     if override_time is not None and 'time' in test_data:
         test_data['_original_time'] = test_data['time']
         test_data['time'] = AnonymousAttribute(is_blob=False, value=override_time)
@@ -149,7 +150,7 @@ def temporary_submit(opts):
         for test_dir in sorted(test_dirs):
             submit = _temporary_submit_internal(
                     problem_dir, test_dir, submit_file_path,
-                    opts.time, opts.store_io)
+                    opts.time, opts.override, opts.store_io)
             submits.append(submit)
 
     _wait_for_results(submits)

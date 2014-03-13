@@ -44,6 +44,7 @@ def main():
     temporary_submit_parser.add_argument('-2', '--results2d', action='store_const', const=True)
     temporary_submit_parser.add_argument('-t', '--time')
     temporary_submit_parser.add_argument('-v', '--verbose', action='store_const', const=True)
+    temporary_submit_parser.add_argument('-o', '--override', nargs='*')
     temporary_submit_parser.add_argument('--store_io', action='store_const', const=True)
 
     temporary_submit_result_parser = subparsers.add_parser('testresult')
