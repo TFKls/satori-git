@@ -2,7 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
-from satori.web.utils.forms import StatusBar
+from satori.web.utils.forms import AlertList,StatusBar
 from satori.web.utils import xmlparams
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
@@ -10,11 +10,12 @@ from django.http import HttpResponseRedirect
 from django import forms
 
 class LoginForm(forms.Form):
-    login = forms.CharField(label="Login:")
-    password = forms.CharField(widget=forms.PasswordInput, label="Password:")
+    login = forms.CharField(label="Login",required=True)
+    password = forms.CharField(widget=forms.PasswordInput, label="Password",required=True)
 
 @general_view
 def view(request, page_info):
+    alerts = AlertList()
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -29,22 +30,18 @@ def view(request, page_info):
                 else:
                     return HttpResponseRedirect(reverse('news'))
             except:
-                form.errors['__all__']= 'Login failed!'
-                return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'failed' : True })
+                alerts.add('Login failed!','danger')
+                return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'alerts' : alerts })
     else:
         form = LoginForm()
     status = request.GET.get('status',None)
-    if status:
-        bar = StatusBar()
-    else:
-        bar = None
     if status=='regok':
-        bar.messages.append('Registration successful, activation link has been sent.')
+        alerts.add('Registration successful, activation link has been sent.','success')
     if status=='activated':
-        bar.messages.append('Account activated. You may now login.')
+        alerts.add('Account activated. You may now login.','success')
     if status=='actfailed':
-        bar.errors.append('Activation failed!')
-    return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'status_bar' : bar })
+        alerts.add('Activation failed!','danger')
+    return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'alerts' : alerts })
 
 
 @general_view

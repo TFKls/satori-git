@@ -1,5 +1,6 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load addcss %}
 
 {% block title %}
 Log in
@@ -7,13 +8,23 @@ Log in
 
 {% block content %}
 
-<p>Please fill in the form to login.</p>
+{{ alerts.render|safe }}
 
-<form method="post" action="">
-    <table>
-      {{ form.as_table }}
-    </table>
-    <input class="button" type="submit" value="Submit"/>
+<div class="limit-width">
+
+<form method="post" action="" role="form" class="form">
+      <p class="help-block">Please fill in the form to login.</p>
+      {% for field in form %}
+        <div class="form-group {% if field.errors %} has-error {% endif %}">
+            {{ field.label_tag }}
+            {{ field|addcss:"form-control" }}
+            {% for error_message in field.errors %}
+                <span class="help-block"> {{ error_message }} </span>
+            {% endfor %}
+        </div>
+      {% endfor %}
+    <button class="btn btn-default" type="submit">Submit</button>
 </form>
+</div>
 
 {% endblock %}

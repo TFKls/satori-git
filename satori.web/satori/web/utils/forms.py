@@ -1,18 +1,36 @@
 from django import forms
 from django.core.signing import TimestampSigner
 from django.db import models
+from django.utils.html import escape
 from datetime import datetime, timedelta
 from satori.tools.params import OaTypeTime
 from copy import deepcopy
 from satori.web.utils.tables import format_html
 from satori.tools.params import total_seconds
 
+#TODO: Remove all instances of Status Bar and delete this
 class StatusBar():
     def __init__(self):
         self.messages = []
         self.errors = []
         self.msgclass = 'bar_message'
         self.errclass = 'bar_error'
+
+class AlertList():
+    def __init__(self):
+        self.alerts = []
+    
+    def add(self,message,alert_type):
+        if alert_type!='success' and alert_type!='warning' and alert_type!='danger':
+            alert_type = 'info'
+        self.alerts.append([message,alert_type])
+    
+    def render(self):
+        output_html = ""
+        for alert in self.alerts:
+            output_html += '<div class="alert alert-'+alert[1]+'">'+escape(alert[0])+'</div>'
+        return output_html
+        
 
 class SatoriSplitDateTime(forms.SplitDateTimeWidget):
     class Media:

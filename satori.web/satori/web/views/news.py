@@ -23,6 +23,7 @@ class NewsEditForm(forms.Form):
 @general_view
 def view(request, page_info):
     messages = Web.get_subpage_list_global(True)
+    contests = Web.get_contest_list()
     for m in messages:
         #TODO(kalq): Check this - subpage looks strange here
         #TODO(kalq): Add attachments here

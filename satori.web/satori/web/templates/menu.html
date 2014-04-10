@@ -1,6 +1,6 @@
 {% load url from future %}
 <div id="navigationPanel">
-    <ul>
+    <ul class="nav nav-pills nav-stacked">
         {% if page_info.contest %}
             <li><a href="{% url 'contest_news' page_info.contest.id %}">News</a></li>
             
@@ -40,7 +40,7 @@
             {% endif %}
 
             {% if page_info.is_problemsetter %}
-                <li><a href="https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp">Manage problems and tests</a></li>
+                <li><a href="https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp">Javatool</a></li>
             {% endif %}
             
         {% else %}
@@ -57,7 +57,7 @@
             
 
             {% if page_info.is_problemsetter %}
-                <li><a href="https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp">Manage problems and tests</a></li>
+                <li><a href="https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp">Javatool</a></li>
             {% endif %}
 
             {% for subpage in page_info.subpages %}

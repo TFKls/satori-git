@@ -1,0 +1,28 @@
+{% load url from future %}
+
+<nav class="navbar navbar-inverse navbar-static-top" role="navigation">
+<div class="container-fluid">
+    <div class="navbar-header">
+        <p class="navbar-text">Server time: {% now "H:i:s" %}</p>
+        {% if page_info.contest %}
+        <p class="navbar-text">Selected contest {{page_info.contest.name}}</p> 
+        <ul class="nav navbar-nav">
+        <li><a href="{% url 'news' %}">Leave contest</a></li>
+        </ul>
+        {% endif %}
+    </div>
+    <div class="navbar-right">
+        {% if page_info.role %}
+        <p class="navbar-text">Logged in as {{page_info.role.name}}</p>
+        {% endif %}
+        <ul class="nav navbar-nav">
+            {% if page_info.role %}
+            <li><a href="{% url 'logout' %}">Sign out</a></li>
+            {% else %}
+            <li><a href="{% url 'register' %}">Register</a></li>
+            <li><a href="{% url 'login' %}?redir={{ page_info.url }}">Sign in</a></li>
+            {% endif %}
+        </ul>
+    </div>
+</div>
+</nav>
