@@ -29,6 +29,7 @@
             {% if page_info.contest_can_backup %}
                 <li><a href="{% url 'backup' page_info.contest.id %}">Backup</a></li>
             {% endif %}
+
             {% for ranking in page_info.rankings %}
                 <li><a href="{% url 'ranking' page_info.contest.id ranking.id %}">{{ranking.name}}</a></li>
             {% endfor %}
@@ -51,11 +52,6 @@
                 <li><a href="{% url 'users' %}">Users</a></li>
             {% endif %}
             
-            {% if page_info.user %}
-                <li><a href="{% url 'profile' %}">User profile</a></li>
-            {% endif %}
-            
-
             {% if page_info.is_problemsetter %}
                 <li><a href="https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp">Javatool</a></li>
             {% endif %}

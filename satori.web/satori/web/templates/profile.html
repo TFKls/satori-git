@@ -1,0 +1,32 @@
+{% extends "templates/index.html" %}
+{% load url from future %}
+{% load addcss %}
+
+{% block title %}
+My profile
+{% endblock %}
+
+{% block content %}
+
+{{ alerts.render|safe }}
+
+<div class="limit-width">
+
+<form method="post" action="" role="form" class="form-horizontal">
+      <p class="help-block">Account information for {{ page_info.user.login }} ({{ page_info.user.firstname }} {{ page_info.user.lastname }}).</p>
+      {% for field in form %}
+        <div class="form-group{% if field.errors %} has-error {% endif %}">
+                <label class="control-label col-sm-4" for="{{field.id_for_label}}">{{ field.label }}</label>
+                <div class="col-sm-8"> {{ field|addcss:"form-control" }} </div>
+            {% for error_message in field.errors %}
+                <div class="row">
+                    <div class="col-sm-12"><span class="help-block"> {{ error_message }} </span></div>
+                </div>
+            {% endfor %}
+        </div>
+      {% endfor %}
+    <button class="btn btn-default" type="submit" name="update">Update</button>
+</form>
+</div>
+
+{% endblock %}

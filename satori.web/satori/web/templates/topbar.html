@@ -16,6 +16,9 @@
         <p class="navbar-text">Logged in as {{page_info.role.name}}</p>
         {% endif %}
         <ul class="nav navbar-nav">
+            {% if page_info.user %}
+            <li><a href="{% url 'profile' %}">My account</a></li>            
+            {% endif %}
             {% if page_info.role %}
             <li><a href="{% url 'logout' %}">Sign out</a></li>
             {% else %}
