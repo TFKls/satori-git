@@ -45,6 +45,7 @@ setup(
         'satori.tools',
         'Sphinx',
         'xstatic-mathjax',
+        'django-bootstrap3',
     ],
     entry_points='''
         [console_scripts]

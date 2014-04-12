@@ -120,6 +120,7 @@ TEMPLATE_LOADERS = (
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
 #    'django.contrib.sessions.middleware.SessionMiddleware',
+#    'django.contrib.sessions.middleware.MessageMiddleware',
 #    'django.contrib.auth.middleware.AuthenticationMiddleware',
 )
 
@@ -138,9 +139,13 @@ INSTALLED_APPS = (
 #    'django.contrib.sessions',
 #    'django.contrib.sites',
 #    'django.contrib.admin',
+#    'django.contrib.messages',
     'satori.web',
     'django.contrib.webdesign',
+    'bootstrap3',
 )
+
+#MESSAGE_STORAGE = 'django.contrib.messages.storage.cookie.CookieStorage'
 
 RECAPTCHA_PUB_KEY = '6LdTPsASAAAAACfINb4O2NltX7I8IeGkBhk8tXJa'
 RECAPTCHA_PRIV_KEY = '6LdTPsASAAAAAD0AVU5Jo148Mve24lr6swKPpPwA'
@@ -150,3 +155,13 @@ SATORI_TOKEN_COOKIE_DOMAIN = None
 SATORI_TOKEN_COOKIE_SECURE = False
 SATORI_TOKEN_COOKIE_PATH = '/'
 SATORI_TOKEN_COOKIE_HTTPONLY = True
+
+BOOTSTRAP3 = {
+    'jquery_url': '//code.jquery.com/jquery.min.js',
+    'base_url': '/files/bootstrap/',
+    'css_url': None,
+    'theme_url': None,
+    'javascript_url': None,
+    'horizontal_label_class': 'col-md-2',
+    'horizontal_field_class': 'col-md-4',
+}

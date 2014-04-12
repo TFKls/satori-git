@@ -31,6 +31,7 @@ def view(request, page_info):
                     return HttpResponseRedirect(reverse('news'))
             except:
                 alerts.add('Login failed!','danger')
+                form = LoginForm()
                 return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'alerts' : alerts })
     else:
         form = LoginForm()

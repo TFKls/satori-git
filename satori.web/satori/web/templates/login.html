@@ -1,6 +1,6 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
-{% load addcss %}
+{% load bootstrap3 %}
 
 {% block title %}
 Log in
@@ -12,19 +12,16 @@ Log in
 
 <div class="limit-width">
 
-<form method="post" action="" role="form" class="form">
-      <p class="help-block">Please fill in the form to login.</p>
-      {% for field in form %}
-        <div class="form-group {% if field.errors %} has-error {% endif %}">
-            {{ field.label_tag }}
-            {{ field|addcss:"form-control" }}
-            {% for error_message in field.errors %}
-                <span class="help-block"> {{ error_message }} </span>
-            {% endfor %}
-        </div>
-      {% endfor %}
-    <button class="btn btn-default" type="submit">Submit</button>
+<form action="" method="post" class="form">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+        <button type="submit" class="btn btn-default">
+            Submit
+        </button>
+    {% endbuttons %}
 </form>
+
 </div>
 
 {% endblock %}

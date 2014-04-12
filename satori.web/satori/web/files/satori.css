@@ -1,0 +1,14 @@
+#navigationPanel {
+    padding-top : 4em;
+    text-transform : uppercase;
+}
+
+#navigationPanel a {
+    color : rgb(51,51,51);
+    font-size : 130%;
+}
+
+.limit-width
+{
+    max-width : 400px;
+}

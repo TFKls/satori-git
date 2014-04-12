@@ -1,3 +1,4 @@
+{% load bootstrap3 %}
 {% load url from future %}
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
 "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -10,13 +11,13 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>  
-  <link href="/files/css/bootstrap.min.css" rel="stylesheet"/>  
+  {% bootstrap_css %}
   <link href="/files/satori.css" rel="stylesheet"/>
   <link rel="icon" href="/files/satori_favicon.png"/>
-
+    
+  {% bootstrap_javascript %}
   <script src="/mathjax/MathJax.js?config=TeX-AMS-MML_HTMLorMML" type="text/javascript"></script>
-  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script>
-  <script src="/files/js/bootstrap.min.js"></script>
+<!--  <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js"></script> -->
   {% block header %}
   {% endblock %}
 </head>

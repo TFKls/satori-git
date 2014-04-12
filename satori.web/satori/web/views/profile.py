@@ -4,6 +4,7 @@ want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
 from satori.web.utils.forms import AlertList
 from satori.web.utils import xmlparams
+from django.forms.util import ErrorList
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -22,25 +23,27 @@ def view(request, page_info, id = None):
     change_allowed = user_admin or not user.confirmed
     class ProfileForm(forms.Form):
         if change_allowed:
-            firstname = forms.CharField(label="First name",required=False)
-            lastname = forms.CharField(label="Last name",required=True)
+            firstname = forms.CharField(label="First name",required=False,initial=user.firstname)
+            lastname = forms.CharField(label="Last name",required=True,initial=user.lastname)
         else:
-            firstname = forms.CharField(label="First name",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}))
-            lastname = forms.CharField(label="Last name",required=True,widget=forms.TextInput(attrs={'readonly':'readonly'}),help_text='This is a confirmed account - identity is locked.')
+            firstname = forms.CharField(label="First name",required=False,widget=forms.TextInput(attrs={'readonly':'readonly'}),initial=user.firstname)
+            lastname = forms.CharField(label="Last name",required=True,widget=forms.TextInput(attrs={'readonly':'readonly'}),initial=user.lastname,help_text='This is a confirmed account - identity is locked.')
         oldpass = forms.CharField(label="Old password",required=False,widget=forms.PasswordInput)
         newpass = forms.CharField(label="New password",required=False,widget=forms.PasswordInput)
         confirm = forms.CharField(label="Confirm password",required=False,widget=forms.PasswordInput)
-        affiliation = forms.CharField(label="Affiliation",required=False)
- #       if user_admin:
-  #          lock_user = forms.BooleanField(label="Confirm identity",required=False)
+        affiliation = forms.CharField(label="Affiliation",required=False,initial=user.affiliation)
+        if user_admin:
+            lock_user = forms.BooleanField(label="Confirm identity",required=False)
         
 #    parser = xmlparams.parser_from_xml(Global.get_instance().profile_fields,'profile','input')
-    form = ProfileForm(data={'firstname' : user.firstname, 'lastname' : user.lastname,'lock_user' : user.confirmed,'affiliation' : user.affiliation})
+    form = ProfileForm()
+#    form = ProfileForm(data={'firstname' : user.firstname, 'lastname' : user.lastname,'lock_user' : user.confirmed,'affiliation' : user.affiliation})
 #    profile_form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
     if request.method!="POST":
         return render_to_response('profile.html', {'page_info' : page_info, 'form' : form})
     alerts = AlertList()
-    if 'update' in request.POST.keys():
+    if request.method=="POST":
+#    if 'update' in request.POST.keys():
         form = ProfileForm(request.POST)
         if form.is_valid():
             try:
@@ -60,16 +63,27 @@ def view(request, page_info, id = None):
                 if user.affiliation!=data['affiliation']:
                     user.modify(UserStruct(affiliation=data['affiliation']))
                     alerts.add('Affiliation changed.','info')
-#                if user_admin and data['lock_user'] and not user.confirmed:
-#                    user.modify(UserStruct(confirmed=True))
-#                    alerts.add('User identity locked.','info');
-#                if user_admin and not data['lock_user'] and user.confirmed:
-#                    user.modify(UserStruct(confirmed=False))
-#                    alerts.add('User identity unlocked.','info');
+                if user_admin and data['lock_user'] and not user.confirmed:
+                    user.modify(UserStruct(confirmed=True))
+                    alerts.add('User identity locked.','info');
+                if user_admin and not data['lock_user'] and user.confirmed:
+                    user.modify(UserStruct(confirmed=False))
+                    alerts.add('User identity unlocked.','info');
+                
             except LoginFailed:
-                alerts.add('Login failed!','danger')
+                alerts.add('Login unsucessful for password changing!','danger')
+                form._errors['oldpass'] = ErrorList();
+                form._errors['oldpass'].append('Enter correct data here');
+                form._errors['newpass'] = ErrorList();
+                form._errors['newpass'].append('Enter correct data here');
+                form._errors['confirm'] = ErrorList();
+                form._errors['confirm'].append('Enter correct data here');
             except InvalidPassword:
                 alerts.add('Invalid password!','danger')
+                form._errors['newpass'] = ErrorList();
+                form._errors['newpass'].append('Enter correct data here');
+                form._errors['confirm'] = ErrorList();
+                form._errors['confirm'].append('Enter correct data here');
             except:
                 alerts.add('Error updating profile!','danger')
             return render_to_response('profile.html', {'page_info' : page_info, 'form' : form, 'alerts' : alerts}) 
