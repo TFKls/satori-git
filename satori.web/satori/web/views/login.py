@@ -2,7 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
-from satori.web.utils.forms import AlertList,StatusBar
+from satori.web.utils.forms import AlertList
 from satori.web.utils import xmlparams
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse

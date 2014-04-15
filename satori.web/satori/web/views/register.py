@@ -2,7 +2,7 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
-from satori.web.utils.forms import StatusBar
+from satori.web.utils.forms import AlertList
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -37,9 +37,9 @@ def view(request, page_info):
                 User.register(UserStruct(login=data["login"],firstname=data["firstname"],lastname=data["lastname"],email=data["email"]),password=data["password"],profile=profile.get_map())
                 return HttpResponseRedirect(reverse('login')+"?status=regok")
             except:
-                bar = StatusBar()
-                bar.errors.append('Registration failed!')
-                return render_to_response('register.html',{'form' : form, 'status_bar' : bar})
+                alerts = AlertList()
+                alerts.add('Registration failed!','danger')
+                return render_to_response('register.html',{'form' : form, 'alerts' : alerts})
     else:
         form = RegisterForm()
     return render_to_response('register.html',{'form' : form})
