@@ -1,0 +1,75 @@
+
+<div class="row">
+
+<div class="col-md-6">
+<ul class="pagination pagination-no-margin">
+{% for page_number, page_link in table.autopagelinks %}
+  {% if forloop.first and page_number > 1 %}
+    <li><a href="{{table.autopagelink_first}}">
+    {% if page_number > 2 %}&laquo; {% endif %}
+    1
+    </a></li>    
+    {% if page_number > 2 %}
+    <li class="disabled"><a>...</a></li>
+    {% endif %}
+  {% endif %}
+  
+  {% if page_number == table.page %}
+      <li class="active"><a href="{{page_link}}">{{ page_number }}</a></li>
+  {% else %}
+      <li><a href="{{page_link}}">{{ page_number }}</a></li>  
+  {% endif %}
+  
+  {% if forloop.last and page_number < table.total_pages %}
+    {% if page_number < table.total_pages|add:"-1" %}
+    <li class="disabled"><a>...</a></li>
+    {% endif %}
+    <li><a href="{{table.autopagelink_last}}">{{table.total_pages}} 
+    {% if page_number < table.total_pages|add:"-1" %} &raquo; {% endif %}
+    </a></li>    
+  {% endif %}
+  
+{% endfor %}
+</ul>
+</div>
+
+<div class="col-md-3">
+<div class="row">
+<form action="" method="get" role="form" class="form-inline form-horizontal">
+  <label class="control-label col-md-6" for="{{users.prefix}}_show">Jump to page: </label>
+  <div class="input-group col-md-5">
+    <input type="text" class="form-control" name="{{users.prefix}}_page" value="{{table.page}}"/>
+    <span class="input-group-btn">
+        <button class="btn btn-default" type="submit">Go!</button>
+    </span>
+    {% for key, value in table.params_subst_dict.iteritems %}
+    {% if key != users.prefix|add:"_page" %}
+      <input type="hidden" name="{{key}}" value="{{value}}"/>
+    {% endif %}
+    {% endfor %}
+  </div>
+</form>
+</div>
+</div>
+
+<div class="col-md-3">
+<div class="row">
+<form action="" method="get" role="form" class="form-inline form-horizontal">
+  <label class="control-label col-md-6" for="{{users.prefix}}_show">Results per page: </label>
+  <div class="input-group col-md-5">
+    <input type="text" class="form-control" name="{{users.prefix}}_show" value="{{table.show}}"/>
+    <span class="input-group-btn">
+        <button class="btn btn-default" type="submit">Change</button>
+    </span>
+    {% for key, value in table.params_subst_dict.iteritems %}
+    {% if key != users.prefix|add:"_show" %}
+      <input type="hidden" name="{{key}}" value="{{value}}"/>
+    {% endif %}
+    {% endfor %}
+  </div>
+</form>
+</div>
+</div>
+
+
+</div>

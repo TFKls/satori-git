@@ -12,3 +12,8 @@
 {
     max-width : 400px;
 }
+
+.pagination-no-margin
+{
+    margin-top : 0;
+}
