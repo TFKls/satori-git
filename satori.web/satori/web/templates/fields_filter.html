@@ -1,0 +1,20 @@
+<div class="row">
+<form class="form form-inline" role="form" action="" method="get">
+    Show table with
+    <select class="form-control" name="table_filter_field">
+    {% for field_id, field_displayname in table.fieldnames %}
+        <option value="{{field_id}}" {% if table.filter_field == field_id %} selected {% endif %}>{{field_displayname}}</option>
+    {% endfor %}
+    </select>
+    which
+    <select class="form-control" name="table_filter_method">
+        <option value="starts" {% if table.filter_method == "starts" %} selected {% endif %}>starts with</option>
+        <option value="contains" {% if table.filter_method == "contains" %} selected {% endif %}>contains</option>
+    </select>
+    <input type="text" class="form-control" name="table_filter_string" value="{{ table.filter_string }}"/>
+    <button type="submit" class="btn btn-default">Filter</button>
+    {% for key,value in table.params_nofilter.iteritems %}
+        <input type="hidden" name="{{key}}" value="{{value}}"/>
+    {% endfor %}
+</form>
+</div>

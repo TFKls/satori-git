@@ -1,5 +1,6 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
 
 {% block title %}
 Select contest
@@ -7,43 +8,116 @@ Select contest
 
 {% block content %}
 
-{% if managed %}
-<h3>Managed contests:</h3>
-<table class="results">
-    {{ managed.render_table }}
-</table>
-    {{ managed.render_filters }}
+{{ alerts.render|safe }}
+
+{% if participating.data %}
+<h3>My contests:</h3>
+<div>
+    <table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Status</th>
+        </tr>    
+    </thead>
+    <tbody>
+        {% for row in participating.data %}
+        {% if participating.show_archived or not row.archived %}
+        <tr>
+            <td><a href="{% url "contest_main" row.id %}">{{row.name}}</a></td>
+            <td>
+                {{row.description}}
+            </td>
+            <td> <span class="
+            {% if row.status == 'admin' %}text-primary{% endif %}
+            {% if row.status == 'contestant' %}text-success{% endif %}
+            {% if row.status == 'pending' %}text-warning{% endif %}
+            ">
+                {{row.status}}</span>
+            {% if row.archived %}
+                {% bootstrap_icon "briefcase" %}
+            {% endif %}
+                
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+    </table>
+
+{% if participating.show_archived %}
+    <p class="help-block">{% bootstrap_icon "briefcase" %} Archived contests displayed (<a href="{{ participating.archived_link }}">hide</a>).</p>
+{% else %}
+    <p class="help-block">Archived contests not displayed (<a href="{{ participating.archived_link }}">show</a>).</p>
+{% endif %}
+</div>
+
 {% endif %}
 
 
-{% if participating %}
-<h3>Joined contests:</h3>
-<table class="results">
-    {{ participating.render_table }}
-</table>
-    {{ participating.render_filters }}
-{% endif %}
+{% if other.data %}
 
-
-{% if other %}
 <h3>Other contests:</h3>
-<table class="results">
-    {{ other.render_table }}
-</table>
-    {{ other.render_filters }}
+<div>
+    <table class="table table-hover">
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Action</th>
+        </tr>    
+    </thead>
+    <tbody>
+        {% for row in other.data %}
+        {% if other.show_archived or not row.archived %}
+        <tr>
+            <td><a href="{% url "contest_main" row.id %}">{{row.name}}</a></td>
+            <td>{{row.description}}</td>
+            <td> 
+                {% if row.status %}
+                <a href="{% url "apply" row.id %}" class="btn btn-xs
+                    {% if row.status == 'join' %}btn-success{% endif %}
+                    {% if row.status == 'apply' %}btn-default{% endif %}
+                    ">
+                    {{row.status}}
+                </a>
+                {% endif %}
+                {% if row.archived %}
+                    {% bootstrap_icon "briefcase" %}
+                {% endif %}
+            </td>
+        </tr>
+        {% endif %}
+        {% endfor %}
+    </tbody>
+    </table>
+</div>
+
+{% if other.show_archived %}
+    <p class="help-block">{% bootstrap_icon "briefcase" %} Archived contests displayed (<a href="{{ other.archived_link }}">hide</a>).</p>
+{% else %}
+    <p class="help-block">Archived contests not displayed (<a href="{{ other.archived_link }}">show</a>).</p>
+{% endif %}
+
 
 {% endif %}
+
+
 
 {% if create_form %}
-<hr class="divide"/>
-<h4>Add new contest</h4>
-<form action="" method="POST">
-<table>
-{{ create_form.as_table }}
-</table>
-<input class="button" type="submit" name="addcontest" value="Add contest"/>
-</form>
+<hr/>
+<div class="panel panel-default">
+<div class="panel-heading">Add new contest</div>
+<div class="panel-body">
+    <form action="" method="POST" class="form form-inline">
+    {% bootstrap_form create_form %}
+    {% buttons %}
+    <button class="btn btn-default" type="submit" name="addcontest">Create</button>
+    {% endbuttons %}
+    </form>
+</div>
+</div>
 {% endif %}
-
 
 {% endblock %}

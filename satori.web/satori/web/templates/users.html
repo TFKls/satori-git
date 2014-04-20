@@ -1,6 +1,7 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
 {% load bootstrap3 %}
+{% load generic_table_sorter %}
 
 {% block title %}
 Users
@@ -15,21 +16,23 @@ Users
 {% endwith %}
 
 <div class="row">
-<table class="table table-hover">
+<table class="table table-condensed table-hover">
 <thead>
     <tr>
-        <th>Login</th>
-        <th>First name</th>
-        <th>Last name</th>
-        <th>E-mail</th>
+        <th>{% generic_table_sorter users "login" %} Login</th>
+        <th>{% generic_table_sorter users "firstname" %} First name</th>
+        <th>{% generic_table_sorter users "lastname" %} Last name</th>
+        <th>{% generic_table_sorter users "affiliation" %} Affiliation</th>
+        <th>{% generic_table_sorter users "email" %} E-mail</th>
     </tr>
 </thead>
 <tbody>
-    {% for row in users.data %}
+    {% for row in users.rows %}
     <tr>
-        <td>{{ row.login }}</td>
+        <td><a href="{% url "profile" row.id %}"><span class="glyphicon glyphicon-edit"></span></a> {{ row.login }}</td>
         <td>{{ row.firstname }}</td>
         <td>{{ row.lastname }}</td>
+        <td>{{ row.affiliation }}</td>
         <td>{{ row.email }}</td>
     </tr>
     {% endfor %}
@@ -37,6 +40,10 @@ Users
 
 </table>
 </div>
+
+{% with users as table %}
+{% include "fields_filter.html" %}
+{% endwith %}
 
 
 {% endblock %}
