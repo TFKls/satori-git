@@ -25,8 +25,6 @@ def view(request, page_info):
     messages = Web.get_subpage_list_global(True)
     contests = Web.get_contest_list()
     for m in messages:
-        #TODO(kalq): Check this - subpage looks strange here
-        #TODO(kalq): Add attachments here
         m.html = fill_image_links(unicode(m.html), 'Subpage', m.subpage.id, 'content_files')
     messages.sort(key=lambda m : [m.subpage.is_sticky, m.subpage.date_created], reverse=True)
     return render_to_response('news.html', { 'page_info' : page_info, 

@@ -10,30 +10,46 @@ Main page
 {% endblock %}
 
 {% block content %}
-<p> <span class="h3">News</span>
- 
-{% if page_info.contest_is_admin %}
-<a class="btn btn-default btn-sm" href="{% url 'contest_news_add' page_info.contest.id %}">add</a>
-{% endif %}
+<p> 
+    <span class="h3">News</span>
+    <span class="pull-right"> 
+    {% if page_info.contest_is_admin %}
+    <a class="btn btn-default btn-sm" href="{% url 'contest_news_add' page_info.contest.id %}">Add news</a>
+    {% endif %}
 
-{% if not page_info.contest and page_info.is_admin %}
-<a class="btn btn-default btn-sm" href="{% url 'news_add' %}">add</a>
-{% endif %}
+    {% if not page_info.contest and page_info.is_admin %}
+    <a class="btn btn-default btn-sm" href="{% url 'news_add' %}">Add global news</a>
+    {% endif %}
+    </span>
 </p>
 
 {% for msg in messages %}
 <div class = "panel panel-default">
     <div class="panel-heading">
-            {{ msg.subpage.name }} {{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}
-            {% if msg.is_admin %}
-            {% if page_info.contest %}
-                {% if msg.subpage.contest %}
-                <a class="button button_small" href="{% url 'contest_news_edit' page_info.contest.id msg.subpage.id %}">Edit</a> 
+            <strong>{{ msg.subpage.name }}</strong>
+            <div class="pull-right">
+                <small>
+                    {{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}
+                </small>
+            
+                {% if msg.is_admin %}
+                    {% if page_info.contest %}
+                        {% if msg.subpage.contest %}
+                            <a href="{% url 'contest_news_edit' page_info.contest.id msg.subpage.id %}">{% bootstrap_icon "edit" %}</a> 
+                        {% endif %}
+                    {% else %}
+                        <a href="{% url 'news_edit' msg.subpage.id %}">{% bootstrap_icon "edit" %}</a>
+                    {% endif %}
                 {% endif %}
-            {% else %}
-                <a class="button button_small" href="{% url 'news_edit' msg.subpage.id %}">Edit</a>
-            {% endif %}
-            {% endif %}
+
+                {% if msg.subpage.is_public %}
+                    {% bootstrap_icon "globe" %}
+                {% endif %}
+
+                {% if msg.subpage.is_sticky %}
+                    {% bootstrap_icon "star" %}
+                {% endif %}
+            </div>
     </div>
             
     <div class="panel-body">

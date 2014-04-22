@@ -46,6 +46,7 @@ setup(
         'Sphinx',
         'xstatic-mathjax',
         'django-bootstrap3',
+        'sphinx-bootstrap-theme',
     ],
     entry_points='''
         [console_scripts]
