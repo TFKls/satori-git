@@ -1,6 +1,6 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
-
+{% load bootstrap3 %}
 {% block title %}
 {% if page_info.contest %}
 {{ page_info.contest.name }}
@@ -10,21 +10,21 @@ Main page
 {% endblock %}
 
 {% block content %}
+<p> <span class="h3">News</span>
+ 
 {% if page_info.contest_is_admin %}
-<a class="button" href="{% url 'contest_news_add' page_info.contest.id %}">Add news</a>
-<hr class="divide"/>
+<a class="btn btn-default btn-sm" href="{% url 'contest_news_add' page_info.contest.id %}">add</a>
 {% endif %}
 
 {% if not page_info.contest and page_info.is_admin %}
-<a class="button" href="{% url 'news_add' %}">Add global news</a>
-<hr class="divide"/>
+<a class="btn btn-default btn-sm" href="{% url 'news_add' %}">add</a>
 {% endif %}
-
+</p>
 
 {% for msg in messages %}
-<div class = "newsmsg bDots">
-    <table class="message">
-            <tr><td><h4>{{ msg.subpage.name }}</h4></td><td style="text-align: right"><span class="signature">{{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}</span>
+<div class = "panel panel-default">
+    <div class="panel-heading">
+            {{ msg.subpage.name }} {{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}
             {% if msg.is_admin %}
             {% if page_info.contest %}
                 {% if msg.subpage.contest %}
@@ -34,11 +34,12 @@ Main page
                 <a class="button button_small" href="{% url 'news_edit' msg.subpage.id %}">Edit</a>
             {% endif %}
             {% endif %}
-            </td>
+    </div>
             
-            </tr>
-            <tr><td colspan="3">{{ msg.html|safe }}</td></tr>
-    </table>
+    <div class="panel-body">
+        {{ msg.html|safe }}
+    </div>
+</div>
 
     {% if can_edit %}
     <h5>Attachments</h5>
@@ -50,7 +51,6 @@ Main page
         {% endfor %}
     </table>
     {% endif %}
-</div>
 {% endfor %}
 
 {% endblock %}
