@@ -1,18 +1,59 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
 {% block title %}
 Configuration
 {% endblock %}
 
 {% block content %}
 
+<p>
+<span class="h3">Global subpages
+<a class="btn btn-default btn-sm" href="{% url 'subpage_add' %}">Add new subpage</a>
+</span>
 
-<h4>Global subpages</h4>
-<table class="simple">
-    {{ global_subpages.render_table }}
+</p>
+<table class="table table-condensed table-hover">
+<thead>
+    <th>Name</th>
+    <th>Visibility</th>
+    <th>Action</th>
+</thead>
+<tbody>
+    {% for page in subpages.rows %}
+    <tr>
+        <td>{{page.name}}</td>
+        <td>
+            {% if page.visibility == 'admins' %}
+            <span class="text-warning">
+            {% endif %}
+
+            {% if page.visibility == 'logged' %}
+            <span class="text-info">
+            {% endif %}
+
+
+            {% if page.visibility == 'everyone' %}
+            <span class="text-primary">
+            {% endif %}
+            
+            {{ page.visibility }}
+            </span>
+            
+            {% if page.is_public %}
+            {% bootstrap_icon "globe" %}
+            {% endif %}
+        </td>
+        <td>
+            <a href = "{% url 'subpage_move' page.id 'up' %}">Move up</a>
+            <a href = "{% url 'subpage_move' page.id 'down' %}">Move down</a>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
 </table>
 
-<a class="button" href="{% url 'subpage_add' %}">Add new subpage</a>
+
 
 
 <hr class="divide"/>

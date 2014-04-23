@@ -76,6 +76,7 @@ urlpatterns = patterns('',
     url(r'^subpage/add$', 'satori.web.views.subpage.add', name='subpage_add'),
     url(r'^subpage/(?P<id>\d+)$', 'satori.web.views.subpage.view', name='subpage'),
     url(r'^subpage/(?P<id>\d+)/edit$', 'satori.web.views.subpage.edit', name='subpage_edit'),
+    url(r'^subpage/(?P<id>\d+)/move(?P<direction>up|down)$', 'satori.web.views.configuration.pagemove', name='subpage_move'),
     url(r'^users$', 'satori.web.views.users.view', name='users'),
 #    url(r'^users/(?P<login>[a-z0-9_]+)/edit$', 'satori.web.views.users.edit', name='user_edit'),
     

@@ -7,7 +7,7 @@ class GenericTable(object):
         self.data = []                  # data in raw format
         self.fields = []                # fields to show as columns
         self.filters = {}
-        self.default_shown = 10
+        self.default_shown = 30
         self.page = 1
         self.sortfield = None
         self.default_sortfield = None

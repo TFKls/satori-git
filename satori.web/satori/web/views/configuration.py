@@ -4,6 +4,7 @@ want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
 from satori.web.utils.forms import RenderObjectButton
 from satori.web.utils.tables import *
+from satori.web.utils.rights import *
 from satori.web.utils.generic_table import GenericTable
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
@@ -15,14 +16,29 @@ class PSetterAddForm(forms.Form):
     login = forms.CharField(required = True)
 
 @general_view
+def pagemove(request, page_info, id, direction):
+    pass
+
+
+@general_view
 def view(request, page_info):
 
     subpages = GenericTable(prefix = 'subpages', request_get = request.GET)
     a = []
     for page in page_info.subpages:
-        row = { 'id' : page.id, 'name' : page.name, 'order' : page.order, 'is_public' : page.is_public }
+        row = { 'id' : page.id, 'name' : page.name, 'order' : page.order, 'is_public' : page.is_public}
+        row['visibility'] = 'admins'
+        if logged_can_do(page):
+            row['visibility'] = 'logged'
+        if everyone_can_do(page):
+            row['visibility'] = 'everyone'
         subpages.data.append(row)
-        
+    subpages.default_shown = 9999
+    subpages.default_sortfield = 'order'
+    subpages.autosort()
+    subpages.autopaginate()
+    
+    
     class GlobalSubpages(ResultTable):
         def __init__(self,req,prefix):
             super(GlobalSubpages,self).__init__(req=req,prefix=prefix,autosort=False)
@@ -61,4 +77,4 @@ def view(request, page_info):
     else:
         problem_setters = None
     global_subpages = GlobalSubpages(req=request.GET,prefix='subpages')
-    return render_to_response('configuration.html', {'page_info' : page_info, 'problem_setters' : problem_setters, 'form' : form, 'global_subpages' : global_subpages})
+    return render_to_response('configuration.html', {'page_info' : page_info, 'problem_setters' : problem_setters, 'form' : form, 'subpages' : subpages})

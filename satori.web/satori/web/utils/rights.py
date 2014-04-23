@@ -2,6 +2,12 @@ from satori.client.common import want_import
 from django import forms
 want_import(globals(),'*')
 
+def everyone_can_do(something,right='VIEW'):
+    return Privilege.get(Security.anonymous(),something,right)
+    
+def logged_can_do(something,right='VIEW'):
+    return Privilege.get(Security.authenticated(),something,right)
+
 class RightsTower(object):
     def length(self):
         return len(self.choices)
