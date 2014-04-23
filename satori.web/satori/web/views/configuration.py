@@ -4,6 +4,7 @@ want_import(globals(), '*')
 from satori.web.utils.decorators import general_view
 from satori.web.utils.forms import RenderObjectButton
 from satori.web.utils.tables import *
+from satori.web.utils.generic_table import GenericTable
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django.http import HttpResponseRedirect
@@ -16,6 +17,12 @@ class PSetterAddForm(forms.Form):
 @general_view
 def view(request, page_info):
 
+    subpages = GenericTable(prefix = 'subpages', request_get = request.GET)
+    a = []
+    for page in page_info.subpages:
+        row = { 'id' : page.id, 'name' : page.name, 'order' : page.order, 'is_public' : page.is_public }
+        subpages.data.append(row)
+        
     class GlobalSubpages(ResultTable):
         def __init__(self,req,prefix):
             super(GlobalSubpages,self).__init__(req=req,prefix=prefix,autosort=False)
