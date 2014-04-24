@@ -5,7 +5,10 @@
 
 #navigationPanel a {
     color : rgb(51,51,51);
-    font-size : 140%;
+    font-size : 120%;
+}
+
+#navigationPanel li {
 }
 
 .limit-width
@@ -28,4 +31,30 @@
     margin-top : 1em;
     margin-left : 1em;
     height : 3em;
+}
+
+.one-button-form
+{
+    display : inline;
+}
+
+.one-button-form button
+{
+    padding : 0;
+    border : none;
+    background-color : transparent;
+}
+
+
+.icon-space
+{
+    padding-left : 0.5em;
+}
+
+.panel-narrow
+{
+    padding-top : 5px;
+    padding-bottom : 5px;
+    padding-left : 10px;
+    padding-right : 10px;
 }

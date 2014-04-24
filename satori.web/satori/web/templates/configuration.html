@@ -7,8 +7,9 @@ Configuration
 
 {% block content %}
 
+
 <p>
-<span class="h3">Global subpages
+<span class="h4">Global subpages
 <a class="btn btn-default btn-sm" href="{% url 'subpage_add' %}">Add new subpage</a>
 </span>
 
@@ -17,7 +18,7 @@ Configuration
 <thead>
     <th>Name</th>
     <th>Visibility</th>
-    <th>Action</th>
+    <th></th>
 </thead>
 <tbody>
     {% for page in subpages.rows %}
@@ -45,8 +46,24 @@ Configuration
             {% endif %}
         </td>
         <td>
-            <a href = "{% url 'subpage_move' page.id 'up' %}">Move up</a>
-            <a href = "{% url 'subpage_move' page.id 'down' %}">Move down</a>
+            <a class="text-primary icon-space" href = "{% url 'subpage_edit' page.id %}">{% bootstrap_icon "edit" %}</a>
+            {% if forloop.first %}
+            <span class="text-muted icon-space">{% bootstrap_icon "chevron-up" %}</span>
+            {% else %}
+            <a class="text-primary icon-space" href = "{% url 'subpage_move' page.id 'up' %}">{% bootstrap_icon "chevron-up" %}</a>
+            {% endif %}
+            {% if forloop.last %}
+            <span class="text-muted icon-space">{% bootstrap_icon "chevron-down" %}</span>
+            {% else %}
+            <a class="text-primary icon-space" href = "{% url 'subpage_move' page.id 'down' %}">{% bootstrap_icon "chevron-down" %}</a>
+            {% endif %}
+
+            <form action="{% url 'subpage_delete' %}" method="POST" class="one-button-form icon-space">
+                <input type="hidden" name="id" value="{{page.id}}"/>
+                <button type="submit"><span class="text-danger">{% bootstrap_icon "trash" %}</span></button>
+                
+            </form>
+
         </td>
     </tr>
     {% endfor %}
@@ -56,19 +73,49 @@ Configuration
 
 
 
-<hr class="divide"/>
 
 <h4>Problem setters</h4>
-
-<table class="simple">
-    {{ problem_setters.render_table }}
+<table class="table table-condensed table-hover">
+<thead>
+    <th>Login</th>
+    <th>Name</th>
+    <th></th>
+</tbody>
+<tbody>
+    {% for user in problemsetters.rows %}
+    <tr>
+        <td>{{user.login}}</td>
+        <td>{{user.name}}</td>
+        <td>
+            <form action="{% url 'problemsetter_revoke' %}" class="one-button-form" method="POST">
+                <input type="hidden" name="id" value="{{user.id}}"/>
+                <button type="submit" class="btn btn-link">{% bootstrap_icon "remove" %}</button>
+            </form>
+        </td>
+    </tr>
+    {% endfor %}
+</tbody>
 </table>
 
-<h4>Add problem setter:</h4>
-<form action="" method="POST">
-{{ form }} <input type="submit" class="button" name="add" value="Add"/>
-</form>
+<div class="panel panel-default">
+    <div class="panel-heading">Add problem setter:</div>
+    <div class="panel-body">
+    
+        <form role="form" class="form form-inline" action="{% url 'problemsetter_grant' %}" method="POST">
 
+        <div class="form-group">
+            <label class="control-label">Login:</label>
+            <input type="text" class="form-control" name="login"/>
+        </div>
+
+        <div class="form-group">
+            <button class="btn btn-default" type="submit" class="button" name="add">Add</button>
+        </div>
+
+        </form>
+    </div>
+
+</div>
 
 
 {% endblock %}

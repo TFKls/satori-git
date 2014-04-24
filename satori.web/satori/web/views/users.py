@@ -16,6 +16,7 @@ def view(request, page_info):
         users.data.append({'login' : user.login, 'firstname' : user.firstname, 'lastname' : user.lastname, 'email' : user.email, 'id' : user.id, 'affiliation' : user.affiliation})
     users.filter_by_fields(users.fields)    
     users.fieldnames = [['login','login'], ['firstname','first name'],['lastname','last name'],['email','e-mail'],['affiliation','affiliation']]
+    users.default_shown=30
     users.default_sortfield='lastname'
     users.autosort()
     users.autopaginate()

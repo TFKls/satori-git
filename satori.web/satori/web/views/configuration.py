@@ -12,19 +12,57 @@ from django.http import HttpResponseRedirect
 from django import forms
 
 
-class PSetterAddForm(forms.Form):
-    login = forms.CharField(required = True)
 
 @general_view
 def pagemove(request, page_info, id, direction):
-    pass
+    page_info.subpages.sort(key=lambda page : page.order)
+    page = Subpage(int(id))
+    if page in page_info.subpages:
+        i = page_info.subpages.index(page)
+        if i>=0 and direction=='up':
+            page_info.subpages[i],page_info.subpages[i-1] = page_info.subpages[i-1],page_info.subpages[i]
+        if i<len(page_info.subpages)-1 and direction=='down':
+            page_info.subpages[i],page_info.subpages[i+1] = page_info.subpages[i+1],page_info.subpages[i]
+    for i in range(0, len(page_info.subpages)):
+        page_info.subpages[i].modify(SubpageStruct(order=i+1))
+    return HttpResponseRedirect(reverse('configuration'))
+
+@general_view
+def pagedelete(request, page_info):
+    try:
+        id = request.POST['id']
+        subpage = Subpage(int(id))
+        subpage.delete()
+        return HttpResponseRedirect(reverse('configuration'))
+    except:
+        return HttpResponseRedirect(reverse('configuration')+'?status=page_del_failed')
+
+@general_view
+def problemsetter_grant(request, page_info):
+    try:
+        login = request.POST['login']
+        user = User.filter(UserStruct(login=login))[0]
+        Privilege.global_grant(user,'MANAGE_PROBLEMS')
+        return HttpResponseRedirect(reverse('configuration'))
+    except:
+        return HttpResponseRedirect(reverse('configuration')+'?status=user_grant_failed')
+
+
+@general_view
+def problemsetter_revoke(request, page_info):
+    try:
+        id = request.POST['id']
+        user = User(int(id))
+        Privilege.global_revoke(user,'MANAGE_PROBLEMS')
+        return HttpResponseRedirect(reverse('configuration'))
+    except:
+        return HttpResponseRedirect(reverse('configuration')+'?status=user_revoke_failed')
 
 
 @general_view
 def view(request, page_info):
 
     subpages = GenericTable(prefix = 'subpages', request_get = request.GET)
-    a = []
     for page in page_info.subpages:
         row = { 'id' : page.id, 'name' : page.name, 'order' : page.order, 'is_public' : page.is_public}
         row['visibility'] = 'admins'
@@ -33,48 +71,20 @@ def view(request, page_info):
         if everyone_can_do(page):
             row['visibility'] = 'everyone'
         subpages.data.append(row)
-    subpages.default_shown = 9999
     subpages.default_sortfield = 'order'
     subpages.autosort()
     subpages.autopaginate()
     
+    problemsetters = GenericTable(prefix = 'problemsetters', request_get = request.GET)        
+    for role in Privilege.global_list('MANAGE_PROBLEMS').keys():
+        row = {'name' : role.name, 'id' : role.id}
+        try:
+            row['login'] = User(role.id).login        
+        except:
+            row['login'] = ''
+        problemsetters.data.append(row)
+    problemsetters.default_sortfield = 'login'
+    problemsetters.autosort()
+    problemsetters.autopaginate()
     
-    class GlobalSubpages(ResultTable):
-        def __init__(self,req,prefix):
-            super(GlobalSubpages,self).__init__(req=req,prefix=prefix,autosort=False)
-            self.results = [s for s in page_info.subpages]
-            self.total = len(self.results)
-#            self.fields.append(TableField(name='test',value=(lambda table,i : '0'),id=0))
-            self.fields.append(TableField(name='',value=(lambda table,i : table.results[i].name),id=1))
-            self.fields.append(TableField(name='',value=(lambda table,i : format_html('<a class="button button_small" href="{0}">Edit</a>', reverse('subpage_edit',args=[table.results[i].id]))),id=2))
-            
-    class PSetterTable(ResultTable):
-        def __init__(self,req,prefix):
-            super(PSetterTable,self).__init__(req=req,prefix=prefix,autosort=False)
-            self.results = Privilege.global_list('MANAGE_PROBLEMS').keys()
-            self.total = len(self.results)
-            self.fields.append(TableField(name='',value=(lambda table,i : table.results[i].name),id=1))
-            self.fields.append(TableField(name='',value='Revoke',render=(lambda table,i : RenderObjectButton(name='revoke',buttonname='Revoke',id=table.results[i].id,css='button button_small')),id=2))
-            
-    if request.method=='POST' and 'add' in request.POST.keys():
-        form = PSetterAddForm(data=request.POST)
-        if form.is_valid():
-            try:
-                user = User.filter(UserStruct(login=form.cleaned_data['login']))[0]
-                Privilege.global_grant(user,'MANAGE_PROBLEMS')
-                form = PSetterAddForm()
-            except:
-                form._errors["login"] = ['Privilege grant failed!']
-    else:
-        form = PSetterAddForm()
-    if request.method=='POST' and 'revoke' in request.POST.keys():
-        user_id = request.POST['id']
-        user = User(int(user_id))
-        Privilege.global_revoke(user,'MANAGE_PROBLEMS')
-    is_priv_admin = Privilege.global_demand('MANAGE_PRIVILEGES')
-    if is_priv_admin:
-        problem_setters = PSetterTable(req=request.GET,prefix='psetters')
-    else:
-        problem_setters = None
-    global_subpages = GlobalSubpages(req=request.GET,prefix='subpages')
-    return render_to_response('configuration.html', {'page_info' : page_info, 'problem_setters' : problem_setters, 'form' : form, 'subpages' : subpages})
+    return render_to_response('configuration.html', {'page_info' : page_info, 'problemsetters' : problemsetters, 'subpages' : subpages})

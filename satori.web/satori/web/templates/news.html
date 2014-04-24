@@ -25,7 +25,7 @@ Main page
 
 {% for msg in messages %}
 <div class = "panel panel-default">
-    <div class="panel-heading">
+    <div class="panel-heading panel-narrow">
             <strong>{{ msg.subpage.name }}</strong>
             <div class="pull-right">
                 <small>
@@ -52,7 +52,7 @@ Main page
             </div>
     </div>
             
-    <div class="panel-body">
+    <div class="panel-body panel-narrow">
         {{ msg.html|safe }}
     </div>
 </div>

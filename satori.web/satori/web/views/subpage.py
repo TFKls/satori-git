@@ -121,3 +121,9 @@ def edit(request, page_info, id):
                                                      'form' : form,
                                                      'page_info' : page_info,
                                                      'subpage' : subpage })
+
+def pagedelete(request, page_info, id):
+    subpage = Subpage.filter(SubpageStruct(id=int(id)))[0]
+    subpage.delete()
+    return HttpResponseRedirect(reverse('configuration'))
+    
