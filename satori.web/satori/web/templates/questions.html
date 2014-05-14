@@ -1,5 +1,6 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
 
 {% block title %}
 Questions
@@ -7,51 +8,76 @@ Questions
 
 {% block content %}
 
-{% if page_info.contest_can_ask_questions %}
-<a class="button" href="{% url 'ask_question' page_info.contest.id %}">Ask a question</a>
-{% endif %}
+<p>
+    <span class="h3">Questions</span>
 
-<h3>Questions</h3>
+    {% if page_info.contest_can_ask_questions %}
+    <span class="pull-right">
+    <a class="btn btn-default btn-sm" href="{% url 'ask_question' page_info.contest.id %}">Ask a question</a>
+    </span>
+    {% endif %}
+
+</p>
+
 {% for q,public in questions %}
 {% if public %}
-<div class="question_public">
+<div class="panel panel-success">
 {% else %}
-<div class="question_private">
-{% endif %}
-<div class="question_header">
-  {% if page_info.contest_is_admin %}
-  Asked by: {{ q.inquirer.name }}<br/>
-  {% endif %}
-  {% if q.problem %}
-    Problem {{ q.problem.code }}
-  {% else %}
-    General
-  {% endif %}
-</div>
-<div class="question_content">
-  {{ q.content }}
-</div>
-
 {% if q.answer %}
-<div class="question_answer">
-  {{ q.answer }}
-</div>
-{% endif %}
-
-{% if page_info.contest_is_admin %}
-<form action="{% url 'answer_question' page_info.contest.id q.id %}" method="POST">
-<div class="button_bar">
-{% if q.answer %}
-<a class="button" href="{% url 'answer_question' page_info.contest.id q.id %}">Edit</a>
+<div class="panel panel-default">
 {% else %}
-<a class="button" href="{% url 'answer_question' page_info.contest.id q.id %}">Answer</a>
+<div class="panel panel-default">
 {% endif %}
-    <input type="submit" class="button button_warn" value="Delete" name="delete">
-</div>
-</form>
 {% endif %}
+    <div class="panel-heading">
+    <div class="row">
+        <div class="col-sm-10">
+          {{ q.content }}
+        </div>
+        <div class="col-sm-2">
+        <small>
+            {{ q.date_created|date:"Y-m-d, H:i:s" }}
+            {% if page_info.contest_is_admin %}
+            <a class="text-primary icon-space" href="{% url 'answer_question' page_info.contest.id q.id %}">{% bootstrap_icon "edit" %}</a>
+            <form class="one-button-form" action="{% url 'answer_question' page_info.contest.id q.id %}" method="POST">
+                <button type="submit" name="make_public"> <span class="text-primary">{% bootstrap_icon "globe" %}</span></button>
+            </form>
+            <form class="one-button-form" action="{% url 'answer_question' page_info.contest.id q.id %}" method="POST">
+                <button type="submit" name="delete"> <span class="text-danger">{% bootstrap_icon "trash" %}</span></button>
+            </form>
+            {% endif %}
+          <br/>
+          
+          {% if q.problem %}
+            Problem {{ q.problem.code }}
+          {% else %}
+            General
+          {% endif %}
+          <br/>
+          
+          {% if page_info.contest_is_admin %}
+              Asked by: {{ q.inquirer.name }}
+          {% endif %}
+        </small>
+        </div>
+    </div>
+    </div>
+{% if q.answer %}
+    <div class="panel-body">
+      {{ q.answer }}
+    </div>
+{% else %}
+    {% if page_info.contest_is_admin %}
+    
+    <div class="panel-footer">
+        <a class="btn btn-primary btn-sm" href="{% url 'answer_question' page_info.contest.id q.id %}">{% bootstrap_icon "comment" %} Answer question</a>
+    </div>
+    {% endif %}
+{% endif %}    
+
 
 </div>
+
 {% endfor %}
 
 

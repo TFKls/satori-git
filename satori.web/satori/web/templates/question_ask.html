@@ -1,17 +1,16 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
 
 {% block title %}
 Ask question
 {% endblock %}
 
 {% block content %}
-<form action="" method="POST">
-<table>
-{{ form.as_table }}
-</table>
-<input class="button" type="submit" value="Ask"/>
-</form>
 
+<form action="" method="POST">
+{% bootstrap_form form %}
+<button class="btn btn-default" type="submit">Ask</button>
+</form>
 
 {% endblock %}

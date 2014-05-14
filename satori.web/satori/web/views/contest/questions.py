@@ -70,14 +70,15 @@ def answer(request, page_info, id):
         if 'delete' in request.POST.keys():
             Question.delete(question)
             return HttpResponseRedirect(reverse('questions',args=[contest.id]))    
+        if 'make_public' in request.POST.keys():
+            question2 = Question.create(QuestionStruct(contest=contest,problem=question.problem,content=question.content))
+            question2.answer = question.answer
+            Privilege.grant(contest.contestant_role,question2,'VIEW')
+            return HttpResponseRedirect(reverse('questions',args=[contest.id]))    
         form = AnswerForm(request.POST)
         if form.is_valid():
             question.content = form.cleaned_data["content"]
             question.answer = form.cleaned_data["answer"]
-            if 'make_public' in request.POST.keys():
-                question2 = Question.create(QuestionStruct(contest=contest,problem=question.problem,content=question.content))
-                question2.answer = question.answer
-                Privilege.grant(contest.contestant_role,question2,'VIEW')
 #                Question.delete(question)
             return HttpResponseRedirect(reverse('questions',args=[contest.id]))    
     else:

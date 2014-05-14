@@ -1,23 +1,32 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
 
 {% block title %}
 Answer question
 {% endblock %}
 
 {% block content %}
-<form action="" method="POST">
-<p>Asked by: {{question.inquirer.name}}</p>
-{% if question.problem %}
-<p>Problem {{question.problem.code}}</p>
-{% else %}
-<p>General</p>
-{% endif %}
-<table>
-{{ form.as_table }}
-</table>
-<input class="button" type="submit" value="Answer" name="submit"/>
-<input class="button" type="submit" value="Copy as public question" name="make_public"/>
+<form class="form" role="form" action="" method="POST">
+<div class="form-group">
+    <label class="control-label">Asked by</label>
+    <div>
+      <p class="form-control-static">{{question.inquirer.name}}</p>
+    </div>
+</div>
+<div class="form-group">
+    <label class="control-label">Problem</label>
+    <div>
+        {% if question.problem %}
+        <p class="form-control-static">{{question.problem.code}}</p>
+        {% else %}
+        <p class="form-control-static">(general question)</p>
+        {% endif %}
+    </div>
+</div>
+
+{% bootstrap_form form %}
+<button class="btn btn-default" type="submit" name="submit">Save</button>
 </form>
 
 {% endblock %}
