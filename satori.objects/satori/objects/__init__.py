@@ -12,7 +12,7 @@ from inspect import getargspec
 from sys import _getframe
 
 if six.PY2:
-    from types import DictType, NoneType, TupleType
+    from types import ClassType, DictType, NoneType, TupleType
 else:
     ClassType = type
     DictType = dict
