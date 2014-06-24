@@ -184,7 +184,7 @@ class TBufferedTransport(TTransportBase, CReadableTransport):
     if len(retstring) < reqlen:
       retstring += self.__trans.readAll(reqlen - len(retstring))
 
-    self.__rbuf = StringIO(retstring)
+    self.__rbuf = BytesIO(retstring)
     return self.__rbuf
 
 
@@ -274,7 +274,7 @@ class TFramedTransport(TTransportBase, CReadableTransport):
   def readFrame(self):
     buff = self.__trans.readAll(4)
     sz, = unpack('!i', buff)
-    self.__rbuf = StringIO(self.__trans.readAll(sz))
+    self.__rbuf = BytesIO(self.__trans.readAll(sz))
 
   def write(self, buf):
     self.__wbuf.write(buf)
@@ -304,7 +304,7 @@ class TFramedTransport(TTransportBase, CReadableTransport):
     while len(prefix) < reqlen:
       self.readFrame()
       prefix += self.__rbuf.getvalue()
-    self.__rbuf = StringIO(prefix)
+    self.__rbuf = BytesIO(prefix)
     return self.__rbuf
 
 
