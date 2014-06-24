@@ -21,6 +21,7 @@ setup(
         'satori',
     ],
     install_requires=[
+        'six',
         'setuptools',
         'argparse',
         'satori.client.common',

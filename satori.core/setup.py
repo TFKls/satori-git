@@ -37,6 +37,7 @@ setup(
         'satori',
     ],
     install_requires=[
+        'six',
         'pycrypto == 2.3',
         'pyopenssl',
         'python-openid',

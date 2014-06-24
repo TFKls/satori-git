@@ -22,6 +22,7 @@ setup(
         'satori',
     ],
     install_requires=[
+        'six',
         'setuptools',
     ],
 )

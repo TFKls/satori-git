@@ -22,6 +22,7 @@ setup(
         'satori.client',
     ],
     install_requires=[
+        'six',
         'setuptools',
         'Thrift',
         'satori.ars',

@@ -37,6 +37,7 @@ setup(
         'satori',
     ],
     install_requires=[
+        'six',
         'Django == 1.4',
         'flup',
         'setuptools',
