@@ -1,20 +1,20 @@
 #!/bin/bash
-OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
-VENV=".virtual_env"
-pushd "$OFFICE"
-
-apt-get -y install python-virtualenv python-dev libpopt-dev libcurl4-openssl-dev libpq-dev libyaml-dev libcap-dev make patch
-unset PYTHONPATH
-
-VENV_BIN=virtualenv2
-if ! which "$VENV_BIN" >& /dev/null; then
-	VENV_BIN=virtualenv
+if which apt-get >/dev/null 2>&1; then
+    apt-get -y install python-virtualenv python-dev libpopt-dev libcurl4-openssl-dev libpq-dev libyaml-dev libcap-dev make patch
 fi
 
-"$VENV_BIN" --no-site-packages --prompt=\(satori\) "$VENV" &&
-mkdir -p bin &&
-find "$VENV/bin" -name "activate*" |while read a; do ln -s "../$a" bin; done &&
-source bin/activate &&
-pip install -U distribute || exit 1
+(
+    cd $(dirname "$(readlink -f "$(which "$0")")")
 
-popd
+    VENV=".virtual_env"
+    unset PYTHONPATH
+
+    for py in python2 python3; do
+        if which $py >/dev/null 2>&1; then
+            virtualenv --python=`which $py` --no-site-packages --prompt="(satori) " "$VENV"
+        fi
+    done
+
+    ( mkdir -p bin && cd bin && cp -sf ../"$VENV"/bin/activate* . )
+    source bin/activate
+)
