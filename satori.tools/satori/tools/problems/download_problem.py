@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:et
 import os
 import os.path
@@ -73,11 +74,11 @@ def store_problem(problem_yaml, tests_yaml):
                 local_blob = open(
                         os.path.join(problem_dir, test_dir, val['filename']),
                         'w')
-                print 'Downloading blob', val['filename'] + ',',
-                print 'size =', remote_blob.length, 'bytes' + '...',
+                print_('Downloading blob', val['filename'] + ',', end="")
+                print_('size =', remote_blob.length, 'bytes' + '...', end="")
                 sys.stdout.flush()
                 copy_file(remote_blob, local_blob)    
-                print 'done'
+                print_('done')
                 remote_blob.close()
                 local_blob.close()
                 test_yaml[key] = val['filename']

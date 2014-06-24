@@ -1,3 +1,4 @@
+from six import print_
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
 """Satori judge implementation.
@@ -322,7 +323,7 @@ class JailRun(Object):
                     self.wfile.write(str(ex))
                 etime = datetime.datetime.now()
                 if cmd != 'cmd_QUERYCG':
-                    print 'served ', cmd, input, raw_output, stime, etime, etime - stime
+                    print_('served ', cmd, input, raw_output, stime, etime, etime - stime)
 
             @staticmethod
             def oa_for_judge(attr):

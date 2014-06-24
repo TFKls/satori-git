@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 
 def start_console():
@@ -6,7 +7,7 @@ def start_console():
     console = code.InteractiveConsole()
     console.runcode('from satori.client.common.remote import *')
     print
-    print 'satori.client.common.remote classes are imported'
+    print_('satori.client.common.remote classes are imported')
     print
     console.interact()
 
@@ -16,7 +17,7 @@ def start_local_console():
     console = code.InteractiveConsole()
     console.runcode('from satori.client.common.local import *')
     print
-    print 'satori.client.common.local classes are imported'
+    print_('satori.client.common.local classes are imported')
     print
     console.interact()
 

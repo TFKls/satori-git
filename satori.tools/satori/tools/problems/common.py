@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:et
 import base64
 import glob
@@ -52,11 +53,11 @@ def upload_blob(blob_path):
         with open(blob_path) as local_blob:
             blob_size = os.path.getsize(blob_path)
             remote_blob = Blob.create(blob_size)
-            print 'Uploading blob', os.path.basename(blob_path) + ',',
-            print 'size =', blob_size, 'bytes' + '...',
+            print_('Uploading blob', os.path.basename(blob_path) + ',', end="")
+            print_('size =', blob_size, 'bytes' + '...', end="")
             sys.stdout.flush()
             copy_file(local_blob, remote_blob)
-            print 'done'
+            print_('done')
         remote_blob_hash = remote_blob.close()
         assert blob_hash == remote_blob_hash
     blob_name = os.path.basename(blob_path)

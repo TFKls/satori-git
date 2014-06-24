@@ -2,7 +2,9 @@
 """Server for the Thrift protocol.
 """
 
-from types import ClassType, TypeType
+from __future__ import absolute_import
+
+import six
 
 from thrift.server.TServer import TThreadedServer
 from thrift.transport.TTransport import TServerTransportBase, TFramedTransportFactory
@@ -11,11 +13,11 @@ from thrift.protocol.TBinaryProtocol import TBinaryProtocolFactory
 from satori.ars.model import ArsInterface
 from satori.objects import Argument
 
-from processor import ThriftProcessor
+from satori.ars.thrift.processor import ThriftProcessor
 
 class ThriftServer(object):
 
-    @Argument('server_type', type=(ClassType, TypeType), default=TThreadedServer)
+    @Argument('server_type', type=six.class_types, default=TThreadedServer)
     @Argument('transport', type=TServerTransportBase)
     @Argument('interface', type=ArsInterface)
     def __init__(self, server_type, transport, interface):

@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 import cssutils
 import os
@@ -25,7 +26,7 @@ class Command(NoArgsCommand):
 
     def handle_noargs(self, **options):
         if options['files'] == None or options['dest'] == None:
-            print 'Please provide all necessary arguments'
+            print_('Please provide all necessary arguments')
             return
 
         files = options['files'].split(',')

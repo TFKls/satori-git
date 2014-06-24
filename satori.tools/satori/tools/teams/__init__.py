@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import logging
@@ -47,5 +48,5 @@ def uzi_team():
     if not len(users) :
         raise RuntimeError('no users')
 
-    print contest.name, name,[user.name for user in users],users
+    print_(contest.name, name,[user.name for user in users],users)
     Contestant.create(fields=ContestantStruct(contest=contest,name=name,accepted=True), user_list=users)

@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:et
 import os
 import sys
@@ -27,10 +28,7 @@ def _temporary_submit_internal(problem_dir, test_dir, submit_file_path,
     else:
         submit_data = {'content': upload_blob(submit_file_path)}
     submit = TemporarySubmit.create(test_data, submit_data)
-    print 'Testing %s on %s, temporary submit id: %d' % (
-            submit_data['content'].filename,
-            test_data['name'].value,
-            submit.id)
+    print_('Testing %s on %s, temporary submit id: %d' % (submit_data['content'].filename, test_data['name'].value, submit.id))
     return submit
 
 
@@ -38,7 +36,7 @@ def _prettyprint_table(table):
     widths = [max(map(len, column)) for column in zip(*table)]
     for row in table:
         row = [elem.ljust(width) for (elem, width) in zip(row, widths)]
-        print '  '.join(row)
+        print_('  '.join(row))
 
 
 def _results_header():
@@ -97,7 +95,7 @@ def _results_to_2d_table(solutions, submits):
 def _wait_for_results(submits):
     waiting_start = time.time()
     total = len(submits)
-    print 'Waiting for results, %d/%d done' % (0, total),
+    print_('Waiting for results, %d/%d done' % (0, total), end="")
     sys.stdout.flush()
     last_reported = 0
     while True:
@@ -109,15 +107,15 @@ def _wait_for_results(submits):
             break
         if done > last_reported:
             print
-            print 'Waiting for results, %d/%d done' % (done, total),
+            print_('Waiting for results, %d/%d done' % (done, total), end="")
             sys.stdout.flush()
             last_reported = done
         time.sleep(2)
-        print '.',
+        print_('.', end="")
         sys.stdout.flush()
     waiting_time = time.time() - waiting_start
     print
-    print 'You had to wait %ds' % int(round(waiting_time))
+    print_('You had to wait %ds' % int(round(waiting_time)))
 
 
 def _store_result_blob(result_map, blob_name, out_fname):
@@ -162,7 +160,7 @@ def temporary_submit(opts):
         _prettyprint_table(table)
     else:
         for submit in submits:
-            print '=' * 70
+            print_('=' * 70)
             _temporary_submit_result_internal(submit)
     if opts.store_io:
         for submit in submits:
@@ -170,18 +168,18 @@ def temporary_submit(opts):
 
 
 def _print_bold_caption(caption):
-    print '\033[1m' + caption + ':' + '\033[0m',
+    print_('\033[1m' + caption + ':' + '\033[0m', end="")
 
 
 def _temporary_submit_result_internal(submit):
     _print_bold_caption('solution')
-    print submit.submit_data_get_map()['content'].filename
+    print_(submit.submit_data_get_map()['content'].filename)
     _print_bold_caption('test')
-    print submit.test_data_get_map()['name'].value
+    print_(submit.test_data_get_map()['name'].value)
 
     result = submit.result_get_list()
     if not result:
-        print 'no results available yet'
+        print_('no results available yet')
         return
     for attr in result:
         _print_bold_caption(attr.name)
@@ -191,9 +189,9 @@ def _temporary_submit_result_internal(submit):
             content = content.rstrip('\n')
             if not content:
                 continue
-            print content
+            print_(content)
         else:
-            print attr.value
+            print_(attr.value)
 
 
 def temporary_submit_result(opts):

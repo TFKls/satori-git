@@ -1,3 +1,4 @@
+from six import print_
 #!/usr/bin/env python
 # vim:ts=4:sts=4:sw=4:expandtab
 """Test suite for satori.core.
@@ -31,14 +32,14 @@ class TestToken(unittest.TestCase):
         """
         tok1 = Token(user_id='test_user', data={'test' : 'data'}, auth='test_auth', validity=timedelta(days=1))
 
-        print 'Token:    ', tok1
-        print 'User:     ', tok1.user_id
-        print 'Auth:     ', tok1.auth
-        print 'Data:     ', tok1.data
-        print 'Valid:    ', tok1.valid
-        print 'Deadline: ', tok1.deadline
-        print 'Validity: ', tok1.validity
-        print 'Salt:     ', tok1.salt
+        print_('Token:    ', tok1)
+        print_('User:     ', tok1.user_id)
+        print_('Auth:     ', tok1.auth)
+        print_('Data:     ', tok1.data)
+        print_('Valid:    ', tok1.valid)
+        print_('Deadline: ', tok1.deadline)
+        print_('Validity: ', tok1.validity)
+        print_('Salt:     ', tok1.salt)
 
 
         tok2 = Token(str(tok1))
@@ -46,14 +47,14 @@ class TestToken(unittest.TestCase):
         self.assertEqual(tok2.auth, 'test_auth')
         self.assertEqual(tok2.salt, tok1.salt)
 
-        print 'Token:    ', tok2
-        print 'User:     ', tok2.user_id
-        print 'Auth:     ', tok2.auth
-        print 'Data:     ', tok2.data
-        print 'Valid:    ', tok2.valid
-        print 'Deadline: ', tok2.deadline
-        print 'Validity: ', tok2.validity
-        print 'Salt:     ', tok2.salt
+        print_('Token:    ', tok2)
+        print_('User:     ', tok2.user_id)
+        print_('Auth:     ', tok2.auth)
+        print_('Data:     ', tok2.data)
+        print_('Valid:    ', tok2.valid)
+        print_('Deadline: ', tok2.deadline)
+        print_('Validity: ', tok2.validity)
+        print_('Salt:     ', tok2.salt)
 
     def tearDown(self):
         """Clean up.
@@ -82,17 +83,17 @@ class TestLogin(unittest.TestCase):
 
     def testLogin(self):
         tok = Security.Security__login(login='mammoth', password='mammoth', namespace='')
-        print 'Token:    ', tok
-        print 'User:     ', tok.user
-        print 'Auth:     ', tok.auth
-        print 'Data:     ', tok.data
-        print 'Valid:    ', tok.valid
-        print 'Deadline: ', tok.deadline
-        print 'Validity: ', tok.validity
-        print 'Salt:     ', tok.salt
+        print_('Token:    ', tok)
+        print_('User:     ', tok.user)
+        print_('Auth:     ', tok.auth)
+        print_('Data:     ', tok.data)
+        print_('Valid:    ', tok.valid)
+        print_('Deadline: ', tok.deadline)
+        print_('Validity: ', tok.validity)
+        print_('Salt:     ', tok.salt)
         user = Security.Security__whoami(token=tok)
-        print 'User.login', user.login
-        print 'VIEW?', Security.Security__right_have(token=tok, object=user, right='VIEW')
+        print_('User.login', user.login)
+        print_('VIEW?', Security.Security__right_have(token=tok, object=user, right='VIEW'))
 
 
 

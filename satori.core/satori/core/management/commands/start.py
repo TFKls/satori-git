@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 
 from   django.conf  import settings
@@ -34,7 +35,7 @@ class Command(NoArgsCommand):
             os._exit(0)
         else:
             def handle_signal(signum, frame):
-                print 'foreground caught signal {0}'.format(signalnames.get(signum, signum))
+                print_('foreground caught signal {0}'.format(signalnames.get(signum, signum)))
                 process.terminate()
 
             signal(SIGINT, handle_signal)

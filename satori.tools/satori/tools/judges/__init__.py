@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import logging
@@ -51,7 +52,7 @@ def get_judges():
         ext = judge.filename.split('.')[-1]
         name = os.path.join(judges_dir,judge.value+'.'+ext)
         test.data_get_blob_path('judge', name);
-    print stats
+    print_(stats)
 
 def update_judges():
     from satori.tools import options, setup
@@ -90,4 +91,4 @@ def update_judges():
             oa = OaMap(test.data_get_map())
             oa.set_blob_path('judge', name, filename=fn)
             test.modify_full(TestStruct(), oa.get_map())
-    print stats
+    print_(stats)

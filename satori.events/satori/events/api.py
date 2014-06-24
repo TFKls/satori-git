@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 """The public API of satori.events.
 """
@@ -73,7 +74,7 @@ class Manager(Object):
             except StopIteration:
                 command = Disconnect()
             except Exception:
-                print 'Exception in client, removing from queue'
+                print_('Exception in client, removing from queue')
                 traceback.print_exc()
                 self.scheduler.remove(client)
             else:

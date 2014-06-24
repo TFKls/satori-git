@@ -1,11 +1,15 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from __future__ import absolute_import
+from six import exec_
+import six
+
 import os
 import shutil
 import logging
 from satori.ars.model import ArsType, ArsTypeAlias, ArsInt64, ArsStructure, ArsExceptionBase, ArsDateTime
 from satori.ars import perf
-from token_container import token_container
+from satori.client.common.token_container import token_container
 
 class ArsUnwrapId(ArsTypeAlias):
     def __init__(self, cls):
@@ -93,7 +97,7 @@ def unwrap_procedure(_proc):
             argtype = _args[i][1]
             newargs.append(argtype.convert_to_ars(value))
 
-        for (name, value) in kwargs.iteritems():
+        for (name, value) in six.iteritems(kwargs):
             if not name in _arg_numbers:
                 raise TypeError('{0} got an unexpected keyword argument \'{1}\''.format(_procname, name))
 
@@ -109,7 +113,7 @@ def unwrap_procedure(_proc):
             ex = ex.ars_type().convert_from_ars(ex)
             reraise = compile('def ' + _procname + '():\n raise ex\n', '<thrift>', 'exec')
             exception = {'ex': ex, '__loader__': StubCodeLoader(_procname)}
-            exec reraise in exception
+            exec_(reraise, exception)
             exception[_procname]()
             
         perf.begin('ret')

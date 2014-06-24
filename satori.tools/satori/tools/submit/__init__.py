@@ -1,3 +1,4 @@
+from six import print_
 import argparse
 import logging
 import os.path
@@ -44,9 +45,9 @@ def submit():
 
     opts.submit_file.close()
 
-    print 'Submit successfully created:'
-    print '  Contest:', contest.name
-    print '  Problem:', problem.code, '-', problem.title
-    print '  File:', args[1]
-    print '  Submit ID:', submit.id
+    print_('Submit successfully created:')
+    print_('  Contest:', contest.name)
+    print_('  Problem:', problem.code, '-', problem.title)
+    print_('  File:', args[1])
+    print_('  Submit ID:', submit.id)
 

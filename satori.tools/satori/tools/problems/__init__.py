@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:et
 import logging
 
@@ -72,13 +73,13 @@ def main():
 
 def list_dispatchers(_):
     for name in sorted(Global.get_dispatchers().keys()):
-        print name
+        print_(name)
 
 #############################     Reporters       #############################
 
 def list_reporters(_):
     for name in sorted(Global.get_reporters().keys()):
-        print name
+        print_(name)
 
 def list_reporter_params(opts):
     reporter_name = opts.REPORTER_NAME
@@ -90,19 +91,19 @@ def list_reporter_params(opts):
         params = parsed_reporter.params
         padding = max([len(param.name) for param in params])
         for param in params:
-            print param.name.ljust(padding),
-            print param.description + ',', 
-            print ('required' if param.required else 'optional') + ',',
-            print 'default=' + str(param.default)
+            print_(param.name.ljust(padding), end="")
+            print_(param.description + ',', end="") 
+            print_(('required' if param.required else 'optional') + ',', end="")
+            print_('default=' + str(param.default))
     else:
-        print reporter_name, 'has no params'
+        print_(reporter_name, 'has no params')
 
 #############################    List problems    #############################
 
 def list_problems(_):
     problem_names = [problem.name for problem in Problem.filter()]
     for name in sorted(problem_names):
-        print name
+        print_(name)
 
 #############################   Download submit   #############################
 
@@ -115,5 +116,4 @@ def download_submit(opts):
     local_blob_name = opts.SUBMITID + '.' + remote_blob_name.split('.')[-1]
     with open(local_blob_name, 'w') as local_blob:
         copy_file(remote_blob, local_blob)
-    print 'mv %s %s  # to get an original file name' % (
-            local_blob_name, remote_blob_name)
+    print_('mv %s %s  # to get an original file name' % (local_blob_name, remote_blob_name))

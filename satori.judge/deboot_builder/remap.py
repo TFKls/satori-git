@@ -1,3 +1,4 @@
+from six import print_
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 # vim:ts=4:sts=4:sw=4:expandtab
@@ -104,13 +105,13 @@ for g in current.group.values():
     if g.name in group_names:
 	    group_map[g.gid] = group_names[g.name]
 	else:
-		print 'Group ', g.name, ' is incorrect'
+		print_('Group ', g.name, ' is incorrect')
 		ok = False
 for p in current.passwd.values():
     if p.name in passwd_names:
     	passwd_map[p.uid] = passwd_names[p.name]
     else:
-		print 'User ', p.name, ' is incorrect'
+		print_('User ', p.name, ' is incorrect')
 		ok = False
 if not ok:
 	sys.exit(1)
@@ -158,8 +159,8 @@ def moves(i_map, i_free):
 
 group_moves = moves(group_map, free_group)
 passwd_moves = moves(passwd_map, free_passwd)
-print 'GID moves: ', group_moves
-print 'UID moves: ', passwd_moves
+print_('GID moves: ', group_moves)
+print_('UID moves: ', passwd_moves)
 
 
 for src,dst in group_moves:

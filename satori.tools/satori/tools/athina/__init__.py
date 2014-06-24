@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import logging
@@ -78,8 +79,8 @@ def athina_import():
 
     while not args.name:
         args.name = raw_input('Contest name: ')
-    print 'Contest name: ', args.name
-    print 'Test environment: ', args.environment
+    print_('Contest name: ', args.name)
+    print_('Test environment: ', args.environment)
 
     time_start =  None
     with open(get_path('times', 'start'), 'r') as f:

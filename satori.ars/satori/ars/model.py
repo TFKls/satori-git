@@ -2,10 +2,14 @@
 """An in-memory model for an exported service.
 """
 
+import six
+
 from datetime       import datetime
 from time           import mktime
-from types          import NoneType, FunctionType
+from types          import FunctionType
 from satori.objects import Argument, DispatchOn
+
+NoneType = type(None)
 
 
 class ArsElement(object):
@@ -109,13 +113,16 @@ class ArsStringType(ArsAtomicType):
         return True
 
     def do_convert_to_ars(self, value):
-        if isinstance(value, unicode):
+        if isinstance(value, six.text_type):
             return value.encode('utf-8')
         else:
             return value
 
     def do_convert_from_ars(self, value):
-        return unicode(value, 'utf-8')
+        if isinstance(value, six.binary_type):
+            return six.text_type(value, 'utf-8')
+        else:
+            return value
 
 ArsString = ArsStringType(name='ArsString')
 
@@ -252,7 +259,7 @@ class ArsNamedTuple(object):
             self.append(item)
 
     def __contains__(self, elem):
-        if isinstance(elem, (str, unicode)):
+        if isinstance(elem, six.string_types):
             return elem in self.names
         elif isinstance(elem, ArsNamedElement):
             return (elem.name in self.names) and (self.names[elem.name] == elem)
@@ -266,7 +273,7 @@ class ArsNamedTuple(object):
         return self.items.__len__()
 
     def __getitem__(self, index):
-        if isinstance(index, (str, unicode)):
+        if isinstance(index, six.string_types):
             return self.names[index]
         elif isinstance(index, int):
             return self.items[index]

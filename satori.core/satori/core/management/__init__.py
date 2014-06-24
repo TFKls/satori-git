@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import os
@@ -20,7 +21,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
     from satori.core.models       import Security, Privilege, Global, User, Machine
     from satori.core.sec.token    import Token
 
-    print 'Installing DBEV'
+    print_('Installing DBEV')
 
     sql = install_dbev_sql()
     cursor = connection.cursor()
@@ -28,10 +29,10 @@ def create_admin(app, created_models, verbosity, **kwargs):
         cursor.execute(query)
     cursor.close()
 
-    print 'Creating Global object'
+    print_('Creating Global object')
     Global.create()
 
-    print 'Installing DBEV rights'
+    print_('Installing DBEV rights')
 
     sql = install_rights_sql()
     from django.db import connection, transaction
@@ -40,21 +41,21 @@ def create_admin(app, created_models, verbosity, **kwargs):
         cursor.execute(query)
     cursor.close()
 
-    print 'Creating superuser'
+    print_('Creating superuser')
 
     token_container.set_token(Token(''))
     admin = User.create(DjangoStruct('User')(login=settings.ADMIN_NAME, firstname='Super', lastname='Admin', activated=True))
     admin.set_password(settings.ADMIN_PASSWORD)
     Privilege.global_grant(admin, 'ADMIN')
 
-    print 'Creating checkers'
+    print_('Creating checkers')
 
     for (login, password, address, netmask) in settings.CHECKERS:
         checker = Machine.create(DjangoStruct('Machine')(login=login, address=address, netmask=netmask))
         checker.set_password(password)
         Privilege.global_grant(checker, 'JUDGE')
 
-    print 'Registering default judges'
+    print_('Registering default judges')
     
     judges_dir = os.path.join(os.path.split(__file__)[0], '..', 'judges')
     for judge in [ os.path.join(judges_dir, entry) for entry in os.listdir(judges_dir) if os.path.isfile(os.path.join(judges_dir, entry)) ]:
@@ -65,7 +66,7 @@ def create_admin(app, created_models, verbosity, **kwargs):
                 shutil.copyfileobj(judge_file, blob)
             blob.close()
 
-    print 'Setting default profile fields...'
+    print_('Setting default profile fields...')
     profile_xml = """
 #@<profile>
 #@  <input>

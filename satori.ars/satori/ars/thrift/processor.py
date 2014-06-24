@@ -2,6 +2,8 @@
 """Processor for the thrift protocol.
 """
 
+from six.moves import range
+
 import logging
 
 from thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
@@ -14,6 +16,19 @@ try:
     from thrift.protocol import fastbinary
 except:
     fastbinary = None
+
+
+class Struct(dict):
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError:
+            raise AttributeError(name)
+
+    def __setattr__(self, name, value):
+        self[name] = value
+
 
 class ThriftProcessor(TProcessor):
     """ARS implementation of thrift.Thrift.TProcessor.
@@ -91,7 +106,7 @@ class ThriftProcessor(TProcessor):
     def _send(self, value, type_, proto): # pylint: disable-msg=E0102
         proto.writeStructBegin(type_.name)
         for index, field in enumerate(type_.fields):
-            fvalue = value.get(field.name, None)
+            fvalue = getattr(value, field.name, None)
             if fvalue is not None:
                 proto.writeFieldBegin(field.name, self._ttype(field.type), index + type_.base_index)
                 self._send(fvalue, field.type, proto)
@@ -150,7 +165,7 @@ class ThriftProcessor(TProcessor):
 
     @DispatchOn(type_=ArsStructure)
     def _recv(self, type_, proto): # pylint: disable-msg=E0102
-        value = {}
+        value = Struct()
         proto.readStructBegin()
         while True:
             fname, ftype, findex = proto.readFieldBegin()
@@ -181,7 +196,7 @@ class ThriftProcessor(TProcessor):
         itype, count = proto.readListBegin()
         if itype != self._ttype(type_.element_type):
             raise Exception("Element type mismatch")
-        for index in xrange(count):
+        for index in range(count):
             value.append(self._recv(type_.element_type, proto))
         proto.readListEnd()
         return value
@@ -257,7 +272,7 @@ class ThriftProcessor(TProcessor):
             oproto.trans.write(fastbinary.encode_binary(value, self.typeargs(struct)[1]))
         else:
             # the above code that is not using fastbinary is totally untested and should not be used
-            raise Exception('fastbinary is required')
+            # raise Exception('fastbinary is required')
             self._send(value, struct, oproto)
 
     def recv_struct(self, struct, iproto):
@@ -267,7 +282,7 @@ class ThriftProcessor(TProcessor):
             return ret
         else:
             # the above code that is not using fastbinary is totally untested and should not be used
-            raise Exception('fastbinary is required')
+            # raise Exception('fastbinary is required')
             return self._recv(struct, iproto)
 
     def process(self, iproto, oproto):

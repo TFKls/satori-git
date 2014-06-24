@@ -1,7 +1,9 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from six import print_
+
 from satori.client.common import want_import, remote
-import ConfigParser
+from six.moves import configparser
 import getpass
 import logging
 import argparse
@@ -10,7 +12,7 @@ import sys
 
 want_import(globals(), 'Machine', 'User', 'token_container', 'TokenInvalid', 'TokenExpired')
 
-config = ConfigParser.RawConfigParser()
+config = configparser.RawConfigParser()
 options = argparse.ArgumentParser()
 thrift_settings = options.add_argument_group('thrift settings')
 thrift_settings.add_argument('-c', '--config', help='alternative configuration file')
@@ -48,7 +50,7 @@ class AuthSetup:
 
     def authenticate(self):
         if self.machine:
-            print 'Machine name: {0}'.format(self.machine)
+            print_('Machine name: {0}'.format(self.machine))
             if not self.password:
                 self.password = getpass.getpass('Password: ')
             try:
@@ -61,7 +63,7 @@ class AuthSetup:
                 self.username = raw_input('User name: ')
                 self.password = None
             else:
-                print 'User name: {0}'.format(self.username)
+                print_('User name: {0}'.format(self.username))
             if not self.password:
                 self.password = getpass.getpass('Password: ')
             try:
@@ -174,6 +176,6 @@ def catch_exceptions(f):
         except:
             logging.exception("An error occured")
             exctype, value = sys.exc_info()[:2]
-            print >>sys.stderr, "An error occured:", str(value)
+            print_("An error occured: ", str(value), file=sys.stderr)
     return ff
 

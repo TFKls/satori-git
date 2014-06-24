@@ -2,11 +2,13 @@
 """Client for the Thrift protocol.
 """
 
+from __future__ import absolute_import
+
 import errno
 import threading
 import socket
 from types import FunctionType
-from httplib import HTTPConnection, HTTPSConnection, HTTPException
+from six.moves.http_client import HTTPConnection, HTTPSConnection, HTTPException
 
 from thrift.Thrift import TType, TProcessor, TMessageType, TApplicationException
 from thrift.transport.TTransport import TFramedTransport, TTransportException, TMemoryBuffer
@@ -17,7 +19,7 @@ from satori.ars.model import ArsInterface
 from satori.objects import Argument, Signature, ArgumentMode
 from satori.objects import Argument, DispatchOn, Signature, Namespace
 
-from processor import ThriftProcessor
+from satori.ars.thrift.processor import ThriftProcessor
 
 class ThriftClient(threading.local):
     @Argument('interface', type=ArsInterface)

@@ -1,14 +1,19 @@
 # vim:ts=4:sts=4:sw=4:expandtab
 
+from __future__ import absolute_import
+
+import six
+
 import getpass
 import logging
-import new
+if six.PY2:
+    import new
 import os
 import shutil
 import sys
 import urllib
-from httplib import HTTPConnection, HTTPSConnection
-from StringIO import StringIO
+from six.moves.http_client import HTTPConnection, HTTPSConnection
+from six import StringIO
 from types import FunctionType
 
 from thrift.transport.TSocket import TSocket
@@ -19,9 +24,9 @@ from satori.client.common import setup_api
 from satori.ars.model import ArsString, ArsProcedure, ArsService, ArsInterface
 from satori.ars.thrift import ThriftClient, ThriftReader, ThriftHttpClient
 from satori.objects import Argument, Signature, ArgumentMode
-from unwrap import unwrap_interface
-from oa_map import get_oa_map
-from token_container import token_container
+from satori.client.common.unwrap import unwrap_interface
+from satori.client.common.oa_map import get_oa_map
+from satori.client.common.token_container import token_container
 
 client_host = ''
 client_port = 0
@@ -32,7 +37,7 @@ http = False
 #http = True
 
 def transport_factory():
-#    return THttpClient(("https" if ssl else "http") + "://" + client_host + ":" + str(blob_port) + "/thrift")
+#    return THttpClient(("https" if ssl else "http") + "://" + client_host + ":" + str(client_port) + "/thrift")
     if ssl:
         return TSSLSocket(host=client_host, port=client_port, validate=False)
     else:

@@ -7,10 +7,17 @@ __all__ = (
     'Object', 'Argument', 'ArgumentMode', 'ArgumentError',
 )
 
-
+import six
 from inspect import getargspec
 from sys import _getframe
-import types
+
+if six.PY2:
+    from types import DictType, NoneType, TupleType
+else:
+    ClassType = type
+    DictType = dict
+    NoneType = type(None)
+    TupleType = tuple
 
 
 class Namespace(dict):
@@ -101,19 +108,19 @@ class ArgumentConstraint(object):
     @staticmethod
     def parse(spec):
         if spec is None:
-            return TypeConstraint(types.NoneType)
-        if isinstance(spec, (types.ClassType, types.TypeType)):
+            return TypeConstraint(NoneType)
+        if isinstance(spec, six.class_types):
             return TypeConstraint(spec)
-        if isinstance(spec, types.TupleType):
+        if isinstance(spec, TupleType):
             return ConstraintDisjunction.of([
                 ArgumentConstraint.parse(m) for m in spec
             ])
-        if isinstance(spec, types.DictType):
+        if isinstance(spec, DictType):
             handlers = {
                 'type': ArgumentConstraint.parse
             }
             return ConstraintConjunction.of([
-                handlers.get(k, lambda v: None)(v) for k, v in spec.iteritems()
+                handlers.get(k, lambda v: None)(v) for k, v in six.iteritems(spec)
             ])
         raise ArgumentError(
             "Unrecognized argument constraint specification '{0}'"
@@ -478,7 +485,7 @@ class Signature(object):
                     else:
                         self.anonymous.append(value)
                 # apply specifications
-                for name, spec in signature.arguments.iteritems():
+                for name, spec in six.iteritems(signature.arguments):
                     spec.apply(self.named, name)
 
             def call(self, callable_, strict=True):
@@ -491,7 +498,7 @@ class Signature(object):
                 if signature.extra_positional:
                     args += self.anonymous
                 kwargs = {}
-                for name, value in self.named.iteritems():
+                for name, value in six.iteritems(self.named):
                     if name in signature.positional:
                         continue
                     if name not in signature.arguments and not signature.extra_keyword:
@@ -549,9 +556,10 @@ class DispatchOn(Object):
     def __init__(self, **kwargs):
         if len(kwargs) != 1:
             raise ArgumentError("DispatchOn takes exactly one keyword argument")
-        self.name = kwargs.keys()[0]
+        for key in kwargs.keys():
+            self.name = key
         typ = kwargs[self.name]
-        self.types = isinstance(typ, types.TupleType) and typ or (typ,)
+        self.types = isinstance(typ, TupleType) and typ or (typ,)
 
     def __call__(self, function):
         combined = _getframe(1).f_locals.get(function.__name__)
@@ -562,7 +570,7 @@ class DispatchOn(Object):
                 values = signature.Values(*args, **kwargs)
                 key = values.named[name]
                 implementations = _dispatch.func_dict[MAGIC_MAP]
-                class_ = isinstance(key, types.ClassType) and types.ClassType or key.__class__
+                class_ = isinstance(key, ClassType) and ClassType or key.__class__
                 for parent in class_.__mro__:
                     if parent in implementations:
                         return values.call(implementations[parent])
@@ -571,6 +579,8 @@ class DispatchOn(Object):
             combined = _dispatch
             combined.__name__ = function.__name__              # pylint: disable-msg=W0622
             combined.__doc__ = function.__doc__                # pylint: disable-msg=W0622
+            if not hasattr(combined, 'func_dict'):
+                combined.func_dict = { }
             combined.func_dict[MAGIC_SIG] = signature
             combined.func_dict[MAGIC_DIS] = self.name
             combined.func_dict[MAGIC_MAP] = dict()

@@ -1,3 +1,4 @@
+from six import print_
 # vim:ts=4:sts=4:sw=4:expandtab
 
 import ctypes
@@ -196,7 +197,7 @@ class SatoriMasterProcess(SatoriProcess):
                 pass
         else:
             fp.close()
-            print 'Satori not running'
+            print_('Satori not running')
 
 
 
