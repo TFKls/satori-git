@@ -38,6 +38,7 @@
 
 #include <linux/fs.h>
 #include <linux/limits.h>
+#include <linux/perf_event.h>
 
 #include <asm/param.h>
 
@@ -828,6 +829,72 @@ Controller::Stats Controller::GroupStats(const string& cgroup)
     return s;
 }
 
+long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int group_fd, unsigned long flags)
+{
+    int ret;
+    ret = syscall(__NR_perf_event_open, hw_event, pid, cpu, group_fd, flags);
+    return ret;
+}
+
+PerfCounters::PerfCounters(int pid)
+    : fd_instructions(-1)
+    , fd_cycles(-1)
+{
+    perf_event_attr attr;
+    memset(&attr, 0, sizeof(struct perf_event_attr));
+    attr.size    = sizeof(perf_event_attr);
+    attr.type    = PERF_TYPE_HARDWARE;
+    attr.config  = PERF_COUNT_HW_INSTRUCTIONS;
+    attr.inherit = 1;
+    attr.enable_on_exec = 1;
+
+    //TODO: maybe, someday, we can do it using PERF_FLAG_PID_CGROUP ?
+    fd_instructions = perf_event_open(&attr, pid, -1, -1, 0);
+    //TODO: -1
+    attr.config  = PERF_COUNT_HW_CPU_CYCLES;
+    fd_cycles = perf_event_open(&attr, pid, -1, fd_instructions, 0);
+    //TODO: -1
+}
+PerfCounters::~PerfCounters()
+{
+    if (fd_instructions >= 0)
+        close(fd_instructions);
+    if (fd_cycles >= 0)
+        close(fd_cycles);
+}
+struct perf_read_format {
+    unsigned long value;
+//    unsigned long time_enabled;
+//    unsigned long time_running;
+//    unsigned long id;
+};
+PerfCounters::Stats PerfCounters::PerfStats()
+{
+    Stats s;
+    perf_read_format res;
+    if (fd_instructions >= 0) {
+        ssize_t r = read(fd_instructions, &res, sizeof(res));
+        if (r != sizeof(res)) {
+            close(fd_instructions);
+            s.instructions = 0;
+            fd_instructions = -1;
+        }
+        s.instructions = res.value;
+    } else
+        s.instructions = 0;
+    if (fd_cycles >= 0) {
+        ssize_t r = read(fd_instructions, &res, sizeof(res));
+        r = read(fd_cycles, &res, sizeof(res));
+        if (r != sizeof(res)) {
+            close(fd_cycles);
+            s.cycles = 0;
+            fd_cycles = -1;
+        }
+        s.cycles = res.value;
+    } else
+        s.cycles = 0;
+    return s;
+}
 
 bool Runner::check_times()
 {
@@ -858,15 +925,22 @@ bool Runner::check_times()
         Debug("Real time below zero: %ld", realtimesofar);
         realtimesofar = 0;
     }
+    PerfCounters::Stats perf_stats = perf->PerfStats();
+
     result.real_time = realtimesofar;
     result.cpu_time = proctimesofar.time;
     result.user_time = proctimesofar.user;
     result.system_time = proctimesofar.system;
     result.memory = max((unsigned long long)result.memory, curmemory/1024);
+    result.perf_instructions = perf_stats.instructions;
+    result.perf_cycles = perf_stats.cycles;
     if ((cpu_time > 0 && cpu_time < (long)result.cpu_time) ||
             (real_time > 0 && real_time < (long)result.real_time) ||
             (user_time > 0 && user_time < (long)result.user_time) ||
-            (system_time > 0 && system_time < (long)result.system_time))
+            (system_time > 0 && system_time < (long)result.system_time) ||
+            (instructions > 0 && instructions < (long)result.perf_instructions) ||
+            (cycles > 0 && cycles < (long)result.perf_cycles)
+       )
     {
         result.SetStatus(Result::RES_TIME);
         return false;
@@ -1370,6 +1444,8 @@ void Runner::run_parent()
     if (clock_gettime(CLOCK_REALTIME, &ts))
         Fail("clock_gettime(CLOCK_REALTIME) failed");
     start_time = miliseconds(ts);
+
+    perf = unique_ptr<PerfCounters>(new PerfCounters(child));
 
     close(pipefd[1]);
     close(pipefd[0]);
