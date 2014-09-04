@@ -244,13 +244,15 @@ int finish()
   }
   if (!config.quiet && !config.silent)
   {
-    printf("Status : %d\n", run.result.exit_status);
-    printf("Retcode: %d\n", WEXITSTATUS(run.result.exit_status));
-    printf("Memory : %lu\n", max(run.result.memory, run.result.cgroup_memory));
-    printf("CPU    : %lu\n", max(run.result.cpu_time, run.result.cgroup_time));
-    printf("Time   : %lu\n", run.result.real_time);
-    printf("Read   : %lu\n", run.result.sum_read);
-    printf("Write  : %lu\n", run.result.sum_write);
+    printf("Status      : %d\n", run.result.exit_status);
+    printf("Retcode     : %d\n", WEXITSTATUS(run.result.exit_status));
+    printf("Memory      : %lu\n", max(run.result.memory, run.result.cgroup_memory));
+    printf("CPU         : %lu\n", max(run.result.cpu_time, run.result.cgroup_time));
+    printf("Time        : %lu\n", run.result.real_time);
+    printf("Read        : %lu\n", run.result.sum_read);
+    printf("Write       : %lu\n", run.result.sum_write);
+    printf("Instructions: %lu\n", run.result.perf_instructions);
+    printf("Cycles      : %lu\n", run.result.perf_cycles);
   }
   if (run.result.status == Result::RES_OK)
     return 0;

@@ -38,31 +38,32 @@ if [ -z "${ARCH}" ]; then
   ARCH=amd64
 fi
 if [ -z "${DIST}" ]; then
-  DIST=raring
+  DIST=trusty
 fi
 INC=aptitude,locales
 LOC=en_US.UTF-8
-JUDGE="gcc g++ gccgo g++-4.8 gcc-4.8 gccgo-4.8 golang-go fp-compiler openjdk-7-jdk a2ps iptables python-yaml libpopt-dev libcap-dev libcurl4-openssl-dev libyaml-dev time libgmp3-dev make p7zip-full"
-CHECKER="${JUDGE} linux-image-generic linux-headers-generic linux-tools smartmontools mdadm lvm2 ssh nfs-client vim screen mc rsync bash-completion psmisc mercurial debootstrap squashfs-tools tshark nmap ethtool iptraf ctorrent atftp lzma lshw memtest86+ strace telnet usbutils command-not-found language-pack-en network-manager subversion unzip mercurial"
-UZI="${JUDGE} linux-image-generic linux-tools openssh-server rsync ubuntu-desktop indicator-applet-complete indicator-session indicator-datetime unity-lens-applications unity-lens-files xserver-xorg-video-all command-not-found language-pack-en gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins codeblocks scite xterm mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm-dev dconf-tools openjdk-7-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate ethtool python-tk"
-FULL="${CHECKER} ${UZI} dmraid rdate casper libstdc++5 clang google-perftools libgoogle-perftools-dev gprolog"
-FULL="${FULL} firefox icedtea-7-plugin icedtea-netx eclipse eclipse-cdt acroread maven2"
+JUDGE="gcc g++ gccgo gcc-multilib g++-multilib gccgo-multilib golang-go golang-go.tools fp-compiler openjdk-7-jdk a2ps iptables python-yaml libpopt-dev libcap-dev libcurl4-openssl-dev libyaml-dev time libgmp3-dev make p7zip-full p7zip-rar libpam-cgroup"
+CHECKER="${JUDGE} linux-image-generic linux-headers-generic linux-tools-generic smartmontools mdadm lvm2 ssh nfs-client nbd-client vim screen mc rsync gpm bash-completion psmisc mercurial debootstrap squashfs-tools tshark nmap ethtool iptraf ctorrent atftp lzma lshw memtest86+ strace telnet usbutils command-not-found language-pack-en network-manager subversion unzip mercurial reptyr"
+UZI="${JUDGE} linux-image-generic linux-headers-generic linux-tools-generic openssh-server rsync gpm ubuntu-desktop indicator-applet-complete indicator-session indicator-datetime unity-lens-applications unity-lens-files xserver-xorg-video-all command-not-found language-pack-en gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins codeblocks scite xterm mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm-dev dconf-tools openjdk-7-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate ethtool python-tk reptyr"
+FULL="${CHECKER} ${UZI} dmraid rdate casper libstdc++5 clang google-perftools libgoogle-perftools-dev gprolog ecryptfs"
+FULL="${FULL} firefox icedtea-7-plugin icedtea-netx netbeans eclipse eclipse-cdt acroread maven2 x2goclient x2goserver"
 FULL="${FULL} gnome-desktop-environment gnome-shell gnome-applets gnome-backgrounds gnome-control-center gnome-do gnome-system-tools gnome-themes-ubuntu gnome-video-effects"
 FULL="${FULL} compiz-plugins compizconfig-settings-manager"
 FULL="${FULL} ftp meld kwrite kdbg kate konsole"
-FULL="${FULL} nscd ldap-utils ldap-auth-client libnss-ldapd libpam-afs-session libpam-krb5 krb5-user libpam-ldap libpam-mount libpam-ssh openafs-client openafs-krb5 rdiff-backup squashfs-tools sshfs exfat-fuse exfat-utils smbclient"
+FULL="${FULL} sssd ldap-utils ldap-auth-client libpam-cracklib libpam-pwquality libpam-sss libpam-afs-session krb5-user libpam-mount libpam-ssh openafs-client openafs-krb5 rdiff-backup squashfs-tools sshfs exfat-fuse exfat-utils smbclient"
 FULL="${FULL} aspell-en aspell-pl language-pack-pl language-pack-en language-pack-gnome-pl language-pack-gnome-en language-pack-kde-pl language-pack-kde-en myspell-en-us myspell-en-gb myspell-pl"
 FULL="${FULL} bash-completion openvpn finger"
 FULL="${FULL} libtool autotools-dev autoconf binutils-dev automake bison cmake dpatch ddd flex indent m4 monodevelop mono-mcs mono-gmcs nasm ocaml cervisia codelite doxygen intltool intltool-debian ipython libboost-dev php5-cli rails rhino jedit"
 FULL="${FULL} postgresql-client pgadmin3 sqlite3 python-virtualenv python-scipy"
-FULL="${FULL} alien dpkg-dev arj debootstrap bc bcrypt mcrypt cabextract zip unzip rar unrar ctorrent lzip lzma make nfs-client smartmontools mdadm lvm2 lsof p7zip-full pwgen zoo unace unshield"
+FULL="${FULL} alien dpkg-dev arj debootstrap bc bcrypt mcrypt cabextract zip unzip rar unrar ctorrent lzip lzma make nfs-client nbd-client smartmontools mdadm lvm2 lsof p7zip-full pwgen zoo unace unshield"
 FULL="${FULL} lynx elinks alpine wget mutt w3m procmail ncftp hexedit curl"
 FULL="${FULL} blender gimp inkscape dia djview gnuplot qcad"
 FULL="${FULL} opera google-chrome-stable google-talkplugin thunderbird konqueror calibre"
 FULL="${FULL} libreoffice-base"
-FULL="${FULL} coq erlang gap ghc6 gfortran agda"
+FULL="${FULL} nodejs-legacy npm"
+FULL="${FULL} coq erlang gap ghc gfortran agda smlnj rlwrap"
 FULL="${FULL} dosbox dosemu tofrodos"
-FULL="${FULL} ethtool fakeroot ia32-libs iproute iptraf mtr nmap tshark htop ltrace strace telnet tcpdump traceroute wireshark xosview"
+FULL="${FULL} ethtool fakeroot ia32-libs iproute iptraf mtr nmap tshark htop iotop ltrace strace telnet tcpdump traceroute wireshark xosview"
 FULL="${FULL} ffmpeg flashplugin-installer mplayer mencoder x264 smplayer vlc"
 FULL="${FULL} frozen-bubble"
 FULL="${FULL} kadu kdesvn konwert krusader kile digikam dolphin pidgin kfind"
@@ -75,9 +76,12 @@ FULL="${FULL} skype virtualbox virtualbox-guest-utils wine dropbox nautilus-open
 FULL="${FULL} ttf-unifont msttcorefonts"
 FULL="${FULL} subversion git mercurial libglew1.5 mysql-client ivy menu"
 FULL="${FULL} orbit2 time gv openjpeg-tools"
-FULL="${FULL} mlton shutter libboost-all-dev devscripts evtest mesa-utils ekg2 clusterssh tmux caffeine lxc-docker inotify-tools"
-SERVER="${FULL} linux-source vlan apt-cacher-ng nginx apache2-mpm-prefork libapache2-svn libapache2-mod-fcgid libfcgi-perl libfcgi-ruby1.8 libapache2-mod-proxy-html libapache2-mod-auth-mysql apache2-suexec-custom php5-cgi php5-curl php5-gd php5-mysql php5-pgsql bittorrent clamav clamav-daemon exim4 exim4-daemon-heavy greylistd srs memcached memtest86+ memtester nfs-kernel-server php5 quota quotatool spamassassin tinyca tinyproxy wakeonlan ntp atftpd subversion-tools mercurial-server trac trac-mercurial bittorrent trac-bitten ant maven2 ivy ant-contrib python-zc.buildout postgresql mysql-server"
-SERVER="${SERVER} libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev libevent-dev libplot-dev libplplot-dev libzbar-dev libqrencode-dev libgsl0-dev libhighgui-dev libopenjpeg-dev libsfml-dev libcsfml-dev libfreeimage-dev libavdevice-dev libavfilter-dev libpostproc-dev libcgal-dev libtheora-dev libopencv-dev"
+FULL="${FULL} mlton shutter libboost-all-dev devscripts evtest mesa-utils ekg2 clusterssh tmux pipelight lxc-docker inotify-tools zlibc"
+FULL="${FULL} libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev libgsl0-dev libqt4-dev"
+FULL="${FULL} ocrodjvu tesseract-ocr-pol"
+FULL="${FULL} truecrypt jflap jpicedt libgflags-dev" 
+SERVER="${FULL} linux-source vlan apt-cacher-ng nginx apache2-mpm-prefork libapache2-svn libapache2-mod-fcgid libfcgi-perl libfcgi-ruby1.8 libapache2-mod-proxy-html libapache2-mod-auth-mysql apache2-suexec-custom php5-cgi php5-curl php5-gd php5-mysql php5-pgsql bittorrent clamav clamav-daemon dovecot-imapd dovecot-pop3d exim4 exim4-daemon-heavy greylistd srs memcached memtest86+ memtester nfs-kernel-server nbd-server php5 quota quotatool spamassassin tinyca tinyproxy wakeonlan ntp atftpd subversion-tools mercurial-server trac trac-mercurial bittorrent trac-bitten ant maven2 ivy ant-contrib python-zc.buildout postgresql mysql-server ipmitool nut"
+SERVER="${SERVER} libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev libevent-dev libplot-dev libplplot-dev libzbar-dev libqrencode-dev libgsl0-dev libhighgui-dev libopenjpeg-dev libsfml-dev libcsfml-dev libfreeimage-dev libavdevice-dev libavfilter-dev libpostproc-dev libcgal-dev libtheora-dev libopencv-dev libclang-dev cabal-install mpich2"
 SERVER="${SERVER} ruby-dev libruby libfcgi-dev fcgiwrap"
 SERVER="${SERVER} python-django python-flup python-psycopg2 python-mysqldb ubuntu-desktop kubuntu-desktop xubuntu-desktop qt-sdk"
 DIR="${MYDIR}/${DIST}_${ARCH}_debooted"
@@ -323,6 +327,7 @@ cat > "${DIR}"/remove.sh <<EOF
 find -L /run /var /tmp -type s -exec rm -f {} \; -prune
 find -L /run /var /tmp -type f \( -name "pid" -o -name "*.pid" -o -name "sock" -o -name "*.sock" -o -name "lock" -o -name "*.lock" \) -exec rm -f {} \; -prune
 find /tmp /var/tmp /var/crash -mindepth 1 -maxdepth 1 -exec rm -rf {} \; -prune
+exit 0
 EOF
   chmod 755 "${DIR}"/remove.sh
   run_inside /remove.sh
@@ -442,7 +447,7 @@ function avcodec_extra
 {
     local list
     list=`run_inside aptitude search "^lib.*extra" |cut -d " " -f 4 |grep "^lib[aps][vow].*extra-[0-9]*\$" |xargs echo`
-    run_inside apt-get -f -y install $list
+    run_inside apt-get -f -y install $list #libdvdcss2 
 }
 
 function netbeans
@@ -540,6 +545,17 @@ function vmware
 
 function cuda_toolkit
 {
+  if [ "$1" == "cuda" ]; then
+    run_inside apt-get -f -y install nvidia-cuda-toolkit nvidia-331 linux-headers-generic
+  elif [ "$1" == "driver" ]; then
+    run_inside apt-get -f -y install nvidia-304 linux-headers-generic
+  elif [ "$1" == "normal" ]; then
+    run_inside apt-get -f -y install nvidia-cuda-toolkit nvidia-304 linux-headers-generic
+  else
+    echo "WHAT"
+  fi
+  return 0
+
   local VER TYPE
   if [ "$1" == "cuda" ]; then
     cp -a cuda/cuda-NVIDIA-Linux*.run "${DIR}"/root/nvidiadriver.run
@@ -569,7 +585,7 @@ function cuda_toolkit
 #   -override           : Overrides the installation checks (compiler, lib, etc)
 
 
-  run_inside apt-get -f -y install make perl-modules linux-headers-generic dkms gcc-4.6 g++-4.6
+  run_inside apt-get -f -y install make perl-modules linux-headers-generic dkms gcc-4.6 g++-4.6 gcc-4.6-multilib g++-4.6-multilib
   for TYPE in generic; do
     echo ${TYPE}
     VER=`ls "${DIR}"/lib/modules |grep "${TYPE}" |sort |tail -n 1`
@@ -629,7 +645,7 @@ cd /opt/satori
 virtualenv --no-site-packages .
 source bin/activate
 easy_install -U distribute
-hg clone "https://bitbucket.org/satoriproject/satori" /tmp/satori
+hg clone --ssh "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /tmp/satori_id_rsa" "ssh://hg@bitbucket.org/satoriproject/satori" /tmp/satori
 for i in satori.objects satori.ars satori.client.common satori.tools ; do
   (cd /tmp/satori/\$i ; python setup.py install )
 done
@@ -723,7 +739,6 @@ function build_judge
   initialize_full &&
   echo "deb http://archive.ubuntu.com/ubuntu ${DIST}-backports main restricted universe multiverse" >> "${SOURCES}" &&
   echo "deb http://archive.canonical.com/ ${DIST} partner" >> "${SOURCES}" &&
-  echo "deb http://ppa.launchpad.net/ubuntu-toolchain-r/test/ubuntu ${DIST} main" >> "${SOURCES}" &&
   echo "Acquire::http::Proxy \"${APTCACHER}\";" > "${DIR}${APTCACHER_CONF}" &&
   run_inside locale-gen "${LOC}" &&
   find_missing_keys &&
@@ -759,7 +774,7 @@ function build_checker
   run_inside aptitude -y forget-new &&
   run_inside apt-get --no-install-recommends -f -y install ${CHECKER} &&
   cuda_toolkit cuda &&
-  hg clone "https://bitbucket.org/satoriproject/satori" "${DIR}"/tmp/satori &&
+  hg clone --ssh "ssh -o UserKnownHostsFile=/dev/null -o StrictHostKeyChecking=no -i /home/satori/.ssh/id_rsa" "ssh://hg@bitbucket.org/satoriproject/satori" "${DIR}"/tmp/satori &&
   run_inside /tmp/satori/install_judge.sh &&
   rm -rf "${DIR}"/tmp/satori &&
   OK=1
@@ -857,7 +872,9 @@ function build_full
   ( [ -f "${DIR}"_uzi.squashfs ] || build_uzi ) &&
   use_squash "${DIR}"_judge.squashfs &&
   initialize_full &&
-  echo "deb http://ppa.launchpad.net/caffeine-developers/ppa/ubuntu ${DIST} main" >> "${SOURCES}" &&
+#  echo "deb http://ppa.launchpad.net/caffeine-developers/ppa/ubuntu ${DIST} main" >> "${SOURCES}" &&
+  echo "deb http://ppa.launchpad.net/x2go/stable/ubuntu ${DIST} main" >> "${SOURCES}" &&
+  echo "deb http://ppa.launchpad.net/pipelight/stable/ubuntu ${DIST} main" >> "${SOURCES}" &&
   echo "deb http://linux.dropbox.com/ubuntu ${DIST} main" >> "${SOURCES}" &&
   echo "deb http://dl.google.com/linux/deb/ stable main" >> "${SOURCES}" &&
   echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> "${SOURCES}" &&
@@ -894,10 +911,9 @@ EOF
   dkms_all &&
   vbox_add &&
   cuda_toolkit normal &&
-  netbeans &&
-  eclipse &&
+#  netbeans &&
+#  eclipse &&
   satori_client &&
-  vmware &&
   OK=1
 
   if [ "${OK}" == "1" ]; then
@@ -944,7 +960,7 @@ EOF
       run_inside aptitude -y purge ${FORBID}
     fi
     run_inside apt-get --no-install-recommends -f -y install ${SERVER}
-    for service in network-manager winbind atftpd bluetooth lightdm gdm kdm exim4 apt-cacher-ng memcached inetd tinyproxy ntp mysql postgres postgresql saned rlinetd postfix apache2 exim4 vmware vmware-USBArbitrator virtualbox virtualbox-guest-utils openvpn winbind nginx; do
+    for service in network-manager winbind atftpd bluetooth lightdm gdm kdm dovecot exim4 apt-cacher-ng memcached inetd tinyproxy ntp mysql postgres postgresql saned rlinetd postfix apache2 exim4 vmware vmware-USBArbitrator virtualbox virtualbox-guest-utils openvpn winbind nginx nbd-server fcgiwrap nmbd winbind smbd reload-smbd samba-ad-dc; do
       run_inside update-rc.d -f $service disable
       if [ -e ${DIR}/etc/init/$service.conf ]; then
           echo "manual" > ${DIR}/etc/init/$service.override
@@ -1044,11 +1060,11 @@ fi
 
 if [ "$1" == "debug" ]; then
     initialize_full &&
-    install_debs server
+    #install_debs server
     #avcodec_extra
     #netbeans
     #eclipse
-    #cuda_toolkit cuda
+    cuda_toolkit cuda
     #vmware
     #vbox_add
     finalize

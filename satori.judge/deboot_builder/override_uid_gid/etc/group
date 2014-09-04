@@ -90,4 +90,12 @@ debian-spamd:x:157:
 ftp:x:158:
 lxc-dnsmasq:x:159:
 docker:x:160:
+openvpn:x:161:
+sambashare:x:162:
+x2gouser:x:163:
+nut:x:164:
+kvm:x:165:
+dovecot:x:166:
+dovenull:x:167:
+nvidia-persistenced:x:168:
 nogroup:x:65534:
