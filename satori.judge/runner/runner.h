@@ -33,6 +33,7 @@ namespace runner {
         class Logger
         {
             public:
+                static sem_t semaphore;
                 static std::set<int> debug_fds;
                 enum Level { DEBUG, WARNING, ERROR, CRITICAL, NONE };
             private:
@@ -135,6 +136,8 @@ namespace runner {
         {
             private:
                 std::string host;
+                std::string session;
+                std::string secret;
                 int port;
                 static bool Parse(const std::string&, std::map<std::string, std::string>&);
                 static bool Dump(const std::map<std::string, std::string>&, std::string&);
@@ -142,9 +145,8 @@ namespace runner {
                 static void CheckOK(const std::string&, const std::map<std::string, std::string>&);
             public:
                 Controller(const std::string&, int);
-                void GroupCreate(const std::string&);
-                void GroupJoin(const std::string&);
-                void GroupDestroy(const std::string&);
+                void GroupOpen();
+                void GroupDestroy();
                 struct Limits
                 {
                     long memory;
@@ -153,7 +155,7 @@ namespace runner {
                     {
                     }
                 };
-                void GroupLimits(const std::string&, const Limits&);
+                void GroupLimits(const Limits&);
                 struct Stats
                 {
                     long time, utime, stime, memory;
@@ -165,7 +167,7 @@ namespace runner {
                     {
                     }
                 };
-                Stats GroupStats(const std::string&);
+                Stats GroupStats();
         };
 
         class PerfCounters
@@ -407,7 +409,6 @@ namespace runner {
                 bool search_path;
                 std::string controller_host;
                 int controller_port;
-                std::string cgroup;
                 long cgroup_memory;
                 long cgroup_time;
                 long cgroup_user_time;
@@ -475,7 +476,6 @@ namespace runner {
                       , search_path(false)
                       , controller_host("")
                       , controller_port(-1)
-                      , cgroup("")
                       , cgroup_memory(-1)
                       , cgroup_time(-1)
                       , cgroup_user_time(-1)

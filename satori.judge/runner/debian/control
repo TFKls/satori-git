@@ -1,0 +1,13 @@
+Source: runner
+Section: unknown
+Priority: optional
+Maintainer: Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>
+Build-Depends: debhelper (>= 8.0.0)
+Standards-Version: 3.9.4
+Homepage: https://bitbucket.org/satoriproject/satori/
+
+Package: runner
+Architecture: any
+Depends: ${shlibs:Depends}, ${misc:Depends}
+Description: Runner utility
+ Runner utility

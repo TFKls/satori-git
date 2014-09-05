@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <map>
 #include <set>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -43,7 +44,6 @@
 #include <asm/param.h>
 
 #include <curl/curl.h>
-#include <yaml.h>
 
 #include "runner.h"
 
@@ -56,6 +56,7 @@ bool Initializer::sigterm;
 bool Initializer::sigalarm;
 vector<int> Initializer::signals;
 vector<struct sigaction> Initializer::handlers;
+sem_t Logger::semaphore;
 set<int> Logger::debug_fds;
 Initializer Runner::initializer;
 Logger Runner::logger;
@@ -191,6 +192,7 @@ void Initializer::ProcessLoop(long ms)
 Logger::Level Logger::level = Logger::ERROR;
 Logger::Logger()
 {
+    sem_init(&semaphore, 0, 1);
 	debug_fds.insert(2);
 }
 void Logger::SetLevel(Logger::Level _level)
@@ -199,6 +201,7 @@ void Logger::SetLevel(Logger::Level _level)
 }
 void Logger::Print(const char* format, va_list args)
 {
+    sem_wait(&semaphore);
     for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
     {
         int fd = *i;
@@ -209,6 +212,7 @@ void Logger::Print(const char* format, va_list args)
         dprintf(fd, "\n");
         va_end(pars);
     }
+    sem_post(&semaphore);
 }
 void Logger::Debug(const char* format, va_list args)
 {
@@ -310,7 +314,7 @@ ProcStats::ProcStats(int _pid)
     char* sta = NULL;
     int z;
 //  if ((z = fscanf(f, "%d(%a[^)])%c%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d%u%u%llu%lu%ld",
-    if ((z = fscanf(f, "%d%as%as%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d%u%u%llu%lu%ld",
+    if ((z = fscanf(f, "%d%ms%ms%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d%u%u%llu%lu%ld",
         &pid, &buf, &sta, &ppid, &pgrp, &sid, &tty, &tpgid, &flags, &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime, &cutime, &cstime, &priority, &nice, &threads, &alarm, &start_time, &vsize, &rss, &rss_lim, &start_code, &end_code, &start_stack, &esp, &eip, &signal, &blocked, &sig_ignore, &sig_catch, &wchan, &nswap, &cnswap, &exit_signal, &cpu_number, &sched_priority, &sched_policy, &io_delay, &guest_time, &cguest_time
     )) != 44)
         Fail("scanf of '/proc/%d/stat' failed %d %d %s %c %d", _pid, z, pid, buf, state, ppid);
@@ -443,7 +447,7 @@ MountsInfo::MountsInfo()
     while (true)
     {
         int z;
-        if ((z = fscanf(f, "%as%as%as%as%*d%*d", &so, &ta, &ty, &op)) != 4)
+        if ((z = fscanf(f, "%ms%ms%ms%ms%*d%*d", &so, &ta, &ty, &op)) != 4)
             break;
         mounts.push_back(Mount(so, ta, ty, op));
         targets[ta] = mounts.back();
@@ -583,143 +587,68 @@ bool Runner::milisleep(long ms)
     return usleep(ms*1000);
 };
 
-bool Controller::Parse(const string& yaml, map<string, string>& data)
+bool Controller::Parse(const string& code, map<string, string>& data)
 {
-    yaml_parser_t parser;
-    yaml_event_t event;
-    yaml_parser_initialize(&parser);
-    yaml_parser_set_input_string(&parser, (const unsigned char*)yaml.c_str(), yaml.length());
-    int mode = 0;
-    string key,val;
-    data.clear();
-    while (true)
-    {
-        if (!yaml_parser_parse(&parser, &event))
-        {
-            Debug("YAML Parser failure: %s", parser.problem);
-            yaml_parser_delete(&parser);
-            return false;
+    static CURL *curl = curl_easy_init();
+    const char* c = code.c_str();
+    size_t la = 0;
+    size_t le = 0;
+    for(size_t i=0;true;i++)
+        if(c[i] == '=')
+            le = i;
+        else if(c[i] == '&' or c[i] == 0) {
+            if(le > la and i > le) {
+                int kl, vl;
+                char *k = curl_easy_unescape(curl, c + la, le-la, &kl);
+                char *v = curl_easy_unescape(curl, c + le+1, i-le-1, &vl);
+                string sk(k, kl);
+                string sv(v, vl);
+                data[sk] = sv;
+                curl_free(k);
+                curl_free(v);
+            }
+            la = i+1;
+            if(c[i] == 0)
+                break;
         }
-        if (mode == 0 && event.type == YAML_STREAM_START_EVENT)
-            mode = 1;
-        else if (mode == 1 && event.type == YAML_DOCUMENT_START_EVENT)
-            mode = 2;
-        else if (mode == 2 && event.type == YAML_MAPPING_START_EVENT)
-            mode = 3;
-        else if (mode == 3 && event.type == YAML_SCALAR_EVENT)
-        {
-            key = string((const char*)event.data.scalar.value, (size_t)event.data.scalar.length);
-            mode = 4;
-        }
-        else if (mode == 4 && event.type == YAML_SCALAR_EVENT)
-        {
-            val = string((const char*)event.data.scalar.value, (size_t)event.data.scalar.length);
-            data[key] = val;
-            mode = 3;
-        }
-        else if (mode == 3 && event.type == YAML_MAPPING_END_EVENT)
-            mode = 5;
-        else if (mode == 5 && event.type == YAML_DOCUMENT_END_EVENT)
-            mode = 6;
-        else if (mode == 6 && event.type == YAML_STREAM_END_EVENT)
-        {
-            yaml_event_delete(&event);
-            break;
-        }
-        else
-        {
-            Debug("YAML Parser: wrong data");
-            yaml_event_delete(&event);
-            yaml_parser_delete(&parser);
-            return false;
-        }
-        yaml_event_delete(&event);
-    }
-    yaml_parser_delete(&parser);
     return true;
 }
-bool Controller::Dump(const map<string, string>& data, string& yaml)
+bool Controller::Dump(const map<string, string>& data, string& code)
 {
-    yaml_emitter_t emitter;
-    yaml_event_t event;
-    yaml_emitter_initialize(&emitter);
-    Buffer ybuf;
-    yaml_emitter_set_output(&emitter, Buffer::YamlWriteCallback, &ybuf);
-
-    yaml_stream_start_event_initialize(&event, YAML_UTF8_ENCODING);
-    if (!yaml_emitter_emit(&emitter, &event))
-    {
-        Debug("Emitter stream start failure: %s", emitter.problem);
-        yaml_emitter_delete(&emitter);
-        return false;
+    static CURL *curl = curl_easy_init();
+    code = "";
+    for(const auto& kv : data) {
+        char *k = curl_easy_escape(curl, kv.first.c_str(), kv.first.length());
+        char *v = curl_easy_escape(curl, kv.second.c_str(), kv.second.length());
+        if(code.length()>0)
+            code += "&";
+        code += k;
+        code += "=";
+        code += v;
+        curl_free(k);
+        curl_free(v);
     }
-    yaml_document_start_event_initialize(&event, NULL, NULL, NULL, 1);
-    if (!yaml_emitter_emit(&emitter, &event))
-    {
-        Debug("Emitter doc start failure: %s", emitter.problem);
-        yaml_emitter_delete(&emitter);
-        return false;
-    }
-    yaml_mapping_start_event_initialize(&event, NULL, NULL, 1, YAML_ANY_MAPPING_STYLE);
-    if (!yaml_emitter_emit(&emitter, &event))
-    {
-        Debug("Emitter map start failure: %s", emitter.problem);
-        yaml_emitter_delete(&emitter);
-        return false;
-    }
-
-    for (map<string,string>::const_iterator i = data.begin(); i != data.end(); i++)
-    {
-        yaml_scalar_event_initialize(&event, NULL, NULL, (unsigned char*)i->first.c_str(), i->first.length(), 1, 1, YAML_ANY_SCALAR_STYLE);
-        if (!yaml_emitter_emit(&emitter, &event))
-        {
-            Debug("Emitter key failure: %s", emitter.problem);
-            yaml_emitter_delete(&emitter);
-            return false;
-        }
-        yaml_scalar_event_initialize(&event, NULL, NULL, (unsigned char*)i->second.c_str(), i->second.length(), 1, 1, YAML_ANY_SCALAR_STYLE);
-        if (!yaml_emitter_emit(&emitter, &event))
-        {
-            Debug("Emitter val failure: %s", emitter.problem);
-            yaml_emitter_delete(&emitter);
-            return false;
-        }
-    }
-
-    yaml_mapping_end_event_initialize(&event);
-    if (!yaml_emitter_emit(&emitter, &event))
-    {
-        Debug("Emitter map end failure: %s", emitter.problem);
-        yaml_emitter_delete(&emitter);
-        return false;
-    }
-    yaml_document_end_event_initialize(&event, 1);
-    if (!yaml_emitter_emit(&emitter, &event))
-    {
-        Debug("Emitter doc end failure: %s", emitter.problem);
-        yaml_emitter_delete(&emitter);
-        return false;
-    }
-    yaml_stream_end_event_initialize(&event);
-    if (!yaml_emitter_emit(&emitter, &event))
-    {
-        Debug("Emitter stream end failure: %s", emitter.problem);
-        yaml_emitter_delete(&emitter);
-        return false;
-    }
-
-    yaml_emitter_delete(&emitter);
-    yaml = ybuf.String();
     return true;
 }
 
 bool Controller::Contact(const string& action, const map<string, string>& input, map<string, string>& output)
 {
     bool result = true;
-    string yaml;
-    if (!Dump(input, yaml))
+    string code;
+    if (!Dump(input, code))
         return false;
-    //Debug("Contact yaml\n%s", yaml.c_str());
+    if (session != "") {
+        if (code.length()>0)
+            code += "&";
+        code += "session_id=";
+        code += session;
+        if (secret != "") {
+            code += "&secret=";
+            code += secret;
+        }
+    }
+
+    //Debug("Contact code\n%s", code.c_str());
 
     char buf[16];
     snprintf(buf, sizeof(buf), "%d", port);
@@ -729,9 +658,12 @@ bool Controller::Contact(const string& action, const map<string, string>& input,
     CURL *curl;
     CURLcode res;
     curl = curl_easy_init();
+    struct curl_slist *headers = NULL;
+    headers = curl_slist_append(headers, "Content-Type: application/x-www-form-urlencoded; charset=utf-8");
     curl_easy_setopt(curl, CURLOPT_URL, url.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, yaml.c_str());
-    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)yaml.length());
+    curl_easy_setopt(curl, CURLOPT_HTTPHEADER, headers);
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDS, code.c_str());
+    curl_easy_setopt(curl, CURLOPT_POSTFIELDSIZE, (long)code.length());
     Buffer cbuf;
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, Buffer::CurlWriteCallback);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cbuf);
@@ -750,12 +682,21 @@ bool Controller::Contact(const string& action, const map<string, string>& input,
 
 void Controller::CheckOK(const std::string& call, const map<string, string>& output)
 {
-    map<string, string>::const_iterator ok = output.find("res");
+    map<string, string>::const_iterator ok = output.find("result");
     if (ok == output.end() || ok->second != "OK")
     {
-        string yaml;
-        Dump(output, yaml);
-        Fail("%s returned '%s'", call.c_str(), yaml.c_str());
+        if (output.find("message") != output.end())
+        {
+            Fail("%s returned '%s'", call.c_str(), output.find("message")->second.c_str());
+        } else {
+            stringstream s;
+            size_t c=output.size();
+            s << "[";
+            for(auto i = output.begin(); i != output.end(); i++, c--)
+                s << i->first << ": " << i->second << (c>1?", ":"");
+            s << "]";
+            Fail("%s returned '%s'", call.c_str(), s.str().c_str());
+        }
     }
 }
 
@@ -763,43 +704,41 @@ Controller::Controller(const string& _host, int _port)
 {
     host = _host;
     port = _port;
-}
+    map<string, string> input, output;
+    Contact("", input, output);
+    CheckOK("", output);
+    session = output["session_id"];
+    secret = output["secret"];
 
-void Controller::GroupCreate(const string& cgroup)
-{
-    map<string, string> input, output;
-    input["group"] = cgroup;
-    Contact("CREATECG", input, output);
-    CheckOK("CREATECG", output);
 }
-void Controller::GroupJoin(const string& cgroup)
+void Controller::GroupOpen()
 {
     map<string, string> input, output;
-    input["group"] = cgroup;
     char buf[64];
 
-    timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    snprintf(buf, sizeof(buf), "__cgroup__.%ld.%ld.%ld.lock", (long)ts.tv_sec, (long)ts.tv_nsec, (long) ((char*)this - NULL));
+    snprintf(buf, sizeof(buf), "runner_%s.lock", session.c_str());
     input["file"] = buf;
     snprintf(buf, sizeof(buf), "/tmp/%s", input["file"].c_str());
     int fd = open(buf, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
     if (fd < 0)
         Fail("open('%s') failed", input["file"].c_str());
-    Contact("ASSIGNCG", input, output);
+    Contact("open", input, output);
+    CheckOK("open", output);
+    Contact("attach", input, output);
+    CheckOK("attach", output);
     close(fd);
     if (unlink(buf))
         Fail("unlink('%s') failed", buf);
-    CheckOK("ASSIGNCG", output);
 }
-void Controller::GroupDestroy(const string& cgroup)
+void Controller::GroupDestroy()
 {
     map<string, string> input, output;
-    input["group"] = cgroup;
-    Contact("DESTROYCG", input, output);
-    CheckOK("DESTROYCG", output);
+    Contact("kill", input, output);
+    CheckOK("kill", output);
+    Contact("close", input, output);
+    CheckOK("close", output);
 }
-void Controller::GroupLimits(const string& cgroup, const Limits& limits)
+void Controller::GroupLimits(const Limits& limits)
 {
     map<string, string> input, output;
     if (limits.memory > 0)
@@ -810,17 +749,15 @@ void Controller::GroupLimits(const string& cgroup, const Limits& limits)
     }
     if (input.size() > 0)
     {
-        input["group"] = cgroup;
-        Contact("LIMITCG", input, output);
-        CheckOK("LIMITCG", output);
+        Contact("limit", input, output);
+        CheckOK("limit", output);
     }
 }
-Controller::Stats Controller::GroupStats(const string& cgroup)
+Controller::Stats Controller::GroupStats()
 {
     map<string, string> input, output;
-    input["group"] = cgroup;
-    Contact("QUERYCG", input, output);
-    CheckOK("QUERYCG", output);
+    Contact("query", input, output);
+    CheckOK("query", output);
     Stats s;
     s.memory = atol(output["memory"].c_str());
     s.time = atol(output["cpu"].c_str());
@@ -954,9 +891,9 @@ bool Runner::check_times()
 }
 bool Runner::check_cgroup()
 {
-    if (cgroup != "" && controller)
+    if (controller)
     {
-        Controller::Stats stats = controller->GroupStats(cgroup);
+        Controller::Stats stats = controller->GroupStats();
         result.cgroup_memory = stats.memory;
         CpuTimes cgtime = miliseconds(stats);
         result.cgroup_time = cgtime.time;
@@ -1177,8 +1114,10 @@ void Runner::run_child()
     }
 
 
-    setresgid(rgid, rgid, egid);
-    setresuid(ruid, ruid, euid);
+    if (setresgid(rgid, rgid, egid))
+        Fail("setresgid failed");
+    if (setresuid(ruid, ruid, euid))
+        Fail("setresuid failed");
     int fi=-1, fo=-1, fe=-1;
     if ((input != "") && ((fi = cat_open_read(input.c_str(), O_RDONLY)) < 0))
         Fail("open('%s') failed", input.c_str());
@@ -1188,8 +1127,10 @@ void Runner::run_child()
         fe = fo;
     else if ((error != "") && ((fe = cat_open_write(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
         Fail("open('%s') failed", error.c_str());
-    setresgid(rgid, egid, sgid);
-    setresuid(ruid, euid, suid);
+    if (setresgid(rgid, egid, sgid))
+        Fail("setresgid failed");
+    if (setresuid(ruid, euid, suid))
+        Fail("setresuid failed");
 
     string username("unknown");
     string homedir("/");
@@ -1268,13 +1209,13 @@ void Runner::run_child()
             Fail("mount('proc', '/proc', 'proc') failed");
     }
 
-    if (cgroup != "" && controller)
+    if (controller)
     {
         Controller::Limits limits;
         //if (cgroup_memory > 0)
         //    limits.memory = cgroup_memory;
-        controller->GroupLimits(cgroup, limits);
-        controller->GroupJoin(cgroup);
+        controller->GroupOpen();
+        controller->GroupLimits(limits);
     }
 
     if ((env_level != ENV_COPY) && clearenv())
@@ -1354,8 +1295,10 @@ void Runner::run_child()
         uid = ruid;
     if (gid < 0)
         gid = rgid;
-    setresgid(gid, gid, gid);
-    setresuid(uid, uid, uid);
+    if (setresgid(gid, gid, gid))
+        Fail("setresgid failed");
+    if (setresuid(uid, uid, uid))
+        Fail("setresuid failed");
 
     if (cpu_time > 0)
         set_rlimit("CPU", RLIMIT_CPU, (cpu_time + 1999) / 1000);
@@ -1670,8 +1613,6 @@ void Runner::Run()
         Fail("Can't run mount_proc without mount namespace");
     if (controller_host != "" || controller_port > 0)
         controller = new Controller(controller_host, controller_port);
-    if (cgroup != "" && controller)
-        controller->GroupCreate(cgroup);
     if (ptrace_safe)
         ptrace = true;
     if (user == "" && thread_count > 0)
@@ -1744,8 +1685,8 @@ void Runner::Stop()
             Unregister(*i);
         offspring.clear();
         child=-1;
-        if (cgroup != "" && controller)
-            controller->GroupDestroy(cgroup);
+        if (controller)
+            controller->GroupDestroy();
         result.SetStatus(Result::RES_STOP);
     }
 }

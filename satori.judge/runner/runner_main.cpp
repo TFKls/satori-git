@@ -148,7 +148,6 @@ static struct poptOption CONFIG_OPT[] =
   { "ns-uts",          0,   POPT_ARG_NONE,   &config.ns_uts,         0, "enable uts namespace",                               0 },
   { "control-host",    0,   POPT_ARG_STRING, &config.c_host,         0, "set controller host HOST",                           "HOST" },
   { "control-port",    0,   POPT_ARG_LONG,   &config.c_port,         0, "set controller port PORT",                           "PORT" },
-  { "cgroup",          0,   POPT_ARG_STRING, &config.c_group,        0, "set control group GROUP",                            "GROUP" },
   { "cgroup-memory",   0,   POPT_ARG_LONG,   &config.c_memory,       0, "limit memory usage to LIMIT bytes for control group",      "LIMIT" },
   { "cgroup-cputime",  0,   POPT_ARG_LONG,   &config.c_cputime,      0, "limit CPU time to LIMIT/10000 seconds for control group",              "LIMIT" },
   { "cgroup-usertime", 0,   POPT_ARG_LONG,   &config.c_usrtime,      0, "limit user-mode CPU time to LIMIT/10000 seconds for control group",    "LIMIT" },
@@ -423,8 +422,6 @@ int main(int argc, const char** argv)
   run.mount_proc = config.mount_proc;
   run.new_pid = config.ns_pid;
   run.new_uts = config.ns_uts;
-  if (config.c_group)
-    run.cgroup = config.c_group;
   if (config.c_host)
     run.controller_host = config.c_host;
   if (config.c_port)
