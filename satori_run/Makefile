@@ -18,3 +18,7 @@ install: build
 
 satori_run : satori_run.cpp runner.cpp runner.h
 	g++ -Wall -Wno-write-strings -DVERSION=$(VERSION) -std=c++0x -g `curl-config --cflags` -o $@ satori_run.cpp runner.cpp -lcap -lpthread -lpopt -lrt `curl-config --libs`
+
+deploy:
+	dpkg-buildpackage
+	dh clean
