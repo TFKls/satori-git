@@ -23,10 +23,10 @@ RUND_CGROUPS = [ 'memory', 'cpuacct', 'perf_event', 'blkio', 'cpuset', 'freezer'
 
 def setup():
     global RUND_HOST, RUND_PORT, RUND_SALT
-    RUND_HOST = os.environ.get('SATORI_RUND', RUND_HOST)+':'+RUND_PORT
-    RUND_PORT = RUND_HOST.split(':')[1]
+    RUND_HOST = os.environ.get('SATORI_RUND', RUND_HOST)+':'+str(RUND_PORT)
+    RUND_PORT = int(RUND_HOST.split(':')[1])
     RUND_HOST = RUND_HOST.split(':')[0]
-    RUND_SALT = os.environ.get('SATORI_RUND_SALT')
+    RUND_SALT = os.environ.get('SATORI_RUND_SALT', RUND_SALT)
     parser = argparse.ArgumentParser()
     parser.add_argument("-H", "--host", default=RUND_HOST, help='listen on address')
     parser.add_argument("-P", "--port", type=int, default=RUND_PORT, help='listen on port')
@@ -357,6 +357,8 @@ class RunnerHandler(BaseHTTPRequestHandler):
         if 'group' in params:
             group = params['group']
             if not re.match(r'[a-z0-9_.]*', group) or len(group) > 32:
+                self.send_error(403)
+                return
 
         if check_session:
             if not self.check_secret(params.get('session_id', ''), params.get('secret', '')):

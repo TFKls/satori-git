@@ -458,17 +458,12 @@ void Runner::set_rlimit(const string& name, int resource, long limit) {
 }
 void Runner::drop_capabilities()
 {
-    for (unsigned long cap = 0; cap < CAP_LAST_CAP; cap++)
-        if(prctl(PR_CAPBSET_DROP, cap))
-            Fail("cap_bset_drop() failed");
     cap_t caps = cap_init();
     if (cap_set_proc(caps))
         Fail("cap_set_proc() failed");
 }
 void Runner::drop_capability(const string& name, int cap)
 {
-    if(prctl(PR_CAPBSET_DROP, (unsigned long) cap))
-        Fail("cap_bset_drop('%s') failed", name.c_str());
     cap_value_t capt = (cap_value_t)cap;
     cap_t caps = cap_get_proc();
     if (caps == NULL)
@@ -508,7 +503,7 @@ CpuTimes::CpuTimes(const rusage& usage)
 CpuTimes::CpuTimes(const ProcStats& stat)
     : CpuTimes((double)stat.utime/sysconf(_SC_CLK_TCK), (double)stat.stime/sysconf(_SC_CLK_TCK)) {};
 CpuTimes::CpuTimes(const Controller::Stats& stat)
-    : CpuTimes((double)stat.utime/HZ, (double)stat.stime/HZ, (double)stat.time/1000 * 1000 * 1000) {};
+    : CpuTimes((double)stat.utime/HZ, (double)stat.stime/HZ, (double)stat.time/(1000 * 1000 * 1000)) {};
 bool Runner::sleep(double s) {
     return usleep(s * 1000 * 1000);
 };
@@ -675,7 +670,7 @@ void Controller::Limit(const Limits& limits) {
     map<string, string> input, output;
     if (limits.memory > 0) {
         char buf[32];
-        snprintf(buf, sizeof(buf), "%ld", limits.memory);
+        snprintf(buf, sizeof(buf), "%lld", limits.memory);
         input["memory"] = buf;
     }
     if (limits.cpus > 0) {
@@ -773,7 +768,7 @@ bool Runner::check_times()
     timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts))
         Fail("clock_gettime(CLOCK_REALTIME) failed");
-    long realtimesofar = to_seconds(ts) - start_time;
+    double realtimesofar = to_seconds(ts) - start_time;
     CpuTimes proctimesofar = dead_pids_time;
     unsigned long long curmemory = 0;
     for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
@@ -802,15 +797,15 @@ bool Runner::check_times()
     result.cpu_time = proctimesofar.time;
     result.user_time = proctimesofar.user;
     result.system_time = proctimesofar.system;
-    result.memory = max((unsigned long long)result.memory, curmemory/1024);
+    result.memory = max((unsigned long long)result.memory, curmemory);
     result.perf_instructions = perf_stats.instructions;
     result.perf_cycles = perf_stats.cycles;
-    if ((cpu_time > 0 && cpu_time < (long)result.cpu_time) ||
-            (real_time > 0 && real_time < (long)result.real_time) ||
-            (user_time > 0 && user_time < (long)result.user_time) ||
-            (system_time > 0 && system_time < (long)result.system_time) ||
-            (instructions > 0 && instructions < (long)result.perf_instructions) ||
-            (cycles > 0 && cycles < (long)result.perf_cycles)
+    if ((cpu_time > 0 && cpu_time < result.cpu_time) ||
+            (real_time > 0 && real_time < result.real_time) ||
+            (user_time > 0 && user_time < result.user_time) ||
+            (system_time > 0 && system_time < result.system_time) ||
+            (instructions > 0 && (unsigned long long)instructions < result.perf_instructions) ||
+            (cycles > 0 && (unsigned long long)cycles < result.perf_cycles)
        )
     {
         result.SetStatus(Result::RES_TIME);
@@ -833,9 +828,9 @@ bool Runner::check_cgroup()
         result.cgroup_time = cgtime.time;
         result.cgroup_user_time = cgtime.user;
         result.cgroup_system_time = cgtime.system;
-        if ((cgroup_time > 0 && cgroup_time < (long)result.cgroup_time) ||
-                (cgroup_user_time > 0 && cgroup_user_time < (long)result.cgroup_user_time) ||
-                (cgroup_system_time > 0 && cgroup_system_time < (long)result.cgroup_system_time))
+        if ((cgroup_time > 0 && cgroup_time < result.cgroup_time) ||
+                (cgroup_user_time > 0 && cgroup_user_time < result.cgroup_user_time) ||
+                (cgroup_system_time > 0 && cgroup_system_time < result.cgroup_system_time))
         {
             result.SetStatus(Result::RES_TIME);
             return false;
@@ -1341,9 +1336,9 @@ void Runner::process_child(long epid)
             result.exit_status = status;
             result.memory = max((long)result.memory, (long)usage.ru_maxrss);
             CpuTimes times = usage;
-            result.cpu_time = max((long)result.cpu_time, (long)times.time);
-            result.user_time = max((long)result.user_time, (long)times.user);
-            result.system_time = max((long)result.system_time, (long)times.system);
+            result.cpu_time = max(result.cpu_time, times.time);
+            result.user_time = max(result.user_time, times.user);
+            result.system_time = max(result.system_time, times.system);
 
             if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
                 result.SetStatus(Result::RES_OK);

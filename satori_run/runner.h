@@ -134,15 +134,16 @@ namespace runner {
         Controller(std::string ="localhost", int =8765, std::string ="", std::string ="", std::string ="");
         void Attach();
         struct Limits {
-            long memory;
+            long long memory;
             long cpus;
-            Limits(long memory =0, long cpus =0)
+            Limits(long long memory =0, long cpus =0)
                 : memory(memory)
                 , cpus(cpus) {}
         };
         void Limit(const Limits&);
         struct Stats {
-            long time, utime, stime, memory;
+            long time, utime, stime;
+            long long memory;
             Stats()
                 : time(0)
                 , utime(0)
@@ -179,12 +180,12 @@ namespace runner {
         };
         RES_STATUS status;
         int    exit_status;
-        unsigned long memory; // bytes
+        unsigned long long memory; // bytes
         double cpu_time; // seconds
         double user_time;
         double system_time;
         double real_time;
-        unsigned long cgroup_memory;
+        unsigned long long cgroup_memory;
         double cgroup_time;
         double cgroup_user_time;
         double cgroup_system_time;
@@ -310,16 +311,16 @@ namespace runner {
         std::map<std::string, std::string> env_add;
         std::set<std::string> env_del;
         // Memory limits (in bytes)
-        long memory_space;
-        long stack_space;
-        long data_space;
-        // Time limits (in miliseconds)
-        long cpu_time;
-        long user_time;
-        long system_time;
-        long real_time;
-        long instructions;
-        long cycles;
+        long long memory_space;
+        long long stack_space;
+        long long data_space;
+        // Time limits (in seconds)
+        double cpu_time;
+        double user_time;
+        double system_time;
+        double real_time;
+        long long instructions;
+        long long cycles;
         // FS limits
         long descriptor_count;
         // Scheduling
@@ -345,10 +346,10 @@ namespace runner {
         std::string control_session;
         std::string control_secret;
         std::string cgroup;
-        long cgroup_memory;
-        long cgroup_time;
-        long cgroup_user_time;
-        long cgroup_system_time;
+        long long cgroup_memory;
+        double cgroup_time;
+        double cgroup_user_time;
+        double cgroup_system_time;
         long cgroup_cpus;
 
         Runner()

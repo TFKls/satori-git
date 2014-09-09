@@ -156,7 +156,7 @@ int finish() {
         default: printf("UNK\n");
     }
     printf("Return       : %d\n", WEXITSTATUS(run.result.exit_status));
-    printf("Memory       : %lu\n", max(run.result.memory, run.result.cgroup_memory));
+    printf("Memory       : %llu\n", max(run.result.memory, run.result.cgroup_memory));
     printf("CPU          : %lf\n", max(run.result.cpu_time, run.result.cgroup_time));
     printf("Time         : %lf\n", run.result.real_time);
     printf("Instructions : %lu\n", run.result.perf_instructions);
