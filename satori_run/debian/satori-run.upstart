@@ -5,4 +5,4 @@ stop on runlevel [!2345]
 
 respawn
 
-exec runnerd
+exec satori_rund

@@ -1,6 +1,6 @@
-PROGRAM=runner
-DAEMON=runnerd
-VERSION=0.9
+PROGRAM=satori_run
+DAEMON=satori_rund
+VERSION=1.0
 .PHONY: build clean install
 DESTROOT=$(DESTDIR)/usr
 DESTBIN=$(DESTROOT)/bin
@@ -16,5 +16,5 @@ install: build
 	$(INSTALL) -s -m 755 $(PROGRAM) $(DESTBIN)/
 	$(INSTALL) -m 755 $(DAEMON) $(DESTSBIN)/
 
-runner : runner_main.cpp runner.cpp runner.h
-	g++ -DVERSION=$(VERSION) -std=c++0x -g -Wall -O2 `curl-config --cflags` -o runner runner_main.cpp runner.cpp -lcap -lpthread -lpopt -lrt `curl-config --libs`
+satori_run : satori_run.cpp runner.cpp runner.h
+	g++ -Wall -Wno-write-strings -DVERSION=$(VERSION) -std=c++0x -g `curl-config --cflags` -o $@ satori_run.cpp runner.cpp -lcap -lpthread -lpopt -lrt `curl-config --libs`

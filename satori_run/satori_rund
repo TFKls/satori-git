@@ -14,26 +14,27 @@ from urllib.parse import urlparse, urlencode, parse_qsl
 import uuid
 import os
 
-RUNNERD_HOST = ''
-RUNNERD_PORT = 8765
-RUNNERD_SERVERSTRING = 'Runnerd'
-RUNNERD_SECRET = uuid.uuid4().hex 
-RUNNERD_SECRET = RUNNERD_SERVERSTRING
+RUND_HOST = ''
+RUND_PORT = 8765
+RUND_SERVERSTRING = 'Satori Run Daemon'
+RUND_SALT = uuid.uuid4().hex 
 
-RUNNERD_CGROUPS = [ 'memory', 'cpuacct', 'perf_event', 'blkio', 'cpuset', 'freezer' ]
+RUND_CGROUPS = [ 'memory', 'cpuacct', 'perf_event', 'blkio', 'cpuset', 'freezer' ]
 
 def setup():
-    global RUNNERD_HOST, RUNNERD_PORT
-    RUNNERD_HOST = os.environ.get('RUNNERD_HOST', RUNNERD_HOST)
-    RUNNERD_PORT = os.environ.get('RUNNERD_PORT', RUNNERD_PORT)
+    global RUND_HOST, RUND_PORT, RUND_SALT
+    RUND_HOST = os.environ.get('SATORI_RUND', RUND_HOST)+':'+RUND_PORT
+    RUND_PORT = RUND_HOST.split(':')[1]
+    RUND_HOST = RUND_HOST.split(':')[0]
+    RUND_SALT = os.environ.get('SATORI_RUND_SALT')
     parser = argparse.ArgumentParser()
-    parser.add_argument("-H", "--host", default=RUNNERD_HOST, help='listen on address')
-    parser.add_argument("-P", "--port", type=int, default=RUNNERD_PORT, help='listen on port')
+    parser.add_argument("-H", "--host", default=RUND_HOST, help='listen on address')
+    parser.add_argument("-P", "--port", type=int, default=RUND_PORT, help='listen on port')
     parser.add_argument("-v", "--verbose", action="store_true", default=False, help='show more info')
     parser.add_argument("-d", "--debug", action="store_true", default=False, help='show debug info')
     args = parser.parse_args()
-    RUNNERD_HOST = args.host
-    RUNNERD_PORT = args.port
+    RUND_HOST = args.host
+    RUND_PORT = args.port
     level=logging.WARNING
     if args.verbose:
         level=logging.INFO
@@ -50,7 +51,7 @@ class ControlGroupSystem:
         assert os.path.exists('/proc/cgroups')
         with open('/proc/cgroups') as f:
             available_groups = [line.strip().split()[0] for line in f.readlines() if not line.startswith('#')]
-        for group in RUNNERD_CGROUPS:
+        for group in RUND_CGROUPS:
             assert group in available_groups
 
         sys_fs_cgroup_prepared = False
@@ -61,12 +62,12 @@ class ControlGroupSystem:
                     sys_fs_cgroup_prepared = True
                 if line[0] == 'cgroup':
                     groups = line[3].split(',')
-                    for group in RUNNERD_CGROUPS:
+                    for group in RUND_CGROUPS:
                         if group in groups:
                             logging.debug('Found \'%s\' control group at mount point \'%s\''%(group, line[1]))
                             self.mount_points[group] = line[1]
 
-        for group in RUNNERD_CGROUPS:
+        for group in RUND_CGROUPS:
             if group not in self.mount_points:
                 if not sys_fs_cgroup_prepared:
                     os.makedirs('/sys/fs/cgroup', exist_ok=True)
@@ -115,9 +116,9 @@ class Session:
         self.id = session_id
         process_groups = self.process_groups(pid)
         self.groups = dict()
-        for group in RUNNERD_CGROUPS:
+        for group in RUND_CGROUPS:
             self.groups[group] = self.initial_group_path(group, process_groups[group])
-        for group in RUNNERD_CGROUPS:
+        for group in RUND_CGROUPS:
             if group == 'memory':
                 with open(os.path.normpath(os.path.join(self.groups[group], '..', 'memory.use_hierarchy')), 'w') as f:
                     f.write('1')
@@ -132,9 +133,9 @@ class Session:
     def attach(self, subpath, pid):
         #TODO: Create subpath if needed!
         process_groups = self.process_groups(pid)
-        for group in RUNNERD_CGROUPS:
+        for group in RUND_CGROUPS:
             assert self.initial_group_path(group, process_groups[group]).startswith(self.groups[group])
-        for group in RUNNERD_CGROUPS:
+        for group in RUND_CGROUPS:
             tasks_file = self.group_path(group, subpath=subpath, filename='tasks')
             with open(tasks_file, 'w') as f:
                 f.write(str(pid))
@@ -215,7 +216,7 @@ class Session:
         state = self.freezing(subpath=subpath)
         self.freeze(subpath=subpath, freeze=True)
 
-        for group in sorted(RUNNERD_CGROUPS, key=lambda x: 1 if x == 'freezer' else 0):
+        for group in sorted(RUND_CGROUPS, key=lambda x: 1 if x == 'freezer' else 0):
             src_path = self.group_path(group, subpath=subpath)
             dst_path = os.path.normpath(os.path.join(src_path, '..', 'tasks'))
             for d, _, _ in os.walk(src_path, topdown=False):
@@ -285,7 +286,7 @@ class RunnerHandler(BaseHTTPRequestHandler):
         return self.server.session_registry
 
     def version_string(self):
-        return RUNNERD_SERVERSTRING
+        return RUND_SERVERSTRING
 
     def log_request(self, *args, **kwargs):
         pass
@@ -353,6 +354,10 @@ class RunnerHandler(BaseHTTPRequestHandler):
             fun = self.cmd_close
             check_session = True
 
+        if 'group' in params:
+            group = params['group']
+            if not re.match(r'[a-z0-9_.]*', group) or len(group) > 32:
+
         if check_session:
             if not self.check_secret(params.get('session_id', ''), params.get('secret', '')):
                 self.send_error(403)
@@ -386,7 +391,7 @@ class RunnerHandler(BaseHTTPRequestHandler):
 
     def cmd_open(self, params, attach=False):
         result = dict()
-        filename = params.get('file', '')
+        filename = os.path.basename(params.get('file', ''))
         prefix = 'runner_'+params['session_id']
         if not filename.startswith(prefix):
             result['result'] = 'FAIL'
@@ -468,7 +473,7 @@ class RunnerHandler(BaseHTTPRequestHandler):
         return uuid.uuid4().hex
 
     def generate_secret(self, session_id):
-        return hashlib.sha1(bytes(RUNNERD_SECRET+session_id, 'utf-8')).hexdigest()
+        return hashlib.sha1(bytes(RUND_SALT+session_id, 'utf-8')).hexdigest()
 
     def check_secret(self, session_id, secret):
         return secret and session_id and secret == self.generate_secret(session_id)
@@ -513,7 +518,7 @@ class RunnerHandler(BaseHTTPRequestHandler):
 
 class RunnerServer(HTTPServer):
     def __init__(self):
-        super().__init__((RUNNERD_HOST, RUNNERD_PORT), RunnerHandler)
+        super().__init__((RUND_HOST, RUND_PORT), RunnerHandler)
 
     def __enter__(self, *args, **kwargs):
         #super().__enter__(*args, **kwargs)

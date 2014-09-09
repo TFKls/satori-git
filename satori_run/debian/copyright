@@ -1,5 +1,5 @@
 Format: http://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
-Upstream-Name: runnerd
+Upstream-Name: satori-run
 Source: https://bitbucket.org/satoriproject/satori
 
 Files: *

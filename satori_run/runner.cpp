@@ -28,7 +28,6 @@
 #include <sys/mman.h>
 #include <sys/mount.h>
 #include <sys/prctl.h>
-#include <sys/ptrace.h>
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
@@ -61,8 +60,7 @@ set<int> Logger::debug_fds;
 Initializer Runner::initializer;
 Logger Runner::logger;
 
-Initializer::Initializer()
-{
+Initializer::Initializer() {
     sigterm = false;
     sigalarm = false;
     signals.push_back(SIGALRM);
@@ -77,44 +75,37 @@ Initializer::Initializer()
     for (uint i=0; i<signals.size(); i++)
         sigaction(signals[i], &action, &handlers[i]);
 }
-void Initializer::Stop()
-{
+void Initializer::Stop() {
     for (uint i=0; i<signals.size(); i++)
         sigaction(signals[i], &handlers[i], NULL);
 }
-void Initializer::SignalHandler(int sig, siginfo_t* info, void* data)
-{
+void Initializer::SignalHandler(int sig, siginfo_t* info, void* data) {
     if (sig == SIGALRM)
         sigalarm = true;
     else if (sig == SIGTERM)
         sigterm = true;
 }
-void Runner::Register(int pid, Runner* runner)
-{
-    if(runners.find(pid) == runners.end())
-    {
+
+void Runner::Register(int pid, Runner* runner) {
+    if(runners.find(pid) == runners.end()) {
         runners[pid] = runner;
     }
     else
         Fail("Process %d was registered twice.\n", pid);
 }
-void Runner::Unregister(int pid)
-{
+void Runner::Unregister(int pid) {
     runners.erase(pid);
 }
-void Runner::StopAll()
-{
-	for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
-		i->second->Stop();
+void Runner::StopAll() {
+    for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
+        i->second->Stop();
 }
-void Runner::CheckAll()
-{
-	for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
-		i->second->Check();
+void Runner::CheckAll() {
+    for (map<int, Runner*>::const_iterator i=runners.begin(); i!=runners.end(); i++)
+        i->second->Check();
 }
-void Runner::ProcessAChild(pid_t pid)
-{
-	map<int, Runner*>::const_iterator i = runners.find(pid);
+void Runner::ProcessAChild(pid_t pid) {
+    map<int, Runner*>::const_iterator i = runners.find(pid);
     if (i != runners.end())
         i->second->process_child(pid);
     else
@@ -133,53 +124,48 @@ void Runner::ProcessAChild(pid_t pid)
         }
     }
 }
-	
-void Initializer::Process()
-{
-    if (sigterm)
-    {
+    
+void Initializer::Process() {
+    if (sigterm) {
         sigterm = false;
-		Runner::StopAll();
+        Runner::StopAll();
     }
-    if (sigalarm)
-    {
+    if (sigalarm) {
         sigalarm = false;
-		Runner::CheckAll();
+        Runner::CheckAll();
     }
     siginfo_t info;
-    while (1) {
+    while (true) {
         info.si_pid = 0;
         if (waitid(P_ALL, 0, &info, WEXITED | WSTOPPED | WNOHANG | WNOWAIT) < 0 && errno != ECHILD)
             Fail("waitid failed");
         if (info.si_pid == 0)
             break;
         int pid = info.si_pid;
-		Runner::ProcessAChild(pid);
+        Runner::ProcessAChild(pid);
    }
 }
 
-
-void Initializer::ProcessLoop(long ms)
-{
+void Initializer::ProcessLoop(double s) {
     timespec ts;
     clock_gettime(CLOCK_REALTIME, &ts);
-    long to = miliseconds(ts)+ms;
+    double to = to_seconds(ts)+s;
     sigset_t orig_mask, blocked_mask;
     sigemptyset(&blocked_mask);
-	for(vector<int>::iterator it = Initializer::signals.begin(); it != Initializer::signals.end(); ++it)
-		sigaddset(&blocked_mask, *it);
-    while (1) {
+    for(vector<int>::iterator it = Initializer::signals.begin(); it != Initializer::signals.end(); ++it)
+        sigaddset(&blocked_mask, *it);
+    while (true) {
         sigprocmask(SIG_BLOCK, &blocked_mask, &orig_mask);
         Process();
         clock_gettime(CLOCK_REALTIME, &ts);
-        long rem = to - miliseconds(ts);
+        double rem = to - to_seconds(ts);
         if (rem <= 0)
             break;
-        ms_timespec(rem, ts);
+        from_seconds(rem, ts);
         int res = ppoll(NULL, 0, &ts, &orig_mask);
         sigprocmask(SIG_SETMASK, &orig_mask, NULL);
         if (res < 0 && errno == EINTR) {
-            Debug("ppoll interrupted");	
+            Debug("ppoll interrupted"); 
             continue;
         }
         if (res < 0)
@@ -187,23 +173,19 @@ void Initializer::ProcessLoop(long ms)
         if (res == 0)
             break;
     }
-}       
+}
 
 Logger::Level Logger::level = Logger::ERROR;
-Logger::Logger()
-{
+Logger::Logger() {
     sem_init(&semaphore, 0, 1);
-	debug_fds.insert(2);
+    debug_fds.insert(2);
 }
-void Logger::SetLevel(Logger::Level _level)
-{
+void Logger::SetLevel(Logger::Level _level) {
     level = _level;
 }
-void Logger::Print(const char* format, va_list args)
-{
+void Logger::Print(const char* format, va_list args) {
     sem_wait(&semaphore);
-    for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
-    {
+    for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++) {
         int fd = *i;
         va_list pars;
         va_copy(pars, args);
@@ -214,27 +196,21 @@ void Logger::Print(const char* format, va_list args)
     }
     sem_post(&semaphore);
 }
-void Logger::Debug(const char* format, va_list args)
-{
+void Logger::Debug(const char* format, va_list args) {
     if(level <= DEBUG)
         Print(format, args);
 }
-void Logger::Warning(const char* format, va_list args)
-{
+void Logger::Warning(const char* format, va_list args) {
     if(level <= WARNING)
         Print(format, args);
 }
-void Logger::Error(const char* format, va_list args)
-{
+void Logger::Error(const char* format, va_list args) {
     if(level <= ERROR)
         Print(format, args);
 }
-void Logger::Fail(int err, const char* format, va_list args)
-{
-    if(level <= CRITICAL)
-    {
-        for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++)
-        {
+void Logger::Fail(int err, const char* format, va_list args) {
+    if(level <= CRITICAL) {
+        for(set<int>::const_iterator i=debug_fds.begin(); i!=debug_fds.end(); i++) {
             int fd = *i;
             va_list pars;
             va_copy(pars, args);
@@ -247,15 +223,12 @@ void Logger::Fail(int err, const char* format, va_list args)
     exit(1);
 }
 
-Buffer::Buffer(size_t _size)
-{
+Buffer::Buffer(size_t _size) {
     size = _size;
     fill = 0;
-    if (size)
-    {
+    if (size) {
         buf = (char*)malloc(size);
-        if (buf == NULL)
-        {
+        if (buf == NULL) {
             fprintf(stderr, "Runner buffer memory depleted %lu: %s\n", (unsigned long)size, strerror(errno));
             exit(1);
         }
@@ -263,19 +236,15 @@ Buffer::Buffer(size_t _size)
     else
         buf = NULL;
 }
-Buffer::~Buffer()
-{
+Buffer::~Buffer() {
     if(buf)
         free(buf);
 }
-void Buffer::Append(void* data, size_t length)
-{
-    if (fill + length > size)
-    {
+void Buffer::Append(void* data, size_t length) {
+    if (fill + length > size) {
         size_t nsize = max(fill+length, 2*size);
         char* nbuf = (char*)realloc(buf, nsize);
-        if (nbuf == NULL)
-        {
+        if (nbuf == NULL) {
             fprintf(stderr, "Runner buffer memory depleted %lu: %s\n", (unsigned long)size, strerror(errno));
             exit(1);
         }
@@ -285,25 +254,16 @@ void Buffer::Append(void* data, size_t length)
     memcpy(buf+fill, data, length);
     fill += length;
 }
-string Buffer::String() const
-{
+string Buffer::String() const {
     return string(buf, fill);
 }
-int Buffer::YamlWriteCallback(void* data, unsigned char* buffer, size_t size)
-{
-    Buffer* buf = (Buffer*)data;
-    buf->Append(buffer, size);
-    return 1;
-}
-size_t Buffer::CurlWriteCallback(void* buffer, size_t size, size_t nmemb, void* userp)
-{
+size_t Buffer::CurlWriteCallback(void* buffer, size_t size, size_t nmemb, void* userp) {
     Buffer* buf = (Buffer*)userp;
     buf->Append(buffer, size * nmemb);
     return nmemb;
 }
 
-ProcStats::ProcStats(int _pid)
-{
+ProcStats::ProcStats(pid_t _pid) {
     FILE* f;
     char filename[32];
     sprintf(filename, "/proc/%d/stat", _pid);
@@ -313,19 +273,16 @@ ProcStats::ProcStats(int _pid)
     char* buf = NULL;
     char* sta = NULL;
     int z;
-//  if ((z = fscanf(f, "%d(%a[^)])%c%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d%u%u%llu%lu%ld",
     if ((z = fscanf(f, "%d%ms%ms%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d%u%u%llu%lu%ld",
         &pid, &buf, &sta, &ppid, &pgrp, &sid, &tty, &tpgid, &flags, &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime, &cutime, &cstime, &priority, &nice, &threads, &alarm, &start_time, &vsize, &rss, &rss_lim, &start_code, &end_code, &start_stack, &esp, &eip, &signal, &blocked, &sig_ignore, &sig_catch, &wchan, &nswap, &cnswap, &exit_signal, &cpu_number, &sched_priority, &sched_policy, &io_delay, &guest_time, &cguest_time
     )) != 44)
         Fail("scanf of '/proc/%d/stat' failed %d %d %s %c %d", _pid, z, pid, buf, state, ppid);
-    if (buf)
-    {
+    if (buf) {
         if (strlen(buf) >= 2)
             command = string(buf+1, strlen(buf)-2);
         free(buf);
     }
-    if (sta)
-    {
+    if (sta) {
         state = sta[0];
         free(sta);
     }
@@ -348,20 +305,17 @@ ProcStats::ProcStats(int _pid)
     mem_dirty *= psize;
     fclose(f);
 }
-void UserInfo::set(void* _p)
-{
-    passwd* p = (passwd*)_p;
-    ok = true;
-    name = p->pw_name;
-    password = p->pw_passwd;
-    uid = p->pw_uid;
-    gid = p->pw_gid;
-    gecos = p->pw_gecos;
-    dir = p->pw_dir;
-    shell = p->pw_shell;
+void UserInfo__set(UserInfo& ui, passwd* p) {
+    ui.ok = true;
+    ui.name = p->pw_name;
+    ui.password = p->pw_passwd;
+    ui.uid = p->pw_uid;
+    ui.gid = p->pw_gid;
+    ui.gecos = p->pw_gecos;
+    ui.dir = p->pw_dir;
+    ui.shell = p->pw_shell;
 }
-UserInfo::UserInfo(const string& name)
-{
+UserInfo::UserInfo(string name) {
     ok = false;
     if(name == "")
         return;
@@ -370,40 +324,36 @@ UserInfo::UserInfo(const string& name)
     char buf[8192];
     getpwnam_r(name.c_str(), &pwd, buf, sizeof(buf), &ppwd);
     if (ppwd == &pwd)
-        set(ppwd);
-    else
-    {
+        UserInfo__set(*this, ppwd);
+    else {
         char* eptr;
         long id = strtol(name.c_str(), &eptr, 10);
         if(eptr && *eptr == 0)
             getpwuid_r(id, &pwd, buf, sizeof(buf), &ppwd);
             if (ppwd == &pwd)
-                set(ppwd);
+                UserInfo__set(*this, ppwd);
     }
 }
-UserInfo::UserInfo(int id)
-{
+UserInfo::UserInfo(uid_t id) {
     ok = false;
     passwd pwd;
     passwd* ppwd;
     char buf[8192];
     getpwuid_r(id, &pwd, buf, sizeof(buf), &ppwd);
     if (ppwd == &pwd)
-        set(ppwd);
+        UserInfo__set(*this, ppwd);
 }
-void GroupInfo::set(void* _g)
-{
-    struct group* g = (struct group*)_g;
-    ok = true;
-    name = g->gr_name;
-    password = g->gr_passwd;
-    gid = g->gr_gid;
-    members.clear();
+UserInfo::UserInfo() : UserInfo(getuid()) {};
+void GroupInfo__set(GroupInfo& gi, group* g) {
+    gi.ok = true;
+    gi.name = g->gr_name;
+    gi.password = g->gr_passwd;
+    gi.gid = g->gr_gid;
+    gi.members.clear();
     for(char** i=g->gr_mem; *i != NULL; i++)
-        members.push_back(*i);
+        gi.members.push_back(*i);
 }
-GroupInfo::GroupInfo(const string& name)
-{
+GroupInfo::GroupInfo(string name) {
     ok = false;
     if(name == "")
         return;
@@ -412,30 +362,28 @@ GroupInfo::GroupInfo(const string& name)
     char buf[8192];
     getgrnam_r(name.c_str(), &grp, buf, sizeof(buf), &pgrp);
     if(pgrp == &grp)
-        set(pgrp);
-    else
-    {
+        GroupInfo__set(*this, pgrp);
+    else {
         char* eptr;
         long id = strtol(name.c_str(), &eptr, 10);
         if(eptr && *eptr == 0)
         getgrgid_r(id, &grp, buf, sizeof(buf), &pgrp);
         if(pgrp == &grp)
-            set(pgrp);
+            GroupInfo__set(*this, pgrp);
     }
 }
-GroupInfo::GroupInfo(int id)
-{
+GroupInfo::GroupInfo(gid_t id) {
     ok = false;
     struct group grp;
     struct group* pgrp;
     char buf[8192];
     getgrgid_r(id, &grp, buf, sizeof(buf), &pgrp);
     if(pgrp == &grp)
-        set(pgrp);
+        GroupInfo__set(*this, pgrp);
 }
+GroupInfo::GroupInfo() : GroupInfo(getgid()) {};
 
-MountsInfo::MountsInfo()
-{
+MountsInfo::MountsInfo() {
     FILE* f;
     f = fopen("/proc/mounts", "r");
     if (!f)
@@ -444,8 +392,7 @@ MountsInfo::MountsInfo()
     char* ta = NULL;
     char* ty = NULL;
     char* op = NULL;
-    while (true)
-    {
+    while (true) {
         int z;
         if ((z = fscanf(f, "%ms%ms%ms%ms%*d%*d", &so, &ta, &ty, &op)) != 4)
             break;
@@ -453,8 +400,7 @@ MountsInfo::MountsInfo()
         targets[ta] = mounts.back();
         map<string, Mount>::iterator t = targets.find(ta);
         t++;
-        if (t != targets.end())
-        {
+        if (t != targets.end()) {
             map<string, Mount>::iterator u = t;
             while (strncmp(ta, u->first.c_str(), strlen(ta)) != 0)
                 u++;
@@ -468,35 +414,30 @@ MountsInfo::MountsInfo()
     }
     fclose(f);
 }
-bool MountsInfo::Available()
-{
+bool MountsInfo::Available() {
     struct stat s;
     if (stat("/proc/mounts", &s))
         return false;
     return major(s.st_dev) == 0;
 }
 
-Runner::~Runner()
-{
+Runner::~Runner() {
     Stop();
 }
 
-void Debug(const char* format, ...)
-{
+void Debug(const char* format, ...) {
     va_list args;
     va_start(args, format);
     Logger::Debug(format, args);
     va_end(args);
 }
-void Warning(const char* format, ...)
-{
+void Warning(const char* format, ...) {
     va_list args;
     va_start(args, format);
     Logger::Warning(format, args);
     va_end(args);
 }
-void Fail(const char* format, ...)
-{
+void Fail(const char* format, ...) {
     int err = errno;
     va_list args;
     va_start(args, format);
@@ -504,8 +445,7 @@ void Fail(const char* format, ...)
     va_end(args);
 }
 
-void Runner::set_rlimit(const string& name, int resource, long limit)
-{
+void Runner::set_rlimit(const string& name, int resource, long limit) {
     struct rlimit r;
     r.rlim_cur = limit;
     r.rlim_max = limit;
@@ -545,88 +485,78 @@ void Runner::drop_capability(const string& name, int cap)
         Fail("cap_free('%s') failed", name.c_str());
 }
 
-long miliseconds(const timeval& tv)
-{
-    long msecs = tv.tv_sec;
-    msecs *= 1000;
-    msecs += tv.tv_usec / 1000;
-    return msecs;
+double to_seconds(const timeval& tv) {
+    double secs = tv.tv_sec;
+    secs += (double) tv.tv_usec / (1000 * 1000);
+    return secs;
 }
-long miliseconds(const timespec& ts)
-{
-    long msecs = ts.tv_sec;
-    msecs *= 1000;
-    msecs += ts.tv_nsec / 1000000;
-    return msecs;
+double to_seconds(const timespec& ts) {
+    long secs = ts.tv_sec;
+    secs += (double) ts.tv_nsec / (1000 * 1000 * 1000);
+    return secs;
 }
-void ms_timeval(long ms, timeval& tv)
-{
-    tv.tv_sec = ms/1000;
-    tv.tv_usec = (ms%1000)*1000;
+void from_seconds(double s, timeval& tv) {
+    tv.tv_sec = floor(s);
+    tv.tv_usec = floor((s - floor(s)) * (1000 * 1000));
 }
-void ms_timespec(long ms, timespec& ts)
-{
-    ts.tv_sec = ms/1000;
-    ts.tv_nsec = (ms%1000)*1000000;
+void from_seconds(double s, timespec& ts) {
+    ts.tv_sec = floor(s);
+    ts.tv_nsec = floor((s - floor(s)) * (1000 * 1000 * 1000));
 }
-CpuTimes miliseconds(const rusage& usage)
-{
-    return CpuTimes(miliseconds(usage.ru_utime), miliseconds(usage.ru_stime));
+CpuTimes::CpuTimes(const rusage& usage)
+    : CpuTimes(to_seconds(usage.ru_utime), to_seconds(usage.ru_stime)) {};
+CpuTimes::CpuTimes(const ProcStats& stat)
+    : CpuTimes((double)stat.utime/sysconf(_SC_CLK_TCK), (double)stat.stime/sysconf(_SC_CLK_TCK)) {};
+CpuTimes::CpuTimes(const Controller::Stats& stat)
+    : CpuTimes((double)stat.utime/HZ, (double)stat.stime/HZ, (double)stat.time/1000 * 1000 * 1000) {};
+bool Runner::sleep(double s) {
+    return usleep(s * 1000 * 1000);
 };
-CpuTimes miliseconds(const ProcStats& stat)
-{
-    return CpuTimes(stat.utime*1000/sysconf(_SC_CLK_TCK), stat.stime*1000/sysconf(_SC_CLK_TCK));
-};
-CpuTimes miliseconds(const Controller::Stats& stat)
-{
-    const long CGROUP_CPU_CLK_TCK = HZ;
-    return CpuTimes(stat.utime*1000/CGROUP_CPU_CLK_TCK, stat.stime*1000/CGROUP_CPU_CLK_TCK, stat.time/1000000);
-};
-bool Runner::milisleep(long ms)
-{
-    return usleep(ms*1000);
-};
+
+string urlescape(string data) {
+    static CURL *curl = curl_easy_init();
+    char *k = curl_easy_escape(curl, data.c_str(), data.length());
+    string ret(k);
+    curl_free(k);
+    return ret;
+}
+string urlunescape(string data) {
+    static CURL *curl = curl_easy_init();
+    int kl;
+    char *k = curl_easy_unescape(curl, data.c_str(), data.length(), &kl);
+    string ret(k, kl);
+    curl_free(k);
+    return ret;
+}
 
 bool Controller::Parse(const string& code, map<string, string>& data)
 {
-    static CURL *curl = curl_easy_init();
-    const char* c = code.c_str();
     size_t la = 0;
     size_t le = 0;
     for(size_t i=0;true;i++)
-        if(c[i] == '=')
+        if(code[i] == '=')
             le = i;
-        else if(c[i] == '&' or c[i] == 0) {
+        else if(i >= code.length() || code[i] == '&') {
             if(le > la and i > le) {
-                int kl, vl;
-                char *k = curl_easy_unescape(curl, c + la, le-la, &kl);
-                char *v = curl_easy_unescape(curl, c + le+1, i-le-1, &vl);
-                string sk(k, kl);
-                string sv(v, vl);
+                string sk = urlunescape(code.substr(la, le-la));
+                string sv = urlunescape(code.substr(le+1, i-le-1));
                 data[sk] = sv;
-                curl_free(k);
-                curl_free(v);
             }
-            la = i+1;
-            if(c[i] == 0)
+            if (i >= code.length())
                 break;
+            la = i+1;
         }
     return true;
 }
 bool Controller::Dump(const map<string, string>& data, string& code)
 {
-    static CURL *curl = curl_easy_init();
     code = "";
     for(const auto& kv : data) {
-        char *k = curl_easy_escape(curl, kv.first.c_str(), kv.first.length());
-        char *v = curl_easy_escape(curl, kv.second.c_str(), kv.second.length());
         if(code.length()>0)
             code += "&";
-        code += k;
+        code += urlescape(kv.first);
         code += "=";
-        code += v;
-        curl_free(k);
-        curl_free(v);
+        code += urlescape(kv.second);
     }
     return true;
 }
@@ -641,19 +571,22 @@ bool Controller::Contact(const string& action, const map<string, string>& input,
         if (code.length()>0)
             code += "&";
         code += "session_id=";
-        code += session;
+        code += urlescape(session);
         if (secret != "") {
             code += "&secret=";
-            code += secret;
+            code += urlescape(secret);
         }
     }
-
-    //Debug("Contact code\n%s", code.c_str());
+    if (group != "") {
+        if (code.length()>0)
+            code += "&";
+        code += "group=";
+        code += urlescape(group);
+    }
 
     char buf[16];
     snprintf(buf, sizeof(buf), "%d", port);
     string url = string("http://") + host + ":" + buf + "/" + action;
-    //Debug("Contact url %s", url.c_str());
 
     CURL *curl;
     CURLcode res;
@@ -672,7 +605,6 @@ bool Controller::Contact(const string& action, const map<string, string>& input,
         result = false;
     else
     {
-        //Debug("Contact result\n%s", cbuf.String().c_str());
         if (!Parse(cbuf.String(), output))
             result = false;
     }
@@ -700,61 +632,63 @@ void Controller::CheckOK(const std::string& call, const map<string, string>& out
     }
 }
 
-Controller::Controller(const string& _host, int _port)
-{
+Controller::Controller(string _host, int _port, string _session, string _secret, string _group) {
     host = _host;
     port = _port;
-    map<string, string> input, output;
-    Contact("", input, output);
-    CheckOK("", output);
-    session = output["session_id"];
-    secret = output["secret"];
-
+    session = _session;
+    secret = _secret;
+    group = _group;
+    if (session == "" or secret == "") {
+        map<string, string> input, output;
+        Contact("", input, output);
+        CheckOK("", output);
+        session = output["session_id"];
+        secret = output["secret"];
+    }
 }
-void Controller::GroupOpen()
-{
+void Controller::Attach() {
     map<string, string> input, output;
     char buf[64];
 
-    snprintf(buf, sizeof(buf), "runner_%s.lock", session.c_str());
+    snprintf(buf, sizeof(buf), "/tmp/runner_%s.lock", session.c_str());
     input["file"] = buf;
-    snprintf(buf, sizeof(buf), "/tmp/%s", input["file"].c_str());
     int fd = open(buf, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
     if (fd < 0)
         Fail("open('%s') failed", input["file"].c_str());
-    Contact("open", input, output);
-    CheckOK("open", output);
     Contact("attach", input, output);
     CheckOK("attach", output);
     close(fd);
     if (unlink(buf))
         Fail("unlink('%s') failed", buf);
 }
-void Controller::GroupDestroy()
-{
+void Controller::Kill() {
     map<string, string> input, output;
     Contact("kill", input, output);
     CheckOK("kill", output);
+}
+void Controller::Close() {
+    map<string, string> input, output;
     Contact("close", input, output);
     CheckOK("close", output);
 }
-void Controller::GroupLimits(const Limits& limits)
-{
+void Controller::Limit(const Limits& limits) {
     map<string, string> input, output;
-    if (limits.memory > 0)
-    {
+    if (limits.memory > 0) {
         char buf[32];
         snprintf(buf, sizeof(buf), "%ld", limits.memory);
         input["memory"] = buf;
     }
-    if (input.size() > 0)
-    {
+    if (limits.cpus > 0) {
+        char buf[32];
+        snprintf(buf, sizeof(buf), "%ld", limits.cpus);
+        input["cpus"] = buf;
+    }
+    if (input.size() > 0) {
         Contact("limit", input, output);
         CheckOK("limit", output);
     }
 }
-Controller::Stats Controller::GroupStats()
-{
+Controller::Stats Controller::Query() {
     map<string, string> input, output;
     Contact("query", input, output);
     CheckOK("query", output);
@@ -773,7 +707,7 @@ long perf_event_open(struct perf_event_attr *hw_event, pid_t pid, int cpu, int g
     return ret;
 }
 
-PerfCounters::PerfCounters(int pid)
+PerfCounters::PerfCounters(pid_t pid)
     : fd_instructions(-1)
     , fd_cycles(-1)
 {
@@ -839,7 +773,7 @@ bool Runner::check_times()
     timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts))
         Fail("clock_gettime(CLOCK_REALTIME) failed");
-    long realtimesofar = miliseconds(ts) - start_time;
+    long realtimesofar = to_seconds(ts) - start_time;
     CpuTimes proctimesofar = dead_pids_time;
     unsigned long long curmemory = 0;
     for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
@@ -849,7 +783,7 @@ bool Runner::check_times()
         proctimesofar += miliseconds(usage.ru_utime);
         */
         ProcStats stat(*i);
-        proctimesofar += miliseconds(stat);
+        proctimesofar += stat;
         curmemory += stat.mem_resident;
     }
     if (proctimesofar.user < 0 || proctimesofar.system < 0 || proctimesofar.time < 0)
@@ -893,9 +827,9 @@ bool Runner::check_cgroup()
 {
     if (controller)
     {
-        Controller::Stats stats = controller->GroupStats();
+        Controller::Stats stats = controller->Query();
         result.cgroup_memory = stats.memory;
-        CpuTimes cgtime = miliseconds(stats);
+        CpuTimes cgtime = stats;
         result.cgroup_time = cgtime.time;
         result.cgroup_user_time = cgtime.user;
         result.cgroup_system_time = cgtime.system;
@@ -1075,10 +1009,6 @@ void Runner::run_child()
 
     Initializer::Stop();
 
-    if (ptrace)
-        if (::ptrace(PTRACE_TRACEME, 0, NULL, NULL))
-            Fail("ptrace_traceme failed");
-
 /*
     if (setpgrp())
         Fail("setpgrp() failed");
@@ -1214,8 +1144,8 @@ void Runner::run_child()
         Controller::Limits limits;
         //if (cgroup_memory > 0)
         //    limits.memory = cgroup_memory;
-        controller->GroupOpen();
-        controller->GroupLimits(limits);
+        controller->Attach();
+        controller->Limit(limits);
     }
 
     if ((env_level != ENV_COPY) && clearenv())
@@ -1266,31 +1196,6 @@ void Runner::run_child()
         if (setpriority(PRIO_PGRP, 0, 19-priority))
             Fail("setpriority(%d) failed", 19-priority);
 
-    if (scheduler_cpu.size())
-    {
-        cpu_set_t *cpusetp;
-        size_t cpusets = 1 + *max_element(scheduler_cpu.begin(), scheduler_cpu.end());
-        if (!(cpusetp = CPU_ALLOC(cpusets)))
-            Fail("cpu_alloc(%d) failed", (int)cpusets);
-        cpusets = CPU_ALLOC_SIZE(cpusets);
-        CPU_ZERO_S(cpusets, cpusetp);
-        for (set<int>::const_iterator i = scheduler_cpu.begin(); i != scheduler_cpu.end(); i++)
-            CPU_SET_S(*i, cpusets, cpusetp);
-        if (sched_setaffinity(0, cpusets, cpusetp))
-            Fail("setaffinity failed");
-        CPU_FREE(cpusetp);
-    }
-    if (scheduler_policy >= 0)
-    {
-        sched_param schp;
-        if (scheduler_priority > 0)
-            schp.sched_priority = scheduler_priority;
-        else
-            schp.sched_priority = 0;
-        if (sched_setscheduler(0, scheduler_policy, &schp))
-            Fail("setscheduler failed");
-    }
-
     if (uid < 0)
         uid = ruid;
     if (gid < 0)
@@ -1302,8 +1207,6 @@ void Runner::run_child()
 
     if (cpu_time > 0)
         set_rlimit("CPU", RLIMIT_CPU, (cpu_time + 1999) / 1000);
-    if (thread_count > 0)
-        set_rlimit("THREAD", RLIMIT_NPROC, thread_count);
 
     if (fi >= 0)
     {
@@ -1380,13 +1283,12 @@ void Runner::run_parent()
 {
     Debug("spawn child %d", (int)child);
     Register(child, this);
-    if (!ptrace)
-        offspring.insert(child);
+    offspring.insert(child);
 
     timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts))
         Fail("clock_gettime(CLOCK_REALTIME) failed");
-    start_time = miliseconds(ts);
+    start_time = to_seconds(ts);
 
     perf = unique_ptr<PerfCounters>(new PerfCounters(child));
 
@@ -1396,7 +1298,6 @@ void Runner::run_parent()
 
 void Runner::process_child(long epid)
 {
-    const long ptrace_opts = PTRACE_O_TRACESYSGOOD | PTRACE_O_TRACEFORK | PTRACE_O_TRACEVFORK | PTRACE_O_TRACECLONE | PTRACE_O_TRACEEXEC | PTRACE_O_TRACEEXIT;
     if (!check_times())
     {
         Stop();
@@ -1412,20 +1313,8 @@ void Runner::process_child(long epid)
         Debug("wait4 %d empty", (int)epid);
         return;
     }
-    int sig = 0;
-    if (WIFSTOPPED(status))
-        sig = WSTOPSIG(status);
-    else if (WIFSIGNALED(status))
-        sig = WTERMSIG(status);
     if (offspring.find(p) == offspring.end())
     {
-        if (ptrace)
-        {
-//      ::ptrace(PTRACE_ATTACH, p, NULL, NULL);
-            ::ptrace(PTRACE_SETOPTIONS, p, NULL, ptrace_opts);
-            if (sig == SIGTRAP)
-                sig = SIGTRAP | 0x80;
-        }
         offspring.insert(p);
         Register(p, this);
     }
@@ -1433,118 +1322,7 @@ void Runner::process_child(long epid)
 
     if (WIFSTOPPED(status))
     {
-        if (ptrace)
-        {
-            siginfo_t sigi;
-            ::ptrace(PTRACE_GETSIGINFO, p, NULL, &sigi);
-
-            if (sig == SIGTRAP)
-            {
-                int ptre = (status >> 16) & 0xffff;
-                if (ptre == PTRACE_EVENT_FORK ||
-                        ptre == PTRACE_EVENT_VFORK ||
-                        ptre == PTRACE_EVENT_CLONE)
-                {
-                    //TODO: Handle new child? No need?
-                    unsigned long npid;
-                    ::ptrace(PTRACE_GETEVENTMSG, p, NULL, &npid);
-                    Debug("-> Thread %d %lu", (int)p, npid);
-                    /*
-                    ::ptrace(PTRACE_ATTACH, npid, NULL, NULL);
-                    ::ptrace(PTRACE_SETOPTIONS, npid, NULL, ptrace_opts);
-                    offspring.insert(npid);
-                    Register(npid, this);
-                    */
-                    ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-                    ::ptrace(PTRACE_SYSCALL, npid, NULL, NULL);
-                    Debug("<- Thread %d %lu", (int)p, npid);
-                }
-                else if (ptre == PTRACE_EVENT_EXEC)
-                {
-                    //TODO: Allow him to exec?
-                    Debug("-> Execing %d", (int)p);
-                    ::ptrace(PTRACE_ATTACH, p, NULL, NULL);
-                    ::ptrace(PTRACE_SETOPTIONS, p, NULL, ptrace_opts);
-                    ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-                    Debug("<- Execing %d", (int)p);
-                }
-                else if (ptre == PTRACE_EVENT_EXIT)
-                {
-                    unsigned long exit_status;
-                    ::ptrace(PTRACE_GETEVENTMSG, p, NULL, &exit_status);
-                    Debug("-> Exiting %d %lu", (int)p, exit_status);
-                    //TODO: Check something on exit?
-                    ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-                    Debug("<- Exiting %d %lu", (int)p, exit_status);
-                }
-            }
-            else if (sig == (SIGTRAP | 0x80))
-            {
-                user_regs_struct regs;
-                ::ptrace(PTRACE_GETREGS, p, NULL, &regs);
-#ifdef __x86_64__
-#define orig_xax orig_rax
-#define xbx rbx
-#else
-#define orig_xax orig_eax
-#define xbx ebx
-#endif
-                switch (regs.orig_xax)
-                {
-                    case __NR_execve:
-                        if(!after_exec)
-                        {
-                            Debug("First exec reached");
-                            after_exec = true;
-                        }
-                        else if (ptrace_safe)
-                        {
-                            result.SetStatus(Result::RES_IO);
-                            Stop();
-                        }
-                    case __NR_exit:
-                        break;
-                    case __NR_read:
-                        break;
-                    case __NR_write:
-                        break;
-                    case __NR_brk:
-                        break;
-                    case __NR_mmap:
-                        break;
-                    case __NR_munmap:
-                        break;
-                    case __NR_uname:
-                        break;
-                    case __NR_clone:
-                        Debug("Clone");
-                        unsigned long mod;
-                        mod = CLONE_UNTRACED;
-                        regs.xbx &= ~mod;
-                        mod = CLONE_PTRACE;
-                        regs.xbx |= mod;
-                    default:
-                        if (ptrace_safe)
-                        {
-                            result.SetStatus(Result::RES_IO);
-                            Stop();
-                        }
-                    //TODO: Handle syscalls!
-                }
-                Debug("Syscall %d %d", (int)p, (int)regs.orig_xax);
-                ::ptrace(PTRACE_SETREGS, p, NULL, &regs);
-                ::ptrace(PTRACE_SYSCALL, p, NULL, NULL);
-#undef xbx
-#undef orig_xbx
-            }
-            else
-            {
-                Debug("-> Signaling %d %d", (int)p, (int)sigi.si_signo);
-                ::ptrace(PTRACE_SYSCALL, p, NULL, sigi.si_signo);
-            }
-        }
-        else
-            force_stop = true;
+        force_stop = true;
     }
     else if (WIFEXITED(status) || WIFSIGNALED(status))
     {
@@ -1555,15 +1333,14 @@ void Runner::process_child(long epid)
             int s = WSTOPSIG(status);
             Debug("Signaled %d (%d)", (int)p, s);
         }
-        dead_pids_time = miliseconds(usage);
+        dead_pids_time = usage;
         offspring.erase(p);
         Unregister(p);
         if (p == child)
         {
             result.exit_status = status;
-            result.usage = usage;
             result.memory = max((long)result.memory, (long)usage.ru_maxrss);
-            CpuTimes times = miliseconds(usage);
+            CpuTimes times = usage;
             result.cpu_time = max((long)result.cpu_time, (long)times.time);
             result.user_time = max((long)result.user_time, (long)times.user);
             result.system_time = max((long)result.system_time, (long)times.system);
@@ -1611,12 +1388,8 @@ void Runner::Run()
         Fail("Can't run pivot without mount namespace");
     if (mount_proc && !new_mount)
         Fail("Can't run mount_proc without mount namespace");
-    if (controller_host != "" || controller_port > 0)
-        controller = new Controller(controller_host, controller_port);
-    if (ptrace_safe)
-        ptrace = true;
-    if (user == "" && thread_count > 0)
-        Warning("BEWARE! 'thread_count' sets limits for user, not for process group!");
+    if (control_host != "" || control_port > 0)
+        controller = new Controller(control_host, control_port, control_session, control_secret, cgroup);
     if (child > 0)
         Fail("run failed");
     if (pipe(pipefd))
@@ -1667,16 +1440,8 @@ void Runner::Run()
         Fail("clone failed");
 }
 
-void Runner::Stop()
-{
-    if (child > 0)
-    {
-        if (ptrace)
-        {
-            ::ptrace(PTRACE_KILL, child, NULL, NULL);
-            for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
-                ::ptrace(PTRACE_KILL, *i, NULL, NULL);
-        }
+void Runner::Stop() {
+    if (child > 0) {
         killpg(child, SIGKILL);
         check_times();
         check_cgroup();
@@ -1686,7 +1451,7 @@ void Runner::Stop()
         offspring.clear();
         child=-1;
         if (controller)
-            controller->GroupDestroy();
+            controller->Kill();
         result.SetStatus(Result::RES_STOP);
     }
 }
@@ -1706,7 +1471,7 @@ bool Runner::Check()
 void Runner::Wait()
 {
     while (child>0 && Check())
-        Initializer::ProcessLoop(10);
+        Initializer::ProcessLoop(0.1);
 }
 
 }
