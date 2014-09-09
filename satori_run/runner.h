@@ -143,7 +143,7 @@ namespace runner {
         void Limit(const Limits&);
         struct Stats {
             long time, utime, stime;
-            long long memory;
+            unsigned long long memory;
             Stats()
                 : time(0)
                 , utime(0)
@@ -179,33 +179,21 @@ namespace runner {
             RES_OTHER
         };
         RES_STATUS status;
-        int    exit_status;
+        int exit_status;
         unsigned long long memory; // bytes
         double cpu_time; // seconds
-        double user_time;
-        double system_time;
         double real_time;
-        unsigned long long cgroup_memory;
-        double cgroup_time;
-        double cgroup_user_time;
-        double cgroup_system_time;
-        unsigned long perf_instructions;
-        unsigned long perf_cycles;
+        unsigned long instructions;
+        unsigned long cycles;
 
         Result()
             : status(RES_OTHER)
             , exit_status(0)
             , memory(0)
             , cpu_time(0)
-            , user_time(0)
-            , system_time(0)
             , real_time(0)
-            , cgroup_memory(0)
-            , cgroup_time(0)
-            , cgroup_user_time(0)
-            , cgroup_system_time(0)
-            , perf_instructions(0)
-            , perf_cycles(0) {}
+            , instructions(0)
+            , cycles(0) {}
         void SetStatus(RES_STATUS _status) {
             if (status == RES_OTHER)
                 status = _status;
@@ -247,8 +235,7 @@ namespace runner {
         }
     };
 
-    class Runner
-    {
+    class Runner {
         private:
         static std::map<int, Runner*> runners;
         static void Register(int, Runner*);
@@ -279,21 +266,10 @@ namespace runner {
         std::unique_ptr<PerfCounters> perf;
 
         public:
-        // File to put debug
-        std::string debug_file;
-        // Directory to chroot into
-        std::string dir;
-        bool pivot;
-        // Executable to run (inside chroot)
-        std::string exec;
-        // Executable working dir (inside chroot)
+        std::string root_dir;
         std::string work_dir;
-        // Parameters
-        std::vector<std::string> params;
-        // User settings
         std::string user;
         std::string group;
-        // Environment
         enum ENV_LEVEL {
             ENV_EMPTY,
             ENV_SIMPLE,
@@ -301,6 +277,8 @@ namespace runner {
             ENV_COPY
         };
         ENV_LEVEL env_level;
+        std::map<std::string, std::string> env_add;
+        std::set<std::string> env_del;
         enum CAP_LEVEL {
             CAP_EMPTY,
             CAP_SAFE,
@@ -308,22 +286,6 @@ namespace runner {
             CAP_FULL
         };
         CAP_LEVEL cap_level;
-        std::map<std::string, std::string> env_add;
-        std::set<std::string> env_del;
-        // Memory limits (in bytes)
-        long long memory_space;
-        long long stack_space;
-        long long data_space;
-        // Time limits (in seconds)
-        double cpu_time;
-        double user_time;
-        double system_time;
-        double real_time;
-        long long instructions;
-        long long cycles;
-        // FS limits
-        long descriptor_count;
-        // Scheduling
         long priority; // the bigger, the better (0 = 19, 39 = -20)
         // Redirects (outside chroot!)
         std::string input;
@@ -332,25 +294,30 @@ namespace runner {
         std::string error;
         bool error_trunc;
         bool error_to_output;
+        long cpu_count;
+        // Memory limits (in bytes)
+        long long memory_space;
+        long long stack_space;
+        // Time limits (in seconds)
+        double cpu_time;
+        double real_time;
+        long long instructions;
+        long long cycles;
+        // FS limits
+        long descriptor_count;
+        // Scheduling
         // Flags
         bool lock_memory;
-        bool new_ipc;
-        bool new_net;
-        bool new_mount;
-        bool mount_proc;
-        bool new_pid;
-        bool new_uts;
         bool search_path;
         std::string control_host;
         int control_port;
         std::string control_session;
         std::string control_secret;
         std::string cgroup;
-        long long cgroup_memory;
-        double cgroup_time;
-        double cgroup_user_time;
-        double cgroup_system_time;
-        long cgroup_cpus;
+        std::string exec;
+        std::vector<std::string> params;
+        // File to put debug
+        std::string log_file;
 
         Runner()
             : controller(NULL)
@@ -360,28 +327,14 @@ namespace runner {
             , after_exec(false)
             , start_time(0)
             , dead_pids_time(0,0)
-            , debug_file("")
-            , dir("")
-            , pivot(false)
-            , exec("")
+            , root_dir("")
             , work_dir("")
-            , params()
             , user("")
             , group("")
             , env_level(ENV_COPY)
-            , cap_level(CAP_FULL)
             , env_add()
             , env_del()
-            , memory_space(-1)
-            , stack_space(-1)
-            , data_space(-1)
-            , cpu_time(-1)
-            , user_time(-1)
-            , system_time(-1)
-            , real_time(-1)
-            , instructions(-1)
-            , cycles(-1)
-            , descriptor_count(-1)
+            , cap_level(CAP_FULL)
             , priority(-1)
             , input("")
             , output("")
@@ -389,21 +342,22 @@ namespace runner {
             , error("")
             , error_trunc(false)
             , error_to_output(false)
+            , cpu_count(-1)
+            , memory_space(-1)
+            , stack_space(-1)
+            , cpu_time(-1)
+            , real_time(-1)
+            , instructions(-1)
+            , cycles(-1)
+            , descriptor_count(-1)
             , lock_memory(false)
-            , new_ipc(false)
-            , new_net(false)
-            , new_mount(false)
-            , mount_proc(false)
-            , new_pid(false)
-            , new_uts(false)
             , search_path(false)
             , control_host("")
             , control_port(-1)
             , cgroup("")
-            , cgroup_memory(-1)
-            , cgroup_time(-1)
-            , cgroup_user_time(-1)
-            , cgroup_system_time(-1) {}
+            , exec("")
+            , params()
+            , log_file("") {}
         ~Runner();
 
         void Run();

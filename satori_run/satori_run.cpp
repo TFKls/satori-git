@@ -65,12 +65,12 @@ static struct {
     long    memory;
     long    stack;
     long    files;
-    char*   log_level;
-    char*   log_file;
     char*   control_host;
     char*   control_group;
     char*   control_session;
     char*   control_secret;
+    char*   log_level;
+    char*   log_file;
     char**  argv;
 } config;
 
@@ -93,10 +93,10 @@ static struct poptOption CONFIG_OPT[] = {
     { "max-memory",      0,   POPT_ARG_LONG,   &config.memory,         0, "limit memory usage to LIMIT bytes",                  "LIMIT" },
     { "max-stack",       0,   POPT_ARG_LONG,   &config.stack,          0, "limit stack usage to LIMIT bytes",                   "LIMIT" },
     { "max-files",       0,   POPT_ARG_LONG,   &config.files,          0, "limit open file count to LIMIT",                     "LIMIT" },
-    { "log-level",       0,   POPT_ARG_STRING, &config.log_level,      0, "set logging verbosity to LEVEL ('debug', 'warning', 'error', 'critical', 'none')", "LEVEL" },
-    { "log-file",        0,   POPT_ARG_STRING, &config.log_file,       0, "file for logging information",                       "FILE" },
     { "control-host",    0,   POPT_ARG_STRING, &config.control_host,   0, "set satori_rund host HOST[:PORT]",                   "HOST" },
     { "control-group",   0,   POPT_ARG_STRING, &config.control_group,  0, "set control group NAME",                             "NAME" },
+    { "log-level",       0,   POPT_ARG_STRING, &config.log_level,      0, "set logging verbosity to LEVEL ('debug', 'warning', 'error', 'critical', 'none')", "LEVEL" },
+    { "log-file",        0,   POPT_ARG_STRING, &config.log_file,       0, "file for logging information",                       "FILE" },
     POPT_TABLEEND
 };
 static struct poptOption options[] = {
@@ -156,11 +156,11 @@ int finish() {
         default: printf("UNK\n");
     }
     printf("Return       : %d\n", WEXITSTATUS(run.result.exit_status));
-    printf("Memory       : %llu\n", max(run.result.memory, run.result.cgroup_memory));
-    printf("CPU          : %lf\n", max(run.result.cpu_time, run.result.cgroup_time));
+    printf("Memory       : %llu\n", run.result.memory);
+    printf("CPU          : %lf\n", run.result.cpu_time);
     printf("Time         : %lf\n", run.result.real_time);
-    printf("Instructions : %lu\n", run.result.perf_instructions);
-    printf("Cycles       : %lu\n", run.result.perf_cycles);
+    printf("Instructions : %lu\n", run.result.instructions);
+    printf("Cycles       : %lu\n", run.result.cycles);
     if (run.result.status == Result::RES_OK)
         return 0;
     return 1;
@@ -205,7 +205,7 @@ int main(int argc, const char** argv) {
 
     parse_options(argc, argv);
     if (config.root_dir)
-        run.dir = config.root_dir;
+        run.root_dir = config.root_dir;
     if (config.work_dir)
         run.work_dir = config.work_dir;
     if (config.user)
@@ -247,13 +247,13 @@ int main(int argc, const char** argv) {
     if (config.stderr_trunc)
         run.error_trunc = true;
     if (config.cpu_count > 0)
-        run.cgroup_cpus = config.cpu_count;
+        run.cpu_count = config.cpu_count;
     if (config.real_time > 0)
         run.real_time = config.real_time;
     if (config.cpu_time > 0)
-        run.cgroup_time = config.cpu_time;
+        run.cpu_time = config.cpu_time;
     if (config.memory > 0)
-        run.cgroup_memory = config.memory;
+        run.memory_space = config.memory;
     if (config.stack > 0)
         run.stack_space = config.stack;
     if (config.files > 0)
@@ -271,7 +271,7 @@ int main(int argc, const char** argv) {
             Logger::SetLevel(Logger::NONE);
     }
     if (config.log_file)
-        run.debug_file = config.log_file;
+        run.log_file = config.log_file;
 
     string control_host("localhost");
     if (config.control_host)
@@ -292,6 +292,8 @@ int main(int argc, const char** argv) {
 
     run.search_path = true;
     run.cap_level = Runner::CAP_EMPTY;
+    run.env_del.insert("SATORI_RUND_SECRET");
+    run.env_del.insert("SATORI_RUND_SESSION");
 
     run.Run();
     run.Wait();

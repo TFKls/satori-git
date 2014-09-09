@@ -688,7 +688,7 @@ Controller::Stats Controller::Query() {
     Contact("query", input, output);
     CheckOK("query", output);
     Stats s;
-    s.memory = atol(output["memory"].c_str());
+    s.memory = atoll(output["memory"].c_str());
     s.time = atol(output["cpu"].c_str());
     s.utime = atol(output["cpu.user"].c_str());
     s.stime = atol(output["cpu.system"].c_str());
@@ -764,55 +764,28 @@ PerfCounters::Stats PerfCounters::PerfStats()
 
 bool Runner::check_times()
 {
-//  rusage usage;
     timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts))
         Fail("clock_gettime(CLOCK_REALTIME) failed");
     double realtimesofar = to_seconds(ts) - start_time;
-    CpuTimes proctimesofar = dead_pids_time;
-    unsigned long long curmemory = 0;
-    for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
-    {
-        /* NIE DA SIE TAK, A POWINNO! Musimy czytać wolnego proca w sighandlerze
-        getrusage(*i, &usage);
-        proctimesofar += miliseconds(usage.ru_utime);
-        */
-        ProcStats stat(*i);
-        proctimesofar += stat;
-        curmemory += stat.mem_resident;
-    }
-    if (proctimesofar.user < 0 || proctimesofar.system < 0 || proctimesofar.time < 0)
-    {
-        Debug("CPU time below zero: (%ld + %ld = %ld)", proctimesofar.user, proctimesofar.system, proctimesofar.time);
-        proctimesofar = CpuTimes(0,0);
-    }
-    if (realtimesofar < 0)
-    {
+    if (realtimesofar < 0) {
         Debug("Real time below zero: %ld", realtimesofar);
         realtimesofar = 0;
     }
     PerfCounters::Stats perf_stats = perf->PerfStats();
 
-    result.real_time = realtimesofar;
-    result.cpu_time = proctimesofar.time;
-    result.user_time = proctimesofar.user;
-    result.system_time = proctimesofar.system;
-    result.memory = max((unsigned long long)result.memory, curmemory);
-    result.perf_instructions = perf_stats.instructions;
-    result.perf_cycles = perf_stats.cycles;
+    result.real_time = max(result.real_time, realtimesofar);
+    result.instructions = max(result.instructions, perf_stats.instructions);
+    result.cycles = max(result.cycles, perf_stats.cycles);
     if ((cpu_time > 0 && cpu_time < result.cpu_time) ||
             (real_time > 0 && real_time < result.real_time) ||
-            (user_time > 0 && user_time < result.user_time) ||
-            (system_time > 0 && system_time < result.system_time) ||
-            (instructions > 0 && (unsigned long long)instructions < result.perf_instructions) ||
-            (cycles > 0 && (unsigned long long)cycles < result.perf_cycles)
-       )
-    {
+            (instructions > 0 && (unsigned long long)instructions < result.instructions) ||
+            (cycles > 0 && (unsigned long long)cycles < result.cycles)
+       ) {
         result.SetStatus(Result::RES_TIME);
         return false;
     }
-    if ((memory_space > 0) && ((long)curmemory > memory_space))
-    {
+    if ((memory_space > 0) && ((unsigned long long)memory_space < result.memory)) {
         result.SetStatus(Result::RES_MEMORY);
         return false;
     }
@@ -823,20 +796,14 @@ bool Runner::check_cgroup()
     if (controller)
     {
         Controller::Stats stats = controller->Query();
-        result.cgroup_memory = stats.memory;
+        result.memory = max(result.memory, stats.memory);
         CpuTimes cgtime = stats;
-        result.cgroup_time = cgtime.time;
-        result.cgroup_user_time = cgtime.user;
-        result.cgroup_system_time = cgtime.system;
-        if ((cgroup_time > 0 && cgroup_time < result.cgroup_time) ||
-                (cgroup_user_time > 0 && cgroup_user_time < result.cgroup_user_time) ||
-                (cgroup_system_time > 0 && cgroup_system_time < result.cgroup_system_time))
-        {
+        result.cpu_time = max(result.cpu_time, cgtime.time);
+        if (cpu_time > 0 && cpu_time < result.cpu_time) {
             result.SetStatus(Result::RES_TIME);
             return false;
         }
-        if (cgroup_memory > 0 && cgroup_memory < (long)result.cgroup_memory)
-        {
+        if (memory_space > 0 && (unsigned long long)memory_space < result.memory) {
             result.SetStatus(Result::RES_MEMORY);
             return false;
         }
@@ -1061,96 +1028,33 @@ void Runner::run_child()
     string homedir("/");
     string shell("/bin/bash");
     UserInfo ust(uid);
-    if (ust.ok)
-    {
+    if (ust.ok) {
         username = ust.name;
         homedir = ust.dir;
         shell = ust.shell;
     }
 
-    if ((dir != "") && chdir(dir.c_str()))
-        Fail("chdir('%s') failed", dir.c_str());
-    if (dir != "")
-    {
-        if (new_mount && pivot)
-        {
-            const char* oldroot = "tmp/__oldroot__";
-            bool rem = (mkdir(oldroot, S_IRUSR | S_IWUSR | S_IXUSR) == 0);
-            if(mount(oldroot, oldroot, "", MS_BIND, NULL))
-            {
-                if (rem)
-                    rmdir(oldroot);
-                Fail("bind mount('%s') failed", oldroot);
-            }
-            if(mount(oldroot, oldroot, "", MS_PRIVATE, NULL))
-            {
-                if (rem)
-                    rmdir(oldroot);
-                Fail("private mount('%s') failed", oldroot);
-            }
-            if (syscall(SYS_pivot_root, ".", oldroot))
-            {
-                if (rem)
-                    rmdir(oldroot);
-                Fail("pivot_root('.', '%s') failed", oldroot);
-            }
-            if (chdir("/"))
-            {
-                if (rem)
-                    rmdir(oldroot);
-                Fail("chdir('/') failed");
-            }
-            if(umount2(oldroot, MNT_DETACH))
-            {
-                if (rem)
-                    rmdir(oldroot);
-                Fail("first detach('%s') failed", oldroot);
-            }
-            if(umount2(oldroot, MNT_DETACH))
-            {
-                if (rem)
-                    rmdir(oldroot);
-                Fail("second detach('%s') failed", oldroot);
-            }
-            if (rem)
-                rmdir(oldroot);
-        }
-        else if (chroot("."))
-            Fail("chroot('.') failed");
-    }
-    if (work_dir != "")
-    {
-        if (chdir(work_dir.c_str()))
-            Fail("chdir('%s') failed", work_dir.c_str());
-    }
-    else
-        if (dir != "" && chdir("/"))
-            Fail("chdir('/') failed");
-
-    if (new_mount && mount_proc)
-    {
-        umount2("/proc", MNT_DETACH);
-        if (mount("proc", "/proc", "proc", 0, NULL))
-            Fail("mount('proc', '/proc', 'proc') failed");
-    }
-
-    if (controller)
-    {
+    if (root_dir != "" and chdir(root_dir.c_str()))
+        Fail("chdir('%s') failed", root_dir.c_str());
+    if (root_dir != "" and chroot(".") and chdir("/"))
+        Fail("chroot('.') failed");
+    if (work_dir != "" and chdir(work_dir.c_str()))
+        Fail("chdir('%s') failed", work_dir.c_str());
+    if (controller) {
         Controller::Limits limits;
-        //if (cgroup_memory > 0)
-        //    limits.memory = cgroup_memory;
+        if (memory_space > 0)
+            limits.memory = memory_space;
+        if (cpu_count > 0)
+            limits.cpus = cpu_count;
         controller->Attach();
         controller->Limit(limits);
     }
 
     if ((env_level != ENV_COPY) && clearenv())
         Fail("clearenv failed");
-    switch(env_level)
-    {
+    switch(env_level) {
         case ENV_FULL:
             if (setenv("TERM", "linux", 1)) Fail("setenv('TERM') failed");
-            if (setenv("CFLAGS", "-Wall -O2", 1)) Fail("setenv('CFLAGS') failed");
-            if (setenv("CPPFLAGS", "-Wall -O2", 1)) Fail("setenv('CPPFLAGS') failed");
             if (setenv("USER", username.c_str(), 1)) Fail("setenv('USER') failed");
             if (setenv("USERNAME", username.c_str(), 1)) Fail("setenv('USERNAME') failed");
             if (setenv("LOGNAME", username.c_str(), 1)) Fail("setenv('LOGNAME') failed");
@@ -1175,18 +1079,8 @@ void Runner::run_child()
 
     set_rlimit("CORE", RLIMIT_CORE, 0);
 
-    if (memory_space > 0)
-    {
-        set_rlimit("AS", RLIMIT_AS, memory_space);
-        set_rlimit("DATA", RLIMIT_DATA, memory_space);
-        set_rlimit("STACK", RLIMIT_STACK, memory_space);
-    }
     if (stack_space > 0)
         set_rlimit("STACK", RLIMIT_STACK, min(stack_space, memory_space));
-    if (data_space > 0)
-        set_rlimit("DATA", RLIMIT_DATA, min(data_space, memory_space));
-
-
     if (priority > 0)
         if (setpriority(PRIO_PGRP, 0, 19-priority))
             Fail("setpriority(%d) failed", 19-priority);
@@ -1334,11 +1228,9 @@ void Runner::process_child(long epid)
         if (p == child)
         {
             result.exit_status = status;
-            result.memory = max((long)result.memory, (long)usage.ru_maxrss);
+            result.memory = max(result.memory, (unsigned long long)usage.ru_maxrss);
             CpuTimes times = usage;
             result.cpu_time = max(result.cpu_time, times.time);
-            result.user_time = max(result.user_time, times.user);
-            result.system_time = max(result.system_time, times.system);
 
             if (WIFEXITED(status) && (WEXITSTATUS(status) == 0))
                 result.SetStatus(Result::RES_OK);
@@ -1371,57 +1263,24 @@ int Runner::child_runner(void* _runner)
 void Runner::Run()
 {
     parent = getpid();
-    if (debug_file != "")
+    if (log_file != "")
     {
         int debfd;
-        if ((debug_file != "") && ((debfd = open(debug_file.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)) < 0))
-            Fail("open('%s') failed", debug_file.c_str());
+        if ((log_file != "") && ((debfd = open(log_file.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)) < 0))
+            Fail("open('%s') failed", log_file.c_str());
         else
             Logger::debug_fds.insert(debfd);
     }
-    if (pivot && !new_mount)
-        Fail("Can't run pivot without mount namespace");
-    if (mount_proc && !new_mount)
-        Fail("Can't run mount_proc without mount namespace");
     if (control_host != "" || control_port > 0)
         controller = new Controller(control_host, control_port, control_session, control_secret, cgroup);
     if (child > 0)
         Fail("run failed");
     if (pipe(pipefd))
         Fail("pipe failed");
-    //if (cgroup_memory > 0 && memory_space <= 0)
-    //{
-    //    memory_space = cgroup_memory;
-    //    Debug("Setting memory limit to cgroup memory limit");
-    //}
-    if (cgroup_time > 0 && cpu_time <= 0)
-    {
-        cpu_time = cgroup_time;
-        Debug("Setting time limit to cgroup time limit");
-    }
-    if (cgroup_user_time > 0 && user_time <= 0)
-    {
-        user_time = cgroup_user_time;
-        Debug("Setting user time limit to cgroup user time limit");
-    }
-    if (cgroup_system_time > 0 && system_time <= 0)
-    {
-        system_time = cgroup_system_time;
-        Debug("Setting system time limit to cgroup system time limit");
-    }
+
     after_exec = false;
 
     unsigned long flags = SIGCHLD;
-    if (new_ipc)
-        flags |= CLONE_NEWIPC;
-    if (new_net)
-        flags |= CLONE_NEWNET;
-    if (new_mount)
-        flags |= CLONE_NEWNS;
-    if (new_pid)
-        flags |= CLONE_NEWPID;
-    if (new_uts)
-        flags |= CLONE_NEWUTS;
     size_t cssize = 1024*1024;
     void *childstack, *stack = malloc(cssize);
     if (!stack)
