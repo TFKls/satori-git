@@ -52,7 +52,7 @@ def ensure_testd(ip, port, session, args):
             logging.info('Found Satori Test Daemon at %s:%d'%(ip, port))
             return True
     except:
-        args = ['./satori_testd', '--host=0.0.0.0', '--port='+str(port), '--session='+session] + args
+        args = ['satori_testd', '--host=0.0.0.0', '--port='+str(port), '--session='+session] + args
         logging.warning('Starting Satori Test Daemon %s', ' '.join(args))
         p = Process(target=subprocess.check_call, args=(args,))
         p.start()
