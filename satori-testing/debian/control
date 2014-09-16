@@ -1,4 +1,4 @@
-Source: satori-run
+Source: satori-testing
 Section: unknown
 Priority: optional
 Maintainer: Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>
@@ -6,8 +6,8 @@ Build-Depends: debhelper (>= 8.0.0)
 Standards-Version: 3.9.4
 Homepage: https://bitbucket.org/satoriproject/satori/
 
-Package: satori-run
+Package: satori-testing
 Architecture: any
 Depends: ${shlibs:Depends}, ${misc:Depends}, python3
-Description: Satori Run daemon and utility
- Satori Run daemon and utility.
+Description: Satori Run daemon and testing utilities
+ Satori Run daemon and testing utilities.
