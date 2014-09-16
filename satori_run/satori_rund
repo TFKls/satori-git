@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# vim:ts=4:sts=4:sw=4:expandtab
 
 import argparse
 import cgi
@@ -6,13 +7,13 @@ import hashlib
 from http.server import HTTPServer, BaseHTTPRequestHandler
 import logging
 import math
+import os
 import re
 import signal
 import subprocess
 import traceback
 from urllib.parse import urlparse, urlencode, parse_qsl
 import uuid
-import os
 
 RUND_HOST = ''
 RUND_PORT = 8765

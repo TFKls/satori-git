@@ -486,7 +486,7 @@ double to_seconds(const timeval& tv) {
     return secs;
 }
 double to_seconds(const timespec& ts) {
-    long secs = ts.tv_sec;
+    double secs = ts.tv_sec;
     secs += (double) ts.tv_nsec / (1000 * 1000 * 1000);
     return secs;
 }
@@ -1052,12 +1052,12 @@ void Runner::run_child()
         case ENV_EMPTY:
             ;
     }
-    for (map<string, string>::const_iterator i=env_add.begin(); i!=env_add.end(); i++)
-        if (setenv(i->first.c_str(), i->second.c_str(), 1))
-            Fail("setenv('%s') failed", i->first.c_str());
     for (set<string>::const_iterator i=env_del.begin(); i!=env_del.end(); i++)
         if (unsetenv(i->c_str()))
             Fail("unsetenv('%s') failed", i->c_str());
+    for (map<string, string>::const_iterator i=env_add.begin(); i!=env_add.end(); i++)
+        if (setenv(i->first.c_str(), i->second.c_str(), 1))
+            Fail("setenv('%s') failed", i->first.c_str());
 
     set_rlimit("CORE", RLIMIT_CORE, 0);
 

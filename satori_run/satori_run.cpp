@@ -294,6 +294,7 @@ int main(int argc, const char** argv) {
     run.cap_level = Runner::CAP_EMPTY;
     run.env_del.insert("SATORI_RUND_SECRET");
     run.env_del.insert("SATORI_RUND_SESSION");
+    run.env_del.insert("SATORI_TESTD_SESSION");
 
     run.Run();
     run.Wait();
