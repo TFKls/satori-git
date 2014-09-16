@@ -1,0 +1,12 @@
+image: judge
+judge: test/judge.py
+time: 1s
+memory: 512MB
+tools: test/tools.zip
+input: test/test.gen
+generator: test/gen.cpp
+verifier: test/ver.cpp
+hinter: test/sol.cpp
+checker: test/checker.cpp
+languages: cpp
+d: d
