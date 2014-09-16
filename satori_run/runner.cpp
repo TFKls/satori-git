@@ -607,26 +607,6 @@ bool Controller::Contact(const string& action, const map<string, string>& input,
     return result;
 }
 
-void Controller::CheckOK(const std::string& call, const map<string, string>& output)
-{
-    map<string, string>::const_iterator ok = output.find("result");
-    if (ok == output.end() || ok->second != "OK")
-    {
-        if (output.find("message") != output.end())
-        {
-            Fail("%s returned '%s'", call.c_str(), output.find("message")->second.c_str());
-        } else {
-            stringstream s;
-            size_t c=output.size();
-            s << "[";
-            for(auto i = output.begin(); i != output.end(); i++, c--)
-                s << i->first << ": " << i->second << (c>1?", ":"");
-            s << "]";
-            Fail("%s returned '%s'", call.c_str(), s.str().c_str());
-        }
-    }
-}
-
 Controller::Controller(string _host, int _port, string _session, string _secret, string _group) {
     host = _host;
     port = _port;
@@ -635,8 +615,9 @@ Controller::Controller(string _host, int _port, string _session, string _secret,
     group = _group;
     if (session == "" or secret == "") {
         map<string, string> input, output;
-        Contact("", input, output);
-        CheckOK("", output);
+        if (!Contact("", input, output)) {
+            //TODO: What should I do?
+        }
         session = output["session_id"];
         secret = output["secret"];
     }
@@ -645,26 +626,29 @@ void Controller::Attach() {
     map<string, string> input, output;
     char buf[64];
 
-    snprintf(buf, sizeof(buf), "/tmp/runner_%s.lock", session.c_str());
+    snprintf(buf, sizeof(buf), "/tmp/satori_rund_%s.lock", session.c_str());
     input["file"] = buf;
     int fd = open(buf, O_WRONLY | O_CREAT | O_EXCL, S_IRUSR | S_IWUSR);
     if (fd < 0)
         Fail("open('%s') failed", input["file"].c_str());
-    Contact("attach", input, output);
-    CheckOK("attach", output);
+    if (!Contact("attach", input, output)) {
+        //TODO: What should I do?
+    }
     close(fd);
     if (unlink(buf))
         Fail("unlink('%s') failed", buf);
 }
 void Controller::Kill() {
     map<string, string> input, output;
-    Contact("kill", input, output);
-    CheckOK("kill", output);
+    if (!Contact("kill", input, output)) {
+        //TODO: What should I do?
+    }
 }
 void Controller::Close() {
     map<string, string> input, output;
-    Contact("close", input, output);
-    CheckOK("close", output);
+    if (!Contact("close", input, output)) {
+        //TODO: What should I do?
+    }
 }
 void Controller::Limit(const Limits& limits) {
     map<string, string> input, output;
@@ -679,14 +663,16 @@ void Controller::Limit(const Limits& limits) {
         input["cpus"] = buf;
     }
     if (input.size() > 0) {
-        Contact("limit", input, output);
-        CheckOK("limit", output);
+        if (!Contact("limit", input, output)) {
+            //TODO: What should I do?
+        }
     }
 }
 Controller::Stats Controller::Query() {
     map<string, string> input, output;
-    Contact("query", input, output);
-    CheckOK("query", output);
+    if (!Contact("query", input, output)) {
+        //TODO: What should I do?
+    }
     Stats s;
     s.memory = atoll(output["memory"].c_str());
     s.time = atol(output["cpu"].c_str());
@@ -1172,7 +1158,6 @@ void Runner::run_parent()
 {
     Debug("spawn child %d", (int)child);
     Register(child, this);
-    offspring.insert(child);
 
     timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts))
@@ -1202,11 +1187,6 @@ void Runner::process_child(long epid)
         Debug("wait4 %d empty", (int)epid);
         return;
     }
-    if (offspring.find(p) == offspring.end())
-    {
-        offspring.insert(p);
-        Register(p, this);
-    }
     bool force_stop = false;
 
     if (WIFSTOPPED(status))
@@ -1222,9 +1202,6 @@ void Runner::process_child(long epid)
             int s = WSTOPSIG(status);
             Debug("Signaled %d (%d)", (int)p, s);
         }
-        dead_pids_time = usage;
-        offspring.erase(p);
-        Unregister(p);
         if (p == child)
         {
             result.exit_status = status;
@@ -1253,18 +1230,15 @@ void Runner::process_child(long epid)
     }
 }
 
-int Runner::child_runner(void* _runner)
-{
+int Runner::child_runner(void* _runner) {
     Runner* runner = (Runner*) _runner;
     runner->run_child();
     return 0;
 }
 
-void Runner::Run()
-{
+void Runner::Run() {
     parent = getpid();
-    if (log_file != "")
-    {
+    if (log_file != "") {
         int debfd;
         if ((log_file != "") && ((debfd = open(log_file.c_str(), O_WRONLY | O_CREAT | O_APPEND, S_IRUSR | S_IWUSR)) < 0))
             Fail("open('%s') failed", log_file.c_str());
@@ -1297,33 +1271,29 @@ void Runner::Run()
 void Runner::Stop() {
     if (child > 0) {
         killpg(child, SIGKILL);
+        if (controller)
+            controller->Kill();
         check_times();
         check_cgroup();
         Unregister(child);
-        for (set<int>::const_iterator i = offspring.begin(); i != offspring.end(); i++)
-            Unregister(*i);
-        offspring.clear();
         child=-1;
         if (controller)
-            controller->Kill();
+            controller->Close();
         result.SetStatus(Result::RES_STOP);
     }
 }
 
-bool Runner::Check()
-{
+bool Runner::Check() {
     if (child <= 0)
         return false;
-    if (!check_times() || !check_cgroup())
-    {
+    if (!check_times() || !check_cgroup()) {
         Stop();
         return false;
     }
     return true;
 }
 
-void Runner::Wait()
-{
+void Runner::Wait() {
     while (child>0 && Check())
         Initializer::ProcessLoop(0.1);
 }

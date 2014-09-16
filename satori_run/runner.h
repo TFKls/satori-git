@@ -129,7 +129,6 @@ namespace runner {
         static bool Parse(const std::string&, std::map<std::string, std::string>&);
         static bool Dump(const std::map<std::string, std::string>&, std::string&);
         bool Contact(const std::string&, const std::map<std::string, std::string>&, std::map<std::string, std::string>&);
-        static void CheckOK(const std::string&, const std::map<std::string, std::string>&);
         public:
         Controller(std::string ="localhost", int =8765, std::string ="", std::string ="", std::string ="");
         void Attach();
@@ -258,10 +257,8 @@ namespace runner {
         int  pipefd[2];
         int  child;
         int  parent;
-        std::set<int> offspring;
         bool after_exec;
         long start_time;
-        CpuTimes dead_pids_time;
         long inside_syscall;
         std::unique_ptr<PerfCounters> perf;
 
@@ -323,10 +320,8 @@ namespace runner {
             : controller(NULL)
             , child(-1)
             , parent(-1)
-            , offspring()
             , after_exec(false)
             , start_time(0)
-            , dead_pids_time(0,0)
             , root_dir("")
             , work_dir("")
             , user("")

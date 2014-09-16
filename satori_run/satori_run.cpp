@@ -87,7 +87,7 @@ static struct poptOption CONFIG_OPT[] = {
     { "trunc-stdout",    0,   POPT_ARG_NONE,   &config.stdout_trunc,   0, "truncate standard output",                           0 },
     { "stderr",          0,   POPT_ARG_STRING, &config.stderr,         0, "redirect standard error output to FILE",             "FILE" },
     { "trunc-stderr",    0,   POPT_ARG_NONE,   &config.stderr_trunc,   0, "truncate standard error",                            0 },
-    { "max-cpus",        0,   POPT_ARG_STRING, &config.cpu_count,      0, "limit cpu usage to LIMIT processors",                "LIMIT" },
+    { "max-cpus",        0,   POPT_ARG_LONG,   &config.cpu_count,      0, "limit cpu usage to LIMIT processors",                "LIMIT" },
     { "max-real-time",   0,   POPT_ARG_DOUBLE, &config.real_time,      0, "limit real time to LIMIT seconds",                   "LIMIT" },
     { "max-cpu-time",    0,   POPT_ARG_DOUBLE, &config.cpu_time,       0, "limit CPU time to LIMIT seconds",                    "LIMIT" },
     { "max-memory",      0,   POPT_ARG_LONG,   &config.memory,         0, "limit memory usage to LIMIT bytes",                  "LIMIT" },

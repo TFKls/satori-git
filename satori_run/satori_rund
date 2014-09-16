@@ -90,7 +90,7 @@ class Session:
         return self.registry.control_group_system
 
     def initial_group_path(self, group, path='/', subpath='/'):
-        return os.path.abspath(os.path.join(self.control_group_system().mount_point(group), path.strip('/'), 'runnerd_'+self.id, subpath.strip('/')))
+        return os.path.abspath(os.path.join(self.control_group_system().mount_point(group), path.strip('/'), 'satori_rund_'+self.id, subpath.strip('/')))
 
     def process_groups(self, pid):
         groups_file = os.path.join('/proc', str(pid), 'cgroup')
@@ -110,6 +110,20 @@ class Session:
                 with open(group_list_file) as f:
                     result.update([line.strip() for line in f.readlines()])
         return list(result)
+
+    def cpuset_cpus(self, path):
+        path=os.path.abspath(path)
+        while path.startswith(self.control_group_system().mount_point('cpuset')):
+            cpuset_file = os.path.join(path, 'cpuset.cpus')
+            if os.path.exists(cpuset_file):
+                with open(cpuset_file) as f:
+                    cpus = f.readline().strip()
+                if cpus != '':
+                    cpuset=list()
+                    for cpu_range in [(c+'-'+c).split('-')[0:2] for c in cpus.split(',')]:
+                        for cpu in range(int(cpu_range[0]), int(cpu_range[1])+1):
+                            cpuset.append(cpu)
+                    return sorted(cpuset)
 
     def __init__(self, registry, session_id, pid):
         self.registry = registry
@@ -150,7 +164,14 @@ class Session:
             logging.debug('Limited session %s [%s] memory to %s bytes'%(self.id, subpath, memory))
         if cpus:
             assert 'cpuset' in self.groups
-            pass #TODO: design cpu limits
+            cpuset_cpus = [str(c) for c in self.cpuset_cpus(os.path.normpath(os.path.join(self.group_path('cpuset', subpath=subpath), '..')))]
+            logging.debug('Available cpus: %s', ','.join(cpuset_cpus))
+            if len(cpuset_cpus) > cpus:
+                cpuset_cpus = cpuset_cpus[0:cpus]
+            limit_file = self.group_path('cpuset', subpath=subpath, filename='cpuset.cpus')
+            with open(limit_file, 'w') as f:
+                f.write(','.join(cpuset_cpus))
+            logging.debug('Limited session %s [%s] cpus to %s'%(self.id, subpath, ','.join(cpuset_cpus)))
 
     def freeze(self, subpath, freeze=True):
         assert 'freezer' in self.groups
@@ -379,14 +400,10 @@ class RunnerHandler(BaseHTTPRequestHandler):
             self.wfile.write(result)
 
     def cmd_default(self, params):
-        result = dict()
-        result['result'] = 'FAIL'
-        result['message'] = 'method unknown'
-        return result
+        raise Exception('method unknown')
 
     def cmd_root(self, params):
         result = dict()
-        result['result'] = 'OK'
         result['session_id'] = self.generate_session_id()
         result['secret'] = self.generate_secret(result['session_id'])
         return result
@@ -394,33 +411,19 @@ class RunnerHandler(BaseHTTPRequestHandler):
     def cmd_open(self, params, attach=False):
         result = dict()
         filename = os.path.basename(params.get('file', ''))
-        prefix = 'runner_'+params['session_id']
+        prefix = 'satori_rund_'+params['session_id']
         if not filename.startswith(prefix):
-            result['result'] = 'FAIL'
-            result['message'] = 'Filename must start with ' + prefix
-            return result
+            raise Exception('Filename must start with ' + prefix)
         if not re.match(r'[a-z0-9_.]*', filename) or len(filename) > 128:
-            result['result'] = 'FAIL'
-            result['message'] = 'Filename is invalid'
-            return result
+            raise Exception('Filename is invalid')
         pid = self.find_pid(filename)
         if pid == None:
-            result['result'] = 'FAIL'
-            result['message'] = 'Process not found'
-            return result
+            raise Exception('Process not found')
+        if attach:
+            self.session_registry().attach(params['session_id'], params.get('group', '/'), pid)
         else:
-            try:
-                if attach:
-                    self.session_registry().attach(params['session_id'], params.get('group', '/'), pid)
-                else:
-                    self.session_registry().open(params['session_id'], pid)
-            except:
-                result['result'] = 'FAIL';
-                result['message'] = traceback.format_exc()
-            else:
-                result['result'] = 'OK'
-                result['pid'] = str(pid)
-            return result
+            self.session_registry().open(params['session_id'], pid)
+        return result
 
     def cmd_attach(self, params):
         return self.cmd_open(params, attach=True)
@@ -429,46 +432,22 @@ class RunnerHandler(BaseHTTPRequestHandler):
         result = dict()
         memory = self.parse_memory(params.get('memory', ''))
         cpus = self.parse_cpus(params.get('cpus', ''))
-        try:
-            self.session_registry().limit(params['session_id'], params.get('group', '/'), memory, cpus)
-        except:
-            result['result'] = 'FAIL';
-            result['message'] = traceback.format_exc()
-        else:
-            result['result'] = 'OK'
+        self.session_registry().limit(params['session_id'], params.get('group', '/'), memory, cpus)
         return result
 
     def cmd_query(self, params):
         result = dict()
-        try:
-            result.update(self.session_registry().query(params['session_id'], params.get('group', '/')))
-        except:
-            result['result'] = 'FAIL';
-            result['message'] = traceback.format_exc()
-        else:
-            result['result'] = 'OK'
+        result.update(self.session_registry().query(params['session_id'], params.get('group', '/')))
         return result
 
     def cmd_kill(self, params):
         result = dict()
-        try:
-            self.session_registry().kill(params['session_id'], params.get('group', '/'))
-        except:
-            result['result'] = 'FAIL';
-            result['message'] = traceback.format_exc()
-        else:
-            result['result'] = 'OK'
+        self.session_registry().kill(params['session_id'], params.get('group', '/'))
         return result
 
     def cmd_close(self, params):
         result = dict()
-        try:
-            self.session_registry().close(params['session_id'], params.get('group', '/'))
-        except:
-            result['result'] = 'FAIL';
-            result['message'] = traceback.format_exc()
-        else:
-            result['result'] = 'OK'
+        self.session_registry().close(params['session_id'], params.get('group', '/'))
         return result
 
     def generate_session_id(self):
@@ -493,6 +472,8 @@ class RunnerHandler(BaseHTTPRequestHandler):
         return None
 
     def parse_memory(self, memory):
+        if not memory:
+            return None
         mul = 1
         memstr = memory.strip().lower()
         if memstr[-1] == 'b':
@@ -516,7 +497,9 @@ class RunnerHandler(BaseHTTPRequestHandler):
         return int(math.ceil(float(memstr) * mul))
 
     def parse_cpus(self, cpus):
-        pass #TODO: design cpu limiting
+        if not cpus:
+            return None
+        return int(cpus)
 
 class RunnerServer(HTTPServer):
     def __init__(self):
