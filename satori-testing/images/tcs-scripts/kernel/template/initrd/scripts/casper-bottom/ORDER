@@ -1,0 +1,77 @@
+/scripts/casper-bottom/00new_config
+/scripts/casper-bottom/01integrity_check
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/03timezone
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/05mountpoints
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/05mountpoints_lupin
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/07remove_oem_config
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/10custom_installation
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/10ntfs_3g
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/11adduser
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/12fstab
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/13swap
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/14locales
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/15autologin
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/16gdmnopasswd
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/18hostname
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/19keyboard
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/20xconfig
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/22desktop_settings
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/22sslcert
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/23networking
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/24preseed
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/25configure_init
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/26serialtty
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/30accessibility
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/31disable_update_notifier
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/32disable_hibernation
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/33enable_apport_crashes
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/34disable_kde_services
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/35fix_language_selector
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/36disable_trackerd
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/40install_driver_updates
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/41apt_cdrom
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/43disable_updateinitramfs
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/44pk_allow_ubuntu
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/45jackd2
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/48kubuntu_disable_restart_notifications
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/49kubuntu_mobile_session
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/50ubiquity-bluetooth-agent
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-bottom/99enable_poststartup
+[ -e /conf/param.conf ] && . /conf/param.conf

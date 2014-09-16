@@ -1,0 +1,29 @@
+#!/bin/sh
+
+PREREQ=""
+DESCRIPTION="Import specific configuration..."
+
+. /scripts/casper-functions
+
+prereqs()
+{
+       echo "$PREREQ"
+}
+
+case $1 in
+# get pre-requisites
+prereqs)
+       prereqs
+       exit 0
+       ;;
+esac
+
+log_begin_msg "$DESCRIPTION"
+
+setdir="/root/livefs"
+
+if [ -n "$setdir" -a -f $setdir/casper.conf ]; then
+  cat $setdir/casper.conf >> /conf/param.conf
+fi
+
+log_end_msg

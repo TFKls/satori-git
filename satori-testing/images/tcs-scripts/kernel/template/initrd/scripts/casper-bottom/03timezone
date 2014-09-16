@@ -1,0 +1,59 @@
+#! /bin/sh
+
+PREREQ=""
+DESCRIPTION="Setting up timezone..."
+
+prereqs()
+{
+       echo "$PREREQ"
+}
+
+case $1 in
+# get pre-requisites
+prereqs)
+       prereqs
+       exit 0
+       ;;
+esac
+
+. /scripts/casper-functions
+
+log_begin_msg "$DESCRIPTION"
+
+conf_file="/root/etc/default/locale"
+timezone="Etc/UTC"
+timeserver=""
+
+if [ -f "${conf_file}" ]; then
+    timezone=$(grep -s 'TZ=' ${conf_file} | sed s/'TZ='// | tr -d '"' )
+fi
+
+for x in $(cat /proc/cmdline); do
+    case $x in
+	timeserver=*)
+	    timeserver=${x#timeserver=}
+	    ;;
+	timezone=*)
+	    timezone=${x#timezone=}
+	    ;;
+    esac
+done
+
+rm /root/etc/localtime
+ln -s /root/usr/share/zoneinfo/${timezone} /root/etc/localtime
+printf 'TZ="%s"\n' "${timezone}" > ${conf_file}
+echo "${timezone}" > /root/etc/timezone
+
+if [ -n "${timeserver}" ]; then
+  if [ -e /root/etc/ntp.cond ]; then
+    sed -i -e "s|^ *server .*$|server $timeserver|" /root/etc/ntp.conf
+  fi
+  mount -n -o bind /sys /root/sys
+  mount -n -o bind /proc /root/proc
+  mount -n -o bind /dev /root/dev
+  chroot /root ntpdate $timeserver
+  chroot /root hwclock --utc --systohc
+  umount /root/sys
+  umount /root/proc
+  umount /root/dev
+fi

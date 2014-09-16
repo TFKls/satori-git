@@ -1,0 +1,6 @@
+/scripts/casper-premount/10driver_updates
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-premount/20iso_scan
+[ -e /conf/param.conf ] && . /conf/param.conf
+/scripts/casper-premount/30custom_installation
+[ -e /conf/param.conf ] && . /conf/param.conf

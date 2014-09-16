@@ -1,0 +1,55 @@
+#!/bin/sh
+
+PREREQ="udev"
+
+prereqs() {
+	echo "$PREREQ"
+}
+
+case "$1" in
+	prereqs)
+		prereqs
+		exit 0
+	;;
+esac
+
+. /scripts/functions
+
+[ -x /sbin/dropbear ] || exit 0
+
+. /conf/initramfs.conf
+
+for x in $(cat /proc/cmdline); do
+	case "$x" in
+		ip=*)
+			IPOPTS="${x#ip=}"
+			;;
+	esac
+done
+
+mkdir -p /var/run
+
+# We need to wait until udev finishes, because init-top/udev does not
+# block until everything is initialized.
+wait_for_udev
+
+# Configure the network in the background.
+#
+# This step can print messages like:
+# /scripts/init-premount/dropbear: line XXX: ipconfig: not found
+# The reason for these messages is that the root volume is not encrypted and
+# the root switch happens before the network has been configured. After the
+# root switch the ipconfig binary is no longer present and thus the messages.
+#
+# If you encounter this specific issue then you should disable dropbear in the
+# initramfs as it isn't needed to unlock the passphrase prompt. For this do:
+# 1) Edit /usr/share/initramfs-tools/conf-hooks.d/dropbear and set DROPBEAR=n
+# 2) Run: sudo update-initramfs -k all -u
+configure_networking &
+
+# Start dropbear once the network subsystem of udev is ready and the network is
+# configured.
+log_begin_msg "Starting dropbear"
+/sbin/dropbear
+log_end_msg
+

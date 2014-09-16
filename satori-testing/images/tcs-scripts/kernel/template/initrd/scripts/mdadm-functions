@@ -1,0 +1,39 @@
+#!/bin/sh
+
+txt_message ()
+{
+        if [ -x /bin/plymouth ] && plymouth --ping; then
+	    return 0
+        else
+                echo "$@" >&2
+        fi
+        return 0
+}
+
+message()
+{
+        if [ -x /bin/plymouth ] && plymouth --ping; then
+                plymouth message --text="$@"
+        else
+                echo "$@" >&2
+        fi
+        return 0
+}
+
+
+mountroot_fail()
+{
+    message "Incrementally starting RAID arrays..."
+    if mdadm --incremental --run --scan; then
+	message "Incrementally started RAID arrays."
+	return 0
+    else	
+	if mdadm --assemble --scan --run; then
+	    message "Assembled and started RAID arrays."
+	    return 0
+	else
+	    message "Could not start RAID arrays in degraded mode."
+	fi
+    fi
+    return 1
+}
