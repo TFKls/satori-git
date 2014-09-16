@@ -248,8 +248,7 @@ namespace runner {
         void drop_capabilities();
         void drop_capability(const std::string&, int);
         static bool sleep(double);
-        bool check_cgroup();
-        bool check_times();
+        bool check_limits();
         static int child_runner(void*);
         void run_child();
         void run_parent();

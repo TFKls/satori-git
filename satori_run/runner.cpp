@@ -748,7 +748,7 @@ PerfCounters::Stats PerfCounters::PerfStats()
     return s;
 }
 
-bool Runner::check_times()
+bool Runner::check_limits()
 {
     timespec ts;
     if (clock_gettime(CLOCK_REALTIME, &ts))
@@ -775,10 +775,6 @@ bool Runner::check_times()
         result.SetStatus(Result::RES_MEMORY);
         return false;
     }
-    return true;
-}
-bool Runner::check_cgroup()
-{
     if (controller)
     {
         Controller::Stats stats = controller->Query();
@@ -1172,7 +1168,7 @@ void Runner::run_parent()
 
 void Runner::process_child(long epid)
 {
-    if (!check_times())
+    if (!check_limits())
     {
         Stop();
         return;
@@ -1273,8 +1269,7 @@ void Runner::Stop() {
         killpg(child, SIGKILL);
         if (controller)
             controller->Kill();
-        check_times();
-        check_cgroup();
+        check_limits();
         Unregister(child);
         child=-1;
         if (controller)
@@ -1286,7 +1281,7 @@ void Runner::Stop() {
 bool Runner::Check() {
     if (child <= 0)
         return false;
-    if (!check_times() || !check_cgroup()) {
+    if (!check_limits()) {
         Stop();
         return false;
     }
