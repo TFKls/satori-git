@@ -1,0 +1,52 @@
+#!/bin/bash
+image="$1"
+squash="$2"
+if [ -z "$image" ]; then
+    echo "You must specify docker image" >/dev/stderr
+    exit 1
+fi
+if [ -z "$squash" ]; then
+    echo "You must specify output file" >/dev/stderr
+    exit 1
+fi
+
+echo "Using image '$image'" >/dev/stderr
+container="$(docker run -d "$image" sleep $[3*60*60])"
+echo "Using container '$container'" >/dev/stderr
+sleep 10
+echo "$container"
+
+outdir="$(mktemp -d)"
+echo "Using temporary folder '$outdir'" >/dev/stderr
+mkdir -p "$outdir"
+pushd "$outdir"
+docker export "$container" | tar --numeric-owner -x
+docker stop "$container"
+docker rm "$container"
+
+rm .docker*
+chroot . rm -f /usr/sbin/policy-rc.d
+chroot . rm -f /sbin/initctl
+chroot . dpkg-divert --rename --remove /sbin/initctl;
+
+chroot . apt-get clean
+for lf in `find var/log -type f`; do
+    :> "$lf"
+done
+chroot . find -L /run /var /tmp -type s -exec rm -f {} \; -prune
+chroot . find -L /run /var /tmp -type f \( -name "pid" -o -name "*.pid" -o -name "sock" -o -name "*.sock" -o -name "lock" -o -name "*.lock" \) -exec rm -f {} \; -prune
+chroot . find /tmp /var/tmp /var/crash -mindepth 1 -maxdepth 1 -exec rm -rf {} \; -prune
+chroot . rm -rf /root/*
+chroot . rm -rf /*.log
+chroot . rm -rf /*.old
+chroot . rm -rf /*.txt
+chroot . rm -rf /.??*
+chroot . rm -rf /nonexistent
+chroot . mkdir -p /tmp/.X11-unix
+chroot . chmod 777 /tmp/.X11-unix
+chroot . chmod o+t /tmp/.X11-unix
+
+popd
+
+mksquashfs "$outdir" "$squash" -noappend
+rm -rf "$outdir"

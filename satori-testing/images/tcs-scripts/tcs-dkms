@@ -1,0 +1,18 @@
+#!/bin/bash
+for KER in `ls /lib/modules |sort`; do
+    ls /usr/src |sed -e "s|^\(.*\)-\([0-9.]*\)\$|OK \1 \2|" |grep "^OK" |while read line; do
+        MOD=`echo "$line" |cut -d " " -f 2`
+        VER=`echo "$line" |cut -d " " -f 3`
+        CHK=`echo "${MOD}" |cut -d "-" -f 1`
+        if [ "$CHK" == "linux" ]; then
+          continue
+        fi
+        if [ -d "${DIR}"/usr/src/"${MOD}"-"${VER}" ]; then
+          echo "${MOD}" "${VER}" "${KER}"
+          dkms add -m "${MOD}" -v "${VER}"
+          dkms build -m "${MOD}" -v "${VER}" -k "${KER}"
+          dkms install -m "${MOD}" -v "${VER}" -k "${KER}"
+        fi
+    done
+done
+exit 0

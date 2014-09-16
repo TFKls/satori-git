@@ -1,0 +1,2 @@
+#!/bin/bash
+apt-get -f -y install $(apt-cache search "^lib.*extra" |cut -d " " -f 1 |grep "^lib[aps][vow][^ ]*extra-[0-9]*\$" |tr "\n" " ")

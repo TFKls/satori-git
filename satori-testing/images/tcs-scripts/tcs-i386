@@ -1,0 +1,3 @@
+#!/bin/bash
+apt-get -f -y install dbus:i386
+dpkg -l "libnss-*" |grep "^ii" |cut -d " " -f 3 |cut -d ":" -f 1 |sort |uniq |while read l; do echo "$l:i386"; done |xargs apt-get -f -y install

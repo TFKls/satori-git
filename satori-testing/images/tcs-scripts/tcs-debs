@@ -1,0 +1,13 @@
+#!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+R=0
+pushd "${OFFICE}"
+if [ -d debs ]; then
+    for d in debs/*; do
+        dpkg -i "$d"
+        apt-get -y -f install
+        dpkg -i "$d" || R=1
+    done
+fi
+popd
+exit "$R"

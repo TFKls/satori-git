@@ -1,0 +1,10 @@
+#!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+pushd "${OFFICE}"
+./tcs-debs &&
+./tcs-dkms &&
+./tcs-i386 &&
+./tcs-remap / &&
+exit 0
+exit 1
+popd

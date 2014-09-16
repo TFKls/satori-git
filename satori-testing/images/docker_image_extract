@@ -1,0 +1,27 @@
+#!/bin/bash
+image="$1"
+shift
+dest="$1"
+shift
+
+if [ -z "$image" ]; then
+    echo "You must specify docker image" >/dev/stderr
+    exit 1
+fi
+if [ -z "$dest" ]; then
+    echo "You must specify output folder" >/dev/stderr
+    exit 1
+fi
+
+echo "Using image '$image'" >/dev/stderr
+container="$(docker run -d "$image" sleep $[3*60*60])"
+echo "Using container '$container'" >/dev/stderr
+sleep 10
+
+for file in "$@"; do
+    echo "$file"
+    docker cp "$container:$file" "$dest"
+done
+
+docker stop "$container"
+docker rm "$container"

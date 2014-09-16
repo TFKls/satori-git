@@ -1,0 +1,31 @@
+#!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+
+function wget_html {
+    local wtfile wret
+    wtfile=`mktemp --suffix .html`
+    wget --convert-links -O "${wtfile}" "$@" 2>/dev/null
+    wret="$?"
+    if [ "$wret" != "0" ]; then
+        return ${wret}
+    fi
+    cat "${wtfile}"
+    rm -f "${wtfile}"
+    return 0
+}
+
+R=1
+pushd "${OFFICE}"
+VER=`VBoxManage -v |grep "^[0-9][0-9.]*_" |tail -n 1 |cut -d _ -f 1`
+echo "$VER"
+src=`wget_html "http://download.virtualbox.org/virtualbox/${VER}/" |grep -i 'href="[^"]*vbox-extpack"' |sed -e 's|.*href="\([^"]*vbox-extpack\)".*|\1|i' |tail -n 1`
+nam=`echo $src |sed -e "s|.*/||"`
+if [ -n "$src" ]; then
+    echo $src
+    wget -O "${nam}" "$src"
+    VBoxManage extpack install "${nam}" &&
+    R=0
+    rm -f "${nam}"
+fi
+popd
+exit "$R"

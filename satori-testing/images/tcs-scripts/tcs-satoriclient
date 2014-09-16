@@ -1,0 +1,33 @@
+#!/bin/bash
+mkdir -p /opt/satori
+cd /opt/satori
+virtualenv --no-site-packages .
+source bin/activate
+pip install -U distribute
+
+hg clone "https://bitbucket.org/satoriproject/satori" /tmp/satori
+for i in satori.objects satori.ars satori.client.common satori.tools ; do
+    (cd /tmp/satori/$i ; python setup.py install ) || exit 1
+done
+rm -rf /tmp/satori
+
+cat > /usr/local/bin/satori.submit <<EOF
+#!/bin/bash
+. /opt/satori/bin/activate
+exec satori.submit "\$@"
+EOF
+chmod 755 /usr/local/bin/satori.submit
+
+cat > /usr/local/bin/satori.console <<EOF
+#!/bin/bash
+. /opt/satori/bin/activate
+exec satori.console "\$@"
+EOF
+chmod 755 /usr/local/bin/satori.console
+
+cat > /usr/local/bin/satori.tool <<EOF
+#!/bin/bash
+exec javaws https://satori.tcs.uj.edu.pl/files/javatool/satori.javatool.jnlp
+EOF
+chmod 755 "${DIR}"/usr/local/bin/satori.tool
+exit 0
