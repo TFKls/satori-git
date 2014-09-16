@@ -9,8 +9,8 @@ syntax: regexp
 tmp/*
 ^satori.javatool/bin/*
 ^satori.javatool/lib/*
-^satori_run/satori_run$
-^satori-run_
+^satori-testing/satori_run$
+^satori-testing_
 ^syncdb.sh$
 \.orig$
 ^bin/

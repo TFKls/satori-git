@@ -1,0 +1,193 @@
+#!/usr/bin/env python3
+# vim:ts=4:sts=4:sw=4:expandtab
+
+import argparse
+import atexit
+import logging
+from multiprocessing import Process
+import os
+import re
+import shutil
+import signal
+import subprocess
+import sys
+import tempfile
+import time
+import traceback
+from urllib.parse import urlparse, urlencode, parse_qsl
+from urllib.request import urlopen
+import uuid
+
+def docker_ip():
+    ifconfig,_ = subprocess.Popen(['ifconfig', 'docker0'], stdout=subprocess.PIPE).communicate()
+    ifconfig = [ re.sub(r'^[^ ]* ','', line).strip() for line in ifconfig.decode('utf-8').split('\n') ]
+    for cand in ifconfig:
+        m = re.match(r'.*inet addr:([0-9.]*).*', cand)
+        if m:
+            logging.info('Found docker IP to be %s'%(m.group(1),))
+            return m.group(1)
+    logging.error('Docker IP is unknown')
+
+def ensure_rund(ip, port):
+    try:
+        with urlopen('http://'+ip+':'+str(port)+'/') as f:
+            result = dict(parse_qsl(f.read().decode('utf-8')))
+            assert 'session_id' in result
+            assert 'secret' in result
+            logging.info('Found Satori Run Daemon at %s:%d'%(ip, port))
+            return True
+    except:
+        args = ['satori_rund', '--host=0.0.0.0'+ip, '--port='+str(port)]
+        logging.warning('Starting Satori Run Daemon %s', ' '.join(args))
+        p = Process(target=subprocess.check_call, args=(args,))
+        p.start()
+        atexit.register(terminator, p)
+        time.sleep(2)
+
+def ensure_testd(ip, port, session, args):
+    try:
+        with urlopen('http://'+ip+':'+str(port)+'/image?session_id='+session) as f:
+            result = dict(parse_qsl(f.read().decode('utf-8')))
+            assert 'image' in result
+            logging.info('Found Satori Test Daemon at %s:%d'%(ip, port))
+            return True
+    except:
+        args = ['./satori_testd', '--host=0.0.0.0', '--port='+str(port), '--session='+session] + args
+        logging.warning('Starting Satori Test Daemon %s', ' '.join(args))
+        p = Process(target=subprocess.check_call, args=(args,))
+        p.start()
+        atexit.register(terminator, p)
+        time.sleep(2)
+
+DOCKER_IP = None
+TESTD_HOST = None
+TESTD_PORT = 8766
+TESTD_SESSION = uuid.uuid4().hex 
+TESTD_ARGS = []
+RUND_HOST = None
+RUND_PORT = 8765
+
+TEST_INSIDE = False
+TEST_TIME = 300
+TEST_MEMORY = 4*1024*1024*1024
+TEST_CPUS = None
+
+def terminator(p):
+    logging.warning('Terminating process %d'%(p.pid,))
+    p.terminate()
+    p.join()
+
+def setup():
+    signal.signal(signal.SIGTERM, lambda signum, stack_frame: sys.exit(1))
+    global DOCKER_IP, TESTD_HOST, TESTD_PORT, TESTD_SESSION, TESTD_ARGS, RUND_HOST, RUND_PORT, TEST_INSIDE, TEST_TIME, TEST_MEMORY, TEST_CPUS
+    if 'SATORI_TESTD_INSIDE' in os.environ:
+        TEST_INSIDE = True
+    if not TEST_INSIDE:
+        if not DOCKER_IP:
+            DOCKER_IP = docker_ip()
+    if not TESTD_HOST:
+        TESTD_HOST = DOCKER_IP
+    if not RUND_HOST:
+        RUND_HOST = DOCKER_IP
+    TESTD_HOST = os.environ.get('SATORI_TESTD', TESTD_HOST)+':'+str(TESTD_PORT)
+    TESTD_PORT = int(TESTD_HOST.split(':')[1])
+    TESTD_HOST = TESTD_HOST.split(':')[0]
+    TESTD_SESSION = os.environ.get('SATORI_TESTD_SESSION', TESTD_SESSION)
+    RUND_HOST = os.environ.get('SATORI_RUND', RUND_HOST)+':'+str(RUND_PORT)
+    RUND_PORT = int(RUND_HOST.split(':')[1])
+    RUND_HOST = RUND_HOST.split(':')[0]
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-v', '--verbose', action='store_true', default=False, help='show more info')
+    parser.add_argument('-d', '--debug', action='store_true', default=False, help='show debug info')
+    parser.add_argument('-i', '--inside', action='store_true', default=TEST_INSIDE, help='inside container')
+    parser.add_argument('-t', '--time', type=float, default=TEST_TIME, help='test timeout')
+    parser.add_argument('-m', '--memory', type=int, default=TEST_MEMORY, help='test memory')
+    parser.add_argument('-c', '--cpus', help='docker cpus')
+    parser.add_argument('command')
+    parser.add_argument('args', nargs=argparse.REMAINDER)
+    args = parser.parse_args()
+    level=logging.WARNING
+    if args.verbose:
+        level=logging.INFO
+    if args.debug:
+        level=logging.DEBUG
+    logging.basicConfig(level=level)
+    TEST_INSIDE = args.inside
+    TEST_TIME = args.time
+    TEST_MEMORY = args.memory
+    TESTD_ARGS = args.args
+    TEST_CPUS = args.cpus
+
+def communicate_testd(command):
+    return urlopen('http://'+TESTD_HOST+':'+str(TESTD_PORT)+'/'+command+'?session_id='+TESTD_SESSION)
+
+def parse_testd(command):
+    with communicate_testd(command) as f:
+        return dict(parse_qsl(f.read().decode('utf-8')))
+
+def run():
+    global RUND_HOST, TESTD_HOST
+    RUND_HOST=DOCKER_IP
+    TESTD_HOST=DOCKER_IP
+    ensure_rund(RUND_HOST, RUND_PORT)
+    ensure_testd(TESTD_HOST, TESTD_PORT, TESTD_SESSION, TESTD_ARGS)
+    image = parse_testd('image')['image']
+    
+    with tempfile.TemporaryDirectory() as temp_dir:
+        script_file = os.path.abspath(__file__)
+        script_name = os.path.basename(script_file)
+        docker_script = os.path.join(temp_dir, script_name)
+        shutil.copyfile(script_file, docker_script)
+        os.chmod(docker_script, 0o755)
+        
+        docker_env = dict()
+        docker_env['SATORI_TESTD'] = DOCKER_IP+':'+str(TESTD_PORT)
+        docker_env['SATORI_TESTD_SESSION'] = TESTD_SESSION
+        docker_env['SATORI_RUND' ] = DOCKER_IP+':'+str(RUND_PORT)
+        docker_env['SATORI_TESTD_INSIDE'] = '1'
+
+        docker_args = ['docker', 'run', '--rm=true', '--hostname=satori_test', '--workdir=/root']
+        if TEST_CPUS:
+            docker_args += ['--cpuset='+str(TEST_CPUS)]
+        if TEST_MEMORY:
+            docker_args += ['--memory='+str(TEST_MEMORY)]
+        for k,v in docker_env.items():
+            docker_args += ['-e', k+'='+v ]
+        docker_args += ['-v', temp_dir+':'+temp_dir]
+        docker_args += ['--entrypoint='+ os.path.join(temp_dir, script_name)]
+        docker_args += ['satori:'+image]
+
+        logging.info('Starting docker %s'%(' '.join(docker_args),))
+        subprocess.check_call(docker_args)
+#TODO:get image
+#TODO:start container
+#TODO:copy myself inside
+#TODO:set env variables
+#TODO:run myself --inside
+
+def run_inside():
+    os.makedirs('/satori_test/secure', exist_ok=True)
+    os.chown('/satori_test/secure', 0, 0)
+    os.chmod('/satori_test/secure', 0o700)
+    os.chdir('/satori_test/secure')
+    with open('judge', 'wb') as judge_file:
+        with urlopen('http://'+TESTD_HOST+':'+str(TESTD_PORT)+'/test/judge?session_id='+TESTD_SESSION) as judge_blob:
+            judge_file.write(judge_blob.read())
+    os.chmod('judge', 0o700)
+    env = dict()
+    env['SATORI_TESTD'] = TESTD_HOST+':'+str(TESTD_PORT)
+    env['SATORI_TESTD_SESSION'] = TESTD_SESSION
+    env['SATORI_RUND' ] = RUND_HOST+':'+str(RUND_PORT)
+    subprocess.call(['satori_run',
+        '--work-dir=/satori_test/secure',
+        '--env=simple',
+        '--env-add='+','.join([ k+'='+v for k,v in env.items() ]),
+        '--max-real-time='+str(TEST_TIME),
+        '/satori_test/secure/judge'])
+
+if __name__ == '__main__':
+    setup()
+    if TEST_INSIDE:
+        run_inside()
+    else:
+        run()
