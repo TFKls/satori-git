@@ -1,3 +1,33 @@
+satori-testing (1.0-1ubuntu5) trusty; urgency=medium
+
+  * Add missing build dependencies 
+
+ -- Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>  Wed, 24 Sep 2014 17:20:17 +0200
+
+satori-testing (1.0-1ubuntu4) trusty; urgency=medium
+
+  * Add missing build dependencies 
+
+ -- Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>  Wed, 24 Sep 2014 17:15:40 +0200
+
+satori-testing (1.0-1ubuntu3) trusty; urgency=medium
+
+  * Third attempt to publish on launchpad
+
+ -- Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>  Wed, 24 Sep 2014 17:08:37 +0200
+
+satori-testing (1.0-1ubuntu2) trusty; urgency=medium
+
+  * Second attempt to publish on launchpad
+
+ -- Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>  Wed, 24 Sep 2014 17:05:22 +0200
+
+satori-testing (1.0-1ubuntu1) trusty; urgency=medium
+
+  * Attempt to publish package on launchpad
+
+ -- Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>  Wed, 24 Sep 2014 17:00:51 +0200
+
 satori-testing (1.0-1) unstable; urgency=low
 
   * Initial release

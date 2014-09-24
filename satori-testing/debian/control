@@ -1,13 +1,13 @@
 Source: satori-testing
-Section: unknown
+Section: misc
 Priority: optional
 Maintainer: Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>
-Build-Depends: debhelper (>= 8.0.0)
+Build-Depends: debhelper (>= 8.0.0), libcap-dev, libcurl4-openssl-dev, libpopt-dev
 Standards-Version: 3.9.4
 Homepage: https://bitbucket.org/satoriproject/satori/
 
 Package: satori-testing
-Architecture: any
+Architecture: amd64
 Depends: ${shlibs:Depends}, ${misc:Depends}, python3, python3-yaml, docker.io
 Description: Satori Run daemon and testing utilities
  Satori Run daemon and testing utilities.
