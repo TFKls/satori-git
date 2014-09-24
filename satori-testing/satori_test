@@ -103,8 +103,9 @@ def setup():
     parser.add_argument('-t', '--time', type=float, default=TEST_TIME, help='test timeout')
     parser.add_argument('-m', '--memory', type=int, default=TEST_MEMORY, help='test memory')
     parser.add_argument('-c', '--cpus', help='docker cpus')
-    parser.add_argument('command')
-    parser.add_argument('args', nargs=argparse.REMAINDER)
+    if not TEST_INSIDE:
+        parser.add_argument('command')
+        parser.add_argument('args', nargs=argparse.REMAINDER)
     args = parser.parse_args()
     level=logging.WARNING
     if args.verbose:
@@ -115,7 +116,8 @@ def setup():
     TEST_INSIDE = args.inside
     TEST_TIME = args.time
     TEST_MEMORY = args.memory
-    TESTD_ARGS = args.args
+    if not TEST_INSIDE:
+        TESTD_ARGS = args.args
     TEST_CPUS = args.cpus
 
 def communicate_testd(command):
@@ -155,7 +157,7 @@ def run():
             docker_args += ['-e', k+'='+v ]
         docker_args += ['-v', temp_dir+':'+temp_dir]
         docker_args += ['--entrypoint='+ os.path.join(temp_dir, script_name)]
-        docker_args += ['satori:'+image]
+        docker_args += ['satoriproject/satori:'+image]
 
         logging.info('Starting docker %s'%(' '.join(docker_args),))
         subprocess.check_call(docker_args)
