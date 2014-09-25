@@ -4,14 +4,15 @@ ARCH=amd64
 OTHER_ARCHITECTURES="i386"
 DISTRO=trusty
 LOCALE=en_US.UTF-8
-APTCACHER="http://149.156.75.213:3142"
+APTCACHER=""
 KEYSERVER="keyserver.ubuntu.com"
 MAINTAINER="Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>"
+DOCKER_REPO="satoriproject/satori"
 
 BASE_DIR="${OFFICE}/${DISTRO}_${ARCH}_base"
-BASE_PACKAGES=locales
+BASE_PACKAGES="locales software-properties-common"
 
-JUDGE_PACKAGES="gcc g++ gccgo gcc-multilib g++-multilib gccgo-multilib golang-go golang-go.tools fp-compiler openjdk-7-jdk a2ps iptables python-yaml libpopt-dev libcap-dev libcurl4-openssl-dev libyaml-dev time libgmp3-dev make p7zip-full p7zip-rar libpam-cgroup python3 python3-yaml"
+JUDGE_PACKAGES="satori-testing gcc g++ gccgo gcc-multilib g++-multilib gccgo-multilib golang-go golang-go.tools fp-compiler openjdk-7-jdk a2ps iptables time make p7zip-full p7zip-rar"
 CHECKER_PACKAGES="${JUDGE_PACKAGES} linux-image-generic linux-headers-generic linux-tools-generic smartmontools mdadm lvm2 ssh nfs-client nbd-client vim screen mc rsync gpm bash-completion psmisc mercurial debootstrap squashfs-tools tshark nmap ethtool iptraf ctorrent atftp lzma lshw memtest86+ strace telnet usbutils command-not-found language-pack-en network-manager subversion unzip mercurial reptyr dnsutils docker.io"
 UZI_PACKAGES="${JUDGE_PACKAGES} linux-image-generic linux-headers-generic linux-tools-generic openssh-server rsync gpm ubuntu-desktop indicator-applet-complete indicator-session indicator-datetime unity-lens-applications unity-lens-files xserver-xorg-video-all command-not-found language-pack-en gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins codeblocks scite xterm mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm-dev dconf-tools openjdk-7-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate ethtool python-tk reptyr dnsutils gnome-session-fallback"
 FULL_PACKAGES="${CHECKER_PACKAGES} ${UZI_PACKAGES} dmraid rdate casper libstdc++5 clang google-perftools libgoogle-perftools-dev gprolog"
@@ -82,3 +83,54 @@ export LANG="${LOCALE}"
 export LC_ALL="${LOCALE}"
 
 export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+function add_apt_cacher
+{
+    TAG="$1"
+    if [ -n "${APTCACHER}" ]; then
+        cat >> "${TAG}/Dockerfile" <<EOF
+RUN echo "Acquire::http::Proxy \"${APTCACHER}\";" > /etc/apt/apt.conf.d/90apt-cacher
+EOF
+    fi
+}
+function rem_apt_cacher
+{
+    TAG="$1"
+    if [ -n "${APTCACHER}" ]; then
+        cat >> "${TAG}/Dockerfile" <<EOF
+RUN rm -f /etc/apt/apt.conf.d/90apt-cacher
+EOF
+    fi
+}
+function copy_scripts
+{
+    TAG="$1"
+    cp -a tcs-scripts "${TAG}"
+    if [ -d "tcs-debs-${TAG}" ]; then
+        cp -a "tcs-debs-${TAG}" "${TAG}"/tcs-scripts/debs
+    fi
+    if [ "$2" == "kernel" ]; then
+        cp -a tcs-kernel "${TAG}"/tcs-scripts/kernel 
+    fi
+}
+function add_header
+{
+    TAG="$1"
+    BASE="$2"
+    cat > "${TAG}/Dockerfile" <<EOF
+FROM ${BASE}
+MAINTAINER ${MAINTAINER}
+
+ENV DEBIAN_PRIORITY critical
+ENV DEBIAN_FRONTEND noninteractive
+ENV LANG en_US.UTF-8
+ENV LC_ALL en_US.UTF-8
+
+EOF
+}
+function add_footer
+{
+    TAG="$1"
+    cat >> "${TAG}/Dockerfile" <<EOF
+EOF
+}
