@@ -5,19 +5,13 @@ source ./settings.sh
 
 TAG=full
 
-rm -rf ".${TAG}"
-mkdir -p ".${TAG}"
-cat > ".${TAG}/Dockerfile" <<EOF
-FROM tcs:judge
-MAINTAINER ${MAINTAINER}
 
-ENV DEBIAN_PRIORITY critical
-ENV DEBIAN_FRONTEND noninteractive
-ENV LANG en_US.UTF-8
-ENV LC_ALL en_US.UTF-8
+rm -rf "${TAG}"
+mkdir -p "${TAG}"
+add_header "${TAG}" "${DOCKER_REPO}:judge"
+add_apt_cacher "${TAG}"
 
-RUN echo "Acquire::http::Proxy \"${APTCACHER}\";" > /etc/apt/apt.conf.d/90apt-cacher
-
+cat >> "${TAG}/Dockerfile" <<EOF
 RUN echo "deb http://ppa.launchpad.net/x2go/stable/ubuntu ${DISTRO} main" >> /etc/apt/sources.list
 RUN echo "deb http://ppa.launchpad.net/pipelight/stable/ubuntu ${DISTRO} main" >> /etc/apt/sources.list
 RUN echo "deb http://linux.dropbox.com/ubuntu ${DISTRO} main" >> /etc/apt/sources.list
@@ -31,43 +25,38 @@ RUN echo "deb http://get.docker.io/ubuntu docker main" >> /etc/apt/sources.list
 #  echo acroread acroread/default-viewer select true | run_inside debconf-set-selections
 #  echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | run_inside debconf-set-selections
  
-RUN apt-get-keys
+RUN apt-get update
+RUN apt-get -y dist-upgrade
 RUN apt-get -d -f -y install ${FULL_PACKAGES}
 RUN apt-get -f -y install ${FULL_PACKAGES}
 RUN apt-get -f -y install nvidia-cuda-toolkit nvidia-304 linux-headers-generic
-
-ADD tcs-scripts /root/tcs-scripts
-
 RUN update-java-alternatives -s java-1.7.0-openjdk-amd64
-RUN /root/tcs-scripts/tcs-avcodec
-RUN /root/tcs-scripts/tcs-virtualbox
-RUN /root/tcs-scripts/tcs-satoriclient
 RUN pipelight-plugin --update
 RUN pipelight-plugin --disable-all
 RUN pipelight-plugin --remove-mozilla-plugins
 
+ADD tcs-scripts /root/tcs-scripts
+RUN /root/tcs-scripts/tcs-avcodec
+RUN /root/tcs-scripts/tcs-virtualbox
+RUN /root/tcs-scripts/tcs-satoriclient
 RUN /root/tcs-scripts/tcs-kernel
-
-RUN apt-get autoremove
-RUN apt-get clean
-
 RUN /root/tcs-scripts/tcs-scripts
 RUN rm -rf /root/tcs-scripts
-
-RUN rm -f /etc/apt/apt.conf.d/90apt-cacher
+RUN apt-get -y autoremove
+RUN apt-get -y clean
 EOF
 
-cp -a tcs-scripts ".${TAG}"
-if [ -d "tcs-debs-${TAG}" ]; then
-    cp -a "tcs-debs-${TAG}" ".${TAG}"/tcs-scripts/debs
-fi
+rem_apt_cacher "${TAG}"
+add_footer "${TAG}"
+
+copy_scripts "${TAG}" kernel
 
 if [ "$1" != "debug" ]; then
-    docker build "--tag=tcs:${TAG}" ".${TAG}"
+    docker build "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
 
     rm -rf kernel
     mkdir -p kernel
-    ./docker_image_extract "tcs:${TAG}" kernel /root/vmlinuz /root/initrd.cpio.lzma /root/modules.tar.bz2
+    ./docker_image_extract "${DOCKER_REPO}:${TAG}" kernel /root/vmlinuz /root/initrd.cpio.lzma /root/modules.tar.bz2
 fi
 
 popd
