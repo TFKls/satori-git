@@ -4,7 +4,7 @@ ARCH=amd64
 OTHER_ARCHITECTURES="i386"
 DISTRO=trusty
 LOCALE=en_US.UTF-8
-APTCACHER=""
+APTCACHER="http://149.156.75.213:3142"
 KEYSERVER="keyserver.ubuntu.com"
 MAINTAINER="Grzegorz Gutowski <gutowski@tcs.uj.edu.pl>"
 DOCKER_REPO="satoriproject/satori"
@@ -14,7 +14,7 @@ BASE_PACKAGES="locales software-properties-common"
 
 JUDGE_PACKAGES="satori-testing gcc g++ gccgo gcc-multilib g++-multilib gccgo-multilib golang-go golang-go.tools fp-compiler openjdk-7-jdk a2ps iptables time make p7zip-full p7zip-rar"
 CHECKER_PACKAGES="${JUDGE_PACKAGES} linux-image-generic linux-headers-generic linux-tools-generic smartmontools mdadm lvm2 ssh nfs-client nbd-client vim screen mc rsync gpm bash-completion psmisc mercurial debootstrap squashfs-tools tshark nmap ethtool iptraf ctorrent atftp lzma lshw memtest86+ strace telnet usbutils command-not-found language-pack-en network-manager subversion unzip mercurial reptyr dnsutils docker.io"
-UZI_PACKAGES="${JUDGE_PACKAGES} linux-image-generic linux-headers-generic linux-tools-generic openssh-server rsync gpm ubuntu-desktop indicator-applet-complete indicator-session indicator-datetime unity-lens-applications unity-lens-files xserver-xorg-video-all command-not-found language-pack-en gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins codeblocks scite xterm mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm-dev dconf-tools openjdk-7-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate ethtool python-tk reptyr dnsutils gnome-session-fallback"
+UZI_PACKAGES="${JUDGE_PACKAGES} linux-image-generic linux-headers-generic linux-tools-generic openssh-server rsync gpm ubuntu-desktop indicator-applet-complete indicator-session indicator-datetime unity-lens-applications unity-lens-files xserver-xorg-video-all command-not-found language-pack-en gnome-terminal google-chrome-stable vim vim-gnome cscope emacs xemacs21 geany geany-plugins codeblocks scite xterm mc gedit gdb ddd xwpe nemiver stl-manual gcc-doc fp-docs manpages-dev manpages-posix manpages-posix-dev nano valgrind bash-completion ubiquity user-setup libgd2-xpm-dev dconf-tools openjdk-7-doc network-manager eclipse eclipse-cdt ctorrent screen konsole kate ethtool python-tk python3-tk reptyr dnsutils gnome-session-fallback"
 FULL_PACKAGES="${CHECKER_PACKAGES} ${UZI_PACKAGES} dmraid rdate casper libstdc++5 clang google-perftools libgoogle-perftools-dev gprolog"
 FULL_PACKAGES="${FULL_PACKAGES} firefox icedtea-7-plugin icedtea-netx netbeans eclipse eclipse-cdt maven2 x2goclient x2goserver"
 FULL_PACKAGES="${FULL_PACKAGES} gnome-desktop-environment gnome-shell gnome-applets gnome-backgrounds gnome-control-center gnome-do gnome-system-tools gnome-themes-ubuntu gnome-video-effects"
@@ -47,9 +47,15 @@ FULL_PACKAGES="${FULL_PACKAGES} ttf-unifont msttcorefonts"
 FULL_PACKAGES="${FULL_PACKAGES} subversion git mercurial libglew1.5 mysql-client ivy menu"
 FULL_PACKAGES="${FULL_PACKAGES} orbit2 time gv openjpeg-tools"
 FULL_PACKAGES="${FULL_PACKAGES} mlton shutter libboost-all-dev devscripts evtest mesa-utils ekg2 clusterssh tmux pipelight docker.io inotify-tools zlibc"
-FULL_PACKAGES="${FULL_PACKAGES} libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev libgsl0-dev libqt4-dev"
+FULL_PACKAGES="${FULL_PACKAGES} libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev python3-dev libgsl0-dev libqt4-dev tk-dev"
 FULL_PACKAGES="${FULL_PACKAGES} ocrodjvu tesseract-ocr-pol"
 FULL_PACKAGES="${FULL_PACKAGES} libgflags-dev enscript groovy scala rdesktop xubuntu-desktop" 
+
+SERVER_PACKAGES="${FULL_PACKAGES} linux-source vlan apt-cacher-ng nginx apache2-mpm-prefork libapache2-svn libapache2-mod-fcgid libfcgi-perl libfcgi-ruby1.8 libapache2-mod-proxy-html libapache2-mod-auth-mysql apache2-suexec-custom php5-cgi php5-curl php5-gd php5-mysql php5-pgsql bittorrent clamav clamav-daemon dovecot-imapd dovecot-pop3d exim4 exim4-daemon-heavy greylistd srs memcached memtest86+ memtester nfs-kernel-server nbd-server php5 quota quotatool spamassassin tinyca tinyproxy wakeonlan ntp atftpd subversion-tools mercurial-server trac trac-mercurial bittorrent trac-bitten ant maven2 ivy ant-contrib python-zc.buildout postgresql mysql-server ipmitool nut"
+SERVER_PACKAGES="${SERVER_PACKAGES} libwxgtk2.8-dev libmysqlclient-dev libpq-dev python-dev libevent-dev libplot-dev libplplot-dev libzbar-dev libqrencode-dev libgsl0-dev libhighgui-dev libopenjpeg-dev libsfml-dev libcsfml-dev libfreeimage-dev libavdevice-dev libavfilter-dev libpostproc-dev libcgal-dev libtheora-dev libopencv-dev libclang-dev cabal-install mpich2"
+SERVER_PACKAGES="${SERVER_PACKAGES} ruby-dev libruby libfcgi-dev fcgiwrap"
+SERVER_PACKAGES="${SERVER_PACKAGES} python-django python-flup python-psycopg2 python-mysqldb ubuntu-desktop kubuntu-desktop xubuntu-desktop qt-sdk"
+SERVER_PACKAGES="${SERVER_PACKAGES} bogofilter dhcp3-server bridge-utils erlang glassfish-javaee glassfish-appserv tomcat7 tomcat7-user nut-monitor r-recommended scilab vsftpd"
 
 function uniq_pack_list
 {
@@ -59,6 +65,7 @@ JUDGE_PACKAGES=`uniq_pack_list $JUDGE_PACKAGES`
 CHECKER_PACKAGES=`uniq_pack_list $CHECKER_PACKAGES`
 UZI_PACKAGES=`uniq_pack_list $UZI_PACKAGES`
 FULL_PACKAGES=`uniq_pack_list $FULL_PACKAGES`
+SERVER_PACKAGES=`uniq_pack_list $SERVER_PACKAGES`
 
 
 unset DEBCONF_REDIR

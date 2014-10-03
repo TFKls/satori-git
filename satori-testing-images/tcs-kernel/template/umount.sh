@@ -6,7 +6,7 @@ if [ ! -r .mounted ]; then
 fi
 
 cd initrd &&
-find . | cpio -o -H newc --reset-access-time > ../initrd.cpio &&
+find . -not -name .keep | cpio -o -H newc --reset-access-time > ../initrd.cpio &&
 lzma ../initrd.cpio &&
 cd .. &&
 rm -rf initrd &&
