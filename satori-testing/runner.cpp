@@ -796,8 +796,12 @@ bool Runner::check_limits()
 int total_write(int fd, const void* buf, size_t cnt) {
     while (cnt>0) {
         ssize_t w = write(fd, buf, cnt);
-        if (w < 0)
-            return w;
+        if (w < 0) {
+            if (errno == EINTR)
+                w = 0;
+            else
+                return w;
+        }
         buf = ((char*)buf)+w;
         cnt -= w;
     }
@@ -806,8 +810,12 @@ int total_write(int fd, const void* buf, size_t cnt) {
 int total_read(int fd, void* buf, size_t cnt) {
     while (cnt>0) {
         ssize_t r = read(fd, buf, cnt);
-        if (r < 0)
-            return r;
+        if (r < 0) {
+            if (errno == EINTR)
+                r = 0;
+            else
+                return r;
+        }
         buf = ((char*)buf)+r;
         cnt -= r;
     }
@@ -860,6 +868,8 @@ int cat_open_read(const char* path, int oflag) {
         char buf[4096];
         while (true) {
             int r = read(fd, buf, sizeof(buf));
+            if (r < 0 and errno == EINTR)
+                continue;
             if (r <= 0) {
                 close(fd);
                 close(catpipe[0]);
@@ -924,6 +934,8 @@ int cat_open_write(const char* path, int oflag, int mode) {
         char buf[4096];
         while (true) {
             int r = read(catpipe[0], buf, sizeof(buf));
+            if (r < 0 and errno == EINTR)
+                continue;
             if (r <= 0) {
                 close(catpipe[0]);
                 close(fd);
@@ -947,8 +959,13 @@ void Runner::run_child()
     // Synchronize myself to run after my parent has registered me in runners
     char rbuf[1];
     close(pipefd[1]);
-    while (read(pipefd[0], rbuf, 1) > 0)
-        ;
+    while (true) {
+        int r = read(pipefd[0], rbuf, 1);
+        if (r < 0 and errno == EINTR)
+            continue;
+        if (r <= 0)
+            break;
+    }
     close(pipefd[0]);
 
     Initializer::Stop();
