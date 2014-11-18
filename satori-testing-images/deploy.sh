@@ -26,37 +26,32 @@ function deploy
 function deployk
 {
     chmod 644 kernel/{vmlinuz,initrd.cpio.lzma}
-    rsync -a -P -p kernel/{vmlinuz,initrd.cpio.lzma} "$1"
+    rsync -a -P -p kernel/vmlinuz "$1/$2"
+    rsync -a -P -p kernel/initrd.cpio.lzma "$1/$2.cpio.lzma"
 }
 
 get judge judge
-exit 0
 get checker checker
 get uzi uzi
-get full full
-get server full
+get light light
+get extended extended
+#get full full
+#exit 0
 
 
-deploy judge   /exports/checker/judge.squashfs
-deploy server  /exports/checker/full.squashfs
+deploy judge    /exports/checker/judge.squashfs
+deploy extended /exports/checker/full.squashfs
 
-deploy checker /exports/booter/booter.cfg/__BASE__/CHECKER/filesystem.squashfs
-deploy uzi    /exports/booter/booter.cfg/__BASE__/UZI/filesystem.squashfs
-deploy full   /exports/booter/booter.cfg/__BASE__/DESKTOP/filesystem.squashfs
-deploy server /exports/booter/booter.cfg/__BASE__/SERVER/filesystem.squashfs
-#deploy server root@sphinx:/exports/booter/booter.cfg/__BASE__/SERVER/filesystem.squashfs
-deploy uzi    /exports/booter/casper.uzi/filesystem.squashfs
-deployk /boot/casper
-deployk root@sphinx.direct:/boot/casper
-deployk root@student.direct:/boot/casper
-deployk root@miracle.direct:/boot/casper
-deployk /exports/booter/booter.cfg/__BASE__/KERNEL
-deployk /srv/tftp/KERNEL
-deployk /root/.VirtualBox/TFTP/KERNEL
+deploy checker  /exports/booter/booter.cfg/__BASE__/CHECKER/filesystem.squashfs
+#deploy full     /exports/booter/booter.cfg/__BASE__/DESKTOP/filesystem.squashfs
+deploy uzi      /exports/booter/casper.uzi/filesystem.squashfs
+deploy light    /exports/booter/casper.test/filesystem.squashfs
 
-deploy uzi    /imports/wydzial/casper.uzi/filesystem.squashfs
-deployk /imports/wydzialtftp/uzi/KERNEL
+deployk /srv/tftp/KERNEL tcs
 
-deploy full   /imports/wydzial/__BASE__/DESKTOP/filesystem.squashfs
-deployk /imports/wydzialtftp/pracownicy
-deployk /imports/wydzialtftp/studenci
+deploy uzi      /imports/wydzial/casper.uzi/filesystem.squashfs
+deployk         /imports/wydzialtftp/uzi/KERNEL tcs
+
+#deploy full     /imports/wydzial/__BASE__/DESKTOP/filesystem.squashfs
+#deployk         /imports/wydzialtftp/pracownicy tcs
+#deployk         /imports/wydzialtftp/studenci tcs

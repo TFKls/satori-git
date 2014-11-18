@@ -8,7 +8,7 @@ TAG=full
 
 rm -rf "${TAG}"
 mkdir -p "${TAG}"
-add_header "${TAG}" "${DOCKER_REPO}:judge"
+add_header "${TAG}" "${DOCKER_REPO}:extended"
 add_apt_cacher "${TAG}"
 
 cat >> "${TAG}/Dockerfile" <<EOF
@@ -26,16 +26,12 @@ RUN echo "deb http://deb.opera.com/opera stable non-free" >> /etc/apt/sources.li
 RUN apt-key adv --keyserver "${KEYSERVER}" --recv-key 517590D9A8492E35
 RUN echo "deb http://repository.spotify.com stable non-free" >> /etc/apt/sources.list 
 RUN apt-key adv --keyserver "${KEYSERVER}" --recv-key 082CCEDF94558F59
-
-#  run_inside locale-gen "pl_PL.UTF-8"
-#  echo acroread acroread/default-viewer select true | run_inside debconf-set-selections
-#  echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | run_inside debconf-set-selections
+RUN echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | debconf-set-selections
  
 RUN apt-get update
 RUN apt-get -y dist-upgrade
-RUN apt-get -d -f -y install ${FULL_PACKAGES}
+RUN for package in ${FULL_PACKAGES}; do apt-get -f -y install \${package}; done; true;
 RUN apt-get -f -y install ${FULL_PACKAGES}
-RUN apt-get -f -y install nvidia-cuda-toolkit nvidia-304 linux-headers-generic
 RUN update-java-alternatives -s java-1.7.0-openjdk-amd64
 RUN pipelight-plugin --update
 RUN pipelight-plugin --disable-all
@@ -45,6 +41,7 @@ ADD tcs-scripts /root/tcs-scripts
 RUN /root/tcs-scripts/tcs-avcodec
 RUN /root/tcs-scripts/tcs-virtualbox
 RUN /root/tcs-scripts/tcs-satoriclient
+RUN /root/tcs-scripts/tcs-cuda
 RUN /root/tcs-scripts/tcs-kernel
 RUN /root/tcs-scripts/tcs-scripts
 RUN rm -rf /root/tcs-scripts
@@ -58,7 +55,7 @@ add_footer "${TAG}"
 copy_scripts "${TAG}" kernel
 
 if [ "$1" != "debug" ]; then
-    docker build "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
+    docker build "$@" "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
 
     rm -rf kernel
     mkdir -p kernel

@@ -1,5 +1,47 @@
 #!/bin/bash
-for service in network-manager winbind atftpd bluetooth lightdm gdm kdm dovecot exim4 apt-cacher-ng memcached inetd tinyproxy ntp mysql postfix postgres postgresql saned rlinetd postfix apache2 exim4 vmware vmware-USBArbitrator virtualbox virtualbox-guest-utils openvpn winbind nginx nbd-server fcgiwrap nmbd winbind smbd reload-smbd samba-ad-dc inetutils-inetd docker isc-dhcp-server isc-dhcp-server6 vsftpd greylist spamassassin; do
+for service in \
+  apache2 \
+  apt-cacher-ng \
+  atftpd \
+  bluetooth \
+  docker \
+  docker.io \
+  dovecot \
+  exim4 \
+  fcgiwrap \
+  gdm \
+  greylist \
+  inetd \
+  inetutils-inetd \
+  isc-dhcp-server \
+  isc-dhcp-server6 \
+  kdm \
+  lightdm \
+  memcached \
+  mysql \
+  nbd-server \
+  network-manager \
+  nginx \
+  nmbd \
+  ntp \
+  openvpn \
+  postfix \
+  postgres \
+  postgresql \
+  reload-smbd \
+  rlinetd \
+  samba-ad-dc \
+  saned \
+  smbd \
+  spamassassin \
+  tinyproxy \
+  virtualbox \
+  virtualbox-guest-utils \
+  vmware \
+  vmware-USBArbitrator \
+  vsftpd \
+  winbind \
+; do
     update-rc.d -f "${service}" disable
     if [ -e "/etc/init/${service}.conf" ]; then
         echo "manual" > "/etc/init/${service}.override"

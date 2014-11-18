@@ -23,6 +23,6 @@ for TYPE in generic ; do
     ./umount.sh
     cd ..
     tar -c -j -f "${VER}/modules.tar.bz2" -C "system/lib/modules/" "${VER}"
-    rm current-${TYPE}
+    rm -f current-${TYPE}
     ln -s "${VER}" current-${TYPE}
 done

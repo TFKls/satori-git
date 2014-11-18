@@ -33,15 +33,16 @@ chroot . apt-get clean
 for lf in `find var/log -type f`; do
     :> "$lf"
 done
+chroot . rm -rf /etc/hosts /etc/resolv.conf /etc/hostname
 chroot . find -L /run /var /tmp -type s -exec rm -f {} \; -prune
-chroot . find -L /run /var /tmp -type f \( -name "pid" -o -name "*.pid" -o -name "sock" -o -name "*.sock" -o -name "lock" -o -name "*.lock" \) -exec rm -f {} \; -prune
+chroot . find -L /run /var /tmp -type f \( -name "pid" -o -name "*.pid" -o -name "sock" -o -name "socket" -o -name "*.sock" -o -name "*.socket" -o -name "lock" -o -name "*.lock" \) -exec rm -f {} \; -prune
 chroot . find /tmp /var/tmp /var/crash -mindepth 1 -maxdepth 1 -exec rm -rf {} \; -prune
-chroot . rm -rf /root/*
-chroot . rm -rf /*.log
-chroot . rm -rf /*.old
-chroot . rm -rf /*.txt
-chroot . rm -rf /.??*
-chroot . rm -rf /nonexistent
+chroot . find /home  -mindepth 1 -maxdepth 1 -type d -exec rm -rf {} \; -prune
+chroot . rm -rf /root
+chroot . mkdir /root
+chroot . chmod 0700 /root
+chroot . find / -maxdepth 1 \( -name "*.log" -o -name "*.old" -o -name "*.txt" -o -name ".??*" \) -exec rm -rf {} \; -prune
+chroot . rm -rf /nonexistent /vagrant /.docker
 chroot . mkdir -p /tmp/.X11-unix
 chroot . chmod 777 /tmp/.X11-unix
 chroot . chmod o+t /tmp/.X11-unix

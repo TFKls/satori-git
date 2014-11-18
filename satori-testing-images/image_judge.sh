@@ -29,7 +29,7 @@ add_footer "${TAG}"
 copy_scripts "${TAG}"
 
 if [ "$1" != "debug" ]; then
-    docker build "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
+    docker build  "$@" "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
 fi
 
 popd

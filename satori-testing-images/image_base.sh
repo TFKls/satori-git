@@ -12,7 +12,8 @@ add_apt_cacher "${TAG}"
 
 cat >> "${TAG}/Dockerfile" <<EOF
 RUN locale-gen en_US.UTF-8
-RUN echo rm -f /etc/apt/sources.list.d/*
+RUN update-locale LANG=en_US.UTF-8
+RUN rm -f /etc/apt/sources.list.d/*
 RUN echo "deb     http://archive.ubuntu.com/ubuntu ${DISTRO} main restricted universe multiverse" > /etc/apt/sources.list 
 RUN echo "deb-src http://archive.ubuntu.com/ubuntu ${DISTRO} main restricted universe multiverse" >> /etc/apt/sources.list 
 RUN echo "deb     http://archive.ubuntu.com/ubuntu ${DISTRO}-updates main restricted universe multiverse" >> /etc/apt/sources.list
@@ -36,7 +37,7 @@ add_footer "${TAG}"
 copy_scripts "${TAG}"
 
 if [ "$1" != "debug" ]; then
-    docker build "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
+    docker build "$@" "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
 fi
 
 popd
