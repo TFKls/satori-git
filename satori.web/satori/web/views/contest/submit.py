@@ -10,7 +10,8 @@ from django.core.urlresolvers import reverse
 @contest_view
 def view(request, page_info):
     contest = page_info.contest
-    submitable = [["",'Select a problem']]
+#    submitable = [["",'Select a problem']]
+    submitable = []
     problems = ProblemMapping.filter(ProblemMappingStruct(contest=contest))
     problems.sort(key=lambda p: p.code)
     for problem in problems:

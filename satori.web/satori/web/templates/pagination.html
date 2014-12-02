@@ -36,14 +36,14 @@
 <div class="col-md-3">
 <div class="row">
 <form action="" method="get" role="form" class="form-inline form-horizontal">
-  <label class="control-label col-md-6" for="{{users.prefix}}_show">Jump to page: </label>
+  <label class="control-label col-md-6" for="{{table.prefix}}_show">Jump to page: </label>
   <div class="input-group col-md-5">
-    <input type="text" class="form-control" name="{{users.prefix}}_page" value="{{table.page}}"/>
+    <input type="text" class="form-control" name="{{table.prefix}}_page" value="{{table.page}}"/>
     <span class="input-group-btn">
         <button class="btn btn-default" type="submit">Go!</button>
     </span>
     {% for key, value in table.params_subst_dict.iteritems %}
-    {% if key != users.prefix|add:"_page" %}
+    {% if key != table.prefix|add:"_page" %}
       <input type="hidden" name="{{key}}" value="{{value}}"/>
     {% endif %}
     {% endfor %}
@@ -55,14 +55,14 @@
 <div class="col-md-3">
 <div class="row">
 <form action="" method="get" role="form" class="form-inline form-horizontal">
-  <label class="control-label col-md-6" for="{{users.prefix}}_show">Results per page: </label>
+  <label class="control-label col-md-6" for="{{table.prefix}}_show">Results per page: </label>
   <div class="input-group col-md-5">
-    <input type="text" class="form-control" name="{{users.prefix}}_show" value="{{table.show}}"/>
+    <input type="text" class="form-control" name="{{table.prefix}}_show" value="{{table.show}}"/>
     <span class="input-group-btn">
         <button class="btn btn-default" type="submit">Change</button>
     </span>
     {% for key, value in table.params_subst_dict.iteritems %}
-    {% if key != users.prefix|add:"_show" %}
+    {% if key != table.prefix|add:"_show" %}
       <input type="hidden" name="{{key}}" value="{{value}}"/>
     {% endif %}
     {% endfor %}

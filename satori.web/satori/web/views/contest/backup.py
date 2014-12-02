@@ -59,29 +59,29 @@ def view(request, page_info):
     return render_to_response('backup.html', {'page_info' : page_info, 'backups' : backups, 'add_form' : form})
         
 
-def placeholder(request,page_info):
-    class BackupTable(ResultTable):
-        def default_limit(self):
-            return 20
-        def __init__(self,req,prefix=''):
-            super(BackupTable,self).__init__(req=req,prefix=prefix,default_sort=2,default_desc=True)
-            self.results = []
-            self.contestants = []
-            self.total = len(self.results)
-            if is_admin:
-                self.fields.append(TableField(name='Contestant',value=(lambda table,i : table.contestants[i].name),id=1))
-            self.fields.append(TableField(name='Name',value=(lambda table,i : table.results[i].name),id=2))
-            def download_link(table,i):
-                name=table.results[i].name
-                filename=table.results[i].filename
-                url = reverse('download_group',args=['download','Contestant',str(table.contestants[i].id),'backup',name,filename])
-                return format_html(u'<a href="{0}" class="stdlink">{1}</a>', url, filename)
-            self.fields.append(TableField(name='File',value=(lambda table,i : table.results[i].filename),render=download_link,id=3,sortable=False))
-            def delete_form(table,i):
-                return format_html(u'<form action="" method="POST"><input type="hidden" name="id" value="{0}"/><input type="hidden" name="cid" value="{1}"/><input class="button button_small"' +
-                                    ' type="submit" name="delete" value="Delete"></form>', table.results[i].name, table.contestants[i].id)
-            self.fields.append(TableField(name='',value='',render=delete_form,id=4,sortable=False,css=['centered']))
-            
-    backups = BackupTable(req=request.GET,prefix='backup')
-    return render_to_response('backup.html', {'page_info' : page_info, 'form' : form, 'backups' : backups})
+#def placeholder(request,page_info):
+#    class BackupTable(ResultTable):
+#        def default_limit(self):
+#            return 20
+#        def __init__(self,req,prefix=''):
+#            super(BackupTable,self).__init__(req=req,prefix=prefix,default_sort=2,default_desc=True)
+#            self.results = []
+#            self.contestants = []
+#            self.total = len(self.results)
+#            if is_admin:
+#                self.fields.append(TableField(name='Contestant',value=(lambda table,i : table.contestants[i].name),id=1))
+#            self.fields.append(TableField(name='Name',value=(lambda table,i : table.results[i].name),id=2))
+#            def download_link(table,i):
+#                name=table.results[i].name
+#                filename=table.results[i].filename
+#                url = reverse('download_group',args=['download','Contestant',str(table.contestants[i].id),'backup',name,filename])
+#                return format_html(u'<a href="{0}" class="stdlink">{1}</a>', url, filename)
+#            self.fields.append(TableField(name='File',value=(lambda table,i : table.results[i].filename),render=download_link,id=3,sortable=False))
+#            def delete_form(table,i):
+#                return format_html(u'<form action="" method="POST"><input type="hidden" name="id" value="{0}"/><input type="hidden" name="cid" value="{1}"/><input class="button button_small"' +
+#                                    ' type="submit" name="delete" value="Delete"></form>', table.results[i].name, table.contestants[i].id)
+#            self.fields.append(TableField(name='',value='',render=delete_form,id=4,sortable=False,css=['centered']))
+#            
+#    backups = BackupTable(req=request.GET,prefix='backup')
+#    return render_to_response('backup.html', {'page_info' : page_info, 'form' : form, 'backups' : backups})
 

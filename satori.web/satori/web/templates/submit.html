@@ -1,12 +1,19 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
+
 {% block title %}
 {{ page_info.contest.name }} - submit
+
 {% endblock %}
 
 {% block content %}
 
-<h2>Submit</h2>
+{{ alerts.render|safe }}
+
+<h3>Submit a solution</h3>
+
+<div class="limit-width">
 
 {%if noproblems %}
 
@@ -14,12 +21,18 @@ No problems to submit!
 
 {%else%}
 
-<form action="{% url 'submit' page_info.contest.id %}" method="post" enctype="multipart/form-data">
-<table>
-    {{ form.as_table }}
-</table>
-<input class="button" type="submit" value="Submit"/>
+<form action="" method="post" class="form" enctype="multipart/form-data">
+    {% csrf_token %}
+    {% bootstrap_form form %}
+    {% buttons %}
+        <button type="submit" class="btn btn-default">
+            Submit
+        </button>
+    {% endbuttons %}
 </form>
-{%endif%}
+
+{% endif %}
+
+</div>
 
 {% endblock %}

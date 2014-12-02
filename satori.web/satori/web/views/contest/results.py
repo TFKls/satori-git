@@ -3,12 +3,27 @@ from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
 from satori.web.utils.tables import *
+from satori.web.utils.generic_table import GenericTable
 from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django import forms
 
 @contest_view
 def view(request, page_info):
+    contest = page_info.contest
+    admin = page_info.contest_is_admin
+    results = GenericTable('results',request.GET)
+    
+    query = Web.get_results(contest=contest)
+    for row in query.results:
+        results.data.append({'id' : row.submit.id, 'contestant' : row.contestant.name, 'problem' : row.problem_mapping.code, 'status' : row.status})
+    results.autopaginate()
+    return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results })
+
+
+
+@contest_view
+def placeholder(request, page_info):
     contest = page_info.contest
     admin = page_info.contest_is_admin
     class SubmitsTable(ResultTable):

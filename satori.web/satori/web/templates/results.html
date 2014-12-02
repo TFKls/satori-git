@@ -1,13 +1,55 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
+
+{% block header %}
+<link rel="stylesheet" href="/files/results.css" />
+{% endblock %}
 
 {% block title %}
 {{ page_info.contest.name }} - results
 {% endblock %}
 
 {% block content %}
+{{ alerts.render|safe }}
+
+<h4>Users</h4>
+
+{% with results as table %}
+{% include "pagination.html" %}
+{% endwith %}
+
+<div class="row">
+<table class="table table-condensed table-hover">
+<thead>
+    <tr>
+        <th>Number</th>
+        <th>Contestant</th>
+        <th>Problem</th>
+        <th>Status</th>
+    </tr>
+</thead>
+<tbody>
+    {% for row in results.rows %}
+    <tr>
+        <td>{{ row.id }}</td>
+        <td>{{ row.contestant }}</td>
+        <td>{{ row.problem }}</td>
+        <td class="sta{{row.status}}">{{ row.status }}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+
+</table>
+</div>
 
 
+
+
+{% endblock %}
+
+
+{% comment %}
 <h2>Results</h2>
 
 {%if results.showdiff %} <form action="{% url 'results_diff' page_info.contest.id %}" method="GET"> {% endif %}
@@ -27,4 +69,4 @@
     {{ results.render_scrollbar }}
     {{ results.render_filters }}
 
-{% endblock %}
+{% endcomment %}

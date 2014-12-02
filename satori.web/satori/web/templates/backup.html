@@ -28,7 +28,15 @@ Backup
     <tr>
         <td>{{ row.contestant_name }}</td>
         <td>{{ row.backup_name }}</td>
-        <td>{{ row.backup_filename }}</td>
+        <td>{{ row.backup_filename }} 
+            <a href="{% url "download_group" "download" "Contestant" row.contestant_id "backup" row.backup_name row.backup_filename %}">{% bootstrap_icon "download" %}</a>
+
+            <form class="one-button-form" action="{% url 'backup' page_info.contest.id %}" method="POST">
+                <input type="hidden" name="cid" value="{{ row.contestant_id }}"/>
+                <input type="hidden" name="id" value="{{ row.backup_name }}"/>
+                <button type="submit" name="delete"> <span class="text-danger">{% bootstrap_icon "trash" %}</span></button>
+            </form>
+        </td>
     </tr>
     {% endfor %}
 </tbody>
