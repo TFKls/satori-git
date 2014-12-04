@@ -18,52 +18,80 @@
 {% include "pagination.html" %}
 {% endwith %}
 
-<table class="table table-condensed">
-<thead>
-    <tr>
-        <th>Number</th>
-        <th>Contestant</th>
-        <th>Problem</th>
-        <th>Status</th>
-    </tr>
-</thead>
-<tbody>
-    {% for row in results.rows %}
-    <tr>
-        <td>{{ row.id }}</td>
-        <td>{{ row.contestant }}</td>
-        <td>{{ row.problem }}</td>
-        <td class="sta{{row.status}}">{{ row.status }}</td>
-    </tr>
-    {% endfor %}
-</tbody>
+<div class="container-fluid">
 
-</table>
+<div class="col-md-9">
+    <table class="table table-condensed">
+    <thead>
+        <tr>
+            <th>Number</th>
+        {% if page_info.contest_is_admin %}            
+            <th>Contestant</th> 
+        {% endif %}
+            <th>Problem</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for row in results.rows %}
+        <tr>
+            <td><a href="{% url 'view_result' page_info.contest.id row.id %}">{{ row.id }}</a></td>
+        {% if page_info.contest_is_admin %}            
+            <td><a href="{{ row.contestant_link }}">{{ row.contestant }}</a></td>
+        {% endif %}
+            <td><a href="{{ row.problem_link }}">{{ row.problem }}</a></td>
+            <td class="sta{{ row.status }}">{{ row.status }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
 
+    </table>
+</div>    
 
+<div class="col-md-3">
+    <div class="panel panel-default">
+    <div class="panel-heading">
+    Filters <a href="{{results.pagedata.nofilterlink}}">{% bootstrap_icon "remove" %}</a>
+    </div>
+    <div class="panel-body">
+        <form class="form form-vertical" role="form" action="{{ results.pagedata.nofilterlink }}" method="get">
+            <div class="form-group">
+            {% if page_info.contest_is_admin %}            
+            <label for="results_contestant">Contestant: </label>
+            <select class="form-control" name="results_contestant">
+                <option value="">All contestants</option>
+                {% for c in results.allcontestants %}
+                <option value="{{ c.id }}" {% ifequal c.id|add:0 results.my_params.contestant|add:0 %} selected {% endifequal %}>
+                    {{ c.name }}
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+
+            <label for="results_problem">Problem: </label>
+            <select class="form-control" name="results_problem">
+                <option value="">All problems</option>
+                {% for p in results.problems %}
+                <option value="{{ p.problem_mapping.id }}" {% ifequal p.problem_mapping.id|add:0 results.my_params.problem|add:0 %} selected {% endifequal %}>
+                    {{ p.problem_mapping.code }} &ndash; {{ p.problem_mapping.title }}
+
+                </option>
+                {% endfor %}
+            </select>
+            <label for="results_status">Status: </label>
+            <input type="text" class="form-control" name="results_status" value="{{results.my_params.status}}"/>
+            </div>
+            
+            <div class="form-group">
+                <button type="submit" class="btn btn-default">Filter</button>
+            </div>
+        </form>
+    </div>
+    </div>
+</div>
+    
+</div>
 
 
 {% endblock %}
 
-
-{% comment %}
-<h2>Results</h2>
-
-{%if results.showdiff %} <form action="{% url 'results_diff' page_info.contest.id %}" method="GET"> {% endif %}
-
-<table class="results">
-    {{ results.render_table }}
-</table>
-<div class="button_bar">
-{%if results.showdiff %}  
-    <input class="button" value="Compare" type="submit"/>
-    </form>
-    <a class="button" href="{{ results.difflink }}">Hide diff</a>
-{% else %}
-    <a class="button" href="{{ results.difflink }}">Compare submits</a>
-{% endif %}
-</div>
-    {{ results.render_scrollbar }}
-    {{ results.render_filters }}
-
-{% endcomment %}

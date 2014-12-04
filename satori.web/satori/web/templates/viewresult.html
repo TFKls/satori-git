@@ -1,15 +1,58 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
+
+{% block header %}
+<link rel="stylesheet" href="/files/results.css" />
+{% endblock %}
 
 {% block title %}
 Submit {{ widget.sid }}
 {% endblock %}
 
-{% block header %}
- {% include "showhide.html" %}
-{% endblock %}
 
 {% block content %}
+        
+    <div class="row">
+    <h4>View submit</h4>
+    <table class="table table-condensed">
+    <thead>
+        <tr>
+            <th>Number</th>
+        {% if page_info.contest_is_admin %}            
+            <th>Contestant</th> 
+        {% endif %}
+            <th>Problem</th>
+            <th>Status</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td>{{ submit.id }}</td>
+        {% if page_info.contest_is_admin %}            
+            <td><a href="">{{ submit_data.contestant.name }}</a></td>
+        {% endif %}
+            <td><a href="">{{ submit_data.problem_mapping.code }} &ndash; {{ submit_data.problem_mapping.title }}</a></td>
+            <td class="sta{{ submit_data.status }}">{{ submit_data.status }}</td>
+        </tr>
+    </tbody>
+    </table>
+    </div>
+    
+    
+    <div class="row">
+        <h4>Code</h4>
+        {% if submit_data.data %}
+        <pre>{{submit_data.data}}</pre>
+        {% else %}
+        <div class="alert alert-warning">Cannot display the code as plaintext.</div>
+        {% endif %}
+    </div>
+
+{% endblock %}
+
+
+{% comment %}
 
 
 <h3>Submit {{widget.sid}}</h4>
@@ -104,4 +147,4 @@ Submit {{ widget.sid }}
 Cannot render this file, please download.
 {% endif %}
 
-{% endblock %}
+{% endcomment %}

@@ -13,12 +13,39 @@ def view(request, page_info):
     contest = page_info.contest
     admin = page_info.contest_is_admin
     results = GenericTable('results',request.GET)
+    max_limit = 50000
+    results.pagedata = {}
+    results.problems = sorted(Web.get_problem_mapping_list(contest=contest), key=lambda p: p.problem_mapping.code)
+    results.allcontestants = sorted(Web.get_accepted_contestants(contest=contest,limit=max_limit).contestants+Web.get_contest_admins(contest=contest,limit=max_limit).contestants,key = lambda c : c.name)
     
-    query = Web.get_results(contest=contest)
+    contestant = None                                                   # check if results are needed for the single contestant or for everyone
+    try:
+        contestant = Contestant(int(results.my_params['contestant']))
+    except:
+        pass
+    
+    problem = None
+    try:                                                                # check if the results are needed for a single problem
+        problem = ProblemMapping(int(results.my_params['problem']))
+    except:
+        pass
+        
+        
+    status = results.my_params.get('status',None)                       # check if the results are filtered by status
+        
+    query = Web.get_results(contest=contest,contestant=contestant,problem=problem)
+    
     for row in query.results:
-        results.data.append({'id' : row.submit.id, 'contestant' : row.contestant.name, 'problem' : row.problem_mapping.code, 'status' : row.status})
+        results.data.append({'id' : row.submit.id, 'contestant' : row.contestant.name, 'problem' : row.problem_mapping.code, 'status' : row.status,
+                             'contestant_link' : results.params_subst_link({'contestant' : str(row.contestant.id) }), 
+                             'problem_link' : results.params_subst_link({'problem' : str(row.problem_mapping.id)}), 
+                             })
+    if status:
+        results.data = [r for r in results.data if r['status']==status]
+        
     results.autopaginate()
-    return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results })
+    results.pagedata['nofilterlink'] = results.params_subst_link(deleted_my=['contestant','problem','status'])
+    return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results})
 
 
 

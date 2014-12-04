@@ -9,11 +9,22 @@ from django.core.urlresolvers import reverse
 from django import forms
 from satori.web.utils.shortcuts import text2html
 from satori.web.utils.tables import ResultTable,TableField,format_html
+from satori.web.utils.generic_table import GenericTable
 from difflib import HtmlDiff,Differ
 from cgi import escape
 
 @contest_view
 def view(request, page_info, id):
+    submit = Submit(int(id))
+    contest = page_info.contest
+    submit_data = Web.get_result_details(submit=submit)
+    admin =  page_info.contest_is_admin
+    tests = GenericTable('tests',request.GET)
+    return render_to_response('viewresult.html',{'page_info' : page_info, 'submit' : submit, 'submit_data' : submit_data, 'tests' : tests})
+    
+
+@contest_view
+def placeholder(request, page_info, id):
     submit = Submit(int(id))
     contest = page_info.contest
     res = Web.get_result_details(submit=submit)
