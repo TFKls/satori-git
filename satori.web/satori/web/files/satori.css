@@ -18,6 +18,20 @@
     max-width : 400px;
 }
 
+#status_bar
+{
+    max-width : 50%;
+    text-align : center;
+}
+
+#content
+{
+    margin-top : 10px;
+    margin-left : 0;
+    margin-right : 10px;
+    margin-bottom : 0;
+}
+
 .pagination-no-margin
 {
     margin-top : 0;

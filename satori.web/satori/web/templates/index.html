@@ -46,12 +46,20 @@
         </div>
 
         <div class="col-xs-10" id="data-column">
-        
-            {% include "templates/status_bar.html" %}
-            {% block content %}
+            {% if alerts %}
+            <div class="row">
+                <div id="status_bar">
+                    {{ alerts.render|safe }}
+                </div>
+            </div>
+            {% endif %}
+            <div class="row">
+                <div id="content">
+                {% block content %}
 
-            {% endblock %}
-        
+                {% endblock %}
+                </div>
+            </div>
         </div>
         
     </div>

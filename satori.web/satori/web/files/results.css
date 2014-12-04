@@ -2,7 +2,15 @@
     background-color: #D9F7C2;
 }
 
+.staOK:hover {
+    background-color: #D9F7C2;
+}
+
 .staACC {
+    background-color: #43791A;
+}
+
+.staACC:hover {
     background-color: #43791A;
 }
 
@@ -10,19 +18,43 @@
     background-color: #F8C3D2;
 }
 
+
+.staRTE:hover {
+    background-color: #F8C3D2;
+}
+
 .staTLE {
     background-color: #F8C3D2;
 }
+
+.staTLE:hover {
+    background-color: #F8C3D2;
+}
+
 
 .staANS {
     background-color: #F8C3D2;
 }
 
+.staANS:hover {
+    background-color: #F8C3D2;
+}
+
+
 .staMEM {
     background-color: #F8C3D2;
 }
 
+.staMEM:hover {
+    background-color: #F8C3D2;
+}
+
+
 .staREJ {
+    background-color: #A29D8C;
+}
+
+.staREJ:hover {
     background-color: #A29D8C;
 }
 
@@ -30,7 +62,17 @@
     background-color: #9D888E;
 }
 
+.staCME:hover {
+    background-color: #9D888E;
+}
+
+
 .staQUE {
     background-color: #FFF2C8;
 }
+
+.staQUE:hover {
+    background-color: #FFF2C8;
+}
+
 

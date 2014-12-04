@@ -11,16 +11,14 @@
 {% endblock %}
 
 {% block content %}
-{{ alerts.render|safe }}
 
-<h4>Users</h4>
+<h4>Results</h4>
 
 {% with results as table %}
 {% include "pagination.html" %}
 {% endwith %}
 
-<div class="row">
-<table class="table table-condensed table-hover">
+<table class="table table-condensed">
 <thead>
     <tr>
         <th>Number</th>
@@ -41,7 +39,6 @@
 </tbody>
 
 </table>
-</div>
 
 
 

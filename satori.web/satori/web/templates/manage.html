@@ -1,5 +1,6 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
 
 {% block title %}
 {{ page_info.contest.name }} - manage
@@ -13,11 +14,16 @@
 
 {% block content %}
 
-<form action="" method="POST"/>
-<table>
-{{ manage_form.as_table }}
-</table>
-<input class="button" type="submit" name="params" value="Submit"/>
+<form class="form form-vertical" action="" method="POST"/>
+    {% csrf_token %}
+
+    {% bootstrap_form manage_form %}
+    {% buttons %}
+        <button type="submit" name="params" class="btn btn-default">
+            Submit
+        </button>
+    {% endbuttons %}
+
 </form>
 
 <hr class="divide"/>
