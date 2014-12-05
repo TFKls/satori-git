@@ -5,6 +5,7 @@ pushd "${OFFICE}"
 ./tcs-dkms &&
 ./tcs-i386 &&
 ./tcs-remap / &&
+./tcs-disable-services &&
 exit 0
 exit 1
 popd

@@ -11,6 +11,14 @@ tmp/*
 ^satori.javatool/lib/*
 ^satori-testing/satori_run$
 ^satori-testing_
+^satori-testing-images/base/*
+^satori-testing-images/judge/*
+^satori-testing-images/checker/*
+^satori-testing-images/uzi/*
+^satori-testing-images/full/*
+^satori-testing-images/server/*
+^satori-testing-images/tcs-debs-*/*
+^satori-testing-images/kernel/*
 ^syncdb.sh$
 \.orig$
 ^bin/

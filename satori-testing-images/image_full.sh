@@ -12,15 +12,21 @@ add_header "${TAG}" "${DOCKER_REPO}:judge"
 add_apt_cacher "${TAG}"
 
 cat >> "${TAG}/Dockerfile" <<EOF
-RUN echo "deb http://ppa.launchpad.net/x2go/stable/ubuntu ${DISTRO} main" >> /etc/apt/sources.list
-RUN echo "deb http://ppa.launchpad.net/pipelight/stable/ubuntu ${DISTRO} main" >> /etc/apt/sources.list
+RUN apt-add-repository ppa:x2go/stable
+RUN apt-add-repository ppa:pipelight/stable
+RUN echo "deb http://get.docker.io/ubuntu docker main" >> /etc/apt/sources.list 
+RUN apt-key adv --keyserver "${KEYSERVER}" --recv-key D8576A8BA88D21E9
 RUN echo "deb http://linux.dropbox.com/ubuntu ${DISTRO} main" >> /etc/apt/sources.list
+RUN apt-key adv --keyserver "${KEYSERVER}" --recv-key FC918B335044912E
 RUN echo "deb http://dl.google.com/linux/deb/ stable main" >> /etc/apt/sources.list
 RUN echo "deb http://dl.google.com/linux/chrome/deb/ stable main" >> /etc/apt/sources.list
 RUN echo "deb http://dl.google.com/linux/talkplugin/deb/ stable main" >> /etc/apt/sources.list
+RUN apt-key adv --keyserver "${KEYSERVER}" --recv-key A040830F7FAC5991
 RUN echo "deb http://deb.opera.com/opera stable non-free" >> /etc/apt/sources.list
+RUN apt-key adv --keyserver "${KEYSERVER}" --recv-key 517590D9A8492E35
 RUN echo "deb http://repository.spotify.com stable non-free" >> /etc/apt/sources.list 
-RUN echo "deb http://get.docker.io/ubuntu docker main" >> /etc/apt/sources.list 
+RUN apt-key adv --keyserver "${KEYSERVER}" --recv-key 082CCEDF94558F59
+
 #  run_inside locale-gen "pl_PL.UTF-8"
 #  echo acroread acroread/default-viewer select true | run_inside debconf-set-selections
 #  echo ttf-mscorefonts-installer msttcorefonts/accepted-mscorefonts-eula select true | run_inside debconf-set-selections

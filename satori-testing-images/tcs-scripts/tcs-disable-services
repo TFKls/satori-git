@@ -1,0 +1,7 @@
+#!/bin/bash
+for service in network-manager winbind atftpd bluetooth lightdm gdm kdm dovecot exim4 apt-cacher-ng memcached inetd tinyproxy ntp mysql postfix postgres postgresql saned rlinetd postfix apache2 exim4 vmware vmware-USBArbitrator virtualbox virtualbox-guest-utils openvpn winbind nginx nbd-server fcgiwrap nmbd winbind smbd reload-smbd samba-ad-dc inetutils-inetd docker isc-dhcp-server isc-dhcp-server6 vsftpd greylist spamassassin; do
+    update-rc.d -f "${service}" disable
+    if [ -e "/etc/init/${service}.conf" ]; then
+        echo "manual" > "/etc/init/${service}.override"
+    fi
+done
