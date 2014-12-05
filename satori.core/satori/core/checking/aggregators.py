@@ -675,6 +675,9 @@ class MarksAggregator(AggregatorBase):
                 try:
                     if not self.fixed_score:
                         self.fixed_score = 0
+                    time = self.score.aggregator.submit_cache[result.submit_id].time
+                    if self.params.time_stop and time > self.params.time_stop:
+                        return
                     self.fixed_score = max(self.fixed_score,int(result.oa_get_str('score')))
                 except:
                     super(MarksAggregator.MarksScore.MarksProblemScore,self).aggregate(result)
