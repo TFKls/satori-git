@@ -1,8 +1,8 @@
 
 <div class="row">
 
-<div class="col-md-6">
-<ul class="pagination pagination-no-margin">
+<div class="col-sm-6">
+<ul class="pagination pagination-sm pagination-no-margin">
 {% for page_number, page_link in table.autopagelinks %}
   {% if forloop.first and page_number > 1 %}
     <li><a href="{{table.autopagelink_first}}">
@@ -33,11 +33,11 @@
 </ul>
 </div>
 
-<div class="col-md-3">
+<div class="col-sm-3">
 <div class="row">
 <form action="" method="get" role="form" class="form-inline form-horizontal">
-  <label class="control-label col-md-6" for="{{table.prefix}}_show">Jump to page: </label>
-  <div class="input-group col-md-5">
+  <label class="control-label col-md-6 input-sm" for="{{table.prefix}}_show">Jump to page: </label>
+  <div class="input-group input-group-sm col-md-5">
     <input type="text" class="form-control" name="{{table.prefix}}_page" value="{{table.page}}"/>
     <span class="input-group-btn">
         <button class="btn btn-default" type="submit">Go!</button>
@@ -52,11 +52,12 @@
 </div>
 </div>
 
-<div class="col-md-3">
+<div class="col-sm-3">
 <div class="row">
 <form action="" method="get" role="form" class="form-inline form-horizontal">
-  <label class="control-label col-md-6" for="{{table.prefix}}_show">Results per page: </label>
-  <div class="input-group col-md-5">
+  
+  <label class="control-label col-md-6 input-sm" for="{{table.prefix}}_show">Results per page: </label>
+  <div class="input-group input-group-sm col-md-5">
     <input type="text" class="form-control" name="{{table.prefix}}_show" value="{{table.show}}"/>
     <span class="input-group-btn">
         <button class="btn btn-default" type="submit">Change</button>

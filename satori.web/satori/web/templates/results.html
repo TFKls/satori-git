@@ -14,13 +14,13 @@
 
 <h4>Results</h4>
 
-{% with results as table %}
-{% include "pagination.html" %}
-{% endwith %}
 
 <div class="container-fluid">
 
 <div class="col-md-9">
+    {% with results as table %}
+    {% include "pagination.html" %}
+    {% endwith %}
     <table class="table table-condensed">
     <thead>
         <tr>
@@ -35,7 +35,7 @@
     <tbody>
         {% for row in results.rows %}
         <tr>
-            <td><a href="{% url 'view_result' page_info.contest.id row.id %}">{{ row.id }}</a></td>
+            <td><a href="{% url 'view_result' page_info.contest.id row.id %}">{{ row.id }} {% bootstrap_icon "search" %} </a></td>
         {% if page_info.contest_is_admin %}            
             <td><a href="{{ row.contestant_link }}">{{ row.contestant }}</a></td>
         {% endif %}
@@ -51,11 +51,11 @@
 <div class="col-md-3">
     <div class="panel panel-default">
     <div class="panel-heading">
-    Filters <a href="{{results.pagedata.nofilterlink}}">{% bootstrap_icon "remove" %}</a>
+    Filters
     </div>
     <div class="panel-body">
         <form class="form form-vertical" role="form" action="{{ results.pagedata.nofilterlink }}" method="get">
-            <div class="form-group">
+            <div class="form-group form-group-sm">
             {% if page_info.contest_is_admin %}            
             <label for="results_contestant">Contestant: </label>
             <select class="form-control" name="results_contestant">
@@ -82,8 +82,9 @@
             <input type="text" class="form-control" name="results_status" value="{{results.my_params.status}}"/>
             </div>
             
-            <div class="form-group">
-                <button type="submit" class="btn btn-default">Filter</button>
+            <div class="form-group form-group-sm">
+                <button type="submit" class="btn btn-primary btn-sm">Filter</button>
+                <a href="{{ results.pagedata.nofilterlink }}" class="btn btn-link btn-sm">Clear filters</a>
             </div>
         </form>
     </div>

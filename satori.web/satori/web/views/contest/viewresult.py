@@ -18,6 +18,12 @@ def view(request, page_info, id):
     submit = Submit(int(id))
     contest = page_info.contest
     submit_data = Web.get_result_details(submit=submit)
+    fullname = submit_data.data_filename.rsplit('.',2)
+    if len(fullname)==2:
+        extension = '.'+fullname[1]
+    else:
+        extension = ''
+    submit_data.filename = id+extension
     admin =  page_info.contest_is_admin
     tests = GenericTable('tests',request.GET)
     return render_to_response('viewresult.html',{'page_info' : page_info, 'submit' : submit, 'submit_data' : submit_data, 'tests' : tests})

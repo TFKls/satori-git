@@ -7,7 +7,7 @@ class GenericTable(object):
         self.data = []                  # data in raw format
         self.fields = []                # fields to show as columns
         self.filters = {}
-        self.default_shown = 65535      # our notion of infinity
+        self.default_shown = 30         # default number of results to show
         self.page = 1
         self.sortfield = None
         self.default_sortfield = None

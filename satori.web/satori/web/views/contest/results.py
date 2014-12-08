@@ -33,7 +33,7 @@ def view(request, page_info):
         
     status = results.my_params.get('status',None)                       # check if the results are filtered by status
         
-    query = Web.get_results(contest=contest,contestant=contestant,problem=problem)
+    query = Web.get_results(contest=contest,contestant=contestant,problem=problem,limit=max_limit,offset=0)
     
     for row in query.results:
         results.data.append({'id' : row.submit.id, 'contestant' : row.contestant.name, 'problem' : row.problem_mapping.code, 'status' : row.status,

@@ -4,6 +4,8 @@
 
 {% block header %}
 <link rel="stylesheet" href="/files/results.css" />
+<link rel="stylesheet" href="/files/prettify/prettify.css"/>
+<script src="/files/prettify/prettify.js"></script>
 {% endblock %}
 
 {% block title %}
@@ -41,13 +43,22 @@ Submit {{ widget.sid }}
     
     
     <div class="row">
-        <h4>Code</h4>
+        <p><span class="h4">Code</span> <a class="stdlink" href="{% url 'download_group' "download" "Submit" submit.id "data" "content" submit_data.filename %}">{% bootstrap_icon "download-alt" %}</a></p>
         {% if submit_data.data %}
-        <pre>{{submit_data.data}}</pre>
+        <pre class="prettyprint padded">{{submit_data.data}}</pre>
         {% else %}
         <div class="alert alert-warning">Cannot display the code as plaintext.</div>
         {% endif %}
     </div>
+
+
+<script>
+  !function ($) {
+    $(function(){
+      window.prettyPrint && prettyPrint()
+    })
+  }(window.jQuery)
+</script>
 
 {% endblock %}
 
