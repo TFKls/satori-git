@@ -28,27 +28,27 @@ Main page
     <div class="panel-heading panel-narrow">
             <strong>{{ msg.subpage.name }}</strong>
             <div class="pull-right">
-                <small>
-                    {{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}
-                </small>
             
                 {% if msg.is_admin %}
                     {% if page_info.contest %}
                         {% if msg.subpage.contest %}
-                            <a href="{% url 'contest_news_edit' page_info.contest.id msg.subpage.id %}">{% bootstrap_icon "edit" %}</a> 
+                            <a data-toggle="tooltip" title="Edit news" data-placement="top" href="{% url 'contest_news_edit' page_info.contest.id msg.subpage.id %}">{% bootstrap_icon "pencil" %}</a> 
                         {% endif %}
                     {% else %}
-                        <a href="{% url 'news_edit' msg.subpage.id %}">{% bootstrap_icon "edit" %}</a>
+                        <a data-toggle="tooltip" title="Edit news" data-placement="top" href="{% url 'news_edit' msg.subpage.id %}">{% bootstrap_icon "pencil" %}</a>
                     {% endif %}
                 {% endif %}
 
                 {% if msg.subpage.is_public %}
-                    {% bootstrap_icon "globe" %}
+                    <span data-toggle="tooltip" title="This is a public message." data-placement="top">{% bootstrap_icon "globe" %}</span>
                 {% endif %}
 
                 {% if msg.subpage.is_sticky %}
-                    {% bootstrap_icon "star" %}
+                    <span data-toggle="tooltip" title="This is a sticky message." data-placement="top">{% bootstrap_icon "star" %}</span>
                 {% endif %}
+                <small>
+                    {{msg.subpage.date_created|date:"Y-m-d, H:i:s"}}
+                </small>
             </div>
     </div>
             

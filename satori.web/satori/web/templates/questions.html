@@ -36,12 +36,12 @@ Questions
         </div>
         <div class="col-sm-1">
             {% if page_info.contest_is_admin %}
-            <a class="text-primary icon-space" href="{% url 'answer_question' page_info.contest.id q.id %}">{% bootstrap_icon "edit" %}</a>
+            <a class="text-primary icon-space" data-toggle="tooltip" title="Edit" href="{% url 'answer_question' page_info.contest.id q.id %}">{% bootstrap_icon "pencil" %}</a>
             <form class="one-button-form" action="{% url 'answer_question' page_info.contest.id q.id %}" method="POST">
-                <button type="submit" name="make_public"> <span class="text-primary">{% bootstrap_icon "globe" %}</span></button>
+                <button type="submit" name="make_public" data-toggle="tooltip" title="Make a public copy of the question"><span class="text-primary">{% bootstrap_icon "globe" %}</span></button>
             </form>
             <form class="one-button-form" action="{% url 'answer_question' page_info.contest.id q.id %}" method="POST">
-                <button type="submit" name="delete"> <span class="text-danger">{% bootstrap_icon "trash" %}</span></button>
+                <button type="submit" name="delete" data-toggle="tooltip" title="Delete question"> <span class="text-danger">{% bootstrap_icon "trash" %}</span></button>
             </form>
             {% endif %}
         </div>

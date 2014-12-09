@@ -34,7 +34,7 @@ Select contest
             ">
                 {{row.status}}</span>
             {% if row.archived %}
-                {% bootstrap_icon "briefcase" %}
+                <span data-toggle="tooltip" title="Contest archived.">{% bootstrap_icon "briefcase" %}</span>
             {% endif %}
                 
             </td>

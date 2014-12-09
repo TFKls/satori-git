@@ -1,3 +1,4 @@
+# coding=utf-8
 # vim:ts=4:sts=4:sw=4:expandtab
 from satori.client.common import want_import
 want_import(globals(), '*')
@@ -16,35 +17,69 @@ def view(request, page_info):
     max_limit = 50000
     results.pagedata = {}
     results.problems = sorted(Web.get_problem_mapping_list(contest=contest), key=lambda p: p.problem_mapping.code)
-    results.allcontestants = sorted(Web.get_accepted_contestants(contest=contest,limit=max_limit).contestants+Web.get_contest_admins(contest=contest,limit=max_limit).contestants,key = lambda c : c.name)
+    if admin:
+        results.allcontestants = sorted(Web.get_accepted_contestants(contest=contest,limit=max_limit).contestants+Web.get_contest_admins(contest=contest,limit=max_limit).contestants,key = lambda c : c.name)
     
-    contestant = None                                                   # check if results are needed for the single contestant or for everyone
     try:
         contestant = Contestant(int(results.my_params['contestant']))
     except:
-        pass
+        contestant = None                                                   # check if results are needed for the single contestant or for everyone
     
-    problem = None
     try:                                                                # check if the results are needed for a single problem
         problem = ProblemMapping(int(results.my_params['problem']))
     except:
-        pass
+        problem = None
         
         
     status = results.my_params.get('status',None)                       # check if the results are filtered by status
-        
-    query = Web.get_results(contest=contest,contestant=contestant,problem=problem,limit=max_limit,offset=0)
+    
+    detailed_tsr = None
+    results.suite_show = None
+    results.enable_cmp = bool(results.my_params.get('enable_cmp',None))
+    results.suite_cmp = None
+    results.only_diff = bool(results.my_params.get('only_diff',None))
+    
+    if problem and admin:                                               # a long fragment about suite comparing
+        try:
+            results.suite_show = TestSuite(int(results.my_params['suite_show']))        # shall we show result on another than default suite?
+        except:
+            pass
+        try:
+            if results.enable_cmp:
+                results.suite_cmp = TestSuite(int(results.my_params['suite_cmp']))      # shall we take another suite for comparison?
+        except:
+            pass
+            
+        detailed_tsr = admin and (results.suite_show or results.suite_cmp)                                   # shall we ask for all suite results?
+        results.suites = TestSuite.filter(TestSuiteStruct(problem=problem.problem))
+    
+    query = Web.get_results(contest=contest,contestant=contestant,problem=problem,limit=max_limit,offset=0,detailed_tsr=detailed_tsr)
     
     for row in query.results:
-        results.data.append({'id' : row.submit.id, 'contestant' : row.contestant.name, 'problem' : row.problem_mapping.code, 'status' : row.status,
+        status = row.status                                     # find the right suite result, if other than default
+        if results.suite_show:
+            for tsr in row.test_suite_results:
+                if tsr.test_suite==results.suite_show:
+                    status = tsr.test_suite_result.status
+            
+        status_cmp = row.status                                 # the same for comparison suite
+        if results.suite_cmp:
+            for tsr in row.test_suite_results:
+                if tsr.test_suite==results.suite_cmp:
+                    status_cmp = tsr.test_suite_result.status
+                
+        results.data.append({'id' : row.submit.id, 'contestant' : row.contestant.name, 'problem' : row.problem_mapping.code + u' – ' + row.problem_mapping.title, 
+                             'status' : status, 'status_cmp' : status_cmp, 'matching' : status==status_cmp,
                              'contestant_link' : results.params_subst_link({'contestant' : str(row.contestant.id) }), 
                              'problem_link' : results.params_subst_link({'problem' : str(row.problem_mapping.id)}), 
                              })
     if status:
         results.data = [r for r in results.data if r['status']==status]
+    if results.only_diff:
+        results.data = [r for r in results.data if r['status']!=r['status_cmp']]
         
     results.autopaginate()
-    results.pagedata['nofilterlink'] = results.params_subst_link(deleted_my=['contestant','problem','status'])
+    results.pagedata['nofilterlink'] = results.params_subst_link(deleted_my=['contestant','problem','status','enable_cmp','suite_show','suite_cmp','only_diff'])
     return render_to_response('results.html',{ 'page_info' : page_info, 'results' : results})
 
 

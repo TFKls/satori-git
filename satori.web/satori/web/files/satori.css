@@ -71,3 +71,8 @@ pre.padded
 {
     padding : 10px !important;
 }
+
+.cell-narrow
+{
+    width : 6em;
+}

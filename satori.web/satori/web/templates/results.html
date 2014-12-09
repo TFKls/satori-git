@@ -21,26 +21,34 @@
     {% with results as table %}
     {% include "pagination.html" %}
     {% endwith %}
-    <table class="table table-condensed">
+    <table class="table table-condensed table-bordered">
     <thead>
         <tr>
             <th>Number</th>
         {% if page_info.contest_is_admin %}            
             <th>Contestant</th> 
         {% endif %}
-            <th>Problem</th>
-            <th>Status</th>
+            <th class="text-center">Problem</th>
+            <th class="text-center cell-narrow">Status {% if results.suite_show %}<i>({{ results.suite_show.name }})</i>{% endif %}</th>
+        {% if results.enable_cmp %}
+            <th class="text-center cell-narrow">Status {% if results.suite_cmp %}<i>({{ results.suite_cmp.name }})</i>{% endif %}</th>
+            <th class="cell-narrow">Matching?</th>
+        {% endif %}
         </tr>
     </thead>
     <tbody>
         {% for row in results.rows %}
         <tr>
-            <td><a href="{% url 'view_result' page_info.contest.id row.id %}">{{ row.id }} {% bootstrap_icon "search" %} </a></td>
+            <td><a data-toggle="tooltip" title="View submit" href="{% url 'view_result' page_info.contest.id row.id %}">{{ row.id }} {% bootstrap_icon "search" %} </a></td>
         {% if page_info.contest_is_admin %}            
             <td><a href="{{ row.contestant_link }}">{{ row.contestant }}</a></td>
         {% endif %}
-            <td><a href="{{ row.problem_link }}">{{ row.problem }}</a></td>
-            <td class="sta{{ row.status }}">{{ row.status }}</td>
+            <td class="text-center"><a href="{{ row.problem_link }}">{{ row.problem }}</a></td>
+            <td class="sta{{ row.status }} text-center cell-narrow">{{ row.status }}</td>
+        {% if results.enable_cmp %}
+            <td class="sta{{ row.status_cmp }} text-center cell-narrow">{{ row.status_cmp }}</td>
+            <td class="text-center cell-narrow">{% if row.matching %} <span class="text-success">{% bootstrap_icon "ok" %}</span> {% else %} <span class="text-warning">{% bootstrap_icon "remove" %}</span> {% endif %}</td>
+        {% endif %}
         </tr>
         {% endfor %}
     </tbody>
@@ -78,8 +86,42 @@
                 </option>
                 {% endfor %}
             </select>
+
+            {% if page_info.contest_is_admin %}            
+            <label for="results_suite_show">Show results for suite:</label>
+            <select class="form-control" name="results_suite_show">
+                <option value="">Default suite</option>
+                {% for s in results.suites %}
+                <option value="{{ s.id }}" {% ifequal s.id|add:0 results.my_params.suite_show|add:0 %} selected {% endifequal %}>
+                    {{ s.name }}
+                </option>
+                {% endfor %}
+            </select>
+            {% endif %}
+            
             <label for="results_status">Status: </label>
             <input type="text" class="form-control" name="results_status" value="{{results.my_params.status}}"/>
+            
+            {% if page_info.contest_is_admin %}            
+            <input type="checkbox" name="results_enable_cmp" {% if results.enable_cmp %} checked{% endif %}/>
+            <label for="results_enable_cmp">Compare with suite:</label>
+            <select class="form-control" name="results_suite_cmp">
+                <option value="">Default suite</option>
+                {% for s in results.suites %}
+                <option value="{{ s.id }}" {% ifequal s.id|add:0 results.my_params.suite_cmp|add:0 %} selected {% endifequal %}>
+                    {{ s.name }}
+                </option>
+                {% endfor %}
+            </select>
+
+            <input type="checkbox" name="results_only_diff" {% if results.only_diff %} checked{% endif %}/>
+            Show only when different
+
+            {% endif %}
+            
+            
+            
+            
             </div>
             
             <div class="form-group form-group-sm">
