@@ -100,7 +100,7 @@
             {% endif %}
             
             <label for="results_status">Status: </label>
-            <input type="text" class="form-control" name="results_status" value="{{results.my_params.status}}"/>
+            <input type="text" class="form-control" name="results_status" value="{{results.status_filter}}"/>
             
             {% if page_info.contest_is_admin %}            
             <input type="checkbox" name="results_enable_cmp" {% if results.enable_cmp %} checked{% endif %}/>

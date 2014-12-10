@@ -31,7 +31,7 @@ def view(request, page_info):
         problem = None
         
         
-    status = results.my_params.get('status',None)                       # check if the results are filtered by status
+    results.status_filter = results.my_params.get('status',"")                       # check if the results are filtered by status
     
     detailed_tsr = None
     results.suite_show = None
@@ -73,8 +73,8 @@ def view(request, page_info):
                              'contestant_link' : results.params_subst_link({'contestant' : str(row.contestant.id) }), 
                              'problem_link' : results.params_subst_link({'problem' : str(row.problem_mapping.id)}), 
                              })
-    if status:
-        results.data = [r for r in results.data if r['status']==status]
+    if results.status_filter:
+        results.data = [r for r in results.data if r['status']==results.status_filter]
     if results.only_diff:
         results.data = [r for r in results.data if r['status']!=r['status_cmp']]
         
