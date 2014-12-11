@@ -21,24 +21,34 @@
     {% with results as table %}
     {% include "pagination.html" %}
     {% endwith %}
+    <form role="form" action="{% url 'results_diff' page_info.contest.id %}" method="get">
     <table class="table table-condensed table-bordered">
     <thead>
         <tr>
-            <th>Number</th>
+            <th class="cmp_button" colspan="2">
+                <button class="btn btn-link">Compare submits</button>
+            </th>
+            <th rowspan="2">Number</th>
         {% if page_info.contest_is_admin %}            
-            <th>Contestant</th> 
+            <th rowspan="2">Contestant</th> 
         {% endif %}
-            <th class="text-center">Problem</th>
-            <th class="text-center cell-narrow">Status {% if results.suite_show %}<i>({{ results.suite_show.name }})</i>{% endif %}</th>
+            <th rowspan="2" class="text-center">Problem</th>
+            <th rowspan="2" class="text-center cell-narrow">Status {% if results.suite_show %}<i>({{ results.suite_show.name }})</i>{% endif %}</th>
         {% if results.enable_cmp %}
-            <th class="text-center cell-narrow">Status {% if results.suite_cmp %}<i>({{ results.suite_cmp.name }})</i>{% endif %}</th>
-            <th class="cell-narrow">Matching?</th>
+            <th rowspan="2" class="text-center cell-narrow">Status {% if results.suite_cmp %}<i>({{ results.suite_cmp.name }})</i>{% endif %}</th>
+            <th rowspan="2" class="cell-narrow">Matching?</th>
         {% endif %}
+        </tr>
+        <tr>
+            <th class="cmp_a">&nbsp;</th>
+            <th class="cmp_b">&nbsp;</th>
         </tr>
     </thead>
     <tbody>
         {% for row in results.rows %}
         <tr>
+            <td class="text-center"><input type="radio" name="cmp_a" value="{{row.id}}"/></td>
+            <td class="text-center"><input type="radio" name="cmp_b" value="{{row.id}}"/></td>
             <td><a data-toggle="tooltip" title="View submit" href="{% url 'view_result' page_info.contest.id row.id %}">{{ row.id }} {% bootstrap_icon "search" %} </a></td>
         {% if page_info.contest_is_admin %}            
             <td><a href="{{ row.contestant_link }}">{{ row.contestant }}</a></td>
@@ -53,7 +63,7 @@
         {% endfor %}
     </tbody>
 
-    </table>
+    </table></form>
 </div>    
 
 <div class="col-md-3">

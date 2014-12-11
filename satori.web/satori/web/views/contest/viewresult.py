@@ -106,8 +106,8 @@ def placeholder(request, page_info, id):
 @contest_view
 def diff(request, page_info):
     try:
-        id0 = request.GET['diff_1']
-        id1 = request.GET['diff_2']
+        id0 = request.GET['cmp_a']
+        id1 = request.GET['cmp_b']
         submit0 = Web.get_result_details(submit=Submit(int(id0)))
         submit1 = Web.get_result_details(submit=Submit(int(id1)))
         submits = [submit0,submit1]

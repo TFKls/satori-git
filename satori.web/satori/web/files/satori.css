@@ -76,3 +76,36 @@ pre.padded
 {
     width : 6em;
 }
+
+.cmp_a
+{
+    width : 3em;
+}
+
+.cmp_b
+{
+    width : 3em;
+}
+
+.cmp_button
+{
+    padding : 0 !important;
+    font-size : small;
+}
+
+.cmp_button button
+{
+    padding-bottom : 1px;
+}
+
+.cmp_a
+{
+    background-color: #D9F7C2;
+    font-size : x-small;
+}
+
+.cmp_b
+{
+    background-color: #F8C3D2; 
+    font-size : x-small;
+}
