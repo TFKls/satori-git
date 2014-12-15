@@ -10,16 +10,6 @@ from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
 from django import forms
 
-class ManualAddForm(forms.Form):
-    user = forms.CharField(required=False, label="Login")
-    def clean(self):
-        data = self.cleaned_data
-        try:
-            data['user'] = User.filter(UserStruct(login=data['user']))[0]
-        except:
-            raise forms.ValidationError('User not found!')
-            del data['user']
-        return data
 
 
 def accept(id):
@@ -37,10 +27,30 @@ def delete(id):
 @contest_view
 def view(request, page_info):
     max_limit = 50000
+    contest = page_info.contest
     contestants = GenericTable('contestants',request.GET)
-    
-    for c in Web.get_accepted_contestants(limit=max_limit).contestants+Web.get_pending_contestants(limit=max_limit).contestants:
-        contestants.data.append({'name' : c.name, 'accepted' : c.accepted, 'hidden' : c.hidden})
+    contestants.fields = ['name']
+    for c in Web.get_accepted_contestants(contest=contest,limit=max_limit).contestants+Web.get_pending_contestants(contest=contest,limit=max_limit).contestants:
+        contestants.data.append({'name' : c.name, 'accepted' : c.accepted, 'hidden' : c.invisible, 'members' : c.get_member_users()})
+    contestants.fieldnames = [['name','name']]
+#    contestants.filter_by_fields(['name'])
+    contestants.default_sortfield = 'name'
+    contestants.autosort()
+    contestants.autopaginate()
+    return render_to_response('contestants.html', {'page_info' : page_info, 'contestants' : contestants })
+
+
+
+class ManualAddForm(forms.Form):
+    user = forms.CharField(required=False, label="Login")
+    def clean(self):
+        data = self.cleaned_data
+        try:
+            data['user'] = User.filter(UserStruct(login=data['user']))[0]
+        except:
+            raise forms.ValidationError('User not found!')
+            del data['user']
+        return data
 
 @contest_view
 def placeholder(request, page_info):

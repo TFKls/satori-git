@@ -1,50 +1,39 @@
 {% extends "templates/index.html" %}
 {% load url from future %}
+{% load bootstrap3 %}
+{% load generic_table_sorter %}
 
 {% block title %}
-Contestants
+Users
 {% endblock %}
 
 {% block content %}
 
-{% if accepted.total > 0 %}
+<h4>Contestants</h4>
 
-<h4>Accepted contestants</h4>
-<form action="" method="POST"/>
-<table class="results">
-{{ accepted.render_table }}
+{% with contestants as table %}
+{% include "pagination.html" %}
+{% endwith %}
+
+<table class="table table-condensed table-hover">
+<thead>
+    <tr>
+        <th>{% generic_table_sorter contestants "name" %} Contestant</th>
+        <th>Accepted</th>
+        <th>Hidden</th>
+    </tr>
+</thead>
+<tbody>
+    {% for row in contestants.rows %}
+    <tr>
+        <td><a href="" data-toggle="tooltip" data-placement="left" title="Edit contestant">{% bootstrap_icon "pencil" %}</a> {{ row.name }}</td>
+        <td>{% if row.accepted %}Accepted{% else %}Pending{% endif %}</td>
+        <td>{% if row.hidden %}Hidden{% else %}Visible{% endif %}</td>
+    </tr>
+    {% endfor %}
+</tbody>
+
 </table>
-{{ accepted.render_scrollbar }}
-<p>
-<input class="button" type="submit" name="revoke" value="Unaccept selected"/>
-<input class="button" type="submit" name="hide" value="Hide selected"/>
-<input class="button" type="submit" name="show" value="Unhide selected"/>
-</p>
-</form>
-
-{% endif %}
-
-{% if pending.total > 0 %}
-
-<h4>Pending contestants</h4>
-<form action="" method="POST"/>
-<table class="results">
-{{ pending.render_table }}
-</table>
-{{ pending.render_scrollbar }}
-<p>
-<input class="button" type="submit" name="accept" value="Accept selected"/>
-<input class="button" type="submit" name="dismiss" value="Dismiss selected"/>
-</p>
-</form>
-{% endif %}
-
-<h4>Add user manually</h4>
-<form action="" method="POST">{{ add_form }}<input class="button" type="submit" name="add" value="Add"/></form>
-
-<h4>Import contestants</h4>
-<form action="" method="POST">{{ import_form }}<input class="button" type="submit" name="import" value="Import"/>
-</form>
 
 
 {% endblock %}
