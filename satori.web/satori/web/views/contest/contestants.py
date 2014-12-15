@@ -4,6 +4,7 @@ want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
 from satori.web.utils.forms import StatusBar
 from satori.web.utils.tables import *
+from satori.web.utils.generic_table import GenericTable
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
 from django.core.urlresolvers import reverse
@@ -20,8 +21,29 @@ class ManualAddForm(forms.Form):
             del data['user']
         return data
 
+
+def accept(id):
+    contestant = Contestant(int(id))
+    contestant.accepted = True
+
+def revoke(id):
+    contestant = Contestant(int(id))
+    contestant.accepted = False
+
+def delete(id):
+    contestant = Contestant(int(id))
+    contestant.delete()
+
 @contest_view
 def view(request, page_info):
+    max_limit = 50000
+    contestants = GenericTable('contestants',request.GET)
+    
+    for c in Web.get_accepted_contestants(limit=max_limit).contestants+Web.get_pending_contestants(limit=max_limit).contestants:
+        contestants.data.append({'name' : c.name, 'accepted' : c.accepted, 'hidden' : c.hidden})
+
+@contest_view
+def placeholder(request, page_info):
     contest = page_info.contest
     
     class AcceptedTable(ResultTable):
