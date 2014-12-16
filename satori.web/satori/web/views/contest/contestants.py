@@ -24,14 +24,46 @@ def delete(id):
     contestant = Contestant(int(id))
     contestant.delete()
 
+def hide(id):
+    contestant = Contestant(int(id))
+    contestant.invisible = True
+
+def show(id):
+    contestant = Contestant(int(id))
+    contestant.invisible = False
+
+def process_post(request,page_info):
+    key_prefixes = [['revoke',revoke],['accept',accept],['delete',delete],['hide',hide],['show',show]]   # we search for 'operation_id' in POST.keys(), e.g. 'revoke_131'
+                                                                                                         # we translate operation for one of the above functions, the integer for the object key
+                                                                                                         # key 'mass' means that we perform the operation on all checked 'select_id' objects
+    target_string = []
+    for field in request.POST.keys():
+        for prefix in key_prefixes:
+            plen = len(prefix[0])
+            if field[:plen]==prefix[0]:
+                operation = prefix[1]
+                target_string = field[plen+1:]
+    if target_string=='mass':
+        targets = []
+        for field in request.POST.keys():
+            if field[:6]=='select':
+                targets.append(int(field[7:]))
+    else:
+        targets = [int(target_string)]
+    for element in targets:
+        operation(element)
+
 @contest_view
 def view(request, page_info):
+    if request.method=='POST':
+        process_post(request,page_info)
+        return HttpResponseRedirect(reverse('contestants',args=[page_info.contest.id]))
     max_limit = 50000
     contest = page_info.contest
     contestants = GenericTable('contestants',request.GET)
     contestants.fields = ['name']
     for c in Web.get_accepted_contestants(contest=contest,limit=max_limit).contestants+Web.get_pending_contestants(contest=contest,limit=max_limit).contestants:
-        contestants.data.append({'name' : c.name, 'accepted' : c.accepted, 'hidden' : c.invisible, 'members' : c.get_member_users()})
+        contestants.data.append({'id' : c.id, 'name' : c.name, 'accepted' : c.accepted, 'hidden' : c.invisible, 'members' : c.get_member_users()})
     contestants.fieldnames = [['name','name']]
 #    contestants.filter_by_fields(['name'])
     contestants.default_sortfield = 'name'
