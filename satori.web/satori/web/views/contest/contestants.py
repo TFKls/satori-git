@@ -2,8 +2,8 @@
 from satori.client.common import want_import
 want_import(globals(), '*')
 from satori.web.utils.decorators import contest_view
-from satori.web.utils.forms import StatusBar
-from satori.web.utils.tables import *
+from satori.web.utils.forms import AlertList
+#from satori.web.utils.tables import *
 from satori.web.utils.generic_table import GenericTable
 from django.shortcuts import render_to_response
 from django.http import HttpResponseRedirect
@@ -12,33 +12,51 @@ from django import forms
 
 
 
-def accept(id):
+def accept(id,request,page_info):
     contestant = Contestant(int(id))
     contestant.accepted = True
 
-def revoke(id):
+def revoke(id,request,page_info):
     contestant = Contestant(int(id))
     contestant.accepted = False
 
-def delete(id):
+def delete(id,request,page_info):
     contestant = Contestant(int(id))
     contestant.delete()
 
-def hide(id):
+def hide(id,request,page_info):
     contestant = Contestant(int(id))
     contestant.invisible = True
 
-def show(id):
+def show(id,request,page_info):
     contestant = Contestant(int(id))
     contestant.invisible = False
 
+def add(id,request,page_info):
+    try:
+        user = User.filter(UserStruct(login=request.POST['login_add']))[0]
+        Contestant.create(ContestantStruct(contest=page_info.contest,accepted=True),[user])
+        page_info.alerts.add('User added to contest.','success')
+    except IndexError:
+        page_info.alerts.add('User '+request.POST['login_add']+' not found.','danger')
+
+def copy_contestants(id,request,page_info):
+    contest = Contest.filter(ContestStruct(name=request.POST['copy_contest']))[0]
+    for contestant in Contestant.filter(ContestantStruct(contest=import_from)):
+        try:
+            Contestant.create(ContestantStruct(contest=contest, accepted=contestant.accepted, invisible=contestant.invisible, login=contestant.login), contestant.get_member_users())
+        except AlreadyRegistered:
+            pass
+
 def process_post(request,page_info):
-    key_prefixes = [['revoke',revoke],['accept',accept],['delete',delete],['hide',hide],['show',show]]   # we search for 'operation_id' in POST.keys(), e.g. 'revoke_131'
-                                                                                                         # we translate operation for one of the above functions, the integer for the object key
-                                                                                                         # key 'mass' means that we perform the operation on all checked 'select_id' objects
+    operation_prefixes = [['revoke',revoke],['accept',accept],['delete',delete],['hide',hide],['show',show],
+                          ['add',add],['copy_contestants',copy_contestants]]                                 ]  # we search for 'operation_id' in POST.keys(), e.g. 'revoke_131'
+                                                                                                                # we translate operation for one of the above functions, the integer for the object key
+                                                                                                                # key 'mass' means that we perform the operation on all checked 'select_id' objects
     target_string = []
+    page_info.alerts = AlertList()
     for field in request.POST.keys():
-        for prefix in key_prefixes:
+        for prefix in operation_prefixes:
             plen = len(prefix[0])
             if field[:plen]==prefix[0]:
                 operation = prefix[1]
@@ -49,15 +67,17 @@ def process_post(request,page_info):
             if field[:6]=='select':
                 targets.append(int(field[7:]))
     else:
-        targets = [int(target_string)]
-    for element in targets:
-        operation(element)
+        targets = [target_string]
+    try:
+        for element in targets:
+            operation(element,request,page_info)
+    except Exception as e:
+        page_info.alerts.add('Operation failed: '+str(e)+'!','danger')
 
 @contest_view
 def view(request, page_info):
     if request.method=='POST':
         process_post(request,page_info)
-        return HttpResponseRedirect(reverse('contestants',args=[page_info.contest.id]))
     max_limit = 50000
     contest = page_info.contest
     contestants = GenericTable('contestants',request.GET)
@@ -69,7 +89,8 @@ def view(request, page_info):
     contestants.default_sortfield = 'name'
     contestants.autosort()
     contestants.autopaginate()
-    return render_to_response('contestants.html', {'page_info' : page_info, 'contestants' : contestants })
+    allcontests = Web.get_contest_list()
+    return render_to_response('contestants.html', {'page_info' : page_info, 'contestants' : contestants, 'allcontests' : allcontests})
 
 
 

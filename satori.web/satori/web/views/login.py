@@ -15,7 +15,7 @@ class LoginForm(forms.Form):
 
 @general_view
 def view(request, page_info):
-    alerts = AlertList()
+    page_info.alerts = AlertList()
     if request.method == "POST":
         form = LoginForm(request.POST)
         if form.is_valid():
@@ -30,18 +30,18 @@ def view(request, page_info):
                 else:
                     return HttpResponseRedirect(reverse('news'))
             except:
-                alerts.add('Login failed!','danger')
+                page_info.alerts.add('Login failed!','danger')
                 form = LoginForm()
-                return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'alerts' : alerts })
+                return render_to_response('login.html', {'page_info' : page_info, 'form' : form })
     else:
         form = LoginForm()
     status = request.GET.get('status',None)
     if status=='regok':
-        alerts.add('Registration successful, activation link has been sent.','success')
+        page_info.alerts.add('Registration successful, activation link has been sent.','success')
     if status=='activated':
-        alerts.add('Account activated. You may now login.','success')
+        page_info.alerts.add('Account activated. You may now login.','success')
     if status=='actfailed':
-        alerts.add('Activation failed!','danger')
-    return render_to_response('login.html', {'page_info' : page_info, 'form' : form, 'alerts' : alerts })
+        page_info.alerts.add('Activation failed!','danger')
+    return render_to_response('login.html', {'page_info' : page_info, 'form' : form })
 
 

@@ -26,7 +26,7 @@ class CreateContestForm(forms.Form):
 @general_view
 def view(request, page_info):
     create_form = None
-    alerts = AlertList()
+    page_info.alerts = AlertList()
     can_create = Privilege.global_demand('MANAGE_CONTESTS')
     show_archived = request.GET.get('show_archived',None)=='on'
     if request.method=="POST":
@@ -38,7 +38,7 @@ def view(request, page_info):
                     contest = Contest.create(ContestStruct(name=data['name'],description=data['description']))
                     return HttpResponseRedirect(reverse('contest_manage',args=[contest.id]))
                 except:
-                    alerts.add('Contest creation failed!','danger')
+                    page_info.alerts.add('Contest creation failed!','danger')
                     create_form = CreateContestForm()
     if can_create and not create_form:
         create_form = CreateContestForm()
@@ -78,4 +78,4 @@ def view(request, page_info):
         other.autosort()
         other.autopaginate()
         
-    return render_to_response('select_contest.html', {'page_info' : page_info, 'participating' : participating, 'other' : other, 'create_form' : create_form, 'alerts' : alerts})
+    return render_to_response('select_contest.html', {'page_info' : page_info, 'participating' : participating, 'other' : other, 'create_form' : create_form})

@@ -11,13 +11,12 @@ Users
 
 <h4>Contestants</h4>
 
+
+<div class="containter-fluid">
+<div class="col-md-9">
 {% with contestants as table %}
 {% include "pagination.html" %}
 {% endwith %}
-
-<div class="containter-fluid">
-<form class="form" action="" method="POST">
-<div class="col-md-9">
 <table class="table table-condensed table-hover">
 <thead>
     <tr>
@@ -32,49 +31,49 @@ Users
     <tr>
         <td>
             <a href="" data-toggle="tooltip" data-placement="left" title="Edit contestant">{% bootstrap_icon "pencil" %}</a> 
-            <span class="one-button-form">
+            <form class="one-button-form" action="" method="POST">
             <button data-toggle="tooltip" data-placement="top" title="Delete contestant" class="btn btn-link btn-small" name="delete_{{row.id}}">
                         <span class="text-danger">{% bootstrap_icon "trash" %}</span>
             </button>
-            </span>
+            </form>
             {{ row.name }}
         </td>
         <td>
             {% if row.accepted %}
                 <span class="text-success">accepted</span>
-                <span class="one-button-form">
+                <form class="one-button-form" action="" method="POST">
                     <button data-toggle="tooltip" data-placement="top" title="Revoke acceptation" class="btn btn-link btn-small" name="revoke_{{row.id}}">
                         {% bootstrap_icon "remove" %}
                     </button>
-                </span>
+                </form>
             {% else %}
                 <span class="text-warning">pending</span>
-                <span class="one-button-form">
+                <form class="one-button-form" action="" method="POST">
                     <button data-toggle="tooltip" data-placement="top" title="Accept contestant" class="btn btn-link btn-small" name="accept_{{row.id}}">
                         {% bootstrap_icon "ok" %}
                     </button>
-                </span>
+                </form>
             {% endif %}
         </td>
         <td>
             {% if not row.hidden %}
                 <span class="text-success">visible</span>
-                <span class="one-button-form">
+                <form class="one-button-form" action="" method="POST">
                     <button data-toggle="tooltip" data-placement="top" title="Make contestant invisible" class="btn btn-link btn-small" name="hide_{{row.id}}">
                         {% bootstrap_icon "eye-close" %}
                     </button>
-                </span>
+                </form>
             {% else %}
                 <span class="text-warning">hidden</span>
-                <span class="one-button-form">
+                <form class="one-button-form" action="" method="POST">
                     <button data-toggle="tooltip" data-placement="top" title="Make contestant visible" class="btn btn-link btn-small" name="show_{{row.id}}">
                         {% bootstrap_icon "eye-open" %}
                     </button>
-                </span>
+                </form>
             {% endif %}
         </td>
         <td class="cell-narrow">
-            <input type="checkbox" name="select_{{row.id}}"/>
+            <input form="mass_actions" type="checkbox" name="select_{{row.id}}"/>
         </td>
     </tr>
     {% endfor %}
@@ -89,14 +88,15 @@ Users
         Mass actions
         </div>
         <div class="panel-body">
+        <form id="mass_actions" class="form form-horizontal" action="" method="POST">
             <div class="form-group form-group-sm">
                 <button type="submit" class="btn btn-link btn-sm" name="accept_mass">{% bootstrap_icon "ok" %} Accept selected</button>
                 <button type="submit" class="btn btn-link btn-sm" name="revoke_mass">{% bootstrap_icon "remove" %}Revoke selected</button>
                 <button type="submit" class="btn btn-link btn-sm" name="hide_mass">{% bootstrap_icon "eye-close" %} Hide selected</button>
                 <button type="submit" class="btn btn-link btn-sm" name="show_mass">{% bootstrap_icon "eye-open" %} Show selected</button>
                 <button type="submit" class="btn btn-link btn-sm" name="delete_mass">{% bootstrap_icon "trash" %} Delete selected</button>
-            </div>
-    
+            </div>    
+        </form>
         </div>
     </div>
 
@@ -105,18 +105,20 @@ Users
         Adding contestants
         </div>
         <div class="panel-body">
+        <form class="form form-vertical" action="" method="POST">
+            <label for="login_add">Quick add by login: </label>
             <div class="form-group form-group-sm">
-                <label for="add_login">Quick add by login: </label>
-                <input type="text" name="add_login"/>
+                <input type="text" name="login_add"/>
                 <button type="submit" class="btn btn-link btn-sm" name="add">Add user</button>
             </div>
-    
+        </form>
         </div>
     </div>
 
 </div>
 
-</form>
+
+
 
 </div>
 {% endblock %}

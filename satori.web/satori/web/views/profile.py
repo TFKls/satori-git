@@ -41,7 +41,7 @@ def view(request, page_info, id = None):
 #    profile_form = xmlparams.ParamsForm(parser=parser,initial=parser.read_oa_map(user.profile_get_map(),check_required=False))
     if request.method!="POST":
         return render_to_response('profile.html', {'page_info' : page_info, 'form' : form})
-    alerts = AlertList()
+    page_info.alerts = AlertList()
     if request.method=="POST":
 #    if 'update' in request.POST.keys():
         form = ProfileForm(request.POST)
@@ -50,28 +50,28 @@ def view(request, page_info, id = None):
                 data = form.cleaned_data
                 if data['newpass']:
                     if data['newpass']!=data['confirm']:
-                        alerts.add('Passwords do not match!','danger')
+                        page_info.alerts.add('Passwords do not match!','danger')
                     else:
                         if user_admin:
                             user.set_password(data['newpass'])
                         else:
                             user.change_password(data['oldpass'],data['newpass'])
-                        alerts.add('Password changed.','success')
+                        page_info.alerts.add('Password changed.','success')
                 if user.firstname!=data['firstname'] or user.lastname!=data['lastname']:
                     user.modify(UserStruct(firstname=data['firstname'],lastname=data['lastname']))
-                    alerts.add('Personal data changed.','info')
+                    page_info.alerts.add('Personal data changed.','info')
                 if user.affiliation!=data['affiliation']:
                     user.modify(UserStruct(affiliation=data['affiliation']))
-                    alerts.add('Affiliation changed.','info')
+                    page_info.alerts.add('Affiliation changed.','info')
                 if user_admin and data['lock_user'] and not user.confirmed:
                     user.modify(UserStruct(confirmed=True))
-                    alerts.add('User identity locked.','info');
+                    page_info.alerts.add('User identity locked.','info');
                 if user_admin and not data['lock_user'] and user.confirmed:
                     user.modify(UserStruct(confirmed=False))
-                    alerts.add('User identity unlocked.','info');
+                    page_info.alerts.add('User identity unlocked.','info');
                 
             except LoginFailed:
-                alerts.add('Login unsucessful for password changing!','danger')
+                page_info.alerts.add('Login unsucessful for password changing!','danger')
                 form._errors['oldpass'] = ErrorList();
                 form._errors['oldpass'].append('Enter correct data here');
                 form._errors['newpass'] = ErrorList();
@@ -79,18 +79,18 @@ def view(request, page_info, id = None):
                 form._errors['confirm'] = ErrorList();
                 form._errors['confirm'].append('Enter correct data here');
             except InvalidPassword:
-                alerts.add('Invalid password!','danger')
+                page_info.alerts.add('Invalid password!','danger')
                 form._errors['newpass'] = ErrorList();
                 form._errors['newpass'].append('Enter correct data here');
                 form._errors['confirm'] = ErrorList();
                 form._errors['confirm'].append('Enter correct data here');
             except:
-                alerts.add('Error updating profile!','danger')
-            return render_to_response('profile.html', {'page_info' : page_info, 'form' : form, 'alerts' : alerts}) 
+                page_info.alerts.add('Error updating profile!','danger')
+            return render_to_response('profile.html', {'page_info' : page_info, 'form' : form }) 
 #    if 'update' in request.POST.keys():
 #        profile_form = xmlparams.ParamsForm(parser=parser, data=request.POST)
 #        if profile_form.is_valid():
 #            om = params.dict_to_oa_map(profile_form.cleaned_data)
 #            user.profile_set_map(parser.write_oa_map(profile_form.cleaned_data))
 #            return render_to_response('changepass.html', {'page_info' : page_info, 'form' : form, 'profile_form' : profile_form})
-    return render_to_response('profile.html', {'page_info' : page_info, 'alerts' : alerts, 'form' : form}) 
+    return render_to_response('profile.html', {'page_info' : page_info, 'form' : form }) 

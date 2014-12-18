@@ -46,10 +46,10 @@
         </div>
 
         <div class="col-xs-10" id="data-column">
-            {% if alerts %}
+            {% if page_info.alerts %}
             <div class="row">
                 <div id="status_bar">
-                    {{ alerts.render|safe }}
+                    {{ page_info.alerts.render|safe }}
                 </div>
             </div>
             {% endif %}

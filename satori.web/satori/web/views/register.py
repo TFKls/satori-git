@@ -37,9 +37,9 @@ def view(request, page_info):
                 User.register(UserStruct(login=data["login"],firstname=data["firstname"],lastname=data["lastname"],email=data["email"]),password=data["password"],profile=profile.get_map())
                 return HttpResponseRedirect(reverse('login')+"?status=regok")
             except:
-                alerts = AlertList()
-                alerts.add('Registration failed!','danger')
-                return render_to_response('register.html',{'form' : form, 'alerts' : alerts})
+                page_info.alerts = AlertList()
+                page_info.alerts.add('Registration failed!','danger')
+                return render_to_response('register.html',{'page_info' : page_info, 'form' : form})
     else:
         form = RegisterForm()
     return render_to_response('register.html',{'form' : form})
