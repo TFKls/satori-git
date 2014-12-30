@@ -70,17 +70,18 @@ def store_problem(problem_yaml, tests_yaml):
         for (key, val) in test_yaml.items():
             if type(val) == dict:  # blob
                 remote_blob = Blob.open(val['hash'])
-                local_blob = open(
-                        os.path.join(problem_dir, test_dir, val['filename']),
-                        'w')
-                print 'Downloading blob', val['filename'] + ',',
+                filename = val['filename'] or '__'+key
+                print 'Downloading blob', filename + ',',
                 print 'size =', remote_blob.length, 'bytes' + '...',
                 sys.stdout.flush()
+                local_blob = open(
+                        os.path.join(problem_dir, test_dir, filename),
+                        'w')
                 copy_file(remote_blob, local_blob)    
                 print 'done'
                 remote_blob.close()
                 local_blob.close()
-                test_yaml[key] = val['filename']
+                test_yaml[key] = filename
         test_file = open(os.path.join(problem_dir, test_dir, 'test.yaml'), 'w')
         yaml.safe_dump(test_yaml, stream=test_file, indent=2,
                        default_flow_style=False)
