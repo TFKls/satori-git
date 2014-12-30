@@ -96,18 +96,18 @@ export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
 
 function add_apt_cacher
 {
-    TAG="$1"
+    BUILDDIR="$1"
     if [ -n "${APTCACHER}" ]; then
-        cat >> "${TAG}/Dockerfile" <<EOF
+        cat >> "${BUILDDIR}/Dockerfile" <<EOF
 RUN echo "Acquire::http::Proxy \"${APTCACHER}\";" > /etc/apt/apt.conf.d/90apt-cacher
 EOF
     fi
 }
 function rem_apt_cacher
 {
-    TAG="$1"
+    BUILDDIR="$1"
     if [ -n "${APTCACHER}" ]; then
-        cat >> "${TAG}/Dockerfile" <<EOF
+        cat >> "${BUILDDIR}/Dockerfile" <<EOF
 RUN rm -f /etc/apt/apt.conf.d/90apt-cacher
 EOF
     fi
@@ -115,19 +115,21 @@ EOF
 function copy_scripts
 {
     TAG="$1"
-    cp -a tcs-scripts "${TAG}"
+    BUILDDIR="$2"
+    cp -a tcs-scripts "${BUILDDIR}"
+    cp -a settings.sh "${BUILDDIR}/tcs-scripts"
     if [ -d "tcs-debs-${TAG}" ]; then
-        cp -a "tcs-debs-${TAG}" "${TAG}"/tcs-scripts/debs
+        cp -a "tcs-debs-${TAG}" "${BUILDDIR}"/tcs-scripts/debs
     fi
-    if [ "$2" == "kernel" ]; then
-        cp -a tcs-kernel "${TAG}"/tcs-scripts/kernel 
+    if [ "$3" == "kernel" ]; then
+        cp -a tcs-kernel "${BUILDDIR}"/tcs-scripts/kernel 
     fi
 }
 function add_header
 {
-    TAG="$1"
+    BUILDDIR="$1"
     BASE="$2"
-    cat > "${TAG}/Dockerfile" <<EOF
+    cat > "${BUILDDIR}/Dockerfile" <<EOF
 FROM ${BASE}
 MAINTAINER ${MAINTAINER}
 
@@ -140,7 +142,7 @@ EOF
 }
 function add_footer
 {
-    TAG="$1"
-    cat >> "${TAG}/Dockerfile" <<EOF
+    BUILDDIR="$1"
+    cat >> "${BUILDDIR}/Dockerfile" <<EOF
 EOF
 }

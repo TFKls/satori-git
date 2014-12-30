@@ -1,0 +1,22 @@
+#!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+pushd "${OFFICE}"
+source settings.sh
+
+NVIDIA_DRIVER_VERSION="343.36"
+if [ "$1" != "" ]; then
+    NVIDIA_DRIVER_VERSION="$1"
+fi
+KERNEL_VERSION=`ls "${DIR}"/lib/modules |grep "${TYPE}" |sort |tail -n 1`
+NVIDIA_DRIVER_LINK="http://us.download.nvidia.com/XFree86/Linux-x86_64/${NVIDIA_DRIVER_VERSION}/NVIDIA-Linux-x86_64-${NVIDIA_DRIVER_VERSION}.run"
+
+nvidia-installer --uninstall --ui=none --no-questions
+apt-get -y remove "nvidia-*"
+apt-get -f -y install make perl-modules linux-headers-generic dkms &&
+wget -c -t 10 "${NVIDIA_DRIVER_LINK}" -O /tmp/driver.run &&
+mv /tmp/driver.run . &&
+chmod 755 driver.run &&
+./driver.run --no-distro-scripts --no-cc-version-check --no-x-check --no-nouveau-check --no-network --no-runlevel-check --accept-license --no-precompiled-interface --ui=none --no-questions -k "${KERNEL_VERSION}"
+exit 0
+
+exit 1

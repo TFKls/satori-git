@@ -1,4 +1,8 @@
 #!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+pushd "${OFFICE}"
+source settings.sh
+
 for service in \
   apache2 \
   apt-cacher-ng \

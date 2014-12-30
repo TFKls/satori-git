@@ -46,6 +46,7 @@ chroot . rm -rf /nonexistent /vagrant /.docker
 chroot . mkdir -p /tmp/.X11-unix
 chroot . chmod 777 /tmp/.X11-unix
 chroot . chmod o+t /tmp/.X11-unix
+chmod 755 .
 
 popd
 

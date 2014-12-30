@@ -4,13 +4,14 @@ pushd "${OFFICE}"
 source ./settings.sh
 
 TAG=base
+BUILDDIR="build-${TAG}"
 
-rm -rf "${TAG}"
-mkdir -p "${TAG}"
-add_header "${TAG}" "ubuntu:${DISTRO}"
-add_apt_cacher "${TAG}"
+rm -rf "${BUILDDIR}"
+mkdir -p "${BUILDDIR}"
+add_header "${BUILDDIR}" "ubuntu:${DISTRO}"
+add_apt_cacher "${BUILDDIR}"
 
-cat >> "${TAG}/Dockerfile" <<EOF
+cat >> "${BUILDDIR}/Dockerfile" <<EOF
 RUN locale-gen en_US.UTF-8
 RUN update-locale LANG=en_US.UTF-8
 RUN rm -f /etc/apt/sources.list.d/*
@@ -24,6 +25,8 @@ RUN dpkg --add-architecture i386
 RUN apt-get update
 RUN apt-get -y dist-upgrade
 RUN apt-get -f -y install software-properties-common python
+
+RUN rm -rf /root/tcs-scripts
 ADD tcs-scripts /root/tcs-scripts
 RUN /root/tcs-scripts/tcs-scripts
 RUN rm -rf /root/tcs-scripts
@@ -31,13 +34,13 @@ RUN apt-get -y autoremove
 RUN apt-get -y clean
 EOF
 
-rem_apt_cacher "${TAG}"
-add_footer "${TAG}"
+rem_apt_cacher "${BUILDDIR}"
+add_footer "${BUILDDIR}"
 
-copy_scripts "${TAG}"
+copy_scripts "${TAG}" "${BUILDDIR}"
 
 if [ "$1" != "debug" ]; then
-    docker build "$@" "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
+    unshare -m docker -- build "$@" "--tag=${DOCKER_REPO}:${TAG}" "${BUILDDIR}"
 fi
 
 popd

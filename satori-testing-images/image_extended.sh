@@ -4,14 +4,14 @@ pushd "${OFFICE}"
 source ./settings.sh
 
 TAG=extended
+BUILDDIR="build-${TAG}"
 
+rm -rf "${BUILDDIR}"
+mkdir -p "${BUILDDIR}"
+add_header "${BUILDDIR}" "${DOCKER_REPO}:judge"
+add_apt_cacher "${BUILDDIR}"
 
-rm -rf "${TAG}"
-mkdir -p "${TAG}"
-add_header "${TAG}" "${DOCKER_REPO}:judge"
-add_apt_cacher "${TAG}"
-
-cat >> "${TAG}/Dockerfile" <<EOF
+cat >> "${BUILDDIR}/Dockerfile" <<EOF
 RUN apt-add-repository "deb http://dl.google.com/linux/deb/ stable main"
 RUN apt-add-repository "deb http://dl.google.com/linux/chrome/deb/ stable main"
 RUN apt-add-repository "deb http://dl.google.com/linux/talkplugin/deb/ stable main"
@@ -22,7 +22,9 @@ RUN apt-get -d -f -y install ${EXTENDED_PACKAGES}
 RUN apt-get -f -y install ${EXTENDED_PACKAGES}
 RUN update-java-alternatives -s java-1.7.0-openjdk-amd64
 
+RUN rm -rf /root/tcs-scripts
 ADD tcs-scripts /root/tcs-scripts
+RUN /root/tcs-scripts/tcs-nvidia
 RUN /root/tcs-scripts/tcs-cuda
 RUN /root/tcs-scripts/tcs-kernel
 RUN /root/tcs-scripts/tcs-scripts
@@ -31,13 +33,13 @@ RUN apt-get -y autoremove
 RUN apt-get -y clean
 EOF
 
-rem_apt_cacher "${TAG}"
-add_footer "${TAG}"
+rem_apt_cacher "${BUILDDIR}"
+add_footer "${BUILDDIR}"
 
-copy_scripts "${TAG}" kernel
+copy_scripts "${TAG}" "${BUILDDIR}" kernel
 
 if [ "$1" != "debug" ]; then
-    docker build "$@" "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
+    unshare -m docker -- build "$@" "--tag=${DOCKER_REPO}:${TAG}" "${BUILDDIR}"
 
     rm -rf kernel
     mkdir -p kernel

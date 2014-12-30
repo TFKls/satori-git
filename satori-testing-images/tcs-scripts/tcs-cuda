@@ -1,34 +1,16 @@
 #!/bin/bash
 OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
 pushd "${OFFICE}"
+source settings.sh
 
-echo "deb http://developer.download.nvidia.com/compute/cuda/repos/ubuntu1404/x86_64 /" >> /etc/apt/sources.list &&
-apt-key adv --keyserver keyserver.ubuntu.com --recv-key D88C3D385C37D3BE &&
-apt-get update &&
-apt-get -y dist-upgrade &&
-apt-get -y remove wine &&
-apt-get -f -y install cuda &&
+CUDA_LINK="http://developer.download.nvidia.com/compute/cuda/6_5/rel/installers/cuda_6.5.14_linux_64.run"
+
+wget -c -t 10 "${CUDA_LINK}" -O /tmp/cuda.run &&
+mv /tmp/cuda.run . &&
+chmod 755 cuda.run &&
+./cuda.run -toolkit -override -silent &&
+./cuda.run -samples -override -silent &&
+#make -C /usr/local/cuda/samples -j 16 &&
 exit 0
 
-VER=`ls "${DIR}"/lib/modules |grep "${TYPE}" |sort |tail -n 1`
-#apt-get -f -y install nvidia-331 &&
-#apt-get -f -y install g++-4.6 gcc-4.6 &&
-#wget -c -t 10 "http://developer.download.nvidia.com/compute/cuda/5_5/rel/installers/cuda_5.5.22_linux_64.run" -O /tmp/cuda.run &&
-#wget -c -t 10 "http://developer.download.nvidia.com/compute/cuda/5_0/rel-update-1/installers/cuda_5.0.35_linux_64_ubuntu11.10-1.run" -O /tmp/cuda.run &&
-#wget -c -t 10 "http://us.download.nvidia.com/XFree86/Linux-x86_64/331.104/NVIDIA-Linux-x86_64-331.104.run" -O /tmp/driver.run &&
-#wget -c -t 10 "http://us.download.nvidia.com/XFree86/Linux-x86_64/319.76/NVIDIA-Linux-x86_64-319.76.run" -O /tmp/driver.run &&
-#wget -c -t 10 "http://us.download.nvidia.com/XFree86/Linux-x86_64/304.123/NVIDIA-Linux-x86_64-304.123.run" -O /tmp/driver.run &&
-#mv /tmp/cuda.run /tmp/driver.run . &&
-#chmod 755 cuda.run driver.run &&
-#./driver.run --no-distro-scripts --no-cc-version-check --no-x-check --no-nouveau-check --no-network --no-runlevel-check --accept-license --no-precompiled-interface --ui=none --no-questions -k "${VER}" &&
-#./cuda.run -toolkit -override -silent &&
-#./cuda.run -samples -override -silent &&
-#(pushd /usr/local/lib; ln -s ../cuda/lib64/* ../cuda/extras/CUPTI/lib64/* ../cuda/nvvm/lib64/* .; popd) &&
-#exit 0
-
-#apt-get -f -y install nvidia-cuda-toolkit nvidia-331 linux-headers-generic &&
-#exit 0
-
 exit 1
-
-popd

@@ -1,4 +1,8 @@
 #!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+pushd "${OFFICE}"
+source settings.sh
+
 mkdir -p /opt/satori
 cd /opt/satori
 virtualenv --no-site-packages .

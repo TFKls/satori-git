@@ -1,0 +1,8 @@
+#!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+pushd "${OFFICE}"
+source settings.sh
+
+sed -e "s|^\( *[^ #].*google.*\)|#\1|" -i /etc/apt/sources.list
+sed -e "s|^\( *[^ #].*dropbox.*\)|#\1|" -i /etc/apt/sources.list
+apt-get update

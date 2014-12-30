@@ -1,11 +1,14 @@
 #!/bin/bash
 OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
 pushd "${OFFICE}"
+source settings.sh
+
+./tcs-aptlists &&
 ./tcs-debs &&
 ./tcs-dkms &&
 ./tcs-i386 &&
 ./tcs-remap / &&
 ./tcs-disable-services &&
 exit 0
+
 exit 1
-popd

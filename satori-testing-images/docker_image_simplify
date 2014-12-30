@@ -1,0 +1,26 @@
+#!/bin/bash
+image="$1"
+if [ -z "$image" ]; then
+    echo "You must specify docker image" >/dev/stderr
+    exit 1
+fi
+
+echo "Using image '$image'" >/dev/stderr
+container="$(docker run -d "$image" sleep $[3*60*60])"
+echo "Using container '$container'" >/dev/stderr
+sleep 10
+echo "$container"
+
+simple="${image}__simple__"
+
+OK=0
+docker export "$container" | docker import - "$simple" &&
+OK=1
+
+docker stop "$container"
+docker rm "$container"
+
+if [ "$OK" == 1 ]; then
+    docker tag -f "$simple" "$image" &&
+    docker rmi -f "$simple"
+fi

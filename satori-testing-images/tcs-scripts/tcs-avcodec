@@ -1,2 +1,6 @@
 #!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+pushd "${OFFICE}"
+source settings.sh
+
 apt-get -f -y install $(apt-cache search "^lib.*extra" |cut -d " " -f 1 |grep "^lib[aps][vow][^ ]*extra-[0-9]*\$" |tr "\n" " ")

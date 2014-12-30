@@ -1,4 +1,8 @@
 #!/bin/bash
+OFFICE=$(dirname "$(readlink -f "$(which "$0")")")
+pushd "${OFFICE}"
+source settings.sh
+
 if [ -d /lib/modules ]; then
     for KER in `ls /lib/modules |sort`; do
         ls /usr/src |sed -e "s|^\(.*\)-\([0-9.]*\)\$|OK \1 \2|" |grep "^OK" |while read line; do

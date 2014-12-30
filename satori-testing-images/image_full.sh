@@ -4,14 +4,14 @@ pushd "${OFFICE}"
 source ./settings.sh
 
 TAG=full
+BUILDDIR="build-${TAG}"
 
+rm -rf "${BUILDDIR}"
+mkdir -p "${BUILDDIR}"
+add_header "${BUILDDIR}" "${DOCKER_REPO}:extended"
+add_apt_cacher "${BUILDDIR}"
 
-rm -rf "${TAG}"
-mkdir -p "${TAG}"
-add_header "${TAG}" "${DOCKER_REPO}:extended"
-add_apt_cacher "${TAG}"
-
-cat >> "${TAG}/Dockerfile" <<EOF
+cat >> "${BUILDDIR}/Dockerfile" <<EOF
 RUN apt-add-repository ppa:x2go/stable
 RUN apt-add-repository ppa:pipelight/stable
 RUN echo "deb http://get.docker.io/ubuntu docker main" >> /etc/apt/sources.list 
@@ -37,10 +37,12 @@ RUN pipelight-plugin --update
 RUN pipelight-plugin --disable-all
 RUN pipelight-plugin --remove-mozilla-plugins
 
+RUN rm -rf /root/tcs-scripts
 ADD tcs-scripts /root/tcs-scripts
 RUN /root/tcs-scripts/tcs-avcodec
 RUN /root/tcs-scripts/tcs-virtualbox
 RUN /root/tcs-scripts/tcs-satoriclient
+RUN /root/tcs-scripts/tcs-nvidia
 RUN /root/tcs-scripts/tcs-cuda
 RUN /root/tcs-scripts/tcs-kernel
 RUN /root/tcs-scripts/tcs-scripts
@@ -49,13 +51,13 @@ RUN apt-get -y autoremove
 RUN apt-get -y clean
 EOF
 
-rem_apt_cacher "${TAG}"
-add_footer "${TAG}"
+rem_apt_cacher "${BUILDDIR}"
+add_footer "${BUILDDIR}"
 
-copy_scripts "${TAG}" kernel
+copy_scripts "${TAG}" "${BUILDDIR}" kernel
 
 if [ "$1" != "debug" ]; then
-    docker build "$@" "--tag=${DOCKER_REPO}:${TAG}" "${TAG}"
+    unshare -m docker -- build "$@" "--tag=${DOCKER_REPO}:${TAG}" "${BUILDDIR}"
 
     rm -rf kernel
     mkdir -p kernel

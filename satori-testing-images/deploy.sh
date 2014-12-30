@@ -35,7 +35,8 @@ get checker checker
 get uzi uzi
 get light light
 get extended extended
-#get full full
+get full full
+get desktop desktop
 #exit 0
 
 
@@ -43,7 +44,8 @@ deploy judge    /exports/checker/judge.squashfs
 deploy extended /exports/checker/full.squashfs
 
 deploy checker  /exports/booter/booter.cfg/__BASE__/CHECKER/filesystem.squashfs
-#deploy full     /exports/booter/booter.cfg/__BASE__/DESKTOP/filesystem.squashfs
+deploy full     /exports/booter/booter.cfg/__BASE__/FULL/filesystem.squashfs
+deploy desktop  /exports/booter/booter.cfg/__BASE__/DESKTOP/filesystem.squashfs
 deploy uzi      /exports/booter/casper.uzi/filesystem.squashfs
 deploy light    /exports/booter/casper.test/filesystem.squashfs
 
@@ -52,6 +54,6 @@ deployk /srv/tftp/KERNEL tcs
 deploy uzi      /imports/wydzial/casper.uzi/filesystem.squashfs
 deployk         /imports/wydzialtftp/uzi/KERNEL tcs
 
-#deploy full     /imports/wydzial/__BASE__/DESKTOP/filesystem.squashfs
+#deploy desktop  /imports/wydzial/__BASE__/DESKTOP/filesystem.squashfs
 #deployk         /imports/wydzialtftp/pracownicy tcs
 #deployk         /imports/wydzialtftp/studenci tcs
