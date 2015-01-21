@@ -30,7 +30,7 @@ Users
     {% for row in contestants.rows %}
     <tr>
         <td>
-            <a href="" data-toggle="tooltip" data-placement="left" title="Edit contestant">{% bootstrap_icon "pencil" %}</a> 
+            <a href="{% url "contestant_view" page_info.contest.id row.id %}" data-toggle="tooltip" data-placement="left" title="Edit contestant">{% bootstrap_icon "pencil" %}</a> 
             <form class="one-button-form" action="" method="POST">
             <button data-toggle="tooltip" data-placement="top" title="Delete contestant" class="btn btn-link btn-small" name="delete_{{row.id}}">
                         <span class="text-danger">{% bootstrap_icon "trash" %}</span>
@@ -112,8 +112,46 @@ Users
                 <button type="submit" class="btn btn-link btn-sm" name="add">Add user</button>
             </div>
         </form>
+        <form class="form form-vertical" action="" method="POST">
+            <label for="copy_contest">Copy users from contest:</label>
+            <select class="form-control" name="copy_contest">
+                <option value=""></option>
+                {% for c in contestants.allcontests %}
+                <option value="{{ c.id }}">
+                    {{ c.name }}
+                </option>
+                {% endfor %}
+            </select>
+            <button type="submit" class="btn btn-link btn-sm" name="copy_contestants">Copy</button>
+        </form>        
+        </div>
+        </div>
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+        Filters
+        </div>
+        <div class="panel-body">
+        <form class="form form-vertical" action="" method="GET">
+            <label for="contestants_accepted">Accept status: </label>
+            <select class="form-control" name="contestants_accepted_status">
+                <option value="">All</option>
+                <option value="accepted_only" {% if contestants.accepted_status == "accepted_only" %}selected {% endif %}>Accepted</option>
+                <option value="pending_only" {% if contestants.accepted_status == "pending_only" %}selected {% endif %}>Pending</option>
+            </select>
+            {% comment %}
+            <label for="contestants_visible">Visibility status: </label>
+            <select class="form-control" name="contestants_visibility_status">
+                <option value="">All</option>
+                <option value="visible_only" {% if contestants.visibility_status == "visible_only" %}selected {% endif %}>Visible</option>
+                <option value="hidden_only" {% if contestants.visibility_status == "hidden_only" %}selected {% endif %}>Hidden</option>
+            </select>
+            {% endcomment %}
+            <button type="submit" class="btn btn-link btn-sm">Filter</button>
+        </form>
         </div>
     </div>
+
 
 </div>
 

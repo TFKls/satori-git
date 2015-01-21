@@ -67,9 +67,16 @@ def view(request, page_info):
             for tsr in row.test_suite_results:
                 if tsr.test_suite==results.suite_cmp:
                     status_cmp = tsr.test_suite_result.status
-                
+        
+        generic_status = "Waiting"
+        
+        if not status:                                          # something to show before checking master sets the "QUE" status
+            status = generic_status
+        if not status_cmp:
+            status_cmp = generic_status
+            
         results.data.append({'id' : row.submit.id, 'contestant' : row.contestant.name, 'problem' : row.problem_mapping.code + u' – ' + row.problem_mapping.title, 
-                             'status' : status, 'status_cmp' : status_cmp, 'matching' : status==status_cmp,
+                             'time' : row.submit.time, 'status' : status, 'status_cmp' : status_cmp, 'matching' : status==status_cmp,
                              'contestant_link' : results.params_subst_link({'contestant' : str(row.contestant.id) }), 
                              'problem_link' : results.params_subst_link({'problem' : str(row.problem_mapping.id)}), 
                              })

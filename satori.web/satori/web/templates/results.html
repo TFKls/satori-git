@@ -32,6 +32,7 @@
         {% if page_info.contest_is_admin %}            
             <th rowspan="2">Contestant</th> 
         {% endif %}
+            <th rowspan="2">Time</th>
             <th rowspan="2" class="text-center">Problem</th>
             <th rowspan="2" class="text-center cell-narrow">Status {% if results.suite_show %}<i>({{ results.suite_show.name }})</i>{% endif %}</th>
         {% if results.enable_cmp %}
@@ -53,6 +54,7 @@
         {% if page_info.contest_is_admin %}            
             <td><a href="{{ row.contestant_link }}">{{ row.contestant }}</a></td>
         {% endif %}
+            <td class="text-center">{{ row.time|date:"Y-m-d H:i:s" }}</td>
             <td class="text-center"><a href="{{ row.problem_link }}">{{ row.problem }}</a></td>
             <td class="sta{{ row.status }} text-center cell-narrow">{{ row.status }}</td>
         {% if results.enable_cmp %}
