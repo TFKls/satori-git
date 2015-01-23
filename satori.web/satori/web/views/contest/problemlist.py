@@ -12,13 +12,12 @@ from django.utils.html import mark_safe
 from django import forms
 from datetime import datetime
 from satori.web.utils.files import valid_attachments
-from satori.web.utils.forms import SatoriDateTimeField
-from satori.web.utils.tables import *
+from satori.web.utils.generic_table import GenericTable
 from satori.web.utils.shortcuts import text2html,fill_image_links
 
 class ProblemsPublishForm(forms.Form):
-    submitstart = SatoriDateTimeField(required=False)
-    submitfinish = SatoriDateTimeField(required=False)
+#    submitstart = SatoriDateTimeField(required=False)
+#    submitfinish = SatoriDateTimeField(required=False)
     group = forms.CharField(required=False)
 #    viewauto = forms.BooleanField(required=False,initial=True)
 #    viewstart = SatoriDateTimeField(required=False)
@@ -39,9 +38,19 @@ def between(times, now):
         return True
     return False
     
-        
 @contest_view
 def viewall(request,page_info):
+    contest = page_info.contest
+    problems = GenericTable('problems',request.GET)
+    problem_list = Web.get_problem_mapping_list(page_info.contest)
+    for problem in problem_list:
+        m = problem.problem_mapping
+        problems.data.append({'code' : m.code, 'title' : m.title, 'id' : m.id})
+    return render_to_response('problemlist.html', {'page_info' : page_info, 'problems' : problems})
+
+        
+@contest_view
+def placeholder(request,page_info):
     class ProblemsTable(ResultTable):
         @staticmethod
         def default_limit():

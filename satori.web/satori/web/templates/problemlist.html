@@ -1,0 +1,36 @@
+{% extends "templates/index.html" %}
+{% load url from future %}
+{% load bootstrap3 %}
+{% load generic_table_sorter %}
+
+{% block title %}
+Problems
+{% endblock %}
+
+{% block content %}
+
+<h4>Problems</h4>
+
+<ul class="list=group">
+    {% for row in problems.data %}
+    <li class="list-group-item">
+    <div class="container-fluid">
+        <div class="row">
+            <div class="col-md-1">
+                {{ row.code }}
+            </div>
+            <div class="col-md-6">
+                {{ row.title }}
+            </div>
+        {% if page_info.contest_is_admin %}
+            <div class="col-md-1">
+                <a href="{% url "contest_problems_edit" page_info.contest.id row.id %}">Edit problem</a>
+            </div>
+        {% endif %}
+        </div>
+    </div>
+    </li>
+    {% endfor %}
+</ul>
+
+{% endblock %}
