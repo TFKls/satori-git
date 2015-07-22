@@ -1,4 +1,5 @@
 var offset = 0;
+var currentSync = 0;
 
 Date.prototype.format = function(format) {
     var returnStr = '';
@@ -29,14 +30,16 @@ function syncTime() {
     console.log("syncing time")
     var r = new XMLHttpRequest();
     var start = (new Date).getTime();
+    var localSync = currentSync;
 
-    r.open('HEAD', document.location, false);
+    r.open('HEAD', document.location);
     r.onreadystatechange = function()
     {
-        if (r.readyState != 4)
+        if (r.readyState != 4 || currentSync != localSync)
         {
             return;
         }
+        currentSync++;
         var latency = (new Date).getTime() - start;
         var timestring = r.getResponseHeader("DATE");
 
