@@ -18,7 +18,7 @@ from satori.tools import options, setup, authenticate
 options.add_argument('--debug', dest='debug', default='')
 
 options.add_argument('--jail-dir', dest='jail_dir', default='/jail')
-options.add_argument('--cgroup-dir', dest='cgroup_dir', default='/cgroup')
+options.add_argument('--cgroup-dir', dest='cgroup_dir', default='/sys/fs/cgroup')
 options.add_argument('--template-dir', dest='template_dir', default='/template')
 options.add_argument('--template-src', dest='template_src', default='student.tcs.uj.edu.pl:/exports/judge')
 
@@ -122,10 +122,6 @@ def judge_initialize():
     subprocess.check_call(['iptables', '-F', 'FORWARD'])
     subprocess.check_call(['iptables', '-P', 'FORWARD', 'ACCEPT'])
 
-    subprocess.call(['umount', '-l', option_values.cgroup_dir])
-    subprocess.call(['rmdir', option_values.cgroup_dir])
-    subprocess.check_call(['mkdir', '-p', option_values.cgroup_dir])
-    subprocess.check_call(['mount', '-t', 'cgroup', '-o', 'rw,nosuid,noexec,relatime,memory,cpuacct,cpuset', 'cgroup', option_values.cgroup_dir])
     if option_values.template_src:
         subprocess.call(['umount', '-l', option_values.template_dir])
         subprocess.call(['rmdir', option_values.template_dir])
@@ -137,8 +133,6 @@ def judge_initialize():
         subprocess.call(['rmdir', option_values.template_dir+'.temp'])
 
 def judge_finalize():
-        subprocess.call(['umount', '-l', option_values.cgroup_dir])
-        subprocess.call(['rmdir', option_values.cgroup_dir])
         if option_values.template_src:
             subprocess.call(['umount', '-l', option_values.template_dir])
             subprocess.call(['rmdir', option_values.template_dir])

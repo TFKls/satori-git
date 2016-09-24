@@ -1158,46 +1158,48 @@ void Runner::run_child()
     {
         if (new_mount && pivot)
         {
-            const char* oldroot = "tmp/__oldroot__";
-            bool rem = (mkdir(oldroot, S_IRUSR | S_IWUSR | S_IXUSR) == 0);
+            const char* oldroot = "__oldroot__";
+            const char* oldroot2 = "__oldroot__/root";
+            if(mkdir(oldroot, S_IRUSR | S_IWUSR | S_IXUSR))
+            {
+                Fail("mkdir('%s') failed", oldroot);
+            }
             if(mount(oldroot, oldroot, "", MS_BIND, NULL))
             {
-                if (rem)
-                    rmdir(oldroot);
+                rmdir(oldroot);
                 Fail("bind mount('%s') failed", oldroot);
             }
             if(mount(oldroot, oldroot, "", MS_PRIVATE, NULL))
             {
-                if (rem)
-                    rmdir(oldroot);
+                rmdir(oldroot);
                 Fail("private mount('%s') failed", oldroot);
             }
-            if (syscall(SYS_pivot_root, ".", oldroot))
+            if(mkdir(oldroot2, S_IRUSR | S_IWUSR | S_IXUSR))
             {
-                if (rem)
-                    rmdir(oldroot);
-                Fail("pivot_root('.', '%s') failed", oldroot);
+                Fail("mkdir('%s') failed", oldroot2);
+            }
+            if (syscall(SYS_pivot_root, ".", oldroot2))
+            {
+                rmdir(oldroot);
+                Fail("pivot_root('%s', '%s') failed", ".", oldroot2);
             }
             if (chdir("/"))
             {
-                if (rem)
-                    rmdir(oldroot);
+                rmdir(oldroot);
                 Fail("chdir('/') failed");
             }
-            if(umount2(oldroot, MNT_DETACH))
+            if(umount2(oldroot2, MNT_DETACH))
             {
-                if (rem)
-                    rmdir(oldroot);
+                rmdir(oldroot2);
                 Fail("first detach('%s') failed", oldroot);
             }
             if(umount2(oldroot, MNT_DETACH))
             {
-                if (rem)
-                    rmdir(oldroot);
+                rmdir(oldroot);
                 Fail("second detach('%s') failed", oldroot);
             }
-            if (rem)
-                rmdir(oldroot);
+            rmdir(oldroot2);
+            rmdir(oldroot);
         }
         else if (chroot("."))
             Fail("chroot('.') failed");

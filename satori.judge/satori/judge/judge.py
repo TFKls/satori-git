@@ -98,14 +98,19 @@ class JailBuilder(Object):
                 subprocess.check_call(['mount', '-t', 'tmpfs', '-o', 'noatime,rw,size=' + str(quota) + 'm', 'tmpfs', path])
                 dirlist.append((path,'rw'))
             os.mkdir(self.jail_path)
-            unionfs = 'aufs'
+            unionfs = 'overlayfs'
             if len(dirlist) == 1:
                 subprocess.check_call(['mount', '-o', 'bind', dirlist[0][0], self.jail_path])
             else:
                 if unionfs == 'overlayfs':
-                    subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+dirlist[0][0]+',upperdir='+dirlist[1][0], dirlist[1][0], self.jail_path])
-                    for d in dirlist[2:]:
-                        subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+self.jail_path+',upperdir='+d[0], d[0], self.jail_path])
+                    if dirlist[-1][1] == 'rw':
+                        ud = os.path.join(dirlist[-1][0],'ud')
+                        wd = os.path.join(dirlist[-1][0],'wd')
+                        os.mkdir(ud);
+                        os.mkdir(wd);
+                        subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+ ':'.join([d[0] for d in reversed(dirlist[:-1])])+',upperdir='+ud+',workdir='+wd, 'overlayfs', self.jail_path])
+                    else:
+                        subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+ ':'.join([d[0] for d in reversed(dirlist)]), 'overlayfs', self.jail_path])
                 else:
                     subprocess.check_call(['mount', '-t', 'aufs', '-o', 'noatime,rw,dirs=' + ':'.join([d[0]+'='+d[1] for d in reversed(dirlist)]), 'aufs', self.jail_path])
             if 'insert' in template:
@@ -356,32 +361,34 @@ class JailRun(Object):
                 self.jail_run.submit['submit_data'].get_blob_path(name, fname)
                 return { 'res' : 'OK' }
             
-            def cgroup_path(self, path):
-                root = os.path.join(self.jail_run.cgroup_path, self.jail_run.cgroup)
+            def cgroup_path(self, cg, path):
+                root = os.path.join(self.jail_run.cgroup_path, cg, self.jail_run.cgroup)
                 if path:
                     root = jailPath(root, path)
                 return root
             
             def cmd_CREATECG(self, input):
-                path = self.cgroup_path(input['group'])
-                if not os.path.isdir(path):
-                    os.mkdir(path)
-                    par = os.path.join(path, '..')
-                    for limit in [ 'cpuset.cpus', 'cpuset.mems', ]:
-                        with open(os.path.join(par, limit), 'r') as s:
-                            with open(os.path.join(path, limit), 'w') as d:
-                                for l in s:
-                                    d.write(l)
+                for cg in [ 'memory', 'cpuacct', 'cpuset', ] :
+                    path = self.cgroup_path(cg, input['group'])
+                    if not os.path.isdir(path):
+                        os.mkdir(path)
+                path = self.cgroup_path('cpuset', input['group'])
+                par = os.path.join(path, '..')
+                for limit in [ 'cpuset.cpus', 'cpuset.mems', ]:
+                    with open(os.path.join(par, limit), 'r') as s:
+                        with open(os.path.join(path, limit), 'w') as d:
+                            for l in s:
+                                d.write(l)
                 return { 'res' : 'OK' }
 
             def cmd_LIMITCG(self, input):
-                path = self.cgroup_path(input['group'])
-                def set_limit(type, value):
-                    file = os.path.join(path, type)
+                def set_limit(cg, lim, value):
+                    path = self.cgroup_path(cg, input['group'])
+                    file = os.path.join(path, lim)
                     with open(file, 'w') as f:
                         f.write(str(value))
                 if 'memory' in input:
-                    set_limit('memory.limit_in_bytes', int(input['memory']))
+                    set_limit('memory', 'memory.limit_in_bytes', int(input['memory']))
                 return { 'res' : 'OK' }
 
             def fuser(self, name):
@@ -398,13 +405,14 @@ class JailRun(Object):
                 return None
 
             def cmd_ASSIGNCG(self, input):
-                path = self.cgroup_path(input['group'])
                 file = jailPath(self.jail_run.root, input['file'])
                 pid = self.fuser(file)
                 #TODO: Check pid
                 if pid is not None:
-                    with open(os.path.join(path, 'tasks'), 'w') as f:
-                        f.write(str(pid))
+                    for cg in [ 'memory', 'cpuacct', 'cpuset', ] :
+                        path = self.cgroup_path(cg, input['group'])
+                        with open(os.path.join(path, 'tasks'), 'w') as f:
+                            f.write(str(pid))
                     return { 'res' : 'OK' }
                 return { 'res' : 'FAIL' }
             
@@ -428,19 +436,21 @@ class JailRun(Object):
                 os.rmdir(path)
 
             def cmd_DESTROYCG(self, input):
-                path = self.cgroup_path(input['group'])
-                self.rec_destroy_cg(path)
+                for cg in [ 'memory', 'cpuacct', 'cpuset', ] :
+                    path = self.cgroup_path(cg, input['group'])
+                    self.rec_destroy_cg(path)
                 return { 'res' : 'OK' }
 
             def cmd_QUERYCG(self, input):
-                path = self.cgroup_path(input['group'])
+                acct_path = self.cgroup_path('cpuacct', input['group'])
+                mem_path = self.cgroup_path('memory', input['group'])
                 output = {}
-                with open(os.path.join(path, 'cpuacct.usage'), 'r') as f:
+                with open(os.path.join(acct_path, 'cpuacct.usage'), 'r') as f:
                     output['cpu'] = f.readline().strip()
-                with open(os.path.join(path, 'cpuacct.stat'), 'r') as f:
+                with open(os.path.join(acct_path, 'cpuacct.stat'), 'r') as f:
                     _, output['cpu.user'] = f.readline().split()
                     _, output['cpu.system'] = f.readline().split()
-                with open(os.path.join(path, 'memory.max_usage_in_bytes'), 'r') as f:
+                with open(os.path.join(mem_path, 'memory.max_usage_in_bytes'), 'r') as f:
                     output['memory'] = f.readline()
                 output['res'] = 'OK'
                 return output
