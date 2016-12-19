@@ -242,6 +242,7 @@ class JailRun(Object):
             subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'ESTABLISHED,RELATED', '-j', 'ACCEPT'])
             subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'state', '--state', 'INVALID', '-j', 'DROP'])
             subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'owner', '--uid-owner', 'root', '-j', 'ACCEPT'])
+            subprocess.check_call(['iptables', '-A', 'OUTPUT', '-m', 'owner', '--uid-owner', '_apt', '-j', 'ACCEPT'])
             subprocess.check_call(['iptables', '-P', 'OUTPUT', 'DROP'])
             subprocess.check_call(['iptables', '-P', 'FORWARD', 'DROP'])
             subprocess.check_call(['iptables', '-t', 'nat', '-P', 'PREROUTING', 'ACCEPT'])
