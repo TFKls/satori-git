@@ -45,7 +45,7 @@ setup(
         'Django == 1.4',
         'egenix-mx-base',
         'psycopg2',
-        'Thrift',
+        'Thrift < 0.10',
         'satori.ars',
         'satori.events',
         'satori.objects',

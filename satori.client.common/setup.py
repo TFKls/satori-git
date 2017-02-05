@@ -23,7 +23,7 @@ setup(
     ],
     install_requires=[
         'setuptools',
-        'Thrift',
+        'Thrift < 0.10',
         'satori.ars',
         'satori.objects',
     ],
