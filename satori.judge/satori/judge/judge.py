@@ -98,11 +98,20 @@ class JailBuilder(Object):
                 subprocess.check_call(['mount', '-t', 'tmpfs', '-o', 'noatime,rw,size=' + str(quota) + 'm', 'tmpfs', path])
                 dirlist.append((path,'rw'))
             os.mkdir(self.jail_path)
-            unionfs = 'overlayfs'
+            unionfs = 'overlay'
             if len(dirlist) == 1:
                 subprocess.check_call(['mount', '-o', 'bind', dirlist[0][0], self.jail_path])
             else:
-                if unionfs == 'overlayfs':
+                if unionfs == 'overlay':
+                    if dirlist[-1][1] == 'rw':
+                        ud = os.path.join(dirlist[-1][0],'ud')
+                        wd = os.path.join(dirlist[-1][0],'wd')
+                        os.mkdir(ud);
+                        os.mkdir(wd);
+                        subprocess.check_call(['mount', '-t', 'overlay', '-o', 'lowerdir='+ ':'.join([d[0] for d in reversed(dirlist[:-1])])+',upperdir='+ud+',workdir='+wd, 'overlay', self.jail_path])
+                    else:
+                        subprocess.check_call(['mount', '-t', 'overlay', '-o', 'lowerdir='+ ':'.join([d[0] for d in reversed(dirlist)]), 'overlay', self.jail_path])
+                elif unionfs == 'overlayfs':
                     if dirlist[-1][1] == 'rw':
                         ud = os.path.join(dirlist[-1][0],'ud')
                         wd = os.path.join(dirlist[-1][0],'wd')
@@ -111,7 +120,7 @@ class JailBuilder(Object):
                         subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+ ':'.join([d[0] for d in reversed(dirlist[:-1])])+',upperdir='+ud+',workdir='+wd, 'overlayfs', self.jail_path])
                     else:
                         subprocess.check_call(['mount', '-t', 'overlayfs', '-o', 'lowerdir='+ ':'.join([d[0] for d in reversed(dirlist)]), 'overlayfs', self.jail_path])
-                else:
+                elif unionfs == 'aufs':
                     subprocess.check_call(['mount', '-t', 'aufs', '-o', 'noatime,rw,dirs=' + ':'.join([d[0]+'='+d[1] for d in reversed(dirlist)]), 'aufs', self.jail_path])
             if 'insert' in template:
                 for src in template['insert']:
