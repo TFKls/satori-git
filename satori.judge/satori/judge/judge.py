@@ -51,12 +51,14 @@ class JailBuilder(Object):
     @Argument('template_path', type=str)
     @Argument('template', type=str)
     @Argument('target_pid', default=None)
-    def __init__(self, root, template, template_path, target_pid):
+    @Argument('target_path', default=None)
+    def __init__(self, root, template, template_path, target_pid, target_path):
         template = os.path.split(template)[1]
         self.root = root
         self.jail_path = os.path.abspath(os.path.join(self.root, '__jail__'))
         self.template = os.path.join(template_path, template + '.template')
         self.target_pid = target_pid
+        self.target_path = os.path.abspath(os.path.join(target_path or '/', '__jail__'))
 
     def create(self):
         try:
@@ -178,8 +180,9 @@ class JailBuilder(Object):
                     subprocess.check_call(['mount', '-o', rec + ',' + opts, src, dst])
             if 'mount_proc' in template:
                 if self.target_pid is not None:
-                    subprocess.call(['nsenter', '--target', str(self.target_pid), '--mount', '--pid', '--root', 'umount', '-l', '/proc'])
-                    subprocess.call(['nsenter', '--target', str(self.target_pid), '--mount', '--pid', '--root', 'mount', '-t', 'proc', 'proc', '/proc'])
+                    tgt = jailPath(self.target_path, '/proc')
+                    subprocess.call(['nsenter', '--target', str(self.target_pid), '--mount', '--pid', '--root', 'umount', '-l', tgt])
+                    subprocess.call(['nsenter', '--target', str(self.target_pid), '--mount', '--pid', '--root', 'mount', '-t', 'proc', 'proc', tgt])
                 pass
             if 'script' in template:
                 for script in template['script']:
@@ -492,7 +495,8 @@ class JailRun(Object):
                 path = os.path.join(jailPath(self.jail_run.root, input['path']))
                 template = input['template']
                 target_pid = self.jail_run.target_pid()
-                jb = JailBuilder(root=path, template_path=self.jail_run.template_path, template=template, target_pid=target_pid)
+                target_path = jailPath('/', input['path'])
+                jb = JailBuilder(root=path, template_path=self.jail_run.template_path, template=template, target_pid=target_pid, target_path=target_path)
                 jb.create()
                 try:
                     subprocess.check_call(['mount', '-o', 'rbind', jb.jail_path, path])
