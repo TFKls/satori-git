@@ -22,6 +22,10 @@ import unshare
 import yaml
 import traceback
 
+def unicode_constructor(loader, node):
+    return node.value
+yaml.SafeLoader.add_constructor("tag:yaml.org,2002:python/unicode", unicode_constructor)
+
 def jailPath(root, path):
     return os.path.join(root, os.path.abspath(os.path.join('/',path))[1:])
 
