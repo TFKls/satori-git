@@ -22,6 +22,7 @@ setup(
     ],
     install_requires=[
         'setuptools',
+        'psutil',
         'python-unshare',
         'pyyaml',
         'satori.client.common',

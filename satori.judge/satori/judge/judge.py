@@ -12,6 +12,7 @@ import cgi
 import datetime
 from multiprocessing import Process, Pipe, Manager
 import os
+import psutil
 import sys
 import shutil
 import signal
@@ -49,11 +50,13 @@ class JailBuilder(Object):
     @Argument('root', type=str)
     @Argument('template_path', type=str)
     @Argument('template', type=str)
-    def __init__(self, root, template, template_path):
+    @Argument('target_pid', default=None)
+    def __init__(self, root, template, template_path, target_pid):
         template = os.path.split(template)[1]
         self.root = root
         self.jail_path = os.path.abspath(os.path.join(self.root, '__jail__'))
         self.template = os.path.join(template_path, template + '.template')
+        self.target_pid = target_pid
 
     def create(self):
         try:
@@ -162,6 +165,8 @@ class JailBuilder(Object):
                 for bind in template['bind']:
                     if isinstance(bind, str):
                         bind = { 'src' : bind }
+                    if (isinstance(bind, list) or isinstance(bind, tuple)) and len(bind) == 2:
+                        bind = { 'src' : bind[0], 'dst' : bind[1] }
                     src = bind['src']
                     dst = jailPath(self.jail_path, bind.get('dst', src))
                     opts = bind.get('opts', '')
@@ -171,6 +176,11 @@ class JailBuilder(Object):
                     else:
                         rec = 'bind'
                     subprocess.check_call(['mount', '-o', rec + ',' + opts, src, dst])
+            if 'mount_proc' in template:
+                if self.target_id is not None:
+                    subprocess.call(['nsenter', '--target', str(self.target_pid), '--mount', '--pid', '--root', 'umount', '-l', '/proc'])
+                    subprocess.call(['nsenter', '--target', str(self.target_pid), '--mount', '--pid', '--root', 'mount', '-t', 'proc', 'proc', '/proc'])
+                pass
             if 'script' in template:
                 for script in template['script']:
                     params = script.split(' ')
@@ -230,6 +240,17 @@ class JailRun(Object):
         self.real_time = real_time
         self.debug = debug
         self.search = search
+        self.child_pid = None
+
+    def target_pid(self):
+        if self.child_pid is None:
+            return None
+        runner = psutil.Process(self.child_pid)
+        children = sorted(runner.children(recursive=False), key=lambda p: p.create_time())
+        if not children:
+            return None
+        child = children[0]
+        return child.pid
 
     def child(self, pipe):
         try:
@@ -284,6 +305,7 @@ class JailRun(Object):
         try:
             child = Process(target = self.child, args=(pipec,))
             child.start()
+            self.child_pid = child.pid
 #WAIT FOR CHILD START AND UNSHARE
             pipe.recv()
             subprocess.check_call(['ifconfig', self.host_eth, self.host_ip, 'netmask', self.netmask, 'up'])
@@ -295,6 +317,7 @@ class JailRun(Object):
         finally:
             pipe.close()
         child.join()
+        self.child_pid = None
         self.exitcode = child.exitcode
         controller.terminate()
         self.result = dict(result)
@@ -468,7 +491,8 @@ class JailRun(Object):
             def cmd_CREATEJAIL(self, input):
                 path = os.path.join(jailPath(self.jail_run.root, input['path']))
                 template = input['template']
-                jb = JailBuilder(root=path, template_path=self.jail_run.template_path, template=template)
+                target_pid = self.jail_run.target_pid()
+                jb = JailBuilder(root=path, template_path=self.jail_run.template_path, template=template, target_pid=target_pid)
                 jb.create()
                 try:
                     subprocess.check_call(['mount', '-o', 'rbind', jb.jail_path, path])
