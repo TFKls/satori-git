@@ -62,7 +62,7 @@ class JailBuilder(Object):
         try:
             os.mkdir(self.root)
             subprocess.check_call(['mount', '-t', 'tmpfs', '-o', 'noatime,rw,size=1m', 'tmpfs', self.root])
-            template = yaml.load(open(self.template, 'r'))
+            template = yaml.safe_load(open(self.template, 'r'))
             dirlist = []
             quota = 0
             num = 1
@@ -177,7 +177,7 @@ class JailBuilder(Object):
                         rec = 'bind'
                     subprocess.check_call(['mount', '-o', rec + ',' + opts, src, dst])
             if 'mount_proc' in template:
-                if self.target_id is not None:
+                if self.target_pid is not None:
                     subprocess.call(['nsenter', '--target', str(self.target_pid), '--mount', '--pid', '--root', 'umount', '-l', '/proc'])
                     subprocess.call(['nsenter', '--target', str(self.target_pid), '--mount', '--pid', '--root', 'mount', '-t', 'proc', 'proc', '/proc'])
                 pass
@@ -342,7 +342,7 @@ class JailRun(Object):
             def do_POST(self):
                 stime = datetime.datetime.now()
                 s = self.rfile.read(int(self.headers['Content-Length']))
-                input = yaml.load(s)
+                input = yaml.safe_load(s)
                 cmd = 'cmd_' + self.path[1:]
                 raw_output = {}
                 try:

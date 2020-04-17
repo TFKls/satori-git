@@ -1030,11 +1030,9 @@ int cat_open_write(const char* path, int oflag, int mode, long long max_size) {
             total_write(ctrlpipe[1], &f, sizeof(f));
             exit(1);
         }
-        /*
         for (int g=getdtablesize(); g >= 0; g--)
             if (g!=ctrlpipe[1] && g!=catpipe[0])
                 close(g);
-        */
 
         int fd = open(path, oflag, mode);
 
@@ -1182,7 +1180,7 @@ void Runner::run_child()
                 rmdir(oldroot);
                 Fail("bind mount('%s') failed", oldroot);
             }
-            if(mount(oldroot, oldroot, "", MS_PRIVATE|MS_REC, NULL))
+            if(mount(oldroot, oldroot, "", MS_PRIVATE, NULL))
             {
                 rmdir(oldroot);
                 Fail("private mount('%s') failed", oldroot);
@@ -1229,7 +1227,7 @@ void Runner::run_child()
     if (new_mount && mount_proc)
     {
         umount2("/proc", MNT_DETACH);
-        if (mount("proc", "/proc", "proc", MS_PRIVATE|MS_REC, NULL))
+        if (mount("proc", "/proc", "proc", 0, NULL))
             Fail("mount('proc', '/proc', 'proc') failed");
     }
 
@@ -1682,14 +1680,6 @@ void Runner::Run()
     void *childstack, *stack = malloc(cssize);
     if (!stack)
         Fail("child stack malloc failed");
-
-    if(new_mount && pivot)
-    {
-        if(mount("/", "/", "", MS_PRIVATE|MS_REC, NULL))
-        {
-            Fail("private mount('%s') failed");
-        }
-    }
 
     childstack = (void*)((char*)stack + cssize);
     child = clone(child_runner, childstack, flags, (void*)this);
