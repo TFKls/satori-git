@@ -60,8 +60,10 @@ static struct
   const char*   stdin;
   const char*   stdout;
   int           stdouttrunc;
+  long long     stdoutsize;
   const char*   stderr;
   int           stderrtrunc;
+  long long     stderrsize;
   const char*   setuid;
   const char*   setgid;
   int           ptrace;
@@ -77,12 +79,12 @@ static struct
   long          cputime;
   long          usrtime;
   long          systime;
-  long          memory;
-  long          stack;
-  long          data;
+  long long     memory;
+  long long     stack;
+  long long     data;
   long          files;
-  long          io_read;
-  long          io_write;
+  long long     io_read;
+  long long     io_write;
   long          priority;
   int           quiet;
   int           silent;
@@ -97,7 +99,7 @@ static struct
   const char*   c_host;
   long          c_port;
   const char*   c_group;
-  long          c_memory;
+  long long     c_memory;
   long          c_cputime;
   long          c_usrtime;
   long          c_systime;
@@ -105,54 +107,56 @@ static struct
 
 static struct poptOption CONFIG_OPT[] =
 {
-  { "debug",           0,   POPT_ARG_STRING, &config.debug,          0, "file for debug information",                         "FILE" },
-  { "root",            0,   POPT_ARG_STRING, &config.chroot,         0, "run the child with the root directory DIR",          "DIR" },
-  { "pivot",           0,   POPT_ARG_NONE,   &config.pivot,          0, "use pivot instead of chroot",                        0 },
-  { "work-dir",        0,   POPT_ARG_STRING, &config.workdir,        0, "set the working directory to DIR (inside chroot)",   "DIR" },
-  { "stdin",           0,   POPT_ARG_STRING, &config.stdin,          0, "redirect standard input from FILE",                  "FILE" },
-  { "stdout",          0,   POPT_ARG_STRING, &config.stdout,         0, "redirect standard output to FILE",                   "FILE" },
-  { "stderr",          0,   POPT_ARG_STRING, &config.stderr,         0, "redirect standard error output to FILE",             "FILE" },
-  { "trunc-stdout",    0,   POPT_ARG_NONE,   &config.stdouttrunc,    0, "truncate standard output",                           0 },
-  { "trunc-stderr",    0,   POPT_ARG_NONE,   &config.stderrtrunc,    0, "truncate standard error",                            0 },
-  { "setuid",          0,   POPT_ARG_STRING, &config.setuid,         0, "run with effective user name NAME",                  "NAME" },
-  { "setgid",          0,   POPT_ARG_STRING, &config.setgid,         0, "run with effective group name NAME",                 "NAME" },
-  { "cpus",            0,   POPT_ARG_STRING, &config.affinity,       0, "bind execution to processors from LIST",             "LIST" },
-  { "max-threads",     0,   POPT_ARG_LONG,   &config.threads,        0, "limit the number of threads to LIMIT",               "LIMIT" },
-  { "max-realtime",    0,   POPT_ARG_LONG,   &config.realtime,       0, "limit real (wall clock) time to LIMIT/1000 seconds", "LIMIT" },
-  { "max-cputime",     0,   POPT_ARG_LONG,   &config.cputime,        0, "limit CPU time to LIMIT/10000 seconds",              "LIMIT" },
-  { "max-usertime",    0,   POPT_ARG_LONG,   &config.usrtime,        0, "limit user-mode CPU time to LIMIT/10000 seconds",    "LIMIT" },
-  { "max-systime",     0,   POPT_ARG_LONG,   &config.systime,        0, "limit system-mode CPU time to LIMIT/10000 seconds",  "LIMIT" },
-  { "max-memory",      0,   POPT_ARG_LONG,   &config.memory,         0, "limit memory usage to LIMIT bytes",                  "LIMIT" },
-  { "max-stack",       0,   POPT_ARG_LONG,   &config.stack,          0, "limit stack usage to LIMIT bytes",                   "LIMIT" },
-  { "max-data",        0,   POPT_ARG_LONG,   &config.data,           0, "limit data usage to LIMIT bytes",                    "LIMIT" },
-  { "max-files",       0,   POPT_ARG_LONG,   &config.files,          0, "limit open file count to LIMIT",                     "LIMIT" },
-  { "max-read",        0,   POPT_ARG_LONG,   &config.io_read,        0, "limit write to LIMIT bytes",                         "LIMIT" },
-  { "max-write",       0,   POPT_ARG_LONG,   &config.io_write,       0, "limit read to LIMIT bytes",                          "LIMIT" },
-  { "ptrace",          0,   POPT_ARG_NONE,   &config.ptrace,         0, "enable ptrace",                                      0 },
-  { "iotrace",         0,   POPT_ARG_NONE,   &config.iotrace,        0, "enable iotrace",                                     0 },
-  { "memlock",         0,   POPT_ARG_NONE,   &config.memlock,        0, "enable memlock",                                     0 },
-  { "env",             0,   POPT_ARG_STRING, &config.env_level,      0, "set environment content to LEVEL ('empty', 'simple', 'full', 'copy')", "LEVEL" },
-  { "env-add",         0,   POPT_ARG_STRING, &config.env_add,        0, "add environment constants from LIST",                "LIST" },
-  { "env-del",         0,   POPT_ARG_STRING, &config.env_del,        0, "delete environment constants from LIST",             "LIST" },
-  { "cap",             0,   POPT_ARG_STRING, &config.cap_level,      0, "set capabilities to LEVEL ('empty', 'safe', 'copy')", "LEVEL" },
-  { "priority",        0,   POPT_ARG_LONG,   &config.priority,       0, "set process priority to PRIO",                       "PRIO" },
-  { "quiet",           'q', POPT_ARG_NONE,   &config.quiet,          0, "prints nothing",                                     0 },
-  { "silent",          0,   POPT_ARG_NONE,   &config.silent,         0, "prints only the result",                             0 },
-  { "log-level",       0,   POPT_ARG_STRING, &config.log_level,      0, "set logging verbosity to LEVEL ('debug', 'warning', 'error', 'critical', 'none')", "LEVEL" },
-  { "search",          0,   POPT_ARG_NONE,   &config.search,         0, "search PATH for the executable",                     0 },
-  { "ns-ipc",          0,   POPT_ARG_NONE,   &config.ns_ipc,         0, "enable ipc namespace",                               0 },
-  { "ns-net",          0,   POPT_ARG_NONE,   &config.ns_net,         0, "enable network namespace",                           0 },
-  { "ns-mount",        0,   POPT_ARG_NONE,   &config.ns_mount,       0, "enable mount namespace",                             0 },
-  { "mount-proc",      0,   POPT_ARG_NONE,   &config.mount_proc,     0, "remount proc filesystem",                            0 },
-  { "ns-pid",          0,   POPT_ARG_NONE,   &config.ns_pid,         0, "enable pid namespace",                               0 },
-  { "ns-uts",          0,   POPT_ARG_NONE,   &config.ns_uts,         0, "enable uts namespace",                               0 },
-  { "control-host",    0,   POPT_ARG_STRING, &config.c_host,         0, "set controller host HOST",                           "HOST" },
-  { "control-port",    0,   POPT_ARG_LONG,   &config.c_port,         0, "set controller port PORT",                           "PORT" },
-  { "cgroup",          0,   POPT_ARG_STRING, &config.c_group,        0, "set control group GROUP",                            "GROUP" },
-  { "cgroup-memory",   0,   POPT_ARG_LONG,   &config.c_memory,       0, "limit memory usage to LIMIT bytes for control group",      "LIMIT" },
-  { "cgroup-cputime",  0,   POPT_ARG_LONG,   &config.c_cputime,      0, "limit CPU time to LIMIT/10000 seconds for control group",              "LIMIT" },
-  { "cgroup-usertime", 0,   POPT_ARG_LONG,   &config.c_usrtime,      0, "limit user-mode CPU time to LIMIT/10000 seconds for control group",    "LIMIT" },
-  { "cgroup-systime",  0,   POPT_ARG_LONG,   &config.c_systime,      0, "limit system-mode CPU time to LIMIT/10000 seconds for control group",  "LIMIT" },
+  { "debug",           0,   POPT_ARG_STRING,   &config.debug,          0, "file for debug information",                         "FILE" },
+  { "root",            0,   POPT_ARG_STRING,   &config.chroot,         0, "run the child with the root directory DIR",          "DIR" },
+  { "pivot",           0,   POPT_ARG_NONE,     &config.pivot,          0, "use pivot instead of chroot",                        0 },
+  { "work-dir",        0,   POPT_ARG_STRING,   &config.workdir,        0, "set the working directory to DIR (inside chroot)",   "DIR" },
+  { "stdin",           0,   POPT_ARG_STRING,   &config.stdin,          0, "redirect standard input from FILE",                  "FILE" },
+  { "stdout",          0,   POPT_ARG_STRING,   &config.stdout,         0, "redirect standard output to FILE",                   "FILE" },
+  { "stderr",          0,   POPT_ARG_STRING,   &config.stderr,         0, "redirect standard error output to FILE",             "FILE" },
+  { "trunc-stdout",    0,   POPT_ARG_NONE,     &config.stdouttrunc,    0, "truncate standard output",                           0 },
+  { "trunc-stderr",    0,   POPT_ARG_NONE,     &config.stderrtrunc,    0, "truncate standard error",                            0 },
+  { "stdout-size",     0,   POPT_ARG_LONGLONG, &config.stdoutsize,     0, "standard output maximum size",                       "LIMIT" },
+  { "stderr-size",     0,   POPT_ARG_LONGLONG, &config.stderrsize,     0, "standard error maximum size",                        "LIMIT" },
+  { "setuid",          0,   POPT_ARG_STRING,   &config.setuid,         0, "run with effective user name NAME",                  "NAME" },
+  { "setgid",          0,   POPT_ARG_STRING,   &config.setgid,         0, "run with effective group name NAME",                 "NAME" },
+  { "cpus",            0,   POPT_ARG_STRING,   &config.affinity,       0, "bind execution to processors from LIST",             "LIST" },
+  { "max-threads",     0,   POPT_ARG_LONG,     &config.threads,        0, "limit the number of threads to LIMIT",               "LIMIT" },
+  { "max-realtime",    0,   POPT_ARG_LONG,     &config.realtime,       0, "limit real (wall clock) time to LIMIT/1000 seconds", "LIMIT" },
+  { "max-cputime",     0,   POPT_ARG_LONG,     &config.cputime,        0, "limit CPU time to LIMIT/10000 seconds",              "LIMIT" },
+  { "max-usertime",    0,   POPT_ARG_LONG,     &config.usrtime,        0, "limit user-mode CPU time to LIMIT/10000 seconds",    "LIMIT" },
+  { "max-systime",     0,   POPT_ARG_LONG,     &config.systime,        0, "limit system-mode CPU time to LIMIT/10000 seconds",  "LIMIT" },
+  { "max-memory",      0,   POPT_ARG_LONGLONG, &config.memory,         0, "limit memory usage to LIMIT bytes",                  "LIMIT" },
+  { "max-stack",       0,   POPT_ARG_LONGLONG, &config.stack,          0, "limit stack usage to LIMIT bytes",                   "LIMIT" },
+  { "max-data",        0,   POPT_ARG_LONGLONG, &config.data,           0, "limit data usage to LIMIT bytes",                    "LIMIT" },
+  { "max-files",       0,   POPT_ARG_LONG,     &config.files,          0, "limit open file count to LIMIT",                     "LIMIT" },
+  { "max-read",        0,   POPT_ARG_LONGLONG, &config.io_read,        0, "limit write to LIMIT bytes",                         "LIMIT" },
+  { "max-write",       0,   POPT_ARG_LONGLONG, &config.io_write,       0, "limit read to LIMIT bytes",                          "LIMIT" },
+  { "ptrace",          0,   POPT_ARG_NONE,     &config.ptrace,         0, "enable ptrace",                                      0 },
+  { "iotrace",         0,   POPT_ARG_NONE,     &config.iotrace,        0, "enable iotrace",                                     0 },
+  { "memlock",         0,   POPT_ARG_NONE,     &config.memlock,        0, "enable memlock",                                     0 },
+  { "env",             0,   POPT_ARG_STRING,   &config.env_level,      0, "set environment content to LEVEL ('empty', 'simple', 'full', 'copy')", "LEVEL" },
+  { "env-add",         0,   POPT_ARG_STRING,   &config.env_add,        0, "add environment constants from LIST",                "LIST" },
+  { "env-del",         0,   POPT_ARG_STRING,   &config.env_del,        0, "delete environment constants from LIST",             "LIST" },
+  { "cap",             0,   POPT_ARG_STRING,   &config.cap_level,      0, "set capabilities to LEVEL ('empty', 'safe', 'copy')", "LEVEL" },
+  { "priority",        0,   POPT_ARG_LONG,     &config.priority,       0, "set process priority to PRIO",                       "PRIO" },
+  { "quiet",           'q', POPT_ARG_NONE,     &config.quiet,          0, "prints nothing",                                     0 },
+  { "silent",          0,   POPT_ARG_NONE,     &config.silent,         0, "prints only the result",                             0 },
+  { "log-level",       0,   POPT_ARG_STRING,   &config.log_level,      0, "set logging verbosity to LEVEL ('debug', 'warning', 'error', 'critical', 'none')", "LEVEL" },
+  { "search",          0,   POPT_ARG_NONE,     &config.search,         0, "search PATH for the executable",                     0 },
+  { "ns-ipc",          0,   POPT_ARG_NONE,     &config.ns_ipc,         0, "enable ipc namespace",                               0 },
+  { "ns-net",          0,   POPT_ARG_NONE,     &config.ns_net,         0, "enable network namespace",                           0 },
+  { "ns-mount",        0,   POPT_ARG_NONE,     &config.ns_mount,       0, "enable mount namespace",                             0 },
+  { "mount-proc",      0,   POPT_ARG_NONE,     &config.mount_proc,     0, "remount proc filesystem",                            0 },
+  { "ns-pid",          0,   POPT_ARG_NONE,     &config.ns_pid,         0, "enable pid namespace",                               0 },
+  { "ns-uts",          0,   POPT_ARG_NONE,     &config.ns_uts,         0, "enable uts namespace",                               0 },
+  { "control-host",    0,   POPT_ARG_STRING,   &config.c_host,         0, "set controller host HOST",                           "HOST" },
+  { "control-port",    0,   POPT_ARG_LONG,     &config.c_port,         0, "set controller port PORT",                           "PORT" },
+  { "cgroup",          0,   POPT_ARG_STRING,   &config.c_group,        0, "set control group GROUP",                            "GROUP" },
+  { "cgroup-memory",   0,   POPT_ARG_LONGLONG, &config.c_memory,       0, "limit memory usage to LIMIT bytes for control group",      "LIMIT" },
+  { "cgroup-cputime",  0,   POPT_ARG_LONG,     &config.c_cputime,      0, "limit CPU time to LIMIT/10000 seconds for control group",              "LIMIT" },
+  { "cgroup-usertime", 0,   POPT_ARG_LONG,     &config.c_usrtime,      0, "limit user-mode CPU time to LIMIT/10000 seconds for control group",    "LIMIT" },
+  { "cgroup-systime",  0,   POPT_ARG_LONG,     &config.c_systime,      0, "limit system-mode CPU time to LIMIT/10000 seconds for control group",  "LIMIT" },
   POPT_TABLEEND
 };
 static struct poptOption options[] =
@@ -246,11 +250,11 @@ int finish()
   {
     printf("Status : %d\n", run.result.exit_status);
     printf("Retcode: %d\n", WEXITSTATUS(run.result.exit_status));
-    printf("Memory : %lu\n", max(run.result.memory, run.result.cgroup_memory));
+    printf("Memory : %llu\n", max(run.result.memory, run.result.cgroup_memory));
     printf("CPU    : %lu\n", max(run.result.cpu_time, run.result.cgroup_time));
     printf("Time   : %lu\n", run.result.real_time);
-    printf("Read   : %lu\n", run.result.sum_read);
-    printf("Write  : %lu\n", run.result.sum_write);
+    printf("Read   : %llu\n", run.result.sum_read);
+    printf("Write  : %llu\n", run.result.sum_write);
   }
   if (run.result.status == Result::RES_OK)
     return 0;
@@ -322,6 +326,10 @@ int main(int argc, const char** argv)
     run.output_trunc = true;
   if (config.stderrtrunc)
     run.error_trunc = true;
+  if (config.stdoutsize > 0)
+      run.output_size = config.stdoutsize;
+  if (config.stderrsize > 0)
+      run.error_size = config.stderrsize;
   if (config.threads > 0)
     run.thread_count = config.threads;
   if (config.setuid > 0)

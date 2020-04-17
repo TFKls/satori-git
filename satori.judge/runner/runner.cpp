@@ -31,6 +31,7 @@
 #include <sys/resource.h>
 #include <sys/stat.h>
 #include <sys/syscall.h>
+#include <sys/sysmacros.h>
 #include <sys/time.h>
 #include <sys/types.h>
 #include <sys/user.h>
@@ -312,7 +313,7 @@ ProcStats::ProcStats(int _pid)
     char* buf = NULL;
     char* sta = NULL;
     int z;
-    if ((z = fscanf(f, "%d%ms%ms%d%d%d%d%d%u%lu%lu%lu%lu%lu%lu%ld%ld%ld%ld%ld%ld%llu%lu%ld%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%lu%d%d%u%u%llu%lu%ld",
+    if ((z = fscanf(f, "%d%ms%ms%d%d%d%d%d%u%llu%llu%llu%llu%llu%llu%lld%lld%lld%lld%lld%lld%llu%llu%lld%llu%llu%llu%llu%llu%llu%llu%llu%llu%llu%llu%llu%llu%d%d%u%u%llu%llu%llu",
         &pid, &buf, &sta, &ppid, &pgrp, &sid, &tty, &tpgid, &flags, &minflt, &cminflt, &majflt, &cmajflt, &utime, &stime, &cutime, &cstime, &priority, &nice, &threads, &alarm, &start_time, &vsize, &rss, &rss_lim, &start_code, &end_code, &start_stack, &esp, &eip, &signal, &blocked, &sig_ignore, &sig_catch, &wchan, &nswap, &cnswap, &exit_signal, &cpu_number, &sched_priority, &sched_policy, &io_delay, &guest_time, &cguest_time
     )) != 44)
         Fail("scanf of '/proc/%d/stat' failed %d %d %s %c %d", _pid, z, pid, buf, state, ppid);
@@ -373,10 +374,10 @@ UserInfo::UserInfo(const string& name)
     {
         char* eptr;
         long id = strtol(name.c_str(), &eptr, 10);
-        if(eptr && *eptr == 0)
+        if (eptr && *eptr == 0)
             getpwuid_r(id, &pwd, buf, sizeof(buf), &ppwd);
-            if (ppwd == &pwd)
-                set(ppwd);
+        if (ppwd == &pwd)
+            set(ppwd);
     }
 }
 UserInfo::UserInfo(int id)
@@ -415,9 +416,9 @@ GroupInfo::GroupInfo(const string& name)
     {
         char* eptr;
         long id = strtol(name.c_str(), &eptr, 10);
-        if(eptr && *eptr == 0)
-        getgrgid_r(id, &grp, buf, sizeof(buf), &pgrp);
-        if(pgrp == &grp)
+        if (eptr && *eptr == 0)
+            getgrgid_r(id, &grp, buf, sizeof(buf), &pgrp);
+        if (pgrp == &grp)
             set(pgrp);
     }
 }
@@ -807,7 +808,7 @@ void Controller::GroupLimits(const string& cgroup, const Limits& limits)
     if (limits.memory > 0)
     {
         char buf[32];
-        snprintf(buf, sizeof(buf), "%ld", limits.memory);
+        snprintf(buf, sizeof(buf), "%lld", limits.memory);
         input["memory"] = buf;
     }
     if (input.size() > 0)
@@ -824,7 +825,7 @@ Controller::Stats Controller::GroupStats(const string& cgroup)
     Contact("QUERYCG", input, output);
     CheckOK("QUERYCG", output);
     Stats s;
-    s.memory = atol(output["memory"].c_str());
+    s.memory = atoll(output["memory"].c_str());
     s.time = atol(output["cpu"].c_str());
     s.utime = atol(output["cpu.user"].c_str());
     s.stime = atol(output["cpu.system"].c_str());
@@ -874,7 +875,7 @@ bool Runner::check_times()
         result.SetStatus(Result::RES_TIME);
         return false;
     }
-    if ((memory_space > 0) && ((long)curmemory > memory_space))
+    if ((memory_space > 0) && ((long long)curmemory > memory_space))
     {
         result.SetStatus(Result::RES_MEMORY);
         return false;
@@ -898,7 +899,7 @@ bool Runner::check_cgroup()
             result.SetStatus(Result::RES_TIME);
             return false;
         }
-        if (cgroup_memory > 0 && cgroup_memory < (long)result.cgroup_memory)
+        if (cgroup_memory > 0 && cgroup_memory < (long long)result.cgroup_memory)
         {
             result.SetStatus(Result::RES_MEMORY);
             return false;
@@ -1002,7 +1003,7 @@ int cat_open_read(const char* path, int oflag) {
 }
 
 
-int cat_open_write(const char* path, int oflag, int mode) {
+int cat_open_write(const char* path, int oflag, int mode, long long max_size) {
     int catpipe[2];
     int ctrlpipe[2];
     if (socketpair(AF_UNIX, SOCK_STREAM, 0, catpipe))
@@ -1029,9 +1030,11 @@ int cat_open_write(const char* path, int oflag, int mode) {
             total_write(ctrlpipe[1], &f, sizeof(f));
             exit(1);
         }
+        /*
         for (int g=getdtablesize(); g >= 0; g--)
             if (g!=ctrlpipe[1] && g!=catpipe[0])
                 close(g);
+        */
 
         int fd = open(path, oflag, mode);
 
@@ -1046,8 +1049,10 @@ int cat_open_write(const char* path, int oflag, int mode) {
         if (fd < 0)
             exit(1);
         char buf[4096];
+        long long sum_write = 0;
         while (true) {
             int r = read(catpipe[0], buf, sizeof(buf));
+
             if (r < 0 and errno == EINTR)
                 continue;
             if (r <= 0) {
@@ -1055,7 +1060,15 @@ int cat_open_write(const char* path, int oflag, int mode) {
                 close(fd);
                 exit(0);
             }
-            total_write(fd, buf, r);
+            if (max_size >= 0 ) {
+                if (sum_write < max_size) {
+                    long long rr = std::min((long long)r, max_size - sum_write);
+                    total_write(fd, buf, rr);
+                    sum_write += rr;
+                }
+            } else {
+                total_write(fd, buf, r);
+            }
         }
     }
     close(ctrlpipe[1]);
@@ -1130,11 +1143,11 @@ void Runner::run_child()
     int fi=-1, fo=-1, fe=-1;
     if ((input != "") && ((fi = cat_open_read(input.c_str(), O_RDONLY)) < 0))
         Fail("open('%s') failed", input.c_str());
-    if ((output != "") && ((fo = cat_open_write(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH )) < 0))
+    if ((output != "") && ((fo = cat_open_write(output.c_str(), O_WRONLY|O_CREAT|(output_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, output_size)) < 0))
         Fail("open('%s') failed", output.c_str());
     if (error_to_output)
         fe = fo;
-    else if ((error != "") && ((fe = cat_open_write(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH)) < 0))
+    else if ((error != "") && ((fe = cat_open_write(error.c_str(), O_WRONLY|O_CREAT|(error_trunc?O_TRUNC:O_APPEND), S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH, error_size)) < 0))
         Fail("open('%s') failed", error.c_str());
     if (setresgid(rgid, egid, sgid))
         Fail("setresgid failed");
@@ -1169,7 +1182,7 @@ void Runner::run_child()
                 rmdir(oldroot);
                 Fail("bind mount('%s') failed", oldroot);
             }
-            if(mount(oldroot, oldroot, "", MS_PRIVATE, NULL))
+            if(mount(oldroot, oldroot, "", MS_PRIVATE|MS_REC, NULL))
             {
                 rmdir(oldroot);
                 Fail("private mount('%s') failed", oldroot);
@@ -1216,7 +1229,7 @@ void Runner::run_child()
     if (new_mount && mount_proc)
     {
         umount2("/proc", MNT_DETACH);
-        if (mount("proc", "/proc", "proc", 0, NULL))
+        if (mount("proc", "/proc", "proc", MS_PRIVATE|MS_REC, NULL))
             Fail("mount('proc', '/proc', 'proc') failed");
     }
 
@@ -1571,7 +1584,7 @@ void Runner::process_child(long epid)
         {
             result.exit_status = status;
             result.usage = usage;
-            result.memory = max((long)result.memory, (long)usage.ru_maxrss);
+            result.memory = max((long long)result.memory, (long long)usage.ru_maxrss);
             CpuTimes times = miliseconds(usage);
             result.cpu_time = max((long)result.cpu_time, (long)times.time);
             result.user_time = max((long)result.user_time, (long)times.user);
@@ -1669,6 +1682,14 @@ void Runner::Run()
     void *childstack, *stack = malloc(cssize);
     if (!stack)
         Fail("child stack malloc failed");
+
+    if(new_mount && pivot)
+    {
+        if(mount("/", "/", "", MS_PRIVATE|MS_REC, NULL))
+        {
+            Fail("private mount('%s') failed");
+        }
+    }
 
     childstack = (void*)((char*)stack + cssize);
     child = clone(child_runner, childstack, flags, (void*)this);

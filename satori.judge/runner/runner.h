@@ -67,8 +67,8 @@ namespace runner {
             public:
                 int pid,ppid,pgrp,sid,tty,tpgid,exit_signal,cpu_number;
                 unsigned int flags,sched_priority,sched_policy;
-                long cutime,cstime,priority,nice,threads,alarm,rss;
-                unsigned long minflt,cminflt,majflt,cmajflt,utime,stime,vsize,rss_lim,start_code,end_code,start_stack,esp,eip,signal,blocked,sig_ignore,sig_catch,wchan,nswap,cnswap,guest_time,cguest_time;
+                long long cutime,cstime,priority,nice,threads,alarm,rss;
+                unsigned long long minflt,cminflt,majflt,cmajflt,utime,stime,vsize,rss_lim,start_code,end_code,start_stack,esp,eip,signal,blocked,sig_ignore,sig_catch,wchan,nswap,cnswap,guest_time,cguest_time;
                 unsigned long long start_time,io_delay;
                 char state;
                 std::string command;
@@ -147,7 +147,7 @@ namespace runner {
                 void GroupDestroy(const std::string&);
                 struct Limits
                 {
-                    long memory;
+                    long long memory;
                     Limits()
                         : memory(-1)
                     {
@@ -156,7 +156,8 @@ namespace runner {
                 void GroupLimits(const std::string&, const Limits&);
                 struct Stats
                 {
-                    long time, utime, stime, memory;
+                    long time, utime, stime;
+                    long long memory;
                     Stats()
                         : time(0)
                         , utime(0)
@@ -186,14 +187,14 @@ namespace runner {
             RES_STATUS status;
             int    exit_status;
             rusage usage;
-            unsigned long memory; //KB
+            unsigned long long memory; //KB
             unsigned long cpu_time; //1/1000 s
             unsigned long user_time;
             unsigned long system_time;
             unsigned long real_time;
-            unsigned long sum_write;
-            unsigned long sum_read;
-            unsigned long cgroup_memory;
+            unsigned long long sum_write;
+            unsigned long long sum_read;
+            unsigned long long cgroup_memory;
             unsigned long cgroup_time;
             unsigned long cgroup_user_time;
             unsigned long cgroup_system_time;
@@ -341,9 +342,9 @@ namespace runner {
 				std::map<std::string, std::string> env_add;
 				std::set<std::string> env_del;
 				// Memory limits (in bytes)
-				long memory_space;
-				long stack_space;
-				long data_space;
+				long long memory_space;
+				long long stack_space;
+				long long data_space;
 				// Time limits (in miliseconds)
 				long cpu_time;
 				long user_time;
@@ -351,9 +352,9 @@ namespace runner {
 				long real_time;
 				// FS limits
 				long descriptor_count;
-				long file_size;
-				long sum_write;
-				long sum_read;
+				long long file_size;
+				long long sum_write;
+				long long sum_read;
 				std::vector<std::string> read_files;
 				std::vector<std::string> write_files;
 				// Threading limits
@@ -366,10 +367,10 @@ namespace runner {
 				// Redirects (outside chroot!)
 				std::string input;
 				std::string output;
-				long output_size; // in bytes
+				long long output_size; // in bytes
 				bool output_trunc;
 				std::string error;
-				long error_size; // in bytes
+				long long error_size; // in bytes
 				bool error_trunc;
 				bool error_to_output;
 				// Flags
@@ -385,7 +386,7 @@ namespace runner {
 				std::string controller_host;
 				int controller_port;
 				std::string cgroup;
-				long cgroup_memory;
+				long long cgroup_memory;
 				long cgroup_time;
 				long cgroup_user_time;
 				long cgroup_system_time;
