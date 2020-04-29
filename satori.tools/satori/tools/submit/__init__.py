@@ -50,3 +50,8 @@ def submit():
     print '  File:', args[1]
     print '  Submit ID:', submit.id
 
+def rejudge():
+    options.add_argument('--submit', type=int, help='submit ID')
+    opts = setup(logging.INFO)
+    s = Submit.filter(SubmitStruct(id=opts.submit))[0]
+    s.rejudge_test_results()

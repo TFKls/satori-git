@@ -10,6 +10,28 @@ from satori.tools import config, options, setup, auth_setup, catch_exceptions
 want_import(globals(), '*')
 
 @catch_exceptions
+def team_rename():
+    options.add_argument('contest', help='contest_name')
+    options.add_argument('team', help='old team_name')
+    options.add_argument('name', help='new team_name')
+    opts = setup(logging.INFO)
+
+    contest_name=opts.contest
+    old_name=opts.team
+    new_name=opts.name
+
+    c=Contest.filter(ContestStruct(name=contest_name))
+    if len(c) >= 1:
+    	contest=c[0]
+    else:
+        logging.error('incorrect contest name '+contest_name)
+        sys.exit(1)
+
+    cn=Contestant.filter(ContestantStruct(contest=contest,name=old_name))[0]
+    cn.modify(ContestantStruct(name=new_name))
+ 
+
+@catch_exceptions
 def uzi_team():
     options.add_argument('contest', help='contest_name')
     options.add_argument('team', help='team_name')

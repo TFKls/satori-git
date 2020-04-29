@@ -30,6 +30,8 @@ setup(
     entry_points='''
         [console_scripts]
         satori.passwd = satori.tools.admin:passwd
+        satori.adduser = satori.tools.admin:adduser
+        satori.addchecker = satori.tools.admin:addchecker
         satori.athina_import = satori.tools.athina:athina_import
         satori.athina_import_testsuite = satori.tools.athina:athina_import_testsuite
         satori.athina_import_problem = satori.tools.athina:athina_import_problem
@@ -38,7 +40,9 @@ setup(
         satori.get_judges = satori.tools.judges:get_judges
         satori.update_judges = satori.tools.judges:update_judges
         satori.team = satori.tools.teams:uzi_team
+        satori.team_rename = satori.tools.teams:team_rename
         satori.submit = satori.tools.submit:submit
         satori.problems = satori.tools.problems:main
+        satori.rejudge = satori.tools.submit:rejudge
     ''',
 )
