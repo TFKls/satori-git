@@ -235,8 +235,10 @@ class Web(object):
         for submit in q[offset:offset+limit]:
             ret_r = ResultInfo()
             ret_r.submit = submit
-            ret_r.contestant = contestant_dict[submit.contestant_id]
-            ret_r.problem_mapping = problem_dict[submit.problem_id]
+            if submit.contestant_id in contestant_dict:
+                ret_r.contestant = contestant_dict[submit.contestant_id]
+            if submit.problem_id in problem_dict:
+                ret_r.problem_mapping = problem_dict[submit.problem_id]
             ret_r.status = submit.get_test_suite_status()
             ret_r.report = submit.get_test_suite_report()
             if detailed_tsr and Privilege.demand(submit, 'MANAGE'):

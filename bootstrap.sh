@@ -15,7 +15,8 @@ fi
 mkdir -p bin &&
 find "$VENV/bin" -name "activate*" |while read a; do ln -s "../$a" bin; done &&
 source bin/activate &&
-pip install -U distribute || exit 1
-pip install -U setuptools || exit 1
+pip install "pip<10"
+#pip install -U distribute || exit 1
+#pip install -U setuptools || exit 1
 
 popd

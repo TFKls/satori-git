@@ -16,11 +16,11 @@ MANAGERS = ADMINS
 
 ACTIVATION_REQUIRED = True
 EMAIL_HOST = 'localhost'
-ACTIVATION_EMAIL_FROM = 'szymon.borak@tcs.uj.edu.pl'
+ACTIVATION_EMAIL_FROM = 'satori@tcs.uj.edu.pl'
 ACTIVATION_EMAIL_SUBJECT = 'Your Satori account activation'
 ACTIVATION_EMAIL_BODY = """
 Hello {name}!
-To activate your Satori account visit http://szymon.borak.student.tcs.uj.edu.pl/activate/{code} .
+To activate your Satori account visit http://satori.tcs.uj.edu.pl/activate/{code} .
 Your activation token is: {code} .
 """
 
@@ -103,7 +103,7 @@ SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
-USE_I18N = True
+USE_I18N = False
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"

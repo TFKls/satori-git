@@ -604,7 +604,9 @@ class MarksAggregator(AggregatorBase):
                         mscore = minscore
                     if pid in self.scores:
                         if self.scores[pid].fixed_score:
-                            score = maxscore*(self.scores[pid].fixed_score/100.0)
+                            score = self.scores[pid].fixed_score
+                            if problem.group in self.aggregator.params.group_points:
+                                score *= float(self.aggregator.params.group_points[problem.group]) / g_score
                         elif self.scores[pid].ok:
                             score = maxscore
                             solve_time = self.aggregator.submit_cache[self.scores[pid].ok_submit].time
@@ -678,7 +680,15 @@ class MarksAggregator(AggregatorBase):
                     time = self.score.aggregator.submit_cache[result.submit_id].time
                     if self.params.time_stop and time > self.params.time_stop:
                         return
-                    self.fixed_score = max(self.fixed_score,int(result.oa_get_str('score')))
+                    maxscore = self.params.max_score
+                    minscore = self.params.min_score
+                    score = maxscore
+                    if self.params.time_start_descent is not None and self.params.time_descent is not None:
+                          score = self.score.timed_score(score, time, self.params.time_start_descent, self.params.time_descent)
+                    if minscore is not None and score < minscore:
+                          score = minscore
+                    score = score * int(result.oa_get_str('score')) / 100.0
+                    self.fixed_score = max(self.fixed_score,score)
                 except:
                     super(MarksAggregator.MarksScore.MarksProblemScore,self).aggregate(result)
 

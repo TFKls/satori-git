@@ -57,7 +57,7 @@ class Token(object):
         self.key = key or settings.SECRET_KEY
         self.salt = self._salt()
         self.session = None
-        self.deadline = datetime(2020, 01, 01) # TODO
+        self.deadline = datetime(2030, 01, 01) # TODO
         if token:
             raw = self._decrypt(token).split('\n')
             if len(raw) != 4:

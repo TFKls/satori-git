@@ -51,13 +51,13 @@ setup(
         'satori.objects',
         'satori.tools',
         'setproctitle',
-        'Twisted',
+        'Twisted < 18',
         'uwsgi >= 1.3'
         'pyopenssl',
         'ipaddr',
         'gdata',
         'pyyaml',
-        'sphinx',
+        'sphinx < 1.4',
     ],
     entry_points='''
         [console_scripts]

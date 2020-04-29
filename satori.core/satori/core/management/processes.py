@@ -20,6 +20,7 @@ from thrift.server.TServer import TThreadedServer, TForkingServer
 from twisted.web import server, wsgi
 from twisted import internet
 import twisted.internet.ssl
+import twisted.internet.reactor
 
 from satori.core.api      import ars_interface
 from satori.core.checking import CheckingMaster

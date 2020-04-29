@@ -233,9 +233,12 @@ class CheckingMaster(Client2):
             logging.debug('checking master: rejudge test suite result %s', test_suite_result.id)
             self.test_suite_results_to_rejudge.add(test_suite_result)
         elif event.type == 'checking_rejudge_ranking':
-            ranking = Ranking.objects.get(id=event.id)
-            logging.debug('checking master: rejudge ranking %s', ranking.id)
-            self.rankings_to_rejudge.add(ranking)
+            try:
+                ranking = Ranking.objects.get(id=event.id)
+                logging.debug('checking master: rejudge ranking %s', ranking.id)
+                self.rankings_to_rejudge.add(ranking)
+            except:
+                logging.critical('checking master: rejudge ranking %s: NO SUCH RANKING', ranking.id)
         elif event.type == 'checking_stop_ranking':
             ranking = Ranking()
             ranking.id = event.id
