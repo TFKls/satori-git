@@ -6,8 +6,9 @@ import getpass
 import os
 PROJECT_PATH = os.path.abspath(os.path.split(__file__)[0])
 
+UZI = os.getenv("UZI") is not None
 
-DEBUG = False
+DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 
 ADMINS = (
@@ -16,6 +17,7 @@ ADMINS = (
 
 MANAGERS = ADMINS
 
+EMAIL_HOST = 'tcs.uj.edu.pl'
 DATABASE_ENGINE = ''           # 'postgresql_psycopg2', 'postgresql', 'mysql', 'sqlite3' or 'oracle'.
 DATABASE_NAME = ''             # Or path to database file if using sqlite3.
 DATABASE_USER = ''             # Not used with sqlite3.
@@ -24,36 +26,11 @@ DATABASE_HOST = ''             # Set to empty string for localhost. Not used wit
 DATABASE_PORT = ''             # Set to empty string for default. Not used with sqlite3.
 
 USE_SSL = True
-THRIFT_HOST = 'dev.satori.tcs.uj.edu.pl'
-THRIFT_PORT = 38889
-BLOB_PORT = 38887
-params = os.environ.get('SATORI_BACKEND', None)
-if params:
-    params = params.split(':')
-    assert len(params) == 3, '$SATORI_BACKEND should be of form host:thrift_port:blob_port'
-    THRIFT_HOST = params[0]
-    THRIFT_PORT = int(params[1])
-    BLOB_PORT = int(params[2])
-elif getpass.getuser() == 'gutowski':
-    USE_SSL = False
-    THRIFT_HOST = 'localhost'
-    THRIFT_PORT = 39889
-    BLOB_PORT = 39887
-elif (getpass.getuser() == 'zzzmwm01') or (getpass.getuser() == 'mwrobel'):
-    THRIFT_HOST = 'localhost'
-    THRIFT_PORT = 37889
-    BLOB_PORT = 37887
-#elif getpass.getuser() == 'duraj':
-#    USE_SSL = False
-#    THRIFT_HOST = 'localhost'
-#    THRIFT_PORT = 36889
-#    BLOB_PORT = 36887
-elif getpass.getuser() == 'boraks':
-    USE_SSL = False
-    THRIFT_HOST = 'student.tcs.uj.edu.pl'
-    THRIFT_PORT = 32889
-    BLOB_PORT = 32887
-del params
+
+THRIFT_HOST = 'satori.tcs.uj.edu.pl'
+THRIFT_PORT = 12889
+BLOB_HOST = 'satori.tcs.uj.edu.pl'
+BLOB_PORT = 12887
 
 LOGGING = {
         'version': 1,
@@ -66,7 +43,8 @@ LOGGING = {
         'handlers': {
             'console': {
                 'level': 'DEBUG',
-                'class': 'logging.StreamHandler',
+                'class': 'logging.FileHandler',
+                'filename': '/home/amppz/satori.web.log',
                 'formatter': 'default',
                 },
             },
@@ -76,6 +54,9 @@ LOGGING = {
             },
         }
 
+if UZI:
+    THRIFT_HOST = 'uzi.satori.tcs.uj.edu.pl'
+    BLOB_HOST = 'uzi.satori.tcs.uj.edu.pl'
 # Local time zone for this installation. Choices can be found here:
 # http://en.wikipedia.org/wiki/List_of_tz_zones_by_name
 # although not all choices may be available on all operating systems.
@@ -91,7 +72,7 @@ SITE_ID = 1
 
 # If you set this to False, Django will make some optimizations so as not
 # to load the internationalization machinery.
-USE_I18N = True
+USE_I18N = False
 
 # Absolute path to the directory that holds media.
 # Example: "/home/media/media.lawrence.com/"
@@ -108,7 +89,7 @@ MEDIA_URL = ''
 ADMIN_MEDIA_PREFIX = '/media/'
 
 # Make this unique, and don't share it with anybody.
-SECRET_KEY = 'm@i55d12d3la4!*%ba&_^p5tl*!0mqdohef3lm1(q5-%eyuff)'
+SECRET_KEY = 'm@i55d12d3idupad12la4!*%ba&_^p5tl*!0mqdohef3lm1(q5-%eyuff)'
 
 # List of callables that know how to import templates from various sources.
 TEMPLATE_LOADERS = (
@@ -145,8 +126,13 @@ INSTALLED_APPS = (
 RECAPTCHA_PUB_KEY = '6LdTPsASAAAAACfINb4O2NltX7I8IeGkBhk8tXJa'
 RECAPTCHA_PRIV_KEY = '6LdTPsASAAAAAD0AVU5Jo148Mve24lr6swKPpPwA'
 
-SATORI_TOKEN_COOKIE_NAME = 'satori_token'
+FILE_UPLOAD_TEMP_DIR = '/home/amppz/uploads.tmp'
+
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+
+SATORI_TOKEN_COOKIE_NAME = 'amppz_token'
 SATORI_TOKEN_COOKIE_DOMAIN = None
-SATORI_TOKEN_COOKIE_SECURE = False
+SATORI_TOKEN_COOKIE_SECURE = True
 SATORI_TOKEN_COOKIE_PATH = '/'
 SATORI_TOKEN_COOKIE_HTTPONLY = True

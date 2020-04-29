@@ -70,6 +70,7 @@ def view(request, page_info):
         questions = forms.BooleanField(label='Questions allowed',required=False)
         backups = forms.BooleanField(label='Backups allowed',required=False)            
         prints = forms.BooleanField(label='Prints allowed',required=False)            
+        printer = forms.ChoiceField(label='Printer', choices=[[-1,'None']]+[[p.id, p.name] for p in Printer.filter()], required=False)
 
     if request.method!="POST":
         def get_date(x):
@@ -80,7 +81,7 @@ def view(request, page_info):
             if x:
                 return x.time()
             return None
-        manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'lock_start_0' : get_date(contest.lock_start), 'lock_start_1' : get_time(contest.lock_start), 'lock_finish_0' : get_date(contest.lock_finish),'lock_finish_1' : get_time(contest.lock_finish), 'lock_address' : contest.lock_address, 'lock_netmask' : contest.lock_netmask, 'questions' : questions, 'backups' : backups, 'prints' : prints})
+        manage_form = ManageForm(data={'viewfield' : unicode(viewing.current), 'joinfield' : unicode(joining.current), 'name' : contest.name, 'description' : contest.description, 'lock_start_0' : get_date(contest.lock_start), 'lock_start_1' : get_time(contest.lock_start), 'lock_finish_0' : get_date(contest.lock_finish),'lock_finish_1' : get_time(contest.lock_finish), 'lock_address' : contest.lock_address, 'lock_netmask' : contest.lock_netmask, 'questions' : questions, 'backups' : backups, 'prints' : prints, 'printer' : contest.printer.id if contest.printer else -1})
         admin_form = AdminForm()
         return render_to_response('manage.html', {'page_info' : page_info, 'manage_form' : manage_form, 'admin_form' : admin_form, 'admins' : admins})
     if "addadmin" in request.POST.keys():
@@ -112,6 +113,10 @@ def view(request, page_info):
     joining.set(manage_form.cleaned_data['joinfield'])
     contest.name = manage_form.cleaned_data['name']
     contest.description = manage_form.cleaned_data['description']
+    if int(manage_form.cleaned_data['printer']) >= 0:
+        contest.printer = Printer(int(manage_form.cleaned_data['printer']))
+    else:
+        contest.printer = None
     if locks:
         contest.lock_start = manage_form.cleaned_data['lock_start']
         contest.lock_finish = manage_form.cleaned_data['lock_finish']

@@ -1,4 +1,5 @@
-# vim:ts=4:sts=4:sw=4:expandtab10from setuptools import setup, find_packages
+# vim:ts=4:sts=4:sw=4:expandtab
+from setuptools import setup, find_packages
 from distutils.util import convert_path
 import os
 
@@ -37,12 +38,12 @@ setup(
     ],
     install_requires=[
         'Django == 1.4',
-        'flup',
+        'flup == 1.0.2',
         'setuptools',
         'Thrift < 0.10',
         'satori.client.common',
         'satori.tools',
-        'Sphinx',
+        'Sphinx < 1.4',
         'xstatic-mathjax',
     ],
     entry_points='''

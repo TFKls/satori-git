@@ -7,6 +7,16 @@ from django.shortcuts import render_to_response
 from django.core.urlresolvers import reverse
 from django import forms
 
+def getfield(obj, *args, **kwargs):
+    default = kwargs.get('default', None)
+    ret = obj
+    for a in args:
+        if hasattr(ret, a):
+            ret = getattr(ret, a)
+        else:
+            return default
+    return ret
+
 @contest_view
 def view(request, page_info):
     contest = page_info.contest
@@ -63,14 +73,14 @@ def view(request, page_info):
                 self.fields.append(TableField(name='',value='',render=(lambda table,i: format_html(u'<input type="radio" name="diff_1" value="{0}"/>', table.results[i].submit.id)),id='diff_1'))
                 self.fields.append(TableField(name='',value='',render=(lambda table,i: format_html(u'<input type="radio" name="diff_2" value="{0}"/>', table.results[i].submit.id)),id='diff_2'))            
             if admin:
-                cts = TableField(name='Contestant',value=(lambda table,i: table.results[i].contestant.name),
+                cts = TableField(name='Contestant',value=(lambda table,i: getfield(table.results[i],'contestant','name', default='?')),
                                                   render=(lambda table,i: format_html(u'<a class="stdlink" href="{0}">{1}</a>', table.getparams(filters={'cts' : unicode(table.results[i].contestant.id)},page=1), table.results[i].contestant.name)),
                                                             id='cts')
                 
                 choices = [[unicode(c.id),c.name] for c in Web.get_accepted_contestants(contest=contest,limit=self.max_limit()).contestants]
                 self.fields.append(cts)
                 self.filter_functions.append(FilterFunction(name='Contestant',prefix='cts',choices=choices))
-            prf = TableField(name='Problem',value=(lambda table,i: table.results[i].problem_mapping.code), id='problem')
+            prf = TableField(name='Problem',value=(lambda table,i: getfield(table.results[i], 'problem_mapping', 'code', default='?')), id='problem')
             pmlist = Web.get_problem_mapping_list(contest=contest)
             pmlist.sort(key=lambda p: p.problem_mapping.code)
             pchoices = [[unicode(p.problem_mapping.id),p.problem_mapping.code+' ('+p.problem_mapping.title+')'] for p in pmlist]
