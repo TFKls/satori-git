@@ -45,6 +45,32 @@ class Judge(object):
 
         return ret
 
+    @ExportMethod(SubmitToCheck, [], PCGlobal('JUDGE'))
+    @staticmethod
+    def kolejka_get_next():
+        from satori.core.checking.check_queue_client import kolejka_check_queue_client
+        r = token_container.token.role
+
+        next = kolejka_check_queue_client.get_next(r)
+
+        if next.test_result_id is None:
+            return None
+
+        ret = SubmitToCheck()
+        ret.test_result = next.test_result_id
+
+        if next.test_result_id > 0:
+            test_result = TestResult.objects.get(id=next.test_result_id)
+            ret.test_data = test_result.test.data_get_map()
+            ret.submit_data = test_result.submit.data_get_map()
+        else:
+            temporary_submit = TemporarySubmit.objects.get(id=-next.test_result_id)
+            ret.test_data = temporary_submit.test_data_get_map()
+            ret.submit_data = temporary_submit.submit_data_get_map()
+
+        return ret
+
+
     @ExportMethod(NoneType, [long, TypedMap(unicode, AnonymousAttribute)], PCGlobal('JUDGE'))
     @staticmethod
     def set_partial_result(test_result_id, result):

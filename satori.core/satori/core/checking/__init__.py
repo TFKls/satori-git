@@ -13,14 +13,32 @@ from aggregators import aggregators
 
 serial = 1
 
+def looks_like_kolejka(obj):
+    ag = None
+    try:
+        ag = obj.test_data
+    except:
+        try:
+            ag = obj.test.data
+        except:
+            return False
+    try:
+        kolejka = ag.oa_get(name='kolejka') 
+        return True
+    except OpenAttribute.DoesNotExist:
+        return False
+    return False
+
 class CheckingMaster(Client2):
     queue = 'checking_master_queue'
 
     def __init__(self):
         super(CheckingMaster, self).__init__()
 
+        self.kolejka_temporary_submit_queue = deque()
         self.temporary_submit_queue = deque()
 
+        self.kolejka_test_result_queue = deque()
         self.test_result_queue = deque()
         self.test_result_set = set()
         self.test_result_judged_set = set()
@@ -62,19 +80,26 @@ class CheckingMaster(Client2):
         self.map({'type': 'checking_new_submit'}, self.queue)
         self.map({'type': 'checking_new_temporary_submit'}, self.queue)
         self.map({'type': 'checking_test_result_dequeue'}, self.queue)
+        self.map({'type': 'checking_kolejka_test_result_dequeue'}, self.queue)
 
         for test_result in TestResult.objects.filter(pending=True, submit__problem__contest__archived=False):
             if test_result.tester:
                 test_result.tester = None
                 test_result.save(force_update=True)
-            self.test_result_queue.append(test_result)
+            if looks_like_kolejka(test_result):
+                self.kolejka_test_result_queue.append(test_result)
+            else:
+                self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
         for test_suite_result in TestSuiteResult.objects.filter(pending=True, submit__problem__contest__archived=False):
             self.start_test_suite_result(test_suite_result)
         for ranking in Ranking.objects.filter(contest__archived=False):
             self.start_ranking(ranking)
         for temporary_submit in TemporarySubmit.objects.filter(pending=True):
-            self.temporary_submit_queue.append(temporary_submit)
+            if looks_like_kolejka(temporary_submit):
+                self.kolejka_temporary_submit_queue.append(temporary_submit)
+            else:
+                self.temporary_submit_queue.append(temporary_submit)
 
         self.do_work()
 
@@ -129,7 +154,10 @@ class CheckingMaster(Client2):
             test_result.save(force_update=True)
             test_result.oa_set_map({})
             self.test_result_judged_set.remove(test_result)
-            self.test_result_queue.append(test_result)
+            if looks_like_kolejka(test_result):
+                self.kolejka_test_result_queue.append(test_result)
+            else:
+                self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
         else:
             logging.debug('checking master: rejudge test result %s: rejudge', test_result.id)
@@ -137,7 +165,10 @@ class CheckingMaster(Client2):
             test_result.tester = None
             test_result.save(force_update=True)
             test_result.oa_set_map({})
-            self.test_result_queue.append(test_result)
+            if looks_like_kolejka(test_result):
+                self.kolejka_test_result_queue.append(test_result)
+            else:
+                self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
             for test_suite_result in self.scheduled_test_results_map.get(test_result, []):
                 self.test_suite_results_to_rejudge.add(test_suite_result)
@@ -195,6 +226,7 @@ class CheckingMaster(Client2):
             logging.debug('checking master: stop ranking %s: not running', ranking.id)
 
     def handle_event(self, queue, event):
+        global serial
         logging.debug('checking master: event %s', event.type)
 
         if event.type == 'checking_checked_test_result':
@@ -259,7 +291,10 @@ class CheckingMaster(Client2):
         elif event.type == 'checking_new_temporary_submit':
             temporary_submit = TemporarySubmit.objects.get(id=event.id)
             logging.debug('checking master: new temporary submit %s', temporary_submit.id)
-            self.temporary_submit_queue.append(temporary_submit)
+            if looks_like_kolejka(temporary_submit):
+                self.kolejka_temporary_submit_queue.append(temporary_submit)
+            else:
+                self.temporary_submit_queue.append(temporary_submit)
         elif event.type == 'checking_changed_contestants':
             contest = Contest.objects.get(id=event.id)
             logging.debug('checking master: changed contestants of %s', contest.id)
@@ -291,9 +326,29 @@ class CheckingMaster(Client2):
                 e.test_result_id = test_result.id
             else:
                 e.test_result_id = None
-            global serial
-            e.Aserial = serial
+            e.serial = serial
             logging.debug('Check queue: dequeue by %s: %s (%s)', event.tester_id, e, serial)
+            serial = serial + 1
+            self.send(e)
+        elif event.type == 'checking_kolejka_test_result_dequeue':
+            e = Event(type='checking_kolejka_test_result_dequeue_result')
+            e.tag = event.tag
+            if self.kolejka_temporary_submit_queue:
+                temporary_submit = self.kolejka_temporary_submit_queue.popleft()
+                temporary_submit.tester = Role.objects.get(id=event.tester_id)
+                temporary_submit.save(force_update=True)
+                e.test_result_id = -temporary_submit.id
+            elif self.kolejka_test_result_queue:
+                test_result = self.kolejka_test_result_queue.popleft()
+                self.test_result_set.remove(test_result)
+                self.test_result_judged_set.add(test_result)
+                test_result.tester = Role.objects.get(id=event.tester_id)
+                test_result.save(force_update=True)
+                e.test_result_id = test_result.id
+            else:
+                e.test_result_id = None
+            e.serial = serial
+            logging.debug('Check queue: kolejka dequeue by %s: %s (%s)', event.tester_id, e, serial)
             serial = serial + 1
             self.send(e)
 
@@ -429,7 +484,10 @@ class CheckingMaster(Client2):
             logging.debug('Scheduling test result: %s - already in queue', test_result.id)
         elif test_result.pending:
             logging.debug('Scheduling test result: %s - adding to queue', test_result.id)
-            self.test_result_queue.append(test_result)
+            if looks_like_kolejka(test_result):
+                self.kolejka_test_result_queue.append(test_result)
+            else:
+                self.test_result_queue.append(test_result)
             self.test_result_set.add(test_result)
         else:
             logging.debug('Scheduling test result: %s - already checked', test_result.id)

@@ -54,10 +54,13 @@ setup(
         'Twisted < 18',
         'uwsgi >= 1.3'
         'pyopenssl',
+        'service_identity',
         'ipaddr',
         'gdata',
         'pyyaml',
         'sphinx < 1.4',
+        'Jinja2 < 3',
+        'MarkupSafe < 2',
     ],
     entry_points='''
         [console_scripts]

@@ -34,4 +34,32 @@ class CheckQueueClient(local):
         logging.debug('Check queue client: received %s for pid %s tid %s', result[1], self.pid, self.tid)
         return result[1]
 
+class KolejkaCheckQueueClient(local):
+    def new_connection(self):
+        self.pid = current_process().pid
+        self.tid = current_thread().ident
+        logging.info('Starting kolejka check queue client connection for pid %s tid %s', self.pid, self.tid)
+        self.tag = str(self.pid) + '_' + str(self.tid) + '_' + str(time.time())
+        self.queue = 'check_kolejka_queue_client_' + self.tag
+        self.connection = Client(address=(settings.EVENT_HOST, settings.EVENT_PORT))
+        self.connection.send(Attach(self.queue))
+        self.connection.recv()
+        self.connection.send(Map({'type': 'checking_kolejka_test_result_dequeue_result', 'tag': str(self.tag)}, self.queue))
+        self.connection.recv()
+
+    def __init__(self):
+        self.new_connection()
+
+    def get_next(self, role):
+        if (self.pid != current_process().pid) or (self.tid != current_thread().ident):
+            self.new_connection()
+        self.connection.send(Send(Event(type='checking_kolejka_test_result_dequeue', tag=str(self.tag), tester_id=role.id)))
+        self.connection.recv()
+        self.connection.send(Receive())
+        result = self.connection.recv()
+        logging.debug('Check kolejka queue client: received %s for pid %s tid %s', result[1], self.pid, self.tid)
+        return result[1]
+
+
 check_queue_client = CheckQueueClient()
+kolejka_check_queue_client = KolejkaCheckQueueClient()
