@@ -18,6 +18,14 @@ def get_problem(problem_name):
     else:
         return problems[0]
 
+def get_problems(contest_name):
+    contest = Contest.filter(ContestStruct(name=contest_name))
+    assert len(contest) <= 1, 'Contest names are declared to be unique'
+    if len(contest) == 0:
+        raise RuntimeError('Contest with a given name not found')
+    contest = contest[0]
+    mappings = ProblemMapping.filter(ProblemMappingStruct(contest=contest))
+    return [ m.problem for m in mappings ]
 
 def create_suite_yaml(suite):
     suite_yaml = {}
@@ -105,4 +113,19 @@ def download_problem(opts):
     tests_yaml = [create_test_yaml(test) for test in tests]
 
     store_problem(problem_yaml, tests_yaml)
+
+def download_contest(opts):
+    contest_name = opts.CONTEST_NAME
+    for problem in get_problems(contest_name):
+        try:
+            problem_yaml = {}
+            problem_yaml['name'] = problem.name
+            problem_yaml['description'] = problem.description
+            suites = TestSuite.filter(TestSuiteStruct(problem=problem))
+            problem_yaml['suites'] = [create_suite_yaml(suite) for suite in suites]
+            tests = Test.filter(TestStruct(problem=problem))
+            tests_yaml = [create_test_yaml(test) for test in tests]
+            store_problem(problem_yaml, tests_yaml)
+        except:
+            continue
 

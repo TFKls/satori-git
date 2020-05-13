@@ -8,7 +8,7 @@ from satori.tools.params import parser_from_xml
 
 from satori.tools.problems.common import copy_file
 
-from satori.tools.problems.download_problem import download_problem
+from satori.tools.problems.download_problem import download_problem, download_contest
 from satori.tools.problems.render_statement import render_statement
 from satori.tools.problems.temporary_submit import temporary_submit
 from satori.tools.problems.temporary_submit import temporary_submit_result
@@ -37,6 +37,10 @@ def main():
     download_problem_parser.set_defaults(command=download_problem)
     download_problem_parser.add_argument('PROBLEM_NAME')
     
+    download_contest_parser = subparsers.add_parser('contest')
+    download_contest_parser.set_defaults(command=download_contest)
+    download_contest_parser.add_argument('CONTEST_NAME')
+
     temporary_submit_parser = subparsers.add_parser('test')
     temporary_submit_parser.set_defaults(command=temporary_submit)
     temporary_submit_parser.add_argument('TEST')
