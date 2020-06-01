@@ -37,7 +37,7 @@ setup(
         'satori',
     ],
     install_requires=[
-        'Django == 1.4',
+        'Django == 1.11.28',
         'flup == 1.0.2',
         'setuptools',
         'Thrift < 0.10',
