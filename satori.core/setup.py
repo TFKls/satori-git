@@ -42,7 +42,7 @@ setup(
         'python-openid',
         'python-memcached',
         'setuptools',
-        'Django == 1.4',
+        'Django == 1.11.29',
         'egenix-mx-base',
         'psycopg2',
         'Thrift < 0.10',
